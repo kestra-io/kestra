@@ -39,6 +39,8 @@ const HTML_EXAMPLE = `
 <div class="video-container">
   <iframe src="https://www.youtube.com/embed/BeQNI2XRddA?si=nvoIqA1SIrMaKyYs" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
+
+<div style="position: relative; padding-bottom: calc(48.9583% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/ts2ZMkTWIBQTH0MyQ8V9?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="AI Copilot | Kestra" allowfullscreen></iframe></div>
 `
 const KITCHEN_SINK = `
 ---

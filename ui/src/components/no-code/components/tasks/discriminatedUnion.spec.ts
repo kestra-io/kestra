@@ -239,6 +239,23 @@ describe("a generic plugin class with one definition per type argument", () => {
         expect(newImplementation(branches[1], branches)).toEqual({type: KPI, data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}})
     })
 
+    it("keeps the chart's own properties and swaps only the data source when the data type changes", () => {
+        const previous = {id: "my_kpi", type: KPI, chartOptions: {displayName: "KPI"}, data: {type: "io.kestra.plugin.core.dashboard.data.ExecutionsKPI", columns: {value: {field: "ID"}}}}
+
+        expect(newImplementation(branches[1], branches, previous)).toEqual({
+            id: "my_kpi",
+            type: KPI,
+            chartOptions: {displayName: "KPI"},
+            data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"},
+        })
+    })
+
+    it("does not carry properties over from a different class", () => {
+        const previous = {id: "my_pie", type: "io.kestra.plugin.core.dashboard.chart.Pie", data: {type: "io.kestra.plugin.core.dashboard.data.ExecutionsKPI"}}
+
+        expect(newImplementation(branches[1], branches, previous)).toEqual({type: KPI, data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}})
+    })
+
     it("resolves a stored value to the branch of its data source", () => {
         const found = findBranchByType(branches, KPI, {type: KPI, data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}})
 

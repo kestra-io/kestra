@@ -30,7 +30,7 @@
         "email_sub": "एक ईमेल सूचना भेजें",
         "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "कस्टम",
-        "custom_note": "एक प्लेसहोल्डर task जोड़ा गया है — इसे एडिटर में किसी भी नोटिफिकेशन प्लगइन से बदलें।",
+        "custom_note": "एक प्लेसहोल्डर task जोड़ा गया है। इसे एडिटर में किसी भी नोटिफिकेशन प्लगइन से बदलें।",
         "custom_sub": "अपना स्वयं का नोटिफिकेशन task जोड़ें",
         "plugin_unavailable": "प्लगइन इंस्टॉल नहीं है",
         "slack_channel_placeholder": "#alerts",
@@ -467,6 +467,41 @@
     "resumed confirm": "क्या आप वाकई execution <code>{id}</code> को फिर से शुरू करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन {id} को पुनः शुरू करें",
+    "approval": {
+      "review": "समीक्षा करें",
+      "title": "execution {id} के {task} की समीक्षा करें",
+      "approve": "अनुमोदित करें",
+      "deny": "अस्वीकार करें",
+      "comment": "टिप्पणी",
+      "comment hint": {
+        "optional": "वैकल्पिक।",
+        "always": "एक टिप्पणी आवश्यक है।",
+        "on approve": "अनुमोदित करने के लिए एक टिप्पणी आवश्यक है।",
+        "on deny": "अस्वीकार करने के लिए एक टिप्पणी आवश्यक है।"
+      },
+      "comment required": "इस निर्णय के लिए एक टिप्पणी आवश्यक है।",
+      "inputs invalid": "कुछ इनपुट अमान्य हैं: {errors}",
+      "review done": "आपकी समीक्षा रिकॉर्ड कर ली गई है",
+      "reviewed": {
+        "title": "execution {id} के अनुमोदन का अनुरोध",
+        "explanation": "यह अनुमोदन अनुरोध अब समीक्षा के लिए प्रतीक्षा नहीं कर रहा है।",
+        "decision": "निर्णय",
+        "by": "द्वारा तय किया गया",
+        "on": "पर निर्णय लिया गया",
+        "decisions": {
+          "approved": "अनुमोदित",
+          "denied": "अस्वीकृत",
+          "expired": "समाप्त"
+        }
+      },
+      "cancel request": "अनुरोध रद्द करें",
+      "cancel confirm": "क्या आप वाकई execution {id} के अनुमोदन अनुरोध को रद्द करना चाहते हैं? कोई निर्णय शाखा नहीं चलेगी।",
+      "cancel done": "अनुमोदन अनुरोध रद्द कर दिया गया है",
+      "banner": {
+        "pausing": "यह execution एक अनुमोदन अनुरोध तैयार कर रहा है और समीक्षा के लिए रुकेगा।",
+        "paused": "यह execution समीक्षा के लिए प्रतीक्षा कर रहा है। जारी रखने के लिए इसे स्वीकृत या अस्वीकृत करें।"
+      }
+    },
     "resume from breakpoint done": "निष्पादन विराम बिंदु से फिर से शुरू किया गया है",
     "breakpoints": "ब्रेकपॉइंट्स",
     "pause": "रोकें",
@@ -1018,7 +1053,6 @@
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
-    "copy all logs": "सभी Logs कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "fix_with_ai": "AI से ठीक करें",
     "download logs": "Logs डाउनलोड करें",
@@ -1102,7 +1136,7 @@
     "flow must not be empty": "Flow खाली नहीं होना चाहिए",
     "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "readonly property": "केवल-पढ़ने की संपत्ति",
-    "namespace and id readonly": "`namespace` और `id` प्रॉपर्टीज़ को बदला नहीं जा सकता — वे अब अपने प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
+    "namespace and id readonly": "`namespace` और `id` प्रॉपर्टीज़ को बदला नहीं जा सकता: वे अब अपने प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
     "flow metadata locked": "flow बन जाने के बाद `id` और `namespace` को बदला नहीं जा सकता।",
     "avg": "औसत",
     "sum": "योग",
@@ -1147,6 +1181,7 @@
     "kestra": "केस्ट्रा",
     "error detected": "त्रुटि(त्रुटियाँ) पाई गईं।",
     "warning detected": "चेतावनी(याँ) मिलीं।",
+    "schema warning": "लाइन {line}: {message}",
     "informative notice": "नोट(s)",
     "open": "खोलें",
     "admin": "प्रशासनिक",
@@ -1177,7 +1212,7 @@
     "hostname": "होस्टनाम",
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
     "file unavailable": "फ़ाइल उपलब्ध नहीं है",
-    "file unavailable description": "यह फ़ाइल अब उपलब्ध नहीं है — इसे हटाया जा सकता है या इसकी समय सीमा समाप्त हो गई है।",
+    "file unavailable description": "यह फ़ाइल अब उपलब्ध नहीं है। इसे हटाया जा सकता है या इसकी समय सीमा समाप्त हो गई है।",
     "row count": "पंक्ति संख्या",
     "encoding": "एन्कोडिंग",
     "show": "दिखाएं",
@@ -1286,6 +1321,7 @@
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
+    "now": "अब",
     "absolute": "पूर्ण",
     "backfill": "Backfill",
     "Set labels": "लेबल्स सेट करें",
@@ -1514,7 +1550,7 @@
       },
       "promote": {
         "title": "flow को विभिन्न एनवायरनमेंट में प्रमोट करें",
-        "message": "Kestra Enterprise Edition आपको UI से सीधे एक environment से दूसरे environment में — जैसे dev से staging से production में — flows को बढ़ावा देने देता है, इसके लिए किसी Git या CI/CD pipelines की आवश्यकता नहीं होती है। बढ़ावा देने से पहले ठीक से समीक्षा करें कि क्या बदलेगा, एक पुष्टिकरण गेट के साथ संवेदनशील लक्ष्यों को सुरक्षित रखें, एक नज़र में drift का पता लगाएं, और किसने, कहाँ और कब क्या बढ़ावा दिया, इसका पूरा इतिहास रखें।"
+        "message": "Kestra Enterprise Edition आपको UI से सीधे एक environment से दूसरे environment में, जैसे dev से staging से production में, flows को बढ़ावा देने देता है, इसके लिए किसी Git या CI/CD pipelines की आवश्यकता नहीं होती है। बढ़ावा देने से पहले ठीक से समीक्षा करें कि क्या बदलेगा, एक पुष्टिकरण गेट के साथ संवेदनशील लक्ष्यों को सुरक्षित रखें, एक नज़र में drift का पता लगाएं, और किसने, कहाँ और कब क्या बढ़ावा दिया, इसका पूरा इतिहास रखें।"
       },
       "dashboards": {
         "header": "कस्टम डैशबोर्ड",
@@ -1552,7 +1588,7 @@
       "policies": {
         "header": "शासन नीतियाँ",
         "label": "नीतियाँ",
-        "message": "पॉलिसीज़ प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने देती हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्लगइन्स ब्लॉक करें, प्रॉपर्टी वैल्यूज़ को बाउंड करें, और कंप्लायंस labels की आवश्यकता करें। नियम staged rollout के साथ tenant या namespace स्तर पर लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
+        "message": "पॉलिसीज़ प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने देती हैं: साझा डिफ़ॉल्ट इंजेक्ट करें, प्लगइन्स ब्लॉक करें, प्रॉपर्टी वैल्यूज़ को बाउंड करें, और कंप्लायंस labels की आवश्यकता करें। नियम staged rollout के साथ tenant या namespace स्तर पर लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
         "title": "नीतियों के साथ हर flow का नियमन करें"
       },
       "namespace": {
@@ -1578,7 +1614,7 @@
         },
         "policies": {
           "title": "इस namespace पर शासन नियम लागू करें",
-          "message": "Kestra Enterprise Edition में, नीतियां आपको ऐसे नियम परिभाषित करने देती हैं जो इस namespace और इसके बच्चों में हर flow पर लागू होते हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्रॉपर्टी मानों को प्रतिबंधित करें, plugins को ब्लॉक करें, और अनुपालन labels की आवश्यकता होती है, हर बदलाव flow लेखकों को पूरी तरह से दिखाई देता है।"
+          "message": "Kestra Enterprise Edition में, नीतियां आपको ऐसे नियम परिभाषित करने देती हैं जो इस namespace और इसके बच्चों में हर flow पर लागू होते हैं: साझा डिफ़ॉल्ट इंजेक्ट करें, प्रॉपर्टी मानों को प्रतिबंधित करें, plugins को ब्लॉक करें, और अनुपालन labels की आवश्यकता होती है, हर बदलाव flow लेखकों को पूरी तरह से दिखाई देता है।"
         },
         "reusable-inputs": {
           "label": "पुनः प्रयोज्य Inputs",
@@ -2211,6 +2247,7 @@
         "plural": "डैशबोर्ड्स"
       },
       "default": "डिफ़ॉल्ट डैशबोर्ड",
+      "set_default": "डिफ़ॉल्ट के रूप में सेट करें",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
@@ -2356,7 +2393,7 @@
         },
         "cancelled": "बारी रद्द कर दी गई",
         "error": {
-          "turnCap": "यह बातचीत अपनी सीमा तक पहुँच गई है — एक नई चैट शुरू करें।",
+          "turnCap": "यह बातचीत अपनी सीमा तक पहुँच गई है: एक नई चैट शुरू करें।",
           "turnInProgress": "एक बारी पहले से ही चल रही है।",
           "request": "अनुरोध विफल रहा। कृपया पुनः प्रयास करें।",
           "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
@@ -2417,9 +2454,9 @@
           "dismiss": "खारिज करें",
           "dismissed": "खारिज किया गया",
           "applied": "लागू किया गया",
-          "previewBanner": "AI द्वारा सुझाए गए बदलाव की समीक्षा हो रही है — जब तक आप इसे लागू या खारिज नहीं करते, संपादक केवल पढ़ने के लिए है।",
+          "previewBanner": "AI द्वारा सुझाए गए बदलाव की समीक्षा हो रही है। जब तक आप इसे लागू या खारिज नहीं करते, संपादक केवल पढ़ने के लिए है।",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "{namespace}.{id} को समीक्षा के लिए ड्राफ्ट रिविज़न के रूप में सहेजें? यह बनाया जाएगा, या यदि पहले से मौजूद है तो एक नया ड्राफ्ट रिविज़न जोड़ा जाएगा — प्रकाशित होने तक ड्राफ्ट को trigger या subflow द्वारा नहीं लिया जाता।",
+          "applyConfirm": "{namespace}.{id} को समीक्षा के लिए ड्राफ्ट रिविज़न के रूप में सहेजें? यह बनाया जाएगा, या यदि पहले से मौजूद है तो एक नया ड्राफ्ट रिविज़न जोड़ा जाएगा। प्रकाशित होने तक ड्राफ्ट को trigger या subflow द्वारा नहीं लिया जाता।",
           "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
@@ -2498,7 +2535,7 @@
         "hidden_consumer": "छिपा हुआ flow",
         "ungrouped": "असमूहित",
         "hub": {
-          "notice": "इस नोड के {count} संबंध हैं — ग्राफ़ को पठनीय रखने के लिए केवल सबसे हाल के वाले दिखाए गए हैं।",
+          "notice": "इस नोड के {count} संबंध हैं। ग्राफ़ को पठनीय रखने के लिए केवल सबसे हाल के वाले दिखाए गए हैं।",
           "expand": "अधिक संबंध लोड करें",
           "expand_failed": "अधिक संबंध लोड नहीं किए जा सके। कृपया पुनः प्रयास करें।"
         },
@@ -2658,7 +2695,7 @@
     },
     "invalid_source_code": "अमान्य स्रोत कोड",
     "source_search": {
-      "cannot_select_read_only": "चयन नहीं किया जा सकता — आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
+      "cannot_select_read_only": "चयन नहीं किया जा सकता: आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
       "collapse_all": "सभी को संक्षिप्त करें",
       "confirm_bar_excluded": "{count} और मिलान नहीं बदला जाएगा। | {count} और मिलान नहीं बदले जाएंगे।",
       "confirm_bar_message": "{matches} को {flows} संपादन योग्य flows में बदलें। {skipped} केवल-पठन flows को छोड़ दिया जाएगा।",
@@ -2674,11 +2711,11 @@
       "empty_title": "flow, फ़ाइलों और key में कोई मान खोजें",
       "error_title": "अमान्य रेगुलर एक्सप्रेशन",
       "examples_aria": "उदाहरण क्वेरीज़",
-      "exclusion_flows_readonly": "flow — {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए। | flow — {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए।",
-      "exclusion_search_only": "{type} — {count} मिलान: केवल खोज, बदला नहीं जा सकता। | {type} — {count} मिलान: केवल खोज, बदले नहीं जा सकते।",
+      "exclusion_flows_readonly": "flow · {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए। | flow · {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए।",
+      "exclusion_search_only": "{type} · {count} मिलान: केवल खोज, बदला नहीं जा सकता। | {type} · {count} मिलान: केवल खोज, बदले नहीं जा सकते।",
       "exclusion_title": "{count} मिलान को सभी बदलें से बाहर रखा गया है | {count} मिलानों को सभी बदलें से बाहर रखा गया है",
       "expand_all": "सभी विस्तृत करें",
-      "file_match_notice": "फ़ाइल पथ मेल खाया। फ़ाइल की सामग्री खोजी नहीं जाती — अंदर खोजने के लिए फ़ाइल खोलें।",
+      "file_match_notice": "फ़ाइल पथ मेल खाया। फ़ाइल की सामग्री खोजी नहीं जाती। अंदर खोजने के लिए फ़ाइल खोलें।",
       "files_progress_banner_failed": "namespace फ़ाइलें एक बार में एक namespace खोजी जाती हैं। {total} में से {done} पूर्ण, {failed} विफल। कुल संख्या अभी बदलती रहेगी।",
       "files_progress_banner_ok": "namespace फ़ाइलें एक बार में एक namespace खोजी जाती हैं। {total} में से {done} पूर्ण। कुल संख्या अभी बदलती रहेगी।",
       "flow_only_toggle_hint": "केस मिलान, पूरा शब्द और रेगुलर एक्सप्रेशन केवल flow पर लागू होते हैं। फ़ाइल पथ और key हमेशा सादे टेक्स्ट से मेल खाते हैं।",
@@ -2755,10 +2792,10 @@
       "show_replace": "बदलें दिखाएँ",
       "summary": "{flows} flows में {matches} मिलान",
       "summary_cross": "{types} में {resources} में {matches}",
-      "tag_keys_only_never": "केवल key — मान कभी नहीं दिखाए या खोजे जाते",
-      "tag_keys_only_values": "केवल key — मान खोजे नहीं जाते",
-      "tag_paths_only": "केवल पथ — फ़ाइल सामग्री खोजी नहीं जाती",
-      "tag_search_only": "केवल खोज — बदला नहीं जाता",
+      "tag_keys_only_never": "केवल key: मान कभी नहीं दिखाए या खोजे जाते",
+      "tag_keys_only_values": "केवल key: मान खोजे नहीं जाते",
+      "tag_paths_only": "केवल पथ: फ़ाइल सामग्री खोजी नहीं जाती",
+      "tag_search_only": "केवल खोज: बदला नहीं जाता",
       "tag_source_code": "स्रोत कोड",
       "truncated_flows": "{total} में से पहले {shown} मिलान दिखाए जा रहे हैं। सभी बदलें केवल दिखाए गए मिलानों पर लागू होता है, पहले क्वेरी सीमित करें।",
       "truncated_type": "{total} में से पहले {shown}",
@@ -2954,6 +2991,56 @@
     "iteration": "पुनरावृत्ति",
     "iteration_number": "पुनरावृत्ति {number}",
     "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
-    "not started": "शुरू नहीं हुआ"
+    "not started": "शुरू नहीं हुआ",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "सभी",
+        "total": "{count} execution | {count} executions",
+        "failed": "{count} विफल"
+      },
+      "toolbar": {
+        "panBack": "पीछे खिसकाएं",
+        "panForward": "आगे खिसकाएं",
+        "zoomIn": "ज़ूम इन करें",
+        "zoomOut": "ज़ूम आउट करें",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "यह पेज खोलें",
+        "runsCount": "{count} execution | {count} executions",
+        "failedCount": "{count} विफल"
+      },
+      "bucket": {
+        "hint": "एकत्रित: execution-स्तर का विवरण देखने के लिए ज़ूम इन करें",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "execution खोलें",
+        "showOnlyFlow": "केवल यह flow दिखाएं"
+      },
+      "empty": {
+        "description": "चयनित सीमा और फ़िल्टर में कोई execution नहीं मिला।",
+        "resetFilters": "फ़िल्टर रीसेट करें",
+        "widenRange": "7 दिनों तक बढ़ाएं"
+      },
+      "error": {
+        "title": "टाइमलाइन लोड नहीं हो सकी",
+        "description": "इस सीमा के लिए execution लोड करते समय कुछ गड़बड़ हुई।"
+      },
+      "truncated": {
+        "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं। सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
+      },
+      "scrubber": {
+        "label": "समय के साथ Execution घनत्व, एक सीमा का चयन करने के लिए खींचें",
+        "ignoredFilters": "घनत्व पट्टी ये फ़िल्टर लागू नहीं करती: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "गणना",
+      "timeline": "टाइमलाइन"
+    }
   }
 }

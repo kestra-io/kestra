@@ -36,6 +36,8 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.Resume;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
@@ -61,8 +63,10 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
@@ -71,6 +75,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
@@ -96,6 +101,7 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -114,7 +120,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -131,6 +143,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
+    protected DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
@@ -165,6 +180,17 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     private TenantService tenantService;
+
+    @MockBean
+    @Replaces(ApprovalRequestHandler.NoopApprovalRequestHandler.class)
+    ApprovalRequestHandler approvalRequestHandler() throws Exception {
+        ApprovalRequestHandler mock = mock(ApprovalRequestHandler.class);
+        when(mock.open(any(), any(), any(), any(), any())).thenReturn(new ApprovalRequestHandler.OpenedRequest(null, null));
+        return mock;
+    }
+
+    @Inject
+    ApprovalRequestHandler approvalRequestHandler;
 
     @MockBean(TenantValidationFilter.class)
     public TenantValidationFilter getTenantValidationFilter() {
@@ -1135,6 +1161,68 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    void shouldEvaluateChecksAgainOnRestartAndReplay() throws TimeoutException {
+        String tenantId = TENANT_ID;
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        String flowId = "restart-replay-checks";
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/%s/flows".formatted(tenantId), """
+                    id: %s
+                    namespace: io.kestra.tests.checks
+
+                    inputs:
+                      - id: size
+                        type: INT
+                        defaults: 200
+
+                    checks:
+                      - when: "{{ inputs.size <= 100 }}"
+                        message: The size can't be more than 100
+                        behavior: FAIL_EXECUTION
+
+                    tasks:
+                      - id: resize
+                        type: io.kestra.plugin.core.log.Log
+                        message: "Resizing to {{ inputs.size }}"
+                    """.formatted(flowId)
+            ).contentType(MediaType.APPLICATION_YAML_TYPE),
+            Flow.class
+        );
+
+        Execution failed = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/io.kestra.tests.checks/%s".formatted(tenantId, flowId), MultipartBody.builder().addPart("size", "200").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        Await.until(() -> executionRepositoryInterface.findById(tenantId, failed.getId()).map(e -> e.getState().isFailed()).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(10));
+
+        HttpClientResponseException restart = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/%s/executions/%s/actions/restart".formatted(tenantId, failed.getId()), null), Execution.class)
+        );
+        assertEquals(HttpStatus.CONFLICT, restart.getStatus());
+        assertThat(restart.getMessage()).contains("The size can't be more than 100");
+
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay".formatted(tenantId, failed.getId()), null),
+            Execution.class
+        );
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertTrue(replay.getTaskRunList() == null || replay.getTaskRunList().isEmpty());
+
+        Execution replayWithValidInputs = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay-with-inputs".formatted(tenantId, failed.getId()), MultipartBody.builder().addPart("size", "50").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        Await.until(
+            () -> executionRepositoryInterface.findById(tenantId, replayWithValidInputs.getId()).map(e -> e.getState().isSuccess()).orElse(false),
+            Duration.ofMillis(100), Duration.ofSeconds(10)
+        );
+    }
+
+    @Test
     void shouldReturnNotFoundWhenReplayWithInputsCalledOnUnknownExecution() {
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("condition", "success")
@@ -1970,7 +2058,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
         Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build()); // API didn't send back the tenant id'
-        Map<String, Object> inputs = (Map<String, Object>) outputs.get("onResume");
+        Map<String, Object> inputs = (Map<String, Object>) outputs.get("inputs");
         Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
         assertThat(inputs.get("asked")).isEqualTo("myString");
         assertThat(secretInputs.get("type")).isEqualTo(EncryptedString.TYPE);
@@ -1999,6 +2087,278 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(Problems.detail(exception)).isEqualTo("Missing required input:asked");
+    }
+
+    private String reviewUri(Execution execution, String decision, String comment) {
+        String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
+        return "/api/v1/main/executions/" + execution.getId() + "/actions/review?taskRunId=" + taskRunId + "&decision=" + decision;
+    }
+
+    private MutableHttpRequest<?> review(String uri, String comment) {
+        if (comment == null) {
+            return HttpRequest.POST(uri, null);
+        }
+        return HttpRequest.POST(uri, MultipartBody.builder().addPart("kestra_review_comment", comment).build()).contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRunOnApproveWhenReviewApproves() throws QueueException, InternalException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpResponse<?> response = client.toBlocking().exchange(review(reviewUri(paused, "APPROVE", "ok"), "ok"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().getCurrent() == Type.SUCCESS);
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        assertThat(outputs.get("decision")).isEqualTo("APPROVED");
+        assertThat(outputs.get("comment")).isEqualTo("ok");
+        assertThat(execution.findTaskRunsByTaskId("approved")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRunOnDenyWhenReviewDenies() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "DENY", null), null));
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        assertThat(execution.findTaskRunsByTaskId("denied")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("approved")).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRefuseSecondReviewAndKeepTheFirstDecision() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "APPROVE", null), null));
+        awaitExecution(paused.getId(), exec -> exec.getState().getCurrent() == Type.SUCCESS);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "DENY", null), null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        assertThat(execution.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldKeepTheFirstDecisionWhenTwoReviewCommandsRace() throws QueueException, InternalException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        executionCommandQueue.emit(Resume.decide(paused, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null), PausableTask.Resumed.now(), null));
+        executionCommandQueue.emit(Resume.decide(paused, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.DENIED, null), PausableTask.Resumed.now(), null));
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        boolean approved = "APPROVED".equals(outputs.get("decision"));
+        assertThat(execution.getState().getCurrent()).isNotEqualTo(Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("approved")).hasSize(approved ? 1 : 0);
+        assertThat(execution.findTaskRunsByTaskId("denied")).hasSize(approved ? 0 : 1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldCancelTheApprovalWithoutRunningAnyBranch() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        HttpResponse<?> response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/cancel-approval?taskRunId=" + taskRunId, null)
+        );
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        assertThat(execution.getState().getCurrent()).isEqualTo(Type.CANCELLED);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(Type.CANCELLED);
+        assertThat(execution.findTaskRunsByTaskId("approved")).isEmpty();
+        assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
+    void shouldRefuseToCancelATaskRunThatIsNotAnApproval() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
+        String taskRunId = paused.findTaskRunsByTaskId("pause").getFirst().getId();
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/cancel-approval?taskRunId=" + taskRunId, null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRefuseForceRunAndBulkForceRunOfAnApproval() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpClientResponseException single = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/force-run", null))
+        );
+        assertThat(single.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+
+        HttpClientResponseException bulk = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/force-run/by-ids", List.of(paused.getId())))
+        );
+        assertThat(bulk.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow().getState().isPaused()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRefuseChangingTheStatusOrTheTaskRunStateOfAnExecutionPausedOnAnApproval() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("approval").getFirst().getId();
+        String base = "/api/v1/main/executions/" + paused.getId() + "/actions";
+
+        HttpClientResponseException status = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(base + "/change-status?status=SUCCESS", null))
+        );
+        HttpClientResponseException state = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(base + "/state", new ExecutionController.StateRequest(taskRunId, Type.SUCCESS)))
+        );
+
+        assertThat(status.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(state.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow().getState().isPaused()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldReturnNotFoundWhenReviewTargetsAnUnknownTaskRun() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/review?taskRunId=nope&decision=APPROVE", null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldReturnUnprocessableEntityWhenReviewTargetsAFinishedTaskThatIsNotAnApproval() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("notify").getFirst().getId();
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/review?taskRunId=" + taskRunId + "&decision=APPROVE", null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRejectAnExpiredDecisionFromTheApi() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "EXPIRED", null), null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-always.yaml" })
+    void shouldReturnUnprocessableEntityWhenReviewMissesRequiredComment() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-comment-always");
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "APPROVE", null), null))
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow().getState().isPaused()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRejectAReviewCommentThatIsTooLong() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String comment = "x".repeat(ExecutionService.APPROVAL_COMMENT_MAX_LENGTH + 1);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(review(reviewUri(paused, "APPROVE", comment), comment))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow().getState().isPaused()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-always.yaml" })
+    void shouldAcceptRequiredCommentSentAsMultipartPart() throws QueueException, InternalException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-comment-always");
+
+        HttpResponse<?> response = client.toBlocking().exchange(review(reviewUri(paused, "APPROVE", "because"), "because"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        assertThat(outputs.get("comment")).isEqualTo("because");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldValidateReviewWithoutDeciding() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpResponse<?> response = client.toBlocking().exchange(review(reviewUri(paused, "APPROVE", "ok").replace("/actions/review", "/actions/review/validate"), "ok"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow();
+        assertThat(execution.getState().isPaused()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldAllowReviewToEveryoneInOss() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+        String taskRunId = paused.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        Map<?, ?> response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/executions/" + paused.getId() + "/actions/review/allowed?taskRunId=" + taskRunId),
+            Map.class
+        );
+
+        assertThat(response.get("allowed")).isEqualTo(true);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldRefuseResumeAndBulkResumeOfAnApproval() throws QueueException {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        HttpClientResponseException single = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + paused.getId() + "/actions/resume", null))
+        );
+        assertThat(single.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+
+        HttpClientResponseException bulk = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(paused.getId())))
+        );
+        assertThat(bulk.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        Execution execution = executionRepositoryInterface.findById(TENANT_ID, paused.getId()).orElseThrow();
+        assertThat(execution.getState().isPaused()).isTrue();
     }
 
     @Test
@@ -2573,6 +2933,48 @@ class ExecutionControllerRunnerTest {
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/%s/executions/notfound".formatted(tenantId))));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldCloseTheApprovalRequestWhenDeletingAPausedExecution() throws QueueException {
+        clearInvocations(approvalRequestHandler);
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/executions/" + paused.getId()));
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldCloseTheApprovalRequestWhenBulkDeletingAPausedExecution() throws QueueException {
+        clearInvocations(approvalRequestHandler);
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/main/executions/by-ids?includeNonTerminated=true", List.of(paused.getId())),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount()).isEqualTo(1);
+        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-input.yaml" })
+    void shouldKeepAnInputNamedCommentApartFromTheReviewerComment() throws Exception {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-comment-input");
+
+        var body = MultipartBody.builder().addPart("kestra_review_comment", "reviewer note").addPart("comment", "input value").build();
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "APPROVE", null), body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        assertThat(outputs.get("comment")).isEqualTo("reviewer note");
+        assertThat((Map<String, Object>) outputs.get("inputs")).containsEntry("comment", "input value");
     }
 
     @Test

@@ -488,17 +488,21 @@
         "decision": "Decisão",
         "by": "Decidido por",
         "on": "Decidido em",
+        "cancelled by": "Cancelado por",
+        "cancelled on": "Cancelado em",
         "decisions": {
           "approved": "Aprovado",
           "denied": "Negado",
-          "expired": "Expirado"
+          "expired": "Expirado",
+          "cancelled": "Cancelado",
+          "killed": "Morto"
         }
       },
       "cancel request": "Cancelar solicitação",
       "cancel confirm": "Tem certeza de que deseja cancelar a solicitação de aprovação da execução {id}? Nenhuma ramificação de decisão será executada.",
       "cancel done": "A solicitação de aprovação foi cancelada",
       "banner": {
-        "pausing": "Esta egzekucja está preparando uma solicitação de aprovação e será pausada para revisão.",
+        "pausing": "Esta execução está pausando. A solicitação de aprovação pode ser revisada assim que todas as tasks onWait terminarem.",
         "paused": "Esta egzekucja aguarda uma revisão. Aprova ou nega para continuar."
       }
     },

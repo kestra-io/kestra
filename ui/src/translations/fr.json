@@ -488,17 +488,21 @@
         "decision": "Décision",
         "by": "Décidé par",
         "on": "Décidé le",
+        "cancelled by": "Annulé par",
+        "cancelled on": "Annulé le",
         "decisions": {
           "approved": "Approuvé",
           "denied": "Refusé",
-          "expired": "Expiré"
+          "expired": "Expiré",
+          "cancelled": "Annulé",
+          "killed": "Tué"
         }
       },
       "cancel request": "Annuler la demande",
       "cancel confirm": "Voulez-vous vraiment annuler la demande d'approbation de l'exécution {id} ? Aucune branche de décision ne sera exécutée.",
       "cancel done": "La demande d'approbation a été annulée",
       "banner": {
-        "pausing": "Cette exécution prépare une demande d'approbation et se mettra en pause pour une révision.",
+        "pausing": "Cette exécution est en pause. La demande d'approbation pourra être examinée dès que toutes les tâches onWait seront terminées.",
         "paused": "Cette exécution est en attente d'une révision. Approuvez-la ou refusez-la pour continuer."
       }
     },

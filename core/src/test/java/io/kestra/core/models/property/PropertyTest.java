@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -275,6 +276,43 @@ class PropertyTest {
     void ofValue() {
         var prop = Property.ofValue(TestObj.builder().key("key").value("value").build());
         assertThat(prop).isNotNull();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void mapPropertyKeepsNullEntry() throws Exception {
+        var json = JacksonMapper.ofJson().readValue("{\"deletedAt\":null,\"status\":\"open\"}", Property.class);
+        assertThat(json.getExpression()).contains("\"deletedAt\":null");
+
+        var yaml = JacksonMapper.ofYaml().readValue("deletedAt: null\nstatus: open\n", Property.class);
+        assertThat(yaml.getExpression()).contains("\"deletedAt\":null");
+
+        var rendered = (Map<String, Object>) runContextFactory.of().render(json).asMap(String.class, Object.class);
+        assertThat(rendered).containsKey("deletedAt");
+        assertThat(rendered.get("deletedAt")).isNull();
+        assertThat(rendered.get("status")).isEqualTo("open");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void listPropertyKeepsNullEntry() throws Exception {
+        var property = JacksonMapper.ofJson().readValue("[{\"$match\":{\"k\":null}}]", Property.class);
+        assertThat(property.getExpression()).contains("\"k\":null");
+
+        var rendered = (List<Map<String, Object>>) runContextFactory.of().render(property).asList(Map.class);
+        assertThat(rendered).hasSize(1);
+        var match = (Map<String, Object>) rendered.getFirst().get("$match");
+        assertThat(match).containsKey("k");
+        assertThat(match.get("k")).isNull();
+    }
+
+    @Test
+    void ofValueKeepsNullEntries() {
+        var map = new LinkedHashMap<String, Object>();
+        map.put("deletedAt", null);
+        map.put("status", "open");
+        assertThat(Property.ofValue(map).getExpression()).contains("\"deletedAt\":null");
+        assertThat(Property.ofValue(List.of(map)).getExpression()).contains("\"deletedAt\":null");
     }
 
     @Test

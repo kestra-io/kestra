@@ -837,6 +837,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-disabled-child.yaml" }, tenantId = "waitfordisabledchild")
+    void waitforDisabledChild() throws Exception {
+        loopUntilTestCaseTest.waitforDisabledChild("waitfordisabledchild");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-all-disabled.yaml" }, tenantId = "waitforalldisabled")
+    void waitforAllDisabled() throws Exception {
+        loopUntilTestCaseTest.waitforAllDisabled("waitforalldisabled");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/waitfor-child-task-warning.yaml" }, tenantId = "waitforchildtaskwarning")
     void waitForChildTaskWarning() throws Exception {
         loopUntilTestCaseTest.waitForChildTaskWarning("waitforchildtaskwarning");

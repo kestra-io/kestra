@@ -1,6 +1,10 @@
 package io.kestra.controller.grpc.services;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,6 +18,8 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
@@ -27,6 +33,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
@@ -35,6 +42,7 @@ import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
 
 @Singleton
 @Slf4j
@@ -251,8 +259,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
             switch (workerTriggerResult.type()) {
                 case POLLING -> {
-                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
-                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                    processPollingTriggerResult(workerTriggerResult);
                 }
                 case REALTIME -> {
                     if (evaluation != null) {
@@ -282,6 +289,32 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      */
     static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
         return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
+    }
+
+    void processPollingTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        TriggerEvaluationResult evaluation = workerTriggerResult.evaluation();
+        TriggerEvaluated triggerEvaluated = new TriggerEvaluated(workerTriggerResult.id(), evaluation, Instant.now(), EventId.create());
+        try {
+            triggerEventQueue.send(triggerEvaluated);
+        } catch (KestraRuntimeException e) {
+            if (!isOversizedOrUnsupported(e)) {
+                throw e;
+            }
+
+            Logs.logTrigger(workerTriggerResult.id(), Level.ERROR, "Unable to publish polling trigger result: {}", e.getMessage(), e);
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), null));
+        }
+        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+    }
+
+    private static boolean isOversizedOrUnsupported(Throwable throwable) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Throwable cause = throwable; cause != null && visited.add(cause); cause = cause.getCause()) {
+            if (cause instanceof MessageTooBigException || cause instanceof UnsupportedMessageException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

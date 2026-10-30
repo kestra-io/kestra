@@ -1,0 +1,159 @@
+:root {
+    --ks-bg-plugin-icon: #ffffff;
+
+    --ks-font-family-sans: "Inter", sans-serif;
+    --ks-font-family-mono: "JetBrains Mono", monospace;
+    --ks-font-scale: 1;
+    --ks-font-size-2xs: calc(0.625rem * var(--ks-font-scale));
+    --ks-font-size-xs: calc(0.6875rem * var(--ks-font-scale));
+    --ks-font-size-sm: calc(0.75rem * var(--ks-font-scale));
+    --ks-font-size-base: calc(0.875rem * var(--ks-font-scale));
+    --ks-font-size-md: calc(0.875rem * var(--ks-font-scale));
+    --ks-font-size-lg: calc(1rem * var(--ks-font-scale));
+    --ks-font-size-xl: calc(1.125rem * var(--ks-font-scale));
+    --ks-font-size-2xl: calc(1.25rem * var(--ks-font-scale));
+    --ks-font-size-3xl: calc(1.375rem * var(--ks-font-scale));
+    --ks-font-size-4xl: calc(1.625rem * var(--ks-font-scale));
+
+    --ks-radius-xs: 0.25rem;
+    --ks-radius-sm: 0.375rem;
+    --ks-radius-base: 0.5rem;
+    --ks-radius-lg: 0.625rem;
+    --ks-radius-xl: 0.875rem;
+
+    --ks-shadow-sm: 0 0.125rem 0.25rem rgba(20, 24, 31, 0.075);
+    --ks-shadow-base: 0 0.5rem 1rem rgba(20, 24, 31, 0.15);
+    --ks-shadow-lg: 0 1rem 3rem rgba(20, 24, 31, 0.175);
+
+    --ks-spacing-px: 1px;
+    --ks-spacing-1: 0.25rem;
+    --ks-spacing-2: 0.5rem;
+    --ks-spacing-3: 0.75rem;
+    --ks-spacing-4: 1rem;
+    --ks-spacing-5: 1.5rem;
+    --ks-spacing-6: 2rem;
+    --ks-spacing-7: 2.5rem;
+    --ks-spacing-8: 3rem;
+    --ks-spacing-10: 4rem;
+    --ks-spacing-12: 5rem;
+    --ks-spacing-16: 6rem;
+
+    /** Below Element Plus, whose overlays start at 2000 and climb. To sit above one, use `useTopLayer()`. */
+    --ks-z-base: 0;
+    --ks-z-raised: 1;
+    --ks-z-sticky: 100;
+    --ks-z-dropdown: 1000;
+    --ks-z-overlay: 1030;
+    /** Last resort for plain stylesheets, which cannot call `useTopLayer()`. */
+    --ks-z-top: 9999;
+
+    --ks-placeholder-color: var(--ks-text-inactive);
+    --ks-placeholder-font-size: var(--ks-font-size-xs);
+    --ks-placeholder-font-weight: var(--ks-font-weight-regular);
+
+    --ks-font-weight-regular: 400;
+    --ks-font-weight-medium: 500;
+    --ks-font-weight-semibold: 600;
+    --ks-font-weight-bold: 700;
+
+    --ks-line-height-tight: 1.2;
+    --ks-line-height-base: 1.5;
+    --ks-line-height-loose: 1.75;
+
+    --ks-duration-fast: 100ms;
+    --ks-duration-base: 200ms;
+    --ks-duration-slow: 300ms;
+    --ks-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ks-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ks-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+    --ks-border-width-thin: 1px;
+    --ks-border-width-base: 2px;
+    --ks-border-width-thick: 4px;
+
+    --ks-border-block-primary: var(--ks-border-width-thin) solid var(--ks-border-default);
+    --ks-border-block-secondary: var(--ks-border-width-thin) solid var(--ks-border-subtle);
+    --ks-border-block-active: var(--ks-border-width-thin) solid var(--ks-border-focus);
+
+    --ks-icon-size-xs: 0.75rem;
+    --ks-icon-size-sm: 1rem;
+    --ks-icon-size-base: 1.25rem;
+    --ks-icon-size-lg: 1.5rem;
+    --ks-icon-size-xl: 2rem;
+
+    --ks-status-created: var(--ks-status-info);
+    --ks-status-submitted: var(--ks-status-info);
+    --ks-status-restarted: var(--ks-status-info);
+    --ks-status-retried: var(--ks-status-info);
+    --ks-status-resubmitted: var(--ks-status-info);
+    --ks-status-failed: var(--ks-status-error);
+    --ks-status-killed: var(--ks-status-error);
+    --ks-status-success: var(--ks-status-success);
+    --ks-status-running: var(--ks-status-running);
+    --ks-status-breakpoint: var(--ks-status-running);
+    --ks-status-pausing: var(--ks-status-running);
+    --ks-status-paused: var(--ks-status-warning);
+    --ks-status-warning: var(--ks-status-warning);
+    --ks-status-retrying: var(--ks-status-warning);
+    --ks-status-killing: var(--ks-status-pending);
+    --ks-status-cancelled: var(--ks-status-neutral);
+    --ks-status-skipped: var(--ks-status-neutral);
+    --ks-status-queued: var(--ks-status-neutral);
+
+    --ks-status-border-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-base) 80%);
+    --ks-status-border-submitted: color-mix(in srgb, var(--ks-status-submitted), var(--ks-bg-base) 80%);
+    --ks-status-border-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-base) 80%);
+    --ks-status-border-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-base) 80%);
+    --ks-status-border-resubmitted: color-mix(in srgb, var(--ks-status-resubmitted), var(--ks-bg-base) 80%);
+    --ks-status-border-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-base) 80%);
+    --ks-status-border-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-base) 80%);
+    --ks-status-border-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-base) 80%);
+    --ks-status-border-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 80%);
+    --ks-status-border-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-base) 80%);
+    --ks-status-border-pausing: color-mix(in srgb, var(--ks-status-pausing), var(--ks-bg-base) 80%);
+    --ks-status-border-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-base) 80%);
+    --ks-status-border-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 80%);
+    --ks-status-border-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-base) 80%);
+    --ks-status-border-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-base) 80%);
+    --ks-status-border-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-base) 80%);
+    --ks-status-border-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-base) 80%);
+    --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 80%);
+
+    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-badge) 90%);
+    --ks-status-background-submitted: color-mix(in srgb, var(--ks-status-submitted), var(--ks-bg-badge) 90%);
+    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-badge) 90%);
+    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-badge) 90%);
+    --ks-status-background-resubmitted: color-mix(in srgb, var(--ks-status-resubmitted), var(--ks-bg-badge) 90%);
+    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-badge) 90%);
+    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-badge) 90%);
+    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-badge) 90%);
+    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-badge) 90%);
+    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-badge) 90%);
+    --ks-status-background-pausing: color-mix(in srgb, var(--ks-status-pausing), var(--ks-bg-badge) 90%);
+    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-badge) 90%);
+    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-badge) 90%);
+    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-badge) 90%);
+    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-badge) 90%);
+    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-badge) 90%);
+    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-badge) 90%);
+    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-badge) 90%);
+
+    --ks-log-trace: var(--ks-status-neutral);
+    --ks-log-debug: var(--ks-status-running);
+    --ks-log-info: var(--ks-status-info);
+    --ks-log-warn: var(--ks-status-warning);
+    --ks-log-error: var(--ks-status-error);
+
+    --ks-log-border-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-base) 80%);
+    --ks-log-border-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 80%);
+    --ks-log-border-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-base) 80%);
+    --ks-log-border-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 80%);
+    --ks-log-border-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-base) 80%);
+
+    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-base) 95%);
+    --ks-log-background-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 95%);
+    --ks-log-background-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-base) 95%);
+    --ks-log-background-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 95%);
+    --ks-log-background-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-base) 95%);
+}
+

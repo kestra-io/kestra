@@ -55,11 +55,16 @@
     import ProseA from "../content/ProseA.vue"
     import ChildTableOfContents from "../content/ChildTableOfContents.vue"
     import ChildCard from "../content/ChildCard.vue"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
     import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     const markdownComponents = {
         a: ProseA,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ChildCard,
@@ -124,7 +129,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .docs-not-found {
         display: flex;
         flex-direction: column;

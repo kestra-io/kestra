@@ -9,6 +9,7 @@
         :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
         :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
+        :fitHeight
     >
         <template #navbar>
             <slot name="navbar" />
@@ -35,7 +36,9 @@
                     <template v-else>
                         <KsIcon><Counter /></KsIcon>
                     </template>
-                    &nbsp;<code>{{ scope.row.name }}</code>
+                    &nbsp;<KsTooltip :content="metricDescription(scope.row as MetricEntry)" :disabled="!metricDescription(scope.row as MetricEntry)">
+                        <code>{{ scope.row.name }}</code>
+                    </KsTooltip>
                 </template>
             </KsTableColumn>
 
@@ -100,6 +103,7 @@
 
     import type {Execution} from "../../stores/executions"
     import {date, humanizeDuration, humanizeNumber} from "../../utils/filters"
+    import {useMetricDescriptions} from "./metricDescriptions"
 
     import {useTableColumns} from "@kestra-io/design-system"
 
@@ -111,12 +115,14 @@
         showTask?: boolean;
         execution?: Execution;
         optionalColumns?: ColumnConfig[];
+        fitHeight?: boolean;
     }>(), {
         embed: true,
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
         optionalColumns: () => [],
+        fitHeight: false,
     })
 
     const localOptionalColumns = ref([
@@ -137,6 +143,8 @@
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
     const pageSize = ref(25)
+
+    const metricDescription = useMetricDescriptions(() => props.execution, metrics)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -206,7 +214,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-id {
         margin: 0;
     }

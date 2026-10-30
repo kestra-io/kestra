@@ -47,3 +47,6 @@
     @use 'element-plus/theme-chalk/src/carousel';
     @use 'element-plus/theme-chalk/src/carousel-item';
 </style>
+
+<style>
+</style>

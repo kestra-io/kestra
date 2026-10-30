@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {expect} from "storybook/test"
 import KsBadge from "./KsBadge.vue"
 import KsButton from "../Basic/KsButton/KsButton.vue"
 
@@ -8,7 +9,7 @@ const meta: Meta<typeof KsBadge> = {
     component: KsBadge,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["primary", "success", "warning", "danger", "info"]},
+        type: {control: "select", options: ["primary", "success", "warning", "danger", "info", "neutral"]},
         inline: {control: "boolean"},
         size: {control: "select", options: ["default", "small"]},
         isDot: {control: "boolean"},
@@ -37,7 +38,16 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-badge v-bind=\"args\"><ks-button>Messages</ks-button></ks-badge></div>",
     }),
-    args: {value: 5},
+    args: {
+        value: 5,
+        type: "danger",
+        max: 99,
+        isDot: false,
+        hidden: false,
+        showZero: true,
+        inline: false,
+        size: "default",
+    },
 }
 
 export const Types: Story = {
@@ -52,6 +62,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /**
@@ -79,6 +90,33 @@ export const Inline: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
+}
+
+/**
+ * Neutral – a grey pill for counts that sit next to content without competing with it, such as
+ * the number of matches next to each value in a KsFilter list.
+ */
+export const Neutral: Story = {
+    render: () => ({
+        components: {KsBadge},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+                <span style="display:inline-flex;align-items:center;gap:8px">Trace <ks-badge value="18.4K" type="neutral" inline /></span>
+                <span style="display:inline-flex;align-items:center;gap:8px">Warn <ks-badge value="12" type="neutral" inline /></span>
+                <span style="display:inline-flex;align-items:center;gap:8px">Error <ks-badge value="0" type="neutral" inline /></span>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const reference = canvasElement.ownerDocument.createElement("span")
+        reference.style.backgroundColor = "var(--ks-bg-tag)"
+        canvasElement.appendChild(reference)
+        const pill = canvasElement.querySelector(".kel-badge__content") as HTMLElement
+        await expect(getComputedStyle(pill).backgroundColor).toBe(getComputedStyle(reference).backgroundColor)
+        reference.remove()
+    },
+    parameters: {controls: {disable: true}},
 }
 
 /** Small: a compact pill for icon buttons, where the default one covers half the glyph. */
@@ -93,6 +131,7 @@ export const Small: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Red dot – small dot without a number */
@@ -107,6 +146,7 @@ export const RedDot: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Hidden – badge can be hidden programmatically */
@@ -126,6 +166,7 @@ export const Hidden: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const MaxValue: Story = {
@@ -138,4 +179,5 @@ export const MaxValue: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

@@ -60,6 +60,7 @@
                 @execute="execute"
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
+                @editor-warnings="onKsEditorWarnings"
             >
                 <template #absolute>
                     <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
@@ -101,7 +102,6 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
     import {useFlowEditorActions} from "../flows/useFlowEditorActions"
-    import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
@@ -226,9 +226,15 @@
             setDirty?.({path: props.path, dirty: newVal})
         }
     })
+    watch(() => props.flow,
+          () => {
+              if (props.flow) {
+                  flowStore.ksEditorWarnings = []
+              }
+          },
+    )
 
     onMounted(() => {
-        useDocStore().docId = "flowEditor"
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"})
         }
@@ -259,6 +265,9 @@
     })
 
     onBeforeUnmount(() => {
+        if(props.flow){
+            flowStore.ksEditorWarnings = []
+        }
         window.removeEventListener("keydown", handleGlobalSave)
         window.removeEventListener("keydown", toggleAiShortcut)
         pluginsStore.editorPlugin = undefined
@@ -393,7 +402,12 @@
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
         pluginsStore.updateDocumentation(cls ? {cls, version: version ?? undefined, hash: hash.value} : undefined)
     }
-
+    function onKsEditorWarnings(warnings: {line: number, message: string}[]) {
+        if(!props.flow) return
+        flowStore.ksEditorWarnings = warnings.map(w =>
+            t("schema warning", {line: w.line, message: w.message}),
+        )
+    }
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
     // path as the Save button — including auto-install of missing plugins before persisting.
     const saveFlowYaml = async () => {
@@ -449,7 +463,7 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .editor-tab {
         height: 100%;
         display: flex;

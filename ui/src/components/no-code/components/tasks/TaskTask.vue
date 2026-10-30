@@ -64,15 +64,15 @@
         return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/")
     })
 
-    const localSchema = computed(() => getValueAtJsonPath(fullSchema.value,  blockSchemaPath.value))
+    const localSchema = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value as Record<string, unknown>, blockSchemaPath.value))
 
     const fieldTitle = computed(() => {
         const schema = localSchema.value
 
         if(schema?.anyOf && Array.isArray(schema.anyOf)){
-            const titles: string[] = schema.anyOf.map((s: Schema) => s.allOf?.find((a: Schema) => a.title)?.title ?? s.title)
+            const titles: (string | undefined)[] = schema.anyOf.map((s: Schema) => s.allOf?.find((a: Schema) => a.title)?.title ?? s.title)
 
-            if(titles.every((title) => title === titles[0])){
+            if(titles.length > 0 && titles[0] && titles.every((title) => title === titles[0])){
                 return titles[0]
             }
         }
@@ -114,7 +114,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .task-wrapper {
     width: 100%;
 }

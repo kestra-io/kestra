@@ -77,7 +77,7 @@
         if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath) as SchemaNode | undefined
+        return getValueAtJsonPath(fullSchema.value as unknown as Record<string, unknown>, props.blockSchemaPath) as SchemaNode | undefined
     })
 
     onBeforeMount(() => {
@@ -165,7 +165,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     :deep(div.task-icon) {
         display: inline-block;
         width: var(--ks-font-size-lg);
@@ -195,7 +195,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.task-icon) {
+        & :deep(.task-icon) {
             width: 2rem;
             height: 2rem;
         }

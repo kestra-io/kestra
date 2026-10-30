@@ -32,7 +32,8 @@
                     <KsAlert
                         :closable="false"
                         class="task-edit-revision-alert"
-                        v-if="revision && revisions?.length !== revision"
+                        data-test="task-edit-revision-alert"
+                        v-if="isOldRevision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -87,6 +88,7 @@
 
         <div class="task-edit-panel-body">
             <TaskEditData
+                v-if="!outsideFlow"
                 class="task-edit-col task-edit-col-inputs"
                 :class="{'task-edit-col--collapsed': inputsCollapsed}"
                 kind="inputs"
@@ -221,6 +223,7 @@
         size?: string;
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
+        outsideFlow?: boolean;
         editorKey?: string;
         taskPath?: string;
     }
@@ -240,6 +243,7 @@
         size: undefined,
         presentation: "drawer",
         hideTabstrip: false,
+        outsideFlow: false,
         editorKey: undefined,
         taskPath: undefined,
     })
@@ -405,7 +409,7 @@
     })
 
     const flowStore = useFlowStore()
-    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
     const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
         const split = validationErrorLines(localTaskErrors.value)
@@ -475,7 +479,7 @@
 
     const outputSections = computed(() => {
         const properties = declaredOutputProperties.value
-        if (!properties) return []
+        if (!properties || props.outsideFlow) return []
         const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
@@ -512,9 +516,14 @@
 
     const isLoading = computed(() => taskYaml.value === undefined)
 
+    // Revision numbers are not list indexes: deleting a flow consumes a revision that the list leaves out.
+    const selectedRevision = computed(() => revisions.value?.find(({revision}) => revision === props.revision))
+
+    const isOldRevision = computed(() => Boolean(props.revision) && props.revision !== revisions.value?.at(-1)?.revision)
+
     const source = computed(() => {
         return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
+            ? selectedRevision.value?.source
             : flowStore.flow?.source
     })
 
@@ -525,7 +534,7 @@
             revision: props.revision?.toString(),
         })
         if (props.revision) {
-            if (!revisions.value?.[props.revision - 1]) {
+            if (!selectedRevision.value) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
@@ -565,10 +574,10 @@
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (propTaskType.value) {
+        if (propTaskType.value && !props.outsideFlow) {
             pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
-        if (taskYaml.value) {
+        if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
                 .then((result) => { localTaskErrors.value = result?.errors })
@@ -579,7 +588,7 @@
     }
 
     const commitEdit = () => {
-        if (lastValidatedValue.value !== taskYaml.value) {
+        if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({
                 task: taskYaml.value,
@@ -636,7 +645,7 @@
             taskBaseline.value = incoming
         }
         const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
-        if (typeof incomingType === "string" && incomingType) {
+        if (typeof incomingType === "string" && incomingType && !props.outsideFlow) {
             await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
@@ -645,7 +654,7 @@
     watch(taskYaml, () => {
         const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
         const parsedType = task?.type
-        if (parsedType && parsedType !== type.value) {
+        if (parsedType && parsedType !== type.value && !props.outsideFlow) {
             type.value = parsedType
             clearTimeout(typeLoadTimer.value)
             typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
@@ -669,7 +678,7 @@
     defineExpose({open: onShow, flushPendingEdit})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-edit-panel {
         display: flex;
         flex-direction: column;
@@ -748,39 +757,35 @@
         flex-direction: column;
     }
 
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
     @container (max-width: 760px) {
         .task-edit-panel-body {
-            @include task-edit-stacked;
+            flex-direction: column;
+
+            .task-edit-col {
+                flex: none;
+                width: 100%;
+                height: auto;
+                border: none;
+                border-bottom: 1px solid var(--ks-border-subtle);
+            }
+
+            .task-edit-col-inputs,
+            .task-edit-col-output {
+                max-height: 30%;
+            }
+
+            .task-edit-col-params {
+                order: -1;
+                flex: 1 1 auto;
+                min-height: 55%;
+            }
+
+            .task-edit-col-inputs.task-edit-col--collapsed,
+            .task-edit-col-output.task-edit-col--collapsed {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
         }
     }
 

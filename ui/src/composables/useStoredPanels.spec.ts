@@ -5,7 +5,7 @@ import {useStoredPanels, PreSerializedPanel, STORED_PANELS_RELOAD_EVENT} from ".
 import {EditorElement, Tab} from "../utils/multiPanelTypes"
 
 function makeTab(uid: string): Tab {
-    return {uid, button: {icon: null, label: uid}, component: null}
+    return {uid, button: {icon: {}, label: uid}, component: {}}
 }
 
 // An editor element that only deserializes the uids it knows about, mirroring a real one
@@ -74,6 +74,24 @@ describe("useStoredPanels", () => {
 
         expect(panels.value).toEqual([
             {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 50},
+        ])
+    })
+
+    it("removes a panel when all of its stored tabs no longer deserialize", () => {
+        localStorage.setItem(KEY, JSON.stringify([
+            {tabs: ["a"], activeTab: "a", size: 50},
+            {tabs: ["nocode-removed-task"], activeTab: "nocode-removed-task", size: 50},
+        ]))
+
+        const {panels, saveState} = useStoredPanels(KEY, [elementKnowing("a")])
+
+        expect(panels.value).toEqual([
+            {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 50},
+        ])
+
+        saveState(KEY)
+        expect(storedLayout()).toEqual([
+            {tabs: ["a"], activeTab: "a", size: 50},
         ])
     })
 

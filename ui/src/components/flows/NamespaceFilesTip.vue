@@ -64,7 +64,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .namespace-files-tip {
         padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
     }

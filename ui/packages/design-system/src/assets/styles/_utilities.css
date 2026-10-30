@@ -34,10 +34,6 @@
     flex-grow: 1 !important;
 }
 
-.flex-shrink-0 {
-    flex-shrink: 0 !important;
-}
-
 .justify-content-end {
     justify-content: flex-end !important;
 }

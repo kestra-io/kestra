@@ -488,17 +488,21 @@
         "decision": "결정",
         "by": "결정 기준",
         "on": "결정됨",
+        "cancelled by": "취소자",
+        "cancelled on": "취소됨",
         "decisions": {
           "approved": "승인됨",
           "denied": "거부됨",
-          "expired": "만료됨"
+          "expired": "만료됨",
+          "cancelled": "취소됨",
+          "killed": "종료됨"
         }
       },
       "cancel request": "요청 취소",
       "cancel confirm": "execution {id}에 대한 승인 요청을 취소하시겠습니까? 결정 branch는 실행되지 않습니다.",
       "cancel done": "승인 요청이 취소되었습니다.",
       "banner": {
-        "pausing": "이 실행은 승인 요청을 준비 중이며 검토를 위해 일시 중지됩니다.",
+        "pausing": "이 Execution이 일시 중지됩니다. 모든 onWait Task가 완료되면 승인 요청을 검토할 수 있습니다.",
         "paused": "이 Execution은 검토를 기다리고 있습니다. 계속하려면 승인하거나 거부하세요."
       }
     },

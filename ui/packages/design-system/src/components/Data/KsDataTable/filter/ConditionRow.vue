@@ -45,7 +45,7 @@
         placement="bottom-start"
         :width="320"
         :showArrow="false"
-        popperClass="p-0"
+        popperClass="cond-value-popover"
     >
         <template #reference>
             <button class="cond-value-trigger" type="button" :disabled="readOnly">
@@ -110,7 +110,7 @@
         placement="bottom-start"
         :width="300"
         :showArrow="false"
-        popperClass="p-0"
+        popperClass="cond-value-popover"
     >
         <template #reference>
             <button class="cond-value-trigger" type="button" :disabled="readOnly">
@@ -520,5 +520,11 @@
     &:hover {
         color: var(--ks-status-error);
     }
+}
+</style>
+
+<style>
+.cond-value-popover.cond-value-popover {
+    padding: 0;
 }
 </style>

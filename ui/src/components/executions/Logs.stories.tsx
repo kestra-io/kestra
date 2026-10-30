@@ -315,10 +315,10 @@ function compactFullscreenPlay(lastTaskId = "task-3") {
             if (!element || !element.clientHeight || element.scrollHeight < 40000) throw new Error("last task log scroller not ready");
             return element;
         });
-        await scrollToBottom(lastScroller);
-        await scrollToBottom(taskScroller);
-        await scrollToBottom(lastScroller);
-        await waitFor(() => {
+        await waitFor(async () => {
+            await scrollToBottom(lastScroller);
+            await scrollToBottom(taskScroller);
+            await scrollToBottom(lastScroller);
             const scrollerBounds = lastScroller.getBoundingClientRect();
             const dialogBounds = dialog.getBoundingClientRect();
             const visibleTail = within(lastScroller).getAllByText(`${lastTaskId} entry 1699`).find(element => {
@@ -392,10 +392,12 @@ export const CompactFullscreenVirtualizedTasks: Story = {
             }
             return element;
         });
-        recycledFirstTaskScroller.scrollTop = 50;
-        recycledFirstTaskScroller.dispatchEvent(new Event("scroll"));
-        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-        expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
+        await waitFor(async () => {
+            recycledFirstTaskScroller.scrollTop = 50;
+            recycledFirstTaskScroller.dispatchEvent(new Event("scroll"));
+            await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+            expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
+        });
     },
 };
 

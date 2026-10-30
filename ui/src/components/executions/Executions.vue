@@ -75,7 +75,7 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
+                        chart: {shown: !hideChart && canViewCharts, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
@@ -506,6 +506,7 @@
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {type Execution, type Label, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
@@ -932,8 +933,10 @@
         localStorage.setItem(storageKeys.SHOW_CHART, value.toString())
     }
 
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
+
     const showStatChart = () => {
-        return !props.hideChart && isDisplayedTop.value && showChart.value
+        return !props.hideChart && canViewCharts.value && isDisplayedTop.value && showChart.value
     }
 
     const refresh = () => {

@@ -467,6 +467,41 @@
     "resumed confirm": "¿Estás seguro de que quieres reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resume from breakpoint title": "Reanudar ejecución {id} desde el punto de interrupción",
+    "approval": {
+      "review": "Revisar",
+      "title": "Revisa el {task} de la ejecución {id}",
+      "approve": "Aprobar",
+      "deny": "Denegar",
+      "comment": "Comentario",
+      "comment hint": {
+        "optional": "Opcional.",
+        "always": "Se requiere un comentario.",
+        "on approve": "Se requiere un comentario para aprobar.",
+        "on deny": "Se requiere un comentario para denegar."
+      },
+      "comment required": "Se requiere un comentario para esta decisión.",
+      "inputs invalid": "Algunas entradas no son válidas: {errors}",
+      "review done": "Tu revisión ha sido registrada",
+      "reviewed": {
+        "title": "Solicitud de aprobación de la ejecución {id}",
+        "explanation": "Esta solicitud de aprobación ya no está esperando una revisión.",
+        "decision": "Decisión",
+        "by": "Decidido por",
+        "on": "Decidido en",
+        "decisions": {
+          "approved": "Aprobado",
+          "denied": "Denegado",
+          "expired": "Caducado"
+        }
+      },
+      "cancel request": "Cancelar solicitud",
+      "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución {id}? No se ejecutará ninguna rama de decisión.",
+      "cancel done": "La solicitud de aprobación ha sido cancelada",
+      "banner": {
+        "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",
+        "paused": "Esta ejecución está esperando una revisión. Apruébala o deniégala para continuar."
+      }
+    },
     "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
     "breakpoints": "Puntos de interrupción",
     "pause": "Pausar",

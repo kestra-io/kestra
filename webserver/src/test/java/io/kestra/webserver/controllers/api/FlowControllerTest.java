@@ -1715,6 +1715,36 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldReturnFullInvalidInputTypeDetailWhenValidatingFlow() {
+        String source = """
+            id: invalid-input-type
+            namespace: io.kestra.unittest
+            inputs:
+              - id: enabled
+                type: BOOLEAN
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: Hello
+            """;
+
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking()
+            .exchange(POST("/api/v1/main/flows/validate", source).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        assertThat(response.body()).singleElement().satisfies(validation ->
+        {
+            assertThat(validation.getErrors()).singleElement().satisfies(error ->
+            {
+                assertThat(error.detail())
+                    .startsWith("Invalid type: BOOLEAN\nCould not resolve type id 'BOOLEAN'")
+                    .contains("known type ids = [", "BOOL,");
+                assertThat(error.pointer()).isEqualTo("/inputs/0/type");
+                assertThat(error.path()).isEqualTo("inputs[0].type");
+            });
+        });
+    }
+
+    @Test
     void shouldValidateFlowWithWarningsAndInfos() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/warningsAndInfos.yaml");
         String source = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());

@@ -135,6 +135,7 @@ public final class ExecutorTestHarness {
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
     private final InMemoryExecutionStateStore executionStateStore;
+    private final InMemoryWorkerJobRunningStateStore workerJobRunningStateStore;
     private final InMemoryExecutionQueuedStateStore executionQueuedStateStore;
     private final InMemoryExecutionDelayStateStore executionDelayStateStore;
     private final InMemorySLAMonitorStateStore slaMonitorStateStore;
@@ -180,6 +181,7 @@ public final class ExecutorTestHarness {
         this.clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
         this.flowMetaStore = new InMemoryFlowMetaStore();
         this.executionStateStore = new InMemoryExecutionStateStore();
+        this.workerJobRunningStateStore = new InMemoryWorkerJobRunningStateStore();
         this.executionQueuedStateStore = new InMemoryExecutionQueuedStateStore();
         this.executionDelayStateStore = new InMemoryExecutionDelayStateStore();
         this.slaMonitorStateStore = new InMemorySLAMonitorStateStore();
@@ -339,7 +341,8 @@ public final class ExecutorTestHarness {
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
-            new PausedTaskNotifier.NoopPausedTaskNotifier()
+            new PausedTaskNotifier.NoopPausedTaskNotifier(),
+            Optional.of(workerJobRunningStateStore)
         );
 
         this.executionEventMessageHandler = new ExecutionEventMessageHandler(
@@ -752,6 +755,10 @@ public final class ExecutorTestHarness {
 
     public InMemoryExecutionStateStore executionStateStore() {
         return executionStateStore;
+    }
+
+    public InMemoryWorkerJobRunningStateStore workerJobRunningStateStore() {
+        return workerJobRunningStateStore;
     }
 
     public InMemoryExecutionQueuedStateStore executionQueuedStateStore() {

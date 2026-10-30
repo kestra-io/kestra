@@ -30,6 +30,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.Output;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -72,6 +73,7 @@ public class ExecutorService {
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
+    private final Optional<WorkerJobRunningStateStore> workerJobRunningStateStore;
 
     @Inject
     public ExecutorService(
@@ -89,7 +91,8 @@ public class ExecutorService {
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
-        PausedTaskNotifier pausedTaskNotifier) {
+        PausedTaskNotifier pausedTaskNotifier,
+        Optional<WorkerJobRunningStateStore> workerJobRunningStateStore) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -105,6 +108,7 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
+        this.workerJobRunningStateStore = workerJobRunningStateStore;
     }
 
     public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
@@ -811,6 +815,7 @@ public class ExecutorService {
                     Execution execution = executor.getExecution();
                     for (TaskRun child : updated) {
                         execution = execution.withTaskRun(child);
+                        this.releaseWorkingDirectoryEntry(flow, child);
                     }
                     executor = executor.withExecution(execution, "handledTerminatedFlowableTasks");
                 }
@@ -845,6 +850,10 @@ public class ExecutorService {
         }
 
         executor = this.handlePausedDelay(executor, list);
+
+        for (WorkerTaskResult flowableResult : list) {
+            this.releaseWorkingDirectoryEntry(executor.getFlow(), flowableResult.getTaskRun());
+        }
 
         this.addWorkerTaskResults(executor, list);
 
@@ -955,6 +964,23 @@ public class ExecutorService {
                 .delayType(ExecutionDelay.DelayType.RESTART_FLOWABLE)
                 .build()
         );
+    }
+
+    /**
+     * A {@link WorkingDirectory} is the only flowable dispatched to a worker, so it is the only one
+     * holding a {@code worker_job_running} entry. Its terminal state is decided by the executor —
+     * resolved from its children or forced to match a terminated parent — never reported by the
+     * worker, so the executor is the only place that can release the entry. Called at every point a
+     * WorkingDirectory task run is set terminal, so a terminal execution never keeps a live entry.
+     */
+    private void releaseWorkingDirectoryEntry(FlowWithSource flow, TaskRun taskRun) {
+        if (workerJobRunningStateStore.isEmpty()
+            || !taskRun.getState().isTerminated()
+            || !(flow.findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof WorkingDirectory)) {
+            return;
+        }
+
+        workerJobRunningStateStore.get().deleteByKey(taskRun.getId());
     }
 
     /**

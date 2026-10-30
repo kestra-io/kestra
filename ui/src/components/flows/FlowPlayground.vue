@@ -156,11 +156,12 @@
     const playgroundStore = usePlaygroundStore()
     const executionsStore = useExecutionsStore()
 
+    // immediate: a panel reopened on the same run must refresh it, the server may have ended it meanwhile
     watch(() => playgroundStore.latestExecution?.id, (newValue, oldValue) => {
         if (newValue && newValue !== oldValue) {
             executionsStore.followExecution(playgroundStore.latestExecution, t)
         }
-    })
+    }, {immediate: true})
 
     const activeTab = ref(tabs.value[0])
 

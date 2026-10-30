@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -27,16 +28,19 @@ class ConcurrencyLimitControllerTest {
     @Client("/")
     private ReactorHttpClient client;
 
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
     @Test
     void shouldReturnBadRequestWhenUpdatingWithInvalidConcurrencyLimit() {
-        // Given - a ConcurrencyLimit with all required fields null
-        ConcurrencyLimit invalid = ConcurrencyLimit.builder().build();
+        // Given - a request without the required running count
+        var invalid = new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest("namespace", "flowId", null);
 
         // When
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                PUT("/api/v1/main/concurrency-limit/namespace/flowId", invalid)
+                PUT("/api/v1/main/concurrency-limit", invalid)
             )
         );
 
@@ -61,7 +65,7 @@ class ConcurrencyLimitControllerTest {
 
         // update the concurrency limit
         ConcurrencyLimit updated = client.toBlocking().retrieve(
-            PUT("/api/v1/main/concurrency-limit/" + concurrencyLimit.getNamespace() + "/" + concurrencyLimit.getFlowId(), concurrencyLimit.withRunning(99)),
+            PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest(concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId(), 99)),
             ConcurrencyLimit.class
         );
         assertThat(updated).isNotNull();
@@ -87,7 +91,7 @@ class ConcurrencyLimitControllerTest {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                PUT("/api/v1/main/concurrency-limit/" + existing.getNamespace() + "/" + existing.getFlowId(), existing.withRunning(-5))
+                PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest(existing.getNamespace(), existing.getFlowId(), -5))
             )
         );
 
@@ -95,31 +99,31 @@ class ConcurrencyLimitControllerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
-    void shouldIdentifyConcurrencyLimitFromPathNotBody(Execution execution) {
-        // A body naming a different flow must not retarget it: the path identifies the resource.
-        ConcurrencyLimit spoofed = ConcurrencyLimit.builder()
-            .tenantId("main")
-            .namespace("evil.namespace")
-            .flowId("evil-flow")
-            .running(42)
-            .build();
+    void shouldUpdateNamespaceConcurrencyLimitWhenFlowIsEmpty() {
+        // Given - a namespace-scoped counter, stored with an empty flow id
+        concurrencyLimitRepository.update(ConcurrencyLimit.builder().tenantId("main").namespace("scoped.namespace").flowId("").running(3).build());
 
+        // When
         ConcurrencyLimit updated = client.toBlocking().retrieve(
-            PUT("/api/v1/main/concurrency-limit/" + execution.getNamespace() + "/" + execution.getFlowId(), spoofed),
+            PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest("scoped.namespace", null, 0)),
             ConcurrencyLimit.class
         );
 
-        assertThat(updated.getNamespace()).isEqualTo(execution.getNamespace());
-        assertThat(updated.getFlowId()).isEqualTo(execution.getFlowId());
-        assertThat(updated.getRunning()).isEqualTo(42);
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("scoped.namespace");
+        assertThat(updated.getFlowId()).isEmpty();
+        assertThat(updated.getRunning()).isZero();
+    }
 
+    @Test
+    void shouldReturnNotFoundWhenUpdatingUnknownConcurrencyLimitByBody() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                GET("/api/v1/main/concurrency-limit/evil.namespace/evil-flow")
+                PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest("unknown.namespace", "unknown-flow", 0))
             )
         );
+
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 

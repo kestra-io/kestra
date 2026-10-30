@@ -3,12 +3,11 @@ package io.kestra.indexer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
-
-import com.devskiller.friendly_id.FriendlyId;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
@@ -21,6 +20,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.*;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -60,7 +60,7 @@ class DefaultIndexerTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
         ExecutionStatistic statistic = new ExecutionStatistic(
-            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, FriendlyId.createFriendlyId()
+            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, IdUtils.create()
         );
 
         // When
@@ -70,7 +70,7 @@ class DefaultIndexerTest {
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
         {
             List<DailyExecutionStatistics> stats = executionStatisticsRepository.statistics(
-                tenant, "namespace", "flow", bucket, bucket, DateUtils.GroupType.MINUTE
+                tenant, "namespace", "flow", Collections.emptyList(), bucket, bucket, DateUtils.GroupType.MINUTE
             );
             assertThat(stats).hasSize(1);
             assertThat(stats.getFirst().getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
@@ -83,14 +83,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         LogEntry logEntry = LogEntry.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .taskId("task")
             .executionId(executionId)
-            .taskRunId(FriendlyId.createFriendlyId())
+            .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
             .level(Level.INFO)
@@ -116,14 +116,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         TaskRun taskRun = TaskRun.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .executionId(executionId)
             .taskId("task")
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .build();
         MetricEntry metricEntry = MetricEntry.of(taskRun, Counter.of("counter", 1), null);
 

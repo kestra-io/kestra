@@ -32,6 +32,7 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
             @row-click="onRowClick"
+            :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -64,7 +65,7 @@
                 <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                     {{ $t("export") }}
                 </KsButton>
-                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="Delete">
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
@@ -203,14 +204,14 @@
                                     }
                                 }"
                             >
-                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" />
+                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" :dot="isMobile" />
                             </router-link>
                         </div>
                     </template>
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION) && canViewCharts"
                     prop="state"
                     :label="$t('execution statistics')"
                     className="row-graph"
@@ -267,7 +268,7 @@
 
             </template>
 
-            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')" fixed="right">
                 <template #default="scope">
                     <div class="flow-actions-cell">
                         <KsIconButton
@@ -290,7 +291,7 @@
             large
         >
             <template #header>
-                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ selectedFlow.id }}</code></template>
                 </i18n-t>
             </template>
@@ -310,6 +311,8 @@
 
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import {isPlainRowActivation} from "../../utils/rowNavigation"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
@@ -323,7 +326,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import Upload from "vue-material-design-icons/Upload.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
@@ -354,6 +357,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
@@ -364,7 +368,6 @@
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
-    const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -399,6 +402,8 @@
     const toast = useToast()
 
     const flowFilter = useFlowFilter()
+
+    const isMobile = useIsMobile()
 
     const lastExecutionByFlowReady = ref(false)
     const latestExecutions = ref<ExecutionControllerLastExecutionResponse[]>([])
@@ -471,6 +476,17 @@
         initialVisibleColumns: [],
     })
 
+    const mobileColumns = computed(() => {
+        const shown = (prop: string) => displayColumns.value.includes(prop) ? prop : undefined
+        return {
+            leading: shown("state.current"),
+            title: "id",
+            meta: ["namespace"].filter(shown),
+            metaAside: shown("state.startDate"),
+            actions: "action",
+        }
+    })
+
     watch(extensionColumnsVisible, visible => {
         if (visible && flowStore.flows?.length) {
             loadExtensionData(flowStore.flows)
@@ -478,6 +494,7 @@
     })
 
     const user = computed(() => authStore.user)
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)
@@ -518,16 +535,10 @@
     }
 
     const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
-        if (column?.type === "selection") return
-
-        const click = event as MouseEvent
-        // a modifier-click is the browser's own open-in-a-new-tab gesture, which RouterLink deliberately
-        // lets through without preventDefault, so the current tab must stay where it is
-        if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey || click.button !== 0) return
-        if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
+        if (!isPlainRowActivation(column, event)) return
 
         router.push({
-            name: route.name?.toString().replace("/list", "/update"),
+            name: "flows/update",
             params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
         })
     }
@@ -700,13 +711,13 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .full-container {
     min-height: 0;
     display: flex;
     flex-direction: column;
 
-    > * {
+    & > * {
         flex: 1;
     }
 }

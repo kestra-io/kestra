@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
 
+import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -69,6 +70,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final RunContextLoggerFactory runContextLoggerFactory;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
+    private final SLAService slaService;
     private final MetricRegistry metricRegistry;
     private final Tracer tracer;
 
@@ -90,6 +92,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         RunContextLoggerFactory runContextLoggerFactory,
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
+        SLAService slaService,
         MetricRegistry metricRegistry,
         TracerFactory tracerFactory,
         Clock clock) {
@@ -110,6 +113,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
+        this.slaService = slaService;
         this.metricRegistry = metricRegistry;
         this.tracer = tracerFactory.getTracer(DefaultExecutor.class, "EXECUTOR");
     }
@@ -169,11 +173,16 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
+                                            var duration =  slaService.computeSLADuration(execution, monitoringSla);
+                                            if (duration.isEmpty()) {
+                                                continue;
+                                            }
                                             monitors.add(
                                                 SLAMonitor.builder()
                                                     .executionId(execution.getId())
                                                     .slaId(sla.getId())
-                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), duration.get()))
+                                                    .duration(duration.get())
                                                     .build()
                                             );
                                         }
@@ -445,6 +454,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
                         return null;
+                    } finally {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, execution.getState().getCurrent().name());
                     }
                 }
             )

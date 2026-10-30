@@ -67,11 +67,13 @@
             ) ?? []
 
         const otherWarnings = flowStore.flowValidation?.warnings ?? []
+        const ksEditorWarnings = flowStore.ksEditorWarnings ?? []
 
         const warnings = [
             ...outdatedWarning,
             ...deprecationWarnings,
             ...otherWarnings,
+            ...ksEditorWarnings,
         ]
 
         return warnings.length === 0 ? undefined : warnings
@@ -92,7 +94,7 @@
         cancelPendingRefresh = deferToIdle(refreshStats)
     }
 
-    onUnmounted(() => cancelPendingRefresh?.())
+    onUnmounted(() => { cancelPendingRefresh?.() })
 
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id] as const,
@@ -112,7 +114,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-editor-stats {
         display: flex;
         align-items: center;

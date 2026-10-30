@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "./inputs"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, hasMissingRequiredInputs} from "./inputs"
 import {inputsToFormData} from "./submitTask"
 import type {InputMetaData} from "../stores/executions"
 
@@ -39,6 +39,17 @@ describe("normalize for ION uses the structured-data editor contract", () => {
 
     it("preserves Ion text", () => {
         expect(normalize("ION", "{name:\"Ada\"}")).toBe("{name:\"Ada\"}")
+    })
+})
+
+// The multipart serializer appends each array element as its own part, so the backend only saw `{...}`.
+describe("normalize for TABLE sends the rows as one JSON array", () => {
+    it("serializes row arrays", () => {
+        expect(normalize("TABLE", [{name: "Ada"}, {name: "Bob"}])).toBe("[{\"name\":\"Ada\"},{\"name\":\"Bob\"}]")
+    })
+
+    it("preserves an already serialized value", () => {
+        expect(normalize("TABLE", "[{\"name\":\"Ada\"}]")).toBe("[{\"name\":\"Ada\"}]")
     })
 })
 
@@ -133,6 +144,15 @@ describe("unflattenToForms", () => {
             },
             {id: "api_key", type: "SECRET", displayName: "API Key"},
         ])
+    })
+
+    it("carries descriptionDisplayMode from formGroups onto the FORM node", () => {
+        const tree = unflattenToForms(
+            [{id: "environment.region", type: "STRING"}],
+            {environment: {displayName: "Environment", description: "Pick env", descriptionDisplayMode: "TOOLTIP"}},
+        )
+        expect(tree[0].descriptionDisplayMode).toBe("TOOLTIP")
+        expect(buildWizardSteps(tree).find(s => s.kind === "form")?.descriptionDisplayMode).toBe("TOOLTIP")
     })
 
     it("round-trips with flattenInputs (the inverse invariant)", () => {
@@ -286,5 +306,26 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
 
         expect(formData?.get("environment.region")).toBe("EU")
         expect(formData?.get("environment.data_center")).toBeNull()
+    })
+})
+
+// https://github.com/kestra-io/kestra/issues/21483: the backfill button stayed disabled whenever an optional input had a value
+describe("hasMissingRequiredInputs", () => {
+    const flowInputs = [{id: "region"}, {id: "batchSize", required: false}]
+
+    it("ignores optional inputs, filled or not", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU", batchSize: 100})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU"})).toBe(false)
+    })
+
+    it("reports a required input without a value", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {batchSize: 100})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: null, batchSize: 100})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, null)).toBe(true)
+    })
+
+    it("needs nothing when the flow has no required input", () => {
+        expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
+        expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
     })
 })

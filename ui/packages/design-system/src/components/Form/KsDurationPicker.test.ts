@@ -178,6 +178,47 @@ describe("KsDurationPicker", () => {
         expect(emitted![emitted!.length - 1][0]).toBe("PT10M")
     })
 
+    test.each([
+        ["PT1.5S", "1.5"],
+        ["PT1M30.5S", "30.5"],
+    ])("keeps fractional seconds from a %s value on mount", async (value, seconds) => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: value},
+        })
+        await wrapper.vm.$nextTick()
+
+        const secondsInput = wrapper.findAll(".ks-duration-picker__field input")[3]
+        expect((secondsInput.element as HTMLInputElement).value).toBe(seconds)
+        expect((wrapper.find(".ks-duration-picker__custom input").element as HTMLInputElement).value).toBe(value)
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe(value)
+    })
+
+    test("accepts typed fractional seconds", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        await customInputEl.setValue("PT0.5S")
+        await customInputEl.trigger("input")
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).not.toContain("Invalid ISO 8601 duration")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT0.5S")
+    })
+
+    test("keeps a value it cannot represent on mount instead of clearing it", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "P1Y"},
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+        expect((wrapper.find(".ks-duration-picker__custom input").element as HTMLInputElement).value).toBe("P1Y")
+        expect(wrapper.text()).toContain("Invalid ISO 8601 duration: P1Y")
+    })
+
     test("empty modelValue results in null emit", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: ""},

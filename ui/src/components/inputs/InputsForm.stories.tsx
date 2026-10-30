@@ -96,15 +96,15 @@ export const InputTypes: Story = {
         const input = await waitFor(() => within(can.getByTestId("input-form-resource_type")).getByRole("combobox"), {timeout: 4000, interval: 500});
 
         await userEvent.click(input);
-        await userEvent.click(popups.getByText("Second value"));
+        await userEvent.click(await popups.findByText("Second value"));
 
         await waitFor(function testSelect() {
             expect(can.getByTestId("test-content").textContent).toContain("Second value");
         });
 
         await userEvent.click(within(can.getByTestId("input-form-resource_type_multi")).getByRole("combobox"));
-        await userEvent.click(popups.getByText("Fifth value"));
-        await userEvent.click(popups.getByText("Seventh value"));
+        await userEvent.click(await popups.findByText("Fifth value"));
+        await userEvent.click(await popups.findByText("Seventh value"));
 
         await userEvent.keyboard("{esc}");
 
@@ -223,6 +223,10 @@ export const Wizard: Story = {
         expect(can.getByTestId("wizard-back")).toBeTruthy();
         // The active FORM's displayName shows as a header above its fields.
         expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
+        // A TOOLTIP description moves from the header text block into a hoverable icon next to the title.
+        expect(canvasElement.querySelector(".wizard-step-header .text-description")).toBeNull();
+        await userEvent.hover(within(canvasElement.querySelector(".wizard-step-title") as HTMLElement).getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(within(window.document.body).getByText("Where the workload runs")).toBeTruthy());
 
         // Bar tracks progress: step 0 passed (filled), step 1 ("Environment") now active.
         const segs = can.getByTestId("wizard-progress").querySelectorAll(".ks-stepbar__seg");
@@ -255,6 +259,8 @@ export const Wizard: Story = {
                 id: "environment",
                 type: "FORM",
                 displayName: "Environment",
+                description: "Where the workload runs",
+                descriptionDisplayMode: "TOOLTIP",
                 inputs: [{id: "region", type: "STRING", required: false, displayName: "Region"}],
             },
             {id: "team", type: "STRING", required: false, displayName: "Team"},
@@ -268,7 +274,7 @@ export const Wizard: Story = {
 // from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
 // validate callback is DEFERRED into a queue the play function releases manually, so we can observe
 // the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
-const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
+const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>}) => {
     const initial = unflattenToForms(props.inputs, props.formGroups)
 
     const queue: (() => void)[] = []
@@ -318,6 +324,12 @@ export const AppsWizard: Story = {
         expect(window.__appsWizardPending()).toBe(0);
         expect(can.getByTestId("wizard-next")).not.toHaveTextContent("Loading");
 
+        // The group's TOOLTIP mode survives the formGroups round-trip: the step header shows a help icon, not a text block.
+        expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
+        expect(canvasElement.querySelector(".wizard-step-header .text-description")).toBeNull();
+        await userEvent.hover(within(canvasElement.querySelector(".wizard-step-title") as HTMLElement).getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(within(window.document.body).getByText("Where the workload runs")).toBeTruthy());
+
         // CHANGE: editing an input makes a validate necessary. goNext fires it and AWAITS the
         // promisified emit; held open past the 500ms threshold, the Next button shows the loading
         // label and the step does NOT advance until the round-trip is released.
@@ -346,7 +358,7 @@ export const AppsWizard: Story = {
                 {id: "name", type: "STRING", required: false, displayName: "Name"},
                 {id: "environment.region", type: "STRING", required: false, displayName: "Region"},
             ]}
-            formGroups={{environment: {displayName: "Environment"}}}
+            formGroups={{environment: {displayName: "Environment", description: "Where the workload runs", descriptionDisplayMode: "TOOLTIP"}}}
         />;
     }
 };
@@ -375,6 +387,42 @@ export const InputSelect: Story = {
                 allowCustomValue: false
             },
            ]}
+        />;
+    }
+};
+
+export const DescriptionDisplayMode: Story = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+        const popups = within(window.document.body);
+
+        const textDescription = await can.findByTestId("input-description-as_text");
+        expect(textDescription).toHaveTextContent("Shown as a text block");
+        expect(can.queryByTestId("input-description-as_tooltip")).toBeNull();
+
+        const field = can.getByTestId("input-form-as_text");
+        expect(textDescription.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        await userEvent.hover(can.getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(popups.getByTestId("input-description-as_tooltip")).toHaveTextContent("Shown in a tooltip"));
+    },
+    render() {
+        return <Sut inputs={[
+            {
+                id: "as_text",
+                type: "STRING",
+                displayName: "Text description",
+                description: "Shown as a text block",
+                descriptionDisplayMode: "TEXT"
+            },
+            {
+                id: "as_tooltip",
+                type: "STRING",
+                displayName: "Tooltip description",
+                description: "Shown in a tooltip",
+                descriptionDisplayMode: "TOOLTIP"
+            },
+        ]}
         />;
     }
 };

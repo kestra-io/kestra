@@ -236,6 +236,14 @@ function setupLogsStore() {
         return counts
     }
 
+    function bulkDeleteLogs(ids: string[]) {
+        return LogsAPI.deleteLogsByIds({body: ids})
+    }
+
+    function queryDeleteLogs(filters: Record<string, unknown>) {
+        return LogsAPI.deleteLogsByQuery({filters: routeQueryToQueryFilters(filters)})
+    }
+
     return {
         logs,
         total,
@@ -248,6 +256,8 @@ function setupLogsStore() {
         loadNextPage,
         loadPreviousPage,
         deleteLogs,
+        bulkDeleteLogs,
+        queryDeleteLogs,
         downloadLogs,
         levelCounts,
     }

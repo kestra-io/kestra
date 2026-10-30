@@ -1489,6 +1489,10 @@ export type Label = {
 export type Level = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'TRACE';
 
 export type LogEntry = {
+    /**
+     * Row key, set on read; the input of DELETE /logs/by-ids.
+     */
+    readonly id?: string | null;
     namespace: string;
     flowId: string;
     taskId?: string | null;
@@ -2761,6 +2765,25 @@ export type ApiTaskRunWritable = {
     forceExecution?: boolean;
 };
 
+/**
+ * Paged response for stores that may not know their exact row count (e.g. an external log store): `total` is only present when the backing store can compute it. Kept as a separate type from PagedResults rather than a shared `total` field: only this path can legitimately omit `total`, so the OpenAPI schema (and generated SDK types) can still mark `total` as required on every other, always-countable, endpoint. When `total` is absent, pagination falls back to an opaque cursor (`type`/`nextCursor`) since there is no page count to offset from.
+ */
+export type CursorOrOffsetPagedResultsLogEntryWritable = {
+    results: Array<LogEntryWritable>;
+    /**
+     * Exact total row count --- present when the store can compute it (offset mode), omitted when it can't (cursor mode).
+     */
+    total?: number;
+    /**
+     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`).
+     */
+    type: PaginationType;
+    /**
+     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
+     */
+    nextCursor?: string;
+};
+
 export type EventExecutionStatusEventWritable = {
     data: ExecutionStatusEventWritable;
     id?: string | null;
@@ -2809,6 +2832,22 @@ export type ExecutionStatusEventWritable = {
     namespace: string;
     flowId: string;
     state: StateWritable;
+};
+
+export type LogEntryWritable = {
+    namespace: string;
+    flowId: string;
+    taskId?: string | null;
+    executionId?: string | null;
+    taskRunId?: string | null;
+    attemptNumber?: number | null;
+    triggerId?: string | null;
+    timestamp?: string;
+    level?: Level;
+    thread?: string;
+    message?: string;
+    executionKind?: ExecutionKind | null;
+    progress?: string | null;
 };
 
 export type LoopRunWritable = {
@@ -9932,6 +9971,88 @@ export type ListAllKeysResponses = {
 };
 
 export type ListAllKeysResponse = ListAllKeysResponses[keyof ListAllKeysResponses];
+
+export type DeleteLogsByIdsData = {
+    /**
+     * The ids of the logs to delete
+     */
+    body: Array<string>;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/logs/by-ids';
+};
+
+export type DeleteLogsByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsByIdsError = DeleteLogsByIdsErrors[keyof DeleteLogsByIdsErrors];
+
+export type DeleteLogsByIdsResponses = {
+    /**
+     * deleteLogsByIds 200 response
+     */
+    200: BulkResponse;
+};
+
+export type DeleteLogsByIdsResponse = DeleteLogsByIdsResponses[keyof DeleteLogsByIdsResponses];
+
+export type DeleteLogsByQueryData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: {
+        /**
+         * Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`
+         */
+        filters?: Array<QueryFilter> | null;
+    };
+    url: '/api/v1/{tenant}/logs/by-query';
+};
+
+export type DeleteLogsByQueryErrors = {
+    /**
+     * At least one valid filter is required
+     */
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsByQueryError = DeleteLogsByQueryErrors[keyof DeleteLogsByQueryErrors];
+
+export type DeleteLogsByQueryResponses = {
+    /**
+     * On success; `count` is omitted when the log store cannot report the number of deleted logs
+     */
+    200: BulkResponse;
+};
+
+export type DeleteLogsByQueryResponse = DeleteLogsByQueryResponses[keyof DeleteLogsByQueryResponses];
 
 export type SearchLogsData = {
     body?: never;

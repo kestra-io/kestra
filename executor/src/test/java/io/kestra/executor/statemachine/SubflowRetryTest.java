@@ -77,8 +77,8 @@ class SubflowRetryTest {
         }
 
         // Then
-        assertThat(childTasks).hasSize(2);
-        assertThat(harness).hasExecutionInState(created, State.Type.FAILED);
+        assertThat(childTasks).as("the subflow ran once per allowed attempt, then the retries stopped").hasSize(2);
+        assertThat(harness).as("exhausted retries fail the parent instead of retrying forever").hasExecutionInState(created, State.Type.FAILED);
     }
 
     @Test
@@ -102,8 +102,8 @@ class SubflowRetryTest {
         harness.run(List.of(), recordingWorker(task -> Results.success(task, T0)));
 
         // Then
-        assertThat(childTasks).hasSize(1);
-        assertThat(harness).hasExecutionInState(created, State.Type.KILLED);
+        assertThat(childTasks).as("the kill stopped the retries: the subflow never ran again").hasSize(1);
+        assertThat(harness).as("a kill is final, even when the killed subflow's outputs cannot be rendered").hasExecutionInState(created, State.Type.KILLED);
     }
 
     private ScriptedWorker recordingWorker(ScriptedWorker worker) {

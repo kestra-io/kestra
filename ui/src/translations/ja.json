@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "エラーが検出されました。",
     "warning detected": "警告が検出されました。",
+    "schema warning": "行 {line}: {message}",
     "informative notice": "注記",
     "open": "開く",
     "admin": "管理者",
@@ -1320,6 +1321,7 @@
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
     "relative start date": "相対開始日",
+    "now": "現在",
     "absolute": "絶対",
     "backfill": "Backfill",
     "Set labels": "ラベルを設定",
@@ -2989,6 +2991,56 @@
     "iteration": "反復",
     "iteration_number": "反復 {number}",
     "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？",
-    "not started": "未開始"
+    "not started": "未開始",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}：{state}"
+      },
+      "breadcrumb": {
+        "all": "すべて",
+        "total": "{count} 件の実行 | {count} 件の実行",
+        "failed": "{count} 件失敗"
+      },
+      "toolbar": {
+        "panBack": "後方へ移動",
+        "panForward": "前方へ移動",
+        "zoomIn": "ズームイン",
+        "zoomOut": "ズームアウト",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "このページを開く",
+        "runsCount": "{count} 件の実行 | {count} 件の実行",
+        "failedCount": "{count} 件失敗"
+      },
+      "bucket": {
+        "hint": "集計済み: ズームインすると実行単位の詳細が表示されます",
+        "stateCount": "{state}：{count}"
+      },
+      "popover": {
+        "openExecution": "実行を開く",
+        "showOnlyFlow": "この flow のみ表示"
+      },
+      "empty": {
+        "description": "選択した期間とフィルターに一致する実行がありません。",
+        "resetFilters": "フィルターをリセット",
+        "widenRange": "7日間に広げる"
+      },
+      "error": {
+        "title": "タイムラインを読み込めませんでした",
+        "description": "この期間の実行の読み込み中にエラーが発生しました。"
+      },
+      "truncated": {
+        "description": "最新の{total}件中{shown}件の実行を表示しています。すべて表示するには期間またはフィルターを絞り込んでください。"
+      },
+      "scrubber": {
+        "label": "時間経過に伴うExecution密度。ドラッグして範囲を選択してください",
+        "ignoredFilters": "密度バーにはこれらのフィルターは適用されません：{filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "カウント",
+      "timeline": "タイムライン"
+    }
   }
 }

@@ -148,6 +148,9 @@ charts:
         state:
           field: STATE
           displayName: State
+      orderBy:
+        - column: start_date
+          order: DESC
 
   - id: next_executions
     type: io.kestra.plugin.core.dashboard.chart.Table
@@ -165,9 +168,12 @@ charts:
         flowId:
           field: FLOW_ID
           displayName: Flow
-        nextExec:
+        next_execution_date:
           field: NEXT_EXECUTION_DATE
           displayName: Next Execution Date
+      orderBy:
+        - column: next_execution_date
+          order: ASC
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

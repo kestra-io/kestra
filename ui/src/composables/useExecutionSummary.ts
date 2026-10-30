@@ -15,7 +15,7 @@ export function useExecutionSummary(execution: () => Execution) {
     })
 
     const matchesStatus = (type: "replay" | "replayed" | "restarted") =>
-        execution().labels?.some((label) => label.key === `system.${type}` && String(label.value) === "true") ?? false
+        execution().labels?.some((label) => label.key === `system.${type}` && label.value === "true") ?? false
 
     const replayed = computed(() => matchesStatus("replay") || matchesStatus("replayed"))
     const restarted = computed(() => matchesStatus("restarted"))

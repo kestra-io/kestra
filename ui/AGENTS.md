@@ -407,6 +407,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
 | `KsInputNumber` | Numeric input with increment / decrement |
+| `KsInputTag` | Single-line input that turns each entry into a removable tag: Enter adds the typed text, `delimiter` splits typed or pasted text into several tags, Backspace on an empty input removes the last one; `invalid` marks tags in the error tone with an icon, and `invalidLabel` adds a tooltip and text for screen readers, without rejecting them; `v-model` is a `string[]` |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |

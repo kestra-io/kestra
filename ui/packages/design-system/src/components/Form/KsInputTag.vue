@@ -5,13 +5,19 @@
         v-bind="({...filteredProps(), ...$attrs} as InputTagProps)"
     >
         <template #tag="{value}">
-            <span :class="{'ks-input-tag-invalid': invalid?.(value)}">{{ value }}</span>
+            <span v-if="invalid?.(value)" class="ks-input-tag-invalid" :title="invalidLabel">
+                <KsIcon><AlertBoxOutline /></KsIcon>
+                {{ value }}
+                <span v-if="invalidLabel" class="ks-input-tag-sr">({{ invalidLabel }})</span>
+            </span>
+            <span v-else>{{ value }}</span>
         </template>
     </ElInputTag>
 </template>
 
 <script setup lang="ts">
     import {ElInputTag, type InputTagProps} from "element-plus"
+    import AlertBoxOutline from "vue-material-design-icons/AlertBoxOutline.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -24,16 +30,19 @@
         delimiter?: string | RegExp
         disabled?: boolean
         size?: "large" | "default" | "small"
-        /** Marks the tags it returns `true` for with the error tone; it never rejects them. */
+        /** Marks the tags it returns `true` for with the error tone and an icon; it never rejects them. */
         invalid?: (value: string) => boolean
+        /** Says why a tag is marked, as a tooltip and as text for screen readers, so the state is not carried by color alone. */
+        invalidLabel?: string
     }>(), {
         placeholder: undefined,
         delimiter: undefined,
         size: undefined,
         invalid: undefined,
+        invalidLabel: undefined,
     })
 
-    const filteredProps = useFilteredProps(props, ["invalid"])
+    const filteredProps = useFilteredProps(props, ["invalid", "invalidLabel"])
 </script>
 
 <style lang="scss">
@@ -61,6 +70,21 @@
             --kel-tag-bg-color: var(--ks-bg-error);
             --kel-tag-text-color: var(--ks-text-error);
             --kel-tag-hover-color: var(--ks-text-error);
+        }
+
+        & .ks-input-tag-invalid {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--ks-spacing-1);
+        }
+
+        & .ks-input-tag-sr {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
     }
 </style>

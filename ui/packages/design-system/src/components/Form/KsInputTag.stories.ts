@@ -60,6 +60,7 @@ export const InvalidTags: Story = {
     args: {
         modelValue: ["grace@example.com", "not-an-email", "linus@example.com"],
         invalid: (value: string) => !value.includes("@"),
+        invalidLabel: "Not a valid email",
     },
 }
 

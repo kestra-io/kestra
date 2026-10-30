@@ -73,6 +73,19 @@ describe("KsInputTag", () => {
         expect(wrapper.findAll(".ks-input-tag-invalid").map(tag => tag.text())).toEqual(["nope"])
     })
 
+    test("pairs the error tone with an icon, a tooltip and text for screen readers", () => {
+        const wrapper = mount(KsInputTag, {
+            props: {modelValue: ["a@x.com", "nope"], invalid: (value: string) => !value.includes("@"), invalidLabel: "Not a valid email"},
+            global: globalConfig,
+        })
+        const invalid = wrapper.find(".ks-input-tag-invalid")
+
+        expect(invalid.find(".kel-icon").exists()).toBe(true)
+        expect(invalid.attributes("title")).toBe("Not a valid email")
+        expect(invalid.find(".ks-input-tag-sr").text()).toBe("(Not a valid email)")
+        expect(wrapper.findAll(".ks-input-tag-invalid .kel-icon").length).toBe(1)
+    })
+
     test("disabled applies is-disabled class", () => {
         const wrapper = mount(KsInputTag, {
             props: {modelValue: ["a@x.com"], disabled: true},

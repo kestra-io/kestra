@@ -121,6 +121,17 @@ class InternalKVStoreTest {
     }
 
     @Test
+    void get_expired_returns_empty() throws IOException, InterruptedException {
+        final InternalKVStore kv = kv();
+
+        kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
+        Thread.sleep(2);
+
+        assertThat(kv.get("expired-key")).isEmpty();
+        assertThat(kv.exists("expired-key")).isFalse();
+    }
+
+    @Test
     void should_delete_with_metadata() throws IOException {
         final InternalKVStore kv = kv();
 

@@ -1987,7 +1987,32 @@
       "filter_failed": "Nieudane {count}",
       "filter_success": "Udane {count}",
       "search_value": "Szukaj według dokładnego Value",
-      "range": "{from}–{to} z {total}"
+      "range": "{from}–{to} z {total}",
+      "tabs": {
+        "attempts": "Próby",
+        "configuration": "Konfiguracja",
+        "inputs_outputs": "Inputy i outputy",
+        "structure": "Struktura"
+      },
+      "no_error": "Dla tego Task Runa nie zarejestrowano komunikatu o błędzie.",
+      "no_attempts": "Dla tego Task Runa nie zarejestrowano żadnej próby.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "Nie znaleziono definicji tego taska w rewizji flow, na której działała ta egzekucja.",
+      "configuration_error": "Nie udało się rozwiązać konfiguracji tego taska. Spróbuj ponownie z Edytuj Flow.",
+      "execution_inputs": "Inputy egzekucji",
+      "no_inputs": "Ten flow nie deklaruje żadnych inputów.",
+      "inputs_error": "Nie udało się rozwiązać inputów egzekucji.",
+      "consumed_outputs": "Używane outputy",
+      "no_consumed_outputs": "Konfiguracja tego taska nie odwołuje się do outputów żadnego innego taska.",
+      "consumed_outputs_error": "Nie udało się wczytać outputów wskazanych tasków.",
+      "view_definition": "Pokaż definicję taska",
+      "hide_definition": "Ukryj definicję taska",
+      "relation": {
+        "focused": "Ten task",
+        "parent": "Task nadrzędny",
+        "sibling": "Task równorzędny",
+        "child": "Task podrzędny"
+      }
     },
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",

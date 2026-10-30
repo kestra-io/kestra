@@ -1987,7 +1987,32 @@
       "filter_failed": "Fehlgeschlagen {count}",
       "filter_success": "Erfolgreich {count}",
       "search_value": "Nach exaktem Value suchen",
-      "range": "{from}–{to} von {total}"
+      "range": "{from}–{to} von {total}",
+      "tabs": {
+        "attempts": "Versuche",
+        "configuration": "Konfiguration",
+        "inputs_outputs": "Inputs & Outputs",
+        "structure": "Struktur"
+      },
+      "no_error": "Für diesen Task-Run wurde keine Fehlermeldung aufgezeichnet.",
+      "no_attempts": "Für diesen Task-Run wurde kein Versuch aufgezeichnet.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "Die Definition dieses Tasks wurde in der Flow-Revision, mit der diese Execution lief, nicht gefunden.",
+      "configuration_error": "Die Konfiguration dieses Tasks konnte nicht aufgelöst werden. Versuche es erneut über „Flow bearbeiten“.",
+      "execution_inputs": "Inputs der Execution",
+      "no_inputs": "Dieser Flow deklariert keine Inputs.",
+      "inputs_error": "Die Inputs der Execution konnten nicht aufgelöst werden.",
+      "consumed_outputs": "Verwendete Outputs",
+      "no_consumed_outputs": "Die Konfiguration dieses Tasks verweist auf keine Outputs anderer Tasks.",
+      "consumed_outputs_error": "Die Outputs der referenzierten Tasks konnten nicht geladen werden.",
+      "view_definition": "Task-Definition anzeigen",
+      "hide_definition": "Task-Definition ausblenden",
+      "relation": {
+        "focused": "Dieser Task",
+        "parent": "Übergeordneter Task",
+        "sibling": "Gleichrangiger Task",
+        "child": "Untergeordneter Task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",

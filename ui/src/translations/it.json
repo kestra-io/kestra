@@ -1987,7 +1987,32 @@
       "filter_failed": "Fallite {count}",
       "filter_success": "Riuscite {count}",
       "search_value": "Cerca per value esatto",
-      "range": "{from}–{to} di {total}"
+      "range": "{from}–{to} di {total}",
+      "tabs": {
+        "attempts": "Tentativi",
+        "configuration": "Configurazione",
+        "inputs_outputs": "Input e output",
+        "structure": "Struttura"
+      },
+      "no_error": "Nessun messaggio di errore è stato registrato per questa esecuzione di Task.",
+      "no_attempts": "Nessun tentativo è stato registrato per questa esecuzione di Task.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "La definizione di questo task non è stata trovata nella revisione del flow con cui è stata eseguita questa esecuzione.",
+      "configuration_error": "Impossibile risolvere la configurazione di questo task. Riprova da Modifica flow.",
+      "execution_inputs": "Input dell'esecuzione",
+      "no_inputs": "Questo flow non dichiara alcun input.",
+      "inputs_error": "Impossibile risolvere gli input dell'esecuzione.",
+      "consumed_outputs": "Output utilizzati",
+      "no_consumed_outputs": "La configurazione di questo task non fa riferimento agli output di nessun altro task.",
+      "consumed_outputs_error": "Impossibile caricare gli output dei task referenziati.",
+      "view_definition": "Mostra la definizione del task",
+      "hide_definition": "Nascondi la definizione del task",
+      "relation": {
+        "focused": "Questo task",
+        "parent": "Task padre",
+        "sibling": "Task fratello",
+        "child": "Task figlio"
+      }
     },
     "loop_iterations_notice": {
       "logs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro log non vengono visualizzati qui.",

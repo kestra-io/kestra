@@ -1987,7 +1987,32 @@
       "filter_failed": "En échec {count}",
       "filter_success": "Réussies {count}",
       "search_value": "Rechercher par valeur exacte",
-      "range": "{from}–{to} sur {total}"
+      "range": "{from}–{to} sur {total}",
+      "tabs": {
+        "attempts": "Tentatives",
+        "configuration": "Configuration",
+        "inputs_outputs": "Inputs et outputs",
+        "structure": "Structure"
+      },
+      "no_error": "Aucun message d'erreur n'a été enregistré pour cette exécution de Task.",
+      "no_attempts": "Aucune tentative n'a été enregistrée pour cette exécution de Task.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "La définition de cette task est introuvable dans la révision du flow avec laquelle cette exécution a tourné.",
+      "configuration_error": "Impossible de résoudre la configuration de cette task. Réessayez depuis Modifier le flow.",
+      "execution_inputs": "Inputs de l'exécution",
+      "no_inputs": "Ce flow ne déclare aucun input.",
+      "inputs_error": "Impossible de résoudre les inputs de l'exécution.",
+      "consumed_outputs": "Outputs utilisés",
+      "no_consumed_outputs": "La configuration de cette task ne fait référence aux outputs d'aucune autre task.",
+      "consumed_outputs_error": "Impossible de charger les outputs des tasks référencées.",
+      "view_definition": "Afficher la définition de la task",
+      "hide_definition": "Masquer la définition de la task",
+      "relation": {
+        "focused": "Cette task",
+        "parent": "Task parente",
+        "sibling": "Task sœur",
+        "child": "Task enfant"
+      }
     },
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",

@@ -1,0 +1,75 @@
+<template>
+    <div v-if="loading" v-ks-loading="true" class="upstream-outputs__status" />
+    <KsAlert v-else-if="error" type="error" :closable="false">
+        {{ $t("gantt_panel.consumed_outputs_error") }}
+    </KsAlert>
+    <KsEmpty v-else-if="Object.keys(values).length === 0" :imageSize="80" :description="$t('gantt_panel.no_consumed_outputs')" />
+    <Vars v-else :data="values" />
+</template>
+
+<script setup lang="ts">
+    import {ref, watch} from "vue"
+    import {KsAlert, KsEmpty} from "@kestra-io/design-system"
+    import Vars from "../Vars.vue"
+    import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+    import type {ExecutionTaskRun} from "../executionTaskRun"
+
+    const props = defineProps<{
+        referencedTaskIds: string[]
+        taskRunList: ExecutionTaskRun[]
+        focusedTaskRun: ExecutionTaskRun
+        executionId: string
+    }>()
+
+    const loading = ref(false)
+    const error = ref(false)
+    const values = ref<Record<string, unknown>>({})
+
+    function runInFocusedContext(taskId: string): ExecutionTaskRun | undefined {
+        const candidates = props.taskRunList.filter((run) => run.taskId === taskId)
+        const focused = props.focusedTaskRun
+        return candidates.find((run) => focused.value !== undefined && run.value === focused.value)
+            ?? candidates.find((run) => run.parentTaskRunId === focused.parentTaskRunId)
+            ?? candidates[0]
+    }
+
+    let latestLoad = 0
+    async function load() {
+        const current = ++latestLoad
+        if (props.referencedTaskIds.length === 0) {
+            values.value = {}
+            loading.value = false
+            return
+        }
+
+        loading.value = true
+        error.value = false
+        try {
+            const merged: Record<string, unknown> = {}
+            for (const taskId of props.referencedTaskIds) {
+                const taskRun = runInFocusedContext(taskId)
+                if (!taskRun) continue
+
+                const outputs = await loadTaskRunOutputs(props.executionId, taskRun.id)
+                if (current !== latestLoad) return
+                for (const [key, value] of Object.entries(outputs)) {
+                    merged[`${taskId}.${key}`] = value
+                }
+            }
+            values.value = merged
+        } catch {
+            if (current === latestLoad) error.value = true
+        } finally {
+            if (current === latestLoad) loading.value = false
+        }
+    }
+
+    watch(() => [props.executionId, props.referencedTaskIds.join(",")], load, {immediate: true})
+</script>
+
+<style scoped>
+    .upstream-outputs__status {
+        position: relative;
+        min-height: 4rem;
+    }
+</style>

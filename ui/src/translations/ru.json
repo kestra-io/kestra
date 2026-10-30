@@ -1987,7 +1987,32 @@
       "filter_failed": "Неудачные {count}",
       "filter_success": "Успешные {count}",
       "search_value": "Поиск по точному значению",
-      "range": "{from}–{to} из {total}"
+      "range": "{from}–{to} из {total}",
+      "tabs": {
+        "attempts": "Попытки",
+        "configuration": "Конфигурация",
+        "inputs_outputs": "Input и output",
+        "structure": "Структура"
+      },
+      "no_error": "Для этого выполнения Task не записано сообщение об ошибке.",
+      "no_attempts": "Для этого выполнения Task не записано ни одной попытки.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "Определение этого task не найдено в ревизии flow, с которой шло это выполнение.",
+      "configuration_error": "Не удалось разрешить конфигурацию этого task. Попробуйте ещё раз через «Редактировать flow».",
+      "execution_inputs": "Input выполнения",
+      "no_inputs": "Этот flow не объявляет ни одного input.",
+      "inputs_error": "Не удалось разрешить input выполнения.",
+      "consumed_outputs": "Используемые output",
+      "no_consumed_outputs": "Конфигурация этого task не ссылается на output других task.",
+      "consumed_outputs_error": "Не удалось загрузить output указанных task.",
+      "view_definition": "Показать определение task",
+      "hide_definition": "Скрыть определение task",
+      "relation": {
+        "focused": "Этот task",
+        "parent": "Родительский task",
+        "sibling": "Соседний task",
+        "child": "Дочерний task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",

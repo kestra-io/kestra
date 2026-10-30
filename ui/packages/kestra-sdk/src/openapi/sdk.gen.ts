@@ -4079,12 +4079,16 @@ export const _066Ce9C38 = <ThrowOnError extends boolean = true>(parameters: {
  * Puts a key-value pair in store
  */
 export const _06C163B2c = <ThrowOnError extends boolean = true>(parameters: {
+    ttl?: string | null;
+    description?: string | null;
     namespace: string;
     key: string;
     tenant: string;
     body: string;
 }, options?: Options<never, ThrowOnError>): RequestResult<SetKeyValueResponses, SetKeyValueErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
+                { in: 'headers', key: 'ttl' },
+                { in: 'headers', key: 'description' },
                 { in: 'path', key: 'namespace' },
                 { in: 'path', key: 'key' },
                 { in: 'path', key: 'tenant' },

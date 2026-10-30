@@ -2241,7 +2241,7 @@ export type Sla = {
 
 export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 
-export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
+export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
 
@@ -11723,6 +11723,16 @@ export type SetKeyValueData = {
      * The value of the key
      */
     body: string;
+    headers?: {
+        /**
+         * The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)
+         */
+        ttl?: string | null;
+        /**
+         * The description of the key
+         */
+        description?: string | null;
+    };
     path: {
         /**
          * The namespace id

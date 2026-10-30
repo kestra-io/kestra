@@ -116,10 +116,11 @@ public class LocalPathFactory {
                 List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
                 if (pluginAllowedPaths.stream().map(LocalPathFactory::resolveAllowedPath).noneMatch(path::startsWith)) {
                     throw new SecurityException(
-                        "The path " + path + " is not authorized. " +
-                            "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `"
-                            + LocalPath.ALLOWED_PATHS_CONFIG + "` property, " +
-                            "or by plugin using the `allowed-paths` plugin configuration."
+                        ("The path %s is not authorized. " +
+                            "Only files inside the working directory are allowed by default. Other paths must be allowed globally using the `%s` property " +
+                            "or for the plugin using the `allowed-paths` plugin configuration. " +
+                            "See https://go.kestra.io/adjust-configuration for configuration instructions.")
+                            .formatted(path, LocalPath.ALLOWED_PATHS_CONFIG)
                     );
                 }
             }
@@ -141,8 +142,10 @@ public class LocalPathFactory {
             // we only allow globally allowed as we don't have a run context to get the working directory nor the plugin configuration
             if (globalAllowedPaths.stream().noneMatch(path::startsWith)) {
                 throw new SecurityException(
-                    "The path " + path + " is not authorized. " +
-                        "Path must be allowed either globally inside the Kestra configuration using the `" + LocalPath.ALLOWED_PATHS_CONFIG + "` property."
+                    ("The path %s is not authorized. " +
+                        "The path must be allowed globally using the `%s` property. " +
+                        "See https://go.kestra.io/adjust-configuration for configuration instructions.")
+                        .formatted(path, LocalPath.ALLOWED_PATHS_CONFIG)
                 );
             }
 

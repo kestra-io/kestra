@@ -132,6 +132,10 @@ export interface KestraHttpOptions {
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
 }
 
+type AsyncMethod = (...args: never[]) => Promise<unknown>
+type StreamMethod = (url: string, data?: unknown, config?: Record<string, unknown>) => Promise<unknown>
+type WithAuthRetryParams<Args extends unknown[], Return> = (...args: Args) => Promise<Return>;
+
 export function setupKestraHttp(
     clientConfig: Record<string, unknown> = {},
     options: KestraHttpOptions = {},
@@ -185,8 +189,8 @@ export function setupKestraHttp(
         return error
     }
 
-    function withAuthRetry<F extends (...args: any[]) => Promise<any>>(fn: F): F {
-        return (async (...args: Parameters<F>) => {
+    function withAuthRetry<Args extends unknown[], Return>(fn: WithAuthRetryParams<Args, Return>): WithAuthRetryParams<Args, Return> {
+        return async (...args: Args) => {
             const wasLoggedIn = isLoggedIn()
             try {
                 return await fn(...args)
@@ -202,7 +206,7 @@ export function setupKestraHttp(
                 }
                 throw error
             }
-        }) as F
+        }
     }
 
     const client = configureClient(clientConfig)
@@ -276,13 +280,13 @@ export function setupKestraHttp(
     })
 
     for (const target of [client, useClient()] as const) {
-        const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
+        const targetAny = target as unknown as Record<string, AsyncMethod>
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
             if (typeof targetAny[method] !== "function") continue
             let fn = targetAny[method].bind(target)
             // stream() reads an open body (SSE and similar). Opt it out of the page loader, same as generated `sse` methods.
             if (method === "stream") {
-                const inner = fn
+                const inner = fn as unknown as StreamMethod
                 fn = (url: string, data?: unknown, config: Record<string, unknown> = {}) =>
                     inner(url, data, {...config, [SKIP_PROGRESS]: true})
             }

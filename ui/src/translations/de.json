@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
     "warning detected": "Warnung(en) erkannt.",
+    "schema warning": "Zeile {line}: {message}",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "admin": "Admin",
@@ -1320,6 +1321,7 @@
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
     "relative start date": "Relatives Startdatum",
+    "now": "Jetzt",
     "absolute": "Absolut",
     "backfill": "Backfill",
     "Set labels": "Labels festlegen",
@@ -1948,12 +1950,45 @@
     "iterations": "Iterationen",
     "load_10_more": "10 weitere laden",
     "show_all_executions": "Alle Ausführungen anzeigen",
-    "failed_iterations_only": "Nur fehlgeschlagene Iterationen",
     "loop_iterations_shown": "{shown} von {total} angezeigt",
     "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
     "retry": "Versuche es erneut",
     "no_iterations": "Noch keine Iterationen",
     "no_failed_iterations": "Keine fehlgeschlagenen Iterationen",
+    "gantt_tree_label": "Execution-Timeline",
+    "gantt_row_expand": "{name} ausklappen",
+    "gantt_row_collapse": "{name} einklappen",
+    "gantt_failed_only": "Nur fehlgeschlagene",
+    "gantt_go_to_first_failure": "Zum ersten Fehler springen",
+    "gantt_loop_iterations_count": "{count} Iteration | {count} Iterationen",
+    "gantt_loop_failed_count": "{count} fehlgeschlagen",
+    "gantt_loop_show_failed": "Nur fehlgeschlagene Iterationen anzeigen",
+    "gantt_loop_show_all": "Alle Iterationen anzeigen",
+    "gantt_loop_show_all_iterations": "Alle {count} Iterationen anzeigen",
+    "gantt_loop_loading": "Iterationen werden geladen…",
+    "gantt_iteration_no_tasks": "Noch keine Task-Runs in dieser Iteration",
+    "gantt_iteration_no_failed_tasks": "Keine fehlgeschlagenen Task-Runs in dieser Iteration",
+    "gantt_panel": {
+      "label": "Task-Run-Details",
+      "lineage": "Position im Flow",
+      "previous_iteration": "Vorherige Iteration",
+      "next_iteration": "Nächste Iteration",
+      "open_iteration": "Iteration öffnen",
+      "iteration_position": "{position} von {total} in {loop}",
+      "first_failure": "Erster Fehler",
+      "go_to_failure": "Zum Fehler springen",
+      "task_runs": "Task-Runs",
+      "iteration": "Iteration",
+      "value": "Value",
+      "index": "Index",
+      "index_of": "#{index} von {total}",
+      "execution": "Execution",
+      "filter_all": "Alle {count}",
+      "filter_failed": "Fehlgeschlagen {count}",
+      "filter_success": "Erfolgreich {count}",
+      "search_value": "Nach exaktem Value suchen",
+      "range": "{from}–{to} von {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
       "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",
@@ -2989,6 +3024,56 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
-    "not started": "Nicht gestartet"
+    "not started": "Nicht gestartet",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen. Schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      },
+      "scrubber": {
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen",
+        "ignoredFilters": "Die Dichteleiste wendet diese Filter nicht an: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
+    }
   }
 }

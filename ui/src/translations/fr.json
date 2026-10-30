@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Erreur(s) détectée(s).",
     "warning detected": "Avertissement(s) détecté(s).",
+    "schema warning": "Ligne {line} : {message}",
     "informative notice": "Note(s)",
     "open": "Afficher",
     "admin": "Administrateur",
@@ -1320,6 +1321,7 @@
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
     "relative start date": "Date de début relative",
+    "now": "Maintenant",
     "absolute": "Absolu",
     "backfill": "Backfill",
     "Set labels": "Ajouter des labels",
@@ -1948,12 +1950,45 @@
     "iterations": "Itérations",
     "load_10_more": "Charger 10 de plus",
     "show_all_executions": "Afficher toutes les exécutions",
-    "failed_iterations_only": "Itérations échouées uniquement",
     "loop_iterations_shown": "{shown} sur {total} affichés",
     "loop_iterations_load_error": "Échec du chargement des itérations",
     "retry": "Réessayer",
     "no_iterations": "Pas encore d'itérations",
     "no_failed_iterations": "Aucune itération échouée",
+    "gantt_tree_label": "Chronologie de l'exécution",
+    "gantt_row_expand": "Développer {name}",
+    "gantt_row_collapse": "Réduire {name}",
+    "gantt_failed_only": "Échecs uniquement",
+    "gantt_go_to_first_failure": "Aller au premier échec",
+    "gantt_loop_iterations_count": "{count} itération | {count} itérations",
+    "gantt_loop_failed_count": "{count} en échec",
+    "gantt_loop_show_failed": "Afficher uniquement les itérations en échec",
+    "gantt_loop_show_all": "Afficher toutes les itérations",
+    "gantt_loop_show_all_iterations": "Afficher les {count} itérations",
+    "gantt_loop_loading": "Chargement des itérations…",
+    "gantt_iteration_no_tasks": "Aucune exécution de Task dans cette itération pour le moment",
+    "gantt_iteration_no_failed_tasks": "Aucune exécution de Task en échec dans cette itération",
+    "gantt_panel": {
+      "label": "Détails de l'exécution de la Task",
+      "lineage": "Emplacement dans le flow",
+      "previous_iteration": "Itération précédente",
+      "next_iteration": "Itération suivante",
+      "open_iteration": "Ouvrir l'itération",
+      "iteration_position": "{position} sur {total} dans {loop}",
+      "first_failure": "Premier échec",
+      "go_to_failure": "Aller à l'échec",
+      "task_runs": "Exécutions de Task",
+      "iteration": "Itération",
+      "value": "Valeur",
+      "index": "Index",
+      "index_of": "#{index} sur {total}",
+      "execution": "Exécution",
+      "filter_all": "Toutes {count}",
+      "filter_failed": "En échec {count}",
+      "filter_success": "Réussies {count}",
+      "search_value": "Rechercher par valeur exacte",
+      "range": "{from}–{to} sur {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
       "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
@@ -2989,6 +3024,56 @@
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
     "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
-    "not started": "Non démarré"
+    "not started": "Non démarré",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow} : {state}"
+      },
+      "breadcrumb": {
+        "all": "Tous",
+        "total": "{count} exécution | {count} exécutions",
+        "failed": "{count} en échec"
+      },
+      "toolbar": {
+        "panBack": "Reculer",
+        "panForward": "Avancer",
+        "zoomIn": "Zoomer",
+        "zoomOut": "Dézoomer",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Ouvrir cette page",
+        "runsCount": "{count} exécution | {count} exécutions",
+        "failedCount": "{count} en échec"
+      },
+      "bucket": {
+        "hint": "Agrégé : zoomez pour le détail au niveau de l'exécution",
+        "stateCount": "{state} : {count}"
+      },
+      "popover": {
+        "openExecution": "Ouvrir l'exécution",
+        "showOnlyFlow": "Afficher uniquement ce flow"
+      },
+      "empty": {
+        "description": "Aucune exécution dans la période et les filtres sélectionnés.",
+        "resetFilters": "Réinitialiser les filtres",
+        "widenRange": "Élargir à 7 jours"
+      },
+      "error": {
+        "title": "Impossible de charger la chronologie",
+        "description": "Une erreur s'est produite lors du chargement des exécutions pour cette période."
+      },
+      "truncated": {
+        "description": "Affichage des {shown} dernières exécutions sur {total}. Réduisez la période ou les filtres pour toutes les voir."
+      },
+      "scrubber": {
+        "label": "Densité d'Execution au fil du temps, faites glisser pour sélectionner une plage",
+        "ignoredFilters": "La barre de densité n'applique pas ces filtres : {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Décompte",
+      "timeline": "Chronologie"
+    }
   }
 }

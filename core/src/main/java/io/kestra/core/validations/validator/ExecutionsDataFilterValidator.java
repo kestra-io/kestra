@@ -3,6 +3,7 @@ package io.kestra.core.validations.validator;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.ExecutionsDataFilterValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
@@ -26,7 +27,7 @@ public class ExecutionsDataFilterValidator implements ConstraintValidator<Execut
 
         List<String> violations = new ArrayList<>();
 
-        executionsDataFilter.getColumns().forEach((key, value) ->
+        MapUtils.emptyOnNull(executionsDataFilter.getColumns()).forEach((key, value) ->
         {
             if (value.getField() == Executions.Fields.LABELS && value.getKey() == null) {
                 violations.add("Column `" + key + "` must have a `key`.");

@@ -1161,6 +1161,68 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    void shouldEvaluateChecksAgainOnRestartAndReplay() throws TimeoutException {
+        String tenantId = TENANT_ID;
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        String flowId = "restart-replay-checks";
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/%s/flows".formatted(tenantId), """
+                    id: %s
+                    namespace: io.kestra.tests.checks
+
+                    inputs:
+                      - id: size
+                        type: INT
+                        defaults: 200
+
+                    checks:
+                      - when: "{{ inputs.size <= 100 }}"
+                        message: The size can't be more than 100
+                        behavior: FAIL_EXECUTION
+
+                    tasks:
+                      - id: resize
+                        type: io.kestra.plugin.core.log.Log
+                        message: "Resizing to {{ inputs.size }}"
+                    """.formatted(flowId)
+            ).contentType(MediaType.APPLICATION_YAML_TYPE),
+            Flow.class
+        );
+
+        Execution failed = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/io.kestra.tests.checks/%s".formatted(tenantId, flowId), MultipartBody.builder().addPart("size", "200").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        Await.until(() -> executionRepositoryInterface.findById(tenantId, failed.getId()).map(e -> e.getState().isFailed()).orElse(false), Duration.ofMillis(100), Duration.ofSeconds(10));
+
+        HttpClientResponseException restart = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/%s/executions/%s/actions/restart".formatted(tenantId, failed.getId()), null), Execution.class)
+        );
+        assertEquals(HttpStatus.CONFLICT, restart.getStatus());
+        assertThat(restart.getMessage()).contains("The size can't be more than 100");
+
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay".formatted(tenantId, failed.getId()), null),
+            Execution.class
+        );
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertTrue(replay.getTaskRunList() == null || replay.getTaskRunList().isEmpty());
+
+        Execution replayWithValidInputs = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay-with-inputs".formatted(tenantId, failed.getId()), MultipartBody.builder().addPart("size", "50").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        Await.until(
+            () -> executionRepositoryInterface.findById(tenantId, replayWithValidInputs.getId()).map(e -> e.getState().isSuccess()).orElse(false),
+            Duration.ofMillis(100), Duration.ofSeconds(10)
+        );
+    }
+
+    @Test
     void shouldReturnNotFoundWhenReplayWithInputsCalledOnUnknownExecution() {
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("condition", "success")

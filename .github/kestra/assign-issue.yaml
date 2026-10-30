@@ -1,0 +1,230 @@
+id: assign-issue
+namespace: community.github
+
+description: |
+  Assigns an issue to the contributor who comments `/assign` on it, in any repository of the organization, and keeps the number of open issues per contributor in check.
+
+  The command must be alone on its line, outside a code block. The issue is assigned unless it is closed, already assigned to someone else (first come, first served: an assignee is never replaced), or the contributor already has `maxOpenIssues` open issues assigned across the public repositories of the organization. Maintainers, meaning anyone whose permission on that repository is in `maintainerPermissions`, are exempt from the limit. Every refusal and every assignment is answered with a comment, and a `/assign` from someone who is already the assignee is ignored.
+
+  Executions run one at a time, and everything that decides the outcome is read from GitHub inside that section rather than taken from the webhook payload, so a request that waited in the queue is decided on the state left by the one before it. The webhook key is its only authentication, so the commenter and the comment text are also re-read from GitHub by comment id.
+
+  Limits: requests for different repositories made within moments of each other can briefly exceed the limit, because the other repositories are counted with a search. A refusal is posted again if GitHub delivers the same comment twice (an assignment is not), and a comment whose response is lost is retried and may be posted twice.
+
+  ### Setup
+  1. Create the secrets `GITHUB_TOKEN` and `GITHUB_ASSIGN_WEBHOOK_KEY`. The token needs read and write on Issues in every repository of the organization, and its owner needs push access to them: GitHub requires that both to assign an issue and to read a user's permission.
+  2. Add an organization webhook (Organization settings, Webhooks) to `https://<kestra-host>/api/v1/<tenant>/executions/webhook/community.github/assign-issue/<GITHUB_ASSIGN_WEBHOOK_KEY>` with the content type `application/json`, subscribed to the `Issue comments` event only. It delivers the comments of every repository, and `repositoryPattern` decides which ones are handled.
+
+# Deciding is check-then-act, so executions must not interleave: QUEUE makes a later request wait instead of dropping it.
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+variables:
+  maxOpenIssues: 2
+  # Anyone with one of these permissions on the repository is a maintainer and is not limited.
+  maintainerPermissions: [admin, write]
+  # Repository names end up in request URLs: ".github" is a valid one, "." and ".." are not.
+  repositoryPattern: '^kestra-io/(?!\.{1,2}$)[A-Za-z0-9._-]+$'
+  # An example in a how-to comment must not assign its author, so fenced code is removed before looking for the command.
+  fencedCode: '(?ms)^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?(?:^ {0,3}\1[`~]*[ \t]*$|\z)'
+  # The command alone on its line and indented by at most 3 spaces (4 is a code block); the bot's own messages quote it inline, so they never match and cannot loop.
+  assignCommand: '(?im)^ {0,3}/assign[ \t]*$'
+
+triggers:
+  - id: github_issue_comment
+    type: io.kestra.plugin.core.trigger.Webhook
+    # The key is part of the URL and is the only authentication, so it is kept in a secret.
+    key: "{{ secret('GITHUB_ASSIGN_WEBHOOK_KEY') }}"
+    # Other comments never start an execution or wait in the queue; "?? ''" makes GitHub's ping a plain no-match.
+    when: >-
+      {{ ((trigger.body.action ?? '') == 'created')
+         and ((trigger.body.repository.full_name ?? '') | regexMatch(vars.repositoryPattern))
+         and ((trigger.body.issue.pull_request ?? null) == null)
+         and ((trigger.body.comment.user.type ?? '') == 'User')
+         and ((trigger.body.comment.body ?? '') | regexReplace(vars.fencedCode, '') | regexMatch(vars.assignCommand)) }}
+
+tasks:
+  # The only things taken from the payload, which cannot be trusted: everything else is read from GitHub.
+  - id: event
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      repository: "{{ trigger.body.repository.full_name }}"
+      organization: "{{ trigger.body.repository.full_name | substringBefore('/') }}"
+      issueNumber: "{{ trigger.body.issue.number }}"
+      commentId: "{{ trigger.body.comment.id }}"
+
+  # Who wrote the comment and what it says, according to GitHub.
+  - id: get_comment
+    type: io.kestra.plugin.core.http.Request
+    uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues/comments/{{ outputs.event.values.commentId }}"
+    headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+    timeout: PT30S
+    retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+  - id: commenter
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      login: "{{ outputs.get_comment.body | jq('.user.login') | first }}"
+      # Still a command by a person (it may have been edited), on the issue and in the repository the payload names.
+      isCommand: >-
+        {{ ((outputs.get_comment.body | jq('.user.type') | first) == 'User')
+           and (outputs.get_comment.body | jq('.body') | first | regexReplace(vars.fencedCode, '') | regexMatch(vars.assignCommand))
+           and (outputs.get_comment.body | jq('.issue_url') | first | endsWith('/repos/' ~ outputs.event.values.repository ~ '/issues/' ~ outputs.event.values.issueNumber)) }}
+
+  - id: process
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.commenter.values.isCommand }}"
+    then:
+      - id: get_issue
+        type: io.kestra.plugin.core.http.Request
+        uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues/{{ outputs.event.values.issueNumber }}"
+        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+        timeout: PT30S
+        retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      # This repository's issue list is not a search index, so an assignment made moments ago is counted;
+      # Search may not show it yet, so it only covers the other repositories.
+      - id: get_open_issues_here
+        type: io.kestra.plugin.core.http.Request
+        uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues?assignee={{ outputs.commenter.values.login }}&state=open&per_page=100"
+        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+        timeout: PT30S
+        retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      # Archived repositories are left out because nobody can close their issues, and private ones because their issue numbers must not appear in a public comment.
+      - id: get_open_issues_elsewhere
+        type: io.kestra.plugin.core.http.Request
+        uri: "https://api.github.com/search/issues?q=org:{{ outputs.event.values.organization }}+is:issue+is:open+is:public+archived:false+assignee:{{ outputs.commenter.values.login }}+-repo:{{ outputs.event.values.repository }}&per_page=100"
+        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+        timeout: PT30S
+        retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      # A search that timed out is flagged incomplete: counting from it could let someone past the limit, so fail instead.
+      - id: search_is_complete
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ outputs.get_open_issues_elsewhere.body | jq('.incomplete_results') | first }}"
+        errorMessage: "GitHub returned incomplete search results for {{ outputs.commenter.values.login }}, so the limit cannot be checked."
+
+      # Permission identifies maintainers; a comment's association cannot, as GitHub only reports MEMBER for public members.
+      - id: get_permission
+        type: io.kestra.plugin.core.http.Request
+        uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/collaborators/{{ outputs.commenter.values.login }}/permission"
+        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+        timeout: PT30S
+        retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      # Outputs are stored as text, hence the comparisons with 'true' further down.
+      - id: facts
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          isMaintainer: "{{ vars.maintainerPermissions contains (outputs.get_permission.body | jq('.permission') | first) }}"
+          # Pull requests share the comment API with issues but are not assigned here.
+          isPullRequest: "{{ outputs.get_issue.body | jq('.pull_request != null') | first }}"
+          state: "{{ outputs.get_issue.body | jq('.state') | first }}"
+          assignedToYou: "{{ (outputs.get_issue.body | jq('[.assignees[].login]') | first) contains outputs.commenter.values.login }}"
+          assignees: >-
+            {{ outputs.get_issue.body | jq('[.assignees[].login] | join(", ")') | first }}
+          # A repository's issue list also returns its pull requests, which do not count.
+          openCount: >-
+            {{ (outputs.get_open_issues_here.body | jq('[.[] | select(.pull_request == null)] | length') | first)
+               + (outputs.get_open_issues_elsewhere.body | jq('.total_count') | first) }}
+          openHere: >-
+            {{ outputs.get_open_issues_here.body | jq('[.[] | select(.pull_request == null) | "#" + (.number | tostring)] | join(", ")') | first }}
+          openElsewhere: >-
+            {{ outputs.get_open_issues_elsewhere.body | jq('[.items[] | (.repository_url | split("/") | .[-2:] | join("/")) + "#" + (.number | tostring)] | join(", ")') | first }}
+
+      # The first matching rule wins; a pull request or an existing assignee is ignored without a word.
+      - id: decide
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          outcome: >-
+            {%- if outputs.facts.values.isPullRequest == 'true' -%}PULL_REQUEST
+            {%- elseif outputs.facts.values.assignedToYou == 'true' -%}ALREADY_ASSIGNED_TO_YOU
+            {%- elseif outputs.facts.values.state != 'open' -%}CLOSED
+            {%- elseif outputs.facts.values.assignees != '' -%}TAKEN
+            {%- elseif outputs.facts.values.isMaintainer != 'true' and (outputs.facts.values.openCount | number) >= vars.maxOpenIssues -%}LIMIT
+            {%- else -%}ASSIGN
+            {%- endif -%}
+
+      # Lets a silent outcome be explained afterwards.
+      - id: audit
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ outputs.commenter.values.login }} commented /assign on {{ outputs.event.values.repository }}#{{ outputs.event.values.issueNumber }}: {{ outputs.decide.values.outcome }}"
+
+      - id: refuse
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ ['CLOSED', 'TAKEN', 'LIMIT'] contains outputs.decide.values.outcome }}"
+        then:
+          - id: refusal
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              message: >-
+                {%- if outputs.decide.values.outcome == 'CLOSED' -%}
+                @{{ outputs.commenter.values.login }} this issue is closed, so it cannot be assigned.
+                {%- elseif outputs.decide.values.outcome == 'TAKEN' -%}
+                @{{ outputs.commenter.values.login }} this issue is already assigned to {{ outputs.facts.values.assignees }}, so it cannot be assigned to you. Please pick another one.
+                {%- else -%}
+                @{{ outputs.commenter.values.login }} you already have {{ outputs.facts.values.openCount }} open issues assigned in the {{ outputs.event.values.organization }} organization ({{ outputs.facts.values.openHere }}{% if outputs.facts.values.openHere != '' and outputs.facts.values.openElsewhere != '' %}, {% endif %}{{ outputs.facts.values.openElsewhere }}), and the limit is {{ vars.maxOpenIssues }}. Once one of them is closed or released, comment `/assign` again.
+                {%- endif -%}
+
+          - id: refusal_comment
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues/{{ outputs.event.values.issueNumber }}/comments"
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            contentType: application/json
+            body: "{{ {'body': outputs.refusal.values.message} }}"
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+      - id: assign
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs.decide.values.outcome == 'ASSIGN' }}"
+        then:
+          - id: add_assignee
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues/{{ outputs.event.values.issueNumber }}/assignees"
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            contentType: application/json
+            body: "{{ {'assignees': [outputs.commenter.values.login]} }}"
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+          # GitHub answers 201 even when it silently drops an assignee, so check before telling the contributor.
+          - id: applied
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              value: "{{ (outputs.add_assignee.body | jq('[.assignees[].login]') | first) contains outputs.commenter.values.login }}"
+
+          - id: assignment
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              message: >-
+                {%- if outputs.applied.values.value == 'true' -%}
+                @{{ outputs.commenter.values.login }} this issue is now assigned to you.
+                {%- if outputs.facts.values.isMaintainer != 'true' %} You have {{ (outputs.facts.values.openCount | number) + 1 }} of {{ vars.maxOpenIssues }} open issues assigned in the {{ outputs.event.values.organization }} organization.{% endif %}
+                When you open a pull request, link this issue in its description, for example `Closes https://github.com/{{ outputs.event.values.repository }}/issues/{{ outputs.event.values.issueNumber }}`. If you cannot work on it anymore, please say so here so that someone else can pick it up.
+                {%- else -%}
+                @{{ outputs.commenter.values.login }} GitHub did not accept the assignment of this issue to you. A maintainer will take a look.
+                {%- endif -%}
+
+          - id: assignment_comment
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues/{{ outputs.event.values.issueNumber }}/comments"
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            contentType: application/json
+            body: "{{ {'body': outputs.assignment.values.message} }}"
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+          # Fails after the comment so that the contributor is answered and the failure is still visible in Kestra.
+          - id: assignment_not_applied
+            type: io.kestra.plugin.core.execution.Fail
+            condition: "{{ outputs.applied.values.value != 'true' }}"
+            errorMessage: "GitHub accepted the request to assign {{ outputs.event.values.repository }}#{{ outputs.event.values.issueNumber }} to {{ outputs.commenter.values.login }} but did not apply it."
+    else:
+      - id: ignored
+        type: io.kestra.plugin.core.log.Log
+        message: "Ignoring comment {{ outputs.event.values.commentId }} on {{ outputs.event.values.repository }}#{{ outputs.event.values.issueNumber }}: GitHub no longer shows a valid /assign command."

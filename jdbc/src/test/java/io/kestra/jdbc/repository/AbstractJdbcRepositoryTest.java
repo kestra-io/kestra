@@ -54,7 +54,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).eq(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.NOT_EQUALS, null)).isEqualTo(
-                DSL.field(columnName).ne(assertValue)
+                DSL.field(columnName).ne(assertValue).or(DSL.field(columnName).isNull())
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.GREATER_THAN, null)).isEqualTo(
                 DSL.field(columnName).greaterThan(assertValue)
@@ -66,7 +66,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).in(List.of(assertValue))
             );
             assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN, null)).isEqualTo(
-                DSL.field(columnName).notIn(List.of(assertValue))
+                DSL.field(columnName).notIn(List.of(assertValue)).or(DSL.field(columnName).isNull())
             );
             Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(

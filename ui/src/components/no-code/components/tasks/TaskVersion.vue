@@ -1,10 +1,11 @@
 <template>
-    <InputText
-        :modelValue="modelValue"
-        :disabled
-        :placeholder="disabled ? $t('no_code.version_oss_placeholder') : undefined"
-        class="task-version-input"
-    />
+    <div class="task-version">
+        <InputText
+            :modelValue="modelValue"
+            :disabled
+            :placeholder="disabled ? $t('no_code.version_oss_placeholder') : undefined"
+        />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -23,8 +24,9 @@
         inheritAttrs: false,
     })
 </script>
+
 <style scoped lang="scss">
-.task-version-input {
+.task-version {
     width: 100%;
 }
 </style>

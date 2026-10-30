@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
     "warning detected": "Warnung(en) erkannt.",
+    "schema warning": "Zeile {line}: {message}",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "admin": "Admin",

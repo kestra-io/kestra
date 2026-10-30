@@ -646,6 +646,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-outputs.yaml")
+    protected void loopNestedOutputs(Execution execution) throws Exception {
+        loopCaseTest.loopNestedOutputs(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-outputs-failed-render.yaml")
     protected void loopOutputsFailedRender(Execution execution) {
         loopCaseTest.loopOutputsFailedRender(execution);

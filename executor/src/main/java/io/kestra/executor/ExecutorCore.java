@@ -26,6 +26,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
+import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
@@ -54,6 +55,7 @@ import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.executor.handler.ExecutionCommandMessageHandler;
@@ -94,6 +96,7 @@ public class ExecutorCore {
     private final ExecutionDelayProcessor executionDelayProcessor;
     private final SLAMonitorProcessor slaMonitorProcessor;
     private final RunContextFactory runContextFactory;
+    private final TaskOutputService taskOutputService;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final DispatchQueueInterface<Execution> executionQueue;
@@ -129,6 +132,7 @@ public class ExecutorCore {
         ExecutionDelayProcessor executionDelayProcessor,
         SLAMonitorProcessor slaMonitorProcessor,
         RunContextFactory runContextFactory,
+        TaskOutputService taskOutputService,
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
         MetricRegistry metricRegistry,
@@ -161,6 +165,7 @@ public class ExecutorCore {
         this.executionDelayProcessor = executionDelayProcessor;
         this.slaMonitorProcessor = slaMonitorProcessor;
         this.runContextFactory = runContextFactory;
+        this.taskOutputService = taskOutputService;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
         this.executionQueue = executionQueue;
@@ -362,7 +367,7 @@ public class ExecutorCore {
                     if (!ListUtils.isEmpty(loop.getOutputs())) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                         try {
-                            outputs = loop.computeIterationOutput(runContext, execution);
+                            outputs = loop.computeIterationOutput(runContext, execution, isLoopOverUri(executor.getExecution().getLoopRun()));
                         } catch (Exception e) {
                             Logs.logExecution(
                                 executor.getExecution(),
@@ -471,6 +476,14 @@ public class ExecutorCore {
                 log.error("Failed to release the lease of task run '{}' of execution '{}'.", taskRun.getId(), taskRun.getExecutionId(), e);
             }
         }
+    }
+
+    /**
+     * Reads what the loop recorded when it started rather than rendering its values again: in an iteration, {@code item} is the iteration's own item.
+     */
+    private boolean isLoopOverUri(LoopRun loopRun) throws InternalException {
+        TaskRun loopTaskRun = loopRun.parent().findTaskRunByTaskRunId(loopRun.taskRunId());
+        return taskOutputService.getOutputs(loopTaskRun).containsKey(Loop.NEXT_OFFSET_OUTPUT);
     }
 
     /**

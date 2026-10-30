@@ -2,13 +2,13 @@ import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
 
 interface TriggerSearchOptions {
     sort?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface TriggerFindOptions {
     namespace: string;
     flowId: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface TriggerDeleteOptions {
@@ -18,9 +18,14 @@ export interface TriggerDeleteOptions {
     triggerId: string;
 }
 
+export interface TriggerExportOptions {
+    filters?: unknown;
+    [key: string]: unknown;
+}
+
 export async function searchTriggers(options: TriggerSearchOptions) {
     const {sort, ...rest} = options
-    return TriggersAPI.searchTriggers({...rest, sort: sort ? [sort] : undefined})
+    return TriggersAPI.searchTriggers({...rest, sort: sort ? [sort] : undefined} as Parameters<typeof TriggersAPI.searchTriggers>[0])
 }
 
 export async function searchTriggersForFlow(options: TriggerFindOptions) {
@@ -28,9 +33,9 @@ export async function searchTriggersForFlow(options: TriggerFindOptions) {
     return TriggersAPI.searchTriggersForFlow({...rest, sort: sort ? [sort] : undefined} as Parameters<typeof TriggersAPI.searchTriggersForFlow>[0])
 }
 
-export async function exportTriggersAsCSV(options: any) {
+export async function exportTriggersAsCSV(options: TriggerExportOptions) {
     const response: unknown = await TriggersAPI.exportTriggers({
-        filters: options.filters,
+        filters: options.filters as NonNullable<Parameters<typeof TriggersAPI.exportTriggers>[0]>["filters"],
     }, {
         headers: {Accept: "text/csv"},
     })

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
 import io.kestra.core.models.SourceMatch;
@@ -158,6 +160,35 @@ class SourceSearchMatcherTest {
         assertThat(triggersOnly).hasSize(1);
         assertThat(triggersOnly.getFirst().snippet()).contains("cron: [mark]marker[/mark]-trigger");
         assertThat(inputsOnly).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 499, 500, 501 })
+    void shouldFindTaskMatchesWhenOutOfScopeMatchesReachTheLimit(int descriptionMatches) {
+        String source = "id: scoped-search\nnamespace: company.team\ndescription: "
+            + "needle ".repeat(descriptionMatches)
+            + "\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: needle\n"
+            + "triggers:\n  - id: needle\n";
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(source, "needle", false, false, false, SourceSearchScope.TASKS);
+
+        assertThat(matches).containsExactly(new SourceMatch(7, 13, "    message: [mark]needle[/mark]"));
+    }
+
+    @Test
+    void shouldLimitScopedZeroWidthMatchesWhenOutOfScopeMatchesReachTheLimit() {
+        String source = "description: " + "needle ".repeat(500)
+            + "\ntasks:\n  - id: log\n    message: " + "needle ".repeat(501)
+            + "\ntriggers:\n  - id: needle\n";
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(source, "(?=needle)", false, false, true, SourceSearchScope.TASKS);
+
+        assertThat(matches).hasSize(500);
+        assertThat(matches.getFirst().line()).isEqualTo(4);
+        assertThat(matches.getFirst().column()).isEqualTo(13);
+        assertThat(matches.getLast().line()).isEqualTo(4);
+        assertThat(matches.getLast().column()).isEqualTo(13 + "needle ".length() * 499);
+        assertThat(SourceSearchMatcher.findMatches(source, "needle", false, false, false)).hasSize(500);
     }
 
     @Test

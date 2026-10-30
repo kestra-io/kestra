@@ -11,8 +11,9 @@ import org.jooq.impl.DSL;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 
-public class AbstractJdbcConcurrencyLimitRepository extends AbstractJdbcRepository implements ConcurrencyLimitRepositoryInterface {
+public class AbstractJdbcConcurrencyLimitRepository extends AbstractJdbcRepository implements ConcurrencyLimitDataStore, ConcurrencyLimitRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<ConcurrencyLimit> jdbcRepository;
 
     public AbstractJdbcConcurrencyLimitRepository(io.kestra.jdbc.AbstractJdbcRepository<ConcurrencyLimit> jdbcRepository) {

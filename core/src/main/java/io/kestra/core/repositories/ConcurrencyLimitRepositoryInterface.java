@@ -9,18 +9,6 @@ import jakarta.validation.constraints.NotNull;
 
 public interface ConcurrencyLimitRepositoryInterface {
     /**
-     * Update a concurrency limit
-     * WARNING: this is inherently unsafe and must only be used for administration
-     */
-    ConcurrencyLimit update(ConcurrencyLimit concurrencyLimit);
-
-    /**
-     * Delete a concurrency limit.
-     * WARNING: this is inherently unsafe and must only be used for administration
-     */
-    ConcurrencyLimit delete(ConcurrencyLimit concurrencyLimit);
-
-    /**
      * Returns all concurrency limits from the database for a given tenant
      */
     List<ConcurrencyLimit> find(String tenantId);

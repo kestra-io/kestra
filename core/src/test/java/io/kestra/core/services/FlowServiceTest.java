@@ -29,6 +29,7 @@ import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -70,6 +71,9 @@ class FlowServiceTest {
     private TriggerEventQueue triggerEventQueue;
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
+    @Inject
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
 
@@ -1243,7 +1247,7 @@ class FlowServiceTest {
         ConcurrencyLimit running = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())
             .orElseThrow()
             .withRunning(3);
-        concurrencyLimitRepository.update(running);
+        concurrencyLimitDataStore.update(running);
 
         // When the flow is updated but keeps a (non-null) concurrency limit
         Flow updated = flow.toBuilder()
@@ -1271,7 +1275,7 @@ class FlowServiceTest {
             .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
             .build();
         FlowWithSource created = flowService.create(GenericFlow.of(flow));
-        concurrencyLimitRepository.update(new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 1));
+        concurrencyLimitDataStore.update(new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 1));
 
         // When the flow is updated, still without a concurrency block
         Flow updated = flow.toBuilder()

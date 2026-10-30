@@ -46,10 +46,10 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -120,7 +120,7 @@ public class FlowService {
     private PebbleExpressionService pebbleExpressionService;
 
     @Inject
-    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
 
     @Inject
     private PluginAutoInstallService pluginAutoInstallService;
@@ -396,12 +396,12 @@ public class FlowService {
 
     private void removeConcurrencyLimit(FlowWithSource flow) {
         var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
-        concurrencyLimitRepository.delete(concurrencyLimit);
+        concurrencyLimitDataStore.delete(concurrencyLimit);
     }
 
     private void initConcurrencyLimit(FlowWithSource flow) {
         var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
-        concurrencyLimitRepository.update(concurrencyLimit);
+        concurrencyLimitDataStore.update(concurrencyLimit);
     }
 
     private void sendTriggerEvent(TriggerEvent event) {

@@ -58,6 +58,9 @@ class ConcurrencyLimitServiceTest {
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
+    @Inject
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
+
     @Test
     @LoadFlows(value = "flows/valids/flow-concurrency-queue.yml", tenantId = CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT)
     void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
@@ -106,7 +109,7 @@ class ConcurrencyLimitServiceTest {
 
         assertThat(limit).isNotEmpty();
         ConcurrencyLimit updated = limit.get().withRunning(99);
-        concurrencyLimitRepository.update(updated);
+        concurrencyLimitDataStore.update(updated);
 
         limit = concurrencyLimitRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
         assertThat(limit).isNotEmpty();

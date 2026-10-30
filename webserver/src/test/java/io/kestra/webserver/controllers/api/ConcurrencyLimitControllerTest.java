@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -31,7 +31,7 @@ class ConcurrencyLimitControllerTest {
     private ReactorHttpClient client;
 
     @Inject
-    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
 
     @Test
     void shouldReturnBadRequestWhenUpdatingWithInvalidConcurrencyLimit() {
@@ -105,7 +105,7 @@ class ConcurrencyLimitControllerTest {
     void shouldUpdateNamespaceConcurrencyLimitWhenFlowIsEmpty() {
         // Given - a namespace-scoped counter, stored with an empty flow id
         ConcurrencyLimit seeded = ConcurrencyLimit.builder().tenantId("main").namespace("scoped.namespace").flowId("").running(3).build();
-        concurrencyLimitRepository.update(seeded);
+        concurrencyLimitDataStore.update(seeded);
 
         try {
             // When
@@ -119,7 +119,7 @@ class ConcurrencyLimitControllerTest {
             assertThat(updated.getFlowId()).isEmpty();
             assertThat(updated.getRunning()).isZero();
         } finally {
-            concurrencyLimitRepository.delete(seeded);
+            concurrencyLimitDataStore.delete(seeded);
         }
     }
 
@@ -132,7 +132,7 @@ class ConcurrencyLimitControllerTest {
             ConcurrencyLimit.builder().tenantId("main").namespace("b.paged").flowId("").running(2).build(),
             ConcurrencyLimit.builder().tenantId("main").namespace("a.paged").flowId("").running(3).build()
         );
-        seeded.forEach(concurrencyLimitRepository::update);
+        seeded.forEach(concurrencyLimitDataStore::update);
 
         try {
             // When - the tenant row sorts first, then the namespaces alphabetically
@@ -146,7 +146,7 @@ class ConcurrencyLimitControllerTest {
             assertThat(third.getResults().getFirst().namespace()).isEqualTo("b.paged");
             assertThat(third.getResults().getFirst().queued()).isZero();
         } finally {
-            seeded.forEach(concurrencyLimitRepository::delete);
+            seeded.forEach(concurrencyLimitDataStore::delete);
         }
     }
 

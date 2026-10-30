@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 
 import jakarta.inject.Inject;
 
@@ -17,9 +18,12 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
+    @Inject
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
+
     @Test
     void findById() {
-        concurrencyLimitRepository.update(create("findById"));
+        concurrencyLimitDataStore.update(create("findById"));
         Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById("tenant", "namespace", "findById");
 
         assertThat(limit).isNotEmpty();
@@ -28,10 +32,10 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
 
     @Test
     void update() {
-        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.update(create("update"));
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitDataStore.update(create("update"));
 
         ConcurrencyLimit updated = concurrencyLimit.withRunning(99);
-        concurrencyLimitRepository.update(updated);
+        concurrencyLimitDataStore.update(updated);
 
         var limit = concurrencyLimitRepository.findById("tenant", "namespace", "update");
         assertThat(limit).isNotEmpty();
@@ -40,9 +44,9 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
 
     @Test
     void delete() {
-        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.update(create("delete"));
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitDataStore.update(create("delete"));
 
-        concurrencyLimitRepository.delete(concurrencyLimit);
+        concurrencyLimitDataStore.delete(concurrencyLimit);
 
         var limit = concurrencyLimitRepository.findById("tenant", "namespace", "delete");
         assertThat(limit).isEmpty();
@@ -50,8 +54,8 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
 
     @Test
     void list() {
-        concurrencyLimitRepository.update(create("list1"));
-        concurrencyLimitRepository.update(create("list2"));
+        concurrencyLimitDataStore.update(create("list1"));
+        concurrencyLimitDataStore.update(create("list2"));
 
         List<ConcurrencyLimit> list = concurrencyLimitRepository.find("tenant");
 

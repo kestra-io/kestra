@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyLimitDataStore;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
@@ -34,6 +35,9 @@ import java.util.Objects;
 public class ConcurrencyLimitController {
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
+    @Inject
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
 
     @Inject
     private ExecutionQueuedStateStore executionQueuedStateStore;
@@ -87,7 +91,7 @@ public class ConcurrencyLimitController {
             return HttpResponse.notFound();
         }
 
-        return HttpResponse.ok(concurrencyLimitRepository.update(
+        return HttpResponse.ok(concurrencyLimitDataStore.update(
             ConcurrencyLimit.builder().tenantId(tenantId).namespace(namespace).flowId(flowId).running(request.running()).build()
         ));
     }

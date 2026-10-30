@@ -49,6 +49,9 @@ public class FlowConcurrencyCaseTest {
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Inject
+    private ConcurrencyLimitDataStore concurrencyLimitDataStore;
+
+    @Inject
     private LogDataStoreInterface logRepository;
 
     public void flowConcurrencyCancel(String tenantId) throws TimeoutException, QueueException {
@@ -452,7 +455,7 @@ public class FlowConcurrencyCaseTest {
         // manually update the concurrency count so that queued protection kicks in and no new execution would be popped
         ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue").orElseThrow();
         concurrencyLimit = concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1);
-        concurrencyLimitRepository.update(concurrencyLimit);
+        concurrencyLimitDataStore.update(concurrencyLimit);
 
         Execution executionResult1 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution1);
         assertThat(executionResult1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -463,7 +466,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
 
         // we manually reset the concurrency count to avoid messing with any other tests
-        concurrencyLimitRepository.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
+        concurrencyLimitDataStore.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
     }
 
     public void flowConcurrencyLoop(String tenantId) throws QueueException, TimeoutException {

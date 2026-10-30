@@ -6,7 +6,7 @@
         :description="store.description"
         :breadcrumb="store.breadcrumb"
         :titleSiblings="store.titleSiblings"
-        :mainIcon="store.hideMainIcon ? undefined : activeMenuIcon"
+        :mainIcon="activeMenuIcon"
         :beta="store.beta"
         :isBookmarked="bookmarked"
         :hideBookmark

@@ -146,6 +146,28 @@ describe("failed task lookup", () => {
         expect(findFirstFailedTaskRun(healthy)).toBeUndefined()
     })
 
+    it("ignores a warning task run that has no failed child", () => {
+        const withWarning = {
+            taskRunList: [taskRun("notify", "WARNING"), taskRun("reconcile", "FAILED")],
+        } as unknown as Execution
+
+        expect(findFirstFailedTaskRun(withWarning)?.id).toBe("reconcile")
+    })
+
+    it("skips the ForEachItem internals when the task types are known", () => {
+        const forEachItem = {
+            taskRunList: [
+                taskRun("per_file", "FAILED"),
+                taskRun("per_file_items", "FAILED", {parentTaskRunId: "per_file"}),
+            ],
+        } as unknown as Execution
+        const typeOf = (taskId: string) => taskId === "per_file_items"
+            ? "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable"
+            : "io.kestra.plugin.core.flow.ForEachItem"
+
+        expect(findFirstFailedTaskRun(forEachItem, typeOf)?.id).toBe("per_file")
+    })
+
     it("lists the ancestors of a task run with their loop value", () => {
         // Given
         const failed = findFirstFailedTaskRun(execution)!

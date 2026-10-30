@@ -165,6 +165,11 @@ public class Executor implements HasUID {
         return this;
     }
 
+    public Executor withJoinedWorkerTaskResult(WorkerTaskResult joinedWorkerTaskResult) {
+        this.joinedWorkerTaskResult = joinedWorkerTaskResult;
+        return this;
+    }
+
     public Executor withExecutionResumed(ExecutionResumed executionResumed) {
         this.executionResumed = executionResumed;
         return this;

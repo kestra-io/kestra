@@ -467,6 +467,41 @@
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resume from breakpoint title": "Riprendi l'esecuzione {id} dal punto di interruzione",
+    "approval": {
+      "review": "Revisione",
+      "title": "Rivedi il {task} dell'execution {id}",
+      "approve": "Approva",
+      "deny": "Nega",
+      "comment": "Commento",
+      "comment hint": {
+        "optional": "Opzionale.",
+        "always": "È richiesto un commento.",
+        "on approve": "È richiesto un commento per approvare.",
+        "on deny": "È richiesto un commento per negare."
+      },
+      "comment required": "È richiesto un commento per questa decisione.",
+      "inputs invalid": "Alcuni input non sono validi: {errors}",
+      "review done": "La tua recensione è stata registrata",
+      "reviewed": {
+        "title": "Richiesta di approvazione dell'execution {id}",
+        "explanation": "Questa richiesta di approvazione non è più in attesa di revisione.",
+        "decision": "Decisione",
+        "by": "Deciso da",
+        "on": "Deciso il",
+        "decisions": {
+          "approved": "Approvato",
+          "denied": "Negato",
+          "expired": "Scaduto"
+        }
+      },
+      "cancel request": "Annulla richiesta",
+      "cancel confirm": "Sei sicuro di voler annullare la richiesta di approvazione dell'execution {id}? Nessun ramo decisionale verrà eseguito.",
+      "cancel done": "La richiesta di approvazione è stata annullata",
+      "banner": {
+        "pausing": "Questa esecuzione sta preparando una richiesta di approvazione e si metterà in pausa per una revisione.",
+        "paused": "Questa esecuzione è in attesa di revisione. Approvala o rifiutala per continuare."
+      }
+    },
     "resume from breakpoint done": "L'esecuzione è ripresa dal breakpoint",
     "breakpoints": "Punti di interruzione",
     "pause": "Pausa",
@@ -1101,7 +1136,7 @@
     "flow must not be empty": "Il flow non deve essere vuoto",
     "flow creation denied in namespace": "Non hai il permesso di creare flow nel namespace `{namespace}`.",
     "readonly property": "Proprietà di sola lettura",
-    "namespace and id readonly": "Le proprietà `namespace` e `id` non possono essere modificate — sono ora impostate sui loro valori iniziali. Se desideri rinominare un flow o cambiare il suo namespace, puoi creare un nuovo flow e rimuovere quello vecchio.",
+    "namespace and id readonly": "Le proprietà `namespace` e `id` non possono essere modificate: sono ora impostate sui loro valori iniziali. Se desideri rinominare un flow o cambiare il suo namespace, puoi creare un nuovo flow e rimuovere quello vecchio.",
     "flow metadata locked": "`id` e `namespace` non possono essere modificati dopo la creazione di un flow.",
     "avg": "Media",
     "sum": "Somma",
@@ -1176,7 +1211,7 @@
     "hostname": "Nome host",
     "file preview truncated": "Il contenuto visualizzato è stato troncato",
     "file unavailable": "File non disponibile",
-    "file unavailable description": "Questo file non è più disponibile — potrebbe essere stato eliminato o scaduto.",
+    "file unavailable description": "Questo file non è più disponibile. Potrebbe essere stato eliminato o scaduto.",
     "row count": "Conteggio righe",
     "encoding": "Codifica",
     "show": "Mostra",
@@ -1285,6 +1320,7 @@
     "backfill executions": "Esecuzioni di backfill",
     "execute backfill": "Esegui backfill",
     "relative start date": "Data di inizio relativa",
+    "now": "Ora",
     "absolute": "Assoluto",
     "backfill": "Backfill",
     "Set labels": "Imposta etichette",
@@ -1513,7 +1549,7 @@
       },
       "promote": {
         "title": "Promuovi i flow tra gli ambienti",
-        "message": "Kestra Enterprise Edition ti permette di promuovere i flow da un ambiente all'altro — come da dev a staging a production — direttamente dall'interfaccia utente, senza bisogno di Git o pipeline CI/CD. Rivedi un diff di ciò che cambierà esattamente prima di promuovere, proteggi i target sensibili con un gate di conferma, individua le derive a colpo d'occhio e mantieni una cronologia completa di chi ha promosso cosa, dove e quando."
+        "message": "Kestra Enterprise Edition ti permette di promuovere i flow da un ambiente all'altro, come da dev a staging a production, direttamente dall'interfaccia utente, senza bisogno di Git o pipeline CI/CD. Rivedi un diff di ciò che cambierà esattamente prima di promuovere, proteggi i target sensibili con un gate di conferma, individua le derive a colpo d'occhio e mantieni una cronologia completa di chi ha promosso cosa, dove e quando."
       },
       "dashboards": {
         "header": "Dashboard Personalizzate",
@@ -1577,7 +1613,7 @@
         },
         "policies": {
           "title": "Applicare le Regole di Governance in questo Namespace",
-          "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli — iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
+          "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli: iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
         },
         "reusable-inputs": {
           "label": "Input Riutilizzabili",
@@ -2210,6 +2246,7 @@
         "plural": "Dashboard"
       },
       "default": "Dashboard predefinito",
+      "set_default": "Imposta come predefinito",
       "empty": "Non ci sono risultati da mostrare.",
       "edition": {
         "label": "Modifica Dashboard",
@@ -2355,7 +2392,7 @@
         },
         "cancelled": "Giro annullato",
         "error": {
-          "turnCap": "Questa conversazione ha raggiunto il limite — inizia una nuova chat.",
+          "turnCap": "Questa conversazione ha raggiunto il limite: inizia una nuova chat.",
           "turnInProgress": "Un turno è già in corso.",
           "request": "La richiesta è fallita. Riprova.",
           "generic": "Qualcosa è andato storto. Riprova."
@@ -2418,7 +2455,7 @@
           "applied": "Applicato",
           "previewBanner": "Stai esaminando una modifica suggerita dall'IA: l'editor è di sola lettura finché non la applichi o la ignori.",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già — le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
+          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già. Le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",
@@ -2497,7 +2534,7 @@
         "hidden_consumer": "Flow nascosto",
         "ungrouped": "Non raggruppato",
         "hub": {
-          "notice": "Questo nodo ha {count} relazioni — vengono mostrate solo le più recenti per mantenere il grafico leggibile.",
+          "notice": "Questo nodo ha {count} relazioni. Vengono mostrate solo le più recenti per mantenere il grafico leggibile.",
           "expand": "Carica altre relazioni",
           "expand_failed": "Impossibile caricare altre relazioni. Riprova."
         },
@@ -2657,7 +2694,7 @@
     },
     "invalid_source_code": "Codice sorgente non valido",
     "source_search": {
-      "cannot_select_read_only": "Impossibile selezionare — non hai i permessi di modifica su {namespace} / {id}",
+      "cannot_select_read_only": "Impossibile selezionare: non hai i permessi di modifica su {namespace} / {id}",
       "collapse_all": "Comprimi tutto",
       "confirm_bar_excluded": "{count} altra corrispondenza non verrà modificata. | {count} altre corrispondenze non verranno modificate.",
       "confirm_bar_message": "Sostituisci {matches} in {flows} flow modificabili. {skipped} flow di sola lettura verranno saltati.",
@@ -2673,11 +2710,11 @@
       "empty_title": "Trova un valore tra flows, file e key",
       "error_title": "Espressione regolare non valida",
       "examples_aria": "Query di esempio",
-      "exclusion_flows_readonly": "Flows — {count} corrispondenza di sola lettura: ti serve il permesso FLOW · UPDATE. | Flows — {count} corrispondenze di sola lettura: ti serve il permesso FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} corrispondenza: solo ricerca, non può essere sostituita. | {type} — {count} corrispondenze: solo ricerca, non possono essere sostituite.",
+      "exclusion_flows_readonly": "Flows · {count} corrispondenza di sola lettura: ti serve il permesso FLOW · UPDATE. | Flows · {count} corrispondenze di sola lettura: ti serve il permesso FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} corrispondenza: solo ricerca, non può essere sostituita. | {type} · {count} corrispondenze: solo ricerca, non possono essere sostituite.",
       "exclusion_title": "{count} corrispondenza è esclusa da Sostituisci tutto | {count} corrispondenze sono escluse da Sostituisci tutto",
       "expand_all": "Espandi tutto",
-      "file_match_notice": "Il percorso del file corrisponde. Il contenuto del file non viene cercato — apri il file per cercare al suo interno.",
+      "file_match_notice": "Il percorso del file corrisponde. Il contenuto del file non viene cercato. Apri il file per cercare al suo interno.",
       "files_progress_banner_failed": "I file del namespace vengono cercati un namespace alla volta. {done} di {total} completati, {failed} falliti. Il totale cambierà ancora.",
       "files_progress_banner_ok": "I file del namespace vengono cercati un namespace alla volta. {done} di {total} completati. Il totale cambierà ancora.",
       "flow_only_toggle_hint": "Maiuscole/minuscole, parola intera ed espressione regolare si applicano solo ai flows. I percorsi dei file e le key corrispondono sempre a testo semplice.",
@@ -2754,10 +2791,10 @@
       "show_replace": "Mostra sostituzione",
       "summary": "{matches} corrispondenze in {flows} flow",
       "summary_cross": "{matches} in {resources} su {types}",
-      "tag_keys_only_never": "Solo key — i valori non vengono mai mostrati né cercati",
-      "tag_keys_only_values": "Solo key — i valori non vengono cercati",
-      "tag_paths_only": "Solo percorsi — il contenuto del file non viene cercato",
-      "tag_search_only": "Solo ricerca — non sostituito",
+      "tag_keys_only_never": "Solo key: i valori non vengono mai mostrati né cercati",
+      "tag_keys_only_values": "Solo key: i valori non vengono cercati",
+      "tag_paths_only": "Solo percorsi: il contenuto del file non viene cercato",
+      "tag_search_only": "Solo ricerca: non sostituito",
       "tag_source_code": "Codice sorgente",
       "truncated_flows": "Vengono mostrate le prime {shown} corrispondenze su {total}. Sostituisci tutto si applica solo alle corrispondenze mostrate: restringi prima la ricerca.",
       "truncated_type": "prime {shown} su {total}",
@@ -2953,6 +2990,56 @@
     "iteration": "Iterazione",
     "iteration_number": "Iterazione {number}",
     "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?",
-    "not started": "Non avviato"
+    "not started": "Non avviato",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Tutti",
+        "total": "{count} esecuzione | {count} esecuzioni",
+        "failed": "{count} non riuscite"
+      },
+      "toolbar": {
+        "panBack": "Scorri indietro",
+        "panForward": "Scorri avanti",
+        "zoomIn": "Zoom avanti",
+        "zoomOut": "Zoom indietro",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Apri questa pagina",
+        "runsCount": "{count} esecuzione | {count} esecuzioni",
+        "failedCount": "{count} non riuscite"
+      },
+      "bucket": {
+        "hint": "Aggregato: esegui lo zoom per il dettaglio a livello di esecuzione",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Apri esecuzione",
+        "showOnlyFlow": "Mostra solo questo flow"
+      },
+      "empty": {
+        "description": "Nessuna esecuzione nell'intervallo e nei filtri selezionati.",
+        "resetFilters": "Reimposta filtri",
+        "widenRange": "Estendi a 7 giorni"
+      },
+      "error": {
+        "title": "Impossibile caricare la timeline",
+        "description": "Si è verificato un errore durante il caricamento delle esecuzioni per questo intervallo."
+      },
+      "truncated": {
+        "description": "Vengono mostrate le ultime {shown} esecuzioni su {total}. Restringi l'intervallo di tempo o i filtri per vederle tutte."
+      },
+      "scrubber": {
+        "label": "Densità di Execution nel tempo, trascina per selezionare un intervallo",
+        "ignoredFilters": "La barra di densità non applica questi filtri: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Conteggi",
+      "timeline": "Timeline"
+    }
   }
 }

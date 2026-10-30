@@ -147,17 +147,16 @@ export const SetCollapsed: Story = {
         root: "provider",
     },
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
         await waitFor(() => expect(byTest(canvasElement, "plugin-implementation")).toBeTruthy());
         const name = byTest(canvasElement, "plugin-implementation-item-name");
         expect(name?.textContent).toBe("Google Gemini");
         const summary = byTest(canvasElement, "plugin-implementation-item-summary");
         expect(summary?.textContent).toContain("gemini-2.5-flash-lite");
         expect(summary?.textContent).toContain("from secret");
-        expect(canvas.getByText("modelName")).not.toBeVisible();
+        expect(byTest(canvasElement, "field-modelName")).not.toBeVisible();
 
         await fireEvent.click(byTest(canvasElement, "plugin-implementation-toggle")!);
-        await waitFor(() => expect(canvas.getByText("modelName")).toBeVisible());
+        await waitFor(() => expect(byTest(canvasElement, "field-modelName")).toBeVisible());
     },
 };
 

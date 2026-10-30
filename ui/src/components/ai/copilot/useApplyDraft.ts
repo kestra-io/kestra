@@ -86,7 +86,7 @@ export function useApplyDraft() {
         sessionStorage.setItem(COPILOT_DRAFT_KEY, draft.yaml)
         router.push({
             name: "flows/create",
-            query: {copilotDraft: "true"},
+            query: {copilotDraft: String(Date.now())},
             params: {...tenantParam()},
         })
     }

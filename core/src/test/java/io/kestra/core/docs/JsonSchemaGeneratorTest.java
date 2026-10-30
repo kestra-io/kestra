@@ -193,6 +193,43 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldAcceptExpressionWhenEnumPropertyIsDynamic() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+            Map<String, Object> flowSchema = jsonSchemaGenerator.schemas(Flow.class);
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(flowSchema));
+
+            // untyped branches, or the no-code editor renders a type switch instead of a select
+            var definitions = (Map<String, Map<String, Object>>) flowSchema.get("definitions");
+            var anyOf = (List<Map<String, Object>>) properties(definitions.get(Log.class.getName())).get("level").get("anyOf");
+            assertThat(anyOf, everyItem(not(hasKey("type"))));
+
+            assertThat(validate(schema, flowWithLogLevel("WARN")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("\"{{ vars.level }}\"")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("\"{% if true %}WARN{% endif %}\"")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("WARNING")), is(not(empty())));
+
+            // the no-code editor picks its dropdown from a top-level enum in the plugin schema
+            Map<String, Object> level = properties(jsonSchemaGenerator.properties(Task.class, Log.class)).get("level");
+            assertThat((List<String>) level.get("enum"), hasItems("INFO", "WARN"));
+        });
+    }
+
+    private static String flowWithLogLevel(String level) {
+        return """
+            id: dynamic-enum
+            namespace: company.team
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                level: %s
+            """.formatted(level);
+    }
+
     private static String flowWithOutputAsset(String... assetProperties) {
         return """
             id: assets

@@ -507,7 +507,7 @@ export const useFlowStore = defineStore("flow", () => {
     let latestFlowLoadKey: string | undefined
 
     async function loadFlow(
-        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, optional?: boolean },
     ) {
         const key = `${options.namespace}/${options.id}`
         if (options.store !== false) {
@@ -527,6 +527,10 @@ export const useFlowStore = defineStore("flow", () => {
             // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
             if (options.deleted && (e as KestraHttpError).status === 404) {
                 return {} as Flow & { exception?: string }
+            }
+            // A caller that only enriches its own view with the flow (the execution topology) does without it when forbidden.
+            if (options.optional && handledIf(e, [403])) {
+                return {} as Flow & {exception?: string}
             }
             throw e
         }
@@ -672,7 +676,11 @@ export const useFlowStore = defineStore("flow", () => {
             return inFlight
         }
 
-        const request = requestDependencies(options, onlyCount)
+        // A count only feeds a badge, so a user who cannot read the dependencies sees none rather than an error.
+        const request = requestDependencies(options, onlyCount).catch((e: unknown): Awaited<ReturnType<typeof requestDependencies>> => {
+            if (!handledIf(e, [403])) throw e
+            return {count: 0}
+        })
         inFlightDependencyCounts.set(key, request)
         // Both handlers, so this derived promise never becomes an unhandled rejection.
         const settle = () => {

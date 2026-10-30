@@ -111,6 +111,7 @@
     import ExecutionVariableExplorer from "../executions/outputs/ExecutionVariableExplorer.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
     import PlaygroundLog from "./playground/PlaygroundLog.vue"
+    import PlaygroundContext from "./playground/PlaygroundContext.vue"
     import {usePlaygroundStore} from "../../stores/playground"
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
@@ -145,20 +146,27 @@
             component: markRaw(ExecutionMetric),
             props: {fitHeight: false},
         },
+        {
+            name: "context",
+            title: t("playground.context.title"),
+            component: markRaw(PlaygroundContext),
+        },
     ]))
 
     const playgroundStore = usePlaygroundStore()
     const executionsStore = useExecutionsStore()
 
+    // immediate: a panel reopened on the same run must refresh it, the server may have ended it meanwhile
     watch(() => playgroundStore.latestExecution?.id, (newValue, oldValue) => {
         if (newValue && newValue !== oldValue) {
             executionsStore.followExecution(playgroundStore.latestExecution, t)
         }
-    })
+    }, {immediate: true})
 
     const activeTab = ref(tabs.value[0])
 
-    onMounted(() => {
+    onMounted(async () => {
+        await playgroundStore.loadSession().catch(() => undefined)
         playgroundStore.runFromQuery()
     })
 

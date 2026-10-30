@@ -8,7 +8,6 @@ const flowStore = {
     flow: {id: "f", namespace: "ns", revision: 3, inputs: []} as Record<string, unknown>,
     saveAll: vi.fn(),
     saveAsDraft: vi.fn(),
-    loadGraph: vi.fn(),
 }
 const triggerExecution = vi.fn()
 const push = vi.fn()
@@ -27,8 +26,15 @@ vi.mock("./fileExplorer", () => ({
 }))
 
 vi.mock("@kestra-io/design-system", () => ({
-    State: {KILLING: "KILLING", RUNNING: "RUNNING", RESTARTED: "RESTARTED", CREATED: "CREATED"},
-    isDeepEqual: () => true,
+    State: {KILLING: "KILLING", RUNNING: "RUNNING", RESTARTED: "RESTARTED", CREATED: "CREATED", isTerminated: () => false},
+    durationUtils: {duration: () => 20},
+}))
+
+vi.mock("@kestra-io/kestra-sdk/playground", () => ({
+    planPlaygroundRun: vi.fn().mockResolvedValue({reusedTaskIds: [], breakpoints: [], freshReason: "NO_PREVIOUS_RUN"}),
+    listReusedTaskRuns: vi.fn().mockResolvedValue({taskRuns: {}}),
+    reportPlaygroundClient: vi.fn().mockResolvedValue({reportEvery: "PT20S"}),
+    releasePlaygroundClient: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock("vue-router", () => ({
@@ -48,7 +54,6 @@ describe("playground run saves a draft", () => {
         setActivePinia(createPinia())
         flowStore.isCreating = false
         flowStore.saveAsDraft.mockResolvedValue("saved")
-        flowStore.loadGraph.mockResolvedValue(undefined)
         triggerExecution.mockResolvedValue({id: "e1", state: {current: "CREATED"}})
         push.mockResolvedValue(undefined)
     })

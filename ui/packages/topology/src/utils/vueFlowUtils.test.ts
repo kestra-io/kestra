@@ -256,60 +256,6 @@ describe("VueFlowUtils", () => {
         ])
     })
 
-    test("getNextTaskNodes should return next task nodes", () => {
-        const nextTaskNodes = VueFlowUtils.getNextTaskNodes(graph, {uid: "1", type: "task"})
-        expect(nextTaskNodes).toEqual([
-            {
-                uid: "2",
-                type: "task",
-                task: {
-                    id: "task1",
-                    type: "io.kestra.one",
-                    outputFiles: [
-                        "file1.txt",
-                        "file2.txt",
-                    ],
-                },
-            },
-            {
-                uid: "3",
-                type: "task",
-                task: {
-                    id: "task2",
-                    type: "io.kestra.two",
-                    outputFiles: ["file3.txt", "file4.txt"],
-                    taskRunner: {
-                        type: "docker",
-                        image: "kestra/task-runner:latest",
-                    },
-                },
-            },
-        ])
-    })
-
-    test("areTasksIdenticalInGraphUntilTask should return true for identical tasks", () => {
-        const previousGraph = structuredClone(graph)
-        const currentGraph = structuredClone(graph)
-        expect(previousGraph).toEqual(currentGraph)
-        expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeTruthy()
-    })
-
-    test("areTasksIdenticalInGraphUntilTask should return false for different tasks", () => {
-        const previousGraph = structuredClone(graph)
-        const currentGraph = structuredClone(graph)
-        const task: Record<string, unknown> | undefined = currentGraph.nodes[2].task
-        if (task) task.id = "task1-modified"
-        expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
-    })
-
-    test("areTasksIdenticalInGraphUntilTask should return false for different tasks", () => {
-        const previousGraph = structuredClone(graph)
-        const currentGraph = structuredClone(graph)
-        const task: Record<string, unknown> | undefined = currentGraph.nodes[1].task
-        if (task) task.outputFiles = ["file1-modified.txt", "file4.txt"]
-        expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
-    })
-
     test("flowHaveTasks should return false for an empty source", () => {
         expect(VueFlowUtils.flowHaveTasks("")).toBeFalsy()
     })

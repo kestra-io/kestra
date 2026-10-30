@@ -12,7 +12,6 @@ import {
     SMOOTH_STEP_OFFSET,
     SMOOTH_STEP_RADIUS,
 } from "./constants"
-import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 // Never a real backend uid — a flow-level `errors:` section has no cluster of its own (unlike
@@ -1212,68 +1211,4 @@ export function getRootNodes(graph: FlowGraph) {
 export function getTargetNodesEdges(graph: FlowGraph, nodeUid?: string) {
     if (!nodeUid) return undefined
     return graph.edges.filter((edge) => edge.source === nodeUid && edge.target)
-}
-
-export function getNextTaskNodes(graph: FlowGraph, initialNode: MinimalNode) {
-    let edges: FlowGraphEdge[],
-        nextTaskNodes: MinimalNode[],
-        nodeUIDs: string[] = [initialNode.uid]
-    do {
-        edges = nodeUIDs
-            .flatMap((uid) => getTargetNodesEdges(graph, uid))
-            .filter(Boolean) as FlowGraphEdge[]
-        if (edges.length === 0) return []
-        nodeUIDs = edges.map((edge) => edge.target)
-        nextTaskNodes = graph.nodes.filter((node) => nodeUIDs.includes(node.uid) && node.task)
-    } while (!nextTaskNodes.length)
-    return nextTaskNodes
-}
-
-export function areTasksIdenticalInGraphUntilTask(
-    previousGraph: FlowGraph,
-    currentGraph: FlowGraph,
-    taskId?: string,
-) {
-    if (!taskId) return false
-
-    let previousRootTaskNodes = getRootNodes(previousGraph)
-    let currentRootTaskNodes = getRootNodes(currentGraph)
-
-    if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false
-
-    let failIndex = 120
-
-    do {
-        currentRootTaskNodes = currentRootTaskNodes.flatMap((node) =>
-            getNextTaskNodes(currentGraph, node),
-        )
-        if (currentRootTaskNodes.some((node) => node.task?.id === taskId)) return true
-
-        previousRootTaskNodes = previousRootTaskNodes.flatMap((node) =>
-            getNextTaskNodes(previousGraph, node),
-        )
-        if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false
-
-        for (const currentTaskNode of currentRootTaskNodes) {
-            const prevTaskNode = previousRootTaskNodes.find(
-                (taskNode) => taskNode.task?.id === currentTaskNode.task?.id,
-            )
-            const prevTaskValue = prevTaskNode?.task ?? {}
-            const currentTaskValue = currentTaskNode.task ?? {}
-            if (
-                !prevTaskNode ||
-                Object.keys(prevTaskValue).length !== Object.keys(currentTaskValue).length
-            ) {
-                return false
-            }
-            if (!isDeepEqual(prevTaskValue, currentTaskValue)) return false
-        }
-    } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
-
-    if (failIndex <= 0) {
-        console.warn("areTasksIdenticalInGraphUntilTask: Infinite loop detected, stopping comparison.")
-        return false
-    }
-
-    return true
 }

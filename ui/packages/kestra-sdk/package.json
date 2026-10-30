@@ -27,6 +27,7 @@
     "./namespaces": "./dist/namespaces.js",
     "./notifications": "./dist/notifications.js",
     "./outputs": "./dist/outputs.js",
+    "./playground": "./dist/playground.js",
     "./plugins": "./dist/plugins.js",
     "./secrets": "./dist/secrets.js",
     "./services": "./dist/services.js",

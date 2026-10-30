@@ -66,6 +66,9 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
+    protected ApprovalTest.Suite approvalTest;
+
+    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -459,6 +462,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunApprove() throws Exception {
+        approvalTest.approve(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunDeny() throws Exception {
+        approvalTest.deny(runnerUtils);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -714,6 +729,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-max-duration-ok.yaml" })
     void maxDurationSLAShouldPass() throws Exception {
         slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-fail.yaml" })
+    void avgDurationSLAShouldFail() throws Exception {
+        slaTestCase.avgDurationSLAShouldFail();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-not-enough-history.yaml" })
+    void avgDurationSLAShouldNotMonitorWithoutEnoughHistory() throws Exception {
+        slaTestCase.avgDurationSLAShouldNotMonitorWithoutEnoughHistory();
     }
 
     @Test

@@ -4,6 +4,7 @@ import {useExecutionsStore, type Execution} from "../stores/executions"
 import type {Log} from "../stores/logs"
 import {handledIf} from "../utils/kestraHttp"
 import {findFirstFailedTaskRun, taskRunPath} from "../utils/executionUtils"
+import * as FlowUtils from "../utils/flowUtils"
 import {stripBackticks} from "../utils/logs"
 import {linkTagsAsText} from "../components/logs/linkify"
 
@@ -14,7 +15,9 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
 
     const failedTaskRun = computed(() => {
         const current = toValue(execution)
-        return current?.state.current === State.FAILED ? findFirstFailedTaskRun(current) : undefined
+        return current?.state?.current === State.FAILED
+            ? findFirstFailedTaskRun(current, taskId => FlowUtils.findTaskById(store.flow, taskId)?.type)
+            : undefined
     })
 
     const path = computed(() => {

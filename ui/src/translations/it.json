@@ -467,6 +467,41 @@
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resume from breakpoint title": "Riprendi l'esecuzione {id} dal punto di interruzione",
+    "approval": {
+      "review": "Revisione",
+      "title": "Rivedi il {task} dell'execution {id}",
+      "approve": "Approva",
+      "deny": "Nega",
+      "comment": "Commento",
+      "comment hint": {
+        "optional": "Opzionale.",
+        "always": "È richiesto un commento.",
+        "on approve": "È richiesto un commento per approvare.",
+        "on deny": "È richiesto un commento per negare."
+      },
+      "comment required": "È richiesto un commento per questa decisione.",
+      "inputs invalid": "Alcuni input non sono validi: {errors}",
+      "review done": "La tua recensione è stata registrata",
+      "reviewed": {
+        "title": "Richiesta di approvazione dell'execution {id}",
+        "explanation": "Questa richiesta di approvazione non è più in attesa di revisione.",
+        "decision": "Decisione",
+        "by": "Deciso da",
+        "on": "Deciso il",
+        "decisions": {
+          "approved": "Approvato",
+          "denied": "Negato",
+          "expired": "Scaduto"
+        }
+      },
+      "cancel request": "Annulla richiesta",
+      "cancel confirm": "Sei sicuro di voler annullare la richiesta di approvazione dell'execution {id}? Nessun ramo decisionale verrà eseguito.",
+      "cancel done": "La richiesta di approvazione è stata annullata",
+      "banner": {
+        "pausing": "Questa esecuzione sta preparando una richiesta di approvazione e si metterà in pausa per una revisione.",
+        "paused": "Questa esecuzione è in attesa di revisione. Approvala o rifiutala per continuare."
+      }
+    },
     "resume from breakpoint done": "L'esecuzione è ripresa dal breakpoint",
     "breakpoints": "Punti di interruzione",
     "pause": "Pausa",
@@ -1146,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Errore(i) rilevato(i).",
     "warning detected": "Avviso/i rilevato/i.",
+    "schema warning": "Linea {line}: {message}",
     "informative notice": "Note(s)",
     "open": "Apri",
     "admin": "Amministratore",
@@ -1285,6 +1321,7 @@
     "backfill executions": "Esecuzioni di backfill",
     "execute backfill": "Esegui backfill",
     "relative start date": "Data di inizio relativa",
+    "now": "Ora",
     "absolute": "Assoluto",
     "backfill": "Backfill",
     "Set labels": "Imposta etichette",
@@ -1913,12 +1950,45 @@
     "iterations": "Iterazioni",
     "load_10_more": "Carica altri 10",
     "show_all_executions": "Mostra tutte le esecuzioni",
-    "failed_iterations_only": "Solo iterazioni fallite",
     "loop_iterations_shown": "{shown} di {total} mostrati",
     "loop_iterations_load_error": "Impossibile caricare le iterazioni",
     "retry": "Riprova",
     "no_iterations": "Ancora nessuna iterazione",
     "no_failed_iterations": "Nessuna iterazione fallita",
+    "gantt_tree_label": "Cronologia dell'esecuzione",
+    "gantt_row_expand": "Espandi {name}",
+    "gantt_row_collapse": "Comprimi {name}",
+    "gantt_failed_only": "Solo fallite",
+    "gantt_go_to_first_failure": "Vai al primo errore",
+    "gantt_loop_iterations_count": "{count} iterazione | {count} iterazioni",
+    "gantt_loop_failed_count": "{count} fallite",
+    "gantt_loop_show_failed": "Mostra solo le iterazioni fallite",
+    "gantt_loop_show_all": "Mostra tutte le iterazioni",
+    "gantt_loop_show_all_iterations": "Mostra tutte le {count} iterazioni",
+    "gantt_loop_loading": "Caricamento delle iterazioni…",
+    "gantt_iteration_no_tasks": "Ancora nessuna esecuzione di Task in questa iterazione",
+    "gantt_iteration_no_failed_tasks": "Nessuna esecuzione di Task fallita in questa iterazione",
+    "gantt_panel": {
+      "label": "Dettagli dell'esecuzione del Task",
+      "lineage": "Posizione nel flow",
+      "previous_iteration": "Iterazione precedente",
+      "next_iteration": "Iterazione successiva",
+      "open_iteration": "Apri iterazione",
+      "iteration_position": "{position} di {total} in {loop}",
+      "first_failure": "Primo errore",
+      "go_to_failure": "Vai all'errore",
+      "task_runs": "Esecuzioni di Task",
+      "iteration": "Iterazione",
+      "value": "Value",
+      "index": "Indice",
+      "index_of": "#{index} di {total}",
+      "execution": "Esecuzione",
+      "filter_all": "Tutte {count}",
+      "filter_failed": "Fallite {count}",
+      "filter_success": "Riuscite {count}",
+      "search_value": "Cerca per value esatto",
+      "range": "{from}–{to} di {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro log non vengono visualizzati qui.",
       "outputs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro output non vengono visualizzati qui.",
@@ -2954,6 +3024,56 @@
     "iteration": "Iterazione",
     "iteration_number": "Iterazione {number}",
     "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?",
-    "not started": "Non avviato"
+    "not started": "Non avviato",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Tutti",
+        "total": "{count} esecuzione | {count} esecuzioni",
+        "failed": "{count} non riuscite"
+      },
+      "toolbar": {
+        "panBack": "Scorri indietro",
+        "panForward": "Scorri avanti",
+        "zoomIn": "Zoom avanti",
+        "zoomOut": "Zoom indietro",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Apri questa pagina",
+        "runsCount": "{count} esecuzione | {count} esecuzioni",
+        "failedCount": "{count} non riuscite"
+      },
+      "bucket": {
+        "hint": "Aggregato: esegui lo zoom per il dettaglio a livello di esecuzione",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Apri esecuzione",
+        "showOnlyFlow": "Mostra solo questo flow"
+      },
+      "empty": {
+        "description": "Nessuna esecuzione nell'intervallo e nei filtri selezionati.",
+        "resetFilters": "Reimposta filtri",
+        "widenRange": "Estendi a 7 giorni"
+      },
+      "error": {
+        "title": "Impossibile caricare la timeline",
+        "description": "Si è verificato un errore durante il caricamento delle esecuzioni per questo intervallo."
+      },
+      "truncated": {
+        "description": "Vengono mostrate le ultime {shown} esecuzioni su {total}. Restringi l'intervallo di tempo o i filtri per vederle tutte."
+      },
+      "scrubber": {
+        "label": "Densità di Execution nel tempo, trascina per selezionare un intervallo",
+        "ignoredFilters": "La barra di densità non applica questi filtri: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Conteggi",
+      "timeline": "Timeline"
+    }
   }
 }

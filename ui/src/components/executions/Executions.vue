@@ -486,7 +486,7 @@
 
     import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
     import {
-        FALLBACK_TIME_RANGE,
+        defaultTimeRange,
         queryHasAbsoluteDateFilter,
         queryHasUserFilters,
         readTimeRangeFromQuery,
@@ -749,7 +749,7 @@
         selection?: string[];
         queryBulkAction?: boolean;
     }>("dataTable")
-    const chartDefaultDuration = computed(() => miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE)
+    const chartDefaultDuration = computed(() => defaultTimeRange(miscStore.configs?.chartDefaultDuration))
 
     let hasAttemptedTimeRangeWiden = false
 

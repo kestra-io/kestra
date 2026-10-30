@@ -30,7 +30,7 @@
         "email_sub": "Send an email notification",
         "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "Custom",
-        "custom_note": "A placeholder task is added — swap it for any notification plugin in the editor.",
+        "custom_note": "A placeholder task is added. Swap it for any notification plugin in the editor.",
         "custom_sub": "Add your own notification task",
         "plugin_unavailable": "Plugin not installed",
         "slack_channel_placeholder": "#alerts",
@@ -467,6 +467,41 @@
     "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
     "resume from breakpoint title": "Resume execution {id} from breakpoint",
+    "approval": {
+      "review": "Review",
+      "title": "Review {task} of execution {id}",
+      "approve": "Approve",
+      "deny": "Deny",
+      "comment": "Comment",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "A comment is required.",
+        "on approve": "A comment is required to approve.",
+        "on deny": "A comment is required to deny."
+      },
+      "comment required": "A comment is required for this decision.",
+      "inputs invalid": "Some inputs are invalid: {errors}",
+      "review done": "Your review has been recorded",
+      "reviewed": {
+        "title": "Approval request of execution {id}",
+        "explanation": "This approval request is no longer waiting for a review.",
+        "decision": "Decision",
+        "by": "Decided by",
+        "on": "Decided on",
+        "decisions": {
+          "approved": "Approved",
+          "denied": "Denied",
+          "expired": "Expired"
+        }
+      },
+      "cancel request": "Cancel request",
+      "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
+      "cancel done": "The approval request has been cancelled",
+      "banner": {
+        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "paused": "This execution is waiting for a review. Approve or deny it to continue."
+      }
+    },
     "resume from breakpoint done": "Execution is resumed from breakpoint",
     "breakpoints": "Breakpoints",
     "pause": "Pause",
@@ -1101,7 +1136,7 @@
     "flow must not be empty": "Flow must not be empty",
     "flow creation denied in namespace": "You don't have permission to create flows in the namespace `{namespace}`.",
     "readonly property": "Read-only property",
-    "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
+    "namespace and id readonly": "The properties `namespace` and `id` cannot be changed: they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
     "flow metadata locked": "`id` and `namespace` cannot be changed after a flow is created.",
     "avg": "Average",
     "sum": "Sum",
@@ -1176,7 +1211,7 @@
     "hostname": "Hostname",
     "file preview truncated": "Displayed content has been truncated",
     "file unavailable": "File unavailable",
-    "file unavailable description": "This file is no longer available — it may have been purged or expired.",
+    "file unavailable description": "This file is no longer available. It may have been purged or expired.",
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",
@@ -1513,7 +1548,7 @@
       },
       "promote": {
         "title": "Promote Flows Across Environments",
-        "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
+        "message": "Kestra Enterprise Edition lets you promote flows from one environment to another, such as dev to staging to production, directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
       },
       "dashboards": {
         "header": "Custom Dashboards",
@@ -1551,7 +1586,7 @@
       "policies": {
         "header": "Governance Policies",
         "label": "Policies",
-        "message": "Policies let platform teams centrally manage and enforce rules across all flows — inject shared defaults, block plugins, bound property values, and require compliance labels. Rules apply at the tenant or namespace level with staged rollout, and every injected or replaced value stays visible to flow authors.",
+        "message": "Policies let platform teams centrally manage and enforce rules across all flows: inject shared defaults, block plugins, bound property values, and require compliance labels. Rules apply at the tenant or namespace level with staged rollout, and every injected or replaced value stays visible to flow authors.",
         "title": "Govern Every Flow with Policies"
       },
       "namespace": {
@@ -1577,7 +1612,7 @@
         },
         "policies": {
           "title": "Enforce Governance Rules Across This Namespace",
-          "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children — inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
+          "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children: inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
         },
         "reusable-inputs": {
           "label": "Reusable Inputs",
@@ -2356,7 +2391,7 @@
         },
         "cancelled": "Turn cancelled",
         "error": {
-          "turnCap": "This conversation reached its limit — start a new chat.",
+          "turnCap": "This conversation reached its limit: start a new chat.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."
@@ -2417,9 +2452,9 @@
           "dismiss": "Dismiss",
           "dismissed": "Dismissed",
           "applied": "Applied",
-          "previewBanner": "Reviewing an AI-suggested change — the editor is read-only until you apply or dismiss it.",
+          "previewBanner": "Reviewing an AI-suggested change. The editor is read-only until you apply or dismiss it.",
           "applyTitle": "Apply flow",
-          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists — drafts aren't picked up by triggers or subflows until published.",
+          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists. Drafts aren't picked up by triggers or subflows until published.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
           "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
@@ -2498,7 +2533,7 @@
         "hidden_consumer": "Hidden flow",
         "ungrouped": "Ungrouped",
         "hub": {
-          "notice": "This node has {count} relations — only the most recent ones are shown to keep the graph readable.",
+          "notice": "This node has {count} relations. Only the most recent ones are shown to keep the graph readable.",
           "expand": "Load more relations",
           "expand_failed": "Could not load more relations. Please try again."
         },
@@ -2658,7 +2693,7 @@
     },
     "invalid_source_code": "Invalid source code",
     "source_search": {
-      "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
+      "cannot_select_read_only": "Cannot select: you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",
       "confirm_bar_excluded": "{count} more match will not be changed. | {count} more matches will not be changed.",
       "confirm_bar_message": "Replace {matches} across {flows} editable flows. {skipped} read-only flows will be skipped.",
@@ -2674,11 +2709,11 @@
       "empty_title": "Find a value across flows, files and keys",
       "error_title": "Invalid regular expression",
       "examples_aria": "Example queries",
-      "exclusion_flows_readonly": "Flows — {count} read-only match: you need FLOW · UPDATE permission. | Flows — {count} read-only matches: you need FLOW · UPDATE permission.",
-      "exclusion_search_only": "{type} — {count} match: search only, cannot be replaced. | {type} — {count} matches: search only, cannot be replaced.",
+      "exclusion_flows_readonly": "Flows · {count} read-only match: you need FLOW · UPDATE permission. | Flows · {count} read-only matches: you need FLOW · UPDATE permission.",
+      "exclusion_search_only": "{type} · {count} match: search only, cannot be replaced. | {type} · {count} matches: search only, cannot be replaced.",
       "exclusion_title": "{count} match is excluded from Replace all | {count} matches are excluded from Replace all",
       "expand_all": "Expand all",
-      "file_match_notice": "The file path matched. File content is not searched — open the file to search inside it.",
+      "file_match_notice": "The file path matched. File content is not searched. Open the file to search inside it.",
       "files_progress_banner_failed": "Namespace files are searched one namespace at a time. {done} of {total} done, {failed} failed. The total will still change.",
       "files_progress_banner_ok": "Namespace files are searched one namespace at a time. {done} of {total} done. The total will still change.",
       "flow_only_toggle_hint": "Match case, whole word and regular expression apply to Flows only. File paths and keys always match plain text.",
@@ -2755,12 +2790,12 @@
       "show_replace": "Show replace",
       "summary": "{matches} matches in {flows} flows",
       "summary_cross": "{matches} in {resources} across {types}",
-      "tag_keys_only_never": "Keys only — values never shown or searched",
-      "tag_keys_only_values": "Keys only — values are not searched",
-      "tag_paths_only": "Paths only — file content is not searched",
-      "tag_search_only": "Search only — not replaced",
+      "tag_keys_only_never": "Keys only: values never shown or searched",
+      "tag_keys_only_values": "Keys only: values are not searched",
+      "tag_paths_only": "Paths only: file content is not searched",
+      "tag_search_only": "Search only: not replaced",
       "tag_source_code": "Source code",
-      "truncated_flows": "Showing the first {shown} of {total} matches. Replace all only applies to the matches shown — narrow the query first.",
+      "truncated_flows": "Showing the first {shown} of {total} matches. Replace all only applies to the matches shown. Narrow the query first.",
       "truncated_type": "first {shown} of {total}",
       "turn_off": "Turn off {option}",
       "type_files": "Namespace files",

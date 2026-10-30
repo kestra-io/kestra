@@ -30,7 +30,7 @@
         "email_sub": "发送电子邮件通知",
         "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "自定义",
-        "custom_note": "已添加一个占位符 task — 在编辑器中将其替换为任何通知插件。",
+        "custom_note": "已添加一个占位符 task。在编辑器中将其替换为任何通知插件。",
         "custom_sub": "添加您自己的通知 task",
         "plugin_unavailable": "插件未安装",
         "slack_channel_placeholder": "# 警报",
@@ -467,6 +467,41 @@
     "resumed confirm": "您确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resume from breakpoint title": "从断点恢复执行 {id}",
+    "approval": {
+      "review": "审查",
+      "title": "查看 execution {id} 的 {task}",
+      "approve": "批准",
+      "deny": "拒绝",
+      "comment": "评论",
+      "comment hint": {
+        "optional": "可选。",
+        "always": "需要评论。",
+        "on approve": "批准需要评论。",
+        "on deny": "拒绝需要评论。"
+      },
+      "comment required": "此决定需要评论。",
+      "inputs invalid": "某些输入无效：{errors}",
+      "review done": "您的评论已记录",
+      "reviewed": {
+        "title": "执行 {id} 的审批请求",
+        "explanation": "此审批请求不再等待审核。",
+        "decision": "决策",
+        "by": "由",
+        "on": "已决定",
+        "decisions": {
+          "approved": "已批准",
+          "denied": "拒绝",
+          "expired": "已过期"
+        }
+      },
+      "cancel request": "取消请求",
+      "cancel confirm": "您确定要取消执行 {id} 的审批请求吗？没有决策分支会运行。",
+      "cancel done": "审批请求已取消",
+      "banner": {
+        "pausing": "此执行正在准备审批请求，并将暂停以供审查。",
+        "paused": "此 Execution 正在等待审核。批准或拒绝以继续。"
+      }
+    },
     "resume from breakpoint done": "执行已从断点恢复",
     "breakpoints": "断点",
     "pause": "暂停",
@@ -1101,7 +1136,7 @@
     "flow must not be empty": "flow不能为空",
     "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "readonly property": "只读属性",
-    "namespace and id readonly": "属性 `namespace` 和 `id` 无法更改 — 它们现在已设置为初始值。如果您想重命名 flow 或更改其 namespace，可以创建一个新的 flow 并删除旧的。",
+    "namespace and id readonly": "属性 `namespace` 和 `id` 无法更改：它们现在已设置为初始值。如果您想重命名 flow 或更改其 namespace，可以创建一个新的 flow 并删除旧的。",
     "flow metadata locked": "`id` 和 `namespace` 在 flow 创建后无法更改。",
     "avg": "平均",
     "sum": "总计",
@@ -1176,7 +1211,7 @@
     "hostname": "主机名",
     "file preview truncated": "显示的内容已被截断",
     "file unavailable": "文件不可用",
-    "file unavailable description": "该文件不再可用——可能已被清除或过期。",
+    "file unavailable description": "该文件不再可用。可能已被清除或过期。",
     "row count": "行数",
     "encoding": "编码",
     "show": "显示",
@@ -1551,7 +1586,7 @@
       "policies": {
         "header": "治理策略",
         "label": "策略",
-        "message": "策略允许平台团队集中管理和执行所有 flow 的规则——注入共享默认值、阻止插件、绑定属性值以及要求合规性 label。规则在 tenant 或 namespace 级别应用，并分阶段推出，每个注入或替换的值对 flow 作者都可见。",
+        "message": "策略允许平台团队集中管理和执行所有 flow 的规则：注入共享默认值、阻止插件、绑定属性值以及要求合规性 label。规则在 tenant 或 namespace 级别应用，并分阶段推出，每个注入或替换的值对 flow 作者都可见。",
         "title": "通过策略治理每个 flow"
       },
       "namespace": {
@@ -1577,7 +1612,7 @@
         },
         "policies": {
           "title": "在此 namespace 中强制执行治理规则",
-          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
+          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则：注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
         },
         "reusable-inputs": {
           "label": "可复用输入",
@@ -2356,7 +2391,7 @@
         },
         "cancelled": "轮次已取消",
         "error": {
-          "turnCap": "此对话已达上限 — 开启新对话。",
+          "turnCap": "此对话已达上限：开启新对话。",
           "turnInProgress": "一个周期已在进行中。",
           "request": "请求失败。请重试。",
           "generic": "出错了。请重试。"
@@ -2417,9 +2452,9 @@
           "dismiss": "忽略",
           "dismissed": "已忽略",
           "applied": "已应用",
-          "previewBanner": "正在查看 AI 建议的更改——在您应用或忽略之前，编辑器为只读状态。",
+          "previewBanner": "正在查看 AI 建议的更改。在您应用或忽略之前，编辑器为只读状态。",
           "applyTitle": "应用 flow",
-          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版 — 草稿在发布之前不会被 trigger 或 subflow 处理。",
+          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版。草稿在发布之前不会被 trigger 或 subflow 处理。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
           "applyError": "无法应用该 flow。请重试。",
           "applyErrorDashboard": "未能应用仪表盘。请重试。",
@@ -2498,7 +2533,7 @@
         "hidden_consumer": "隐藏 Flow",
         "ungrouped": "未分组",
         "hub": {
-          "notice": "此节点有 {count} 个关联 — 仅显示最新的关联以保持图表可读。",
+          "notice": "此节点有 {count} 个关联。仅显示最新的关联以保持图表可读。",
           "expand": "加载更多关联",
           "expand_failed": "无法加载更多关联。请重试。"
         },
@@ -2658,7 +2693,7 @@
     },
     "invalid_source_code": "源代码无效",
     "source_search": {
-      "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
+      "cannot_select_read_only": "无法选择：您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",
       "confirm_bar_excluded": "还有 {count} 个匹配项不会被更改。 | 还有 {count} 个匹配项不会被更改。",
       "confirm_bar_message": "替换 {flows} 个可编辑 flow 中的 {matches} 匹配项。将跳过 {skipped} 个只读 flow。",
@@ -2674,11 +2709,11 @@
       "empty_title": "在 flow、文件和键中查找值",
       "error_title": "无效的正则表达式",
       "examples_aria": "示例查询",
-      "exclusion_flows_readonly": "flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。 | flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。",
-      "exclusion_search_only": "{type} — {count} 个匹配：仅可搜索，无法替换。 | {type} — {count} 个匹配：仅可搜索，无法替换。",
+      "exclusion_flows_readonly": "flow · {count} 个只读匹配：需要 FLOW · UPDATE 权限。 | flow · {count} 个只读匹配：需要 FLOW · UPDATE 权限。",
+      "exclusion_search_only": "{type} · {count} 个匹配：仅可搜索，无法替换。 | {type} · {count} 个匹配：仅可搜索，无法替换。",
       "exclusion_title": "{count} 个匹配项已从“全部替换”中排除 | {count} 个匹配项已从“全部替换”中排除",
       "expand_all": "全部展开",
-      "file_match_notice": "文件路径已匹配。文件内容不会被搜索 — 打开文件以在其中搜索。",
+      "file_match_notice": "文件路径已匹配。文件内容不会被搜索。打开文件以在其中搜索。",
       "files_progress_banner_failed": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个，{failed} 个失败。总数仍会变化。",
       "files_progress_banner_ok": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个。总数仍会变化。",
       "flow_only_toggle_hint": "区分大小写、全字匹配和正则表达式仅适用于 flow。文件路径和键始终按纯文本匹配。",
@@ -2755,10 +2790,10 @@
       "show_replace": "显示替换",
       "summary": "在 {flows} 个 flow 中有 {matches} 个匹配项",
       "summary_cross": "在 {types} 的 {resources} 中共 {matches}",
-      "tag_keys_only_never": "仅键 — 值从不显示或搜索",
-      "tag_keys_only_values": "仅键 — 不搜索值",
-      "tag_paths_only": "仅路径 — 不搜索文件内容",
-      "tag_search_only": "仅搜索 — 不会被替换",
+      "tag_keys_only_never": "仅键：值从不显示或搜索",
+      "tag_keys_only_values": "仅键：不搜索值",
+      "tag_paths_only": "仅路径：不搜索文件内容",
+      "tag_search_only": "仅搜索：不会被替换",
       "tag_source_code": "源码",
       "truncated_flows": "显示 {total} 个匹配项中的前 {shown} 个。全部替换仅作用于已显示的匹配项，请先缩小查询范围。",
       "truncated_type": "{total} 个中的前 {shown} 个",

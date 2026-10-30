@@ -59,7 +59,9 @@ import lombok.experimental.SuperBuilder;
     description = """
         Runs `onWait`, then pauses the execution until a reviewer decides `onApprove` or `onDeny` from the UI, the `/executions/{id}/actions/review` API, or an EE app.
 
-        `onDeny` always runs on a denial; `denyBehavior` (`CANCEL` by default) then decides what happens to the execution."""
+        `onDeny` always runs on a denial; `denyBehavior` (`CANCEL` by default) then decides what happens to the execution.
+
+        Each approval is a case of kind Approval, listed on the Approvals page and not on Cases."""
 )
 @Plugin(
     examples = {

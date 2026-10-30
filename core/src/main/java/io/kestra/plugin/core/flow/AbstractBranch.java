@@ -23,22 +23,19 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 abstract class AbstractBranch<T extends Output> extends Task implements FlowableTask<T> {
-    @Valid
-    protected List<Task> errors;
+    protected List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;
     }
 
-    @Valid
     @PluginProperty
     @NotEmpty(message = "The 'tasks' property cannot be empty")
-    protected List<Task> tasks;
+    protected List<@Valid Task> tasks;
 
     @Override
     public List<Task> allChildTasks() {

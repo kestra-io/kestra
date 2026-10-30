@@ -1,13 +1,23 @@
-import {onActivated, onDeactivated, onMounted, onUnmounted} from "vue"
+import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
 
-const ALWAYS_GLOBAL_IDS = new Set(["save", "undo", "command-menu", "clear"])
+const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
+// A copy/cut shortcut yields to a real text selection, so `⌘C` over selected card text still
+// copies the text instead of the block; `isTypingTarget` only covers inputs and Monaco. Paste has
+// no equivalent native behavior to protect, since a non-editable selection can't be pasted over.
+const TEXT_SELECTION_GUARDED_IDS = new Set(["copy", "cut"])
+export const AUTHORING_OVERLAY_ATTRIBUTE = "data-authoring-overlay"
 
-function isTypingTarget(target: EventTarget | null): boolean {
+export function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true
     return Boolean(el.closest?.(".monaco-editor"))
+}
+
+function hasNonEmptyTextSelection(): boolean {
+    const selection = window.getSelection?.()
+    return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0)
 }
 
 function matchesKey(event: KeyboardEvent, key: string): boolean {
@@ -36,6 +46,7 @@ export interface UseBlockEditorKeyboardOptions {
     keymap: BlockEditorKeyBindingLike[]
     dispatch: (id: string, event: KeyboardEvent) => void | boolean
     isOverlayOpen?: () => boolean
+    root?: Ref<HTMLElement | undefined | null>
 }
 
 export function resolveBlockEditorBinding(
@@ -50,11 +61,21 @@ export function useBlockEditorKeyboard(options: UseBlockEditorKeyboardOptions) {
         const binding = resolveBlockEditorBinding(event, options.keymap)
         if (!binding) return
 
+        if (TEXT_SELECTION_GUARDED_IDS.has(binding.id) && hasNonEmptyTextSelection()) return
+
         const overlayOpen = options.isOverlayOpen?.() ?? false
         const typing = isTypingTarget(event.target)
         const isGlobal = ALWAYS_GLOBAL_IDS.has(binding.id)
         const ignoresOverlayGuard = IGNORES_OVERLAY_GUARD_IDS.has(binding.id)
+        // A field belongs to whoever owns it. The surface's own dialogs are appended to the body,
+        // so they are claimed by a marker rather than by DOM containment.
+        const foreignTypingTarget =
+            typing &&
+            options.root?.value != null &&
+            !options.root.value.contains(event.target as Node) &&
+            !(event.target as HTMLElement | null)?.closest?.(`[${AUTHORING_OVERLAY_ATTRIBUTE}]`)
 
+        if (event.key !== "Escape" && foreignTypingTarget) return
         if (event.key !== "Escape" && !isGlobal && typing) return
         if (event.key !== "Escape" && !isGlobal && !ignoresOverlayGuard && overlayOpen) return
 

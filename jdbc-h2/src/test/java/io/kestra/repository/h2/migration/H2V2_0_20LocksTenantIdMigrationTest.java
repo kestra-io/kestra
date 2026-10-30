@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * H2-specific integration test for {@link V2_0_20LocksTenantIdMigration}: the generated
- * {@code tenant_id} column must reflect the JSON value's {@code tenantId} for lease rows, stay
- * NULL for rows without one (e.g. server-mutex Locks), and the migration must be re-runnable.
+ * H2-specific integration test for the {@code locks.tenant_id} generated column created by
+ * {@link V2_0_01SchemaMigration}: it must reflect the JSON value's {@code tenantId} for lease rows,
+ * stay NULL for rows without one (e.g. server-mutex Locks), and the migration must be re-runnable.
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -36,7 +36,7 @@ class H2V2_0_20LocksTenantIdMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_20LocksTenantIdMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

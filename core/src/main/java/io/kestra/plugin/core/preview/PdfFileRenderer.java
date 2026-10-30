@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.preview;
 
+import java.util.Set;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
 
@@ -29,5 +31,10 @@ public class PdfFileRenderer extends AbstractBase64FileRenderer {
     @Override
     public boolean supports(String extension) {
         return "pdf".equalsIgnoreCase(extension);
+    }
+
+    @Override
+    public Set<String> extensions() {
+        return Set.of("pdf");
     }
 }

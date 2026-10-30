@@ -1,26 +1,38 @@
 package io.kestra.core.docs;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
+import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
+import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -33,10 +45,13 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.test.TestSuite;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.storage.Reverse;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,6 +60,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -96,7 +113,9 @@ class JsonSchemaGeneratorTest {
             .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        Map<String, Map<String, Object>> generatedProperties = (Map<String, Map<String, Object>>) generate.get("properties");
+        assertThat(generatedProperties.size(), is(7));
+        assertThat(generatedProperties.containsKey("assets"), is(true));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));
@@ -147,6 +166,101 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            // External is inferred, never declared, so it is not offered as an asset type
+            assertThat(definitions, not(hasKey(External.class.getName())));
+            // the custom asset is the free-form branch, so its type stays an open string
+            var customType = properties(definitions.get(Custom.class.getName())).get("type");
+            assertThat(customType.get("type"), is("string"));
+            assertThat(customType, not(hasKey("const")));
+
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(generate));
+            // the whole assets.outputs declaration is rendered at runtime, so an expression is as valid as a literal
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: \"{{ flow.namespace }}\"", "type: " + External.class.getName())), is(empty()));
+            assertThat(validate(schema, flowWithOutputAsset("id: \"{{ taskrun.value }}_trips\"", "type: " + External.class.getName())), is(empty()));
+            // a type no asset plugin provides is deserialized as a custom asset, so the schema accepts it as well
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: company.team", "type: com.acme.assets.Warehouse")), is(empty()));
+            // a literal is still held to its format
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: Company Team", "type: " + External.class.getName())), is(not(empty())));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldAcceptExpressionWhenEnumPropertyIsDynamic() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+            Map<String, Object> flowSchema = jsonSchemaGenerator.schemas(Flow.class);
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(flowSchema));
+
+            // untyped branches, or the no-code editor renders a type switch instead of a select
+            var definitions = (Map<String, Map<String, Object>>) flowSchema.get("definitions");
+            var anyOf = (List<Map<String, Object>>) properties(definitions.get(Log.class.getName())).get("level").get("anyOf");
+            assertThat(anyOf, everyItem(not(hasKey("type"))));
+
+            assertThat(validate(schema, flowWithLogLevel("WARN")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("\"{{ vars.level }}\"")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("\"{% if true %}WARN{% endif %}\"")), is(empty()));
+            assertThat(validate(schema, flowWithLogLevel("WARNING")), is(not(empty())));
+
+            // the no-code editor picks its dropdown from a top-level enum in the plugin schema
+            Map<String, Object> level = properties(jsonSchemaGenerator.properties(Task.class, Log.class)).get("level");
+            assertThat((List<String>) level.get("enum"), hasItems("INFO", "WARN"));
+        });
+    }
+
+    private static String flowWithLogLevel(String level) {
+        return """
+            id: dynamic-enum
+            namespace: company.team
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                level: %s
+            """.formatted(level);
+    }
+
+    private static String flowWithOutputAsset(String... assetProperties) {
+        return """
+            id: assets
+            namespace: company.team
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                assets:
+                  outputs:
+                    - %s
+            """.formatted(String.join("\n" + " ".repeat(10), assetProperties));
+    }
+
+    private static List<com.networknt.schema.Error> validate(com.networknt.schema.Schema schema, String flow) {
+        try {
+            return schema.validate(toolsJson(JacksonMapper.ofYaml().readTree(flow)));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // the schema validator reads Jackson 3 trees, the generator and the flow parser produce Jackson 2 ones
+    private static JsonNode toolsJson(Object value) {
+        try {
+            return JsonMapper.builder().build().readTree(JacksonMapper.ofJson().writeValueAsString(value));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Test
     void flowSchemaExcludesEeOnlyInputTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
@@ -159,8 +273,84 @@ class JsonSchemaGeneratorTest {
             // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
             // leaking through the latter).
             assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // the class name is not the type name, so it survives the string strip: the subtype's definitions and the
+            // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
+            // discriminator
+            assertThat(schema, not(containsString("ReusableInputsInput")));
+            assertThat(schema, not(containsString("TableInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOmitServerOwnedFieldsFromEditorSchemas() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            var flowDefinitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(Flow.class).get("definitions");
+            var flowProperties = properties(flowDefinitions.get(Flow.class.getName()));
+            assertThat(List.of("revision", "updated", "deleted", "draft"), everyItem(not(in(flowProperties.keySet()))));
+            assertThat(flowProperties.keySet(), hasItems("id", "namespace", "disabled"));
+
+            var testSuiteDefinitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(TestSuite.class).get("definitions");
+            var testSuiteProperties = properties(testSuiteDefinitions.get(TestSuite.class.getName()));
+            assertThat(List.of("source", "deleted"), everyItem(not(in(testSuiteProperties.keySet()))));
+            assertThat(testSuiteProperties.keySet(), hasItems("id", "flowId", "testCases"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void excludedInputTypesLeaveNoBranchOrDefinitionBehind() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var flow = definitions.get(Flow.class.getName());
+            var inputs = (Map<String, Object>) ((Map<String, Object>) flow.get("properties")).get("inputs");
+            var items = (Map<String, Object>) inputs.get("items");
+            var branches = (List<Map<String, Object>>) items.get("anyOf");
+
+            String excluded = ReusableInputsInput.class.getName();
+            assertThat(
+                "no anyOf branch may reach the excluded subtype",
+                branches.stream().map(branch -> String.valueOf(branch.get("$ref"))).toList(),
+                everyItem(not(containsString(excluded)))
+            );
+            assertThat(
+                "the excluded subtype's definitions, orphaned by the branch removal, must go with it",
+                definitions.keySet().stream().filter(key -> key.startsWith(excluded)).toList(), is(empty())
+            );
+            // a body definition shared with the surviving subtypes must stay
+            assertThat(definitions, hasKey(DependsOn.class.getName()));
+            assertThat(branches, hasSize(greaterThan(1)));
+        });
+    }
+
+    @Test
+    void excludedInputTypesAreStrippedForTheTargetedSchemaOnly() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator standard = applicationContext.getBean(JsonSchemaGenerator.class);
+            JsonSchemaGenerator excludingEmail = new JsonSchemaGenerator(applicationContext.getBean(PluginRegistry.class)) {
+                @Override
+                protected Set<String> excludedInputTypes(Class<?> cls) {
+                    return Flow.class.equals(cls) ? Set.of("EMAIL") : super.excludedInputTypes(cls);
+                }
+            };
+
+            // the default generator offers EMAIL, so its absence below is the override's doing and not a schema change
+            assertThat(standard.schemas(Flow.class).toString(), containsString("EMAIL"));
+            // the strip has to run before discriminator wrappers collapse: afterwards the subtype is a flat definition
+            // reached by $ref, with no branch left to remove, and EMAIL would survive here
+            assertThat(excludingEmail.schemas(Flow.class).toString(), not(containsString("EMAIL")));
+            // a class the override does not target keeps the default (empty) exclusion set
+            assertThat(excludingEmail.schemas(Dashboard.class).toString(), is(standard.schemas(Dashboard.class).toString()));
         });
     }
 
@@ -176,6 +366,34 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
             Assertions.assertNotNull(task.get("anyOf"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat(
+                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false)
+            );
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat(
+                "the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password")
+            );
         });
     }
 
@@ -304,7 +522,7 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(7));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
@@ -315,7 +533,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(generate.get("$beta"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(3));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$language"), is(MonacoLanguages.PYTHON.toString()));
     }
@@ -327,6 +545,19 @@ class JsonSchemaGeneratorTest {
         assertThat(generate, is(not(nullValue())));
         assertThat((List<String>) generate.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
         assertThat((List<String>) generate.get("required"), containsInAnyOrder("requiredWithNoDefault"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldNotRequireSubtypedFieldWhenBuilderDefaultExists() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredSubtypedWithDefault.class);
+
+        assertThat((List<String>) generate.get("required"), not(hasItem("taskRunner")));
+        assertThat((List<String>) generate.get("required"), hasItem("taskRunnerWithNoDefault"));
+
+        Map<String, Object> inputs = new AbstractClassDocumentation<Task>(jsonSchemaGenerator, RequiredSubtypedWithDefault.class, Task.class) {}.getInputs();
+        assertThat(((Map<String, Object>) inputs.get("taskRunner")).get("$required"), is(false));
+        assertThat(((Map<String, Object>) inputs.get("taskRunnerWithNoDefault")).get("$required"), is(true));
     }
 
     @SuppressWarnings("unchecked")
@@ -351,6 +582,14 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDisplayReverseSeparatorDefaultAsEscapedNewline() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Reverse.class);
+
+        assertThat(properties(generate).get("separator").get("default"), is("\\n"));
     }
 
     @SuppressWarnings("unchecked")
@@ -425,7 +664,8 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(10));
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
+        assertThat(definitions.size(), is(13));
     }
 
     @SuppressWarnings("unchecked")
@@ -556,6 +796,22 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         private Property<TaskWithEnum.TestClass> requiredWithNoDefault;
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class RequiredSubtypedWithDefault extends Task {
+        @PluginProperty
+        @NotNull
+        @Builder.Default
+        private TaskRunner<?> taskRunner = io.kestra.plugin.core.runner.Process.instance();
+
+        @PluginProperty
+        @NotNull
+        private TaskRunner<?> taskRunnerWithNoDefault;
     }
 
     @SuperBuilder
@@ -702,4 +958,71 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithTicketingFields extends Task implements RunnableTask<TaskWithTicketingFields.Output> {
+        @TicketingField(role = TicketingField.Role.CASE_TITLE)
+        private Property<String> subject;
+
+        @TicketingField(defaultValue = "incident")
+        private String table;
+
+        @TicketingField(defaultValue = "3")
+        private Property<Integer> priority;
+
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "urgent"), @TicketingField.Mapping(from = "HIGH", to = "high")})
+        private Property<String> urgency;
+
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "1"), @TicketingField.Mapping(from = "HIGH", to = "2")})
+        private Property<Integer> level;
+
+        private String untouched;
+
+        @Override
+        public Output run(RunContext runContext) throws Exception {
+            return null;
+        }
+
+        @Builder
+        @Getter
+        public static class Output implements io.kestra.core.models.tasks.Output {
+            @TicketingField(role = TicketingField.Role.TICKET_KEY)
+            private final Integer number;
+
+            @TicketingField(role = TicketingField.Role.TICKET_URL)
+            private final URL link;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingHintsWhenPropertyIsAnnotated() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("subject").get("$ticketingRole"), is("CASE_TITLE"));
+        assertThat(props.get("subject").containsKey("$ticketingDefault"), is(false));
+        assertThat(props.get("table").get("$ticketingDefault"), is("incident"));
+        assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
+        assertThat(props.get("untouched").keySet().stream().filter(k -> k.startsWith("$ticketing")).toList(), is(List.of()));
+        assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
+        assertThat(props.get("urgency").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("urgency").get("$ticketingValueMap"), is(Map.of("CRITICAL", "urgent", "HIGH", "high")));
+        assertThat(props.get("level").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("level").get("$ticketingValueMap"), is(Map.of("CRITICAL", "1", "HIGH", "2")));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingRoleWhenOutputIsAnnotated() {
+        Map<String, Object> generate = jsonSchemaGenerator.outputs(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("number").get("$ticketingRole"), is("TICKET_KEY"));
+        assertThat(props.get("link").get("$ticketingRole"), is("TICKET_URL"));
+    }
 }

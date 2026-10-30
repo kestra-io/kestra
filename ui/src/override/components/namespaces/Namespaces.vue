@@ -24,7 +24,7 @@
             }"
         />
 
-        <KsCol v-if="namespaces.length === 0" class="p-3 namespaces">
+        <KsCol v-if="namespaces.length === 0" class="namespaces empty-state">
             <span>{{ $t("no_namespaces") }}</span>
         </KsCol>
 
@@ -37,8 +37,7 @@
             <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                :props="({class: 'tree'} as any)"
-                class="h-auto p-2 rounded-full"
+                class="rounded-full namespace-tree"
             >
                 <template #default="{data}">
                     <router-link
@@ -48,12 +47,11 @@
                                 id: data.id,
                             },
                         }"
-                        tag="div"
                         class="node"
                     >
-                        <div class="d-flex">
-                            <FolderOpenOutline class="me-2 icon" />
-                            <span class="pe-3">
+                        <div class="namespace-row">
+                            <FolderOpenOutline class="icon" />
+                            <span class="namespace-label">
                                 {{ namespaceLabel(data.label) }}
                             </span>
                             <slot name="description" :namespace="data" />
@@ -79,12 +77,13 @@
     import useNamespaces from "../../../composables/useNamespaces"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
+    import {useSystemNamespace} from "../../../composables/useSystemNamespace"
 
     import Navbar from "../../../components/layout/TopNavBar.vue"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
-    import {useNamespacesFilter} from "../../../components/filter/configurations"
+    import {useNamespacesFilter} from "../../../components/filter/configurations/namespacesFilter"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
 
@@ -102,6 +101,15 @@
         disabled?: boolean;
         children?: Node[];
         system?: boolean;
+    }
+
+    // Accumulator shape while building the hierarchy: children are keyed by label for O(1)
+    // lookup during the single pass over namespaces.value, then flattened to Node[] by build().
+    interface BuildNode {
+        id: string;
+        label: string;
+        description?: string;
+        children: Record<string, BuildNode>;
     }
 
     const route = useRoute()
@@ -127,10 +135,7 @@
         {immediate: true, deep: true},
     )
 
-    const miscStore = useMiscStore()
-    const systemNamespace = computed(
-        () => miscStore.configs?.systemNamespace || "system",
-    )
+    const systemNamespace = useSystemNamespace()
 
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
@@ -139,11 +144,11 @@
             return []
         }
 
-        const map = {} as Node[]
+        const map: Record<string, BuildNode> = {}
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".")
-            let currentLevel = map as any
+            let currentLevel: Record<string, BuildNode> = map
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".")
@@ -154,19 +159,19 @@
                         id: label,
                         label,
                         description: isLeaf ? item.description : undefined,
-                        children: [],
+                        children: {},
                     }
                 currentLevel = currentLevel[label].children
             })
         })
 
-        const build = (nodes: Node[]): Node[] => {
+        const build = (nodes: Record<string, BuildNode>): Node[] => {
             return Object.values(nodes).map((node) => {
                 const result: Node = {
                     id: node.id,
                     label: node.label,
                     description: node.description,
-                    children: node.children ? build(node.children) : undefined,
+                    children: build(node.children),
                 }
                 return result
             })
@@ -192,7 +197,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .row-padding {
     padding: var(--ks-spacing-6);
@@ -203,6 +208,23 @@
     border-radius: var(--kel-border-radius-round);
     border: 1px solid var(--ks-border-default);
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+
+    &.empty-state {
+        padding: var(--ks-spacing-4);
+    }
+
+    .namespace-tree {
+        height: auto;
+        padding: var(--ks-spacing-2);
+    }
+
+    .namespace-row {
+        display: flex;
+    }
+
+    .namespace-label {
+        padding-inline-end: var(--ks-spacing-4);
+    }
 
     &.system {
         border-color: var(--ks-border-focus);
@@ -216,10 +238,10 @@
 
     .rounded-full {
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-bg-surface)
+        background-color: var(--ks-bg-surface);
     }
 
-    :deep(.kel-tree-node__content) {
+    & :deep(.kel-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
@@ -230,6 +252,7 @@
         }
 
         .icon {
+            margin-inline-end: var(--ks-spacing-2);
             color: var(--ks-text-link);
         }
     }

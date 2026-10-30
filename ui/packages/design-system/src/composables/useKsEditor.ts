@@ -8,31 +8,45 @@ import "monaco-editor/basic-languages/monaco.contribution"
 import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {useStorage} from "@vueuse/core"
-import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
 import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
 import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
 // @ts-expect-error tab focus path lacks types
 import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
-import debounce from "lodash/debounce"
+import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
 import {useTaskIcon} from "./taskIcon"
-import {findDuplicateTaskIds} from "../utils/yamlValidation"
 import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
 import {useEditorDecorations} from "./useEditorDecorations"
 import {useEditorContentWidget} from "./useEditorContentWidget"
 import {useEditorScrollMemory} from "./useEditorScrollMemory"
 import {useEditorDatePicker} from "./useEditorDatePicker"
+import {useFlowYamlEditor} from "./useFlowYamlEditor"
 import {useSuggestWidgetIcons} from "./useSuggestWidgetIcons"
 import {registerEditorActions} from "./useEditorActions"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
+import {editorFontFamily} from "../utils/editorFont"
 type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
 configureMonacoTypescript()
+
+type EditorTestElement = HTMLDivElement & {
+    __setValueInTests: (value: string) => void
+}
+
+declare global {
+    interface Window {
+        pasteToEditor: (textToPaste: string) => void
+        clearEditor: () => void
+        acceptSuggestion: () => void
+        nextSuggestion: () => void
+    }
+}
 
 export function useKsEditor(
     props: ResolvedKsEditorProps,
@@ -82,7 +96,7 @@ export function useKsEditor(
     })
     const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
     const resolvedEditorFontSize = computed(
-        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+        () => storedEditorFontSizeOverride.value ?? (MONO_BASE_PX[storedAppFontSizeMode.value] ?? MONO_BASE_PX.medium),
     )
 
     const isFocused = ref(false)
@@ -93,6 +107,7 @@ export function useKsEditor(
 
     let lastTimeout: number | undefined
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
+    let placeholderWidget: PlaceholderContentWidget | undefined
     const disposeCompletions = ref<() => void>()
 
 
@@ -146,17 +161,17 @@ export function useKsEditor(
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "")
 
-    const isFlowYamlEditor = computed(() => props.lang === "yaml" && props.schemaType === "flow")
-
     const pebbleEnabled = computed(() => isPebbleEnabled({
         pebble: mergedOptions.value.pebble,
         lang: props.lang,
         schemaType: props.schemaType,
     }))
 
-    const duplicateTaskIdsEnabled = computed(() => {
-        if (mergedOptions.value.duplicateTaskIdMarkers !== undefined) return mergedOptions.value.duplicateTaskIdMarkers
-        return props.schemaType === "flow" && props.lang === "yaml"
+    const flowYamlEditor = useFlowYamlEditor({
+        isFlowYaml: () => props.lang === "yaml" && props.schemaType === "flow",
+        duplicateTaskIdMarkers: () => mergedOptions.value.duplicateTaskIdMarkers,
+        value: () => props.modelValue,
+        codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
     })
 
     const containerClass = computed(() => [
@@ -237,7 +252,7 @@ export function useKsEditor(
             // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
             // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
             editContext: false,
-            fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
+            fontFamily: editorFontFamily(),
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
@@ -263,14 +278,6 @@ export function useKsEditor(
 
     function getOriginalEditor() {
         return isDiff.value ? localDiffEditor.value?.getOriginalEditor() : localEditor.value
-    }
-
-    function hasVisibleInlineGhostText(codeEditor: monaco.editor.IStandaloneCodeEditor): boolean {
-        return codeEditor.getDomNode()?.querySelector(".ghost-text") !== null
-    }
-
-    function isTypeLine(lineContent: string): boolean {
-        return /^\s*(?:-\s*)?type\s*:\s*.+\s*$/.test(lineContent)
     }
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
@@ -312,7 +319,7 @@ export function useKsEditor(
             theme: props.theme,
             language: props.lang,
             suggest: {showClasses: false, showWords: false},
-            ...(isFlowYamlEditor.value ? {inlineSuggest: {enabled: true}} : {}),
+            ...flowYamlEditor.constructionOptions.value,
             ...editorOptions.value,
         }
 
@@ -376,40 +383,9 @@ export function useKsEditor(
             let localBackspaceTimeout: number | null = null
             let suggestController: {model: {state: 0 | 1 | 2}, cancelSuggestWidget: () => void} | undefined
 
+            flowYamlEditor.attach(localEditor.value, () => suggestController?.model.state !== 0)
+
             localEditor.value.onKeyDown((e) => {
-                if (isFlowYamlEditor.value && suggestController?.model.state !== 0
-                    && (e.keyCode === monaco.KeyCode.Enter || e.keyCode === monaco.KeyCode.Tab)) {
-                    const currentLine = localEditor.value?.getModel()?.getLineContent(localEditor.value.getPosition()?.lineNumber ?? 0) ?? ""
-                    if (isTypeLine(currentLine)) {
-                        setTimeout(() => {
-                            const ed = localEditor.value
-                            if (!ed) return
-                            const position = ed.getPosition()
-                            if (!position) return
-                            const acceptedLine = ed.getModel()?.getLineContent(position.lineNumber) ?? ""
-                            if (!isTypeLine(acceptedLine)) return
-                            ed.trigger("typeAcceptedInsertLine", "editor.action.insertLineAfter", {})
-                            ed.trigger("typeAcceptedInlineSuggest", "editor.action.inlineSuggest.trigger", {})
-                        }, 0)
-                    }
-                }
-
-                if (isFlowYamlEditor.value && hasVisibleInlineGhostText(localEditor.value!)) {
-                    if (e.keyCode === monaco.KeyCode.Tab) {
-                        e.preventDefault(); e.stopPropagation()
-                        localEditor.value?.trigger("inlineSuggestCommit", "editor.action.inlineSuggest.commit", {})
-                        return
-                    }
-                    if (e.keyCode === monaco.KeyCode.Enter) {
-                        localEditor.value?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {})
-                        return
-                    }
-                }
-
-                if (isFlowYamlEditor.value && e.keyCode === monaco.KeyCode.Enter) {
-                    setTimeout(() => localEditor.value?.trigger("inlineSuggestTrigger", "editor.action.inlineSuggest.trigger", {}), 0)
-                }
-
                 if (e.keyCode === monaco.KeyCode.Backspace) {
                     if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout)
                     if (!localEditor.value || !isCursorInPebbleBlock(localEditor.value)) return
@@ -426,7 +402,7 @@ export function useKsEditor(
             }
 
             if (props.placeholder !== undefined && props.placeholder !== "") {
-                new PlaceholderContentWidget(String(props.placeholder), localEditor.value)
+                placeholderWidget = new PlaceholderContentWidget(String(props.placeholder), localEditor.value)
             }
 
             suggestController = localEditor.value.getContribution("editor.contrib.suggestController") as unknown as {
@@ -508,6 +484,7 @@ export function useKsEditor(
                 emit("focusout", isCodeEditor(ed) ? ed.getValue() : undefined)
                 isFocused.value = false
             })
+            ed.onDidFocusEditorText?.(() => emit("focus"))
             if (mergedOptions.value.shouldFocus) {
                 ed.onDidFocusEditorText?.(() => { isFocused.value = true })
                 ed.focus()
@@ -559,7 +536,7 @@ export function useKsEditor(
 
         const monacoEl = editorRef.value
         if (monacoEl) {
-            ;(monacoEl as any).__setValueInTests = (value: string) => {
+            ;(monacoEl as EditorTestElement).__setValueInTests = (value: string) => {
                 if (!isCodeEditor(ed)) return
                 ed?.setValue(value)
             }
@@ -584,18 +561,26 @@ export function useKsEditor(
         editorResolved.value?.focus()
     }
 
-    function onDrop(event: DragEvent) {
-        const text = event.dataTransfer?.getData("text/plain")
-        if (!text || !isCodeEditor(localEditor.value)) return
+    function insertTextAtCursor(text: string): void {
         const ed = localEditor.value
-        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
-        const position = target?.position ?? ed.getPosition()
-        if (!position) return
-        ed.executeEdits("drop-insert", [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        if (!text || !isCodeEditor(ed)) return
+        const selection = ed.getSelection()
+        if (!selection) return
+        ed.executeEdits("insert-text", [{
+            range: selection,
             text,
         }])
         ed.focus()
+    }
+
+    function onDrop(event: DragEvent) {
+        const text = event.dataTransfer?.getData("text/plain")
+        const ed = localEditor.value
+        if (!text || !isCodeEditor(ed)) return
+        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
+        const position = target?.position ?? ed.getPosition()
+        if (position) ed.setPosition(position)
+        insertTextAtCursor(text)
     }
 
     function destroy() {
@@ -610,6 +595,8 @@ export function useKsEditor(
             localDiffEditor.value = undefined
         }
         if (localEditor.value) {
+            placeholderWidget?.dispose()
+            placeholderWidget = undefined
             localEditor.value?.dispose()
             localEditor.value?.getModel()?.dispose()
             localEditor.value = undefined
@@ -637,27 +624,6 @@ export function useKsEditor(
             console.warn("Failed to set model language", e)
         }
     })
-
-    watch(() => props.modelValue, (newValue) => {
-        if (!duplicateTaskIdsEnabled.value) return
-        if (!localEditor.value || !isCodeEditor(localEditor.value)) return
-        const model = localEditor.value.getModel()
-        if (!model) return
-
-        const duplicateMarkers = findDuplicateTaskIds(newValue)
-        monaco.editor.setModelMarkers(
-            model,
-            "duplicate-task-ids",
-            duplicateMarkers.map((m) => ({
-                startLineNumber: m.startLineNumber,
-                startColumn: m.startColumn,
-                endLineNumber: m.endLineNumber,
-                endColumn: m.endColumn,
-                message: m.message,
-                severity: monaco.MarkerSeverity.Error,
-            })),
-        )
-    }, {immediate: true})
 
     watch(() => props.modelValue, (newValue) => {
         if (localEditor.value) {
@@ -710,16 +676,16 @@ export function useKsEditor(
             )
         }
 
-        ;(window as any).pasteToEditor = (textToPaste: string) => {
+        window.pasteToEditor = (textToPaste: string) => {
             localEditor.value?.executeEdits("", [{
                 range: localEditor.value?.getSelection() ?? new monaco.Range(0, 0, 0, 0),
                 text: textToPaste,
             }])
         }
-        ;(window as any).clearEditor = () => localEditor.value?.getModel()?.setValue("")
-        ;(window as any).acceptSuggestion = () =>
+        window.clearEditor = () => localEditor.value?.getModel()?.setValue("")
+        window.acceptSuggestion = () =>
             localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {})
-        ;(window as any).nextSuggestion = () =>
+        window.nextSuggestion = () =>
             localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {})
     })
 
@@ -752,6 +718,7 @@ export function useKsEditor(
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        insertTextAtCursor,
         getEditor,
     }
 }

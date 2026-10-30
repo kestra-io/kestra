@@ -1,0 +1,17 @@
+id: webhook-response
+namespace: io.kestra.tests
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: Webhook received
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-response
+    responseCode: 202
+    responseHeaders:
+      Content-Type: text/plain
+      X-Webhook-Token: "{{ trigger.parameters.token[0] }}"
+    responseBody: "{{ trigger.parameters.challenge[0] }}"

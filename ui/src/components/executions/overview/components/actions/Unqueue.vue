@@ -9,24 +9,29 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('unqueue')" />
+            <span>{{ $t('unqueue') }}</span>
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
+            <i18n-t keypath="unqueue title" tag="p" scope="global">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
+            <p>{{ $t("unqueue note") }}</p>
 
             <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
                 <KsOption
-                    v-for="item in states"
-                    :key="item.code"
-                    :value="item.code"
+                    v-for="state in states"
+                    :key="state"
+                    :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <KsExecutionStatus size="small" :label="true" class="unqueue-status" :status="state" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status><code>{{ state }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -42,7 +47,6 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import escape from "lodash/escape"
     import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -66,15 +70,10 @@
     const isDrawerOpen = ref(false)
     const selectedStatus = ref(State.RUNNING)
 
-    const states = computed(() => {
-        return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
-            code: value,
-            label: t("unqueue as", {status: value}),
-        }))
-    })
+    const states = [State.RUNNING, State.CANCELLED, State.FAILED]
 
     const enabled = computed(() => {
-        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.execution.namespace))) {
             return false
         }
 
@@ -93,3 +92,9 @@
             })
     }
 </script>
+
+<style scoped>
+.unqueue-status {
+    margin-inline-end: var(--ks-spacing-1);
+}
+</style>

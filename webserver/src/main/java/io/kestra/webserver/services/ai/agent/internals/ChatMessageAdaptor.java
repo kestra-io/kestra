@@ -1,12 +1,15 @@
 package io.kestra.webserver.services.ai.agent.internals;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
@@ -41,6 +44,7 @@ public final class ChatMessageAdaptor {
 
     /** Project the durable AgentMessage log down to the four LangChain4j message kinds for the next request. */
     public static List<ChatMessage> project(final List<AgentMessage> rows) {
+        Set<String> pairedToolCallIds = pairedToolCallIds(rows);
         List<ChatMessage> out = new ArrayList<>();
         for (AgentMessage m : rows) {
             switch (m.type()) {
@@ -60,8 +64,9 @@ public final class ChatMessageAdaptor {
                             /* SYSTEM/TOOL text: skip */ }
                     }
                 }
+                // Drop a TOOL_CALL with no TOOL_RESULT (or pending PROPOSED_ACTION): providers reject an unpaired tool request, and the durable log would otherwise poison every later turn.
                 case TOOL_CALL -> {
-                    if (m.toolCall() != null) {
+                    if (m.toolCall() != null && isPairedToolCall(m.toolCall(), pairedToolCallIds)) {
                         out.add(toAiMessage(m.toolCall()));
                     }
                 }
@@ -184,5 +189,21 @@ public final class ChatMessageAdaptor {
 
     private static String nullToEmpty(final String s) {
         return s == null ? "" : s;
+    }
+
+    private static Set<String> pairedToolCallIds(final List<AgentMessage> rows) {
+        Set<String> ids = new HashSet<>();
+        for (AgentMessage m : rows) {
+            if ((m.type() == AgentMessageType.TOOL_RESULT || m.type() == AgentMessageType.PROPOSED_ACTION)
+                && m.toolCall() != null && m.toolCall().id() != null) {
+                ids.add(m.toolCall().id());
+            }
+        }
+        return ids;
+    }
+
+    private static boolean isPairedToolCall(final AgentToolCall toolCall, final Set<String> pairedIds) {
+        String id = toolCall.id();
+        return id == null || pairedIds.contains(id);
     }
 }

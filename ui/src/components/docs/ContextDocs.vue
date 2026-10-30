@@ -17,7 +17,7 @@
                 :to="{
                     name: 'docs/view',
                     params:{
-                        path:docPath
+                        path:docsRoutePath
                     }
                 }"
                 target="_blank"
@@ -42,14 +42,14 @@
                     </template>
                 </DocsLayout>
             </template>
-            <KsMarkdown v-else :content="OFFLINE_MD" class="m-3" />
+            <KsMarkdown v-else :content="OFFLINE_MD" class="offline-markdown" />
         </div>
     </ContextInfoContent>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, onUnmounted, onMounted} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {ref, watch, computed, onUnmounted} from "vue"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import DocsLayout from "./DocsLayout.vue"
@@ -79,10 +79,15 @@
     import HomePageButtons from "../content/HomePageButtons.vue"
     import HomePageHeader from "../content/HomePageHeader.vue"
     import ProseImg from "../content/ProseImg.vue"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
 
     const markdownComponents = {
         a: ContextDocsLink,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ContextChildCard,
@@ -109,6 +114,7 @@
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
@@ -137,7 +143,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value]
     }
 
-    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
+    async function setDocPageFromResponse(response: {metadata?: DocMetadata, content: string}) {
         docStore.pageMetadata = response.metadata
         let content = response.content
         if (!("canShare" in navigator)) {
@@ -154,12 +160,14 @@
     async function fetchDefaultDocFromDocIdIfPossible() {
         if(!isOnline.value) return
 
+        const docId = docStore.docId
         try {
-            if(!docStore.docId) {
+            if(!docId) {
                 refreshPage()
                 return
             }
-            const response = await docStore.fetchDocId(docStore.docId)
+            const response = await docStore.fetchDocId(docId)
+            if (docId !== docStore.docId) return
             if (response) {
                 await setDocPageFromResponse(response)
                 // Add the default page to history
@@ -168,34 +176,24 @@
                 refreshPage()
             }
         } catch {
-            refreshPage()
+            if (docId === docStore.docId) refreshPage()
         }
     }
 
     async function refreshPage(val?: string) {
-        let response: {metadata?: any, content:string} | undefined = undefined
-        // if this fails to return a value, fetch the default doc
-        // if nothing, fetch the home page
-        if(response === undefined){
-            response = await docStore.fetchResource(val || "docs")
-        }
+        const path = val || "docs"
+        const response = await docStore.fetchResource(path)
+        if (path !== (docStore.docPath || "docs")) return
 
         await setDocPageFromResponse(response)
-        // Always add to history, empty string for home/default page
-        addToHistory(val || "docs")
+        addToHistory(path)
     }
-
-    onMounted(() => {
-        if (!docPath.value) {
-            fetchDefaultDocFromDocIdIfPossible()
-        }
-    })
 
     onUnmounted(() => {
         markdownContent.value = ""
     })
 
-    watch(() => docStore.docPath, async (val) => {
+    watch([() => docStore.docId, () => docStore.docPath], async ([, val]) => {
         if (!val?.length) {
             fetchDefaultDocFromDocIdIfPossible()
             return
@@ -205,11 +203,11 @@
         refreshPage(val)
     }, {immediate: true})
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
-    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
+    const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .back-button {
         background: var(--ks-btn-secondary-bg-default);
@@ -232,7 +230,7 @@
         &:focus:not(.disabled) {
             background: var(--ks-bg-hover);
             border-color: var(--ks-border-strong);
-            color: var(--ks-primary);
+            color: var(--ks-text-link);
             outline: none;
         }
 
@@ -259,6 +257,10 @@
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 1rem;
+    }
+
+    .offline-markdown {
+        margin: var(--ks-spacing-4);
     }
 
     .docs-toolbar {

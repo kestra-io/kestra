@@ -16,13 +16,17 @@
                         :cls="iconCls"
                         :icons="icons"
                         :loadIcon="loadIcon"
+                        variable="--ks-black"
                         onlyIcon
                     />
                 </slot>
             </div>
 
             <div class="plugin-card__heading">
-                <h5 class="plugin-card__title">{{ title }}</h5>
+                <div class="plugin-card__title-row">
+                    <h5 class="plugin-card__title">{{ title }}</h5>
+                    <slot name="title-badge" />
+                </div>
                 <p v-if="description" class="plugin-card__description">
                     {{ description }}
                 </p>
@@ -41,11 +45,11 @@
             <slot name="footer-content">
                 <span v-if="hasTaskCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ taskCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.tasks", taskCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.tasks", taskCount ?? 0) }}</span>
                 </span>
                 <span v-if="hasBlueprintCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ blueprintCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
                 </span>
             </slot>
             <ChevronRight
@@ -59,26 +63,19 @@
 
 <script setup lang="ts">
     import {computed, useSlots} from "vue"
-    import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {KsTag} from "@kestra-io/design-system"
     import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
-    import locale from "./PluginCard.locale"
 
     defineOptions({
         name: "PluginCard",
     })
 
-    const {t} = useI18n({
-        useScope: "local",
-        inheritLocale: true,
-        messages: locale,
-    })
     const slots = useSlots()
 
     const props = withDefaults(defineProps<{
         iconCls?: string
-        icons?: Record<string, any>
+        icons?: Record<string, TaskIconData>
         loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
         title: string
         description?: string | null
@@ -103,6 +100,7 @@
 
     defineSlots<{
         icon?(): unknown
+        "title-badge"?(): unknown
         "footer-content"?(): unknown
     }>()
 
@@ -119,7 +117,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-card {
         display: flex;
         flex-direction: column;
@@ -131,123 +129,134 @@
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
         color: var(--ks-text-primary);
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
 
-        &--clickable {
-            cursor: pointer;
+    .plugin-card--clickable {
+        cursor: pointer;
 
-            &:hover {
-                border-color: var(--ks-border-focus);
-                box-shadow: 0 4px 8px var(--ks-shadow-surface);
-            }
-
-            &:focus-visible {
-                outline: 2px solid var(--ks-border-focus);
-                outline-offset: 2px;
-            }
+        &:hover {
+            border-color: var(--ks-border-focus);
+            box-shadow: 0 4px 8px var(--ks-shadow-surface);
         }
 
-        &__header {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--ks-spacing-4);
-            width: 100%;
+        &:focus-visible {
+            outline: 2px solid var(--ks-border-focus);
+            outline-offset: 2px;
         }
+    }
 
-        &__logo {
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.625rem;
-            height: 2.625rem;
-            padding: var(--ks-spacing-1);
-            background-color: var(--ks-bg-tag);
-            border-radius: var(--ks-radius-base);
+    .plugin-card__header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--ks-spacing-4);
+        width: 100%;
+    }
+
+    .plugin-card__logo {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.625rem;
+        height: 2.625rem;
+        padding: var(--ks-spacing-1);
+        background-color: var(--ks-bg-plugin-icon);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-black);
+        border-radius: var(--ks-radius-base);
+    }
+
+    .plugin-card__heading {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .plugin-card__title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+    }
+
+    .plugin-card__title {
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: var(--ks-font-size-md);
+        font-weight: 600;
+        line-height: 1.125rem;
+        color: var(--ks-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .plugin-card__description {
+        margin: 0;
+        font-size: var(--ks-font-size-xs);
+        font-weight: 400;
+        line-height: 1.25rem;
+        color: var(--ks-text-secondary);
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 2.5rem;
+    }
+
+    .plugin-card__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+    }
+
+    .plugin-card__category {
+        display: inline-block;
+        text-transform: lowercase;
+
+        &::first-letter {
+            text-transform: uppercase;
         }
+    }
 
-        &__heading {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-1);
-            flex: 1 1 0;
-            min-width: 0;
-        }
+    .plugin-card__divider {
+        margin: 0;
+        border: 0;
+        border-top: 1px solid var(--ks-border-default);
+        width: 100%;
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-md);
-            font-weight: 600;
-            line-height: 1.125rem;
-            color: var(--ks-text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+    .plugin-card__footer {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-4);
+    }
 
-        &__description {
-            margin: 0;
-            font-size: var(--ks-font-size-xs);
-            font-weight: 400;
-            line-height: 1.25rem;
-            color: var(--ks-text-secondary);
-            display: -webkit-box;
-            line-clamp: 2;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            height: 2.5rem;
-        }
+    .plugin-card__count {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        line-height: 0.875rem;
+        white-space: nowrap;
+    }
 
-        &__tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--ks-spacing-2);
-        }
+    .plugin-card__count-value {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
 
-        &__category {
-            display: inline-block;
-            text-transform: lowercase;
+    .plugin-card__count-label {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 400;
+        color: var(--ks-text-secondary);
+    }
 
-            &::first-letter {
-                text-transform: uppercase;
-            }
-        }
-
-        &__divider {
-            margin: 0;
-            border: 0;
-            border-top: 1px solid var(--ks-border-default);
-            width: 100%;
-        }
-
-        &__footer {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-4);
-        }
-
-        &__count {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-1);
-            line-height: 0.875rem;
-            white-space: nowrap;
-        }
-
-        &__count-value {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
-
-        &__count-label {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 400;
-            color: var(--ks-text-secondary);
-        }
-
-        &__chevron {
-            margin-left: auto;
-        }
+    .plugin-card__chevron {
+        margin-left: auto;
     }
 </style>

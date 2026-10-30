@@ -11,6 +11,7 @@ import org.apache.hc.core5.net.URIBuilder;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
@@ -25,6 +26,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowMetaStores;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
@@ -42,10 +44,9 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static io.kestra.core.models.Label.CORRELATION_ID;
 
 @Slf4j
 @Singleton
@@ -68,6 +69,9 @@ public class WebhookService {
 
     @Inject
     private UriProvider uriProvider;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
@@ -128,7 +132,8 @@ public class WebhookService {
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         // the trigger is matched on the raw flow, but the execution is built from the flow the executor will run
-        FlowInterface resolvedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+        FlowInterface resolvedFlow = processedFlow.flow();
 
         Execution execution = Execution.builder()
             // The caller mints the id before reading the request so that files stored for the call already live
@@ -146,17 +151,18 @@ public class WebhookService {
 
         var runContext = runContext(flow, execution);
 
-        // Add labels, flow first so the trigger's own override it, as Execution#newExecution does elsewhere
-        List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
-        labels.addAll(LabelService.labelsExcludingSystem(resolvedFlow.getLabels()));
+        List<Label> contributed = new ArrayList<>();
+        contributed.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
         // The trigger's own labels, as the other trigger types get them through TriggerService
-        labels.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
-        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
-            labels.add(new Label(CORRELATION_ID, execution.getId()));
-        }
+        contributed.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
 
-        execution = execution.withLabels(labels);
+        execution = execution.withLabels(
+            LabelService.forExecution(
+                resolvedFlow,
+                LabelService.withoutPinned(contributed, processedFlow.pinnedLabelKeys()),
+                execution.getId()
+            )
+        );
 
         // Check conditions
         if (!conditionService.isValid(trigger, flow, runContext)) {
@@ -230,7 +236,9 @@ public class WebhookService {
                     executionCommandQueue.emit(command.withOperationId(operationId));
                     eventPublisher.publishEvent(CrudEvent.create(execution));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
+                    // stays its real type and the ErrorController handler can map it to 413.
+                    throw Exceptions.propagate(e);
                 }
             },
             asyncOperationsConfiguration.waitTimeout()
@@ -266,11 +274,22 @@ public class WebhookService {
      * @param execution The execution to create the response from
      * @return The WebhookResponse
      */
-    public WebhookResponse executionResponse(Execution execution) {
+    public WebhookResponse executionResponse(Execution execution) throws InternalException {
         return WebhookResponse.fromExecution(
             execution,
+            executionOutputService.getOutputs(execution),
             uriProvider.executionUrl(execution)
         );
+    }
+
+    /**
+     * Get the flow-level outputs of an execution, they are stored outside of the execution.
+     *
+     * @param execution The execution to read the outputs from
+     * @return The execution outputs, or null if the execution has none
+     */
+    public Map<String, Object> executionOutputs(Execution execution) throws InternalException {
+        return executionOutputService.getOutputs(execution);
     }
 
     /**

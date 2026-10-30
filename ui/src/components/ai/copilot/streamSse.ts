@@ -11,7 +11,7 @@
  *     payload (multiple `data:` lines are joined with "\n")
  *   - lines starting with ":" are comments and ignored
  */
-import {useClient} from "@kestra-io/kestra-sdk"
+import {parseProblem, useClient} from "@kestra-io/kestra-sdk"
 import type {AiEventName, AiSseFrame} from "./types"
 
 export interface StreamSseOptions {
@@ -38,8 +38,11 @@ export async function streamSse({url, body, onFrame, signal}: StreamSseOptions):
     })
 
     if (!response.ok) {
-        const detail = await response.text().catch(() => "")
-        throw new SseHttpError(response.status, detail)
+        // The body is read as text because an SSE stream can also fail mid-flight with no body at all.
+        // When it is a problem document, show its detail rather than the raw JSON.
+        const body = await response.text().catch(() => "")
+        const problem = parseProblem(body, response.status, response.headers?.get?.("content-type"))
+        throw new SseHttpError(response.status, problem?.detail ?? problem?.title ?? body, problem?.type)
     }
     if (!response.body) {
         throw new Error("SSE response has no readable body")
@@ -107,6 +110,8 @@ export class SseHttpError extends Error {
     constructor(
         public readonly status: number,
         public readonly detail: string,
+        /** Problem type URI, when the failure carried a problem document. */
+        public readonly problemType?: string,
     ) {
         super(`SSE request failed with status ${status}`)
         this.name = "SseHttpError"

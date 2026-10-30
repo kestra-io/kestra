@@ -20,12 +20,19 @@
                     :label="option.label"
                     :value="option.value"
                 >
-                    <span v-if="option.color" class="color-option">
+                    <span class="option-content">
                         <span
+                            v-if="option.color"
                             class="color-dot"
                             :style="{backgroundColor: option.color}"
                         />
                         {{ option.label }}
+                        <KsBadge
+                            v-if="option.count !== undefined"
+                            :value="formatCount(option.count!)"
+                            type="neutral"
+                            inline
+                        />
                     </span>
                 </KsOption>
             </KsSelect>
@@ -37,6 +44,7 @@
                 <KsDatePicker
                     v-model="local.startDateValue"
                     type="datetime"
+                    :disabledDate="isAfterEndDate"
                     :placeholder="$t('filter.select_start_date')"
                 />
             </div>
@@ -45,6 +53,8 @@
                 <KsDatePicker
                     v-model="local.endDateValue"
                     type="datetime"
+                    :defaultTime="endDateDefaultTime"
+                    :disabledDate="isBeforeStartDate"
                     :placeholder="$t('filter.select_end_date')"
                 />
             </div>
@@ -59,7 +69,7 @@
                     class="date-filter-option"
                     :class="{active: local.dateFilterMode === opt.value}"
                     type="button"
-                    @click="local.dateFilterMode = opt.value"
+                    @click.stop="local.dateFilterMode = opt.value"
                 >
                     {{ opt.label }}
                 </button>
@@ -71,7 +81,8 @@
 <script setup lang="ts">
     import {reactive, toRefs, watchEffect} from "vue"
     import TimeRangeSwitch from "./TimeRangeSwitch.vue"
-    import type {DateFilterOption} from "../utils/filterTypes"
+    import type {DateFilterOption, FilterValue} from "../utils/filterTypes"
+    import {formatCount} from "../utils/helpers"
 
     const props = defineProps<{
         label?: string;
@@ -82,7 +93,7 @@
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";
         dateFilterMode?: string;
-        options: {value: string; label: string; color?: string}[];
+        options: FilterValue[];
     }>()
 
     const emit = defineEmits<{
@@ -94,6 +105,19 @@
     }>()
 
     const {modelValue, timeRangeMode, startDateValue, endDateValue, dateFilterMode} = toRefs(props)
+
+    // The day panels only offer days that keep start <= end; the same-day time case is caught by the
+    // caller before it reaches the API.
+    const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+    const isAfterEndDate = (date: Date) =>
+        local.endDateValue ? startOfDay(date) > startOfDay(local.endDateValue) : false
+
+    const isBeforeStartDate = (date: Date) =>
+        local.startDateValue ? startOfDay(date) < startOfDay(local.startDateValue) : false
+
+    // Without a default time, picking a day in the end date panel pre-fills 00:00:00, which excludes the whole selected day; default the time part to now so picking today covers up to the current time.
+    const endDateDefaultTime = new Date()
 
     const local = reactive({
         value: modelValue.value,
@@ -122,17 +146,17 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .select-panel {
-    .section {
+    & .section {
         padding: 1rem;
 
-        .date-field {
+        & .date-field {
             &:not(:last-child) {
                 margin-bottom: 0.5rem;
             }
 
-            .form-label {
+            & .form-label {
                 display: block;
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
@@ -142,11 +166,11 @@
         }
     }
 
-    .date-filter-section {
-        border-top: 1px solid var(--ks-border-primary);
+    & .date-filter-section {
+        border-top: 1px solid var(--ks-border-default);
         padding-top: 0.75rem;
 
-        .form-label {
+        & .form-label {
             display: block;
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-xs);
@@ -154,16 +178,16 @@
             margin-bottom: 0.5rem;
         }
 
-        .date-filter-options {
+        & .date-filter-options {
             display: flex;
             gap: 0.25rem;
             flex-wrap: wrap;
         }
 
-        .date-filter-option {
-            background: var(--ks-background-body);
-            border: 1px solid var(--ks-border-primary);
-            border-radius: var(--ks-border-radius-sm);
+        & .date-filter-option {
+            background: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-sm);
             color: var(--ks-text-primary);
             cursor: pointer;
             font-size: var(--ks-font-size-xs);
@@ -172,25 +196,20 @@
             transition: background 0.15s, border-color 0.15s;
 
             &:hover {
-                background: var(--ks-background-card);
+                background: var(--ks-bg-hover);
             }
 
             &.active {
-                background: var(--ks-background-card);
-                border-color: var(--ks-primary);
-                color: var(--ks-primary);
+                background: var(--ks-bg-tag-active);
+                border-color: var(--ks-border-focus);
+                color: var(--ks-text-link);
             }
         }
     }
 }
 
 :deep(.kel-date-editor) {
-    .kel-input__inner::placeholder {
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-sm);
-    }
-
-    .kel-input__prefix .kel-input__icon {
+    & .kel-input__prefix .kel-input__icon {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
     }
@@ -200,12 +219,12 @@
     font-size: var(--ks-font-size-sm);
 }
 
-.color-option {
+.option-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ks-spacing-2);
 
-    .color-dot {
+    & .color-dot {
         display: inline-block;
         width: 10px;
         height: 10px;

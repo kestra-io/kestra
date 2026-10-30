@@ -5,8 +5,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import io.kestra.webserver.utils.RequestUtils;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.web.router.DefaultRouter;
 import io.micronaut.web.router.RouteBuilder;
@@ -26,35 +29,66 @@ public class TenantAliasingRooter extends DefaultRouter {
         Pattern.compile("/api/v1/configs/login")
     );
 
+    private final String contextPath;
+
     @Inject
-    public TenantAliasingRooter(Collection<RouteBuilder> builders) {
+    public TenantAliasingRooter(
+        Collection<RouteBuilder> builders,
+        @Value("${micronaut.server.context-path:}") String contextPath) {
         super(builders);
+        this.contextPath = RequestUtils.normalizeContextPath(contextPath);
     }
 
     @SneakyThrows
     @Override
     public <T, R> UriRouteMatch<T, R> findClosest(HttpRequest<?> request) {
-        String path = request.getUri().getPath();
+        // Matched and rewritten on the raw path (request.getPath()), not the decoded one, so that
+        // a raw-path miss upstream in AuthenticationFilter stays a 404 here too (GHSA-rjhm-qm6w-m7x9).
+        String rawPath = request.getPath();
         UriRouteMatch<T, R> closest = super.findClosest(request);
         if (closest != null || bypassRooting()) {
             return closest;
         }
 
-        boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(path).matches());
-        if (path.startsWith("/api/v1/") && !excluded) {
-            URI originalUri = request.getUri();
-            URI updatedUri = new URI(
-                originalUri.getScheme(),
-                originalUri.getUserInfo(),
-                request.getServerAddress().getHostName(),
-                request.getServerAddress().getPort(),
-                originalUri.getPath().replace("/api/v1", "/api/v1/" + getTenantId()),
-                originalUri.getQuery(),
-                originalUri.getFragment()
-            );
+        String apiPath = RequestUtils.stripContextPath(contextPath, rawPath);
+        boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(apiPath).matches());
+        if (apiPath.startsWith("/api/v1/") && !excluded) {
+            String strippedContextPath = rawPath.substring(0, rawPath.length() - apiPath.length());
+            String rewrittenRawPath = strippedContextPath + apiPath.replaceFirst("^/api/v1", "/api/v1/" + getTenantId());
+            URI updatedUri = new URI(rebuildRawUri(request, rewrittenRawPath));
             return super.findClosest(request.toMutableRequest().uri(updatedUri));
         }
         return null;
+    }
+
+    // Assembled as a raw string rather than via the scheme/userInfo/host/port/path/query/fragment
+    // URI constructor, which treats "path" as decoded input and would re-encode a literal "%2F" into "%252F".
+    private static String rebuildRawUri(HttpRequest<?> request, String rawPath) {
+        URI originalUri = request.getUri();
+        StringBuilder builder = new StringBuilder();
+        if (originalUri.getScheme() != null) {
+            builder.append(originalUri.getScheme()).append(':');
+        }
+        builder.append("//");
+        if (originalUri.getRawUserInfo() != null) {
+            builder.append(originalUri.getRawUserInfo()).append('@');
+        }
+        builder.append(bracketIfIpv6(request.getServerAddress().getHostName()))
+            .append(':').append(request.getServerAddress().getPort());
+        builder.append(rawPath);
+        if (originalUri.getRawQuery() != null) {
+            builder.append('?').append(originalUri.getRawQuery());
+        }
+        if (originalUri.getRawFragment() != null) {
+            builder.append('#').append(originalUri.getRawFragment());
+        }
+        return builder.toString();
+    }
+
+    // A raw IPv6 literal must be bracketed in a URI's authority component ("[::1]:8080"), unlike an
+    // IPv4 address or a hostname; java.net.URI's multi-arg constructor did this automatically.
+    private static String bracketIfIpv6(String host) {
+        return host.contains(":") && !host.startsWith("[") ? "[" + host + "]" : host;
     }
 
     protected String getTenantId() {

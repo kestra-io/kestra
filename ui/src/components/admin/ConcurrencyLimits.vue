@@ -16,7 +16,7 @@
                         :label="k"
                     >
                         <template #default="scope">
-                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row)">
+                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
                                 {{ scope.row[k] }}
                                 <IconEdit />
                             </button>
@@ -28,7 +28,7 @@
                 </KsTable>
             </template>
         </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :beforeClose="beforeEditClose">
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :dirty="isEditDirty">
             <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
@@ -56,7 +56,6 @@
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const {t} = useI18n()
     const route = useRoute()
@@ -96,10 +95,7 @@
     const newRunningCount = ref(0)
     const editingRow = ref<ConcurrencyLimit|null>(null)
 
-    const {guardedClose} = useDiscardGuard(
-        () => editingRow.value != null && newRunningCount.value !== editingRow.value.running,
-    )
-    const beforeEditClose = (done: () => void) => guardedClose(() => done())
+    const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
@@ -120,7 +116,7 @@
     useRouteContext(routeInfo)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .edit-running {
         border: solid 1px transparent;
         background: none;

@@ -24,5 +24,5 @@ public interface ExecutionStateStore {
      * Find an execution by its id.
      * WARNING: it bypasses ACL and tenant checks.
      */
-    Execution findById(String id);
+    Execution findByIdWithoutAcl(String id);
 }

@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
+                    :placeholder="totalPlugins ? $t('pluginPage.search', {count: totalPlugins}) : $t('search')"
                     clearable
                 />
             </div>
@@ -49,7 +49,6 @@
 
         <KsNoData
             v-if="pluginsList.length === 0"
-            class="my-6"
             :description="$t('pluginPage.noResults')"
         />
 
@@ -67,7 +66,7 @@
                         >
                             <p
                                 v-if="elements.length > 0"
-                                class="mb-0"
+                                class="task-type"
                             >
                                 {{ $t(elementType) }}
                             </p>
@@ -86,7 +85,7 @@
                     :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
-                    :title="plugin.title.capitalize()"
+                    :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
                     :description="plugin.description"
                     :categories="plugin.categories"
                     :taskCount="taskCount(plugin)"
@@ -162,9 +161,10 @@
             return acc
         }, {})
 
-        const filtered = Object.values(grouped).flatMap(group =>
-            group.filter(p => p.subGroup).length ? group.filter(p => p.subGroup) : group.filter(p => !p.subGroup),
-        )
+        const filtered = Object.values(grouped).flatMap(group => {
+            const subGroups = group.filter(p => p.subGroup && isVisible(p))
+            return subGroups.length ? subGroups : group.filter(p => !p.subGroup)
+        })
 
         return filtered
             .filter((plugin, index, self) =>
@@ -235,8 +235,7 @@
         return baseList.value
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => matchesSelectedCategories(plugin))
-            .slice()
-            .sort(comparators[sortBy.value] ?? nameAsc)
+            .sort(comparators[sortBy.value])
     })
 
     const loadPluginIcons = async () => {
@@ -307,8 +306,7 @@
     })
 </script>
 
-<style scoped lang="scss">
-    
+<style scoped>
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -317,11 +315,13 @@
         gap: var(--ks-spacing-3);
         width: 100%;
         padding: var(--ks-spacing-6);
+    }
 
-        &__search {
-            min-width: 17rem;
-        }
+    .filter-toolbar__search {
+        min-width: 17rem;
+    }
 
+    .filter-toolbar {
         .category-tags {
             display: flex;
             flex-wrap: wrap;
@@ -362,10 +362,10 @@
         gap: var(--ks-spacing-4);
         grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
+    }
 
-        &--loading {
-            margin-top: var(--ks-spacing-4);
-        }
+    .plugins-container--loading {
+        margin-top: var(--ks-spacing-4);
     }
 
     .plugin-skeleton {
@@ -381,11 +381,11 @@
         overflow-x: hidden;
     }
 
-    @media (max-width: 650px) {
-        .plugin-header {
-            padding: var(--ks-spacing-3);
-        }
+    .task-type {
+        margin-bottom: 0;
+    }
 
+    @media (max-width: 650px) {
         .plugins-container {
             padding-left: var(--ks-spacing-3);
             padding-right: var(--ks-spacing-3);

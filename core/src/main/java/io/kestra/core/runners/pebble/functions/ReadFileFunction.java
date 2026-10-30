@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,18 +11,12 @@ import java.util.stream.Stream;
 
 import com.amazon.ion.util.IonStreamUtils;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
-
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
     public static final String NAME = "read";
-    public static final String REVISION = "revision";
 
     private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
 
@@ -46,24 +39,9 @@ public class ReadFileFunction extends AbstractFileFunction {
 
     @Override
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
-        return switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> {
-                try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
-                    yield readContent(inputStream);
-                }
-            }
-            case LocalPath.FILE_SCHEME -> {
-                try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
-                    yield readContent(inputStream);
-                }
-            }
-            case Namespace.NAMESPACE_FILE_SCHEME -> {
-                try (InputStream inputStream = contentInputStream(path, namespace, tenantId, args)) {
-                    yield readContent(inputStream);
-                }
-            }
-            default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));
-        };
+        try (InputStream inputStream = openStream(NAME, path, namespace, tenantId, args)) {
+            return readContent(inputStream);
+        }
     }
 
     // Returns byte[] for binary ION (preserves fidelity for fromIon()), String for everything else
@@ -73,19 +51,6 @@ public class ReadFileFunction extends AbstractFileFunction {
             return bytes;
         }
         return new String(bytes, StandardCharsets.UTF_8);
-    }
-
-    private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
-        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
-
-        if (args.containsKey(REVISION)) {
-            return namespaceStorage.getFileContent(
-                NamespaceFile.normalize(Path.of(path.getPath())),
-                Integer.parseInt(args.get(REVISION).toString())
-            );
-        }
-
-        return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));
     }
 
     @Override

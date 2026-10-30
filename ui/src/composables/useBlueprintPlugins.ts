@@ -30,7 +30,7 @@ function pluginNameOf(taskType: string): string {
 }
 
 /**
- * Detects whether a blueprint relies on a task whose plugin is not installed on
+ * Detects whether a blueprint relies on a task type that cannot be resolved on
  * the current instance. A blueprint exposes its task class names through
  * `includedTasks`; the installed types come from the plugins endpoint
  * (`GET /api/v1/plugins`, exposed by the plugins store as `installedPluginTypes`).
@@ -40,11 +40,18 @@ function pluginNameOf(taskType: string): string {
  * share a package prefix (e.g. `scripts.python` vs `scripts.shell` are distinct
  * artifacts). Condition classes are excluded because the endpoint does not list
  * them.
+ *
+ * A type can be unresolvable for two different reasons, which the UI must not
+ * conflate: its plugin is absent (installing it fixes the blueprint), or the
+ * plugin is installed but no longer ships that type because it was renamed or
+ * removed (no install helps).
  */
 export function useBlueprintPlugins() {
     const pluginsStore = usePluginsStore()
 
     const installedTypes = computed(() => new Set(pluginsStore.installedPluginTypes ?? []))
+
+    const installedPluginNames = computed(() => new Set([...installedTypes.value].map(pluginNameOf)))
 
     /**
      * Loads the installed plugin types once. Failures are swallowed: if the list
@@ -58,9 +65,6 @@ export function useBlueprintPlugins() {
         }
     }
 
-    /** Exposed for display (e.g. building the missing-plugin message). */
-    const pluginName = pluginNameOf
-
     /**
      * Task types referenced by the blueprint whose plugin is not installed.
      * Returns nothing until the installed set is known, so blueprints are never
@@ -73,9 +77,17 @@ export function useBlueprintPlugins() {
         )
     }
 
-    /** Unique, sorted plugin names that need to be installed for the blueprint. */
-    const missingPluginNames = (includedTasks?: string[]): string[] =>
-        [...new Set(missingTaskTypes(includedTasks).map(pluginNameOf))].sort()
+    /**
+     * Unique, sorted names of the plugins that are absent altogether, so that
+     * installing them would make the blueprint usable. A type that an installed
+     * plugin no longer ships (renamed or removed) contributes nothing here.
+     */
+    const uninstalledPluginNames = (includedTasks?: string[]): string[] =>
+        [...new Set(
+            missingTaskTypes(includedTasks)
+                .map(pluginNameOf)
+                .filter(name => !installedPluginNames.value.has(name)),
+        )].sort()
 
     const hasMissingPlugins = (includedTasks?: string[]): boolean =>
         missingTaskTypes(includedTasks).length > 0
@@ -83,9 +95,8 @@ export function useBlueprintPlugins() {
     return {
         installedTypes,
         ensureInstalledPluginsLoaded,
-        pluginName,
         missingTaskTypes,
-        missingPluginNames,
+        uninstalledPluginNames,
         hasMissingPlugins,
     }
 }

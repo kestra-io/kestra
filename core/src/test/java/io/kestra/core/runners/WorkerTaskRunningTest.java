@@ -58,7 +58,6 @@ class WorkerTaskRunningTest {
                     "size": 1
                   }
                 },
-                "secretInputs": null,
                 "traceParent": null
               },
               "workerInstance": {

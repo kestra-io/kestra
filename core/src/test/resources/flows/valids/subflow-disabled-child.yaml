@@ -1,0 +1,8 @@
+id: subflow-disabled-child
+namespace: io.kestra.tests
+disabled: true
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!

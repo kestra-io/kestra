@@ -9,9 +9,13 @@
         </div>
 
         <div class="action-buttons">
-            <KsTooltip :content="$t('filter.reset_tooltip')" placement="top">
-                <KsButton size="small" :icon="Restore" @click="emits('reset')" />
-            </KsTooltip>
+            <KsButton
+                :tooltip="$t('filter.reset_tooltip')"
+                tooltipPlacement="top"
+                size="small"
+                :icon="Restore"
+                @click="emits('reset')"
+            />
         </div>
     </div>
 </template>
@@ -29,7 +33,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .panel-footer {
     display: flex;
     align-items: center;
@@ -41,7 +45,7 @@
     z-index: 1;
     border-top: 1px solid var(--ks-border-default);
 
-    .selection-display {
+    & .selection-display {
         font-size: var(--ks-font-size-xs);
         white-space: nowrap;
         overflow: hidden;
@@ -50,11 +54,11 @@
         color: var(--ks-text-dim);
     }
 
-    .action-buttons {
+    & .action-buttons {
         display: flex;
         gap: 0.5rem;
 
-        :deep(.kel-button) {
+        & :deep(.kel-button) {
             margin: 0;
         }
     }

@@ -41,7 +41,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                             :tooltip="$t('block_editor.delete')"
                             @click.stop="removeItem(index)"
                         >
-                            <DeleteOutline />
+                            <Delete />
                         </KsIconButton>
                     </div>
                 </div>
@@ -104,9 +104,9 @@
                 :key="'array-' + index"
                 :gutter="10"
                 align="top"
-                class="w-100"
+                class="custom-row"
             >
-                <KsCol :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
+                <KsCol :span="2" class="custom-col reorder" v-if="items.length > 1">
                     <KsIconButton
                         :disabled="index === 0"
                         :tooltip="$t('block_editor.move_up')"
@@ -122,7 +122,7 @@
                         <ChevronDown />
                     </KsIconButton>
                 </KsCol>
-                <KsCol :span="items.length > 1 ? 20 : 22" class="pe-2 array-value-col">
+                <KsCol :span="items.length > 1 ? 20 : 22" class="array-value-col">
                     <Wrapper merge>
                         <template #tasks>
                             <component
@@ -142,7 +142,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </KsCol>
             </KsRow>
@@ -155,14 +155,14 @@
 <script setup lang="ts">
     import {computed, inject, provide, ref, watch} from "vue"
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons"
+    import {Delete, ChevronUp, ChevronDown} from "../../utils/icons"
 
     import {useI18n} from "vue-i18n"
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
-    import {summarizeValue, shouldDrillItem} from "./fieldNesting"
+    import {summarizeValue, shouldDrillItem, describeArrayItem} from "./fieldNesting"
 
     defineOptions({inheritAttrs: false})
 
@@ -175,7 +175,7 @@
     const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         schema?: any;
-        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
+        modelValue?: (string | number | boolean | Record<string, unknown> | undefined)[] | string | number | boolean | null;
         required?: boolean;
         root?: string;
     }>(), {
@@ -200,10 +200,7 @@
     )
 
     function itemLabel(element: any, index: number): string {
-        if (element && typeof element === "object" && !Array.isArray(element)) {
-            return String(element.id ?? element.name ?? element.type ?? `#${index + 1}`)
-        }
-        return `#${index + 1}`
+        return describeArrayItem(element, index)
     }
 
     function itemPreview(element: any): string {
@@ -242,7 +239,7 @@
             localEdit.value = false
             return
         }
-        items.value = value === undefined && !props.required
+        items.value = (value === undefined && !props.required) || value === null
             ? []
             : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})
@@ -288,18 +285,12 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .disabled {
     opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed;
-}
-
-.array-value-col {
-    flex: 1;
-    max-width: none;
 }
 
 .task-collection--cards {
@@ -356,5 +347,21 @@
 
 .task-array-item-body {
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+
+.custom-row {
+    width: 100%;
+}
+
+.custom-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.array-value-col {
+    flex: 1;
+    max-width: none;
+    padding-right: var(--ks-spacing-2) !important;
 }
 </style>

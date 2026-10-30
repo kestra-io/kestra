@@ -1,7 +1,7 @@
 <template>
     <div>
         <teleport to="body">
-            <div v-if="isOpen" class="search-overlay" @click="closeSearch">
+            <div v-if="isOpen" class="search-overlay" :style="{zIndex: topLayer}" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
                         <KsSearch
@@ -17,8 +17,8 @@
                                 <span class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template v-if="!query" #suffix>
-                                <span class="d-none d-sm-block">
-                                    <kbd>ESC</kbd> to close
+                                <span class="search-hint">
+                                    <kbd>ESC</kbd> {{ $t("to close") }}
                                 </span>
                             </template>
                         </KsSearch>
@@ -39,11 +39,11 @@
                                         <component
                                             :is="item.kind === 'link' ? 'router-link' : 'button'"
                                             v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                            class="result-link d-flex gap-2"
+                                            class="result-link"
                                             @click="onItemClick(item)"
                                         >
-                                            <div class="result-title d-flex gap-2 nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
+                                            <div class="result-title nav-item-title">
+                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" />
                                                 <span v-if="item.parentTitle" class="result-parent">
                                                     {{ item.parentTitle }}
                                                 </span>
@@ -52,16 +52,16 @@
                                             </div>
                                             <span
                                                 v-if="index === activeIndex"
-                                                class="result-hint d-none d-sm-flex align-items-center"
+                                                class="result-hint"
                                             >
-                                                <span>Jump to</span>
+                                                <span>{{ $t("jump to") }}</span>
                                             </span>
                                         </component>
                                     </li>
                                 </ul>
                             </KsScrollbar>
                             <div v-else class="empty">
-                                {{ $t("no results") }}
+                                {{ $t("no_results_found") }}
                             </div>
                         </div>
                     </div>
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
+    import {useTopLayer, KsSearch} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
@@ -99,7 +100,8 @@
 
     const query = ref("")
     const isOpen = ref(false)
-    const searchInput = ref<{ focus?: () => void } | null>(null)
+    const topLayer = useTopLayer()
+    const searchInput = ref<InstanceType<typeof KsSearch> | null>(null)
     const activeIndex = ref(0)
     const scopeStack = ref<ScopeNode[]>([])
 
@@ -196,7 +198,7 @@
         isOpen.value = true
         activeIndex.value = 0
         nextTick(() => {
-            searchInput.value?.focus?.()
+            searchInput.value?.focus()
         })
     }
 
@@ -232,7 +234,7 @@
         scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
         query.value = ""
         activeIndex.value = 0
-        nextTick(() => searchInput.value?.focus?.())
+        nextTick(() => searchInput.value?.focus())
     }
 
     const onItemClick = (item: SearchItem) => {
@@ -324,15 +326,15 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .search-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--kel-overlay-color-lighter);
-        z-index: 10000;
+        background: var(--ks-bg-scrim);
+        z-index: var(--ks-z-overlay);
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -347,13 +349,12 @@
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
-            box-shadow:
-                0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: 0 8px 24px var(--ks-shadow-elevated);
             overflow: hidden;
             font-size: var(--ks-font-size-sm);
         }
 
-        :deep(.kel-input) {
+        & :deep(.kel-input) {
             font-size: var(--ks-font-size-sm);
 
             .kel-input__wrapper {
@@ -363,13 +364,15 @@
                 background: var(--ks-bg-surface);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
-                input {
+                & input {
                     color: var(--ks-text-primary);
                     background: transparent;
                 }
 
-                input::placeholder {
-                    color: var(--ks-text-dim);
+                & input::placeholder {
+                    color: var(--ks-placeholder-color);
+                    font-size: var(--ks-placeholder-font-size);
+                    font-weight: var(--ks-placeholder-font-weight);
                 }
 
                 .close-button {
@@ -386,6 +389,14 @@
                 margin-right: 0.25rem;
                 color: var(--ks-text-secondary);
                 white-space: nowrap;
+            }
+
+            .search-hint {
+                display: none;
+
+                @media (min-width: 576px) {
+                    display: block;
+                }
             }
         }
 
@@ -413,7 +424,9 @@
             border-radius: 6px;
             color: var(--ks-text-primary);
             text-decoration: none;
+            display: flex;
             align-items: center;
+            gap: var(--ks-spacing-2);
             transition: none;
             width: 100%;
             border: 0;
@@ -424,6 +437,9 @@
         }
 
         .result-title {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
             flex: 0 1 auto;
             min-width: 0;
         }
@@ -447,11 +463,17 @@
         }
 
         .result-hint {
+            display: none;
+            align-items: center;
             margin-left: auto;
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
+
+            @media (min-width: 576px) {
+                display: flex;
+            }
         }
 
         .empty {

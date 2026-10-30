@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +58,13 @@ public class TaskLogLineMatcher {
 
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
 
+    // The key is EE-only, but the marker protocol is shared, so OSS has to redact it wherever a raw command or log line is emitted.
+    private static final String ENCRYPTED_OUTPUTS_KEY = "encryptedOutputs";
+
+    private static final Pattern ENCRYPTED_LOG_DATA = Pattern.compile("::\\{.*?" + ENCRYPTED_OUTPUTS_KEY + ".*?}::");
+
+    private static final String REDACTED = "******";
+
     /**
      * Attempts to match and extract structured data from a given log line.
      * <p>
@@ -81,7 +89,21 @@ public class TaskLogLineMatcher {
         return Optional.of(handle(logger, runContext, instant, match, matches.get()));
     }
 
+    /**
+     * Replaces every {@code ::{...}::} block carrying encrypted outputs with {@code ******}, so a command or log
+     * line embedding one can be emitted without exposing the value it is meant to encrypt. Frames are matched
+     * textually and within a single line, as the payload may not be valid JSON.
+     */
+    public static String redactEncryptedOutputs(String text) {
+        if (text == null || !text.contains(ENCRYPTED_OUTPUTS_KEY)) {
+            return text;
+        }
+
+        return ENCRYPTED_LOG_DATA.matcher(text).replaceAll(REDACTED);
+    }
+
     protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data) {
+        String logData = redactEncryptedOutputs(data);
 
         if (match.metrics() != null) {
             match.metrics().forEach(runContext::metric);
@@ -97,7 +119,7 @@ public class TaskLogLineMatcher {
                         .addKeyValue(ORIGINAL_TIMESTAMP_KEY, instant);
                     builder.log(it.message());
                 } catch (Exception e) {
-                    logger.warn("Invalid log '{}'", data, e);
+                    logger.warn("Invalid log '{}'", logData, e);
                 }
             });
         }
@@ -107,14 +129,23 @@ public class TaskLogLineMatcher {
                 AssetEmitter assetEmitter = runContext.assets();
                 assetEmitter.emit(match.assets());
             } catch (IllegalVariableEvaluationException e) {
-                logger.warn("Unable to get asset emitter for log '{}'", data, e);
+                logger.warn("Unable to get asset emitter for log '{}'", logData, e);
             } catch (QueueException e) {
-                logger.warn("Unable to emit asset for log '{}'", data, e);
+                logger.warn("Unable to emit asset for log '{}'", logData, e);
             }
         }
 
+        if (match.checkpoints() != null) {
+            match.checkpoints().forEach((key, value) -> runContext.checkpoints().set(key, value));
+        }
+
         if (match.otlp() != null && !match.otlp().isEmpty()) {
-            handleOtlp(logger, runContext, instant, match.otlp(), data);
+            Map<String, Object> otlpOutputs = forwardOtlp(logger, runContext, instant, match.otlp(), logData, true);
+            if (!otlpOutputs.isEmpty()) {
+                Map<String, Object> outputs = new HashMap<>(match.outputs());
+                outputs.putAll(otlpOutputs);
+                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp(), match.checkpoints());
+            }
         }
 
         return match;
@@ -125,8 +156,9 @@ public class TaskLogLineMatcher {
      * {@code ::{...}::} framing — as produced by the
      * <a href="https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/">OTLP File Exporter</a>.
      * <p>
-     * OTLP logs and metrics are forwarded to the {@link RunContext} exactly as for framed log
-     * lines; OTLP traces are only parsed and returned. Blank lines and lines that cannot be
+     * OTLP logs and metrics are forwarded to the {@link RunContext} as for framed log lines, except
+     * that a {@code ::{...}::} marker in a log body is logged as text; OTLP traces are only parsed
+     * and returned. Blank lines and lines that cannot be
      * parsed (e.g. a line truncated by file rotation) are skipped with a warning. The given
      * stream is fully consumed and closed.
      *
@@ -187,19 +219,33 @@ public class TaskLogLineMatcher {
      * untouched as they are only exposed to the caller for now.
      */
     protected void handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
+        forwardOtlp(logger, runContext, instant, record, data, false);
+    }
+
+    // Only framed lines handle markers in log bodies, as parseOtlp has no way to return their outputs.
+    private Map<String, Object> forwardOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data, boolean handleMarkers) {
+        Map<String, Object> outputs = new HashMap<>();
         ListUtils.emptyOnNull(record.resourceLogs()).stream()
             .flatMap(resourceLogs -> ListUtils.emptyOnNull(resourceLogs.scopeLogs()).stream())
             .flatMap(scopeLogs -> ListUtils.emptyOnNull(scopeLogs.logRecords()).stream())
             .forEach(logRecord ->
             {
                 try {
+                    Instant logInstant = toInstant(logRecord.timeUnixNano(), instant);
+                    String body = logRecord.body() != null ? logRecord.body().asText() : null;
+                    Optional<Map<String, Object>> markerOutputs = handleMarkers && body != null ? markerOutputs(body, logger, runContext, logInstant) : Optional.empty();
+                    if (markerOutputs.isPresent()) {
+                        outputs.putAll(markerOutputs.get());
+                        return;
+                    }
+
                     runContext
                         .logger()
                         .atLevel(otlpSeverityToLevel(logRecord))
-                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), instant))
-                        .log(logRecord.body() != null ? logRecord.body().asText() : null);
+                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, logInstant)
+                        .log(body != null ? redactEncryptedOutputs(body) : null);
                 } catch (Exception e) {
-                    logger.warn("Invalid OTLP log '{}'", data, e);
+                    logger.warn("Invalid OTLP log '{}'", redactEncryptedOutputs(data), e);
                 }
             });
 
@@ -211,9 +257,20 @@ public class TaskLogLineMatcher {
                 try {
                     toKestraMetrics(metric, instant).forEach(runContext::metric);
                 } catch (Exception e) {
-                    logger.warn("Invalid OTLP metric '{}'", data, e);
+                    logger.warn("Invalid OTLP metric '{}'", redactEncryptedOutputs(data), e);
                 }
             });
+
+        return outputs;
+    }
+
+    // A body that only looks like a marker is logged as text, as it was before markers were handled here.
+    private Optional<Map<String, Object>> markerOutputs(String body, Logger logger, RunContext runContext, Instant instant) {
+        try {
+            return matches(body, logger, runContext, instant).map(TaskLogMatch::outputs);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -341,7 +398,8 @@ public class TaskLogLineMatcher {
         List<AbstractMetricEntry<?>> metrics,
         List<LogLine> logs,
         AssetEmit assets,
-        OtlpRecord otlp) {
+        OtlpRecord otlp,
+        Map<String, String> checkpoints) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

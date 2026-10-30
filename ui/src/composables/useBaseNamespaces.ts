@@ -1,27 +1,35 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import {useClient, type PagedResultsNamespace} from "@kestra-io/kestra-sdk"
+import {useClient, type ApiSecretListResponseApiSecretMeta, type KvEntry, type Namespace, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
+import {handled, handledIf, type KestraHttpError} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
+
+type NamespaceSearchParameters = NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>
+export type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
+type DeleteKvsRequest = Omit<Parameters<typeof KvAPI.deleteKeyValues>[0], "namespace">
 
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`
 }
 
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
-const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/")
+export const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
+// The server picks a file's next revision without locking, so two overlapping saves of one file can record a revision that was never stored.
+const pendingFileSaves = new Map<string, {content: string; save: Promise<void>; settled: Promise<void>}>()
+
 export const useBaseNamespacesStore = () => {
-    const namespace = ref<any>(undefined)
-    const inheritedSecrets = ref<any>(undefined)
-    const inheritedKVs = ref<any>(undefined)
+    const namespace = ref<Namespace | undefined>(undefined)
+    const inheritedSecrets = ref<Record<string, string[]> | undefined>(undefined)
+    const inheritedKVs = ref<KvEntry[] | undefined>(undefined)
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
     const autocomplete = ref<string[]>()
@@ -29,34 +37,52 @@ export const useBaseNamespacesStore = () => {
 
     const axios = useClient()
 
+    let latestAutocomplete = 0
+
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const current = ++latestAutocomplete
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
-        autocomplete.value = response
+        if (current === latestAutocomplete) {
+            autocomplete.value = response
+        }
         return response
     }
 
-    async function search(options: {commit?: boolean, sort?: string, [key: string]: any}): Promise<PagedResultsNamespace> {
+    async function search(options: NamespaceSearchOptions): Promise<PagedResultsNamespace> {
         const {commit: _commit, sort, ...rest} = options
 
         const data = await NamespaceAPI.searchNamespaces({...rest, sort: sort ? [sort] : undefined})
         return data
     }
 
+    let latestLoad = 0
+
     async function load(id: string) {
-        try{
-            namespace.value = await NamespaceAPI.loadNamespace({id})
-        }catch (e: any) {
-            if (e.status === 404) {
-                existing.value = false
+        const current = ++latestLoad
+        let data: Namespace
+        try {
+            data = await NamespaceAPI.loadNamespace({id})
+        }catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
+                // A load the user has navigated away from must not report its absence for the
+                // namespace they are on, the same way a superseded search is dropped in
+                // `stores/logs.ts`.
+                if (current === latestLoad) existing.value = false
                 return null
             }
             throw e
         }
 
+        if (current !== latestLoad) return data
+
+        namespace.value = data
+        existing.value = true
+
         return namespace.value
     }
 
-    async function update(_: {route: any, payload: any}) {
+    async function update(_: {route: unknown, payload: unknown}) {
         // NOOP IN OSS
     }
 
@@ -66,7 +92,8 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kvsList(item: {id: string}) {
-        const data = await KvAPI.listAllKeys({filters: [{field: "namespace", operation: "EQUALS", value: item.id}] as any})
+        const filters: QueryFilter[] = [{field: "namespace", operation: "EQUALS", value: item.id}]
+        const data = await KvAPI.listAllKeys({filters})
         return data?.results
     }
 
@@ -78,10 +105,12 @@ export const useBaseNamespacesStore = () => {
         inheritedKVs.value = await KvAPI.listKeysWithInheritence({namespace: id})
     }
 
-    async function createKv(payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
+    async function createKv(payload: {namespace: string; key: string; value: string; contentType: string; description: string; ttl?: string}) {
+        // The generated SDK omits these headers from its options type because they are absent from the OpenAPI spec.
+        const headers = {"Content-Type": payload.contentType, "description": payload.description, ...(payload.ttl ? {ttl: payload.ttl} : {})}
         await KvAPI.setKeyValue(
             {namespace: payload.namespace, key: payload.key, body: payload.value},
-            {headers: {"Content-Type": payload.contentType, "description": payload.description, "ttl": payload.ttl}} as any,
+            {headers} as NonNullable<Parameters<typeof KvAPI.setKeyValue>[1]>,
         )
     }
 
@@ -89,16 +118,17 @@ export const useBaseNamespacesStore = () => {
         await KvAPI.deleteKeyValue(payload)
     }
 
-    async function deleteKvs(payload: {namespace: string; request: any}) {
+    async function deleteKvs(payload: {namespace: string; request: DeleteKvsRequest}) {
         await KvAPI.deleteKeyValues({namespace: payload.namespace, ...payload.request})
     }
 
-    async function loadInheritedSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
+    async function loadInheritedSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: unknown}): Promise<Record<string, string[]>> {
         let data: Record<string, string[]>
         try {
             data = await NamespaceAPI.inheritedSecrets({namespace: id})
-        } catch (e: any) {
-            if (e.status === 404) {
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
                 data = {[id]: []}
             } else {
                 throw e
@@ -110,28 +140,36 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
+    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: unknown}): Promise<ApiSecretListResponseApiSecretMeta> {
         try {
-            const data = await SecretsAPI.listSecrets({filters: [{field: "namespace", operation: "EQUALS", value: id}] as any}) as any
+            const filters: QueryFilter[] = [{field: "namespace", operation: "EQUALS", value: id}]
+            const data = await SecretsAPI.listSecrets({filters})
             return data
-        } catch (e: any) {
-            if (e.status === 404) return {total: 0, results: [], readOnly: false}
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
+                return {total: 0, results: [], readOnly: false}
+            }
+
             throw e
         }
     }
 
-    async function usableSecrets(this: ReturnType<typeof useBaseNamespacesStore>, id: string): Promise<string[]> {
+    async function usableSecrets(
+        this: {loadInheritedSecrets: typeof loadInheritedSecrets; listSecrets: typeof listSecrets},
+        id: string,
+    ): Promise<string[]> {
         return [
             ...Object.values((await this.loadInheritedSecrets({id, commit: false})) ?? {}).flat(),
             ...(await this.listSecrets({id, commit: false})).results.map(({key}) => key),
         ]
     }
 
-    async function createSecrets(_: {namespace: string; secret: any}) {
+    async function createSecrets(_: {namespace: string; secret: unknown}) {
         // NOOP IN OSS
     }
 
-    async function patchSecret(_: {namespace: string; secret: any}) {
+    async function patchSecret(_: {namespace: string; secret: unknown}) {
         // NOOP IN OSS
     }
 
@@ -149,11 +187,13 @@ export const useBaseNamespacesStore = () => {
 
     async function readDirectory<T>(payload: {namespace: string; path?: string}): Promise<T[]> {
         try {
+            // A directory removed server-side is handled by the caller (see fileExplorer loadNodes), so its 404 must not toast.
             const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
             return (data ?? []) as unknown as T[]
-        } catch (e: any) {
-            if (e.status === 404) {
-                const notFoundError: any = new Error("Directory not found")
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
+                const notFoundError = new Error("Directory not found") as KestraHttpError
                 notFoundError.status = 404
                 throw notFoundError
             }
@@ -161,7 +201,24 @@ export const useBaseNamespacesStore = () => {
         }
     }
 
-    async function createFile(payload: {namespace: string; path: string; content: string}) {
+    function createFile(payload: {namespace: string; path: string; content: string}): Promise<void> {
+        const key = `${payload.namespace}:${slashPrefix(payload.path)}`
+        const pending = pendingFileSaves.get(key)
+        if (pending?.content === payload.content) {
+            return pending.save
+        }
+        const save = (pending?.settled ?? Promise.resolve()).then(() => postFile(payload))
+        const settled = save.then(() => undefined, () => undefined)
+        pendingFileSaves.set(key, {content: payload.content, save, settled})
+        settled.then(() => {
+            if (pendingFileSaves.get(key)?.settled === settled) {
+                pendingFileSaves.delete(key)
+            }
+        })
+        return save
+    }
+
+    async function postFile(payload: {namespace: string; path: string; content: string}) {
         const DATA = new FormData()
         const BLOB = new Blob([payload.content], {type: "text/plain"})
         DATA.append("fileContent", BLOB)
@@ -176,21 +233,31 @@ export const useBaseNamespacesStore = () => {
 
         try {
             return await FilesAPI.fileRevisions(payload) as unknown as {revision: number}[]
-        } catch (e: any) {
-            console.error(e.message ?? "File not found")
+        } catch (e: unknown) {
+            console.error(e instanceof Error ? e.message : "File not found")
             return []
         }
+    }
+
+    async function fileMetadata(payload: {namespace: string; path: string}) {
+        // A file removed server-side (e.g. by a delete-sync) is reported by the caller, so its 404 must not also toast.
+        return await FilesAPI.fileMetadatas(payload).catch((e: unknown) => {
+            handledIf(e, [404])
+            throw e
+        })
     }
 
     async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"}
 
         try {
+            // `notFound` below reports a removed file, so its 404 must not also raise the global toast.
             const blob = await FilesAPI.fileContent(payload)
             return {content: await blob.text() ?? ""}
-        } catch (e: any) {
-            if (e.status === 404) {
-                return {notFound: true, error: e.message ?? "File not found"}
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
+                return {notFound: true, error: e instanceof Error ? e.message : "File not found"}
             }
             throw e
         }
@@ -200,10 +267,10 @@ export const useBaseNamespacesStore = () => {
         return await FilesAPI.searchNamespaceFiles({namespace: payload.namespace, q: payload.query}) ?? []
     }
 
-    async function importFileDirectory(payload: {namespace: string; path: string; content: ArrayBuffer}) {
+    /** Sent as a File, not a Blob: the server unpacks only a part named `*.zip`, and a Blob arrives as `filename="blob"`. */
+    async function importFileDirectory(payload: {namespace: string; path: string; file: File}) {
         const DATA = new FormData()
-        const BLOB = new Blob([payload.content], {type: "text/plain"})
-        DATA.append("fileContent", BLOB)
+        DATA.append("fileContent", payload.file, payload.file.name)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
         // Don't set Content-Type - the browser must generate the multipart boundary itself.
@@ -214,8 +281,15 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
     }
 
+    /**
+     * Unlike {@link moveFileDirectory}, this suppresses the global error toast: the rename caller
+     * reports the failure itself, and the two together left a persistent raw
+     * "Internal Server Error" alongside the friendly one.
+     */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory(
+            {namespace: payload.namespace, from: payload.old, to: payload.new},
+        )
     }
 
     async function deleteFileDirectory(payload: {namespace: string; path: string}) {
@@ -259,6 +333,7 @@ export const useBaseNamespacesStore = () => {
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,
+        fileMetadata,
         readFile,
         fileRevisions,
         searchFiles,

@@ -66,7 +66,7 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
-    private IgnoreExecutionCaseTest ignoreExecutionCaseTest;
+    protected ApprovalTest.Suite approvalTest;
 
     @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
@@ -112,6 +112,29 @@ public abstract class AbstractRunnerTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
     }
 
+    /**
+     * A nested null must survive the round-trip through the output store, so a downstream expression renders
+     * empty instead of failing on a missing variable.
+     *
+     * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
+     */
+    @Test
+    @ExecuteFlow("flows/valids/null-content-output.yaml")
+    void nullContentOutput(Execution execution) throws Exception {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("produce").getFirst());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) outputs.get("records")).getFirst();
+        assertThat(record).containsKey("b");
+        assertThat(record.get("b")).isNull();
+
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_null").getFirst()))
+            .containsEntry("value", "[]");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_sibling").getFirst()))
+            .containsEntry("value", "[1]");
+    }
+
     @Test
     @ExecuteFlow("flows/valids/sequential.yaml")
     void sequential(Execution execution) {
@@ -128,6 +151,22 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/parallel-nested.yaml")
     void parallelNested(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(11);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-cancelled.yaml" })
+    void parallelFailFastCancelled() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            NAMESPACE, "parallel-fail-fast-cancelled", null, null, Duration.ofSeconds(20),
+            execution1 -> execution1.getState().isTerminated()
+                && execution1.getTaskRunList() != null
+                && execution1.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the sibling must be cancelled quickly instead of running its full PT10S duration
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
@@ -268,7 +307,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml",
+        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml",
             "flows/valids/flow-trigger-multiple-depends-on-flow-listen.yaml" }
     )
     void flowTriggerMultipleDependsOn() throws Exception {
@@ -276,9 +315,20 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/flow-trigger-fire-once-true-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml", "flows/valids/flow-trigger-fire-once-true-flow-listen.yaml" })
-    void flowTriggerDependsOnFireOnceTrue() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerDependsOnFireOnceTrue();
+    @LoadFlows(
+        { "flows/valids/flow-trigger-depends-on-outputs-flow-a.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-b.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-unrelated.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-listen.yaml" }
+    )
+    void flowTriggerDependsOnOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnOutputs();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
+    void flowTriggerDependsOnResetsAfterFiring() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();
     }
 
     @Test
@@ -400,27 +450,27 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/pause-duration-manual-resume.yaml" }, tenantId = "pause-manual-resume")
+    public void pauseRunDurationManuallyResumed() throws Exception {
+        pauseTest.runDurationManuallyResumed("pause-manual-resume", runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-timeout.yaml" })
     public void pauseRunTimeout() throws Exception {
         pauseTest.runTimeout(runnerUtils);
     }
 
     @Test
-    @LoadFlows({ "flows/valids/minimal.yaml" })
-    void shouldIgnoreExecutionById() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionById();
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunApprove() throws Exception {
+        approvalTest.approve(runnerUtils);
     }
 
     @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/output-values.yml" })
-    void shouldIgnoreExecutionByFlowId() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByFlowId();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/minimal2.yaml" })
-    void shouldIgnoreExecutionByNamespace() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByNamespace();
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunDeny() throws Exception {
+        approvalTest.deny(runnerUtils);
     }
 
     @Test
@@ -449,6 +499,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = { "flows/valids/waitfor-max-iterations.yaml" }, tenantId = "waitformaxiterations")
     void waitforMaxIterations() throws Exception {
         loopUntilTestCaseTest.waitforMaxIterations("waitformaxiterations");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
     }
 
     @Test
@@ -542,6 +598,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-with-loop-until.yaml")
+    protected void loopWithLoopUntil(Execution execution) throws Exception {
+        loopCaseTest.loopWithLoopUntil(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-map.yaml")
     protected void loopMap(Execution execution) throws Exception {
         loopCaseTest.loopMap(execution);
@@ -551,6 +613,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-values-from-uri.yaml")
     protected void loopValuesFromUri(Execution execution) throws Exception {
         loopCaseTest.loopValuesFromUri(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-empty-values-from-uri.yaml")
+    protected void loopEmptyValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopEmptyValuesFromUri(execution);
     }
 
     @Test
@@ -621,6 +689,31 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-with-pause.yaml")
+    public void loopWithPause(Execution execution) {
+        loopCaseTest.loopWithPause(execution);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-breakpoint.yaml" }, tenantId = "loop-breakpoint")
+    void loopBreakpointOnChildTask() throws Exception {
+        loopCaseTest.loopBreakpointOnChildTask("loop-breakpoint");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-break.yaml")
+    public void loopBreak(Execution execution) throws InternalException {
+        loopCaseTest.loopBreak(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);
@@ -660,6 +753,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
     }
 
     @Test
@@ -735,21 +834,6 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-    }
-
-    @Test
-    void avoidInfiniteExecutionLoop() throws QueueException {
-        CopyOnWriteArrayList<ExecutionEvent> executions = new CopyOnWriteArrayList<>();
-        executionEventQueue.addListener(e -> executions.add(e));
-
-        executionCommandQueue.emit(Create.of(TestsUtils.mockFlow().toFlowId()));
-
-        // The flow does not exist in the repository: handleCreate logs an error and returns empty.
-        // We expect zero execution events — and certainly no infinite loop.
-        await()
-            .during(Duration.ofMillis(500)) // Wait to ensure no event is ever emitted
-            .atMost(Duration.ofSeconds(1))
-            .until(executions::isEmpty);
     }
 
     @Test

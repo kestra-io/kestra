@@ -3,6 +3,7 @@ package io.kestra.scheduler.internals;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.services.FlowParsingService;
 
@@ -15,30 +16,35 @@ public final class TriggerFlowParser {
     }
 
     /**
-     * Parses the given flow for trigger evaluation. A flow rejected by governance is skipped ({@code null});
-     * any other parse failure degrades to the flow as stored so existing triggers keep evaluating.
+     * Parses the given flow for trigger evaluation, degrading to the flow as stored when parsing fails so
+     * existing triggers keep evaluating.
+     *
+     * @return the parsed flow, or the stored flow when parsing failed
+     *
+     * @throws FlowProcessingException when parsing failed and the stored flow carries no trigger definitions (a
+     *         deserialization failure kept as a {@code FlowWithException}): there is nothing to degrade to, and the
+     *         message tells the caller why so it can report it against the trigger
+     * @throws FlowBlockedException when governance rejects the flow, whose triggers must then not run. Checked
+     *         deliberately: a caller has to decide what to report, and a block reported as an ordinary parse
+     *         failure is the confusion this guards against.
      */
-    public static FlowWithSource parseOrSkip(final FlowParsingService flowParsingService, final FlowWithSource flow, final Logger logger) {
+    public static FlowWithSource parseForTrigger(final FlowParsingService flowParsingService, final FlowWithSource flow, final Logger logger)
+        throws FlowBlockedException, FlowProcessingException {
         try {
-            return flowParsingService.parseForRuntime(flow);
+            return flowParsingService.parseForRuntime(flow).flow();
         } catch (FlowBlockedException e) {
-            logger.warn(
-                "Flow on tenant {}, namespace '{}', flow '{}' is blocked by governance, skipping its triggers: {}",
-                flow.getTenantId(),
-                flow.getNamespace(),
-                flow.getId(),
-                e.getMessage()
-            );
-            return null;
+            throw e;
         } catch (Exception e) {
             logger.warn(
                 "Can't parse flow on tenant {}, namespace '{}', flow '{}' with errors '{}'",
                 flow.getTenantId(),
                 flow.getNamespace(),
                 flow.getId(),
-                e.getMessage(),
-                e
+                e.getMessage()
             );
+            if (flow.getTriggers() == null) {
+                throw e instanceof FlowProcessingException failure ? failure : new FlowProcessingException(e.getMessage());
+            }
             return flow;
         }
     }

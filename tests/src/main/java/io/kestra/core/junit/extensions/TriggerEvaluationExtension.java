@@ -13,6 +13,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.Schedulable;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -107,14 +109,16 @@ public class TriggerEvaluationExtension implements ParameterResolver {
 
     private Optional<Execution> evaluateTrigger(AbstractTrigger trigger, Flow flow) throws Exception {
 
-        if (trigger instanceof PollingTriggerInterface pollingTrigger) {
-            TriggerContext triggerContext = triggerContext(trigger, flow);
-            ConditionContext conditionContext = conditionContext(trigger, flow);
+        TriggerContext triggerContext = triggerContext(trigger, flow);
+        ConditionContext conditionContext = conditionContext(trigger, flow);
 
-            return pollingTrigger.eval(conditionContext, triggerContext).map(eval -> eval.toExecution(triggerContext));
-        } else {
-            throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
-        }
+        Optional<TriggerEvaluationResult> result = switch (trigger) {
+            case Schedulable schedulable -> schedulable.eval(conditionContext, triggerContext);
+            case PollingTriggerInterface pollingTrigger -> pollingTrigger.eval(conditionContext, triggerContext);
+            default -> throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
+        };
+
+        return result.map(eval -> eval.toExecution(triggerContext));
     }
 
     private ConditionContext conditionContext(AbstractTrigger trigger, Flow flow) {

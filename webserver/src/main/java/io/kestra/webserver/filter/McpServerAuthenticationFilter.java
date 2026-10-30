@@ -2,6 +2,7 @@ package io.kestra.webserver.filter;
 
 import java.util.Optional;
 
+import io.kestra.mcp.McpToolRoute;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.mcp.models.McpServer;
@@ -53,21 +54,17 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(() -> resolveServer(request))
+        Optional<String> serverId = McpToolRoute.serverId(request);
+        if (serverId.isEmpty()) {
+            return chain.proceed(request);
+        }
+        return Mono.fromCallable(() -> mcpServerCache.get(tenantService.resolveTenant(), serverId.get()))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMapMany(
                 optMcpServer -> optMcpServer.isEmpty()
                     ? chain.proceed(request)
                     : authenticate(request, chain, optMcpServer.get())
             );
-    }
-
-    private Optional<McpServer> resolveServer(HttpRequest<?> request) {
-        String[] parts = request.getPath().split("/");
-        if (parts.length < 6) {
-            return Optional.empty();
-        }
-        return mcpServerCache.get(tenantService.resolveTenant(), parts[5]);
     }
 
     private Publisher<MutableHttpResponse<?>> authenticate(

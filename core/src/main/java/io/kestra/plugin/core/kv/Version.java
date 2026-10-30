@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.KVService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.utils.TypeConverter;
 import io.kestra.core.validations.KvVersionBehaviorValidation;
@@ -46,7 +46,7 @@ public class Version extends KvPurgeBehavior {
     private Integer keepAmount;
 
     @Override
-    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVStoreService service) throws IOException {
+    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVService service) throws IOException {
         List<KVEntry> entries = service.list(
             Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc("version"))),
             tenant,

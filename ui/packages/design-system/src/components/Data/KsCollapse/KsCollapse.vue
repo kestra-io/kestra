@@ -1,8 +1,8 @@
 <template>
     <ElCollapse
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event as string | string[])"
+        v-bind="({...filteredProps(), ...$attrs} as CollapseProps)"
+        @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,20 +11,20 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapse} from "element-plus"
+    import {ElCollapse, type CollapseModelValue, type CollapseProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<CollapseModelValue>()
 
     const props = defineProps<{
         accordion?: boolean
     }>()
 
     const emit = defineEmits<{
-        change: [value: string | string[]]
+        change: [value: CollapseModelValue]
     }>()
 
     defineSlots<{
@@ -37,7 +37,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/collapse';
+</style>
 
+<style>
     .kel-collapse {
         --kel-collapse-content-text-color: var(--ks-text-primary);
         --kel-collapse-header-text-color: var(--ks-text-primary);
@@ -46,19 +48,18 @@
         --kel-collapse-header-font-size: var(--ks-font-size-base);
         --kel-collapse-content-font-size: var(--ks-font-size-base);
         --kel-collapse-border-color: var(--ks-border-default);
-
         border: none;
 
-        .kel-collapse-item__header {
+        & .kel-collapse-item__header {
             padding: .5rem;
             border: none;
         }
 
-        .kel-collapse-item__content {
+        & .kel-collapse-item__content {
             padding: .5rem;
         }
 
-        .kel-collapse-item__wrap {
+        & .kel-collapse-item__wrap {
             border: none;
         }
     }

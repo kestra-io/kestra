@@ -2,6 +2,7 @@ package io.kestra.core.serializers;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,28 @@ class JacksonMapperTest {
         assertThat(s).contains("nullable:null");
         Pojo deserialize = mapper.readValue(s, Pojo.class);
         test(original, deserialize);
+    }
+
+    @Test
+    void shouldKeepInstantWhenIonRoundTripLandsOnMidnight() throws IOException {
+        ObjectMapper mapper = JacksonMapper.ofIon();
+        Instant midnight = Instant.parse("2027-01-01T00:00:00Z");
+
+        String ion = mapper.writeValueAsString(Map.of("date", midnight));
+        Object date = mapper.readValue(ion, Map.class).get("date");
+
+        assertThat(date).isInstanceOf(Instant.class).isEqualTo(midnight);
+    }
+
+    @Test
+    void shouldKeepLocalDateWhenIonRoundTrip() throws IOException {
+        ObjectMapper mapper = JacksonMapper.ofIon();
+        LocalDate date = LocalDate.parse("2027-01-01");
+
+        String ion = mapper.writeValueAsString(Map.of("date", date));
+        Object deserialized = mapper.readValue(ion, Map.class).get("date");
+
+        assertThat(deserialized).isInstanceOf(LocalDate.class).isEqualTo(date);
     }
 
     @Test

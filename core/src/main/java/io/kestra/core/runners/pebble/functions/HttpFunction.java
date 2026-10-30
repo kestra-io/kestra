@@ -13,6 +13,7 @@ import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.http.client.HttpClientException;
 import io.kestra.core.http.client.HttpClientResponseException;
@@ -41,7 +42,7 @@ public class HttpFunction<T> implements KestraFunction {
 
     private final MessageBodyWriter<T> FALLBACK_CONTENT_WRITER = (type, mediaType, object, outgoingHeaders, outputStream) ->
     {
-        if (mediaType == MediaType.APPLICATION_YAML_TYPE || mediaType.equals(MediaType.of("application/yaml"))) {
+        if (mediaType.equals(MediaType.APPLICATION_YAML_TYPE) || mediaType.equals(MediaType.of(KestraMediaTypes.APPLICATION_X_YAML))) {
             try {
                 outputStream.write(JacksonMapper.ofYaml().writeValueAsString(object).getBytes(StandardCharsets.UTF_8));
                 return;

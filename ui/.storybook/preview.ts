@@ -1,0 +1,119 @@
+// Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
+import {apiFetch, beginStoryScope} from "./apiMock"
+import {setup, type Preview} from "@storybook/vue3-vite"
+import {withThemeByClassName} from "@storybook/addon-themes"
+import initApp from "../src/utils/init"
+import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n"
+import {configureClient, setMockClient, useClient} from "@kestra-io/kestra-sdk"
+import {createMemoryHistory, type RouterOptions} from "vue-router"
+import {vueRouter} from "storybook-vue3-router"
+import "../src/styles/vendor.css"
+import "@kestra-io/design-system/src/assets/styles/index.scss"
+import "../src/styles/app.css"
+import en from "../src/translations/en.json"
+
+window.KESTRA_BASE_PATH = "/ui/"
+window.KESTRA_UI_PATH = "./"
+
+const unmockedClient = {...useClient()}
+let renderError: unknown
+
+// Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
+// TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
+// is mounted once at the layout root before any page's TopNavBar teleports
+// into it; Storybook has no such layout wrapper.
+//
+// These are appended directly to document.body — as plain DOM nodes, outside
+// Vue's own render tree — rather than rendered as template siblings in a
+// decorator. Teleport resolves its target via a synchronous
+// document.querySelector() call the instant it mounts; a decorator-rendered
+// sibling only reliably exists in time for components whose own mount is a
+// shallow, single synchronous pass. Components/Admin/Triggers renders
+// <TopNavBar> as a root element behind an extra layer of story/decorator
+// nesting, which raced the sibling into existing too late and printed
+// "Failed to locate Teleport target". Real, static body-level nodes created
+// once before any story ever mounts have no such race.
+for (const id of ["topnav-title-slot", "topnav-description-slot", "topnav-actions-slot"]) {
+  if (!document.getElementById(id)) {
+    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div")
+    el.id = id
+    document.body.appendChild(el)
+  }
+}
+
+const preview: Preview = {
+  parameters: {
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
+      },
+    },
+  },
+  decorators: [
+    // createMemoryHistory keeps route state in JS memory instead of the real
+    // window.location/history APIs, so router.push() and friends can't trigger
+    // a native browser navigation during a story or interaction test.
+    vueRouter(
+      [
+        {path: "/", name: "home", component: {template: "<div>home</div>"}},
+        {path: "/about", name: "about", component: {template: "<div>about</div>"}},
+        {path: "/:pathMatch(.*)*", name: "catchAll", component: {template: "<div/>"}},
+      ],
+      {vueRouterOptions: {history: createMemoryHistory()} as RouterOptions},
+    ),
+    withThemeByClassName({
+        themes: {
+          light: "light",
+          dark: "dark",
+        },
+        defaultTheme: "light",
+      }),
+  ],
+  // Name the running story in "unmocked API request" warnings, and clear their de-duplication
+  // record, so an unmocked route is reported for every story it affects and points at the story to
+  // fix rather than at nothing.
+  beforeEach({title, name}) {
+    beginStoryScope(`${title} > ${name}`)
+    setMockClient(unmockedClient)
+    renderError = undefined
+  },
+  afterEach() {
+    if (renderError) {
+      throw renderError
+    }
+  },
+}
+
+setup(async (app) => {
+  const reportError = app.config.errorHandler
+  app.config.errorHandler = (error, instance, info) => {
+    renderError ??= error
+    reportError?.(error, instance, info)
+  }
+  const {piniaStore} = await initApp(app, [], {}, en)
+  // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
+  // noisy "Not found" warnings in Storybook (it already falls back to the key).
+  globalI18n.value!.missingWarn = false
+  globalI18n.value!.fallbackWarn = false
+  setMissingKeyPolicy("silent")
+  // Pin the SDK's fetch to the mock: the generated client resolves
+  // `options.fetch ?? _config.fetch ?? globalThis.fetch`, so this makes the generated-SDK path
+  // explicit rather than depending on the global patch alone.
+  configureClient({fetch: apiFetch})
+  // The real app gives stores the full client (src/main.ts), so binding only `get` here left
+  // `$http.post/put/delete` as TypeErrors. useClient() goes through the mocked fetch like
+  // everything else.
+  piniaStore.use(({store}) => {
+    store.$http = useClient()
+  })
+})
+
+// The unhandledrejection listener that used to live here now lives in ./apiMock, installed before
+// anything else: it drops the same monaco teardown rejections (matching the node_modules path the
+// dev server actually serves, which this one missed) and prints the reason of every other rejection,
+// which vitest otherwise reports as a bare `PromiseRejectionEvent {isTrusted: true}`.
+
+import "../src/utils/monacoEnvironment"
+
+export default preview

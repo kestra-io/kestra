@@ -10,10 +10,10 @@
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"
-            :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+            :rowKey="(row: NamespaceSecret) => `${row.namespace}-${row.key}`"
         >
             <template v-if="$slots.empty && showEmptyState" #empty>
                 <slot name="empty" />
@@ -81,7 +81,7 @@
                         v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
                         <template #content>
-                            <span v-html="$t('secret.isReadOnly')" />
+                            <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
                         <KsIcon class="d-flex justify-content-center">
                             <Lock />
@@ -93,9 +93,9 @@
             <KsTableColumn columnKey="copy" className="row-action">
                 <template #default="scope">
                     <KsIconButton
-                        :tooltip="$t('copy_to_clipboard')"
+                        :tooltip="$t('copy_pebble_expression')"
                         placement="left"
-                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                        @click="copyKey(scope.row?.key)"
                     >
                         <ContentCopy />
                     </KsIconButton>
@@ -109,12 +109,12 @@
             >
                 <template #default="scope">
                     <KsIconButton
-                        v-if="canUpdate(scope.row)"
+                        v-if="canUpdate(scope.row as NamespaceSecret & {namespace?: string})"
                         :tooltip="$t('update')"
                         placement="left"
-                        @click="updateSecretModal(scope.row)"
+                        @click="updateSecretModal(scope.row as NamespaceSecret)"
                     >
-                        <FileDocumentEdit />
+                        <Pencil />
                     </KsIconButton>
                 </template>
             </KsTableColumn>
@@ -126,10 +126,10 @@
             >
                 <template #default="scope">
                     <KsIconButton
-                        v-if="canDelete(scope.row)"
+                        v-if="canDelete(scope.row as NamespaceSecret & {namespace?: string})"
                         :tooltip="$t('delete')"
                         placement="left"
-                        @click="removeSecret(scope.row)"
+                        @click="removeListedSecret(scope.row as NamespaceSecret)"
                     >
                         <Delete />
                     </KsIconButton>
@@ -141,7 +141,7 @@
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
-            :beforeClose="beforeSecretClose"
+            :dirty="isSecretDirty"
             formLayout
             scrollable
         >
@@ -165,13 +165,13 @@
                     <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
-                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                    <KsPassword v-model="secret.value" :placeholder="$t('secret.valuePlaceholder')" />
                 </KsFormItem>
                 <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value" inline class="field-item">
                     <div class="secret-value-control">
                         <KsPassword
                             v-model="secret.value"
-                            :placeholder="secretModalTitle"
+                            :placeholder="$t('secret.valuePlaceholder')"
                             :disabled="!secret.updateValue"
                         />
                         <KsSwitch
@@ -198,10 +198,10 @@
                             </KsButton>
                         </div>
                     </template>
-                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="index">
+                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="rowKey(tag)">
                         <KsInput class="tag-key" required v-model="tag.key" :placeholder="$t('key')" />
                         <KsInput class="tag-value" required v-model="tag.value" :placeholder="$t('value')" />
-                        <KsButton :icon="Delete" @click="removeSecretTag(index)" />
+                        <KsButton :aria-label="$t('delete')" :icon="Delete" @click="removeSecretTag(index)" />
                     </div>
                 </KsFormItem>
             </KsForm>
@@ -222,17 +222,16 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {ref, computed, watch, onMounted, nextTick, useTemplateRef} from "vue"
-    import _merge from "lodash/merge"
+    import {ref, computed, watch, nextTick, useTemplateRef} from "vue"
 
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
 
-    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
@@ -244,12 +243,12 @@
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
+    import type {ListSecretsData} from "@kestra-io/kestra-sdk"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
-    import {useSecretsFilter} from "../filter/configurations"
-    import {useTableColumns} from "../../composables/useTableColumns"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+    import {useSecretsFilter} from "../filter/configurations/secretsFilter"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
 
@@ -268,6 +267,13 @@
         namespace?: string;
         description?: string;
         tags?: {key?: string; value?: string}[];
+    }
+
+    interface SecretPayload {
+        key?: string;
+        description?: string;
+        tags?: {key?: string; value?: string}[];
+        value?: string;
     }
 
     const props = withDefaults(defineProps<{
@@ -320,10 +326,13 @@
     })
 
     const secretBaseline = ref("")
-    const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
-    const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
+    const isSecretDirty = computed(() => JSON.stringify(secret.value) !== secretBaseline.value)
 
-    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
+    const hasNamespaceColumn = props.namespace === undefined || props.namespaceColumn
+
+    const storageKey = hasNamespaceColumn
+        ? storageKeys.DISPLAY_SECRETS_COLUMNS
+        : storageKeys.DISPLAY_NAMESPACE_SECRETS_COLUMNS
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -348,7 +357,7 @@
         ]
 
         return columns.filter(col => {
-            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false
+            if (col.prop === "namespace" && !hasNamespaceColumn) return false
             if (col.prop === "description" && props.keyOnly) return false
             if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false
             return true
@@ -363,7 +372,7 @@
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
-            ?.filter(Boolean) as any[],
+            ?.filter(column => column !== undefined),
     )
 
     const secretModalTitle = computed(() => {
@@ -381,7 +390,7 @@
         },
     })
 
-    const checkSecretValue = (_rule: any, _value: any, callback: any) => {
+    const checkSecretValue = (_rule: unknown, _value: unknown, callback: (error?: Error) => void) => {
         if (secret.value?.updateValue && (secret.value.value === undefined || secret.value.value.length === 0)) {
             callback(new Error("Value must not be empty."))
         } else {
@@ -389,7 +398,7 @@
         }
     }
 
-    const checkSecretTags = (_rule: any, _value: any, callback: any) => {
+    const checkSecretTags = (_rule: unknown, _value: unknown, callback: (error?: Error) => void) => {
         const keys = secret.value?.tags?.map((it) => it.key)
 
         if (secret.value?.tags?.length === 1) {
@@ -448,12 +457,14 @@
 
     const dataTable = useTemplateRef("dataTable")
 
-    const loadQuery = (base: any) => {
+    type SecretsQuery = NonNullable<ListSecretsData["query"]>
+
+    const loadQuery = (base: SecretsQuery): SecretsQuery => {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
         )
-        return _merge(base, nonFilterRest)
+        return deepMerge(base, nonFilterRest)
     }
 
     const namespaceFilter = (namespace: string) =>
@@ -464,7 +475,7 @@
         const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
             page,
-            sort: sort ?? String(route.query.sort ?? "key:asc"),
+            sort: [sort ?? String(route.query.sort ?? "key:asc")],
             filters: [
                 ...activeFilters,
                 ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
@@ -485,9 +496,9 @@
 
                 const parentSecrets = parentSecretsResponse?.results ?? []
                 if (parentSecrets.length > 0) {
-                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean))
+                    const currentKeys = new Set(allSecrets.map(s => s?.key).filter(Boolean))
                     const newSecrets = parentSecrets.filter(
-                        (s: any) => s?.key && !currentKeys.has(s.key),
+                        s => s?.key && !currentKeys.has(s.key),
                     )
                     allSecrets.push(...newSecrets)
                 }
@@ -531,18 +542,23 @@
         secret.value.namespace = secretData?.namespace
         secret.value.key = secretData?.key
         secret.value.description = secretData?.description
-        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}]
+        secret.value.tags = secretData?.tags?.map(x => ({...x})) ?? [{key: undefined, value: undefined}]
         secret.value.update = true
         secret.value.updateValue = false
         addSecretDrawerVisible.value = true
     }
 
     const addSecretTag = () => {
-        secret.value?.tags?.push({key: "" as any, value: "" as any})
+        secret.value?.tags?.push({key: "", value: ""})
     }
 
     const removeSecretTag = (index: number) => {
         secret.value?.tags?.splice(index, 1)
+    }
+
+    const copyKey = async (key: string) => {
+        await Utils.copy(`{{ secret('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {
@@ -554,6 +570,11 @@
                 })
                 .then(() => dataTable.value?.reload())
         })
+    }
+
+    const removeListedSecret = (row: NamespaceSecret) => {
+        if (!row.namespace) return
+        removeSecret({key: row.key, namespace: row.namespace})
     }
 
     const isSecretValueUpdated = () => {
@@ -568,7 +589,7 @@
                 return
             }
 
-            const secretData: any = {
+            const secretData: SecretPayload = {
                 key: secret.value?.key,
                 description: secret.value?.description,
                 tags: secret.value?.tags
@@ -634,15 +655,8 @@
             emit("hasData", newValue!)
         }
     })
-
-    onMounted(() => {
-        updateDisplayColumns(
-            localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
-                optionalColumns.value?.filter(col => col.default).map(col => col.prop),
-        )
-    })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .secrets-table {
         display: flex;
         flex-direction: column;

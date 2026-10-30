@@ -17,7 +17,6 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -28,11 +27,12 @@ import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
@@ -52,8 +52,6 @@ public class NamespaceFileController {
     // Maximum length of a single file-name component on common filesystems (e.g. 255 bytes on ext4).
     private static final int MAX_FILE_NAME_LENGTH = 255;
 
-    @Inject
-    private StorageInterface storageInterface;
     @Inject
     private TenantService tenantService;
     @Inject
@@ -75,7 +73,7 @@ public class NamespaceFileController {
     public List<String> searchNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q) throws IOException {
-        return namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface).all(q).stream().map(namespaceFile -> namespaceFile.filePath().toString()).toList();
+        return namespaceFactory.of(tenantService.resolveTenant(), namespace).all(q).stream().map(namespaceFile -> namespaceFile.filePath().toString()).toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -92,7 +90,7 @@ public class NamespaceFileController {
         forbiddenPathsGuard(encodedPath);
 
         Path filePath = Optional.ofNullable(encodedPath).map(URI::getPath).map(Path::of).orElseThrow();
-        InputStream fileContent = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface)
+        InputStream fileContent = namespaceFactory.of(tenantService.resolveTenant(), namespace)
             .getFileContent(filePath, revision);
         return HttpResponse.ok(new StreamedFile(fileContent, MediaType.APPLICATION_OCTET_STREAM_TYPE)).header(HttpHeaders.CACHE_CONTROL, "no-cache");
     }
@@ -110,7 +108,7 @@ public class NamespaceFileController {
         forbiddenPathsGuard(encodedPath);
 
         // if stats is performed upon namespace root, and it doesn't exist yet, we create it
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         Path rootPath = Path.of("/");
         if (path == null || path.isEmpty()) {
             if (!namespaceStorage.exists(rootPath)) {
@@ -147,7 +145,12 @@ public class NamespaceFileController {
             throw new FileNotFoundException("File not found: " + encodedPath.getPath());
         }
 
-        return namespaceFileMetadata.map(metadata -> new NamespaceFileRevision(metadata.getRevision()));
+        int deletedFloor = NamespaceFileMetadata.deletedFloor(namespaceFileMetadata);
+
+        return namespaceFileMetadata.stream()
+            .filter(metadata -> metadata.getRevision() > deletedFloor)
+            .map(metadata -> new NamespaceFileRevision(metadata.getRevision()))
+            .toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -162,7 +165,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         Path dirPath = Path.of(Optional.ofNullable(encodedPath).map(URI::getPath).orElse("/"));
 
         if (dirPath.toString().equals("/") && !namespaceStorage.exists(dirPath)) {
@@ -188,7 +191,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         namespaceStorage.createDirectory(Optional.ofNullable(encodedPath).map(URI::getPath).map(Path::of).orElse(Path.of("/")));
     }
 
@@ -257,7 +260,7 @@ public class NamespaceFileController {
             }
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.putFile(Path.of(path.getPath()), inputStream);
     }
 
@@ -268,7 +271,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Files" }, summary = "Export namespace files as a ZIP")
-    public HttpResponse<byte[]> exportNamespaceFiles(
+    public HttpResponse<StreamedFile> exportNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace) throws IOException {
         try (
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -277,7 +280,7 @@ public class NamespaceFileController {
 
             String tenantId = tenantService.resolveTenant();
 
-            Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+            Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
             List<NamespaceFileMetadata> allNsFiles = namespaceStorage.children("/", true);
             allNsFiles.stream()
                 .filter(Predicate.not(NamespaceFileMetadata::isDirectory))
@@ -291,20 +294,12 @@ public class NamespaceFileController {
                     }
                 }));
 
-            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(throwConsumer(flowWithSource ->
-            {
-                try {
-                    archive.putNextEntry(new ZipEntry(FLOWS_FOLDER + "/" + flowWithSource.getId() + ".yml"));
-                    archive.write(flowWithSource.getSource().getBytes());
-                    archive.closeEntry();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }));
-
             archive.finish();
 
-            return HttpResponse.ok(bos.toByteArray()).header("Content-Disposition", "attachment; filename=\"" + namespace + "_files.zip\"");
+            byte[] zip = bos.toByteArray();
+            StreamedFile streamedFile = new StreamedFile(new ByteArrayInputStream(zip), MediaType.APPLICATION_OCTET_STREAM_TYPE, System.currentTimeMillis(), zip.length)
+                .attach(namespace + "_files.zip");
+            return HttpResponse.ok(streamedFile).header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }
     }
 
@@ -324,7 +319,7 @@ public class NamespaceFileController {
 
         String tenantId = tenantService.resolveTenant();
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.move(Path.of(from.getPath()), Path.of(to.getPath()));
     }
 
@@ -348,21 +343,22 @@ public class NamespaceFileController {
         String pathWithoutScheme = encodedPath.getPath();
 
         String tenantId = tenantService.resolveTenant();
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
+
+        // Without this, a retried delete would see the remaining sibling as the parent's only child and delete the parent.
+        if (!namespaceStorage.exists(Path.of(pathWithoutScheme))) {
+            return List.of();
+        }
 
         String zombieAwarePathToDelete = pathWithoutScheme;
         String parentPathToCheck = NamespaceFileMetadata.parentPath(zombieAwarePathToDelete);
         while (
-            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceFileService.findMetadata(
-                Pageable.from(1, 2), tenantService.resolveTenant(), List.of(
-                    QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.EQUALS).value(parentPathToCheck).build()
-                ), false
-            ).size() == 1
+            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceStorage.children(parentPathToCheck, false).size() == 1
         ) {
             zombieAwarePathToDelete = parentPathToCheck;
             parentPathToCheck = NamespaceFileMetadata.parentPath(parentPathToCheck);
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
         return namespaceStorage.delete(Path.of(zombieAwarePathToDelete));
     }
 
@@ -379,6 +375,10 @@ public class NamespaceFileController {
     private void forbiddenPathsGuard(URI path) {
         if (path == null) {
             return;
+        }
+
+        if (path.getPath() == null) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid hierarchical path.".formatted(path));
         }
 
         if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {

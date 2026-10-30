@@ -1,4 +1,6 @@
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
+
+import {fieldPathOf, pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -130,7 +132,9 @@ export function duplicateBlock(source: string, section: BlockSection, id: string
     const existingIds = collectAllIds(source)
     const newId = uniqueId(String(parsed.id), existingIds)
     existingIds.add(newId)
-    const duplicate = renameNestedIds({...parsed, id: newId}, existingIds)
+    const idMap = new Map<string, string>()
+    const renamed = renameNestedIds({...parsed, id: newId}, existingIds, uniqueId, idMap)
+    const duplicate = rewireDependsOnInSubtree(renamed, idMap)
 
     const path = flowYamlUtils.getPathFromSectionAndId({source, section, id})
     const match = path?.match(/\[(\d+)\]$/)
@@ -156,9 +160,14 @@ export function duplicateBlockAtPath(source: string, path: string): string {
     const displayItem = displayTaskOf(parsed)
     const newId = uniqueId(String(displayItem.id), existingIds)
     existingIds.add(newId)
+    const idMap = new Map<string, string>()
+    const renamedTask = rewireDependsOnInSubtree(
+        renameNestedIds({...displayItem, id: newId}, existingIds, uniqueId, idMap),
+        idMap,
+    )
     const duplicate = isWrappedLaneItem(parsed)
-        ? {...parsed, task: renameNestedIds({...displayItem, id: newId}, existingIds)}
-        : renameNestedIds({...parsed, id: newId}, existingIds)
+        ? {...parsed, task: renamedTask}
+        : renamedTask
 
     const parentPath = pathParent(path)
     const match = path.match(/\[(\d+)\]$/)
@@ -189,16 +198,20 @@ function uniqueId(baseId: string, existingIds: Set<string>): string {
     return `${candidate}_${counter}`
 }
 
+type IdRenamer = (id: string, takenIds: Set<string>) => string
+
 function renameNestedIds(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     const result: Record<string, unknown> = {...node}
     for (const key of FLOWABLE_BRANCH_KEYS) {
         const val = node[key]
         if (Array.isArray(val)) {
             result[key] = (val as Record<string, unknown>[]).map(item =>
-                renameTaskNode(item, takenIds),
+                renameTaskNode(item, takenIds, renameId, idMap),
             )
         } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
             const casesObj = val as Record<string, unknown>
@@ -206,7 +219,7 @@ function renameNestedIds(
             for (const [caseKey, caseVal] of Object.entries(casesObj)) {
                 if (Array.isArray(caseVal)) {
                     newCases[caseKey] = (caseVal as Record<string, unknown>[]).map(item =>
-                        renameTaskNode(item, takenIds),
+                        renameTaskNode(item, takenIds, renameId, idMap),
                     )
                 } else {
                     newCases[caseKey] = caseVal
@@ -221,14 +234,210 @@ function renameNestedIds(
 function renameTaskNode(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     if (!node || typeof node !== "object") return node
-    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds)}
+    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds, renameId, idMap)}
     const originalId = typeof node.id === "string" ? node.id : undefined
-    if (originalId === undefined) return renameNestedIds(node, takenIds)
-    const newId = uniqueId(originalId, takenIds)
+    if (originalId === undefined) return renameNestedIds(node, takenIds, renameId, idMap)
+    const newId = renameId(originalId, takenIds)
     takenIds.add(newId)
-    return renameNestedIds({...node, id: newId}, takenIds)
+    if (newId !== originalId) idMap.set(originalId, newId)
+    return renameNestedIds({...node, id: newId}, takenIds, renameId, idMap)
+}
+
+function keepIdOrRename(id: string, takenIds: Set<string>): string {
+    return takenIds.has(id) ? nextAvailableId(id, takenIds) : id
+}
+
+/**
+ * Rewrites a Dag lane item's `dependsOn` entries through `idMap`, so renaming a task does not
+ * dangle the edges that pointed at its old id. `dependsOn` lives on the wrapper (sibling to
+ * `task`), which `renameTaskNode` never touches since it only ever renames a node's own `id`.
+ */
+function rewireDependsOnInSubtree(
+    node: Record<string, unknown>,
+    idMap: Map<string, string>,
+): Record<string, unknown> {
+    if (!node || typeof node !== "object") return node
+    if (isWrappedLaneItem(node)) {
+        const task = rewireDependsOnInSubtree(node.task, idMap)
+        if (!Array.isArray(node.dependsOn)) return {...node, task}
+        return {
+            ...node,
+            task,
+            dependsOn: (node.dependsOn as unknown[]).map(dep =>
+                typeof dep === "string" ? (idMap.get(dep) ?? dep) : dep,
+            ),
+        }
+    }
+
+    const result: Record<string, unknown> = {...node}
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const val = node[key]
+        if (Array.isArray(val)) {
+            result[key] = (val as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+        } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
+            const casesObj = val as Record<string, unknown>
+            const newCases: Record<string, unknown> = {}
+            for (const [caseKey, caseVal] of Object.entries(casesObj)) {
+                newCases[caseKey] = Array.isArray(caseVal)
+                    ? (caseVal as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+                    : caseVal
+            }
+            result[key] = newCases
+        }
+    }
+    return result
+}
+
+/**
+ * Renames only the ids of `block` (and its nested Flowable lanes) that collide with
+ * `existingIds`, so a task pasted into another flow keeps its ids where it can and only
+ * disambiguates where it must — unlike `duplicateBlock`, which always mints a new id. Any
+ * `dependsOn` inside the same subtree is rewired to follow. A Pebble expression referencing a
+ * renamed id (e.g. `{{ outputs.<oldId>.value }}`) is not: matching that safely without a real
+ * Pebble parser is out of scope here, so such a reference is left pointing at the old id.
+ */
+export function withFreeIds(
+    block: Record<string, unknown>,
+    existingIds: Set<string>,
+): Record<string, unknown> {
+    const idMap = new Map<string, string>()
+    const renamed = renameTaskNode(block, new Set(existingIds), keepIdOrRename, idMap)
+    return rewireDependsOnInSubtree(renamed, idMap)
+}
+
+export function flattenTaskIds(tasks: unknown, acc: string[]): void {
+    if (!Array.isArray(tasks)) return
+    for (const rawTask of tasks) {
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
+        if (task?.id) acc.push(String(task.id))
+        for (const key of FLOWABLE_BRANCH_KEYS) {
+            if (key === "cases") continue
+            flattenTaskIds(task?.[key], acc)
+        }
+        if (task?.cases && typeof task.cases === "object") {
+            for (const branch of Object.values(task.cases as Record<string, unknown>)) flattenTaskIds(branch, acc)
+        }
+    }
+}
+
+type TaskMatcher = (task: Record<string, unknown>) => boolean
+
+function matcherFor(flow: Record<string, unknown>, taskId: string, taskPath?: string): TaskMatcher {
+    const located = taskPath ? getAtPath(flow, taskPath) : undefined
+    if (located && typeof located === "object" && !Array.isArray(located)) {
+        const edited = displayTaskOf(located as Record<string, unknown>)
+        return task => task === edited
+    }
+    return task => Boolean(task.id) && String(task.id) === taskId
+}
+
+export function upstreamTaskIds(
+    flow: {tasks?: unknown; errors?: unknown; finally?: unknown},
+    taskId: string,
+    taskPath?: string,
+): string[] {
+    const isTarget = matcherFor(flow, taskId, taskPath)
+    const upstream: string[] = []
+    if (collectUpstream(flow.tasks, isTarget, upstream)) return upstream
+
+    const afterMain: string[] = []
+    flattenTaskIds(flow.tasks, afterMain)
+    if (collectUpstream(flow.errors, isTarget, afterMain)) return afterMain
+
+    flattenTaskIds(flow.errors, afterMain)
+    if (collectUpstream(flow.finally, isTarget, afterMain)) return afterMain
+
+    const everyId: string[] = []
+    for (const section of [flow.tasks, flow.errors, flow.finally]) flattenTaskIds(section, everyId)
+    return everyId.filter(id => id !== taskId)
+}
+
+function isConcurrentFlowable(task: Record<string, unknown>): boolean {
+    const type = String(task.type ?? "")
+    if (type.endsWith(".Parallel") || type.endsWith(".EachParallel")) return true
+    return type.endsWith(".ForEach") && task.concurrencyLimit !== undefined && Number(task.concurrencyLimit) !== 1
+}
+
+function containsTask(list: unknown, isTarget: TaskMatcher): boolean {
+    if (!Array.isArray(list)) return false
+    return list.some(rawTask => {
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
+        if (!task || typeof task !== "object") return false
+        if (isTarget(task)) return true
+        return FLOWABLE_BRANCH_KEYS.some(key => {
+            const branch = task[key]
+            if (key === "cases" && branch && typeof branch === "object") {
+                return Object.values(branch as Record<string, unknown>).some(caseTasks => containsTask(caseTasks, isTarget))
+            }
+            return containsTask(branch, isTarget)
+        })
+    })
+}
+
+function branchesPrecedingKey(key: string): readonly string[] {
+    if (key === "errors") return ["tasks", "then", "else", "cases", "defaults"]
+    if (key === "finally") return ["tasks", "then", "else", "cases", "defaults", "errors"]
+    return []
+}
+
+function flattenBranch(branch: unknown, acc: string[]): void {
+    if (branch && typeof branch === "object" && !Array.isArray(branch)) {
+        for (const caseTasks of Object.values(branch)) flattenTaskIds(caseTasks, acc)
+    } else {
+        flattenTaskIds(branch, acc)
+    }
+}
+
+function collectUpstream(list: unknown, isTarget: TaskMatcher, acc: string[], concurrent = false): boolean {
+    if (!Array.isArray(list)) return false
+    const items = list as Record<string, unknown>[]
+    const targetIndex = items.findIndex(item => containsTask([item], isTarget))
+    if (targetIndex < 0) return false
+
+    const isDag = items.some(isWrappedLaneItem)
+    let precedingItems: Record<string, unknown>[] = []
+    if (isDag) precedingItems = dagAncestorItems(items, items[targetIndex])
+    else if (!concurrent) precedingItems = items.slice(0, targetIndex)
+    for (const item of precedingItems) flattenTaskIds([item], acc)
+
+    const target = displayTaskOf(items[targetIndex])
+    if (isTarget(target)) return true
+    const targetConcurrent = isConcurrentFlowable(target)
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const branch = target[key]
+        if (key === "cases" && branch && typeof branch === "object") {
+            if (Object.values(branch).some(caseTasks => collectUpstream(caseTasks, isTarget, acc))) return true
+        } else if (containsTask(branch, isTarget)) {
+            for (const earlier of branchesPrecedingKey(key)) flattenBranch(target[earlier], acc)
+            return collectUpstream(branch, isTarget, acc, key === "tasks" && targetConcurrent)
+        }
+    }
+    return true
+}
+
+function dependsOnOf(item: Record<string, unknown>): string[] {
+    return Array.isArray(item.dependsOn) ? item.dependsOn.map(String) : []
+}
+
+function dagAncestorItems(items: Record<string, unknown>[], item: Record<string, unknown>): Record<string, unknown>[] {
+    const itemById = new Map(items.map(candidate => [String(displayTaskOf(candidate)?.id), candidate]))
+    const ancestors: Record<string, unknown>[] = []
+    const visited = new Set<string>([String(displayTaskOf(item).id)])
+    const queue = [...dependsOnOf(item)]
+    while (queue.length) {
+        const id = queue.shift() as string
+        if (visited.has(id)) continue
+        visited.add(id)
+        const ancestor = itemById.get(id)
+        if (!ancestor) continue
+        ancestors.push(ancestor)
+        queue.push(...dependsOnOf(ancestor))
+    }
+    return ancestors
 }
 
 function collectAllIds(source: string): Set<string> {
@@ -286,6 +495,90 @@ export function reorderAtPath(source: string, parentPath: string, fromIndex: num
     } catch {
         return source
     }
+}
+
+export type MoveRefusalReason = "cycle" | "section" | "lane"
+
+export type MoveVerdict = {allowed: true} | {allowed: false; reason: MoveRefusalReason}
+
+function sectionOfPath(path: string): string {
+    const [first] = flowYamlUtils.parsePath(path)
+    return String(first)
+}
+
+/** True when `candidatePath` is `ancestorPath` itself, or nested under it. */
+function isDescendantOrSelfPath(candidatePath: string, ancestorPath: string): boolean {
+    const candidateSegments = flowYamlUtils.parsePath(candidatePath)
+    const ancestorSegments = flowYamlUtils.parsePath(ancestorPath)
+    if (candidateSegments.length < ancestorSegments.length) return false
+    return ancestorSegments.every((segment, index) => segment === candidateSegments[index])
+}
+
+/** Renumbers `path` for the array shrinking by one at `removedParentPath[removedIndex]`, so a path through a later sibling of the removed block still resolves once that sibling has shifted down. */
+function pathAfterRemoval(path: string, removedParentPath: string, removedIndex: number): string {
+    const pathSegments = flowYamlUtils.parsePath(path)
+    const removedSegments = flowYamlUtils.parsePath(removedParentPath)
+    if (pathSegments.length <= removedSegments.length) return path
+    if (!removedSegments.every((segment, index) => segment === pathSegments[index])) return path
+
+    const siblingIndex = pathSegments[removedSegments.length]
+    if (typeof siblingIndex !== "number" || siblingIndex <= removedIndex) return path
+
+    const renumbered = [...pathSegments]
+    renumbered[removedSegments.length] = siblingIndex - 1
+    return flowYamlUtils.joinPath(renumbered)
+}
+
+export function listLengthAtPath(source: string, path: string): number {
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const list = parsed ? getAtPath(parsed, path) : undefined
+        return Array.isArray(list) ? list.length : 0
+    } catch {
+        return 0
+    }
+}
+
+/** Refuses a cycle (into the block's own subtree), a cross-section move (by the path's first segment, so a task-level `errors` lane counts as `tasks` while the flow-level `errors` section does not), and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
+export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
+    if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
+    if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
+
+    const fromParentPath = pathParent(fromPath)
+    if (fromParentPath !== toParentPath && (isWrapperLane(source, fromParentPath) || isWrapperLane(source, toParentPath))) {
+        return {allowed: false, reason: "lane"}
+    }
+
+    return {allowed: true}
+}
+
+/** Extracts the block at `fromPath` and re-inserts it at index `toIndex` of `toParentPath`'s list, correcting for the same-parent case where the removal shifts every later index down by one; returns `source` unchanged when `canMoveBlockToPath` refuses the move. */
+export function moveBlockToPath(source: string, fromPath: string, toParentPath: string, toIndex: number): string {
+    if (!canMoveBlockToPath(source, fromPath, toParentPath).allowed) return source
+
+    const blockYaml = flowYamlUtils.extractBlockWithPath({source, path: fromPath})
+    if (!blockYaml) return source
+
+    const fromParentPath = pathParent(fromPath)
+    const fromIndexMatch = fromPath.match(/\[(\d+)\]$/)
+    const fromIndex = fromIndexMatch ? parseInt(fromIndexMatch[1], 10) : undefined
+
+    const withoutSource = deleteBlockAtPath(source, fromPath)
+    const renumberedToParentPath = fromIndex !== undefined
+        ? pathAfterRemoval(toParentPath, fromParentPath, fromIndex)
+        : toParentPath
+
+    let adjustedIndex = toIndex
+    if (fromParentPath === toParentPath && fromIndex !== undefined && fromIndex < toIndex) {
+        adjustedIndex = toIndex - 1
+    }
+    if (adjustedIndex < 0) adjustedIndex = 0
+
+    const destinationLength = listLengthAtPath(withoutSource, renumberedToParentPath)
+
+    return adjustedIndex >= destinationLength
+        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, position: "after"})
+        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
 }
 
 export function moveBlockAtPath(source: string, path: string, direction: "up" | "down"): string {
@@ -369,11 +662,32 @@ export function buildMinimalTask(fqcn: string, existingIds?: Set<string>): Recor
     return {id, type: fqcn}
 }
 
-function nextAvailableId(baseId: string, existingIds: Set<string>): string {
+export function nextAvailableId(baseId: string, existingIds: Set<string>): string {
     if (!existingIds.has(baseId)) return baseId
     let counter = 1
     while (existingIds.has(`${baseId}_${counter}`)) counter++
     return `${baseId}_${counter}`
+}
+
+/**
+ * Resolves where a new error handler of a task goes: the task's `errors` lane
+ * and the index of the entry to append after (-1 when the lane is empty or absent).
+ * Returns undefined when the task id cannot be found in the source.
+ */
+export function errorsLaneTarget(source: string, taskId: string): {parentPath: string; refIndex: number} | undefined {
+    const taskPath = flowYamlUtils.getPathFromSectionAndId({source, section: "tasks", id: taskId})
+    // an unknown id yields the bare section path, not undefined
+    if (!taskPath || !/\[\d+\]/.test(taskPath)) return undefined
+
+    const parentPath = `${taskPath}.errors`
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const lane = parsed ? getAtPath(parsed, parentPath) : undefined
+        const refIndex = Array.isArray(lane) && lane.length > 0 ? lane.length - 1 : -1
+        return {parentPath, refIndex}
+    } catch {
+        return {parentPath, refIndex: -1}
+    }
 }
 
 export function isWrapperLane(source: string, parentPath: string): boolean {
@@ -397,39 +711,178 @@ export function wrapAsDagTask(task: Record<string, unknown>): Record<string, unk
     return {task}
 }
 
+export interface DagDependency {
+    fromId?: string
+    toId?: string
+}
+
+/**
+ * Closes the gap a task leaves behind in a Dag: whoever depended on it inherits what it depended on,
+ * so pulling a task out of `a -> b -> c` leaves `a -> c` instead of orphaning `c`.
+ */
+export function healDagRemoval(source: string, lanePath: string, removedId: string): string {
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, lanePath)
+    if (!Array.isArray(lane)) return source
+
+    const removed = lane.find(
+        item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === removedId,
+    ) as Record<string, unknown> | undefined
+    if (!removed) return source
+    const inherited = Array.isArray(removed.dependsOn) ? (removed.dependsOn as string[]) : []
+
+    let next = source
+    lane.forEach((raw, index) => {
+        const item = raw as Record<string, unknown>
+        const deps = Array.isArray(item.dependsOn) ? (item.dependsOn as string[]) : undefined
+        if (!deps?.includes(removedId)) return
+
+        const rebuilt: string[] = []
+        const push = (id: string) => {
+            if (id !== removedId && !rebuilt.includes(id)) rebuilt.push(id)
+        }
+        for (const dep of deps) {
+            if (dep === removedId) inherited.forEach(push)
+            else push(dep)
+        }
+
+        const updated = {...item}
+        if (rebuilt.length > 0) updated.dependsOn = rebuilt
+        else delete updated.dependsOn
+
+        next = flowYamlUtils.replaceBlockWithPath({
+            source: next,
+            path: `${lanePath}[${index}]`,
+            newContent: flowYamlUtils.stringify(updated),
+        })
+    })
+    return next
+}
+
+/**
+ * Splices a task into a Dag's dependency chain. A Dag expresses order through `dependsOn` rather
+ * than list position, so inserting into the array alone would leave the new task a disconnected
+ * root; dropping it on the edge `fromId -> toId` has to mean `fromId -> insertedId -> toId`.
+ */
+export function rewireDagDependency(
+    source: string,
+    parentPath: string,
+    insertedId: string,
+    dependency: DagDependency,
+): string {
+    const {fromId, toId} = dependency
+    if (!fromId && !toId) return source
+    // Dropping a task on an edge it is already an endpoint of would make it depend on itself.
+    if (fromId === insertedId || toId === insertedId) return source
+
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, parentPath)
+    if (!Array.isArray(lane)) return source
+
+    const indexOf = (id: string) =>
+        lane.findIndex(item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === id)
+
+    const writeItem = (current: string, index: number, item: Record<string, unknown>) =>
+        flowYamlUtils.replaceBlockWithPath({
+            source: current,
+            path: `${parentPath}[${index}]`,
+            newContent: flowYamlUtils.stringify(item),
+        })
+
+    let next = source
+
+    const insertedIndex = indexOf(insertedId)
+    if (insertedIndex === -1) return source
+    if (fromId) {
+        const inserted = {...(lane[insertedIndex] as Record<string, unknown>), dependsOn: [fromId]}
+        next = writeItem(next, insertedIndex, inserted)
+    }
+
+    if (!toId) return next
+
+    const downstreamIndex = indexOf(toId)
+    if (downstreamIndex === -1) return next
+    const downstream = {...(lane[downstreamIndex] as Record<string, unknown>)}
+    const existing = Array.isArray(downstream.dependsOn) ? [...(downstream.dependsOn as string[])] : []
+    const replaceAt = fromId ? existing.indexOf(fromId) : -1
+    if (replaceAt >= 0) {
+        existing[replaceAt] = insertedId
+    } else if (!existing.includes(insertedId)) {
+        existing.push(insertedId)
+    }
+    downstream.dependsOn = existing
+
+    return writeItem(next, downstreamIndex, downstream)
+}
+
+/**
+ * Keeps only the errors of blocks the saved flow already has: a block added in this session is
+ * incomplete by construction, so flagging it the moment it lands reads as a mistake the user made.
+ * A save attempt reveals every error, since that is the point where they are what blocks the user.
+ */
+export function errorsToShow(
+    errors: ValidationError[] | undefined,
+    flow: Record<string, unknown> | undefined,
+    savedSource: string | undefined,
+    saveAttempted: boolean,
+): ValidationError[] {
+    if (saveAttempted) return errors ?? []
+    if (!errors?.length || !flow) return errors ?? []
+    const saved = savedSource ? collectAllIds(savedSource) : new Set<string>()
+    return errors.filter(({pointer}) => {
+        if (!pointer) return true
+        const taskId = locateTask(pointerSegments(pointer), flow).taskId
+        return taskId === undefined || saved.has(taskId)
+    })
+}
+
+function locateTask(segments: string[], flow: Record<string, unknown>): {taskId?: string; fieldStart: number} {
+    let node: unknown = flow
+    let taskId: string | undefined
+    let fieldStart = 0
+    for (const [depth, segment] of segments.entries()) {
+        const parent = node
+        node = childAt(node, segment)
+        if (node === undefined) break
+        if (!Array.isArray(parent) || !node || typeof node !== "object") continue
+        const task = displayTaskOf(node as Record<string, unknown>)
+        if (task.id == null) continue
+        taskId = String(task.id)
+        // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+        fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
+    }
+    return {taskId, fieldStart}
+}
+
+/**
+ * Groups located errors under the id of the deepest task their pointer runs through, the rest of the
+ * pointer naming the field. An error without a pointer is flow-level and stays out of the map.
+ */
 export function groupValidationIssuesByTask(
-    errors: string[] | undefined,
+    errors: ValidationError[] | undefined,
     flow?: Record<string, unknown>,
 ): Map<string, string[]> {
     const grouped = new Map<string, string[]>()
-    const add = (id: string, entry: string) => {
-        const existing = grouped.get(id) ?? []
-        existing.push(entry)
-        grouped.set(id, existing)
-    }
-    const lines = (errors ?? []).flatMap(raw => raw.split(/[\r\n]+/))
-    for (const line of lines) {
-        const cleaned = line.replace(/^\s*validation error\s*:\s*/i, "").trim()
-        if (!cleaned) continue
-
-        const idMatch = /^([A-Za-z0-9_-]+)(?:\.([A-Za-z0-9_.[\]-]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (idMatch) {
-            const [, id, field, message] = idMatch
-            add(id, field ? `${field}: ${message.trim()}` : message.trim())
-            continue
-        }
-
-        const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (!pathMatch || !flow) continue
-        const [, rawPath, field, message] = pathMatch
-        const taskPath = rawPath.replace(/^_/, "")
-        const item = getAtPath(flow, taskPath)
-        if (!item || typeof item !== "object") continue
-        const id = displayTaskOf(item as Record<string, unknown>).id
-        if (id == null) continue
-        add(String(id), field ? `${field}: ${message.trim()}` : message.trim())
+    if (!flow) return grouped
+    for (const {pointer, detail} of errors ?? []) {
+        if (!pointer || !detail) continue
+        const segments = pointerSegments(pointer)
+        const {taskId, fieldStart} = locateTask(segments, flow)
+        if (taskId === undefined) continue
+        const field = fieldPathOf(segments.slice(fieldStart))
+        const entry = field ? `${field}: ${detail}` : detail
+        grouped.set(taskId, [...(grouped.get(taskId) ?? []), entry])
     }
     return grouped
+}
+
+function childAt(node: unknown, segment: string): unknown {
+    if (Array.isArray(node)) return /^\d+$/.test(segment) ? node[Number(segment)] : undefined
+    if (!node || typeof node !== "object") return undefined
+    const key = pointerKeys(segment).find(candidate => !UNSAFE_KEYS.has(candidate) && candidate in node)
+    return key === undefined ? undefined : (node as Record<string, unknown>)[key]
 }
 
 export {collectAllIds}

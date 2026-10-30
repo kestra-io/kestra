@@ -1,18 +1,22 @@
 package io.kestra.core.runners;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jetbrains.annotations.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -26,13 +30,13 @@ import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -46,7 +50,10 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
+@Slf4j
 class RunVariablesTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunVariablesTest.class);
+
 
     @Inject
     VariableRenderer renderer;
@@ -59,17 +66,15 @@ class RunVariablesTest {
 
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
-        return new KVStoreService() {
+        KVStoreService kvStoreService = Mockito.mock(KVStoreService.class, Mockito.CALLS_REAL_METHODS);
+        Mockito.doAnswer(invocation -> new InternalKVStore(invocation.getArgument(0), invocation.getArgument(1), storageInterface, kvMetadataStateStore) {
             @Override
-            public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
-                    @Override
-                    public Optional<KVValue> getValue(String key) {
-                        return Optional.of(new KVValue("value"));
-                    }
-                };
+            public Optional<KVValue> getValue(String key) {
+                return Optional.of(new KVValue("value"));
             }
-        };
+        }
+        ).when(kvStoreService).get(Mockito.any(), Mockito.any(), Mockito.any());
+        return kvStoreService;
     }
 
     @Test
@@ -259,6 +264,25 @@ class RunVariablesTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldExposeAttemptNumberOfTheExecution() {
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .build()
+            .withMetadata(ExecutionMetadata.builder().attemptNumber(2).build());
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat((Map<String, Object>) variables.get("execution"))
+            .containsEntry("attemptNumber", 2);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldBuildTriggerContextGivenExecutionWithTrigger() {
         // Given
         ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
@@ -423,7 +447,6 @@ class RunVariablesTest {
      * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
      * as present but their children are not walked, since their structure varies per flow/execution.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     void contextPathsShouldMatchExplicitRegistry() {
         String parentRunId = IdUtils.create();
@@ -449,13 +472,13 @@ class RunVariablesTest {
         // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
         Execution parentExecution = Execution.builder()
             .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
-            .outputs(Map.of())
             .trigger(executionTrigger)
             .build()
             .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
-            List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))
+            List.of(new LoopRun.Parent(0, null, "v0", false), new LoopRun.Parent(1, "pk", "v1", false)),
+            false
         );
 
         Execution execution = Execution.builder()
@@ -464,7 +487,6 @@ class RunVariablesTest {
             .labels(List.of(new Label("env", "prod")))
             .loopRun(loopRun)
             .variables(new java.util.HashMap<>(Map.of(RunVariables.FIXTURE_FILES_KEY, Map.of())))
-            .outputs(Map.of())
             .build();
 
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
@@ -482,6 +504,7 @@ class RunVariablesTest {
             })
             .withTaskRun(childRun)
             .withExecution(execution)
+            .withExecutionOutputs(Map.of("myExecutionOutput", "value"))
             .withEnvs(Map.of("MY_ENV", "value"))
             .withGlobals(Map.of("myGlobal", "value"))
             .withInputs(Map.of("myInput", "value"))
@@ -490,9 +513,10 @@ class RunVariablesTest {
 
         // Dynamic top-level keys whose children vary per flow/execution — not walked.
         // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
+        // "execution.outputs" holds the flow-level outputs, dynamic like inputs/outputs.
         Set<String> dynamicTopLevel = Set.of(
             "envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
+            "outputs", "tasks", "trigger", "vars", "execution.outputs", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
         );
 
         List<String> foundPaths = new ArrayList<>();
@@ -526,17 +550,102 @@ class RunVariablesTest {
             if (RunVariables.SECRET_CONSUMER_VARIABLE_NAME.equals(key) && prefix.isEmpty()) {
                 continue;
             }
-            if (stopAt.contains(key) && prefix.isEmpty()) {
-                // Dynamic key: record the top-level key but don't walk flow-specific children
-                paths.add(key);
+            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
+            if (stopAt.contains(fullPath)) {
+                // Dynamic key: record the key but don't walk flow-specific children
+                paths.add(fullPath);
                 continue;
             }
-            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
             paths.add(fullPath);
             if (entry.getValue() instanceof Map<?, ?> nested) {
                 collectStructuralPaths((Map<String, ?>) nested, fullPath, stopAt, paths);
             }
             // Lists (e.g. parents) — record the path but don't recurse into list elements
         }
+    }
+
+    private static Map<String, Object> encryptedString() {
+        return new HashMap<>(Map.of("type", EncryptedString.TYPE, "value", "ciphertext"));
+    }
+
+    @Test
+    void shouldNotMutateExecutionInputsWhenBuildingVariables() {
+        // Given
+        Map<String, Object> nested = new HashMap<>(Map.of("key", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .inputs(new HashMap<>(Map.of("nested", nested)))
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(nested.get("key")).isEqualTo(encryptedString());
+    }
+
+    @Test
+    void shouldNotMutateExecutionTriggerVariablesWhenBuildingVariables() {
+        // Given
+        Map<String, Object> triggerVariables = new HashMap<>(Map.of("token", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .trigger(ExecutionTrigger.builder().id("trigger").type("io.kestra.trigger").variables(triggerVariables).build())
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(triggerVariables).doesNotContainKey("_context");
+    }
+
+    @Test
+    void shouldParseLoopAndParentValuesFollowingTheFlagOfTheirOwnLoop() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        String json = "{\"fqn\":\"docker01\",\"user\":\"root\"}";
+        List<LoopRun.Parent> parents = List.of(new LoopRun.Parent(0, null, json, true), new LoopRun.Parent(1, null, json, false));
+
+        // When
+        Map<String, Object> parsedChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, true), log);
+        Map<String, Object> rawChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, false), log);
+
+        // Then
+        Map<String, Object> expected = Map.of("fqn", "docker01", "user", "root");
+        List<?> parsedParents = (List<?>) parsedChild.get("parents");
+        assertThat(parsedChild.get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(0)).get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(1)).get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) parsedChild.get("parent")).get("value")).isEqualTo(json);
+        assertThat(rawChild.get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) ((List<?>) rawChild.get("parents")).get(0)).get("value")).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldKeepLoopValueAsStringWhenItCannotBeParsed() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        LoopRun.Parent parent = new LoopRun.Parent(0, null, "not json", true);
+        LoopRun loopRun = new LoopRun(parentExecution, "loop", "taskrun", 1, null, "{invalid", List.of(parent), true);
+
+        // When
+        Map<String, Object> variables = RunVariables.of(loopRun, LOGGER);
+
+        // Then
+        assertThat(variables.get("value")).isEqualTo("{invalid");
+        assertThat(((Map<?, ?>) variables.get("parent")).get("value")).isEqualTo("not json");
     }
 }

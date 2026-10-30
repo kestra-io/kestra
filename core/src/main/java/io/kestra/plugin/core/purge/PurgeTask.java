@@ -10,13 +10,23 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
 
-public interface PurgeTask<T> {
+/**
+ * Base contract for the namespace-scoped purge tasks.
+ *
+ * <p>
+ * Extends {@link SystemTask} because {@link #findNamespaces(RunContext)} resolves internal
+ * Kestra services, which are unreachable from a dedicated Worker process.
+ * </p>
+ */
+public interface PurgeTask<T> extends SystemTask {
     Property<List<String>> getNamespaces();
 
     Property<String> getNamespacePattern();
@@ -53,7 +63,7 @@ public interface PurgeTask<T> {
                         .filter(ns ->
                         {
                             for (String renderedNamespace : renderedNamespaces) {
-                                if (ns.startsWith(renderedNamespace)) {
+                                if (NamespaceInterface.isDescendantOrSelf(renderedNamespace, ns)) {
                                     return true;
                                 }
                             }

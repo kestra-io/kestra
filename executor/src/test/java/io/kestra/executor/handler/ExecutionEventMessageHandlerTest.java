@@ -12,10 +12,13 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
+import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ExecutionEvent;
@@ -23,6 +26,7 @@ import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.services.QuotaService;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.executor.SLAMonitorStateStore;
 
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -31,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +59,9 @@ class ExecutionEventMessageHandlerTest {
     @Inject
     QuotaService quotaService;
 
+    @Inject
+    SLAMonitorStateStore slaMonitorStateStore;
+
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
         return mock(KillSwitchService.class);
@@ -69,8 +77,14 @@ class ExecutionEventMessageHandlerTest {
         return mock(QuotaService.class);
     }
 
+    @MockBean(SLAMonitorStateStore.class)
+    SLAMonitorStateStore slaMonitorStateStore() {
+        return mock(SLAMonitorStateStore.class);
+    }
+
     @BeforeEach
     void setUp() {
+        reset(slaMonitorStateStore);
         when(killSwitchService.evaluate(any(ExecutionEvent.class))).thenReturn(EvaluationType.PASS);
     }
 
@@ -227,5 +241,38 @@ class ExecutionEventMessageHandlerTest {
         // Then
         assertThat(maybeExecutor).isPresent();
         assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldCreateSlaMonitorForNonLoopExecution() {
+        // Given
+        SLA sla = MaxDurationSLA.builder().id("max-duration").type(SLA.Type.MAX_DURATION).behavior(SLA.Behavior.FAIL).duration(Duration.ofHours(1)).build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithSla(sla)));
+        var execution = Execution.newExecution(flow, null, Collections.emptyList(), Optional.empty(), ExecutionKind.NORMAL);
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+
+        // When
+        executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        verify(slaMonitorStateStore).save(any());
+    }
+
+    @Test
+    void shouldNotCreateSlaMonitorForLoopExecution() {
+        // Given: a Loop execution, which re-triggers the parent flow's SLA on each iteration
+        // and must not accumulate a monitor per iteration
+        SLA sla = MaxDurationSLA.builder().id("max-duration").type(SLA.Type.MAX_DURATION).behavior(SLA.Behavior.FAIL).duration(Duration.ofHours(1)).build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithSla(sla)));
+        var execution = Execution.newExecution(flow, null, Collections.emptyList(), Optional.empty(), ExecutionKind.LOOP);
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+
+        // When
+        executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        verify(slaMonitorStateStore, never()).save(any());
     }
 }

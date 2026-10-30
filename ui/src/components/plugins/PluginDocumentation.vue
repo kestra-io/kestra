@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && currentPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin?.schema && currentPlugin.cls">
             <div class="dp-sticky">
                 <div class="dp-header">
                     <div class="dp-kicker">{{ packagePath }}</div>
@@ -47,13 +47,14 @@
                     <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
 
-                <nav class="dp-nav" aria-label="Documentation sections">
+                <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')" data-test="plugin-doc-nav">
                     <button
                         type="button"
                         v-for="chip in navChips"
                         :key="chip.id"
                         class="dp-navchip"
                         :class="{active: activeSection === chip.id}"
+                        :data-test="`plugin-doc-navchip-${chip.id}`"
                         @click="selectSection(chip.id)"
                     >
                         {{ chip.label }}
@@ -66,13 +67,14 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="isDarkTheme"
-                    :schema="currentPlugin?.schema"
-                    :pluginType="currentPlugin?.cls"
+                    :schema="currentPlugin.schema"
+                    :pluginType="currentPlugin.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                     compact
                     :activeSection="activeSection"
                     @section-counts="onSectionCounts"
+                    @definition-navigate="selectSection('definitions')"
                 >
                     <template #markdown="{content}">
                         <KsMarkdown
@@ -86,6 +88,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -94,18 +97,18 @@
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
                 </div>
-                <h2 class="dp-intro-title">{{ t("plugins.intro_title") }}</h2>
-                <p class="dp-intro-sub">{{ t("plugins.intro_sub") }}</p>
+                <h2 class="dp-intro-title">{{ $t("plugins.intro_title") }}</h2>
+                <p class="dp-intro-sub">{{ $t("plugins.intro_sub") }}</p>
                 <div class="dp-intro-callout">
                     <CursorPointer :size="17" class="dp-intro-callout-icon" />
-                    <p>{{ t("plugins.intro_callout_prefix") }}<code>type</code>{{ t("plugins.intro_callout_suffix") }}</p>
+                    <p>{{ $t("plugins.intro_callout_prefix") }}<code>type</code>{{ $t("plugins.intro_callout_suffix") }}</p>
                 </div>
             </div>
 
             <div class="dp-intro-search-wrap">
                 <KsInput
                     v-model="introSearch"
-                    :placeholder="t('plugins.intro_search_placeholder')"
+                    :placeholder="$t('plugins.intro_search_placeholder')"
                     clearable
                     size="small"
                     class="dp-intro-search"
@@ -116,7 +119,7 @@
                 </KsInput>
             </div>
 
-            <nav class="dp-nav" aria-label="Documentation sections">
+            <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')">
                 <button
                     type="button"
                     v-for="tab in introTabs"
@@ -131,38 +134,38 @@
 
             <div class="dp-intro-body">
                 <template v-if="introSection === 'overview'">
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_start_here") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_start_here") }}</div>
                     <div class="dp-intro-qstart">
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'flow'">
                             <span class="dp-intro-qnum">1</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step1_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ t("plugins.intro_step1_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step1_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step1_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ $t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ $t("plugins.intro_step1_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step1_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'tasks'">
                             <span class="dp-intro-qnum">2</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step2_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step2_desc") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step2_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step2_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step2_desc") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step2_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'inputs'">
                             <span class="dp-intro-qnum">3</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step3_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ t("plugins.intro_step3_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step3_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step3_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ $t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ $t("plugins.intro_step3_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step3_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                     </div>
 
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_learn_more") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_learn_more") }}</div>
                     <div class="dp-intro-linkgrid">
                         <a
                             v-for="link in learnMoreLinks"
@@ -183,9 +186,9 @@
                     <template v-if="introSearch && filteredFlowRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -199,9 +202,9 @@
                     <template v-if="introSearch && filteredTaskRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -215,9 +218,9 @@
                     <template v-if="introSearch && filteredInputRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -231,12 +234,12 @@
                     <template v-if="introSearch">
                         <div v-if="filteredPebbleRows.length === 0" class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                         <template v-else>
-                            <p class="dp-intro-result-count">{{ t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
+                            <p class="dp-intro-result-count">{{ $t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
                             <div class="dp-intro-fn-list">
                                 <div
                                     v-for="row in filteredPebbleRows"
@@ -273,10 +276,12 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
+    import {buildHighlightHtml} from "../../utils/crossResourceSearch"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
+    import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
     import GitHub from "vue-material-design-icons/Github.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -297,7 +302,7 @@
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
-        plugin?: any;
+        plugin?: PluginComponent | null;
     }>(), {
         overrideIntro: null,
         absolute: false,
@@ -309,7 +314,7 @@
     const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
-    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean}>({})
+    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
     const introSection = ref("overview")
     const introSearch = ref("")
 
@@ -327,13 +332,11 @@
     })
 
     const pluginName = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts[parts.length - 1]
+        return currentPlugin.value?.cls?.split(".").at(-1) ?? ""
     })
 
     const packagePath = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts.slice(0, -1).join(".")
+        return currentPlugin.value?.cls?.split(".").slice(0, -1).join(".") ?? ""
     })
 
     const pluginKind = computed(() => {
@@ -365,19 +368,24 @@
         if (sectionCounts.value.outputs !== undefined) {
             chips.push({id: "outputs", label: t("plugins.nav_outputs"), count: sectionCounts.value.outputs})
         }
+        if (sectionCounts.value.metrics !== undefined) {
+            chips.push({id: "metrics", label: t("plugins.nav_metrics"), count: sectionCounts.value.metrics})
+        }
         if (sectionCounts.value.examples) {
             chips.push({id: "examples", label: t("plugins.nav_examples")})
+        }
+        if (sectionCounts.value.definitions !== undefined) {
+            chips.push({id: "definitions", label: t("plugins.nav_definitions"), count: sectionCounts.value.definitions})
         }
         return chips
     })
 
-    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean}) => {
+    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}) => {
         sectionCounts.value = counts
     }
 
-    watch(currentPlugin, () => {
+    watch([() => currentPlugin.value?.cls, () => currentPlugin.value?.version], () => {
         activeSection.value = "overview"
-        sectionCounts.value = {}
     })
 
     const selectSection = (id: string) => {
@@ -476,7 +484,7 @@
             const exMatch = rest.match(/`([^`]+)`\s*(?:—|-)/)
             const example = exMatch ? exMatch[1] : ""
             const desc = rest.replace(/`[^`]+`\s*(?:—|-)\s*/, "").replace(/\\\|/g, "|").trim()
-            rows.push({name, nameHtml: name, desc, descHtml: desc, example})
+            rows.push({name, nameHtml: buildHighlightHtml(name, ""), desc, descHtml: buildHighlightHtml(desc, ""), example})
         }
         return rows
     })
@@ -484,14 +492,12 @@
     const filteredPebbleRows = computed<PebbleRow[]>(() => {
         const q = introSearch.value.trim().toLowerCase()
         if (!q) return pebbleRows.value
-        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const re = new RegExp(`(${esc})`, "gi")
         return pebbleRows.value
             .filter(r => r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.example.toLowerCase().includes(q))
             .map(r => ({
                 ...r,
-                nameHtml: r.name.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
-                descHtml: r.desc.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
+                nameHtml: buildHighlightHtml(r.name, q),
+                descHtml: buildHighlightHtml(r.desc, q),
             }))
     })
 
@@ -564,13 +570,18 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
   .plugin-doc {
     --ks-table-row-hover-bg: transparent;
   }
 
   .plugin-schema {
     display: block;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-override-intro {
+    width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 
@@ -1135,7 +1146,6 @@
   }
 
   .dp-intro-md :deep(pre) {
-    background: var(--ks-bg-base);
     border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
     padding: var(--ks-spacing-3);
@@ -1148,7 +1158,8 @@
     font-size: var(--ks-font-size-xs);
   }
 
-  :deep(.dp-intro-hl) {
+  .dp-intro-fn-name mark,
+  .dp-intro-fn-desc mark {
     background: color-mix(in srgb, var(--ks-primary-500) 18%, transparent);
     border-radius: 3px;
     padding: 0 2px;

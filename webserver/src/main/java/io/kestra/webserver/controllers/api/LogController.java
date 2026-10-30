@@ -43,7 +43,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogDataStoreInterface.class)
@@ -100,10 +99,23 @@ public class LogController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}")
-    @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task", description = "All logs are returned unless `page` or `size` is set.")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The current page, enables pagination when set") @Nullable @QueryValue @Min(1) Integer page,
+        @Parameter(description = "The current page size, enables pagination when set (defaults to 10)") @Nullable @QueryValue @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) Integer size,
+        @Parameter(description = "The sort of the page, defaults to `timestamp:asc`", examples = {
+            @ExampleObject(name = "Sort by timestamp in descending order", value = "timestamp:desc")
+        }) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        if (page != null || size != null) {
+            return logRepository.find(
+                PageableUtils.from(page == null ? 1 : page, size == null ? 10 : size, sort == null ? List.of("timestamp:asc") : sort),
+                tenantService.resolveTenant(),
+                buildExecutionFilters(executionId, filters)
+            ).getContent();
+        }
+
         return logRepository
             .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
             .collectList()
@@ -132,7 +144,9 @@ public class LogController {
             return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }
 
-        return response;
+        // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
+        // them to a different requester, even though a terminated execution's logs never change.
+        return response.header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -144,20 +158,8 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 
-        Flux<Event<FollowLogEvent>> flux = Flux.<Event<FollowLogEvent>> create(emitter ->
-        {
-            // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-            emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
-
-            // fetch repository first
-            logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters)
-                .toStream()
-                .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
-
-            // consume in realtime — pass the same filter list, the streaming service uses
-            // the FollowLogEventMatcher (backed by Searchable<FollowLogEvent>) to apply it
-            logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters);
-        }, FluxSink.OverflowStrategy.BUFFER)
+        Flux<Event<FollowLogEvent>> flux = logStreamingService
+            .follow(executionId, subscriberId, logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters), effectiveFilters)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(

@@ -1,4 +1,4 @@
-import {computed} from "vue"
+import {computed, type Component} from "vue"
 
 import {useRoute, useRouter} from "vue-router"
 import type {
@@ -27,6 +27,7 @@ import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 import Monitor from "vue-material-design-icons/Monitor.vue"
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
+import KeyOutline from "vue-material-design-icons/KeyOutline.vue"
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
@@ -42,8 +43,8 @@ export type MenuItem = {
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
     icon?: {
-        element?: any;
-        class?: any;
+        element?: Component;
+        class?: string;
     };
     child?: MenuItem[];
     attributes?: {
@@ -94,7 +95,7 @@ export function useLeftMenu() {
         const generated = [
             {
                 id: "workspace",
-                title: "Workspace",
+                title: t("workspace"),
                 child: [
                     {
                         id: "dashboards",
@@ -183,7 +184,7 @@ export function useLeftMenu() {
             },
             {
                 id: "resources",
-                title: "Resources",
+                title: t("resources"),
                 child: [
                     {
                         id: "namespaces",
@@ -302,6 +303,17 @@ export function useLeftMenu() {
                         icon: {
                             element: LockOutline,
                         },
+                    },
+                    {
+                        id: "credentials",
+                        title: t("demos.credentials.label"),
+                        routes: routeStartWith("credentials"),
+                        href: {
+                            name: "credentials/list",
+                        },
+                        icon: {
+                            element: KeyOutline,
+                        },
                         attributes: {
                             locked: true,
                         },
@@ -379,7 +391,7 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Battery40,
-                        }
+                        },
                     },
                     {
                         id: "iam",

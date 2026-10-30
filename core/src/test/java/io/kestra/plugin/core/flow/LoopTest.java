@@ -95,6 +95,27 @@ class LoopTest {
     }
 
     @Test
+    void initFromValues_withEmptyList_shouldReturnZeroCount() throws Exception {
+        // Given — an empty values list drives the loop to no iterations (execution then ends immediately)
+        RunContext runContext = runContextFactory.of();
+        Loop loop = Loop.builder()
+            .id("loop")
+            .type(Loop.class.getName())
+            .values(List.of())
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("x")).build()))
+            .concurrencyLimit(0)
+            .build();
+
+        // When
+        Loop.ValuesInit result = loop.initFromValues(runContext);
+
+        // Then
+        assertThat(result.totalCount()).isEqualTo(0);
+        assertThat(result.limit()).isEqualTo(0);
+        assertThat(result.values().getLeft()).isEmpty();
+    }
+
+    @Test
     void initFromValues_withStringList_noLimit_shouldReturnAll() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();

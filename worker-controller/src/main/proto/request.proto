@@ -5,7 +5,14 @@ option java_multiple_files = true;
 
 // Common request and response header
 message RequestOrResponseHeader {
-  // The client ID string. 
+  // The edition of the client sending the request. EDITION_UNSPECIFIED is the proto3 zero value
+  enum Edition {
+    EDITION_UNSPECIFIED = 0;
+    EDITION_OSS = 1;
+    EDITION_EE = 2;
+  }
+
+  // The client ID string.
   string clientId = 1;
   // The client version.
   string clientVersion = 2;
@@ -13,6 +20,8 @@ message RequestOrResponseHeader {
   string correlationId = 3;
   // The format of the message
   string messageFormat = 4;
+  // The edition of the client sending the request.
+  Edition edition = 5;
 }
 
 message EmptyRequest {
@@ -27,4 +36,11 @@ message BooleanResponse {
 message OpaqueData {
   RequestOrResponseHeader header = 1;
   bytes message = 2;
+}
+
+// A chunk of a payload streamed over several messages, when the payload exceeds the configured
+// maximum inbound message size.
+message StreamChunk {
+  RequestOrResponseHeader header = 1;
+  bytes content = 2;
 }

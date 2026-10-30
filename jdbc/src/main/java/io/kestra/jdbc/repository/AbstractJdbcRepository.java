@@ -14,6 +14,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -26,6 +27,7 @@ import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.repositories.NamespaceAccessControl;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -33,6 +35,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -46,11 +49,41 @@ public abstract class AbstractJdbcRepository {
 
     protected static final int FETCH_SIZE = 100;
 
+    /**
+     * The {@code notification_items} table, correlated against {@code executions} to answer
+     * {@link QueryFilter.Field#OPERATION_ID}/{@link QueryFilter.Field#OPERATION_OUTCOME} filters.
+     * Safe to reference unconditionally here since those two fields are only reachable through
+     * {@link QueryFilter.Resource#EXECUTION}.
+     * <p>
+     * Built from a plain (single-argument) {@code DSL.table(String)}, like every other table in
+     * this module — that renders the identifier unquoted, matching how the table was declared in
+     * its migration and how {@code executions} itself is referenced, so H2's uppercase-folding of
+     * unquoted identifiers resolves both consistently. Its columns, in contrast, are declared
+     * quoted in every migration, hence {@code DSL.quotedName(...)} below.
+     */
+    static final Table<?> NOTIFICATION_ITEMS_TABLE = DSL.table("notification_items");
+
+    /**
+     * Operations valid on the {@link QueryFilter.Field#LABELS} field when its value is a plain
+     * string, i.e. {@code filters[labels][OP]=value} with no label key. Every other operation
+     * requires a keyed map value ({@code filters[labels][OP][key]=value}).
+     */
+    private static final Set<Op> SCALAR_LABEL_OPS = EnumSet.of(Op.CONTAINS, Op.NOT_CONTAINS, Op.IS_NULL, Op.IS_NOT_NULL);
+
     @Getter
     @Inject
     // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
     // not bean-managed) set it in AbstractJdbcLogDataStore.initFrom — hence protected, not private.
     protected SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    // Injected lazily as a provider: the EE bean depends on the
+    // role repository, which itself extends this base, so eager injection would be a circular dependency.
+    protected BeanProvider<NamespaceAccessControl> namespaceAccessControlProvider;
+
+    protected NamespaceAccessControl namespaceAccessControl() {
+        return namespaceAccessControlProvider != null ? namespaceAccessControlProvider.get() : NamespaceAccessControl.GLOBAL;
+    }
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -80,6 +113,35 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return deleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
+    }
+
+    protected Condition aclCondition(Resource resource) {
+        return aclCondition(resource, "namespace");
+    }
+
+    /**
+     * The one namespace-ACL clause every JDBC repository ANDs onto its tenant filter, translating the
+     * backend-agnostic {@link AccessScope} from {@link NamespaceAccessControl} into jOOQ: {@code GLOBAL}
+     * imposes no restriction, {@code DENY_ALL} matches nothing, {@code NAMESPACES} matches a granted
+     * namespace or its dot-delimited subtree ({@code io.kestrax} is not inside {@code io.kestra}).
+     *
+     * @param namespaceColumn the column holding the namespace, which is not always named {@code namespace}.
+     */
+    protected Condition aclCondition(Resource resource, String namespaceColumn) {
+        AccessScope scope = namespaceAccessControl().namespaceScope(resource);
+        Field<String> column = field(namespaceColumn, String.class);
+        return switch (scope.kind()) {
+            case GLOBAL -> DSL.noCondition();
+            case DENY_ALL -> DSL.falseCondition();
+            case NAMESPACES -> {
+                List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);
+                for (String namespace : scope.namespaces()) {
+                    ors.add(CaseSensitiveMatch.eq(column, namespace));
+                    ors.add(CaseSensitiveMatch.startsWith(column, namespace + "."));
+                }
+                yield DSL.or(ors);
+            }
+        };
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -351,8 +413,8 @@ public abstract class AbstractJdbcRepository {
             return getEnabledCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.SUPER_ADMIN) {
-            return getSuperAdminCondition(value, operation);
+        if (field == QueryFilter.Field.INSTANCE_OWNER) {
+            return getInstanceOwnerCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.STATUS) {
@@ -386,6 +448,13 @@ public abstract class AbstractJdbcRepository {
             if (value instanceof Map<?, ?> map) {
                 return findLabelCondition(Either.left(map), operation);
             } else if (value instanceof String string) {
+                if (!SCALAR_LABEL_OPS.contains(operation)) {
+                    throw new InvalidQueryFiltersException(
+                        "Operation %s on the labels field requires a label key, as in filters[labels][%s][<key>]=<value>. Operations supported without a key are %s.".formatted(
+                            operation, operation, SCALAR_LABEL_OPS
+                        )
+                    );
+                }
                 return findLabelCondition(Either.right(string), operation);
             } else {
                 throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
@@ -396,8 +465,12 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
-        if (field.equals(QueryFilter.Field.METADATA)) {
+        if (QueryFilter.Field.METADATA == field) {
             return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
+        if (QueryFilter.Field.ASSET_EXPIRY == field) {
+            return assetExpiryCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.TYPE) {
@@ -436,6 +509,11 @@ public abstract class AbstractJdbcRepository {
             return timeRangeCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.OPERATION_ID || field == QueryFilter.Field.OPERATION_OUTCOME) {
+            Condition leaf = notificationItemCorrelation().and(notificationItemLeafCondition(field, value, operation));
+            return DSL.exists(DSL.selectOne().from(NOTIFICATION_ITEMS_TABLE).where(leaf));
+        }
+
         return defaultHandlers(field, value, operation);
     }
 
@@ -443,63 +521,63 @@ public abstract class AbstractJdbcRepository {
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation) {
-        // Convert the field name to lowercase and quote it
-        Name columnName = getColumnName(field);
+        org.jooq.Field<Object> column = getColumn(field);
+        org.jooq.Field<Object> searchColumn = field == QueryFilter.Field.TAGS ? column : CaseInsensitiveSearch.of(column);
 
         // Default handling for other fields
         return switch (operation) {
             case EQUALS -> {
                 Object v = primitiveOrToString(value);
-                yield v == null ? DSL.field(columnName).isNull() : DSL.field(columnName).eq(v);
+                yield v == null ? column.isNull() : column.eq(v);
             }
             case NOT_EQUALS -> {
                 Object v = primitiveOrToString(value);
-                yield v == null ? DSL.field(columnName).isNotNull() : DSL.field(columnName).ne(v);
+                yield v == null ? column.isNotNull() : column.ne(v);
             }
             case GREATER_THAN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("GREATER_THAN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).greaterThan(value);
+                yield column.greaterThan(value);
             }
             case LESS_THAN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("LESS_THAN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).lessThan(value);
+                yield column.lessThan(value);
             }
             case IN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("IN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).in(ListUtils.convertToListString(value));
+                yield column.in(ListUtils.convertToListString(value));
             }
             case NOT_IN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("NOT_IN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).notIn(ListUtils.convertToListString(value));
+                yield column.notIn(ListUtils.convertToListString(value));
             }
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
-                yield DSL.field(columnName).startsWith(s);
+                yield searchColumn.startsWith(s);
             }
             case ENDS_WITH -> {
                 String s = requireStringValue(value, "ENDS_WITH");
-                yield DSL.field(columnName).endsWith(s);
+                yield searchColumn.endsWith(s);
             }
             case CONTAINS -> {
                 String s = requireStringValue(value, "CONTAINS");
-                yield DSL.field(columnName).contains(s);
+                yield searchColumn.contains(s);
             }
             case REGEX -> {
                 String s = requireStringValue(value, "REGEX");
-                yield DSL.field(columnName).likeRegex(s);
+                yield column.likeRegex(s);
             }
             case PREFIX -> {
                 String s = requireStringValue(value, "PREFIX");
-                yield DSL.field(columnName).eq(s)
-                    .or(DSL.field(columnName).startsWith(s + "."));
+                yield column.eq(s)
+                    .or(column.startsWith(s + "."));
             }
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
@@ -540,6 +618,53 @@ public abstract class AbstractJdbcRepository {
         return DSL.quotedName(field.name().toLowerCase());
     }
 
+    protected org.jooq.Field<Object> getColumn(QueryFilter.Field field) {
+        return DSL.field(getColumnName(field));
+    }
+
+    /**
+     * A table-qualified column reference where the table part is unquoted (matching an
+     * unqualified {@code DSL.table(String)}) and the column part is quoted (matching how every
+     * column is declared in these tables' migrations).
+     */
+    private static <T> Field<T> qualifiedColumn(String table, String column, Class<T> type) {
+        return DSL.field(DSL.unquotedName(table).append(DSL.quotedName(column)), type);
+    }
+
+    /**
+     * {@code notification_items.resource_id = executions.key}, correlating a subquery against
+     * {@code notification_items} to the outer {@code executions} row being filtered.
+     */
+    static Condition notificationItemCorrelation() {
+        Field<String> resourceId = qualifiedColumn("notification_items", "resource_id", String.class);
+        Field<String> executionKey = qualifiedColumn("executions", "key", String.class);
+        return resourceId.eq(executionKey);
+    }
+
+    /**
+     * Builds an {@code EQUALS} condition on {@code notification_items.operation_id}/{@code outcome}
+     * (correlation not included — see {@link #notificationItemCorrelation()}). Used both standalone
+     * (see {@link #getConditionOnField}) and combined by {@code AbstractJdbcExecutionRepository} when
+     * both fields are filtered together.
+     */
+    static Condition notificationItemLeafCondition(QueryFilter.Field field, Object value, QueryFilter.Op operation) {
+        if (operation != QueryFilter.Op.EQUALS) {
+            throw new InvalidQueryFiltersException("Unsupported operation for " + field + ": " + operation);
+        }
+        String column = field == QueryFilter.Field.OPERATION_ID ? "operation_id" : "outcome";
+        Field<String> notificationColumn = qualifiedColumn("notification_items", column, String.class);
+        return notificationColumn.eq((String) primitiveOrToString(value));
+    }
+
+    /**
+     * {@code notification_items.resource_id}, selected to build an {@code IN} subquery against
+     * the outer {@code executions.key}; see
+     * {@link AbstractJdbcExecutionRepository#combinedNotificationItemCondition}.
+     */
+    static Field<String> notificationItemResourceIdField() {
+        return qualifiedColumn("notification_items", "resource_id", String.class);
+    }
+
     protected Condition findQueryCondition(String query) {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
@@ -552,12 +677,16 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
+    protected Condition assetExpiryCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: ASSET_EXPIRY");
+    }
+
     protected Condition getEnabledCondition(Object value, Op operation) {
         return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
     }
 
-    protected Condition getSuperAdminCondition(Object value, Op operation) {
-        throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
+    protected Condition getInstanceOwnerCondition(Object value, Op operation) {
+        throw new InvalidQueryFiltersException("getInstanceOwnerCondition must be overridden for JSONB-backed instanceOwner field");
     }
 
     protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
@@ -774,11 +903,17 @@ public abstract class AbstractJdbcRepository {
         if (isDisabled == null) {
             return DSL.noCondition();
         }
-        return switch (operation) {
-            case EQUALS -> field("disabled").eq(isDisabled);
-            case NOT_EQUALS -> field("disabled").ne(isDisabled);
+        // A trigger is off for the user when either its runtime flag or its flow definition disables it,
+        // so both have to be read here: `disabled` holds only the runtime one.
+        Condition disabled = field("disabled", Boolean.class).isTrue()
+            .or(field("source_disabled", Boolean.class).isTrue());
+
+        boolean matchesDisabled = switch (operation) {
+            case EQUALS -> isDisabled;
+            case NOT_EQUALS -> !isDisabled;
             default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
         };
+        return matchesDisabled ? disabled : DSL.not(disabled);
     }
 
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {

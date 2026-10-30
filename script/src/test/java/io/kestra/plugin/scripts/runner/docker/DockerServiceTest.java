@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import com.github.dockerjava.core.NameParser;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DockerServiceTest {
@@ -46,5 +48,37 @@ class DockerServiceTest {
     @Test
     void normalizeRegistryUrl_null() {
         assertThat(DockerService.normalizeRegistryUrl(null)).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            // A bare name pulls the implicit 'latest' tag
+            "alpine,                                        alpine,                     latest",
+            "cytopia/ansible,                               cytopia/ansible,            latest",
+
+            // An explicit tag is split off the name
+            "alpine:3.20,                                   alpine,                     3.20",
+            "cytopia/ansible:2.20-tools,                    cytopia/ansible,            2.20-tools",
+
+            // The colon of a registry port is not a tag separator
+            "myregistry.example.com:5000/ansible,           myregistry.example.com:5000/ansible, latest",
+            "myregistry.example.com:5000/ansible:2.20,      myregistry.example.com:5000/ansible, 2.20",
+
+            // A digest is pulled as the tag, and any tag next to it is redundant
+            "cytopia/ansible@sha256:b273f5b1,               cytopia/ansible,            sha256:b273f5b1",
+            "cytopia/ansible:2.20-tools@sha256:b273f5b1,    cytopia/ansible,            sha256:b273f5b1",
+            "myregistry.example.com:5000/ansible@sha256:b273f5b1,      myregistry.example.com:5000/ansible, sha256:b273f5b1",
+            "myregistry.example.com:5000/ansible:2.20@sha256:b273f5b1, myregistry.example.com:5000/ansible, sha256:b273f5b1",
+
+            // Anything after the '@' that is not a digest keeps the separator, so the daemon rejects
+            // the reference instead of an empty tag pulling every tag or a bare tag pulling the wrong image
+            "cytopia/ansible@,                              cytopia/ansible@,           latest",
+            "cytopia/ansible@2.20-tools,                    cytopia/ansible@2.20-tools, latest",
+        }
+    )
+    void shouldSplitRepositoryFromTagOrDigestGivenAnImageReference(String image, String expectedRepository, String expectedTag) {
+        assertThat(DockerService.parseImageReference(image))
+            .isEqualTo(new NameParser.ReposTag(expectedRepository, expectedTag));
     }
 }

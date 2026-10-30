@@ -37,7 +37,8 @@ public class SelectInput extends Input<String> implements RenderableInput {
     String expression;
 
     @Schema(
-        title = "If the user can provide a custom value."
+        title = "If the user can provide a custom value.",
+        description = "When a value is provided at execution creation, the `expression` is not rendered."
     )
     @NotNull
     @Builder.Default
@@ -69,10 +70,12 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (this.getRequired() && values.stream().noneMatch(v -> Objects.equals(v.value(), input))) {
-            if (this.getAllowCustomValue()) {
-                return;
-            }
+        // values is null when the options come from an expression that has not been rendered yet.
+        if (this.getAllowCustomValue() || values == null) {
+            return;
+        }
+
+        if (values.stream().noneMatch(v -> Objects.equals(v.value(), input))) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "it must match the values `" + values.stream().map(ValueOption::value).toList() + "`",
                 this,
@@ -96,6 +99,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())
+                .descriptionDisplayMode(getDescriptionDisplayMode())
                 .dependsOn(getDependsOn())
                 .displayName(getDisplayName())
                 .isRadio(getIsRadio())

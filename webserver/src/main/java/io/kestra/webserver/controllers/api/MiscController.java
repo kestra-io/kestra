@@ -9,18 +9,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.ai.AiServiceManager;
@@ -34,14 +37,18 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,6 +59,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller("/api/v1")
 public class MiscController {
+    /** The longest rolling window, in days, the usage figures can cover. */
+    public static final int MAX_USAGE_DAYS = 30;
+
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -59,10 +69,10 @@ public class MiscController {
     VersionProvider versionProvider;
 
     @Inject
-    DashboardRepositoryInterface dashboardRepository;
+    InstanceService instanceService;
 
     @Inject
-    InstanceService instanceService;
+    VersionService versionService;
 
     @Inject
     FeatureUsageReport featureUsageReport;
@@ -75,6 +85,9 @@ public class MiscController {
 
     @Inject
     SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    CookiesConfiguration cookiesConfiguration;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
@@ -117,6 +130,9 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
+    private PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
     private PebbleExpressionService pebbleExpressionService;
 
     @Inject
@@ -136,7 +152,8 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
-            .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
+            .versionUpgrade(versionService.pendingUpgradeNotice().orElse(null))
+            .isCustomDashboardsEnabled(this.isCustomDashboardsEnabled())
             .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .preview(
@@ -146,15 +163,17 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isPluginEndpointsEnabled(applicationContext.containsBean(PluginEndpointController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(isBasicAuthInitialized())
+            .isBasicAuthManagedByConfig(basicAuthService.map(BasicAuthService::isManagedByConfig).orElse(false))
             .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
             .flowTemplate(this.flowTemplate)
-            ;
+            .isPluginAutoInstallEnabled(pluginAutoInstallService.isEnabled());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -182,12 +201,21 @@ public class MiscController {
         return basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false);
     }
 
+    /**
+     * Whether the instance can store dashboards of the user's own. Enterprise-only, so this edition
+     * always answers {@code false} and the UI falls back to the dashboards bundled with it.
+     */
+    protected boolean isCustomDashboardsEnabled() {
+        return false;
+    }
+
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Retrieve instance usage information")
-    public ApiUsage getUsages() {
+    public ApiUsage getUsages(
+        @Parameter(description = "The rolling window, in days, the execution figures cover") @QueryValue(defaultValue = "1") @Min(1) @Max(MAX_USAGE_DAYS) int days) {
         ZonedDateTime now = ZonedDateTime.now();
-        FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)), now));
+        FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(days)), now));
         return ApiUsage.builder()
             .flows(event.getFlows())
             .executions(event.getExecutions())
@@ -196,13 +224,33 @@ public class MiscController {
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
+    @Operation(
+        tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password. Rejected when the credentials are set in the configuration file."
+    )
     public MutableHttpResponse<?> createBasicAuth(
         HttpRequest<?> request,
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
-        basicAuthService
-            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
-            .save(basicAuthCredentials);
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        if (service.isManagedByConfig()) {
+            throw new ValidationErrorException(List.of(
+                "Basic Authentication credentials are managed in the configuration file and cannot be changed from the API."
+            ));
+        }
+
+        // Being authenticated is not enough to prove the caller still knows the *current*
+        // password: isAuthenticated() caches verified tokens, so a password already rotated on
+        // another webserver node sharing this settings store can still pass it here. Re-checking
+        // directly against the stored credentials closes that window.
+        if (service.isBasicAuthInitialized() && !service.validateCurrentPassword(basicAuthCredentials.getCurrentPassword())) {
+            throw new ValidationErrorException(List.of(
+                "The current password is required and must be correct to change Basic Authentication credentials."
+            ));
+        }
+
+        service.save(basicAuthCredentials);
 
         // Log the caller in immediately: they just proved they know these credentials by submitting them.
         return HttpResponse.noContent()
@@ -242,35 +290,39 @@ public class MiscController {
     @Post("/logout")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
-    public MutableHttpResponse<?> logout() {
+    public MutableHttpResponse<?> logout(HttpRequest<?> request) {
+        boolean secure = cookiesConfiguration.isSecure(request);
+
         Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
             .path("/")
             .httpOnly(true)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         Cookie flagCookie = Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "")
             .path("/")
             .httpOnly(false)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         return HttpResponse.noContent().cookie(cookie).cookie(flagCookie);
     }
 
-    private static Cookie authCookie(HttpRequest<?> request, String username, String password) {
+    private Cookie authCookie(HttpRequest<?> request, String username, String password) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, BasicAuthService.encodeToken(username, password))
             .path("/")
             .httpOnly(true)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 
-    private static Cookie authFlagCookie(HttpRequest<?> request) {
+    private Cookie authFlagCookie(HttpRequest<?> request) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "true")
             .path("/")
             .httpOnly(false)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 
@@ -309,6 +361,8 @@ public class MiscController {
 
         ZonedDateTime commitDate;
 
+        VersionService.VersionUpgrade versionUpgrade;
+
         @JsonInclude
         Boolean isCustomDashboardsEnabled;
 
@@ -334,7 +388,14 @@ public class MiscController {
 
         Boolean isBasicAuthInitialized;
 
+        Boolean isBasicAuthManagedByConfig;
+
         Long pluginsHash;
+
+        Boolean isPluginAutoInstallEnabled;
+
+        @JsonInclude
+        Boolean isPluginEndpointsEnabled;
     }
 
     @Value

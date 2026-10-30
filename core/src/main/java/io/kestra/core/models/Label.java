@@ -18,7 +18,8 @@ public record Label(
         message = "Invalid label key. A valid key contains only lowercase letters numbers hyphens (-) underscores (_) or periods (.) and must begin with a lowercase letter."
     ) String key,
     @NotEmpty String value) {
-    public static final String SYSTEM_PREFIX = "system.";
+    public static final String SYSTEM = "system";
+    public static final String SYSTEM_PREFIX = SYSTEM + ".";
 
     // system labels
     public static final String CORRELATION_ID = SYSTEM_PREFIX + "correlationId";
@@ -49,6 +50,13 @@ public record Label(
     }
     public static final String MCP_SERVER_ID = SYSTEM_PREFIX + "mcpServerId";
     public static final String MCP_SESSION_ID = SYSTEM_PREFIX + "mcpSessionId";
+
+    /**
+     * Includes the bare {@code system} key, which would collide with every system label once labels nest on {@code .} in {@link #toNestedMap(List)}.
+     */
+    public static boolean isSystem(@Nullable String key) {
+        return key != null && (key.equals(SYSTEM) || key.startsWith(SYSTEM_PREFIX));
+    }
 
     /**
      * Static helper method for converting a list of labels to a nested map.

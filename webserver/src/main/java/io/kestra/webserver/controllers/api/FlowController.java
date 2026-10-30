@@ -5,20 +5,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.InvalidException;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
@@ -26,6 +29,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.security.SecurityConfiguration;
@@ -52,6 +56,11 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -78,6 +87,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -85,6 +95,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/{tenant}/flows")
 @Slf4j
 public class FlowController {
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -147,9 +158,10 @@ public class FlowController {
         }
 
         if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException(
-                "Unable to generate graph for flow " + flowUid +
-                    " because of exception " + fwe.getException()
+            throw new InvalidException(
+                fwe,
+                "Cannot generate a graph for flow '%s': the flow itself is invalid. Cause: %s"
+                    .formatted(flowUid, fwe.getException())
             );
         }
 
@@ -165,7 +177,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "graph", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "graph", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Generate a graph for a flow source")
     public FlowGraph generateFlowGraphFromSource(
         @RequestBody(description = "The flow source code") @Body String flow,
@@ -173,6 +185,7 @@ public class FlowController {
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
             FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
+            modelValidator.validate(flowParsingService.parseForValidation(flowParsed));
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
@@ -280,22 +293,28 @@ public class FlowController {
         @Parameter(description = "Whether the query must match on word boundaries only") @QueryValue(defaultValue = "false") boolean wholeWord,
         @Parameter(description = "Whether the query is a regular expression rather than a literal string") @QueryValue(defaultValue = "false") boolean regex,
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
-        return PagedResults.of(sourceSearchService.search(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            namespace,
-            query,
-            caseSensitive,
-            wholeWord,
-            regex,
-            scope
-        ));
+        return PagedResults.of(
+            sourceSearchService.search(
+                PageableUtils.from(page, size, sort),
+                tenantService.resolveTenant(),
+                namespace,
+                query,
+                caseSensitive,
+                wholeWord,
+                regex,
+                scope
+            )
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/preview")
-    @Operation(tags = { "Flows" }, summary = "Preview a Source Search replace-all operation", description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything.")
-    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(@RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
+    @Operation(
+        tags = { "Flows" }, summary = "Preview a Source Search replace-all operation",
+        description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything."
+    )
+    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(
+        @RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
         return sourceSearchService.preview(
             tenantService.resolveTenant(),
             request.namespace(),
@@ -310,8 +329,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/apply")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace-all operation", description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped.")
-    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(@RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace-all operation",
+        description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped."
+    )
+    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(
+        @RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
         return sourceSearchService.apply(
             tenantService.resolveTenant(),
             request.query(),
@@ -326,8 +349,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/line")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line", description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation.")
-    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(@RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line",
+        description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation."
+    )
+    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(
+        @RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
         return sourceSearchService.applyLine(
             tenantService.resolveTenant(),
             request.query(),
@@ -343,7 +370,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.APPLICATION_YAML)
+    @Post(consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Create a flow from yaml source")
     public HttpResponse<FlowWithSource> createFlow(
         @RequestBody(description = "The flow source code") @Body String flow,
@@ -404,7 +431,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "{namespace}", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Update a complete namespace from yaml source",
@@ -415,12 +442,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @RequestBody(description = "A list of flows source code") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete) throws Exception {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-
-        List<GenericFlow> genericFlows = sources
-            .stream()
-            .map(source -> parseFlowSource(source.trim()))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
     }
@@ -458,14 +480,42 @@ public class FlowController {
 
     protected List<FlowInterface> bulkUpdateOrCreate(@Nullable String namespace, List<GenericFlow> flows, Boolean delete, Boolean allowNamespaceChild) throws Exception {
 
+        // list all uids of updated flows
+        Set<String> uids = flows
+            .stream()
+            .map(FlowId::uidWithoutRevision)
+            .collect(Collectors.toSet());
+
+        // delete all not in updated uids
+        List<FlowWithSource> deleted = new ArrayList<>();
+        if (delete) {
+            if (namespace != null) {
+                deleted = flowRepository
+                    .findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
+            } else {
+                deleted = flowRepository
+                    .findAllWithSource(tenantService.resolveTenant());
+            }
+            deleted = deleted.stream()
+                .filter(flow -> !uids.contains(FlowId.uidWithoutRevision(flow)))
+                .toList();
+        }
+
+        validateBulkUpdate(flows, deleted);
+
         if (namespace != null) {
             // control namespace to update
             Set<ManualConstraintViolation<GenericFlow>> invalids = flows
                 .stream()
-                .filter(flow -> !flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                .filter(
+                    flow -> flow.getNamespace() == null
+                        || (!flow.getNamespace().equals(namespace) && (!NamespaceInterface.isDescendantOrSelf(namespace, flow.getNamespace()) || !allowNamespaceChild))
+                )
                 .map(
                     flow -> ManualConstraintViolation.of(
-                        String.format("%s - flow namespace is invalid", flow.uid()),
+                        flow.getNamespace() == null
+                            ? String.format("%s - flow namespace is required", flow.getId())
+                            : String.format("%s - flow namespace is invalid", flow.uid()),
                         flow,
                         GenericFlow.class,
                         "flow.namespace",
@@ -480,13 +530,7 @@ public class FlowController {
         }
 
         // multiple same flows
-        List<String> duplicate = flows
-            .stream()
-            .map(GenericFlow::getId)
-            .distinct()
-            .toList();
-
-        if (duplicate.size() < flows.size()) {
+        if (uids.size() < flows.size()) {
             throw new ConstraintViolationException(
                 Collections.singleton(
                     ManualConstraintViolation.of(
@@ -494,40 +538,20 @@ public class FlowController {
                         flows,
                         List.class,
                         "flow.id",
-                        duplicate
+                        List.copyOf(uids)
                     )
                 )
             );
         }
 
-        // list all ids of updated flows
-        List<String> ids = flows
-            .stream()
-            .map(GenericFlow::getId)
-            .toList();
-
-        // delete all not in updated ids
-        List<FlowWithSource> deleted = new ArrayList<>();
-        if (delete) {
-            if (namespace != null) {
-                deleted = flowRepository
-                    .findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
-            } else {
-                deleted = flowRepository
-                    .findAllWithSource(tenantService.resolveTenant());
-            }
-            deleted = deleted.stream()
-                .filter(flow -> !ids.contains(flow.getId()))
-                .peek(throwConsumer(flow -> flowService.delete(flow)))
-                .toList();
-        }
+        deleted.forEach(flowService::delete);
 
         // update or create flows
         List<? extends FlowInterface> updatedOrCreated = flows.stream()
             .map(
                 throwFunction(
                     flow -> flowRepository.findById(tenantService.resolveTenant(), flow.getNamespace(), flow.getId())
-                        .map(throwFunction(existing -> flowService.update(flow, existing)))
+                        .map(throwFunction(existing -> this.doUpdateFlow(flow, existing)))
                         .orElseGet(() -> this.doCreate(flow))
                 )
             )
@@ -535,7 +559,7 @@ public class FlowController {
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
     }
 
-    @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)
+    @Put(uri = "{namespace}/{id}", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Update a flow") // force deprecated = false otherwise it is marked as deprecated, dont know why
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = FlowWithSource.class)) })
@@ -581,8 +605,14 @@ public class FlowController {
         return flowService.update(current, previous);
     }
 
+    /**
+     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. It does not validate the content of the flows, which can still fail after the deletions.
+     */
+    protected void validateBulkUpdate(List<GenericFlow> flows, List<FlowWithSource> toDelete) {
+    }
+
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "bulk", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "bulk", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Update from multiples yaml sources",
@@ -594,10 +624,7 @@ public class FlowController {
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
         @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
         @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild) throws Exception {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-        List<GenericFlow> genericFlows = sources.stream()
-            .map(source -> GenericFlow.fromYaml(tenantService.resolveTenant(), source))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }
 
@@ -660,6 +687,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(
         uri = "validate", consumes = {
+            KestraMediaTypes.APPLICATION_X_YAML,
             MediaType.APPLICATION_YAML,
             MediaType.MULTIPART_FORM_DATA
         }
@@ -710,7 +738,8 @@ public class FlowController {
         } else {
             // Fallback to YAML body
             String content = (body == null ? "" : body).trim();
-            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+            List<FlowSource> flowSources = YamlParser.splitDocuments(content)
+                .stream()
                 .map(flow -> new FlowSource(null, flow))
                 .toList();
 
@@ -730,13 +759,13 @@ public class FlowController {
             var parsedTask = parseTaskTrigger(task, Task.class);
             modelValidator.validate(parsedTask);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the task", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the task: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the task: " + re.getMessage())));
         }
 
         return validateConstraintViolationBuilder.build();
@@ -754,19 +783,19 @@ public class FlowController {
             var parsedTrigger = parseTaskTrigger(trigger, AbstractTrigger.class);
             modelValidator.validate(parsedTrigger);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the trigger", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the trigger: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the trigger: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "/validate/task", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Validate a task")
     public ValidateConstraintViolation validateTask(
         @RequestBody(description = "A task definition that can be from tasks or triggers") @Schema(implementation = Object.class) @Body String task,
@@ -783,17 +812,16 @@ public class FlowController {
                 modelValidator.validate(taskParse);
             }
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the flow", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
@@ -804,7 +832,10 @@ public class FlowController {
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws IOException {
-        var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
+        // Drafts are not exportable: a draft-headed flow falls back to its last saved revision, and a
+        // flow that has only ever been a draft is omitted. Consumers such as the Git sync plugin read
+        // this ZIP as the authoritative set of saved flows.
+        var flows = flowRepository.findWithSourceExcludingDrafts(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -851,16 +882,28 @@ public class FlowController {
         summary = "Delete flows by their IDs."
     )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws QueueException {
-        List<Flow> list = ids
-            .stream()
-            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
-            .peek(throwConsumer(flow -> flowService.delete(flow)))
-            .collect(Collectors.toList());
+            List<FlowWithSource> flows = new ArrayList<>();
+            List<ProblemError> invalids = new ArrayList<>();
 
-        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
-    }
+            for (IdWithNamespace id : ids) {
+                Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId());
+                if (flow.isPresent()) {
+                    flows.add(flow.get());
+                } else {
+                    invalids.add(flowProblem(id, "flow not found", ProblemTypes.NOT_FOUND));
+                }
+            }
+            if (!invalids.isEmpty()) {
+                throw new BulkValidationException("One or more flows could not be deleted.", invalids);
+            }
+
+            flows.forEach(throwConsumer(flow -> flowService.delete(flow)));
+
+            return HttpResponse.ok(BulkResponse.builder().count(flows.size()).build());
+        }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/disable/by-query")
@@ -942,7 +985,7 @@ public class FlowController {
             });
         } catch (IOException e) {
             log.error("Unexpected error while importing flows", e);
-            fileUpload.discard();
+            IOUtils.closeQuietly(fileUpload);
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
@@ -960,15 +1003,15 @@ public class FlowController {
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                flowRepository.findAsync(this.tenantService.resolveTenant(), filters),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "expressions", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "expressions", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Get available Pebble expressions for a flow",
@@ -996,6 +1039,13 @@ public class FlowController {
      */
     protected Set<ExpressionCategory> excludedExpressionCategories(Flow flow) {
         return Set.of();
+    }
+
+    protected List<GenericFlow> parseMultiFlowSource(@Nullable String flows) {
+        return YamlParser.splitDocuments(flows)
+            .stream()
+            .map(this::parseFlowSource)
+            .toList();
     }
 
     protected GenericFlow parseFlowSource(final String source) {
@@ -1070,5 +1120,9 @@ public class FlowController {
         String flowId,
         Integer revision,
         List<FlowService.TaskDeprecation> deprecatedTasks) {
+    }
+
+        private static ProblemError flowProblem(IdWithNamespace id, String detail, ProblemType type) {
+        return ProblemError.ofItem(detail, "flows[" + id.getNamespace() + "." + id.getId() + "]", type);
     }
 }

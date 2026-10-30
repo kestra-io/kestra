@@ -1,8 +1,8 @@
 package io.kestra.worker.processors;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -48,6 +49,7 @@ import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.*;
@@ -220,36 +222,17 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
 
             runContext = providedRunContext != null ? providedRunContext : runContextInitializer.forWorker(workerTask);
-            Optional<String> hash = Optional.empty();
 
+            Optional<String> hash = Optional.empty();
             if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled()) {
                 runContext.logger().debug("Task output caching is enabled for task '{}''", workerTask.getTask().getId());
                 hash = hashTask(runContext, workerTask.getTask());
                 if (hash.isPresent()) {
-                    try {
-                        Optional<InputStream> cacheFile = runContext.storage().getCacheFile(hash.get(), workerTask.getTaskRun().getValue(), workerTask.getTask().getTaskCache().getTtl());
-                        if (cacheFile.isPresent()) {
-                            runContext.logger().info("Skipping task execution for task '{}' as there is an existing cache entry for it", workerTask.getTask().getId());
-                            try (ZipInputStream archive = new ZipInputStream(cacheFile.get())) {
-                                if (archive.getNextEntry() != null) {
-                                    byte[] cache = archive.readAllBytes();
-                                    Map<String, Object> outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
-
-                                    TaskRunAttempt attempt = TaskRunAttempt.builder()
-                                        .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
-                                        .workerId(this.workerId)
-                                        .build();
-                                    List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
-                                    TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
-                                    WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, outputMap);
-                                    workerTaskResultQueue.put(workerTaskResult);
-                                    return workerTaskResult;
-                                }
-                            }
-                        }
-                    } catch (IOException | RuntimeException e) {
-                        // in case of any exception, log an error and continue
-                        runContext.logger().error("Unexpected exception while loading the cache for task '{}', the task will be executed instead.", workerTask.getTask().getId(), e);
+                    Optional<WorkerTaskResult> cachedResult = loadFromCache(runContext, workerTask, hash.get());
+                    if (cachedResult.isPresent()) {
+                        WorkerTaskResult workerTaskResult = cachedResult.get();
+                        workerTaskResultQueue.put(workerTaskResult);
+                        return workerTaskResult;
                     }
                 }
             }
@@ -289,13 +272,23 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 state = WARNING;
             }
 
-            if (taskRunWithOutput.assetEmissionFailed()) {
+            if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.DECLARATION_INVALID) {
+                // never rewrite a state that already terminated in error, mirroring AssetFailureBehavior.apply
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because its asset declaration is invalid, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
+                }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
                 AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
                 if (assetsDeclaration != null) {
                     try {
                         assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
-                    } catch (IllegalVariableEvaluationException e) {
+                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
+                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
                         runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
                     }
                 }
@@ -332,33 +325,21 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
-            workerTaskResultQueue.put(workerTaskResult);
-
-            // upload the cache file, hash may not be present if we didn't succeed in computing it
+            // upload the cache file before emitting the result so that an execution started right after this one sees the entry
+            // hash may not be present if we didn't succeed in computing it
             if (
                 workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
                     (state == State.Type.SUCCESS || state == State.Type.WARNING)
             ) {
-                runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
-
-                try (
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ZipOutputStream archive = new ZipOutputStream(bos)
-                ) {
-                    var zipEntry = new ZipEntry("outputs.ion");
-                    archive.putNextEntry(zipEntry);
-                    archive.write(JacksonMapper.ofIonBinary().writeValueAsBytes(taskRunWithOutput.outputs()));
-                    archive.closeEntry();
-                    archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
-                    Files.write(archiveFile, bos.toByteArray());
-                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), taskRun.getValue());
-                    runContext.logger().debug("Caching entry uploaded in URI {}", uri);
+                try {
+                    uploadCacheEntry(runContext, workerTask, taskRunWithOutput, hash.get(), taskRun);
                 } catch (IOException | RuntimeException e) {
                     // in case of any exception, log an error and continue
                     runContext.logger().error("Unexpected exception while uploading the cache entry for task '{}', the task not be cached.", workerTask.getTask().getId(), e);
                 }
             }
+
+            workerTaskResultQueue.put(workerTaskResult);
 
             this.logTerminated(workerTask, taskRun);
             return workerTaskResult;
@@ -369,6 +350,55 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 runContext.cleanup();
             }
         }
+    }
+
+    private Optional<WorkerTaskResult> loadFromCache(RunContext runContext, WorkerTask workerTask, String hash) {
+        try {
+            Optional<InputStream> cacheFile = runContext.storage().getCacheFile(hash, workerTask.getTaskRun().getValue(), workerTask.getTask().getTaskCache().getTtl());
+            if (cacheFile.isEmpty()) {
+                return Optional.empty();
+            }
+
+            runContext.logger().info("Skipping task execution for task '{}' as there is an existing cache entry for it", workerTask.getTask().getId());
+            Map<String, Object> outputMap;
+            try (ZipInputStream archive = new ZipInputStream(cacheFile.get())) {
+                if (archive.getNextEntry() == null) {
+                    return Optional.empty();
+                }
+                byte[] cache = archive.readAllBytes();
+                outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
+            }
+
+            TaskRunAttempt attempt = TaskRunAttempt.builder()
+                .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
+                .workerId(this.workerId)
+                .build();
+            List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
+            TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
+            return Optional.of(new WorkerTaskResult(taskRun, outputMap));
+        } catch (IOException | RuntimeException e) {
+            // in case of any exception, log an error and continue
+            runContext.logger().error("Unexpected exception while loading the cache for task '{}', the task will be executed instead.", workerTask.getTask().getId(), e);
+            return Optional.empty();
+        }
+    }
+
+    private void uploadCacheEntry(RunContext runContext, WorkerTask workerTask, TaskRunWithOutput taskRunWithOutput, String hash, TaskRun taskRun) throws IOException {
+        runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
+
+        Path archiveFile = runContext.workingDir().createTempFile(".zip");
+        try (
+            OutputStream os = Files.newOutputStream(archiveFile);
+            ZipOutputStream archive = new ZipOutputStream(os)
+        ) {
+            var zipEntry = new ZipEntry("outputs.ion");
+            archive.putNextEntry(zipEntry);
+            archive.write(JacksonMapper.ofIonBinary().writeValueAsBytes(taskRunWithOutput.outputs()));
+            archive.closeEntry();
+            archive.finish();
+        }
+        URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash, taskRun.getValue());
+        runContext.logger().debug("Caching entry uploaded in URI {}", uri);
     }
 
     private void logTerminated(WorkerTask workerTask, TaskRun taskRun) {
@@ -451,7 +481,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
-        boolean assetEmissionFailed = false;
+        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
         try {
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
@@ -459,26 +489,86 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
+                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
+                List<AssetIdentifier> declaredInputs = List.of();
+                try {
+                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
+                List<Asset> declaredOutputs = List.of();
+                try {
+                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
                 // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
                 // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
                 List<AssetsInOut> bundles = new ArrayList<>();
-                List<AssetIdentifier> declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                List<Asset> declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
-                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+                for (AssetEmit emit : runContext.assets().emitted()) {
+                    try {
+                        emit.outputs().forEach(runContext::validate);
+                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
+                    } catch (ConstraintViolationException e) {
+                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
+                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                    }
+                }
 
                 if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(bundles);
+                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
                 }
             }
+        } catch (ConstraintViolationException e) {
+            // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
+            String assetViolations = violationsUnder("assets", e);
+            if (assetViolations.isEmpty()) {
+                logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+            } else {
+                logger.error("Invalid asset declaration for taskRun '{}': {}", taskRun.getId(), assetViolations);
+                assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
+            }
         } catch (Exception e) {
-            logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
-            assetEmissionFailed = true;
+            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
+            assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
-        return new TaskRunWithOutput(taskRun, outputs, assetEmissionFailed);
+        return new TaskRunWithOutput(taskRun, outputs, assetEmission);
+    }
+
+    private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
+        return e.getConstraintViolations().stream()
+            .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
+            .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * A declared asset input without a namespace belongs to the flow referencing it, and left null it is
+     * filtered out of the view of every user whose asset permission is scoped to namespaces rather than
+     * global. Outputs are untouched here: an omitted output namespace must reach {@link Asset#toUpdated}
+     * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
+     * flow's own.
+     */
+    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
+        return bundles.stream()
+            .map(
+                bundle -> new AssetsInOut(
+                    bundle.getInputs().stream()
+                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
+                        .toList(),
+                    bundle.getOutputs()
+                )
+            )
+            .toList();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

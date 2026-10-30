@@ -22,7 +22,7 @@
                 </KsTag>
                 <KsTag v-else-if="type !== 'flows'" size="small" round>
                     <template #icon>
-                        <PencilOff />
+                        <PencilLockOutline />
                     </template>
                     {{ $t('source_search.tag_search_only') }}
                 </KsTag>
@@ -46,6 +46,7 @@
                                 <KsCheckbox
                                     v-if="replaceMode"
                                     class="result-group-checkbox"
+                                    data-test="source-search-group-checkbox"
                                     :modelValue="isGroupChecked(group)"
                                     :indeterminate="isGroupIndeterminate(group)"
                                     :disabled="!group.editable"
@@ -53,7 +54,7 @@
                                         ? $t('source_search.select_all_in_flow', {namespace: group.namespace, id: group.id})
                                         : $t('source_search.cannot_select_read_only', {namespace: group.namespace, id: group.id})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
                                 />
                                 <span class="result-group-title">
                                     <span class="result-group-namespace">{{ group.namespace }} /</span>
@@ -79,7 +80,7 @@
                                         {{ $t('source_search.replace_all_in_flow') }}
                                     </KsButton>
                                     <router-link
-                                        :to="{path: `/flows/edit/${group.namespace}/${group.id}/source`}"
+                                        :to="editorLinkTarget(group)"
                                         class="result-group-open-link"
                                         :aria-label="$t('source_search.open_flow')"
                                         :title="$t('source_search.open_flow')"
@@ -111,7 +112,7 @@
                                     :disabled="!group.editable"
                                     :aria-label="$t('source_search.select_match', {line: match.line})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
                                 />
                                 <span class="result-match-lineno">{{ match.line }}</span>
                                 <KsTag v-if="secretKey(match.snippet)" size="small" class="result-match-secret">
@@ -189,10 +190,8 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <i18n-t keypath="source_search.searching_namespace" tag="span">
-                        <template #namespace>
-                            <code>{{ namespaceState.namespace }}</code>
-                        </template>
+                    <i18n-t keypath="source_search.searching_namespace" tag="span" scope="global">
+                        <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                     </i18n-t>
                 </div>
 
@@ -203,10 +202,8 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <i18n-t keypath="source_search.namespace_search_failed" tag="span">
-                            <template #namespace>
-                                <code>{{ namespaceState.namespace }}</code>
-                            </template>
+                        <i18n-t keypath="source_search.namespace_search_failed" tag="span" scope="global">
+                            <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                         </i18n-t>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>
                     </span>
@@ -305,7 +302,8 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
-    import _escape from "lodash/escape"
+    import {useRoute} from "vue-router"
+    import {escapeHtml} from "@kestra-io/design-system"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -315,7 +313,7 @@
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import Refresh from "vue-material-design-icons/Refresh.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
@@ -362,6 +360,7 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
 
     const SECRET_PATTERN = /secret\(\s*['"]([^'"]+)['"]\s*\)/
 
@@ -482,6 +481,13 @@
         return `flows:${group.namespace}.${group.id}`
     }
 
+    function editorLinkTarget(group: SourceSearchResult) {
+        return {
+            name: "flows/update/edit",
+            params: {tenant: route.params.tenant, namespace: group.namespace, id: group.id},
+        }
+    }
+
     function matchKey(group: SourceSearchResult, match: SourceMatch) {
         return crossSearchResultKey({type: "flows", namespace: group.namespace, id: group.id, line: match.line, column: match.column})
     }
@@ -509,18 +515,18 @@
             .map((part) => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return _escape(part)
+                    return escapeHtml(part)
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${_escape(old)}</mark>`
+                    return `<mark>${escapeHtml(old)}</mark>`
                 }
                 const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${_escape(old)}</del>`
+                const removed = `<del class="result-match-old">${escapeHtml(old)}</del>`
                 if (next === "") {
                     return removed
                 }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${_escape(next)}</ins>`
+                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${escapeHtml(next)}</ins>`
             })
             .join("")
     }
@@ -541,7 +547,7 @@
     defineExpose({collapseAll, expandAll})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-results {
     height: 100%;
     overflow-y: auto;
@@ -797,14 +803,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        :deep(mark) {
+        & :deep(mark) {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-old) {
+        & :deep(.result-match-old) {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -812,14 +818,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-new) {
+        & :deep(.result-match-new) {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-arrow) {
+        & :deep(.result-match-arrow) {
             color: var(--ks-text-muted);
         }
     }
@@ -854,7 +860,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -871,7 +877,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

@@ -1,7 +1,7 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
-import axios from "axios"
 import {API_URL} from "./api"
+import {publicFetchJson} from "../utils/publicApi"
 import type {Plugin} from "../utils/pluginUtils"
 
 // https://api.kestra.io/v1/plugins/pluginsInformation
@@ -20,6 +20,13 @@ type MetadataEntry = {
     body?: string;
 }
 
+// https://api.kestra.io/v1/plugins/subgroups
+type SubGroupEntry = {
+    group?: string;
+    subGroup?: string | null;
+    title?: string;
+}
+
 export type PluginEnrichment = {
     blueprintCount?: number;
     lastReleasedAt?: string;
@@ -28,6 +35,7 @@ export type PluginEnrichment = {
     managedBy?: string;
     description?: string;
     body?: string;
+    title?: string;
 }
 
 // https://api.kestra.io/v1/plugins/{cls}/versions
@@ -60,18 +68,22 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), PUBLIC_API_TIMEOUT_MS)
 
-        const informationPromise = axios.get<{byPlugin: Record<string, PluginsInformationEntry>}>(
+        const informationPromise = publicFetchJson<{byPlugin: Record<string, PluginsInformationEntry>}>(
             `${API_URL}/v1/plugins/pluginsInformation?icons=false`,
             {signal: controller.signal},
         )
-        const metadataPromise = axios.get<MetadataEntry[]>(
+        const metadataPromise = publicFetchJson<MetadataEntry[]>(
             `${API_URL}/v1/plugins/metadata`,
             {signal: controller.signal},
         )
+        const subgroupsPromise = publicFetchJson<SubGroupEntry[]>(
+            `${API_URL}/v1/plugins/subgroups`,
+            {signal: controller.signal},
+        )
 
-        pending = Promise.allSettled([informationPromise, metadataPromise]).then(([info, meta]) => {
+        pending = Promise.allSettled([informationPromise, metadataPromise, subgroupsPromise]).then(([info, meta, subgroups]) => {
             if (info.status === "fulfilled") {
-                for (const [key, entry] of Object.entries(info.value.data?.byPlugin ?? {})) {
+                for (const [key, entry] of Object.entries(info.value?.byPlugin ?? {})) {
                     upsert(key, {
                         blueprintCount: entry.blueprints,
                         lastReleasedAt: entry.lastReleasedAt,
@@ -80,7 +92,7 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
                 }
             }
             if (meta.status === "fulfilled") {
-                for (const entry of meta.value.data ?? []) {
+                for (const entry of meta.value ?? []) {
                     if (!entry.group) continue
                     upsert(entry.group, {
                         createdBy: entry.createdBy,
@@ -90,11 +102,18 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
                     })
                 }
             }
-            if (info.status === "fulfilled" || meta.status === "fulfilled") {
+            if (subgroups.status === "fulfilled") {
+                for (const entry of subgroups.value ?? []) {
+                    const key = entry.subGroup ?? entry.group
+                    if (!key || !entry.title) continue
+                    upsert(key, {title: entry.title})
+                }
+            }
+            if (info.status === "fulfilled" || meta.status === "fulfilled" || subgroups.status === "fulfilled") {
                 loaded.value = true
             } else {
                 failed.value = true
-                console.warn("Plugin enrichment unavailable", {info, meta})
+                console.warn("Plugin enrichment unavailable", {info, meta, subgroups})
             }
         }).finally(() => {
             clearTimeout(timeout)
@@ -119,9 +138,9 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), PUBLIC_API_TIMEOUT_MS)
 
-        const promise = axios.get<PluginVersion[]>(`${API_URL}/v1/plugins/${cls}/versions`, {signal: controller.signal})
-            .then(response => {
-                const data = response.data ?? []
+        const promise = publicFetchJson<PluginVersion[]>(`${API_URL}/v1/plugins/${cls}/versions`, {signal: controller.signal})
+            .then(versions => {
+                const data = versions ?? []
                 versionsByCls.value[cls] = data
                 return data
             })

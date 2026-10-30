@@ -54,7 +54,7 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
     public Optional<ExecutorContext> handle(WorkerTaskResult message) {
         EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
         if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.getTaskRun().getExecutionId());
+            var execution = executionStateStore.findByIdWithoutAcl(message.getTaskRun().getExecutionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
                 killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
                 return Optional.empty();

@@ -1,17 +1,10 @@
 import {defineConfig} from "vite"
-import vue from "@vitejs/plugin-vue"
 
 import {mergeConfig} from "vitest/config"
 import viteConfig from "./vite.config.js"
 import path from "node:path"
-import {fileURLToPath} from "node:url"
 import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
 import {playwright} from "@vitest/browser-playwright"
-
-const dirname =
-    typeof __dirname !== "undefined"
-        ? __dirname
-        : path.dirname(fileURLToPath(import.meta.url))
 
 // vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
 // place in a test run); the storybook CLI sets it automatically, so mirror that here.
@@ -34,6 +27,14 @@ console.warn = (...args) => {
     originalConsoleWarn(...args)
 }
 
+// Node 26 defines a `localStorage` global that stays undefined unless --localstorage-file is
+// given, and it shadows the one jsdom installs, so every unit spec touching storage throws.
+// Disabling Node's own web storage lets jsdom provide it, as it does on the Node 24 in .nvmrc,
+// where the global does not exist and the flag is a no-op. Set here rather than in
+// poolOptions.execArgv, which vitest overrides with its own, and rather than in the npm script,
+// which would not survive someone running vitest directly.
+process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --no-experimental-webstorage`.trim()
+
 // Vite writes logger warnings to process.stderr. Silence the
 // "Sourcemap for X points to a source file outside its package" noise
 // emitted when node_modules packages reference scss from sibling packages
@@ -54,7 +55,6 @@ process.stdout.write = (chunk, ...rest) => {
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-    plugins: [vue()],
     resolve: {
         ...resolvedViteConfig.resolve,
         alias: [
@@ -69,25 +69,20 @@ export default defineConfig({
                     // The plugin will run tests for the stories defined in your Storybook config
                     // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
                     storybookTest({
-                        configDir: path.join(dirname, ".storybook"),
+                        configDir: path.join(import.meta.dirname, ".storybook"),
                     }),
                 ],
                 test: {
                     name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
-                    reporters: [
-                        ["default"],
-                        ["junit"],
-                    ],
-                    outputFile: {
-                        junit: "./test-report.storybook.junit.xml",
-                    },
+                    setupFiles: ["./.storybook/vitest.setup.ts"],
+                    isolate: false,
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a
                     // worker mid-run and surfaces as "[birpc] rpc is closed,
                     // cannot call 'createTesters'" rather than a real test failure.
                     maxWorkers: 2,
+                    sequence: {groupOrder: 1},
                     browser: {
                         enabled: true,
                         headless: true,
@@ -107,7 +102,7 @@ export default defineConfig({
             }),
         ],
         coverage: {
-            reporter: ["text", "html"],
+            reporter: ["text", "html", "lcov"],
             include: [
                 "src/**/*.{ts,vue}",
             ],
@@ -118,7 +113,6 @@ export default defineConfig({
                 "**/*.d.ts",
                 "**/.storybook/**",
                 "storybook-static/**",
-                "stylelint.config.mjs",
             ],
         },
     },

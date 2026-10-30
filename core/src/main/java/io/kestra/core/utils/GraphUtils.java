@@ -178,6 +178,18 @@ public class GraphUtils {
             .collect(Collectors.toSet());
     }
 
+    /**
+     * A graph node carries a task run only when the flow revision the graph was built from
+     * still has that task at the same place in the hierarchy as the revision it ran on.
+     */
+    public static boolean hasTaskRun(GraphCluster graphCluster, String taskRunId) {
+        return nodes(graphCluster)
+            .stream()
+            .filter(AbstractGraphTask.class::isInstance)
+            .map(AbstractGraphTask.class::cast)
+            .anyMatch(node -> node.getTaskRun() != null && node.getTaskRun().getId().equals(taskRunId));
+    }
+
     private static Set<String> reachableEdgeSources(List<FlowGraph.Edge> edges, Set<String> fromUuids) {
         Map<String, List<FlowGraph.Edge>> edgesBySource = edges
             .stream()
@@ -277,6 +289,36 @@ public class GraphUtils {
         Execution execution) throws IllegalVariableEvaluationException {
         for (Map.Entry<String, List<Task>> entry : tasks.entrySet()) {
             fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
+        }
+
+        fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
+    }
+
+    /**
+     * Like {@link #switchCase}, with {@code before} run on every path ahead of the cases, so the cases branch out from its last task.
+     */
+    public static void sequentialThenSwitchCase(
+        GraphCluster graph,
+        List<Task> before,
+        Map<String, List<Task>> cases,
+        List<Task> errors,
+        List<Task> _finally,
+        TaskRun parent,
+        Execution execution) throws IllegalVariableEvaluationException {
+        if (ListUtils.isEmpty(before)) {
+            switchCase(graph, cases, errors, _finally, parent, execution);
+            return;
+        }
+
+        AbstractGraph last = fillGraph(graph, before, RelationType.SEQUENTIAL, parent, execution, null, null, RelationType.SEQUENTIAL);
+        AbstractGraph lastExit = last instanceof GraphCluster cluster && cluster.getEnd() != null ? cluster.getEnd() : last;
+        // an empty case still leaves through finally, so the edge to it is only dropped when every case has tasks
+        if (cases.values().stream().noneMatch(ListUtils::isEmpty)) {
+            graph.getGraph().removeEdge(lastExit, graph.getFinally());
+        }
+
+        for (Map.Entry<String, List<Task>> entry : cases.entrySet()) {
+            fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey(), last, null);
         }
 
         fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
@@ -406,10 +448,23 @@ public class GraphUtils {
         TaskRun parent,
         Execution execution,
         String value) throws IllegalVariableEvaluationException {
+        fillGraph(graph, tasks, relationType, parent, execution, value, null, null);
+    }
+
+    /** {@code start} and {@code firstRelationType} default to the cluster's task node (or root) and the cluster's relation type when null; returns the last node added. */
+    private static AbstractGraph fillGraph(
+        GraphCluster graph,
+        List<Task> tasks,
+        RelationType relationType,
+        TaskRun parent,
+        Execution execution,
+        String value,
+        AbstractGraph start,
+        RelationType firstRelationType) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
         AbstractGraph previous;
 
-        previous = Optional.<AbstractGraph> ofNullable(graph.getTaskNode()).orElse(graph.getRoot());
+        previous = start != null ? start : Optional.<AbstractGraph> ofNullable(graph.getTaskNode()).orElse(graph.getRoot());
         if (relationType == RelationType.FINALLY) {
             previous = graph.getFinally();
 
@@ -433,7 +488,7 @@ public class GraphUtils {
                 List<String> parentValues = null;
 
                 // we use the graph relation type by default but we change it to pass relation for case below
-                RelationType newRelation = graph.getRelationType();
+                RelationType newRelation = firstRelationType != null ? firstRelationType : graph.getRelationType();
                 if (relationType == RelationType.ERROR) {
                     newRelation = relationType;
                 } else if ((!isFirst && relationType != RelationType.PARALLEL && graph.getRelationType() != RelationType.DYNAMIC)) {
@@ -514,6 +569,8 @@ public class GraphUtils {
                 }
             }
         }
+
+        return previous;
     }
 
     private static AbstractGraph toEdgeTarget(AbstractGraph currentGraph) {
@@ -637,15 +694,14 @@ public class GraphUtils {
     }
 
     private static List<TaskRun> findTaskRuns(Task task, Execution execution, TaskRun parent) {
-        List<TaskRun> taskRuns = execution != null ? execution.findTaskRunsByTaskId(task.getId()) : new ArrayList<>();
+        List<TaskRun> taskRuns = execution != null ? execution.findTaskRunsByTaskId(task.getId()) : List.of();
 
-        if (taskRuns.isEmpty()) {
-            return Collections.singletonList(null);
-        }
-
-        return taskRuns
+        List<TaskRun> matching = taskRuns
             .stream()
-            .filter(taskRun -> parent == null || (taskRun.getParentTaskRunId().equals(parent.getId())))
+            .filter(taskRun -> parent == null || parent.getId().equals(taskRun.getParentTaskRunId()))
             .toList();
+
+        // an empty result would drop the node from the graph and spin fillGraphDag's completion loop forever
+        return matching.isEmpty() ? Collections.singletonList(null) : matching;
     }
 }

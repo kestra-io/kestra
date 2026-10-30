@@ -1,6 +1,152 @@
 <template>
     <div class="variable-explorer">
-        <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
+        <DefineViewer>
+            <div class="viewer" :class="{'viewer--fill': isRawEditor}">
+                <div v-if="isMobile" class="viewer__header viewer__header--mobile">
+                    <KsIconButton :aria-label="$t('back')" data-test="variable-back" @click="closeDetail">
+                        <ArrowLeft :size="20" />
+                    </KsIconButton>
+                    <KsText class="viewer__breadcrumb" truncated>
+                        {{ selectedBase.split('.').join(' › ') }}
+                    </KsText>
+                    <KsTag v-if="selectedSearchable" type="warning" size="small" data-test="searchable-tag">
+                        {{ $t("variable_explorer.searchable") }}
+                    </KsTag>
+                    <KsIconButton
+                        v-if="selectedValue !== undefined && !fileSelectedOutput"
+                        :aria-label="$t('copy')"
+                        @click="copyValue"
+                    >
+                        <ContentCopy :size="16" />
+                    </KsIconButton>
+                    <KsSegmented
+                        v-if="isExpandableValue && !fileSelectedOutput"
+                        v-model="viewMode"
+                        :options="viewModes"
+                        size="small"
+                        class="viewer__modes"
+                    />
+                </div>
+                <div v-else class="viewer__header">
+                    <KsSegmented
+                        v-if="isExpandableValue && !fileSelectedOutput"
+                        v-model="viewMode"
+                        :options="viewModes"
+                        size="small"
+                    />
+                    <span v-else-if="selectedBase" class="viewer__title" data-test="viewer-title">
+                        {{ selectedBase.split('.').join(' > ') }}
+                        <KsTag v-if="selectedSearchable" type="warning" size="small" data-test="searchable-tag">
+                            {{ $t("variable_explorer.searchable") }}
+                        </KsTag>
+                    </span>
+                    <KsIconButton
+                        v-if="selectedValue !== undefined && !fileSelectedOutput"
+                        :aria-label="$t('copy')"
+                        @click="copyValue"
+                    >
+                        <ContentCopy :size="16" />
+                    </KsIconButton>
+                </div>
+
+                <LoopIterationsNotice
+                    v-if="selectedLoopTaskId"
+                    kind="outputs"
+                    :taskId="selectedLoopTaskId"
+                    class="viewer-notice"
+                />
+
+                <template v-if="selectedValue === undefined">
+                    <KsNoData
+                        :title="$t('variable_explorer.select_prompt')"
+                        :description="$t('variable_explorer.select_hint')"
+                    />
+                </template>
+
+                <template v-else-if="isRawEditor">
+                    <div v-if="rawPreview.truncated" class="truncated-banner">
+                        <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                            <template #title>
+                                <div class="truncated-row">
+                                    <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </div>
+                            </template>
+                        </KsAlert>
+                    </div>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :modelValue="rawPreviewText"
+                        lang="json"
+                    />
+                </template>
+
+                <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
+                    <FilePreview
+                        :key="fileSelectedOutput"
+                        :path="fileSelectedOutput"
+                        :executionId="execution.id"
+                    />
+                </div>
+
+                <KsJsonTree
+                    v-else-if="isExpandableValue"
+                    :value="selectedValue"
+                    :basePath="selectedBase"
+                    :selectedPath="expressionPath"
+                    defaultExpanded
+                    @select="onSelectPath"
+                />
+
+                <template v-else>
+                    <div v-if="isRawTruncated" class="truncated-banner">
+                        <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                            <template #title>
+                                <div class="truncated-row">
+                                    <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </div>
+                            </template>
+                        </KsAlert>
+                    </div>
+                    <div class="viewer__scalar">
+                        <code>{{ scalarDisplay }}</code>
+                    </div>
+                </template>
+            </div>
+        </DefineViewer>
+
+        <div v-if="isMobile" class="variable-explorer__mobile">
+            <div class="variable-explorer__mobile-main">
+                <SidebarList
+                    v-show="!detailOpen"
+                    :sections="sections"
+                    :selectedExpression="selectedBase"
+                    @select="selectItem"
+                    @search-change="onSearchChange"
+                />
+                <ReuseViewer v-if="detailOpen" />
+            </div>
+            <KsCollapse v-model="debugOpen" class="variable-explorer__mobile-debug">
+                <KsCollapseItem name="expression" :title="$t('variable_explorer.expression')">
+                    <ExpressionDebugger
+                        hideTitle
+                        :execution="execution"
+                        :expression="expression"
+                        :fileUri="debuggedFileUri"
+                    />
+                </KsCollapseItem>
+            </KsCollapse>
+        </div>
+
+        <KsSplitter v-else layout="horizontal">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
                 <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
@@ -16,63 +162,7 @@
 
                     <!-- Center: tree / raw JSON of the selected value -->
                     <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
-                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
-                            <div class="viewer__header">
-                                <KsSegmented
-                                    v-if="isExpandableValue && !fileSelectedOutput"
-                                    v-model="viewMode"
-                                    :options="viewModes"
-                                    size="small"
-                                />
-                                <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
-                                <KsIconButton
-                                    v-if="selectedValue !== undefined && !fileSelectedOutput"
-                                    :aria-label="$t('copy')"
-                                    @click="copyValue"
-                                >
-                                    <ContentCopy :size="16" />
-                                </KsIconButton>
-                            </div>
-
-                            <template v-if="selectedValue === undefined">
-                                <KsNoData
-                                    :title="$t('variable_explorer.select_prompt')"
-                                    :description="$t('variable_explorer.select_hint')"
-                                />
-                            </template>
-
-                            <KsEditor
-                                v-else-if="isRawEditor"
-                                v-bind="editorBindings"
-                                :readOnly="true"
-                                :inline="true"
-                                :navbar="false"
-                                :modelValue="rawValue"
-                                lang="json"
-                            />
-
-                            <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
-                                <FilePreview
-                                    :key="fileSelectedOutput"
-                                    :path="fileSelectedOutput"
-                                    :executionId="execution.id"
-                                />
-                            </div>
-
-                            <KsJsonTree
-                                v-else-if="isExpandableValue"
-                                :value="selectedValue"
-                                :basePath="selectedBase"
-                                :selectedPath="expressionPath"
-                                :previewFormatter="treePreviewFormatter"
-                                defaultExpanded
-                                @select="onSelectPath"
-                            />
-
-                            <div v-else class="viewer__scalar">
-                                <code>{{ rawValue }}</code>
-                            </div>
-                        </div>
+                        <ReuseViewer />
                     </KsSplitterPanel>
                 </KsSplitter>
             </KsSplitterPanel>
@@ -83,6 +173,7 @@
                     <ExpressionDebugger
                         :execution="execution"
                         :expression="expression"
+                        :fileUri="debuggedFileUri"
                     />
                 </div>
             </KsSplitterPanel>
@@ -92,7 +183,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
+    import {createReusableTemplate, useDebounceFn} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -101,22 +192,35 @@
         KsSplitterPanel,
         KsSegmented,
         KsIconButton,
+        KsCollapse,
+        KsCollapseItem,
+        KsText,
+        KsAlert,
+        KsButton,
         KsEditor,
         KsJsonTree,
+        KsTag,
         copyToClipboard,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
+    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
-    import {useExecutionsStore} from "../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../stores/executions"
+    import {loadExecutionOutputs, loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+    import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useIsMobile} from "../../../composables/useIsMobile"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
+    import {loopTaskIds} from "../../../utils/flowUtils"
     import FilePreview from "../FilePreview.vue"
+    import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -128,7 +232,7 @@
     /* ----------------------------- Pebble paths ----------------------------- */
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {
@@ -141,32 +245,37 @@
         return typeof value
     }
 
+    // The preview is a single clipped line, so only its head ever reaches the screen.
+    const PREVIEW_MAX_CHARS = 200
+
     function preview(value: unknown): string {
+        return previewText(value).slice(0, PREVIEW_MAX_CHARS)
+    }
+
+    function previewText(value: unknown): string {
         if (value === null) return "null"
-        if (typeof value === "string") return value
+        if (typeof value === "string") {
+            return value === "" ? Utils.EMPTY_STRING_DISPLAY : value
+        }
         if (Array.isArray(value)) {
             return value.length === 1
                 ? t("variable_explorer.one_item")
                 : t("variable_explorer.n_items", {count: value.length})
         }
         if (typeof value === "object") {
-            const keys = Object.keys(value as object)
-            return `{ ${keys.join(", ")} }`
+            // Each key costs a character at least, so more than this can only build text nobody sees.
+            const keys = Object.keys(value as object).slice(0, PREVIEW_MAX_CHARS)
+            // Unguarded, an empty object previews as `{  }`.
+            return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
     }
 
-    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
-        if (context.kind === "array") {
-            return context.count === 1
-                ? t("variable_explorer.one_item")
-                : t("variable_explorer.n_items", {count: context.count})
-        }
-
-        return context.count === 1
-            ? t("variable_explorer.one_key")
-            : t("variable_explorer.n_keys", {count: context.count})
-    }
+    const searchableOutputIds = computed(() => new Set(
+        (executionsStore.flow?.outputs ?? [])
+            .filter((output) => output.searchable === true)
+            .map((output) => output.id),
+    ))
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
         if (!record) return []
@@ -176,13 +285,20 @@
             type: valueType(value),
             preview: preview(value),
             expression: `${prefix}${formatStep(label)}`,
+            isExpression: typeof value === "string" && (value.includes("{{") || value.includes("{%")),
         }))
+    }
+
+    /** Mirrors RunVariables: trigger variables sit at the top level, id and type under `_context`. */
+    function triggerRecord(trigger: Execution["trigger"]): Record<string, unknown> | undefined {
+        if (!trigger) return undefined
+        return {...(trigger.variables ?? {}), _context: {id: trigger.id, type: trigger.type}}
     }
 
     /* ------------------------- Task outputs sourcing ------------------------- */
     // Sourced exactly like Wrapper.vue: the list of task runs that have outputs
-    // is fetched from the /outputs/{executionId} endpoint, then each task's
-    // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
+    // is fetched from the /outputs/tasks/{executionId} endpoint, then each task's
+    // values are lazily loaded from /outputs/tasks/{executionId}/{taskRunId}.
 
     interface TaskOutputMeta {
         taskId: string;
@@ -193,19 +309,25 @@
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
     const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
+    const flowOutputs = ref<Record<string, unknown>>({})
 
+    // Re-fetch on state changes too: outputs are written as the execution progresses.
     watch(
-        () => execution.value?.id,
-        async (id) => {
-            tasksWithOutputs.value = undefined
-            taskOutputMetaByRunId.value = {}
-            taskOutputs.value = {}
+        () => [execution.value?.id, execution.value?.state?.current] as const,
+        async ([id], previous) => {
+            if (id !== previous?.[0]) {
+                tasksWithOutputs.value = undefined
+                taskOutputMetaByRunId.value = {}
+                taskOutputs.value = {}
+                flowOutputs.value = {}
+            }
             if (!id) return
 
-            const data = await OutputsAPI.taskOutputsInformation({
-                executionId: id,
-            }, {
-                validateStatus: (s: number) => s === 200 || s === 404,
+            flowOutputs.value = await loadExecutionOutputs(id)
+
+            const data = await OutputsAPI.taskOutputsInformation({executionId: id}).catch((e: unknown) => {
+                if (handledIf(e, [404])) return []
+                throw e
             })
 
             const metaByRunId: Record<string, TaskOutputMeta> = {}
@@ -238,14 +360,7 @@
             return cached
         }
 
-        const data = await OutputsAPI.taskRunOutputs({
-            taskRunId,
-            executionId: id,
-        }, {
-            validateStatus: (s: number) => s === 200 || s === 404,
-        })
-
-        const outputs = data || {}
+        const outputs = await loadTaskRunOutputs(id, taskRunId)
         taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
         return outputs
     }
@@ -279,14 +394,14 @@
         void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
-    function isOutputTaskAFile(item: any): item is { uri: string } {
+    function isOutputTaskAFile(item: unknown): item is { uri: string } {
         if(!item || typeof item !== "object") {
             return false
         }
-        if(!Utils.isFile(item.uri)) {
-            return false
-        }
-        return true
+
+        const uri = (item as { uri?: unknown }).uri
+
+        return typeof uri === "string" && Utils.isFile(uri)
     }
 
     const taskItems = computed<ExplorerItem[]>(() => {
@@ -318,10 +433,10 @@
         const exec = execution.value
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
-            {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
+            {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs").map((item) => ({...item, searchable: searchableOutputIds.value.has(item.label)}))},
         ]
     })
 
@@ -358,6 +473,9 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
+    const selectedFlowOutputId = ref<string>()
+    const selectedSearchable = computed(() => selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+    const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
     const expression = ref<string>(seededExpression())
@@ -368,21 +486,21 @@
 
     const fileSelectedOutput = computed(() => {
         const value = previewedValue.value
+        if (typeof value === "string") {
+            return Utils.isFile(value) ? value : undefined
+        }
+        if (value === null || typeof value !== "object" || Array.isArray(value)) {
+            return undefined
+        }
 
-        // if an input file is selected, show the contents of the file
-        if(typeof value === "string" && Utils.isFile(value)){
-            return value
+        const entries = Object.entries(value)
+        // #19194: task outputs can include metadata beside `uri`; only a lone URI wrapper should open automatically.
+        if (entries.length !== 1 || entries[0][0] !== "uri") {
+            return undefined
         }
-        if (value === null || typeof value !== "object") return undefined
-        try {
-            const fileMetadata = value as {uri?: string}
-            if (Utils.isFile(fileMetadata.uri)) {
-                return fileMetadata.uri
-            }
-        } catch {
-            // If the value is not an object or doesn't have a `uri` field, just ignore it.
-        }
-        return undefined
+
+        const uri = entries[0][1]
+        return typeof uri === "string" && Utils.isFile(uri) ? uri : undefined
     })
 
     const rawValue = computed(() =>
@@ -390,6 +508,22 @@
             ? selectedValue.value
             : JSON.stringify(selectedValue.value, null, 2),
     )
+
+    // Only what is rendered is clipped: copyValue still hands over the whole value.
+    const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
+
+    const scalarDisplay = computed(() =>
+        selectedValue.value === "" ? Utils.EMPTY_STRING_DISPLAY : cappedRawValue.value,
+    )
+
+    // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
+    const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))
+
+    const rawPreviewText = computed(() => JSON.stringify(rawPreview.value.value, null, 2) ?? "")
+
+    const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
+
+    const rawValueSize = computed(() => Utils.humanTextSize(rawValue.value))
 
     async function selectItem(item: ExplorerItem) {
         if (item.taskRunId) {
@@ -399,12 +533,17 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        detailOpen.value = true
+        selectedTaskId.value = (execution.value?.taskRunList ?? [])
+            .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
-        const baseExpressionPath = sections.value.find((section) =>
+        const isFlowOutput = sections.value.find((section) =>
             section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
+        selectedFlowOutputId.value = isFlowOutput ? item.label : undefined
+        const baseExpressionPath = isFlowOutput
             ? `execution.${item.expression}`
             : item.expression
 
@@ -418,8 +557,38 @@
             previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
             expression.value = `{{ ${debugPath} }}`
         }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = item.isExpression
+                ? `{{ render(${baseExpressionPath}) }}`
+                : `{{ ${baseExpressionPath} }}`
         }
+    }
+
+    const selectedLoopTaskId = computed(() => {
+        const taskId = selectedTaskId.value
+        if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {
+            return undefined
+        }
+        const iterationCount = (selectedValue.value as {iterationCount?: unknown} | undefined)?.iterationCount
+        return Number(iterationCount) > 0 ? taskId : undefined
+    })
+
+    /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
+    const debuggedFileUri = computed(() => {
+        if (fileSelectedOutput.value) return fileSelectedOutput.value
+        const files = collectFileUris(previewedValue.value)
+        return files.length === 1 ? files[0] : undefined
+    })
+
+    function collectFileUris(value: unknown, found: string[] = []) {
+        if (typeof value === "string") {
+            if (Utils.isFile(value)) found.push(value)
+        } else if (value !== null && typeof value === "object") {
+            for (const child of Object.values(value)) {
+                collectFileUris(child, found)
+                if (found.length > 1) break
+            }
+        }
+        return found
     }
 
     function onSelectPath(path: string, value: unknown) {
@@ -444,40 +613,60 @@
         copyToClipboard(rawValue.value)
     }
 
+    function downloadValue() {
+        // formatStep writes a non-identifier key as ["a.b"], so the last segment is not just a split.
+        const path = expressionPath.value
+        const last = path.match(/\["(.*)"\]$/)?.[1] ?? path.split(".").pop() ?? ""
+        const name = last.replace(/[^\w.-]+/g, "_") || "output"
+        Utils.downloadText(rawValue.value, `${name}.${isExpandableValue.value ? "json" : "txt"}`)
+    }
+
     /* --------------------------------- Layout -------------------------------- */
 
     const leftWidth = ref("25%")
     const rightWidth = ref("30%")
-    const isMobile = useMediaQuery("(max-width: 768px)")
+    const isMobile = useIsMobile()
+
+    const [DefineViewer, ReuseViewer] = createReusableTemplate()
+    const detailOpen = ref(false)
+    const debugOpen = ref<string[]>([])
+
+    function closeDetail() {
+        detailOpen.value = false
+    }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .variable-explorer {
     display: flex;
     width: 100%;
     height: 100%;
     min-height: 0;
     overflow: hidden;
+}
 
-    &__panel {
-        display: flex;
-        min-height: 0;
-        overflow: hidden;
-    }
+.variable-explorer__panel {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
 
-    &__panel--main {
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-spacing-2);
-        overflow: hidden;
-    }
+.variable-explorer__panel--main {
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-spacing-2);
+    overflow: hidden;
+}
 
-    &__panel--sidebar {
-        background-color: var(--ks-bg-base);
-    }
+.variable-explorer__panel--sidebar {
+    background-color: var(--ks-bg-base);
+}
 
-    &__panel--debug {
-        border-left: 1px solid var(--ks-border-default);
-    }
+.variable-explorer__panel--debug {
+    border-left: 1px solid var(--ks-border-default);
+}
+
+.viewer-notice {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
 :deep(.kel-splitter),
@@ -493,29 +682,54 @@
 .viewer {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    min-height: 100%;
+    width: calc(100% - var(--ks-spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
     background-color: var(--ks-bg-surface);
+}
 
-    &__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3) var(--ks-spacing-4);
-        border-bottom: 1px solid var(--ks-border-default);
-    }
+.viewer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
+    border-bottom: 1px solid var(--ks-border-default);
+}
 
-    &__scalar {
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-sm);
-        word-break: break-word;
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-    }
+.viewer__title {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
 
+.viewer__scalar {
+    font-family: var(--ks-font-family-mono);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+    padding: var(--ks-spacing-2) var(--ks-spacing-4);
+}
+
+.viewer {
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.truncated-banner {
+    /* Padding on a wrapper, not a margin on the alert: the alert is width:100%, so a margin
+       pushes it 32px past the panel and the whole panel scrolls sideways. */
+    padding: 0 var(--ks-spacing-4);
+}
+
+.truncated-row {
+    /* The alert's title is an inline span, so the row needs a width of its own to reach the edge. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-3);
+    width: 100%;
 }
 
 .viewer--fill {
@@ -531,10 +745,53 @@
     overflow-y: auto;
 }
 
-@media (max-width: 768px) {
-    :deep(.kel-splitter-bar) {
-        height: 4px !important;
-        width: auto !important;
+.variable-explorer__mobile {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.variable-explorer__mobile-main {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-spacing-2);
+    overflow: hidden;
+}
+
+.variable-explorer__mobile-debug {
+    flex: none;
+    max-height: 60%;
+    margin-top: var(--ks-spacing-2);
+    overflow-y: auto;
+}
+
+.viewer__header--mobile {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.viewer__breadcrumb {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.viewer__modes {
+    flex-basis: 100%;
+}
+
+@media (max-width: 767px) {
+    .viewer {
+        width: 100%;
+    }
+
+    .viewer__scalar code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 }
 </style>

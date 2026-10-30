@@ -94,4 +94,15 @@ public class SLATestCase {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
+
+    public void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-flow-trigger-source");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Execution listener = runnerUtils.awaitFlowExecution(
+            e -> e.getState().isTerminated(), MAIN_TENANT, "io.kestra.tests", "sla-flow-trigger-listener"
+        );
+        assertThat(listener.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(listener.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

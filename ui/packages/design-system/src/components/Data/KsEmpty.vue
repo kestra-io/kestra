@@ -1,5 +1,5 @@
 <template>
-    <ElEmpty :class="{'kel-empty--no-background': !background}" v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElEmpty :class="{'kel-empty--no-background': !background}" v-bind="({...filteredProps(), ...$attrs} as EmptyProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElEmpty} from "element-plus"
+    import {ElEmpty, type EmptyProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import noDataImage from "../../assets/images/no-data.png"
 
@@ -47,13 +47,15 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/empty' as *;
+</style>
 
+<style>
     .kel-empty {
         background-color: var(--ks-bg-surface);
+    }
 
-        &--no-background {
-            background-color: transparent;
-        }
+    .kel-empty--no-background {
+        background-color: transparent;
     }
 
     .kel-empty__description {

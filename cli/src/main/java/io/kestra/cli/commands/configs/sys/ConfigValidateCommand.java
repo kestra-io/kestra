@@ -3,7 +3,7 @@ package io.kestra.cli.commands.configs.sys;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.validations.AppConfigValidator;
@@ -20,7 +20,7 @@ import picocli.CommandLine;
     description = { "Validate the current configuration." }
 )
 @Slf4j
-public class ConfigValidateCommand extends AbstractCommand {
+public class ConfigValidateCommand extends AbstractConfigCommand implements NoDatabaseCommandInterface {
     @Inject
     private Environment environment;
 

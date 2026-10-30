@@ -116,6 +116,38 @@ class LogControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
+    @Test
+    void searchLogsWithUnknownSortFieldReturns422() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET("/api/v1/" + tenant + "/logs/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @Test
+    void searchLogsSortsByTimestamp() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search?sort=timestamp:desc"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(1L);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void searchLogsByExecution() {
@@ -139,6 +171,45 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldPaginateLogsFromExecutionWhenPageAndSizeAreSet() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry log1 = logEntry(tenant, Level.INFO, Instant.now().minusSeconds(3));
+        logRepository.save(log1);
+        logRepository.save(log1.toBuilder().message("second").timestamp(Instant.now().minusSeconds(2)).build());
+        logRepository.save(log1.toBuilder().message("third").timestamp(Instant.now().minusSeconds(1)).build());
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + log1.getExecutionId() + "?page=2&size=2"),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.getFirst().getMessage()).isEqualTo("third");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldSortPaginatedLogsFromExecution() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry log1 = logEntry(tenant, Level.INFO, Instant.now().minusSeconds(3));
+        logRepository.save(log1);
+        logRepository.save(log1.toBuilder().message("second").timestamp(Instant.now().minusSeconds(2)).build());
+        logRepository.save(log1.toBuilder().message("third").timestamp(Instant.now().minusSeconds(1)).build());
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + log1.getExecutionId() + "?size=2&sort=timestamp:desc"),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(logs).hasSize(2);
+        assertThat(logs.getFirst().getMessage()).isEqualTo("third");
+        assertThat(logs.get(1).getMessage()).isEqualTo("second");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldDefaultToNormalKindAndAllowKindFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);
@@ -147,15 +218,7 @@ class LogControllerTest {
             .build();
         logRepository.save(playgroundLog);
 
-        // Execution-scoped endpoint defaults to NORMAL kind only, so a playground log is hidden...
         List<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId()),
-            Argument.of(List.class, LogEntry.class)
-        );
-        assertThat(logs).isEmpty();
-
-        // ...unless the caller explicitly asks for that kind.
-        logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId() + "?filters[kind][EQUALS]=PLAYGROUND"),
             Argument.of(List.class, LogEntry.class)
         );

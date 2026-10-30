@@ -7,6 +7,12 @@ export type LevelKey = typeof LOG_LEVELS[number];
 export const STRUCTURED_PARSE_LIMIT = 100_000
 export const COLLAPSE_THRESHOLD = 3
 
+const BACKTICKS_REGEX = /`([^`]*)`/g
+
+export function stripBackticks(message: string): string {
+    return message.replace(BACKTICKS_REGEX, "$1")
+}
+
 export function detectStructured(message: string | undefined | null): boolean {
     if (!message) {
         return false
@@ -78,18 +84,6 @@ export function color() {
     return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVar("--log-chart-" + level.toLowerCase())]))
 }
 
-export function graphColors(state: LevelKey) {
-    const COLORS = {
-        ERROR: "#AB0009",
-        WARN: "#DD5F00",
-        INFO: "#029E73",
-        DEBUG: "#1761FD",
-        TRACE: "#8405FF",
-    }
-
-    return COLORS[state]
-}
-
 export function chartColorFromLevel(level: LevelKey, alpha = 1) {
     const hex = color()[level]
     if (!hex) {
@@ -120,7 +114,7 @@ export function index(based: readonly string[], value: string) {
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx
 }
 
-export function levelOrLower(level: LevelKey) {
+export function levelOrLower(level: LevelKey | undefined) {
     const levels: LevelKey[] = []
     for (const currentLevel of LOG_LEVELS) {
         levels.push(currentLevel)

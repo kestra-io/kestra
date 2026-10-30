@@ -1,19 +1,29 @@
-import path from "path"
+// This file has been automatically migrated to valid ESM format by Storybook.
+import path, {dirname} from "path"
 import {fileURLToPath} from "url"
-import {mergeConfig} from "vite"
+import {mergeConfig, type Alias} from "vite"
 import type {StorybookConfig} from "@storybook/vue3-vite"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const config: StorybookConfig = {
     stories: [
+        "../src/**/*.stories.@(ts|tsx)",
         "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     ],
-    addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
+    addons: [getAbsolutePath("@storybook/addon-themes"), getAbsolutePath("@storybook/addon-vitest")],
     framework: {
-        name: "@storybook/vue3-vite",
-        options: {},
+        name: getAbsolutePath("@storybook/vue3-vite"),
+        options: {
+            // Storybook resolves this tsconfig from the git root, not from this file
+            docgen: {
+                plugin: "vue-component-meta",
+                tsconfig: "ui/.storybook/tsconfig.docgen.json",
+            },
+        },
     },
     async viteFinal(viteConfig) {
-        const __dirname = path.dirname(fileURLToPath(import.meta.url))
         const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
 
         viteConfig.plugins = [
@@ -23,7 +33,7 @@ const config: StorybookConfig = {
 
         if (viteConfig.resolve) {
             const AliasConfig = [
-                ...(viteConfig.resolve.alias as any[]),
+                ...(viteConfig.resolve.alias as Alias[] ?? []),
                 {find: "override", replacement: path.resolve(__dirname, "../src/override/")},
             ]
             viteConfig.resolve.alias = AliasConfig
@@ -46,3 +56,7 @@ const config: StorybookConfig = {
     },
 }
 export default config
+
+function getAbsolutePath(value: string): string {
+    return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)))
+}

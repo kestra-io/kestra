@@ -36,6 +36,26 @@ class SetTest {
     TestRunContextFactory runContextFactory;
 
     @Test
+    void shouldKeepPebbleExpressionWhenRenderedValueContainsOne() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var runContext = this.runContextFactory.of(
+            namespaceId, Map.of("inputs", Map.of("payload", "{{ 1 + 1 }}"))
+        );
+
+        var set = Set.builder()
+            .id(Set.class.getSimpleName())
+            .type(Set.class.getName())
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("test-key"))
+            .value(Property.ofExpression("{{ inputs.payload }}"))
+            .build();
+
+        set.run(runContext);
+
+        assertThat(runContext.namespaceKv(namespaceId).getValue("test-key").orElseThrow().value()).isEqualTo("{{ 1 + 1 }}");
+    }
+
+    @Test
     void shouldSetKVGivenNoNamespace() throws Exception {
         // Given
         Set set = Set.builder()
@@ -246,6 +266,26 @@ class SetTest {
 
         kv = createAndPerformSetTask(key, "{{ 200.1 }}", KVType.STRING);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo("200.1");
+    }
+
+    @Test
+    void booleanTypeAcceptsTrueAndFalseCaseInsensitive() throws Exception {
+        String key = "bool_key";
+
+        KVStore kv = createAndPerformSetTask(key, "FALSE", KVType.BOOLEAN);
+        assertThat((Boolean) kv.getValue(key).orElseThrow().value()).isFalse();
+
+        kv = createAndPerformSetTask(key, "True", KVType.BOOLEAN);
+        assertThat((Boolean) kv.getValue(key).orElseThrow().value()).isTrue();
+    }
+
+    @Test
+    void booleanTypeRejectsInvalidValue() {
+        IllegalArgumentException exception = Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> createAndPerformSetTask("invalid_bool", "yes", KVType.BOOLEAN)
+        );
+        assertThat(exception.getMessage()).contains("Cannot parse 'yes' as a BOOLEAN value");
     }
 
     private KVStore createAndPerformSetTask(String key, String value, KVType type) throws Exception {

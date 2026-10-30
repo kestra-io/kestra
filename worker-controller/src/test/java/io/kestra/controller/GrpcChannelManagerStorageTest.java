@@ -188,7 +188,7 @@ class GrpcChannelManagerStorageTest {
             new HealthCheck(false),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
-        GrpcChannelManager manager = new GrpcChannelManager(channelConfig, grpcConfig, config, () -> storage);
+        GrpcChannelManager manager = new GrpcChannelManager(channelConfig, grpcConfig, config, () -> storage, null);
         // Intentionally skip init() — we only exercise discoverControllersFromStorage() here.
         return manager;
     }

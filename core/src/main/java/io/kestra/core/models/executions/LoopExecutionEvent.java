@@ -2,6 +2,7 @@ package io.kestra.core.models.executions;
 
 import java.util.Map;
 
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
 
@@ -10,13 +11,15 @@ import jakarta.annotation.Nullable;
 /**
  * Event emitted by the executor to communicate a loop sub-execution state change to its parent execution.
  * The {@code state} field drives how the parent reacts: a {@link State.Type#PAUSED} state pauses the
- * parent loop task run; any terminated state ends or advances the loop iteration.
+ * parent loop task run, a {@link State.Type#RESTARTED} restart from a pause;
+ * any terminated state ends or advances the loop iteration.
  */
 public record LoopExecutionEvent(
     LoopRun loopRun,
     String executionId,
     State.Type state,
-    @Nullable Map<String, Object> outputs) implements DispatchEvent {
+    @Nullable Map<String, Object> outputs,
+    @Nullable TaskRunStatistic taskRunStatistic) implements DispatchEvent {
 
     @Override
     public String key() {
@@ -30,6 +33,7 @@ public record LoopExecutionEvent(
             ", value=" + this.loopRun.value() +
             ", index=" + this.loopRun.index() +
             ", state=" + state +
+            ", taskRunStatistic=" + taskRunStatistic +
             ")";
     }
 }

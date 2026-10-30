@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.slf4j.event.Level;
 
@@ -17,6 +17,11 @@ import io.kestra.core.models.executions.LogEntry;
 
 public interface ILogs extends IData<ILogs.Fields> {
 
+    @Override
+    default Set<QueryFilter.Field> globalFilterFields() {
+        return Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_ID, QueryFilter.Field.LEVEL);
+    }
+
     default List<AbstractFilter<ILogs.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<ILogs.Fields>> where) {
         List<AbstractFilter<ILogs.Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 
@@ -24,7 +29,6 @@ public interface ILogs extends IData<ILogs.Fields> {
 
             List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
                 namespaceFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
@@ -33,7 +37,6 @@ public interface ILogs extends IData<ILogs.Fields> {
 
             List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
                 flowFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
@@ -42,13 +45,12 @@ public interface ILogs extends IData<ILogs.Fields> {
 
             List<QueryFilter> levelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
             if (!levelFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));
                 levelFilters.forEach(f ->
                 {
                     List<Level> levels;
                     if (f.value() instanceof List<?> list) {
                         levels = list.stream().map(l -> Level.valueOf(l.toString())).toList();
-                    } else if(f.value() instanceof String str && str.indexOf(',') > 0) {
+                    } else if (f.value() instanceof String str && str.indexOf(',') > 0) {
                         levels = Arrays.stream(str.split(",")).map(Level::valueOf).toList();
                     } else {
                         Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());

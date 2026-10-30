@@ -1,9 +1,9 @@
 <template>
-    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu="onContextMenu">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed, 'is-overlay': isOverlay}" :inert="isOverlay && collapsed ? true : undefined" @contextmenu="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
-                aria-label="Toggle menu"
+                :aria-label="$t('toggle menu')"
                 @click="onCollapse(true)"
             >
                 <DockLeft />
@@ -11,6 +11,7 @@
             <div
                 ref="dragHandle"
                 class="menu-drag-handle"
+                :class="{'is-swiping': isSwiping}"
                 aria-hidden="true"
             />
         </template>
@@ -30,7 +31,7 @@
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
                 <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
-                    <KsNewBadge>{{ t("new") }}</KsNewBadge>
+                    <KsNewBadge>{{ $t("new") }}</KsNewBadge>
                 </template>
                 <MenuLink
                     v-for="item in getDisplayedItems(section)"
@@ -44,7 +45,7 @@
 
         <KsSideBarSection
             v-if="bookmarksStore.pages?.length"
-            title="Favourites"
+            :title="$t('favourites')"
             collapsible
             :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
             @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
@@ -56,6 +57,14 @@
             <slot name="footer" />
         </template>
     </KsSideBar>
+
+    <div
+        v-if="isOverlay && !collapsed"
+        class="sidebar-scrim"
+        data-test="sidebar-scrim"
+        aria-hidden="true"
+        @click="onCollapse(true)"
+    />
 
     <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
 
@@ -81,7 +90,8 @@
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {usePointerSwipe} from "@vueuse/core"
+    import {onKeyStroke, usePointerSwipe} from "@vueuse/core"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
@@ -163,9 +173,44 @@
         emit("menu-collapse", folded)
     }
 
+    const isOverlay = useIsMobile()
+
+    onKeyStroke("Escape", () => {
+        if (isOverlay.value && !props.collapsed) onCollapse(true)
+    })
+
+    watch(() => $route.fullPath, () => {
+        if (isOverlay.value && !props.collapsed) onCollapse(true)
+    })
+
+    const BEHIND_DRAWER = "#app-body > :not(#side-menu):not(.sidebar-scrim), #bottom-actions-slot"
+
+    const setBehindDrawerInert = (inert: boolean) => {
+        document.querySelectorAll(BEHIND_DRAWER).forEach((element) => element.toggleAttribute("inert", inert))
+    }
+
+    let breakpointCrossing = false
+
+    watch(isOverlay, (overlay) => {
+        breakpointCrossing = true
+        if (overlay && !props.collapsed) onCollapse(true)
+        if (!overlay) emit("menu-collapse", layoutStore.restoreSideMenuCollapsed())
+        setTimeout(() => { breakpointCrossing = false })
+    })
+
+    watch(() => isOverlay.value && !props.collapsed, async (open) => {
+        setBehindDrawerInert(open)
+        if (breakpointCrossing) return
+        await nextTick()
+        const target = open ? "#side-menu a[href]" : "[data-testid=topnav-sidebar-toggle]"
+        document.querySelector<HTMLElement>(target)?.focus()
+    }, {flush: "post"})
+
+    onUnmounted(() => setBehindDrawerInert(false))
+
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
-    const {direction} = usePointerSwipe(dragHandle, {
+    const {direction, isSwiping} = usePointerSwipe(dragHandle, {
         threshold: DRAG_CLOSE_THRESHOLD,
         disableTextSelect: true,
         onSwipeEnd: () => {
@@ -260,7 +305,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 #side-menu {
     position: relative;
     width: 215px;
@@ -273,6 +318,25 @@
         width: 0;
         border-right-width: 0;
     }
+
+    &.is-overlay {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        z-index: var(--ks-z-overlay);
+        width: min(80vw, 20rem);
+
+        &.is-collapsed {
+            width: 0;
+        }
+    }
+}
+
+.sidebar-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: calc(var(--ks-z-overlay) - 1);
+    background: var(--ks-bg-scrim);
 }
 
 .top-level-link {
@@ -294,8 +358,16 @@
     bottom: 0;
     width: var(--ks-spacing-2);
     z-index: 1;
-    cursor: w-resize;
+    /* Drag-to-collapse, not drag-to-resize: the handle is wired to a swipe gesture and the
+       menu width is fixed, so a resize cursor promised something that never happened. */
+    cursor: grab;
     touch-action: pan-y;
+
+    /* Driven by the composable rather than :active, which depends on the UA keeping the state
+       on an 8px div through a pointer capture. */
+    &.is-swiping {
+        cursor: grabbing;
+    }
 }
 
 .menu-drag-handle::after {
@@ -316,34 +388,34 @@
 
 .sidebar-context-menu {
     position: fixed;
-    z-index: 9999;
+    z-index: var(--ks-z-top);
     min-width: 12rem;
     padding: var(--ks-spacing-1);
     background: var(--ks-bg-elevated);
     border: var(--ks-border-width-thin) solid var(--ks-border-strong);
     border-radius: var(--ks-radius-base);
     box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+}
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-        padding: var(--ks-spacing-2);
-        border: 0;
-        border-radius: var(--ks-radius-xs);
-        background: transparent;
-        color: var(--ks-text-primary);
-        font: inherit;
-        font-size: var(--ks-font-size-xs);
-        text-align: left;
-        cursor: pointer;
+.sidebar-context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+    padding: var(--ks-spacing-2);
+    border: 0;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
+    color: var(--ks-text-primary);
+    font: inherit;
+    font-size: var(--ks-font-size-xs);
+    text-align: left;
+    cursor: pointer;
 
-        &:hover,
+    &:hover,
         &:focus-visible {
-            background: var(--ks-bg-hover-elevated);
-            outline: none;
-        }
+        background: var(--ks-bg-hover-elevated);
+        outline: none;
     }
 }
 </style>

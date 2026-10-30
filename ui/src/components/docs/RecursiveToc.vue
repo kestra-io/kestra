@@ -30,7 +30,7 @@
             </KsCollapseItem>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
-                    <RouterLink :to="{path: '/' + child.path}">
+                    <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </RouterLink>
                 </slot>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, type VNode} from "vue"
     import {DISABLED_PAGES} from "./docsUtils"
 
     defineOptions({
@@ -48,7 +48,7 @@
     })
 
     defineSlots<{
-        default: (child: TocChild & {class?: string}) => any
+        default: (child: TocChild & {class?: string}) => VNode[]
     }>()
 
 
@@ -77,26 +77,29 @@
     const openedDocs = ref<string>("")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kel-collapse {
         --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
+        --kel-collapse-header-bg-color: transparent;
+        --kel-collapse-content-bg-color: transparent;
         border-top: none;
         border-bottom: none;
+        background-color: transparent;
 
-        > * {
+        & > * {
             font-size: var(--kel-collapse-header-font-size);
         }
 
-        :deep(> .kel-collapse-item) {
-            > .kel-collapse-item__header {
+        & :deep(> .kel-collapse-item) {
+            & > .kel-collapse-item__header {
                 padding: 0;
                 border-bottom: none;
                 min-height: 32px;
                 line-height: 1.2;
             }
 
-            > button {
+            & > button {
                 padding: 0;
             }
 
@@ -113,11 +116,11 @@
             }
         }
 
-        :deep(.kel-collapse-item__content) {
+        & :deep(.kel-collapse-item__content) {
             padding: 0;
         }
 
-        :deep(.kel-collapse-item__arrow) {
+        & :deep(.kel-collapse-item__arrow) {
             margin: 0 8px;
         }
     }

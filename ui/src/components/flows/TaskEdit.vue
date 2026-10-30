@@ -10,7 +10,7 @@
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
-            :beforeClose="beforeClose"
+            :dirty="isDirty"
             :size="size"
         >
             <template #header>
@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,8 +31,9 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
-                        v-if="revision && revisions?.length !== revision"
+                        class="task-edit-revision-alert"
+                        data-test="task-edit-revision-alert"
+                        v-if="isOldRevision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -62,7 +63,7 @@
         @focusin="onPanelFocusIn"
         @focusout="onPanelFocusOut"
         @dragover.prevent
-        @drop="emit('tab-drop')"
+        @drop="onPanelDrop"
     >
         <div v-if="!hideTabstrip" class="task-edit-tabstrip">
             <div
@@ -87,6 +88,7 @@
 
         <div class="task-edit-panel-body">
             <TaskEditData
+                v-if="!outsideFlow"
                 class="task-edit-col task-edit-col-inputs"
                 :class="{'task-edit-col--collapsed': inputsCollapsed}"
                 kind="inputs"
@@ -97,8 +99,10 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
+                :defaultCollapsedKeys="['context', 'namespaceFiles']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
+                @chip-activate="onChipActivate"
             />
 
             <div class="task-edit-col task-edit-col-params">
@@ -140,42 +144,71 @@
                 :stacked="isStacked"
                 :interactive="false"
                 side="right"
-                @toggle="outputCollapsed = !outputCollapsed"
+                @toggle="toggleOutput"
             />
 
         </div>
 
-        <div v-if="errors && errors.length" v-ks-loading="isLoading" class="task-edit-panel-footer">
-            <div class="task-edit-validation-status" role="status" aria-live="polite">
+        <div
+            v-if="(errors && errors.length) || unsetRequiredCount > 0"
+            v-ks-loading="isLoading"
+            class="task-edit-panel-footer"
+        >
+            <div v-if="errors && errors.length" class="task-edit-validation-status" role="status" aria-live="polite">
                 <ValidationError link :errors="errors" />
+            </div>
+            <div
+                v-if="unsetRequiredCount > 0"
+                class="task-edit-required-status"
+                data-test="task-edit-required-status"
+                role="status"
+                aria-live="polite"
+            >
+                <AlertCircleOutline class="task-edit-required-icon" />
+                <span v-if="unsetRequiredCount === 1">{{ $t("block_editor.required_unset_singular") }}</span>
+                <span v-else>{{ $t("block_editor.required_unset_plural", {count: unsetRequiredCount}) }}</span>
+                <KsButton type="text" size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
+                    {{ $t("block_editor.required_unset_jump") }}
+                </KsButton>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
+    import {ref, computed, nextTick, provide, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
-    import {SECTIONS, KsIconButton, KsDrawer} from "@kestra-io/design-system"
+    import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CodeTags from "vue-material-design-icons/CodeTags.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Play from "vue-material-design-icons/Play.vue"
+    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
+    import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
+    import {validationErrorLines, type ValidationError as ApiValidationError} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+    import {useFlowStore, type FlowRevision, type ParsedFlow, type Task} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {upstreamTaskIds} from "../../utils/flowableBlockOps"
+    import {useContextSections} from "../../composables/useContextSections"
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
+    import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../no-code/injectionKeys"
 
     interface Props {
         component?: string;
-        task?: Record<string, any>;
+        task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
         flowId: string;
@@ -190,7 +223,9 @@
         size?: string;
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
+        outsideFlow?: boolean;
         editorKey?: string;
+        taskPath?: string;
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -208,7 +243,9 @@
         size: undefined,
         presentation: "drawer",
         hideTabstrip: false,
+        outsideFlow: false,
         editorKey: undefined,
+        taskPath: undefined,
     })
 
     const emit = defineEmits<{
@@ -230,8 +267,7 @@
     const taskYaml = ref("")
     const taskBaseline = ref("")
     const isModalOpen = ref(false)
-    const {guardedClose} = useDiscardGuard(() => taskYaml.value !== taskBaseline.value)
-    const beforeClose = (done: () => void) => guardedClose(() => done())
+    const isDirty = computed(() => taskYaml.value !== taskBaseline.value)
     const activeTabs = ref(props.readOnly ? "source" : "form")
     const inputsCollapsed = defineModel<boolean>("inputsCollapsed", {default: false})
     const outputCollapsed = defineModel<boolean>("outputCollapsed", {default: true})
@@ -240,13 +276,94 @@
     const isStacked = ref(false)
     const panelHasFocus = ref(false)
 
-    const onPanelFocusIn = () => {
+    const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
+    const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+    const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null)
+    provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert)
+
+    const unsetRequiredFields = ref<UnsetRequiredField[]>([])
+    provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
+    const unsetRequiredCount = computed(() => unsetRequiredFields.value.length)
+
+    const navigateToRequiredField = ref<((path: string) => boolean) | undefined>(undefined)
+    provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
+
+    async function jumpToFirstUnsetRequired() {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
+            await nextTick()
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
+        }
+        if (!el) return
+
+        openCollapsedGroups(el)
+        await nextTick()
+        scrollThenFocus(el)
+    }
+
+    const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
+        if (event.target instanceof HTMLElement && event.target.closest(".monaco-editor")) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+            return
+        }
+        if (isArmableField(event.target)) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = event.target
+            event.target.classList.add(ARMED_FIELD_CLASS)
+        }
     }
     const onPanelFocusOut = (event: FocusEvent) => {
         const next = event.relatedTarget as Node | null
-        if (!next || !panelRef.value?.contains(next)) {
+        const leavingPanel = !next || !panelRef.value?.contains(next)
+        if (leavingPanel) {
             panelHasFocus.value = false
+        }
+        if (armedField.value && event.target === armedField.value && leavingPanel) {
+            armedField.value.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+        }
+        // Tabbing out of Monaco fires focusout while focus is still inside the panel.
+        if (leavingPanel) focusedExpressionEditorInsert.value = null
+    }
+
+    function insertAndNotify(field: HTMLInputElement | HTMLTextAreaElement, expr: string) {
+        insertAtCaret(field, expr)
+        field.focus()
+        KsMessage.success(t("block_editor.chip_inserted"))
+    }
+
+    function onChipActivate(expr: string, sectionKey: string) {
+        if (armedField.value) {
+            insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
+        } else if (focusedExpressionEditorInsert.value) {
+            focusedExpressionEditorInsert.value(expr)
+            KsMessage.success(t("block_editor.chip_inserted"))
+            trackChipInserted(`inputs.${sectionKey}`)
+        } else {
+            copyToClipboard(expr)
+            KsMessage.success(t("block_editor.chip_copied"))
+            trackChipCopied(`inputs.${sectionKey}`)
+        }
+    }
+
+    function onPanelDrop(event: DragEvent) {
+        if (!event.dataTransfer?.types.includes(CHIP_DRAG_MIME)) {
+            emit("tab-drop")
+            return
+        }
+
+        event.preventDefault()
+        const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const sectionKey = event.dataTransfer.getData(CHIP_SECTION_DRAG_MIME)
+        const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
+        if (expr && isArmableField(target)) {
+            insertAndNotify(target, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         }
     }
 
@@ -261,17 +378,19 @@
 
     watch(isStacked, (stacked) => {
         inputsCollapsed.value = stacked
-        outputCollapsed.value = stacked
     })
     const type = ref<string>()
-    const revisions = ref<any[]>()
+    const revisions = ref<FlowRevision[]>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const lastValidatedValue = ref<string | null>(null)
 
     const {runTask, playgroundStore} = usePlaygroundRun()
 
+    const propTaskId = computed(() => typeof props.task?.id === "string" ? props.task.id : undefined)
+    const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
+
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? props.task?.id ?? YAML_UTILS.parse(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -283,57 +402,48 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse(taskYaml.value)?.type ?? props.task?.type ?? ""
+            return YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
-            return props.task?.type ?? ""
+            return propTaskType.value ?? ""
         }
     })
 
     const flowStore = useFlowStore()
-    const localTaskError = ref<string | undefined>()
-    const errors = computed(() => localTaskError.value?.split(/, ?/))
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
+    const localTaskErrors = ref<ApiValidationError[] | undefined>()
+    const errors = computed(() => {
+        const split = validationErrorLines(localTaskErrors.value)
+        return split.length === 0 ? undefined : split
+    })
     const pluginMarkdown = computed(() => {
-        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
+        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown
         }
         return null
     })
-
-    function flattenTaskIds(tasks: any, acc: string[]) {
-        if (!Array.isArray(tasks)) return
-        for (const task of tasks) {
-            if (task?.id) acc.push(String(task.id))
-            for (const key of ["tasks", "then", "else", "errors", "finally", "defaults"]) flattenTaskIds(task?.[key], acc)
-            if (task?.cases && typeof task.cases === "object") {
-                for (const branch of Object.values(task.cases)) flattenTaskIds(branch, acc)
-            }
-        }
-    }
 
     const currentTaskId = computed(() => String(props.taskId ?? props.task?.id ?? ""))
 
     const editorUri = computed(() => props.editorKey || currentTaskId.value)
 
     const inputSections = computed(() => {
-        const flow = flowStore.flowParsed ?? {}
-        const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
+        const flow: ParsedFlow = flowStore.flowParsed ?? {}
+        const sections: DataSection[] = []
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
-            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: any) => {
+            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: {id?: unknown; name?: unknown}) => {
                 const id = String(i.id ?? i.name ?? "")
                 return {label: id, expr: `{{ inputs.${id} }}`}
             })})
         }
 
-        const ids: string[] = []
-        flattenTaskIds(flow.tasks, ids)
-        flattenTaskIds(flow.errors, ids)
-        flattenTaskIds(flow.finally, ids)
-        const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value, props.taskPath)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
+
+        sections.push(...contextDataSections.value)
 
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],
@@ -341,6 +451,8 @@
             taskrun: ["id", "startDate", "attemptsCount", "parentId", "value", "iteration"],
             task: ["id", "type"],
             trigger: ["id", "date", "type"],
+            item: ["value", "key", "index"],
+            "item.parent": ["value", "key", "index"],
             error: ["taskId", "message", "stackTrace"],
             kestra: ["environment", "url"],
         }
@@ -348,7 +460,7 @@
         for (const [root, fields] of Object.entries(CONTEXT_FIELDS)) {
             for (const field of fields) ctx.push({label: `${root}.${field}`, expr: `{{ ${root}.${field} }}`})
         }
-        for (const root of ["labels", "envs", "globals", "parent", "parents"]) {
+        for (const root of ["labels", "envs", "globals", "parent", "parents", "item.parents"]) {
             ctx.push({label: root, expr: `{{ ${root} }}`})
         }
         ctx.push({label: "now()", expr: "{{ now() }}"})
@@ -360,21 +472,39 @@
         return sections
     })
 
+    const declaredOutputProperties = computed(() => resolveDeclaredOutputProperties([
+        pluginsStore.plugin?.schema?.outputs?.properties,
+        pluginsStore.editorPlugin?.schema?.outputs?.properties,
+    ]))
+
     const outputSections = computed(() => {
-        const candidates = [
-            (pluginsStore.plugin as any)?.schema?.outputs?.properties,
-            (pluginsStore.plugin as any)?.outputs?.properties,
-            (pluginsStore.editorPlugin as any)?.schema?.outputs?.properties,
-            (pluginsStore.editorPlugin as any)?.outputs?.properties,
-        ]
-        const properties = candidates.find(c => c && typeof c === "object")
-        const names = properties ? Object.keys(properties) : []
+        const properties = declaredOutputProperties.value
+        if (!properties || props.outsideFlow) return []
+        const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
             label: name,
-            type: String((properties as Record<string, {type?: string}>)[name]?.type ?? "") || undefined,
+            type: String(properties[name]?.type ?? "") || undefined,
         }))
         return [{key: "out", label: t("block_editor.declared_outputs"), chips}]
+    })
+
+    const hasDeclaredOutputs = computed(() => computeHasDeclaredOutputs(declaredOutputProperties.value))
+    const outputUserOverridden = ref(false)
+
+    watch(hasDeclaredOutputs, (has) => {
+        if (outputUserOverridden.value) return
+        outputCollapsed.value = !has
+    }, {immediate: true})
+
+    function toggleOutput() {
+        outputUserOverridden.value = true
+        outputCollapsed.value = !outputCollapsed.value
+    }
+
+    watch(currentTaskId, () => {
+        outputUserOverridden.value = false
+        outputCollapsed.value = !hasDeclaredOutputs.value
     })
 
     const authStore = useAuthStore()
@@ -386,9 +516,14 @@
 
     const isLoading = computed(() => taskYaml.value === undefined)
 
+    // Revision numbers are not list indexes: deleting a flow consumes a revision that the list leaves out.
+    const selectedRevision = computed(() => revisions.value?.find(({revision}) => revision === props.revision))
+
+    const isOldRevision = computed(() => Boolean(props.revision) && props.revision !== revisions.value?.at(-1)?.revision)
+
     const source = computed(() => {
         return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
+            ? selectedRevision.value?.source
             : flowStore.flow?.source
     })
 
@@ -399,7 +534,7 @@
             revision: props.revision?.toString(),
         })
         if (props.revision) {
-            if (!revisions.value?.[props.revision - 1]) {
+            if (!selectedRevision.value) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
@@ -409,7 +544,7 @@
         }
         return YAML_UTILS.extractBlock({
             section: props.section,
-            source: source.value,
+            source: source.value ?? "",
             key: taskId,
         })
     }
@@ -432,34 +567,34 @@
     const onShow = async () => {
         isModalOpen.value = true
         if (props.taskId) {
-            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? ""
+            taskYaml.value = await load(props.taskId) ?? ""
         } else if (props.taskRaw != null) {
             taskYaml.value = props.taskRaw
         } else if (props.task) {
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (props.task?.type) {
-            pluginsStore.load({cls: props.task.type}).catch(() => {})
+        if (propTaskType.value && !props.outsideFlow) {
+            pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
-        if (taskYaml.value) {
+        if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskError.value = (result as {constraints?: string})?.constraints })
-                .catch(() => { localTaskError.value = undefined })
+                .then((result) => { localTaskErrors.value = result?.errors })
+                .catch(() => { localTaskErrors.value = undefined })
         } else {
-            localTaskError.value = undefined
+            localTaskErrors.value = undefined
         }
     }
 
     const commitEdit = () => {
-        if (lastValidatedValue.value !== taskYaml.value) {
+        if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({
                 task: taskYaml.value,
                 section: props.section,
             }).then((result) => {
-                localTaskError.value = (result as {constraints?: string})?.constraints
+                localTaskErrors.value = result?.errors
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {
@@ -471,13 +606,13 @@
         }
     }
 
-    const onInput = (value?: string | Record<string, any>) => {
+    const onInput = (value: string) => {
         if (timer.value) {
             clearTimeout(timer.value)
         }
 
-        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "")
-        timer.value = setTimeout(commitEdit, 500) as any
+        taskYaml.value = value
+        timer.value = setTimeout(commitEdit, 500)
     }
 
     const flushPendingEdit = () => {
@@ -509,19 +644,20 @@
             taskYaml.value = incoming
             taskBaseline.value = incoming
         }
-        const taskType = newTask?.type ?? YAML_UTILS.parse(incoming)?.type
-        if (taskType) {
-            await pluginsStore.load({cls: taskType}).catch(() => {})
+        const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
+        if (typeof incomingType === "string" && incomingType && !props.outsideFlow) {
+            await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
 
     const typeLoadTimer = ref<ReturnType<typeof setTimeout>>()
     watch(taskYaml, () => {
-        const task = YAML_UTILS.parse(taskYaml.value)
-        if (task?.type && task.type !== type.value) {
-            type.value = task.type
+        const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
+        const parsedType = task?.type
+        if (parsedType && parsedType !== type.value && !props.outsideFlow) {
+            type.value = parsedType
             clearTimeout(typeLoadTimer.value)
-            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: task.type}).catch(() => {}), 500)
+            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
         }
     })
 
@@ -542,7 +678,7 @@
     defineExpose({open: onShow, flushPendingEdit})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-edit-panel {
         display: flex;
         flex-direction: column;
@@ -621,39 +757,35 @@
         flex-direction: column;
     }
 
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
     @container (max-width: 760px) {
         .task-edit-panel-body {
-            @include task-edit-stacked;
+            flex-direction: column;
+
+            .task-edit-col {
+                flex: none;
+                width: 100%;
+                height: auto;
+                border: none;
+                border-bottom: 1px solid var(--ks-border-subtle);
+            }
+
+            .task-edit-col-inputs,
+            .task-edit-col-output {
+                max-height: 30%;
+            }
+
+            .task-edit-col-params {
+                order: -1;
+                flex: 1 1 auto;
+                min-height: 55%;
+            }
+
+            .task-edit-col-inputs.task-edit-col--collapsed,
+            .task-edit-col-output.task-edit-col--collapsed {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
         }
     }
 
@@ -684,6 +816,7 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        flex-wrap: wrap;
         gap: var(--ks-spacing-3);
         flex-shrink: 0;
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
@@ -691,8 +824,35 @@
         background: var(--ks-bg-surface);
     }
 
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
+    }
+
     .task-edit-validation-status {
         display: flex;
         align-items: center;
+    }
+
+    :global(.task-edit-chip-insert-target) {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: -1px;
+    }
+
+    .task-edit-required-status {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-error);
+    }
+
+    .task-edit-required-icon {
+        display: inline-flex;
+        flex-shrink: 0;
     }
 </style>

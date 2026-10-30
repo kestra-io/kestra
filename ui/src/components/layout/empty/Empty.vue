@@ -1,11 +1,10 @@
 <template>
-    <section class="row empty">
-        <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+    <KsRow tag="section" class="empty" justify="center">
+        <KsCol :md="16" :lg="12">
             <KsEmptyState
                 :title="resolvedTitle"
                 :description="resolvedDescription"
-                :image="artwork"
-                :video="resolvedVideo"
+                :image="images[type] ?? generic"
                 :learnMore="resolvedLearnMore"
             >
                 <template v-if="$slots.description || $slots.message" #description>
@@ -28,16 +27,17 @@
                 </template>
             </KsEmptyState>
             <slot name="content" />
-        </div>
-    </section>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {KsButton, KsEmptyState} from "@kestra-io/design-system"
+    import {KsButton, KsCol, KsEmptyState, KsRow} from "@kestra-io/design-system"
 
-    import artwork from "../../../assets/empty_visuals/generic.svg"
+    import generic from "../../../assets/empty_visuals/generic.svg"
+    import {images} from "./images"
     import {links} from "./links"
 
     const props = withDefaults(
@@ -45,7 +45,6 @@
             type: string;
             title?: string;
             description?: string;
-            video?: string;
             learnMore?: string;
             demoCta?: boolean;
         }>(),
@@ -56,7 +55,7 @@
 
     const {t, te} = useI18n()
 
-    const typeLinks = computed(() => links[props.type])
+    const typeDocs = computed(() => links[props.type])
 
     const resolvedTitle = computed(() => {
         if (props.title) return props.title
@@ -70,19 +69,7 @@
         return te(key) ? t(key) : undefined
     })
 
-    const resolvedVideo = computed(() => props.video ?? typeLinks.value?.video)
-
-    const resolvedLearnMore = computed(() => {
-        if (props.learnMore !== undefined) {
-            return props.learnMore
-        } else if (typeLinks.value?.learnMore) {
-            return typeLinks.value.learnMore
-        } else if (props.demoCta) {
-            return "#"
-        } else {
-            return undefined
-        }
-    })
+    const resolvedLearnMore = computed(() => props.learnMore ?? typeDocs.value)
 
     const contactSalesUrl = computed(
         () => `https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${props.type}`,

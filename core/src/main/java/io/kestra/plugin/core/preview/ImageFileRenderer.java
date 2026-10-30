@@ -31,6 +31,11 @@ public class ImageFileRenderer extends AbstractBase64FileRenderer {
     }
 
     @Override
+    public Set<String> extensions() {
+        return SUPPORTED_EXTENSIONS;
+    }
+
+    @Override
     protected FilePreview.Type getPreviewType() {
         return FilePreview.Type.IMAGE;
     }

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
 import java.net.URI;
+import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +24,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.WebhookValidation;
@@ -31,6 +34,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 @SuperBuilder
@@ -41,16 +45,16 @@ import reactor.core.publisher.Mono;
 @Schema(
     title = "Trigger a Flow via an authenticated webhook URL.",
     description = """
-        Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
+        Exposes an endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow without signing in. The required `key` is its only protection: store it as a secret and reference it with `{{ secret('...') }}`.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and configurable response status, headers, body, and content type. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
+            title = "Add a webhook trigger to the current flow with its key read from the `WEBHOOK_KEY` secret; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`, where `{key}` is the value of that secret.",
             code = """
                 id: webhook_flow
                 namespace: company.team
@@ -63,7 +67,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                 """,
             full = true
         ),
@@ -83,7 +87,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                     when: "{{ trigger.body.hello == 'world' }}"
                 """,
             full = true
@@ -99,21 +103,44 @@ import reactor.core.publisher.Mono;
 
                 tasks:
                   - id: handle_request
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      result: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
 
                 outputs:
                   - id: response
                     type: STRING
-                    value: "{{ outputs.handle_request.value }}"
+                    value: "{{ outputs.handle_request.values.result }}"
+
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: "{{ secret('WEBHOOK_KEY') }}"
+                    wait: true
+                    returnOutputs: true
+                    responseContentType: "text/plain"
+                """,
+            full = true
+        ),
+        @Example(
+            title = "Return a custom response for a Meta webhook verification request.",
+            code = """
+                id: meta_webhook
+                namespace: company.team
+
+                tasks:
+                  - id: process_event
+                    type: io.kestra.plugin.core.log.Log
+                    message: "Received Meta webhook event"
 
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
                     key: 4wjtkzwVGBM9yKnjm3yv8r
-                    wait: true
-                    returnOutputs: true
-                    responseContentType: "text/plain"
+                    responseCode: 200
+                    responseHeaders:
+                      Content-Type: text/plain
+                    responseBody: "{{ trigger.parameters['hub.challenge'][0] ?? 'EVENT_RECEIVED' }}"
                 """,
             full = true
         ),
@@ -139,7 +166,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                 """,
             full = true
         ),
@@ -162,7 +189,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                     fetchType: STORE
                 """,
             full = true
@@ -200,7 +227,6 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         title = "Custom response content type.",
         description = """
             If set, the webhook response will use this content type instead of the default `application/json`.
-            Requires `wait` and `returnOutputs` to be `true`.
             This is useful for webhook validation handshakes that require specific content types (e.g., Microsoft Graph Change Notifications require `text/plain` responses).
             """,
         allowableValues = { "application/json", "text/plain" }
@@ -212,10 +238,24 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         title = "Custom response code.",
         description = """
             If set, the webhook response code will use this response code instead of the default `200`.
-            Requires `wait` and `returnOutputs` to be `true`.
+            Set `wait` to `true` when the expression uses task or flow outputs.
             """
     )
     private Property<Integer> responseCode;
+
+    @PluginProperty(additionalProperties = String.class)
+    @Schema(
+        title = "Custom response headers.",
+        description = "Headers returned to the webhook caller. Values can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs."
+    )
+    private Property<Map<String, String>> responseHeaders;
+
+    @PluginProperty
+    @Schema(
+        title = "Custom response body.",
+        description = "Body returned to the webhook caller instead of the default execution metadata or flow outputs. The value can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs."
+    )
+    private Property<String> responseBody;
 
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
@@ -248,7 +288,12 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .flatMap(__ ->
             {
                 if (!this.wait) {
-                    return Mono.<HttpResponse<?>> just(HttpResponse.of(context.webhookService().executionResponse(execution)));
+                    try {
+                        RunContext runContext = context.webhookService().runContext(context.flow(), execution);
+                        return Mono.<HttpResponse<?>> just(buildResponse(context, execution, runContext, false));
+                    } catch (Exception e) {
+                        return Mono.error(e);
+                    }
                 }
 
                 return context
@@ -259,22 +304,64 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                     {
                         try {
                             RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
-                            int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
-
-                            HttpResponse<?> response = this.getReturnOutputs()
-                                ? buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode))
-                                : HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
-                            return Mono.<HttpResponse<?>> just(response);
+                            return Mono.<HttpResponse<?>> just(buildResponse(context, event.getData(), runContext, true));
                         } catch (Exception e) {
                             return Mono.error(e);
                         }
                     });
             })
-            .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
+            .onErrorResume(e ->
+            {
+                // A body too large to enqueue is propagated so the ErrorController handler maps it to 413; any
+                // other error becomes a 500.
+                Throwable unwrapped = Exceptions.unwrap(e);
+                if (unwrapped instanceof MessageTooBigException) {
+                    return Mono.error(unwrapped);
+                }
+                return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
+            });
     }
 
-    private HttpResponse<?> buildOutputResponse(Object body, String responseContentType, HttpResponse.Status responseCode) {
-        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+    private HttpResponse<?> buildResponse(WebhookContext context, Execution execution, RunContext runContext, boolean terminated) throws Exception {
+        int statusCode = runContext.render(this.responseCode)
+            .as(Integer.class)
+            .orElse(terminated && execution.getState().isFailed() ? 500 : 200);
+
+        Object body;
+        if (this.responseBody != null) {
+            body = runContext.render(this.responseBody).as(String.class).orElse(null);
+        } else if (terminated && this.getReturnOutputs()) {
+            body = context.webhookService().executionOutputs(execution);
+        } else {
+            body = context.webhookService().executionResponse(execution);
+        }
+
+        Map<String, List<String>> headers = runContext.render(this.responseHeaders)
+            .asMap(String.class, String.class)
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> List.of(entry.getValue())));
+
+        if (this.responseContentType != null && headers.keySet().stream().noneMatch(name -> name.equalsIgnoreCase("Content-Type"))) {
+            headers.put("Content-Type", List.of(this.responseContentType));
+        }
+
+        Object responseBody = textBody(body, headers);
+        return HttpResponse.builder()
+            .status(HttpResponse.Status.valueOf(statusCode))
+            .headers(headers.isEmpty() ? null : HttpHeaders.of(headers, (name, value) -> true))
+            .body(responseBody)
+            .build();
+    }
+
+    private Object textBody(Object body, Map<String, List<String>> headers) {
+        boolean isTextPlain = headers.entrySet().stream()
+            .filter(entry -> entry.getKey().equalsIgnoreCase("Content-Type"))
+            .flatMap(entry -> entry.getValue().stream())
+            .map(value -> value.split(";", 2)[0].trim())
+            .anyMatch(value -> value.equalsIgnoreCase(MediaType.TEXT_PLAIN));
+
+        if (isTextPlain) {
             String responseBody;
             if (body instanceof String s) {
                 responseBody = s;
@@ -286,11 +373,10 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                 }
             }
 
-            return HttpResponse.of(responseCode, responseBody, MediaType.TEXT_PLAIN_TYPE.toString());
+            return responseBody;
         }
 
-        // Default: application/json (or no responseContentType set)
-        return HttpResponse.of(responseCode, body, responseContentType);
+        return body;
     }
 
     /**

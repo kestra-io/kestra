@@ -1,20 +1,19 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
-import resource from "../../../models/resource"
-import action from "../../../models/action"
-import {useNamespacesStore} from "override/stores/namespaces"
-import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
 import {routeFamily} from "../../../utils/routeFamily"
+import {namespaceValueProvider} from "./namespaceValueProvider"
 
 export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
     const route = useRoute()
 
     return computed(() => {
-        const {VALUES} = useValues("triggers")
+        // `t` is handed over so this never re-enters useI18n: the computed also refreshes outside a
+        // setup context (a flush job after a route-query change), where useI18n throws.
+        const {VALUES} = useValues("triggers", t)
 
         return {
             title: t("filter.titles.trigger_filters"),
@@ -32,27 +31,9 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                             Comparators.PREFIX,
                         ],
                         valueType: "multi-select" as const,
-                        valueProvider: async () => {
-                            const user = useAuthStore().user
-                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
-                                const namespacesStore = useNamespacesStore()
-                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
-                                return [...new Set(namespaces
-                                    .flatMap(namespace => {
-                                        return namespace.split(".").reduce((current: string[], part: string) => {
-                                            const previousCombination = current?.[current.length - 1]
-                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
-                                        }, [])
-                                    }))].map(namespace => ({
-                                    label: namespace,
-                                    value: namespace,
-                                }))
-                            }
-                            return []
-                        },
-                        searchable: true,
+                        valueProvider: namespaceValueProvider(),
                     },
-                ] : []) as any,
+                ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
@@ -65,7 +46,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                }] : []) as any,
+                }] : []) as FilterConfiguration["keys"],
                 {
                     key: "timeRange",
                     label: t("filter.timeRange_trigger.label"),
@@ -73,8 +54,8 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
-                    valueProvider: async (meta?: FilterMeta) => {
-                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
+                    valueProvider: async (options?: {meta?: FilterMeta}) => {
+                        return options?.meta?.dateFilter === "LAST_TRIGGERED_DATE"
                             ? VALUES.RELATIVE_DATE
                             : VALUES.RELATIVE_DATE_NEXT
                     },
@@ -94,10 +75,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.scope_trigger.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "radio",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.SCOPES
-                    },
+                    valueProvider: async () => VALUES.SCOPES,
                     showComparatorSelection: false,
                 },
                 {
@@ -129,7 +107,6 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerState",
@@ -140,10 +117,35 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.TRIGGER_STATES
-                    },
+                    valueProvider: async () => VALUES.TRIGGER_STATES,
+                },
+                {
+                    // QueryFilter.Field.LOCKED supports EQUALS only, so there is no comparator to offer.
+                    key: "locked",
+                    label: t("filter.triggerLocked.label"),
+                    description: t("filter.triggerLocked.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_LOCK_STATES,
+                },
+                {
+                    // Keyed `source` after QueryFilter.Field.SOURCE, but labelled "Kind": it targets the
+                    // scheduler's trigger type, which the API exposes as `state.kind` so it does not clash
+                    // with the trigger definition's plugin type.
+                    key: "source",
+                    label: t("filter.triggerKind.label"),
+                    description: t("filter.triggerKind.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_KINDS,
+                },
+                {
+                    // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
+                    key: "operationId",
+                    label: t("filter.operationId.label"),
+                    description: t("filter.operationId.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "text",
                 },
             ],
         }

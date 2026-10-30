@@ -4,7 +4,7 @@
  * Generates the design-system colour layer from the Figma token export.
  *
  * Inputs:  scripts/Figma.json
- * Outputs: src/assets/styles/{_color-palette,ks-theme-<mode>.scss}
+ * Outputs: src/assets/styles/{_color-palette.scss,ks-palette.css,ks-theme-<mode>.css}
  *
  * Usage:   npm run generate:palette inside ui-design-system directory
  */
@@ -43,6 +43,7 @@ const paletteIndex = Object.fromEntries(sortedPalette.map(c => [normalizeTokenNa
 const valueIndex = buildValueIndex(sortedPalette)
 
 fs.writeFileSync(path.resolve(STYLES_DIR, "_color-palette.scss"), renderPalette(sortedPalette))
+fs.writeFileSync(path.resolve(STYLES_DIR, "ks-palette.css"), renderPaletteProperties(sortedPalette))
 
 for (const [index, mode] of modes.entries()) {
     const modeName = mode.mode?.name?.trim()
@@ -56,7 +57,7 @@ for (const [index, mode] of modes.entries()) {
     const semantic = mode.color.filter(c => !isPaletteColor(c))
 
     fs.writeFileSync(
-        path.resolve(STYLES_DIR, `ks-theme-${normalizedTheme}.scss`),
+        path.resolve(STYLES_DIR, `ks-theme-${normalizedTheme}.css`),
         renderTheme(semantic, paletteIndex, valueIndex, selector),
     )
 
@@ -194,6 +195,23 @@ function renderPalette(palette) {
 }
 
 /**
+ * The palette as `--ks-<name>` properties, which the themes and components reference.
+ * @param {FigmaColor[]} palette
+ */
+function renderPaletteProperties(palette) {
+    let prev = ""
+    const body = palette.map(c => {
+        const group = c.name.split("/")[0]
+        const heading = group !== prev ? `${prev ? "\n" : ""}${INDENT}/* ${group} */\n` : ""
+        prev = group
+        return `${heading}${INDENT}--ks-${paletteVarName(c.name)}: ${c.value};`
+    }).join("\n")
+    const value = (/** @type {string} */ name) => palette.find(c => paletteVarName(c.name) === name)?.value
+    const aliases = ["white", "black"].map(name => `${INDENT}--ks-${name}: ${value(`gray-neutral-${name}`)};`).join("\n")
+    return `${HEADER}\n:root {\n${body}\n\n${aliases}\n}\n`
+}
+
+/**
  * @param {FigmaColor[]} tokens
  * @param {ColorIndex} localPaletteIndex
  * @param {ColorIndex} localValueIndex
@@ -205,10 +223,12 @@ function renderTheme(tokens, localPaletteIndex, localValueIndex, selector) {
         const category = c.name.replace(/^ks\//, "").split("-")[0]
         const heading = category !== prev ? `\n${INDENT}/* ${category} */\n` : ""
         prev = category
-        const varName = c.name.replace(/\//g, "-")
-        return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, localPaletteIndex, localValueIndex)};`
+        // Lowercased to match Color-variables.json: custom properties are case-sensitive, so a
+        // name emitted as `--ks-Artwork-fill` here and listed lowercase there is two different tokens.
+        const varName = c.name.replace(/\//g, "-").toLowerCase()
+        return `${heading}${INDENT}--${varName}: ${resolveValue(c, localPaletteIndex, localValueIndex)};`
     }).join("\n").trim()
-    return `${HEADER}\n@use "color-palette" as *;\n\n${selector} {\n${INDENT}${body}\n}\n`
+    return `${HEADER}\n${selector} {\n${INDENT}${body}\n}\n`
 }
 
 /**
@@ -220,7 +240,7 @@ function resolveValue(color, localPaletteIndex, localValueIndex) {
     const alias = normalizeTokenName(color.var)
     const aliasVar = alias ? localPaletteIndex[alias] : undefined
     if (aliasVar) {
-        return `$base-${aliasVar}`
+        return `var(--ks-${aliasVar})`
     }
 
     const normalizedValue = normalizeHex(color.value)
@@ -228,14 +248,17 @@ function resolveValue(color, localPaletteIndex, localValueIndex) {
     // Exact palette colour match.
     const directMatch = localValueIndex[normalizedValue]
     if (directMatch) {
-        return `$base-${directMatch}`
+        return `var(--ks-${directMatch})`
     }
 
-    // 8-digit hex (#RRGGBBAA) → rgba($base-*, alpha) when the base colour is known
+    // 8-digit hex (#RRGGBBAA) of a palette colour → rgba(), kept literal because cssVar() callers
+    // such as chart configs need a value they can parse rather than a color-mix() of a var().
     if (normalizedValue.length === 9) {
         const alpha = Math.round(parseInt(normalizedValue.slice(7), 16) / 2.55) / 100
-        const base = localValueIndex[normalizedValue.slice(0, 7)]
-        if (base) return `rgba($base-${base}, ${alpha})`
+        if (localValueIndex[normalizedValue.slice(0, 7)]) {
+            const [r, g, b] = [1, 3, 5].map(i => parseInt(normalizedValue.slice(i, i + 2), 16))
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`
+        }
     }
 
     return color.value

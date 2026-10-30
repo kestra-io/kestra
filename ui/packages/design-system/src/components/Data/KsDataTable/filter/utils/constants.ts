@@ -9,6 +9,9 @@ export const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
 /** Filter-key shorthand for the timeRange chip (split into startDate/endDate on the wire). */
 export const TIME_RANGE_KEY = "timeRange"
 
+/** timeRange value for an explicitly unbounded interval, as opposed to no interval at all. */
+export const ALL_TIME_RANGE = "ALL"
+
 /** Route query key that carries the dateFilter meta selector for timeRange. */
 export const DATE_FILTER_KEY = "dateFilter"
 
@@ -22,3 +25,10 @@ export const MAX_RENDERABLE_NESTING_DEPTH = 2
 /** Date-field keys that are encoded separately on the wire from the timeRange chip. */
 export const START_DATE_FIELD = "startDate"
 export const END_DATE_FIELD = "endDate"
+
+/**
+ * Vertical slack within which two elements count as sharing a wrapped row. Their centres
+ * coincide on one row and differ by the row pitch across rows, so this only absorbs subpixel
+ * noise from zoom and fractional device ratios.
+ */
+export const SAME_ROW_TOLERANCE_PX = 4

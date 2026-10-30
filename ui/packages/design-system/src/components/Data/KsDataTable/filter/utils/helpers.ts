@@ -1,15 +1,16 @@
-import type {LocationQuery} from "vue-router"
+import type {LocationQuery, LocationQueryRaw} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
-import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {currentLocale} from "../../../../../utils/date"
 
 /**
- * Decodes a raw `filters[...]` query-param value. Exported because callers translating the route
- * into a backend request payload decode the same values as {@link decodeSearchParams} does.
+ * Normalizes a `filters[...]` query-param value after vue-router (or
+ * {@link parseFiltersFromString}) has already decoded it.
  */
 export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
-        ? value.filter(v => v !== null).map(decodeURIComponent)
-        : decodeURIComponent(value)
+        ? value.filter((item): item is string => item !== null)
+        : value
 
 export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
     return Comparators[comparatorKey]
@@ -102,9 +103,12 @@ const buildParam = (
     value: string | (string | null)[],
     chain: PrefixSegment[],
 ): DecodedParam => {
+    const decodedValue = decodeFilterValue(value)
     const decoded = subKey
-        ? `${subKey}:${decodeFilterValue(value)}`
-        : decodeFilterValue(value)
+        ? Array.isArray(decodedValue)
+            ? decodedValue.map(item => `${subKey}:${item}`)
+            : `${subKey}:${decodedValue}`
+        : decodedValue
     return {
         field,
         value: decoded,
@@ -114,9 +118,10 @@ const buildParam = (
     }
 }
 
-type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
+type Filter = Pick<AppliedFilter, "key" | "comparator" | "value" | "meta">;
 
 type ComparatorKeyResolver = (comparator: Comparators) => string;
+type FilterQuery = Record<string, string | string[]>;
 
 export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: ComparatorKeyResolver) =>
     encodeFilterGroupsToQuery(
@@ -128,8 +133,8 @@ export const encodeFilterGroupsToQuery = (
     groups: FilterGroup[],
     getComparatorKey: ComparatorKeyResolver,
     topLogical: LogicalOperator = "OR",
-): Record<string, string> => {
-    const query: Record<string, string> = {}
+): FilterQuery => {
+    const query: FilterQuery = {}
     const onlyOneLeaf = groups.length === 1 && !isWrapperGroup(groups[0])
     const topOp = topLogical.toLowerCase()
 
@@ -151,8 +156,20 @@ export const encodeFilterGroupsToQuery = (
     return query
 }
 
+/**
+ * Chips in one group are ANDed, so a Between and a separate >= or <= on the same key share one
+ * query param; for numbers the tighter bound is the one that holds. Anything else keeps last-wins.
+ */
+const writeBound = (query: FilterQuery, param: string, value: string, tighter: (a: number, b: number) => number) => {
+    const existing = query[param]
+    const isNumber = (text: unknown) => typeof text === "string" && text.trim() !== "" && Number.isFinite(Number(text))
+    query[param] = isNumber(existing) && isNumber(value)
+        ? String(tighter(Number(existing), Number(value)))
+        : value
+}
+
 const writeFilter = (
-    query: Record<string, string>,
+    query: FilterQuery,
     prefix: string,
     filter: Filter,
     getComparatorKey: ComparatorKeyResolver,
@@ -168,7 +185,7 @@ const writeFilter = (
             } else {
                 query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
             }
-            const dateFilter = (filter as any).meta?.dateFilter
+            const dateFilter = filter.meta?.dateFilter
             if (dateFilter) {
                 query["dateFilter"] = dateFilter
             }
@@ -178,14 +195,32 @@ const writeFilter = (
             // A `time-range` field in custom range mode: encode {startDate,endDate} as a GTE/LTE pair
             // on the field's own key (works inside [and|or][N] group prefixes too). The dedicated
             // `timeRange` key keeps its own startDate/endDate encoding via the case above.
-            if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
+            if (comparator === Comparators.BETWEEN && Array.isArray(value)) {
+                const [min, max] = value
+                writeBound(query, `${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`, min, Math.max)
+                writeBound(query, `${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`, max, Math.min)
+            } else if ((comparator === Comparators.GREATER_THAN_OR_EQUAL_TO || comparator === Comparators.LESS_THAN_OR_EQUAL_TO)
+                && typeof value === "string") {
+                writeBound(query, `${prefix}[${key}][${comparatorKey}]`, value,
+                    comparator === Comparators.GREATER_THAN_OR_EQUAL_TO ? Math.max : Math.min)
+            } else if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
                 query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
-            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+            } else if (Array.isArray(value) && (key === "labels" || value.some(v => typeof v === "string" && v.includes(":")))) {
                 value.forEach((item: string) => {
-                    const [k, v] = item.split(":", 2)
-                    if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
+                    const separatorIndex = item.indexOf(":")
+                    if (separatorIndex <= 0) return
+                    const k = item.slice(0, separatorIndex)
+                    const v = item.slice(separatorIndex + 1)
+                    if (!k || !v) return
+                    const queryKey = `${prefix}[${key}][${comparatorKey}][${k}]`
+                    const existing = query[queryKey]
+                    if ((comparator === Comparators.IN || comparator === Comparators.NOT_IN) && existing !== undefined) {
+                        query[queryKey] = Array.isArray(existing) ? [...existing, v] : [existing, v]
+                    } else {
+                        query[queryKey] = v
+                    }
                 })
             } else {
                 query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)
@@ -202,6 +237,10 @@ export const isValidFilter = (filter: Filter): boolean => {
     const {value} = filter
 
     if (value == null || value === "") return false
+    if (filter.comparator === Comparators.BETWEEN) {
+        return Array.isArray(value) && value.length === 2 && value.every(bound => bound !== "")
+            && Number(value[0]) <= Number(value[1])
+    }
 
     switch (true) {
         case Array.isArray(value):
@@ -238,18 +277,32 @@ export const validStructureSignature = (groups: FilterGroup[]): string => {
     return JSON.stringify(units)
 }
 
-export const getUniqueFilters = <T extends { key: string; comparator?: any }>(filters: T[]): T[] =>
+export const getUniqueFilters = <T extends {key: string; comparator?: Comparators}>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
         index === self.findLastIndex(f =>
             f.key === filter.key && f.comparator === filter.comparator,
         ),
     )
 
-export const clearFilterQueryParams = (query: Record<string, any>): void => {
+export const isFilterQueryKey = (key: string): boolean =>
+    key.startsWith("filters[") || key === DATE_FILTER_KEY
+
+export const clearFilterQueryParams = (query: LocationQueryRaw): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
+        if (isFilterQueryKey(key)) delete query[key]
     }
 }
+
+/**
+ * Stable string over just the filter-carrying query entries, so a watcher fires when the filters
+ * change and not when `page`, `size` or `sort` do.
+ */
+export const filterQuerySignature = (query: LocationQuery | undefined): string =>
+    JSON.stringify(
+        Object.entries(query ?? {})
+            .filter(([key]) => isFilterQueryKey(key))
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    )
 
 /**
  * Returns true if a `filters[...]` key has more `[and|or][N]` prefix segments than the chip UI
@@ -309,3 +362,16 @@ export const parseFiltersFromString = (str: string): Record<string, string | str
 
 export const isSearchPath = (name: string) =>
     ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name)
+
+const countFormats = new Map<string, Intl.NumberFormat>()
+
+/** A value count in short form (`18K`, `2.2K`), so big counts stay distinct at a small width. */
+export const formatCount = (count: number): string => {
+    const locale = currentLocale()
+    let format = countFormats.get(locale)
+    if (!format) {
+        format = new Intl.NumberFormat(locale, {notation: "compact", maximumFractionDigits: 1})
+        countFormats.set(locale, format)
+    }
+    return format.format(count)
+}

@@ -21,6 +21,7 @@ import io.kestra.core.utils.GraphUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -52,16 +53,16 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.core.flow.Parallel
                     tasks:
                       - id: 1st
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.startDate }}"
 
                       - id: 2nd
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.id }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.id }}"
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         ),
         @Example(
@@ -81,35 +82,68 @@ import lombok.experimental.SuperBuilder;
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task1
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task2
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                       - id: sequence2
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task3
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task4
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
+                """
+        ),
+        @Example(
+            full = true,
+            title = """
+                Stop the other branches as soon as one task fails
+                """,
+            code = """
+                id: parallel_fail_fast
+                namespace: company.team
+
+                tasks:
+                  - id: parallel
+                    type: io.kestra.plugin.core.flow.Parallel
+                    onChildFailure: CANCELLED
+                    tasks:
+                      - id: fails_fast
+                        type: io.kestra.plugin.core.execution.Fail
+
+                      - id: long_running
+                        type: io.kestra.plugin.core.flow.Sleep
+                        duration: PT1M
                 """
         )
     }
 )
-public class Parallel extends AbstractBranch<VoidOutput> {
+public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailureInterface {
     @NotNull
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.ofValue(0);
+    private final Property<@PositiveOrZero Integer> concurrent = Property.ofValue(0);
+
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "What to do with the other still-running tasks when one task fails.",
+        description = """
+            `CONTINUE`: other tasks keep running to completion.
+
+            `CANCEL` / `FAIL` (default): as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+    )
+    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAIL);
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {

@@ -42,20 +42,6 @@ public abstract class RunContext implements PropertyContext {
     public abstract Map<String, Object> getVariables();
 
     /**
-     * Returns the list of inputs of type SECRET.
-     */
-    @JsonInclude
-    public abstract List<String> getSecretInputs();
-
-    /**
-     * Returns the plaintext values of SECRET-typed flow outputs decrypted while building this context's
-     * variables (e.g. a subflow's SECRET output consumed by this task), so they can be re-registered for
-     * log masking once this context is re-hydrated (e.g. on the worker).
-     */
-    @JsonInclude
-    public abstract List<String> getSecretOutputs();
-
-    /**
      * OpenTelemetry trace parent
      */
     @JsonInclude
@@ -253,7 +239,7 @@ public abstract class RunContext implements PropertyContext {
 
     /**
      * Clone this run context for a specific plugin.
-     * 
+     *
      * @return a new run context with the plugin configuration of the given plugin.
      */
     public abstract RunContext cloneForPlugin(Plugin plugin);
@@ -274,4 +260,6 @@ public abstract class RunContext implements PropertyContext {
      * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
      */
     public abstract Map<String, Object> currentOutput();
+
+    public abstract Checkpoints checkpoints();
 }

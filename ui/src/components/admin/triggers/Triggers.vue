@@ -27,11 +27,12 @@
     import useRouteContext from "../../../composables/useRouteContext"
     import {exportTriggersAsCSV} from "../../../utils/triggers"
 
+    import {storageKeys} from "../../../utils/constants"
     const VALID_TABS = ["add", "manage"] as const
 
     type ValidTab = typeof VALID_TABS[number];
 
-    const storedDefaultTab = localStorage.getItem("triggersDefaultTab") ?? ""
+    const storedDefaultTab = localStorage.getItem(storageKeys.TRIGGERS_DEFAULT_TAB) ?? ""
     const DEFAULT_TAB: ValidTab = VALID_TABS.includes(storedDefaultTab as ValidTab) ? storedDefaultTab as ValidTab : "add"
 
     const {t} = useI18n({useScope: "global"})

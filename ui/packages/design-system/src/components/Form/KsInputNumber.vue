@@ -1,13 +1,13 @@
 <template>
     <ElInputNumber
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputNumberProps)"
         @change="emit('change', $event, undefined)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElInputNumber} from "element-plus"
+    import {ElInputNumber, type InputNumberProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -46,28 +46,59 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/input-number';
+</style>
 
+<style>
     .kel-input-number {
         width: 100%;
 
-        .kel-input-number__increase, .kel-input-number__decrease {
+        & .kel-input-number__increase, & .kel-input-number__decrease {
             background: var(--ks-bg-surface);
+            border-color: var(--ks-border-strong);
         }
 
-        &.kel-input-number--small {
-
-            .kel-input-number__decrease {
-                border-radius:  var(--ks-radius-sm) 0 0 var(--ks-radius-sm);
+        &:not(.is-controls-right) {
+            & .kel-input-number__decrease, & .kel-input-number__increase {
+                top: 0;
+                bottom: 0;
+                border: 1px solid var(--ks-border-strong);
             }
 
-            .kel-input-number__increase {
-                border-radius: 0 var(--ks-radius-sm) var(--ks-radius-sm) 0;
+            & .kel-input-number__decrease {
+                left: 0;
+                border-radius: var(--ks-radius-base) 0 0 var(--ks-radius-base);
+            }
+
+            & .kel-input-number__increase {
+                right: 0;
+                border-radius: 0 var(--ks-radius-base) var(--ks-radius-base) 0;
+            }
+
+            &.kel-input-number--small {
+                & .kel-input-number__decrease {
+                    border-radius: var(--ks-radius-sm) 0 0 var(--ks-radius-sm);
+                }
+
+                & .kel-input-number__increase {
+                    border-radius: 0 var(--ks-radius-sm) var(--ks-radius-sm) 0;
+                }
+            }
+
+            &.is-disabled {
+                & .kel-input-number__decrease, & .kel-input-number__increase {
+                    border-color: var(--kel-disabled-border-color);
+                }
+            }
+
+            &:focus-within {
+                & .kel-input-number__decrease, & .kel-input-number__increase {
+                    border-color: var(--kel-input-focus-border-color, var(--ks-border-focus));
+                }
             }
         }
 
-        .kel-input-number__increase:hover, .kel-input-number__decrease:hover {
+        & .kel-input-number__increase:hover, & .kel-input-number__decrease:hover {
             color: var(--ks-text-secondary);
-
         }
     }
 </style>

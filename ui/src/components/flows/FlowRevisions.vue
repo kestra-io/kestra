@@ -18,16 +18,22 @@
 <script setup lang="ts">
     import {computed, onMounted, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import Crud from "override/components/auth/Crud.vue"
     import Revisions from "../layout/Revisions.vue"
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
+    const {t} = useI18n()
 
     const flowStore = useFlowStore()
+    const unsavedChangeStore = useUnsavedChangesStore()
     const flow = computed(() => flowStore.flow)
     const storeRevisions = computed(() => flowStore.revisions)
 
@@ -89,16 +95,40 @@
     })
 
     async function restoreRevision(revisionSource: string) {
-        return flowStore.saveFlow({flow: revisionSource})
-            .then((response:any) => {
-                toast.saved(response.id)
+        if (!flow.value) return
+
+        const {namespace, id, revision: previousRevision} = flow.value
+        const revisionsPath = route.path
+
+        try {
+            const saved = await flowStore.saveFlow({flow: revisionSource})
+            flowStore.initYamlSource().catch(onRestoreError)
+            unsavedChangeStore.unsavedChange = false
+            toast.saved(saved.id)
+
+            const loaded = await flowStore.loadRevisions({namespace, id, store: false})
+            if (flow.value?.namespace !== namespace || flow.value?.id !== id || flow.value?.revision !== saved.revision) return
+
+            flowStore.revisions = loaded
+            revisions.value = loaded
+            if (route.path !== revisionsPath || previousRevision === undefined || saved.revision === undefined || saved.revision === previousRevision) return
+
+            await router.push({
+                query: {
+                    ...route.query,
+                    revisionLeft: previousRevision,
+                    revisionRight: saved.revision,
+                },
             })
-            .then(() => {
-                return flowStore.initYamlSource()
-            })
-            .then(() => {
-                router.push({query: {}})
-            })
+        } catch (error: unknown) {
+            onRestoreError(error)
+        }
+    }
+
+    function onRestoreError(error: unknown) {
+        if (!isReportedCentrally(error as KestraHttpError)) {
+            toast.error(asProblem(error)?.detail ?? t("error"))
+        }
     }
 
     async function loadRevisionContent(revision: number) {
@@ -118,7 +148,7 @@
     async function onRevisionDeleted(revision: number) {
         const updatedQuery = {...route.query}
         for (const key of ["revisionLeft", "revisionRight"]) {
-            if ((updatedQuery as any)[key]?.toString() === `${revision}`) delete (updatedQuery)[key]
+            if (updatedQuery[key]?.toString() === `${revision}`) delete updatedQuery[key]
         }
         await router.push({query: updatedQuery})
         await fetchRevisions()
@@ -127,8 +157,9 @@
     watch(() => [route.params.namespace, route.params.id], fetchRevisions)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-revisions {
         min-height: calc(100vh - 190px);
+        min-height: calc(100dvh - 190px);
     }
 </style>

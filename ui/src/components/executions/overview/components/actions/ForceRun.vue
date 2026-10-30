@@ -14,11 +14,13 @@
         :appendToBody="true"
     >
         <template #header>
-            <span v-html="$t('force run title', {id: escape(execution.id)})" />
+            <i18n-t keypath="force run title" tag="span" scope="global">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
         </template>
         <template #footer>
             <KsButton
-                :icon="QueueFirstInLastOut"
+                :icon="RunFast"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
@@ -31,7 +33,6 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
-    import escape from "lodash/escape"
     import {State} from "@kestra-io/design-system"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -43,7 +44,6 @@
 
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     const props = defineProps<{
         execution: Execution;
@@ -80,7 +80,7 @@
         if (
             !user?.isAllowed(
                 resource.EXECUTION,
-                action.UPDATE,
+                action.FORCE_RUN,
                 props.execution.namespace,
             )
         ) {

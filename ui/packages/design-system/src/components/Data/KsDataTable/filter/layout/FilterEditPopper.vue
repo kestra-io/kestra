@@ -1,16 +1,17 @@
 <template>
     <div class="edit-popper">
         <FilterHeader
+            :class="{divided: valueComponent?.component === FilterMultiSelect}"
             :label="filterKey.label"
             :description="filterKey.description"
             @close="emits('close')"
         >
             <template #trailing>
                 <FilterComparatorSelect
-                    :shouldShowComparator
+                    :shouldShowComparator="isComparatorVisible"
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
-                    @update:selected-comparator="state.selectedComparator = $event"
+                    @update:selected-comparator="changeComparator"
                 />
             </template>
         </FilterHeader>
@@ -38,6 +39,7 @@
         type AppliedFilter,
         type FilterKeyConfig,
         type FilterValue,
+        Comparators,
         COMPARATOR_LABELS,
         RANGE_COMPARATORS,
         TEXT_COMPARATORS,
@@ -45,6 +47,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
+    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -53,6 +56,7 @@
     import FilterKVPairs from "./FilterKVPairs.vue"
     import FilterDateTime from "./FilterDateTime.vue"
     import FilterMultiSelect from "./FilterMultiSelect.vue"
+    import FilterNumber from "./FilterNumber.vue"
     import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -65,7 +69,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
@@ -92,6 +96,8 @@
 
     const state = reactive({
         textValue: "",
+        numberValue: "",
+        numberRange: [] as string[],
         selectValue: "",
         radioValue: "ALL",
         dateValue: null as Date | null,
@@ -116,9 +122,20 @@
         props.filterKey?.valueType === "key-value" && !isTextOp.value,
     )
 
+    const isNumberRange = computed(() =>
+        props.filterKey?.valueType === "number" && state.selectedComparator === Comparators.BETWEEN,
+    )
+
     const isTimeRange = computed(() =>
         props.filterKey?.key === "timeRange" || props.filterKey?.valueType === "time-range",
     )
+
+    // A custom range is always start <= value <= end, so a comparator would only mislead there.
+    const isComparatorVisible = computed(() => {
+        const isCustomRange = isTimeRange.value && state.timeRangeMode === "custom"
+            && (props.filterKey?.key === "timeRange" || props.filterKey?.customDateMode === "range")
+        return shouldShowComparator.value && !isCustomRange
+    })
 
     // Server-side search is opted into by declaring an `options` param on valueProvider.
     const supportsServerSideSearch = computed(() =>
@@ -135,6 +152,25 @@
         return type
     })
 
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (comparator: AppliedFilter["comparator"]) => {
+        if (props.filterKey?.valueType === "key-value"
+            && comparator !== Comparators.IN
+            && comparator !== Comparators.NOT_IN) {
+            state.keyValuePair = normalizeKeyValuePairs(state.keyValuePair)
+        }
+        state.selectedComparator = comparator
+    }
+
     const valueComponent = computed(() => {
         if (isTextOp.value) {
             return {
@@ -148,7 +184,7 @@
         if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {modelValue: state.keyValuePair},
+                props: {modelValue: state.keyValuePair, comparator: state.selectedComparator},
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)},
             }
         }
@@ -160,7 +196,6 @@
                 props: {
                     modelValue: state.selectValue,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey,
                     timeRangeMode: state.timeRangeMode,
@@ -193,7 +228,6 @@
                 props: {
                     modelValue: state.keyValuePair,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey?.key,
                     serverSideSearch: supportsServerSideSearch.value,
@@ -201,6 +235,20 @@
                 events: {
                     "update:modelValue": (value: string[]) => (state.keyValuePair = value),
                     "update:search": (value: string) => onSearchChange(value),
+                },
+            },
+            number: {
+                component: FilterNumber,
+                props: {
+                    modelValue: isNumberRange.value ? state.numberRange : state.numberValue,
+                    range: isNumberRange.value,
+                    label: props.filterKey?.label,
+                },
+                events: {
+                    "update:modelValue": (value: string | string[]) => {
+                        if (Array.isArray(value)) state.numberRange = value
+                        else state.numberValue = value
+                    },
                 },
             },
             date: {
@@ -218,6 +266,8 @@
                 props: {
                     modelValue: state.radioValue,
                     options: state.valueOptions,
+                    allLabel: props.filterKey.allLabel,
+                    allDescription: props.filterKey.allDescription,
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.radioValue = value),
@@ -242,6 +292,8 @@
         switch (effectiveValueType.value) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`
+        case "number":
+            return getFilterValue()?.label ?? ""
         case "select":
             if (state.selectValue) {
                 const option = state.valueOptions?.find(opt => opt.value === state.selectValue)
@@ -249,7 +301,9 @@
             }
             return ""
         case "radio":
-            return state.radioValue === "ALL" ? "Default selected" : state.radioValue
+            return state.radioValue === "ALL"
+                ? t("filter.option_selected", {label: props.filterKey.allLabel ?? t("filter.hierarchy.all")})
+                : state.radioValue
         default:
             return ""
         }
@@ -265,10 +319,16 @@
             return
         }
 
+        const defaultValue = filterContext
+            ? filterContext.getDefaultValue(props.filterKey)
+            : resolveDefaultVisibleValue(props.filterKey)
+
         Object.assign(state, {
-            textValue: "",
-            selectValue: "",
-            keyValuePair: [],
+            textValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberRange: [],
+            selectValue: typeof defaultValue === "string" ? defaultValue : "",
+            keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
             dateValue: null,
             timeRangeMode: "predefined",
@@ -292,14 +352,21 @@
         switch (effectiveValueType.value) {
         case "text":
             return {value: state.textValue, label: state.textValue}
+        case "number": {
+            if (!isNumberRange.value) return {value: state.numberValue, label: state.numberValue}
+            const [min = "", max = ""] = state.numberRange
+            // A between needs both bounds in order; until then it stays empty so it is not applied.
+            return min !== "" && max !== "" && Number(min) <= Number(max)
+                ? {value: [min, max], label: `${min} - ${max}`}
+                : {value: [], label: ""}
+        }
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -314,12 +381,11 @@
             }
         case "time-range":
             if (state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 }
             }
             return {
@@ -361,13 +427,24 @@
     const applyLive = () => {
         if (!ready.value || !state.selectedComparator) return
 
+        // A custom range needs at least one bound to be worth applying; the other bound
+        // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
         if (isTimeRange.value && state.timeRangeMode === "custom"
-            && (!state.startDateValue || !state.endDateValue)) {
+            && !state.startDateValue && !state.endDateValue) {
             return
         }
 
+        // An inverted range is rejected by the API with a 422, so it is never applied. It compares
+        // the bounds getFilterValue will send, since an end left unset still defaults to now.
+        if (isTimeRange.value && state.timeRangeMode === "custom") {
+            const now = new Date()
+            if ((state.startDateValue ?? now) > (state.endDateValue ?? now)) {
+                return
+            }
+        }
+
         const filterData = getFilterValue()
-        const updatedFilter: any = {
+        const updatedFilter: AppliedFilter = {
             ...props.filter,
             comparator: state.selectedComparator,
             comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
@@ -429,6 +506,10 @@
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : ""
                 break
+            case "number":
+                state.numberValue = typeof filter.value === "string" ? filter.value : ""
+                state.numberRange = Array.isArray(filter.value) ? [...filter.value] : []
+                break
             case "multi-select":
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : []
                 break
@@ -448,7 +529,7 @@
                         : null
                 break
             case "radio":
-                state.radioValue = typeof filter.value === "string"
+                state.radioValue = typeof filter.value === "string" && state.valueOptions.some(option => option.value === filter.value)
                     ? filter.value
                     : "ALL"
                 break
@@ -512,7 +593,7 @@
 
     const debouncedApplyLive = useDebounceFn(applyLive, 400)
 
-    watch(() => state.textValue, () => debouncedApplyLive())
+    watch([() => state.textValue, () => state.numberValue, () => state.numberRange], () => debouncedApplyLive())
 
     watch([
         () => state.selectValue,
@@ -525,3 +606,10 @@
         () => state.timeRangeMode,
     ], () => applyLive())
 </script>
+
+<style scoped>
+.filter-header.divided {
+    padding-bottom: var(--ks-spacing-3);
+    border-bottom: 1px solid var(--ks-border-default);
+}
+</style>

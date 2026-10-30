@@ -4,7 +4,10 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
+import {useExecutionArtifacts} from "./useExecutionArtifacts"
+import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -13,8 +16,14 @@ export function useExecutionRoot() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
 
+    const executionArtifacts = useExecutionArtifacts()
     const dependenciesCount = ref<number>()
     const previousExecutionId = ref<string>()
+
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "executions",
+        root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
+    })
 
     const routeInfo = computed(() => {
         const ns = route.params.namespace as string
@@ -26,15 +35,11 @@ export function useExecutionRoot() {
 
         return {
             title: route.params.id as string,
+            bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
             breadcrumb: [
+                ...namespaceBreadcrumb.value,
                 {
-                    label: t("executions"),
-                    link: {
-                        name: "executions/list",
-                    },
-                },
-                {
-                    label: `${ns}.${flowId}`,
+                    label: flowId,
                     link: {
                         name: "flows/update",
                         params: {
@@ -53,31 +58,43 @@ export function useExecutionRoot() {
         return executionsStore.execution !== undefined
     })
 
+    // By the time either cleanup below runs, router navigation has already updated `route` to the
+    // destination: if the store holds the flow being navigated to (e.g. breadcrumb -> flow edit,
+    // #10722), clearing it here would erase data the destination page already loaded and rendered.
+    const flowMatchesTarget = () => flowStore.flow?.namespace === route.params.namespace && flowStore.flow?.id === route.params.id
+
     const follow = () => {
         previousExecutionId.value = route.params.id as string
-        executionsStore.followExecution(route.params as any, t)
+        executionsStore.followExecution({id: previousExecutionId.value}, t)
     }
 
     // The bar is derived from the canonical tab/route definitions (executionTabs.ts):
     // the component, props and section flags live on each child route and are resolved
     // by `<router-view>`; here we only build the bar metadata from their `meta`.
     const getBaseTabs = () => {
-        return EXECUTION_TAB_ROUTES.map((tabRoute) => {
-            const meta = tabRoute.meta ?? {}
-            const name = meta.tab as string
-            return {
-                name,
-                title: t(meta.title as string),
-                locked: meta.locked as boolean | undefined,
-                // Dependencies surfaces a live count and is disabled when there are none.
-                ...(name === "dependencies"
-                    ? {
-                        count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
-                        disabled: !dependenciesCount.value,
-                    }
-                    : {}),
-            }
-        })
+        const namespace = executionsStore.execution?.namespace
+        return EXECUTION_TAB_ROUTES
+            .filter((tabRoute) =>
+                isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})
+                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0))
+            .map((tabRoute) => {
+                const meta = tabRoute.meta ?? {}
+                const name = meta.tab as string
+                return {
+                    name,
+                    title: t(meta.title as string),
+                    locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
+                    ...(name === "artifacts" ? {count: executionArtifacts.artifacts.value.length} : {}),
+                    // Dependencies surfaces a live count and is disabled when there are none.
+                    ...(name === "dependencies"
+                        ? {
+                            count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                            disabled: !dependenciesCount.value,
+                        }
+                        : {}),
+                }
+            })
     }
 
     const tabs = computed(() => getBaseTabs())
@@ -94,9 +111,12 @@ export function useExecutionRoot() {
 
         watch(route, () => {
             if (previousExecutionId.value !== route.params.id) {
-                executionsStore.logs = {total: 0, results: []}
-                flowStore.flow = undefined
-                flowStore.flowGraph = undefined
+                executionsStore.resetLogs()
+                if (!flowMatchesTarget()) {
+                    flowStore.flow = undefined
+                    flowStore.flowGraph = undefined
+                    flowStore.invalidGraph = false
+                }
                 follow()
             }
         })
@@ -105,13 +125,17 @@ export function useExecutionRoot() {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
             executionsStore.execution = undefined
-            executionsStore.logs = {total: 0, results: []}
-            flowStore.flow = undefined
-            flowStore.flowGraph = undefined
+            executionsStore.resetLogs()
+            if (!flowMatchesTarget()) {
+                flowStore.flow = undefined
+                flowStore.flowGraph = undefined
+                flowStore.invalidGraph = false
+            }
         })
     }
 
     return {
+        executionArtifacts,
         tabs,
         ready,
         routeInfo,

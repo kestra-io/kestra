@@ -1,12 +1,12 @@
 <template>
-    <ListPreview v-if="type === 'LIST'" :value="content" />
-    <img v-else-if="type === 'IMAGE'" :src="imageContent" alt="Image output preview">
-    <PdfPreview v-else-if="type === 'PDF'" :source="content" />
-    <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
+    <ListPreview v-if="type === 'LIST'" :value="listContent" />
+    <img v-else-if="type === 'IMAGE'" :src="imageContent" :alt="$t('file_preview.image_alt')">
+    <PdfPreview v-else-if="type === 'PDF'" :source="textContent" />
+    <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="textContent" />
     <KsEditor
         v-else
         v-bind="editorBindings"
-        :modelValue="!forceEditor ? content : JSON.stringify(content, null, 2)"
+        :modelValue="editorContent"
         :lang="!forceEditor ? extensionToMonacoLang : 'json'"
         readOnly
         inline
@@ -15,54 +15,62 @@
             fullHeight: false,
             customHeight: 14,
         }"
-        :navbar="false"
-        class="position-relative"
+        class="raw-editor"
     >
-        <template #absolute>
-            <CopyToClipboard :text="!forceEditor ? content : JSON.stringify(content, null, 2)">
-                <template #right>
-                    <KsTooltip
-                        :content="$t('toggle_word_wrap')"
-                        placement="bottom"
-                        :autoClose="2000"
-                    >
-                        <KsButton
-                            :icon="Wrap"
-                            type="default"
-                            @click="wordWrap = !wordWrap"
-                        />
-                    </KsTooltip>
-                </template>
-            </CopyToClipboard>
+        <template #nav>
+            <div class="preview-actions">
+                <KsButton
+                    size="small"
+                    square
+                    :tooltip="$t('copy_to_clipboard')"
+                    :icon="ContentCopy"
+                    @click="copyContent"
+                />
+                <KsButton
+                    size="small"
+                    square
+                    :tooltip="$t('toggle_word_wrap')"
+                    :icon="Wrap"
+                    :aria-pressed="wordWrap"
+                    @click="wordWrap = !wordWrap"
+                />
+            </div>
         </template>
     </KsEditor>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, defineAsyncComponent} from "vue"
     import Wrap from "vue-material-design-icons/Wrap.vue"
-    import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import {KsMarkdown, KsEditor} from "@kestra-io/design-system"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import {KsMarkdown, KsEditor, KsButton, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import ListPreview from "../ListPreview.vue"
-    import PdfPreview from "../PdfPreview.vue"
+    import ListPreview, {type PreviewCell} from "../ListPreview.vue"
+    import type {FilePreview} from "../../stores/executions"
 
-    export interface Preview {
-        truncated?: boolean;
-        type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
-        content?: any;
-        extension?: string;
+    // Async so pdfjs-dist (~417 kB) is fetched only when an output actually is a PDF.
+    const PdfPreview = defineAsyncComponent(() => import("../PdfPreview.vue"))
+
+    export interface Preview extends Omit<FilePreview, "type"> {
+        /** "RAW" is UI-only: FilePreview.vue forces it to show non-text content in the editor. */
+        type?: FilePreview["type"] | "RAW";
     }
 
     const props = defineProps<Preview>()
 
-    const wordWrap = ref(false)
+    const wordWrap = ref(true)
 
     const editorBindings = useEditorBindings()
 
     const forceEditor = computed(() => {
         return props.type === "RAW" && typeof props.content === "object"
     })
+
+    const listContent = computed<PreviewCell[]>(() => Array.isArray(props.content) ? props.content : [])
+    const textContent = computed(() => typeof props.content === "string" ? props.content : "")
+    const editorContent = computed(() => forceEditor.value ? JSON.stringify(props.content, null, 2) : textContent.value)
+
+    const copyContent = () => copyToClipboard(editorContent.value)
 
     const extensionToMonacoLang = computed(() => {
         switch (props.extension) {
@@ -88,8 +96,14 @@
     })
 </script>
 
-<style scoped lang="scss">
-    :deep( .editor-absolute-container) {
-        top: 4px;
+<style scoped>
+    .raw-editor {
+        position: relative;
+    }
+
+    .preview-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-2);
     }
 </style>

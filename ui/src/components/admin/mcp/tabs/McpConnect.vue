@@ -3,7 +3,7 @@
         <section class="section">
             <h3 class="heading">
                 <LinkVariant class="heading-icon" />
-                {{ t("mcp.connect_tab.server_url") }}
+                {{ $t("mcp.connect_tab.server_url") }}
             </h3>
             <KsInput
                 :modelValue="serverUrl"
@@ -13,13 +13,13 @@
                 <template #suffix>
                     <KsTooltip
                         trigger="click"
-                        :content="t('copied')"
+                        :content="$t('copied')"
                         :autoClose="2000"
                         placement="top"
                     >
                         <ContentCopy
                             class="copy"
-                            :aria-label="t('copy_to_clipboard')"
+                            :aria-label="$t('copy_to_clipboard')"
                             @click="copyUrl"
                         />
                     </KsTooltip>
@@ -31,7 +31,7 @@
     <div class="mcp-connect">
         <h3 class="heading">
             <Connection class="heading-icon" />
-            {{ t("mcp.client_setup") }}
+            {{ $t("mcp.client_setup") }}
         </h3>
 
         <KsTabs
@@ -51,7 +51,7 @@
                 <p
                     v-if="authHintKey"
                     class="hint"
-                    v-html="t(authHintKey)"
+                    v-html="$t(authHintKey)"
                 />
                 <p class="hint">
                     {{ clientHint }}
@@ -93,10 +93,10 @@
                 class="paths"
             >
                 <p class="path-hint">
-                    {{ t("mcp.connect_tab.claude_desktop_mac") }}
+                    {{ $t("mcp.connect_tab.claude_desktop_mac") }}
                 </p>
                 <p class="path-hint">
-                    {{ t("mcp.connect_tab.claude_desktop_win") }}
+                    {{ $t("mcp.connect_tab.claude_desktop_win") }}
                 </p>
             </div>
         </section>
@@ -289,7 +289,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-connect {
         max-width: 653px;
         border: 1px solid var(--ks-border-default);
@@ -356,11 +356,11 @@
     }
 
     .url {
-        :deep(.kel-input__wrapper) {
+        & :deep(.kel-input__wrapper) {
             height: 42px;
         }
 
-        :deep(.kel-input__inner) {
+        & :deep(.kel-input__inner) {
             font-family: var(--ks-font-family-mono);
             font-size: var(--ks-font-size-sm);
         }

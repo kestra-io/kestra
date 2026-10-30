@@ -63,11 +63,12 @@ public interface FlowMetaStoreInterface {
      * Find a flow by identifier, processed for runtime — plugin defaults injected and, on editions supporting
      * it, governance applied. Callers creating an execution must use this rather than
      * {@link #findById(String, String, String, Optional)}: an execution snapshots the flow labels and variables
-     * at creation time, so it must be built from the same flow the executor will run.
+     * at creation time, so it must be built from the same flow the executor will run. The result also carries
+     * the label keys governance pinned, if any.
      * <p>
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
      */
-    Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision);
+    Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision);
 
     /**
      * Same as {@link #findByIdForRuntime(String, String, String, Optional)}, checking that the namespace

@@ -3,18 +3,6 @@ import type {RouteRecordRaw} from "vue-router"
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
 import Errors from "../components/errors/Errors.vue"
-import DemoIAM from "../components/demo/IAM.vue"
-import DemoTenants from "../components/demo/Tenants.vue"
-import DemoAuditLogs from "../components/demo/AuditLogs.vue"
-import DemoInstance from "../components/demo/Instance.vue"
-import DemoApps from "../components/demo/Apps.vue"
-import DemoTests from "../components/demo/Tests.vue"
-import DemoAssets from "../components/demo/Assets.vue"
-import DemoCases from "../components/demo/Cases.vue"
-import DemoQuotas from "../components/demo/Quotas.vue"
-import DemoPolicies from "../components/demo/Policies.vue"
-import DemoPromote from "../components/demo/Promote.vue"
-import DemoDashboards from "../components/demo/Dashboards.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
@@ -26,13 +14,14 @@ const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
+    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue"), meta: {docId: "ai-copilot"}},
 
     //Dashboards
     {
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
+        meta: {docId: "dashboards"},
     },
 
     //Flows
@@ -42,7 +31,7 @@ const routes: KestraRouteRecord[] = [
         component: () => import("../components/flows/Flows.vue"),
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
-    {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
+    {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue"), meta: {docId: "flowEditor"}},
     FLOW_ROUTE,
 
     //Executions
@@ -81,6 +70,14 @@ const routes: KestraRouteRecord[] = [
         name: NAMESPACE_PARENT_ROUTE,
         path: "/:tenant?/namespaces/edit/:id",
         component: () => import("../components/namespaces/Namespace.vue"),
+        // Only Enterprise Edition reports a missing namespace: the OSS endpoint echoes any id back,
+        // since an OSS namespace is whatever its flows declare rather than a stored entity.
+        meta: {
+            entity: async (to) => {
+                const {useNamespacesStore} = await import("override/stores/namespaces")
+                return useNamespacesStore().load(String(to.params.id))
+            },
+        },
         // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
         // `/:id` URLs to the matching child route, preserving params and query.
         redirect: (to) => {
@@ -94,11 +91,11 @@ const routes: KestraRouteRecord[] = [
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},
 
     //Settings
-    {name: "preferences", path: "/:tenant?/preferences", component: () => import("override/components/settings/Settings.vue")},
+    {name: "preferences", path: "/:tenant?/preferences", component: () => import("override/components/settings/Settings.vue"), meta: {docId: "settings"}},
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers/:tab?", component: () => import("../components/admin/triggers/Triggers.vue")},
-    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue")},
+    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue"), meta: {docId: "instance"}},
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
     {name: "admin/mcp-servers",        path: "/:tenant?/admin/mcp-servers",                         component: () => import("../components/admin/McpServerList.vue")},
     {name: "admin/mcp-servers/update", path: "/:tenant?/admin/mcp-servers/edit/:id/:tab?",            component: () => import("../components/admin/McpServer.vue")},
@@ -114,19 +111,20 @@ const routes: KestraRouteRecord[] = [
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
 
     //Demo Pages
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DemoDashboards},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: DemoDashboards},
-    {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
-    {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
-    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
-    {name: "cases/list", path: "/:tenant?/cases", component: DemoCases},
-    {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
-    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
-    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
-    {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
-    {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
-    {name: "promote/targets", path: "/:tenant?/promote/targets", component: DemoPromote},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/demo/Dashboards.vue"), ossOnly: true},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue"), ossOnly: true},
+    {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue"), ossOnly: true},
+    {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue"), ossOnly: true},
+    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue"), meta: {docId: "asset"}, ossOnly: true},
+    {name: "credentials/list", path: "/:tenant?/credentials", component: () => import("../components/demo/Credentials.vue"), ossOnly: true},
+    {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue"), ossOnly: true},
+    {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue"), ossOnly: true},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue"), ossOnly: true},
+    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: () => import("../components/demo/AuditLogs.vue"), ossOnly: true},
+    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: () => import("../components/demo/Quotas.vue"), ossOnly: true},
+    {name: "admin/policies", path: "/:tenant?/admin/policies", component: () => import("../components/demo/Policies.vue"), ossOnly: true},
+    {name: "admin/instance", path: "/:tenant?/admin/instance", component: () => import("../components/demo/Instance.vue"), ossOnly: true},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: () => import("../components/demo/Promote.vue"), ossOnly: true},
 ]
 
 export default routes

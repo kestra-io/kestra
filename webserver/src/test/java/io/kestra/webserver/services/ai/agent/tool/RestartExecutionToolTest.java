@@ -62,7 +62,7 @@ class RestartExecutionToolTest {
         assertThat(failedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // When — restart via the tool
-        RestartExecutionTool.Result result = tool.restartExecution(failedExecution.getId(), null, CONTEXT);
+        RestartExecutionTool.Result result = tool.restartExecution(failedExecution.getId(), CONTEXT);
 
         // Then — the tool waited for the executor to accept the restart and acknowledged it
         assertThat(result.executionId()).isEqualTo(failedExecution.getId());
@@ -80,7 +80,7 @@ class RestartExecutionToolTest {
 
     @Test
     void shouldThrowWhenExecutionNotFound() {
-        assertThatThrownBy(() -> tool.restartExecution("does-not-exist", null, CONTEXT))
+        assertThatThrownBy(() -> tool.restartExecution("does-not-exist", CONTEXT))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Execution not found");
     }
@@ -91,7 +91,7 @@ class RestartExecutionToolTest {
         String executionId = save(State.Type.RUNNING);
 
         // When / Then
-        assertThatThrownBy(() -> tool.restartExecution(executionId, null, CONTEXT))
+        assertThatThrownBy(() -> tool.restartExecution(executionId, CONTEXT))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("cannot be restarted");
     }

@@ -8,7 +8,7 @@
                 <slot
                     name="actions"
                     :hasMissingPlugins="hasMissingPlugins"
-                    :missingPlugins="missingPlugins"
+                    :missingTasks="missingTasks"
                 />
             </div>
         </div>
@@ -23,7 +23,7 @@
             <KsCard>
                 <KsEditor
                     v-bind="editorBindings"
-                    class="position-relative"
+                    class="editor-container"
                     lang="yaml"
                     readOnly
                     inline
@@ -59,12 +59,13 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         kind?: string;
     }>(), {
         blueprint: undefined,
@@ -78,20 +79,18 @@
 
     const editorBindings = useEditorBindings()
 
-    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {ensureInstalledPluginsLoaded, missingTaskTypes} = useBlueprintPlugins()
 
-    const hasMissingPlugins = computed(() =>
-        missingTaskTypes(props.blueprint?.includedTasks).length > 0,
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint?.includedTasks),
-    )
+    const hasMissingPlugins = computed(() => missingTasks.value.length > 0)
 
     onMounted(ensureInstalledPluginsLoaded)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         margin: 0 0 var(--ks-spacing-4);
 
@@ -133,7 +132,7 @@
         gap: var(--ks-spacing-4);
         min-height: 100%;
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
         }
 
@@ -144,5 +143,9 @@
             background: var(--ks-bg-surface);
             box-shadow: 0 2px 8px 0 var(--ks-shadow-surface);
         }
+    }
+
+    .editor-container {
+        position: relative;
     }
 </style>

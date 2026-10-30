@@ -1,11 +1,11 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as ProgressProps)">
         <slot/>
     </ElProgress>
 </template>
 
 <script setup lang="ts">
-    import {ElProgress} from "element-plus"
+    import {ElProgress, type ProgressProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {computed} from "vue"
 
@@ -49,20 +49,23 @@
     @use 'element-plus/theme-chalk/src/progress';
 </style>
 
-<style lang="scss" scoped>
+<style>
+</style>
+
+<style scoped lang="scss">
     @use '../../assets/styles/el-ns';
+</style>
 
+<style scoped>
     .kel-progress {
-        :deep(.kel-progress-bar__outer) {
+        & :deep(.kel-progress-bar__outer) {
             border-radius: v-bind(borderRadius);
-
             background-color: var(--ks-bg-hover);
         }
 
-        :deep(.kel-progress-bar__inner) {
+        & :deep(.kel-progress-bar__inner) {
             border-radius: v-bind(borderRadius);
             left: v-bind(left);
         }
     }
-
 </style>

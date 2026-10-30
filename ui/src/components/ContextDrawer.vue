@@ -4,9 +4,9 @@
             class="drawerSplitter"
             :style="{width: `${maxDrawerWidth}px`}"
         >
-            <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
+            <KsSplitterPanel class="drawerSpacerPanel" :min="0" :size="spacerWidth" />
 
-            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
+            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH">
                 <div class="drawerContent">
                     <div v-if="showTabBar" class="tabBar">
                         <KsTabs
@@ -98,9 +98,11 @@
     const {width: windowWidth} = useWindowSize()
     const maxDrawerWidth = computed(() => windowWidth.value * 0.5)
 
+    const spacerWidth = computed(() => Math.max(maxDrawerWidth.value - drawerWidth.value, 0))
+
     watch(maxDrawerWidth, (value) => {
         drawerWidth.value = Math.min(Math.max(drawerWidth.value, MIN_DRAWER_WIDTH), value)
-    })
+    }, {immediate: true})
 
     function setActiveTab(tab: string) {
         if (tab) miscStore.lastContextTab = tab
@@ -121,7 +123,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .drawerSplitter {
         position: absolute;
         top: 0;
@@ -130,20 +132,20 @@
         height: 100%;
         flex-shrink: 0;
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             min-width: 0;
         }
 
-        :deep(.drawerSpacerPanel) {
+        & :deep(.drawerSpacerPanel) {
             overflow: hidden;
             pointer-events: none;
         }
 
-        :deep(.kel-splitter-bar) {
+        & :deep(.kel-splitter-bar) {
             background-color: transparent;
         }
 
-        :deep(.kel-splitter__splitter) {
+        & :deep(.kel-splitter__splitter) {
             width: 5px;
             background-color: transparent;
             transition: background-color 0.1s;
@@ -199,10 +201,10 @@
             align-items: center;
             gap: 0.25rem;
             position: relative;
+        }
 
-            &--active .tab-icon {
-                color: var(--ks-icon-active);
-            }
+        .tab-label--active .tab-icon {
+            color: var(--ks-icon-active);
         }
 
         .open-in-new {

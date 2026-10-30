@@ -2,7 +2,7 @@
     <div class="settings-panel">
         <div class="header">
             <h6>{{ $t("filter.options") }}</h6>
-            <KsButton link :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
         </div>
 
         <div class="list">
@@ -12,10 +12,12 @@
             </div>
             <div class="row">
                 <KsTooltip :content="refreshTooltip" placement="top">
-                    <span class="label">{{ $t("filter.periodic refresh") }}</span>
+                    <span class="label">{{ $t("filter.auto refresh") }}</span>
                 </KsTooltip>
                 <KsSwitch v-model="periodicRefreshEnabled" />
             </div>
+
+            <slot name="extra-options" />
         </div>
     </div>
 </template>
@@ -30,17 +32,10 @@
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
-    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh()
+    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip} = usePeriodicRefresh()
 
     const chartShown = computed(() => filter.tableOptions.value?.chart?.shown !== false)
     const localChartVisible = ref(filter.chartVisible.value)
-
-    const refreshCallback = () => {
-        if (filter.tableOptions.value?.refresh?.callback) {
-            filter.tableOptions.value.refresh.callback()
-        }
-        filter.refreshData()
-    }
 
     watch(() => filter.chartVisible.value, (value) => {
         localChartVisible.value = value ?? true
@@ -49,19 +44,15 @@
     watch(localChartVisible, (value) => {
         filter.updateChart(value)
     })
-
-    watch(periodicRefreshEnabled, (value) => {
-        toggleRefresh(value, refreshCallback)
-    }, {immediate: true})
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .settings-panel {
     display: flex;
     flex-direction: column;
     border-radius: var(--ks-radius-lg);
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -69,27 +60,28 @@
         background-color: var(--ks-bg-active);
         border-bottom: 1px solid var(--ks-border-default);
 
-        h6 {
+        & h6 {
             margin: 0;
             font-size: var(--ks-font-size-sm);
             font-weight: 700;
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
 
             &:hover {
-                color: var(--ks-content-link, var(--ks-text-link));
+                color: var(--ks-text-link);
             }
         }
     }
 
-    .list {
+    & .list {
         display: flex;
         flex-direction: column;
     }
 
-    .row {
+    /* Vue scopes a nested :slotted() rule that has children of its own as a plain one, so it stays flat. */
+    & .row {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -100,11 +92,25 @@
         &:last-child {
             border-bottom: none;
         }
+    }
 
-        .label {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-primary);
-        }
+    & :slotted(.row) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+    }
+
+    & :slotted(.row):last-child {
+        border-bottom: none;
+    }
+
+    & .row .label,
+    & :slotted(.row) .label {
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 }
 </style>

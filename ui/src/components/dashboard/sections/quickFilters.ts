@@ -1,4 +1,4 @@
-import type {Chart} from "../types.ts"
+import type {Chart, Column} from "../types.ts"
 import {QueryFilter} from "@kestra-io/kestra-sdk"
 
 export const QUICK_FILTER_TABS = [
@@ -10,7 +10,7 @@ export const QUICK_FILTER_TABS = [
     {
         key: "running",
         token: "--ks-status-running",
-        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING"],
+        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "PAUSING", "RETRYING", "KILLING"],
     },
     {
         key: "paused",
@@ -43,7 +43,7 @@ const EXECUTIONS_DATA_TYPE = "io.kestra.plugin.core.dashboard.data.Executions"
 export const hasQuickFilters = (chart: Chart): boolean => {
     if (chart.data?.type !== EXECUTIONS_DATA_TYPE) return false
     const columns = chart.data?.columns ?? {}
-    return Object.values(columns).some((col: Record<string, any>) => col.field === "STATE")
+    return Object.values(columns).some((col: Column) => col.field === "STATE")
 }
 
 export const chartConstrainsState = (chart: Chart): boolean =>

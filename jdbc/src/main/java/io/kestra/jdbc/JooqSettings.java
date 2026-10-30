@@ -12,7 +12,6 @@ public class JooqSettings {
     public Settings settings() {
         return new Settings()
             .withRenderKeywordCase(RenderKeywordCase.UPPER)
-            .withRenderFormatted(true)
             .withFetchWarnings(true);
     }
 }

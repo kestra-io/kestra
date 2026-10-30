@@ -1,13 +1,17 @@
 package io.kestra.webserver.filter;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.reactivestreams.Publisher;
 
+import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
@@ -19,20 +23,30 @@ import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
+import io.micronaut.web.router.UriRouteMatch;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Filter("/api/v1/**")
+@Filter(Filter.MATCH_ALL_PATTERN)
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
     /** @deprecated Use {@link BasicAuthService#BASIC_AUTH_COOKIE_NAME} */
     public static final String BASIC_AUTH_COOKIE_NAME = BasicAuthService.BASIC_AUTH_COOKIE_NAME;
+    private static final String API_PREFIX = "/api/v1";
+
+    private final BasicAuthService basicAuthService;
+    private final String contextPath;
 
     @Inject
-    private BasicAuthService basicAuthService;
+    public AuthenticationFilter(
+        BasicAuthService basicAuthService,
+        @Value("${micronaut.server.context-path:}") String contextPath) {
+        this.basicAuthService = Objects.requireNonNull(basicAuthService);
+        this.contextPath = RequestUtils.normalizeContextPath(contextPath);
+    }
 
     @Override
     public int getOrder() {
@@ -41,21 +55,39 @@ public class AuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+        // Registered on "/**" instead of the Ant pattern "/api/v1/**", which Micronaut matches against
+        // the raw request target and which a percent-encoded separator therefore evades (GHSA-rjhm-qm6w-m7x9).
+        // The router prepends the context path to every route, so it must be removed before comparing with API_PREFIX.
+        String rawPath = RequestUtils.stripContextPath(contextPath, request.getPath());
+        // The route that will run is authoritative, the path spellings below only cover requests with no route.
+        boolean looksLikeApi = isApiRoute(request) || rawPath.startsWith(API_PREFIX);
+        // Decoding only matters when there is something to decode or collapse; skip it otherwise so
+        // static assets and health checks don't pay for a URI parse on every request.
+        if (!looksLikeApi && rawPath.indexOf('%') < 0 && !rawPath.contains("//")) {
+            return chain.proceed(request);
+        }
+        String normalizedPath = RequestUtils.stripContextPath(contextPath, normalizePath(request.getUri().getPath()));
+        if (!looksLikeApi && !normalizedPath.startsWith(API_PREFIX)) {
+            return chain.proceed(request);
+        }
+
         return Mono.fromCallable(() -> basicAuthService.configuration())
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
             .flatMap(basicAuthConfiguration ->
             {
-                String normalizedPath = normalizePath(request.getPath());
                 boolean isConfigEndpoint = "/api/v1/configs/login".equals(normalizedPath)
                     || "/api/v1/login".equals(normalizedPath)
                     || ((normalizedPath.matches("/api/v1(/[^/]+)?/basicAuth") || "/api/v1/basicAuthValidationErrors".equals(normalizedPath))
                         && !basicAuthService.isBasicAuthInitialized());
 
-                boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.openUrls())
-                    .map(Collection::stream)
-                    .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
-                    .orElse(false);
+                // A path prefix is not an identity: the router resolves it, so the route it picked must
+                // itself opt into anonymous access (GHSA-j5cv-8rw9-vv2p).
+                boolean isOpenUrl = isAnonymousRoute(request)
+                    && Optional.ofNullable(basicAuthConfiguration.openUrls())
+                        .map(Collection::stream)
+                        .map(stream -> stream.anyMatch(normalizedPath::startsWith))
+                        .orElse(false);
 
                 boolean mcpAuthHandled = request.getAttribute(McpServerAuthenticationFilter.MCP_AUTH_HANDLED, Boolean.class)
                     .orElse(false);
@@ -70,11 +102,17 @@ public class AuthenticationFilter implements HttpServerFilter {
                         .orElse(false);
 
                     return Mono.just(HttpResponse.unauthorized())
-                        .map(response -> isFromLoginPage ? response : response.header("WWW-Authenticate", "Basic"));
+                        .map(response -> isFromLoginPage || isScriptedRequest(request) ? response : response.header("WWW-Authenticate", "Basic"));
                 }
 
                 return chain.proceed(request);
             });
+    }
+
+    // Sec-Fetch-Dest is only sent over HTTPS or localhost, hence the X-Requested-With fallback.
+    private static boolean isScriptedRequest(HttpRequest<?> request) {
+        return "empty".equals(request.getHeaders().get("Sec-Fetch-Dest"))
+            || "XMLHttpRequest".equalsIgnoreCase(request.getHeaders().get("X-Requested-With"));
     }
 
     private static String normalizePath(String path) {
@@ -82,10 +120,29 @@ public class AuthenticationFilter implements HttpServerFilter {
     }
 
     @SuppressWarnings("rawtypes")
+    private boolean isApiRoute(HttpRequest<?> request) {
+        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        if (routeMatch.isPresent() && routeMatch.get() instanceof UriRouteMatch<?, ?> uriRouteMatch) {
+            String template = uriRouteMatch.getRouteInfo().getUriMatchTemplate().toPathString();
+            return RequestUtils.stripContextPath(contextPath, template).startsWith(API_PREFIX);
+        }
+        return false;
+    }
+
+    @SuppressWarnings("rawtypes")
     private boolean isManagementEndpoint(HttpRequest<?> request) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
             return method.getAnnotation(Endpoint.class) != null;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private boolean isAnonymousRoute(HttpRequest<?> request) {
+        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
+            return method.getAnnotation(AnonymousAccess.class) != null;
         }
         return false;
     }

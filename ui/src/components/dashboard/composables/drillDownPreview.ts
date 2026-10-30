@@ -12,8 +12,8 @@ export type PreviewConfig =
     | {
         mode: "table";
         columns: PreviewColumn[];
-        fetch: (params: Record<string, any>) => Promise<{results: any[]; total: number}>;
-        rowDetail: (row: any, tenant: string | undefined) => RouteLocationRaw;
+        fetch: (params: Record<string, unknown>) => Promise<{results: Record<string, unknown>[]; total: number}>;
+        rowDetail: (row: Record<string, unknown>, tenant: string | undefined) => RouteLocationRaw;
     }
     | {mode: "logs"}
     | {mode: "none"} // explicit opt-out: no drawer preview, keep the full-page redirect
@@ -22,29 +22,29 @@ const previewRegistry: Record<string, PreviewConfig> = {
     "executions/list": {
         mode: "table",
         columns: [
-            {prop: "id", label: "Id"},
-            {prop: "namespace", label: "Namespace"},
-            {prop: "flowId", label: "Flow"},
-            {prop: "state.current", label: "State", type: "status"},
-            {prop: "state.startDate", label: "Start Date", type: "date"},
+            {prop: "id", label: "id"},
+            {prop: "namespace", label: "namespace"},
+            {prop: "flowId", label: "flow"},
+            {prop: "state.current", label: "state", type: "status"},
+            {prop: "state.startDate", label: "start date", type: "date"},
         ],
         fetch: (params) => useExecutionsStore().findExecutions({...params, commit: false}),
         rowDetail: (row, tenant) => ({
             name: "executions/update",
-            params: {tenant, namespace: row.namespace, flowId: row.flowId, id: row.id},
+            params: {tenant, namespace: String(row.namespace), flowId: String(row.flowId), id: String(row.id)},
         }),
     },
     "flows/list": {
         mode: "table",
         columns: [
-            {prop: "id", label: "Id"},
-            {prop: "namespace", label: "Namespace"},
-            {prop: "labels", label: "Labels", type: "labels"},
+            {prop: "id", label: "id"},
+            {prop: "namespace", label: "namespace"},
+            {prop: "labels", label: "labels", type: "labels"},
         ],
         fetch: (params) => useFlowStore().findFlows({...params, commit: false}),
         rowDetail: (row, tenant) => ({
             name: "flows/update",
-            params: {tenant, namespace: row.namespace, id: row.id},
+            params: {tenant, namespace: String(row.namespace), id: String(row.id)},
         }),
     },
     "logs/list": {mode: "logs"},

@@ -10,9 +10,11 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.annotations.RequiresExecutor;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.QueueJdbcDataSourceProvider;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueueEnabled;
 
@@ -25,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @JdbcQueueEnabled
+@RequiresExecutor
 @Slf4j
 public class JdbcQueueCleaner {
     private static final Field<Object> CREATED_FIELD = AbstractJdbcRepository.field("created");
@@ -38,10 +41,10 @@ public class JdbcQueueCleaner {
 
     @Inject
     public JdbcQueueCleaner(@Named("queues") JdbcTableConfig jdbcTableConfig,
-        JooqDSLContextWrapper dslContextWrapper,
+        final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider,
         List<BroadcastQueueInterface<?>> broadcastQueues,
         @Property(name = "kestra.jdbc.queue.cleaner.retention", defaultValue = "1h") Duration retention) {
-        this.dslContextWrapper = dslContextWrapper;
+        this.dslContextWrapper = queueJdbcDataSourceProvider.wrapper();
         this.broadcastQueues = broadcastQueues;
         this.retention = retention;
 

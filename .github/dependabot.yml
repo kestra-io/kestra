@@ -25,10 +25,6 @@ updates:
       time: "08:00"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/backend"]
-    ignore:
-      # Ignore Micronaut 5.x until migration is planned
-      - dependency-name: "io.micronaut*"
-        versions: ["[5,)"]
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"

@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,13 +21,13 @@ import org.slf4j.event.Level;
 
 import com.google.common.base.Throwables;
 
+import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -47,8 +48,8 @@ import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
@@ -144,6 +145,7 @@ public class TriggerScheduler {
      */
     public void onStart(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         log.info("Starting trigger scheduling for {} vNodes", vNodesAssignments);
+        final long start = System.nanoTime();
 
         Map<String, TriggerState> triggers = triggerStateStore.findAllForVNodes(vNodesAssignments).stream()
             .collect(Collectors.toMap(TriggerId::uid, Function.identity(), (existing, replacement) ->
@@ -155,7 +157,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> TriggerFlowParser.parseOrSkip(flowParsingService, flow, log))
+            .map(this::parseForTriggerOrSkip)
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(
@@ -178,11 +180,8 @@ public class TriggerScheduler {
                 if (triggerState == null) {
                     RunContext runContext = runContextFactory.of(flow, trigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+                    TriggerState newTriggerState = TriggerState.of(flow, trigger, vNode);
                     try {
-
-                        // Create a TriggerState
-                        TriggerState newTriggerState = TriggerState.of(flow, trigger, vNode);
-
                         if (trigger instanceof Schedulable schedulableTrigger) {
                             ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate(conditionContext, Optional.empty());
                             // schedule are evaluated at the next cron schedule
@@ -194,12 +193,14 @@ public class TriggerScheduler {
 
                         triggerStateStore.save(newTriggerState);
                         Logs.logTrigger(newTriggerState, log, Level.INFO, "New state initialized");
-
+                    } catch (InvalidTriggerConfigurationException e) {
+                        logError(clock, conditionContext, flow, trigger.getId(), e);
+                        disableInvalidTrigger(clock, newTriggerState);
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
-                } else if (trigger instanceof Schedulable schedulableTrigger) {
-                    // we recompute the Schedule nextExecutionDate if needed
+                } else if (trigger instanceof Schedulable schedulableTrigger && triggerState.getBackfill() == null) {
+                    // A running backfill is left untouched: recomputing the next evaluation date would drop its remaining range.
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
@@ -209,9 +210,11 @@ public class TriggerScheduler {
                         TriggerState currentTriggerState = triggerState;
                         switch (recoverMissedSchedules) {
                             case LAST -> {
-                                ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
+                                Optional<ZonedDateTime> previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
+                                Instant lastKnownDate = Optional.ofNullable(currentTriggerState.getEvaluatedAt())
+                                    .orElse(currentTriggerState.getNextEvaluationDate());
+                                if (previousDate.isPresent() && lastKnownDate != null && previousDate.get().toInstant().isAfter(lastKnownDate)) {
+                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate.get());
                                     triggerStateStore.save(currentTriggerState);
                                 }
                             }
@@ -229,11 +232,16 @@ public class TriggerScheduler {
                                 // nothing to do
                             }
                         }
+                    } catch (InvalidTriggerConfigurationException e) {
+                        logError(clock, conditionContext, flow, trigger.getId(), e);
+                        disableInvalidTrigger(clock, triggerState);
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
                 }
             });
+
+        log.debug("Started trigger scheduling in {}ms", Duration.ofNanos(System.nanoTime() - start).toMillis());
     }
 
     /**
@@ -248,8 +256,9 @@ public class TriggerScheduler {
      * @param scheduledTime the target time for which triggers should be evaluated and potentially scheduled;
      *        represents the scheduler’s current cycle timestamp.
      * @param vNodesAssignments the set of virtual node identifiers whose associated triggers should be evaluated.
+     * @return the number of triggers evaluated.
      */
-    public void onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
+    public int onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         metricScheduleLoopCounter.increment();
 
         ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduledTime, clock.getZone());
@@ -268,6 +277,48 @@ public class TriggerScheduler {
 
         // Record metrics
         metricEvaluationLoopDuration.record(Duration.between(scheduledTime, clock.instant()));
+
+        return schedulableTriggers.size();
+    }
+
+    /**
+     * Parses a flow for trigger initialization, skipping ({@code null}) one governance blocks.
+     */
+    private FlowWithSource parseForTriggerOrSkip(final FlowWithSource flow) {
+        try {
+            return TriggerFlowParser.parseForTrigger(flowParsingService, flow, log);
+        } catch (FlowBlockedException e) {
+            log.warn(
+                "Flow on tenant {}, namespace '{}', flow '{}' is blocked by governance, skipping its triggers: {}",
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                e.getMessage()
+            );
+            logBlockedByGovernance(flow, e);
+            return null;
+        } catch (FlowProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Reports a governance block in the logs of every trigger the blocked flow declares. No trigger state is
+     * initialized for such a flow, so this is the only report those triggers ever get.
+     */
+    private void logBlockedByGovernance(final FlowWithSource flow, final FlowBlockedException e) {
+        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(Predicate.not(AbstractTrigger::isDisabled))
+            .forEach(trigger ->
+                Logs.logExecution(
+                    flow,
+                    runContextFactory.of(flow, trigger).logger(),
+                    Level.WARN,
+                    "[trigger: {}] Skipped: {}",
+                    trigger.getId(),
+                    e.getMessage()
+                )
+            );
     }
 
     /**
@@ -283,9 +334,10 @@ public class TriggerScheduler {
         final Logger logger = context.conditionContext().getRunContext().logger();
 
         TriggerState triggerState = context.triggerState();
-        triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
 
         try {
+            triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
+
             if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionContext().getVariables()))) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
@@ -305,31 +357,43 @@ public class TriggerScheduler {
         } catch (Exception e) {
             logger.error("Unable to evaluate trigger '{}'", trigger.getId(), e);
 
+            if (e instanceof InvalidTriggerConfigurationException) {
+                disableInvalidTrigger(clock, triggerState);
+                return;
+            }
+
+            ZonedDateTime recoveredNextEvaluationDate;
+            try {
+                recoveredNextEvaluationDate = NextEvaluationDate.get(clock, trigger);
+            } catch (InvalidTriggerConfigurationException invalid) {
+                disableInvalidTrigger(clock, triggerState);
+                return;
+            }
+
             // Save the final trigger state
             triggerState = triggerState
-                .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger))
+                .updateForNextEvaluationDate(clock, recoveredNextEvaluationDate)
                 .updateOnExecutionTerminated(clock, State.Type.FAILED)
                 .locked(clock, false);
             triggerStateStore.save(triggerState);
 
             // Send the FAILED execution
-            final TriggerContext triggerContext = triggerState.context();
-            final FlowInterface flow = context.flow();
+            TriggerEvaluationResult failed = new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.FAILED,
+                null,
+                null,
+                context.flow().getRevision(),
+                scheduledTime.toInstant(),
+                null
+            );
 
-            Execution execution = Execution.builder()
-                .id(IdUtils.create())
-                .tenantId(triggerContext.getTenantId())
-                .namespace(triggerContext.getNamespace())
-                .flowId(triggerContext.getFlowId())
-                .flowRevision(flow.getRevision())
-                .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
-                .state(new State().withState(State.Type.FAILED))
-                .build()
-                .withScheduleDate(scheduledTime.toInstant())
-                .withTenantId(triggerState.getTenantId());
-
-            triggerExecutionSender.send(execution);
+            triggerExecutionSender.send(triggerState, failed);
         }
+    }
+
+    private void disableInvalidTrigger(Clock clock, TriggerState triggerState) {
+        triggerStateStore.save(triggerState.disabled(clock, true).locked(clock, false));
     }
 
     private void processSchedulableTrigger(Clock clock, ZonedDateTime scheduleTime, TriggerEvaluationContext triggerEvaluationContext, TriggerState triggerState, Schedulable trigger) {
@@ -352,14 +416,9 @@ public class TriggerScheduler {
         triggerStateStore.save(triggerState);
 
         // May send a new execution - if Schedulable trigger or on error
-        final String tenantId = triggerState.getTenantId();
         evaluationResult.ifPresent(res ->
-        {
-            var execution = res.toExecution(triggerContext)
-                .withScheduleDate(scheduleTime.toInstant())
-                .withTenantId(tenantId);
-            triggerExecutionSender.send(execution);
-        });
+            triggerExecutionSender.send(triggerContext, res.withScheduleDate(scheduleTime.toInstant()))
+        );
     }
 
     private void processPollingTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, PollingTriggerInterface trigger) {
@@ -415,8 +474,14 @@ public class TriggerScheduler {
             return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
         } catch (Exception e) {
             if (e instanceof InvalidTriggerConfigurationException) {
-                // disable trigger on invalid configuration
                 triggerStateStore.save(currentTriggerState.disabled(clock, true));
+                Logs.logTrigger(
+                    currentTriggerState,
+                    logger,
+                    Level.WARN,
+                    "Disabled: the trigger configuration is invalid ({}). Fix the flow, then enable the trigger again.",
+                    e.getMessage()
+                );
             }
             Logs.logTrigger(
                 lastTriggerEvaluationContext.triggerState(),

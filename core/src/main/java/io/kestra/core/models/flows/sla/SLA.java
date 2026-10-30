@@ -15,6 +15,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -49,6 +51,8 @@ public abstract class SLA {
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class)
     @Schema(implementation = Object.class, oneOf = { List.class, Map.class })
     private List<@NoSystemLabelValidation Label> labels;
 

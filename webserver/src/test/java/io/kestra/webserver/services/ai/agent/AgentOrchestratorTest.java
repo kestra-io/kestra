@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,10 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.chat.response.StreamingHandle;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -588,6 +592,76 @@ class AgentOrchestratorTest {
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+        assertThat(scriptedModel.lastHandle().isCancelled()).isTrue();
+    }
+
+    @Test
+    void shouldAbortHungModelCallWhenClientDisconnects() throws Exception {
+        // Given — the provider accepts the call but never responds
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.hang();
+        CollectingSink sink = new CollectingSink();
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            pool.submit(() -> {
+                scriptedModel.hungChatStarted().await(2, TimeUnit.SECONDS);
+                sink.cancel();
+                return null;
+            });
+
+            // When — the client disconnects while that call is still in flight
+            orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null, null, null), sink);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        // Then — the turn is cancelled (not timed out) and the thread is returned to IDLE
+        assertThat(sink.error).isNull();
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
+            .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+    }
+
+    @Test
+    void shouldNotDispatchRemainingToolsWhenClientDisconnects() {
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(
+            toolCall("c1", "read-execution-logs", "exec-1"),
+            toolCall("c2", "read-execution", "exec-1")
+        )));
+        CollectingSink sink = new CollectingSink();
+        sink.cancelOnFirstEmit();
+
+        orchestrator.runTurn(new AgentTurnContext(thread, "read them", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        assertThat(sink.names().stream().filter(AgentEvents.TOOL_CALL::equals).count()).isEqualTo(1L);
+        assertThat(sink.names()).doesNotContain(AgentEvents.DONE);
+        assertThat(sink.error).isNull();
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
+            .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @Test
+    void shouldCloseHeldToolCallWhenClientDisconnectsOnApprovedResume() {
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
+        CollectingSink first = new CollectingSink();
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null, null), first);
+
+        CollectingSink sink = new CollectingSink();
+        sink.cancel();
+        orchestrator.resume(claim(reload(thread)), null, true, null, null, sink);
+
+        assertThat(sink.error).isNull();
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        List<AgentMessage> log = messageStore.load(thread.tenant(), thread.uid());
+        assertThat(log).anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+        assertEveryToolCallHasResult(log);
+        assertThat(log)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
+            .allMatch(m -> "cancelled".equals(m.toolResult().get("outcome")));
     }
 
     @Test
@@ -693,6 +767,16 @@ class AgentOrchestratorTest {
         return ((AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION)).confirmationId();
     }
 
+    private static void assertEveryToolCallHasResult(final List<AgentMessage> log) {
+        List<String> resultIds = log.stream()
+            .filter(m -> m.type() == AgentMessageType.TOOL_RESULT && m.toolCall() != null)
+            .map(m -> m.toolCall().id())
+            .toList();
+        assertThat(log)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_CALL)
+            .allMatch(m -> m.toolCall() != null && resultIds.contains(m.toolCall().id()));
+    }
+
     private static final class CollectingSink implements TurnEventSink {
         private final List<Map.Entry<String, Object>> events = new ArrayList<>();
         private boolean completed;
@@ -748,6 +832,8 @@ class AgentOrchestratorTest {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
         private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
+        private CountDownLatch hungChatStarted;
+        private RecordingStreamingHandle lastHandle;
 
         private void enqueue(final AiMessage message) {
             responses.addLast(message);
@@ -755,12 +841,23 @@ class AgentOrchestratorTest {
 
         private void hang() {
             this.hang = true;
+            this.hungChatStarted = new CountDownLatch(1);
+        }
+
+        private CountDownLatch hungChatStarted() {
+            return hungChatStarted;
+        }
+
+        private RecordingStreamingHandle lastHandle() {
+            return lastHandle;
         }
 
         private void clear() {
             responses.clear();
             requestMessages.clear();
             this.hang = false;
+            this.hungChatStarted = null;
+            this.lastHandle = null;
         }
 
         /**
@@ -778,17 +875,33 @@ class AgentOrchestratorTest {
         public void chat(final ChatRequest request, final StreamingChatResponseHandler handler) {
             requestMessages.add(new ArrayList<>(request.messages()));
             if (hang) {
+                hungChatStarted.countDown();
                 return; // never complete the response -> the orchestrator's bounded wait must time out
             }
+            lastHandle = new RecordingStreamingHandle();
             AiMessage ai = responses.pollFirst();
             if (ai == null) {
                 handler.onError(new IllegalStateException("No scripted LLM response available"));
                 return;
             }
             if (ai.text() != null && !ai.text().isEmpty()) {
-                handler.onPartialResponse(ai.text());
+                handler.onPartialResponse(new PartialResponse(ai.text()), new PartialResponseContext(lastHandle));
             }
             handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).build());
+        }
+    }
+
+    private static final class RecordingStreamingHandle implements StreamingHandle {
+        private volatile boolean cancelled;
+
+        @Override
+        public void cancel() {
+            cancelled = true;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled;
         }
     }
 }

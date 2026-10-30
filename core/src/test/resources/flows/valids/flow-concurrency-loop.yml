@@ -1,0 +1,19 @@
+id: flow-concurrency-loop
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: loop_items
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
+    values:
+      - "a"
+      - "b"
+      - "c"
+    tasks:
+      - id: log_item
+        type: io.kestra.plugin.core.debug.Return
+        format: "processing item: {{ item.value }}"

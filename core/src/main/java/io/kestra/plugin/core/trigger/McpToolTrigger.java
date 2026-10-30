@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.trigger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,10 +190,8 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
                 )
             )
             .build();
-        List<Label> labels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
-        labels.add(new Label(Label.CORRELATION_ID, execution.getId()));
-        labels.addAll(additionalLabels);
-        return execution.withLabels(labels);
+        // the flow's own labels come from the Create command, which builds from the flow processed for runtime
+        return execution.withLabels(LabelService.withCorrelationId(additionalLabels, execution.getId()));
     }
 
     public static class Output extends HashMap<String, Object> implements io.kestra.core.models.tasks.Output {

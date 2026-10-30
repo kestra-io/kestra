@@ -10,25 +10,25 @@
         <NavBarAction
             v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
             :icon="ContentCopy"
-            :label="t('copy')"
+            :label="$t('copy')"
             @click="editorCopyFlow"
         />
         <NavBarAction
             v-if="isEditTab && editorIsAllowedEdit && !deleted"
             :icon="Download"
-            :label="t('flow_export')"
+            :label="$t('flow_export')"
             @click="editorExportYaml"
         />
         <NavBarAction
             v-if="isEditTab && canDelete && !deleted && !flowStore.isCreating"
             :icon="Delete"
-            :label="t('delete')"
+            :label="$t('delete')"
             @click="editorDeleteFlow"
         />
         <NavBarAction
             v-if="tab === 'logs' && hasLogs"
-            :icon="TrashCan"
-            :label="t('delete logs')"
+            :icon="Delete"
+            :label="$t('delete logs')"
             @click="deleteLogs"
         />
 
@@ -40,14 +40,14 @@
                 :buttonProps="{disabled: editorHasErrors}"
                 @click="editorSaveOrPublish"
             >
-                {{ isPublishAction ? t('publish') : t('save') }}
+                {{ isPublishAction ? $t('publish') : $t('save') }}
                 <template #dropdown>
                     <KsDropdownMenu>
                         <KsDropdownItem v-if="isPublishAction" :icon="ContentSave" @click="editorSave">
-                            {{ t('save') }}
+                            {{ $t('save') }}
                         </KsDropdownItem>
                         <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
-                            {{ t('save_as_draft') }}
+                            {{ $t('save_as_draft') }}
                         </KsDropdownItem>
                         <KsDropdownItem
                             v-if="editorHaveChange && !flowStore.isCreating"
@@ -55,15 +55,15 @@
                             :disabled="editorHasErrors || editorIsReadOnly"
                             @click="editorSaveAndExecute"
                         >
-                            {{ t('save_and_execute') }}
+                            {{ $t('save_and_execute') }}
                         </KsDropdownItem>
                     </KsDropdownMenu>
                 </template>
             </KsDropdown>
             <NavBarAction
-                v-else-if="canEdit && !deleted"
+                v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
                 :icon="Pencil"
-                :label="t('edit flow')"
+                :label="$t('edit flow')"
                 @click="editFlow"
             />
         </template>
@@ -72,13 +72,14 @@
             <NavBarAction
                 v-if="deleted"
                 type="primary"
-                :icon="BackupRestore"
-                :label="t('restore')"
+                :icon="Restore"
+                :label="$t('restore')"
                 @click="restoreFlow"
             />
             <TriggerFlow
                 v-else-if="shouldShowExecute"
                 type="primary"
+                compact
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
@@ -92,10 +93,9 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useFlowStore} from "../../../stores/flow"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import Pencil from "vue-material-design-icons/Pencil.vue"
-    import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Restore from "vue-material-design-icons/Restore.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -108,13 +108,14 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {useDashboardSelection} from "../../../components/dashboard/composables/useDashboardSelection"
+    import {useIsMobile} from "../../../composables/useIsMobile"
     import {routeFamily} from "../../../utils/routeFamily"
     import {useActiveTab} from "../../../composables/useActiveTab"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
-    import {useDashboardStore} from "../../../stores/dashboard.ts"
     import {useLogsStore} from "../../../stores/logs"
     import {useToast} from "../../../utils/toast"
     import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
@@ -128,13 +129,14 @@
     const route = useRoute()
     const toast = useToast()
 
+    const isMobile = useIsMobile()
+
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
     const tab = useActiveTab()
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
-    const dashboardStore = useDashboardStore()
 
     const {
         haveChange: editorHaveChange,
@@ -153,16 +155,10 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const onSelectDashboard = (value: any) => {
-        const key = dashboardStore.getUserDashboardStorageKey(route)
-        localStorage.setItem(key, value)
-        router.replace({
-            params: {...route.params, dashboard: value},
-        })
-    }
+    const {selectDashboard: onSelectDashboard} = useDashboardSelection()
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
+        !isMobile.value && tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
     )
 
     const canExecute = computed(() =>
@@ -225,8 +221,9 @@
     }
 
     const restoreFlow = () => {
+        if (!flow.value?.source) return
         flowStore.createFlow({
-            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
             restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false

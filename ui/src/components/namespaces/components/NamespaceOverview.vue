@@ -25,7 +25,7 @@
     onMounted(() => {
         if (namespace.value) {
             executionsStore
-                .findExecutions({namespace: namespace.value, onlyTotal: true})
+                .findExecutions({"filters[namespace][PREFIX]": namespace.value, onlyTotal: true})
                 .then((response) => {
                     total.value = response as number
                     loaded.value = true

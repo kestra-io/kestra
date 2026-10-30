@@ -27,7 +27,7 @@
                         <KsButton
                             v-if="!replaceMode"
                             tag="router-link"
-                            :to="{path: `/flows/edit/${selection.namespace}/${selection.id}/source`}"
+                            :to="editorLinkTarget"
                         >
                             {{ $t('source_search.open_in_editor') }}
                         </KsButton>
@@ -50,16 +50,10 @@
 
                     <div v-if="showConfirmBar" class="source-search-preview__confirm-bar">
                         <span class="source-search-preview__confirm-msg">
-                            <i18n-t keypath="source_search.confirm_bar_message" tag="span">
-                                <template #matches>
-                                    <b>{{ $t('source_search.match_count', {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b>
-                                </template>
-                                <template #flows>
-                                    <b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b>
-                                </template>
-                                <template #skipped>
-                                    <b>{{ readOnlyExcludedCount }}</b>
-                                </template>
+                            <i18n-t keypath="source_search.confirm_bar_message" tag="span" scope="global">
+                                <template #matches><b>{{ $t("source_search.match_count", {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b></template>
+                                <template #flows><b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b></template>
+                                <template #skipped><b>{{ readOnlyExcludedCount }}</b></template>
                             </i18n-t>
                             <span v-if="excludedFromReplaceCount > 0" class="source-search-preview__confirm-excluded">
                                 {{ $t('source_search.confirm_bar_excluded', {count: excludedFromReplaceCount}) }}
@@ -88,6 +82,7 @@
                     lang="yaml"
                     :readOnly="true"
                     :navbar="false"
+                    :options="{editor: {padding: {top: 16, bottom: 16}}}"
                     @editorMounted="applyHighlight"
                 />
             </template>
@@ -144,7 +139,8 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {useRoute} from "vue-router"
+    import {KsEditor, escapeHtml} from "@kestra-io/design-system"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
@@ -159,7 +155,6 @@
     import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
-    import _escape from "lodash/escape"
 
     const props = defineProps<{
         selection: CrossSearchSelection | null
@@ -179,6 +174,7 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
     const flowStore = useFlowStore()
 
     const isLoading = ref(false)
@@ -189,6 +185,14 @@
     const flowSelection = computed(() => props.selection?.type === "flows" ? props.selection : null)
 
     const editorKey = computed(() => flowSelection.value ? `${flowSelection.value.namespace}/${flowSelection.value.id}` : "")
+
+    const editorLinkTarget = computed(() => {
+        if (!flowSelection.value) return {}
+        return {
+            name: "flows/update/edit",
+            params: {tenant: route.params.tenant, namespace: flowSelection.value.namespace, id: flowSelection.value.id},
+        }
+    })
 
     const excludedFromReplaceCount = computed(() => props.excludedFromReplaceCount ?? 0)
 
@@ -208,7 +212,7 @@
 
     function applyHighlight() {
         if (!flowSelection.value) return
-        const editor = editorRef.value?.getEditor?.() as any
+        const editor = editorRef.value?.getEditor?.()
         if (!editor) return
         const line = flowSelection.value.line
         activeDecoration?.clear()
@@ -294,7 +298,7 @@
         if (props.selection.type === "files") {
             return buildPathSegments(props.selection.path, props.query, props.caseSensitive)
                 .map((segment) => {
-                    const text = segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text)
+                    const text = segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text)
                     return segment.dim ? `<span class="source-search-preview__meta-dir">${text}</span>` : text
                 })
                 .join("")
@@ -350,7 +354,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-preview {
     height: 100%;
     display: flex;
@@ -545,7 +549,7 @@
     font-weight: 600;
     overflow-wrap: anywhere;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

@@ -1,30 +1,33 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
-
-import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
-
-const response: AxiosLikeConfig = {responseType: "blob" as const}
-const validateStatus = (status: number) => status === 200 || status === 404
-const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
-    const blob = new Blob([res.data], {type: "application/octet-stream"})
-    const url = window.URL.createObjectURL(blob)
-
-    Utils.downloadUrl(url, `${filename}.${extension}`)
-}
-
-import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
-
-import * as Utils from "../utils/utils"
-import {routeFamily} from "../utils/routeFamily"
-
-import type {Dashboard, Chart} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import type {RouteLocation} from "vue-router"
+import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import {removeRefPrefix, usePluginsStore} from "./plugins"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-import _throttle from "lodash/throttle"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
+import {useMiscStore} from "override/stores/misc"
+import {useAuthStore} from "override/stores/auth"
+import * as Utils from "../utils/utils"
+import {handledIf} from "../utils/kestraHttp"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
+import {routeFamily} from "../utils/routeFamily"
+import resource from "../models/resource"
+import action from "../models/action"
+import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
-import {RouteLocation} from "vue-router"
+import {useBookmarksStore} from "./bookmarks"
+
+type ParsedDashboardSource = {id?: string} & Record<string, unknown>
+type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
+type LoadedChart = Chart & {raw: Chart}
+type DefaultDefinitions = {main: string, flow: string, namespace: string}
+
+interface LoadChartResult {
+    error: string | null;
+    data: LoadedChart | null;
+    raw: Record<string, unknown>;
+}
 
 export const DEFAULT_DASHBOARD = {
     id: "default",
@@ -38,20 +41,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
     const defaultDashboards = ref<DashboardSettings>()
-    const defaultDefinitions = ref<{
-        main: string,
-        flow: string,
-        namespace: string,
-    }>()
+    const defaultDefinitions = ref<DefaultDefinitions>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
-    // const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
-    const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
+    const parsedSource = computed<ParsedDashboardSource | undefined>((previous) => {
         try {
-            return YAML_UTILS.parse(sourceCode.value)
+            return YAML_UTILS.parse(sourceCode.value) as ParsedDashboardSource
         } catch {
             return previous
         }
@@ -67,9 +65,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const axios = useClient()
 
-    async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
+    async function list(options: DashboardListOptions, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
+        const canList = useAuthStore().user?.hasAnyAction(resource.DASHBOARD, action.LIST) ?? true
+        const res = canList ? await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined}) : {results: []}
         await loadDefaults()
         let isThereADefault = false
         dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {
@@ -86,10 +85,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return dashboardList.value
     }
 
+    /** Loads the tenant default dashboards, none when the instance cannot store dashboards. The route is
+     *  only in the EE SDK (`dashboards-admin`), so it goes through the raw client to stay edition-agnostic. */
     async function loadDefaults() {
-        // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
-        // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
-        // edition-agnostic (same approach as the custom-blueprint reads).
+        if (useMiscStore().configs?.isCustomDashboardsEnabled === false) {
+            defaultDashboards.value = {}
+            return defaultDashboards.value
+        }
+
         const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
         defaultDashboards.value = data
         return defaultDashboards.value
@@ -97,24 +100,25 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function loadDefaultDefinitions() {
         if (!defaultDefinitions.value) {
-            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
-            defaultDefinitions.value = res.data
+            defaultDefinitions.value = await DashboardsAPI.defaultDashboardDefinitions() as DefaultDefinitions
         }
         return defaultDefinitions.value!
     }
 
-    // side-effect-free lookups for autocompletion, deliberately not going through
-    // list()/load() which mutate dashboardList/activeDashboard and would clobber
-    // whatever the user is currently viewing/editing elsewhere in the app.
+    /** Side-effect-free lookup for autocompletion: `list()` and `load()` would replace the dashboard on screen. */
     async function searchIds(): Promise<{ id: string; title?: string }[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
-        return (res.data as { results: { id: string; title?: string }[] }).results
+        const res = await DashboardsAPI.searchDashboards({size: 100})
+        return res.results as { id: string; title?: string }[]
     }
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
-        if (res.status === 404) return []
-        return (res.data as Dashboard).charts ?? []
+        try {
+            const dashboard = await DashboardsAPI.dashboard({id}) as Dashboard
+            return dashboard.charts ?? []
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return []
+            throw e
+        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
@@ -143,31 +147,28 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return KEY_MAP[routeFamily(route.name)]
     }
 
+    /** The route's dashboard param, else the user's last pick, else the tenant default, else the bundled one. */
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
         const routeName = route.name ? routeFamily(route.name) : undefined
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
             throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
 
-        // URL
         if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
             return route.params.dashboard
         }
 
-        // Localstorage
         const key = getUserDashboardStorageKey(route)
         const userDashboard = localStorage.getItem(key)
         if(userDashboard){
             return userDashboard
         }
 
-        // tenant default
         const defaultTenantDashboard = await getTenantDefaultDashboardId(route)
         if(defaultTenantDashboard) {
             return defaultTenantDashboard
         }
 
-        // default
         return "default"
     }
 
@@ -207,58 +208,88 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
-    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
-
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
-        } catch {
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
+        } catch (e: unknown) {
+            // The page falls back to the bundled default on any failure; only the 404 is its own report.
+            handledIf(e, [404])
             return undefined
         }
 
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
+        latestValidation++
+        setValidationErrors(undefined)
 
         return activeDashboard.value
     }
 
+    /** Dashboard writes are EE-only routes, absent from the OSS SDK, so they go through the raw client.
+     *  The backend only routes `application/x-yaml`, not `application/yaml`. */
+    const yaml = {headers: {"Content-Type": "application/x-yaml"}}
+
     async function create(source: Dashboard["sourceCode"]) {
-        const data = await DashboardsAPI.createDashboard({body: source ?? ""})
+        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const data = await DashboardsAPI.updateDashboard({id, body: source ?? ""})
+        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        return DashboardsAPI.deleteDashboard({id})
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
+
+        const bookmarksStore = useBookmarksStore()
+        const encodedId = encodeURIComponent(id)
+        bookmarksStore.updateAll(bookmarksStore.pages.filter(({path}) => {
+            const segments = path.split(/[?#]/)[0].split("/")
+            const index = segments.indexOf("dashboards")
+            return index === -1 || segments[index + 1] !== encodedId
+        }))
+
+        return deleted
     }
 
+    let latestValidation = 0
+
+    /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        return DashboardsAPI.validateDashboard({body: source ?? ""})
+        const validation = ++latestValidation
+        const isLatest = () => validation === latestValidation
+        try {
+            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            if (isLatest()) {
+                setValidationErrors(data.errors)
+            }
+            return data
+        } catch (error) {
+            if (isLatest()) {
+                setValidationErrors(undefined)
+            }
+            throw error
+        }
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            return await DashboardsAPI.dashboardChartData(
-                {id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0],
-                silent as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[1],
-            )
-        } catch (e: any) {
-            if (e.status === 404) return undefined
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            return data
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return undefined
             throw e
         }
     }
 
     async function validateChart(source: string) {
-        const data = await DashboardsAPI.validateChart({body: source})
-        chartErrors.value = data.constraints ? [data.constraints] : []
+        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        chartErrors.value = validationErrorLines(data.errors)
         return data
     }
 
@@ -266,51 +297,43 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
-        const isDefault = dashboard.id === "default"
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
+        const data = dashboard.id === "default"
+            ? await DashboardsAPI.exportChart({format: "CSV", chart: chart.content ?? "", globalFilter: parameters})
+            : await DashboardsAPI.exportDashboardChart({format: "CSV", id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
-        const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
-
-        const filename = `chart__${chart.id}`
-
-        return axios
-            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
-            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
+        Utils.downloadUrl(window.URL.createObjectURL(new Blob([data], {type: "application/octet-stream"})), `chart__${chart.id}.csv`)
     }
 
     const pluginsStore = usePluginsStore()
 
-    const InitialSchema = {}
+    const InitialSchema = {definitions: {}, $ref: ""}
 
-    const schema = computed<{
-            definitions: any,
-            $ref: string,
-    }>(() =>  {
+    const schema = computed<RootJsonSchema>(() =>  {
         return pluginsStore.schemaType?.dashboard ?? InitialSchema
     })
 
-    const definitions = computed<Record<string, any>>(() =>  {
+    const definitions = computed<Record<string, JsonSchemaDef>>(() =>  {
         return schema.value.definitions ?? {}
     })
 
-    function recursivelyLoopUpSchemaRef(a: any, defs: Record<string, any>): any {
-        if (a.$ref) {
-            const refKey = removeRefPrefix(a.$ref)
+    function recursivelyLoopUpSchemaRef(schemaValue: JsonSchemaDef | undefined, defs: Record<string, JsonSchemaDef>): JsonSchemaDef | undefined {
+        if (schemaValue?.$ref) {
+            const refKey = removeRefPrefix(schemaValue.$ref)
             return recursivelyLoopUpSchemaRef(defs[refKey], defs)
         }
-        return a
+        return schemaValue
     }
 
-    const rootSchema = computed<Record<string, any> | undefined>(() => {
+    const rootSchema = computed<JsonSchemaDef | undefined>(() => {
         return recursivelyLoopUpSchemaRef(schema.value, definitions.value)
     })
 
-    const rootProperties = computed<Record<string, any> | undefined>(() => {
+    const rootProperties = computed<Record<string, JsonSchemaDef> | undefined>(() => {
         return rootSchema.value?.properties
     })
 
-    async function loadChart(chart: any) {
+    async function loadChart(chart: Chart): Promise<LoadChartResult> {
         const yamlChart = YAML_UTILS.stringify(chart)
         if(selectedChart.value?.content === yamlChart){
             return {
@@ -319,34 +342,28 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 raw: chart,
             }
         }
-        const result: { error: string | null; data: null | {
-            id?: string;
-            name?: string;
-            type?: string;
-            chartOptions?: Record<string, any>;
-            dataFilters?: any[];
-            charts?: any[];
-        }; raw: any } = {
+        const result: LoadChartResult = {
             error: null,
             data: null,
             raw: {},
         }
         const errors = await validateChart(yamlChart)
 
-        if (errors.constraints) {
-            result.error = errors.constraints
+        const errorLines = validationErrorLines(errors.errors)
+        if (errorLines.length) {
+            result.error = errorLines.join("\n")
         } else {
             result.data = {...chart, content: yamlChart, raw: chart}
         }
 
-        selectedChart.value = typeof result.data === "object"
+        selectedChart.value = result.data
             ? {
                 ...result.data,
                 chartOptions: {
-                    ...result.data?.chartOptions,
+                    ...result.data.chartOptions,
                     width: 12,
                 },
-            } as any
+            }
             : undefined
         chartErrors.value = [result.error].filter(e => e !== null)
 
@@ -354,6 +371,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
+    const validationErrors = ref<ValidationError[]>()
+
+    function setValidationErrors(located: ValidationError[] | undefined) {
+        validationErrors.value = located
+        const lines = validationErrorLines(located)
+        errors.value = lines.length ? lines : undefined
+    }
 
     return {
         activeDashboard,
@@ -381,6 +405,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
+        validationErrors,
 
         schema,
         definitions,

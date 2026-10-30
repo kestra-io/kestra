@@ -40,6 +40,7 @@ import lombok.experimental.SuperBuilder;
     {
         @JsonSubTypes.Type(value = ExecutionKilledExecution.class, name = "execution"),
         @JsonSubTypes.Type(value = ExecutionKilledTrigger.class, name = "trigger"),
+        @JsonSubTypes.Type(value = ExecutionKilledTaskRuns.class, name = "taskruns"),
     }
 )
 abstract public class ExecutionKilled implements TenantInterface, HasUID, BroadcastEvent {

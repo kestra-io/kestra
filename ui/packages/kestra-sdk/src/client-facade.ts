@@ -83,8 +83,10 @@ export interface AxiosLikeClient {
      * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
      * shared request/response interceptors as the axios-like methods (CSRF header, progress, any
      * EE additions), so streaming endpoints never need to reimplement that cross-cutting logic.
-     * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and error
-     * interceptors are NOT run: streaming callers own their error UX (no global toasts/redirects).
+     * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and HTTP-error
+     * interceptors are NOT run: streaming callers own that UX (no global toasts/redirects). A
+     * fetch-level failure (abort, offline, CORS) still runs error interceptors — the same catch
+     * axios-like methods already have.
      */
     stream: (url: string, data?: any, config?: StreamConfig) => Promise<Response>
 }
@@ -216,7 +218,19 @@ export function createClientFacade(
             if (fn) request = await fn(request, interceptorOptions)
         }
 
-        let response = await fetch(request)
+        let response: Response
+        try {
+            response = await fetch(request)
+        } catch (networkError) {
+            // Same catch as axiosLikeRequest: abort / offline / CORS never produces a Response,
+            // so error interceptors still run (parity with GET/POST). stream() itself is opted
+            // out of NProgress, so this is not what settles the loading indicator.
+            let finalError: unknown = networkError
+            for (const fn of client.interceptors.error.fns) {
+                if (fn) finalError = await fn(finalError, undefined, request, interceptorOptions)
+            }
+            throw finalError
+        }
         for (const fn of client.interceptors.response.fns) {
             if (fn) response = await fn(response, request, interceptorOptions)
         }

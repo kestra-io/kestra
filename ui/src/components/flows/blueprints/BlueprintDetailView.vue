@@ -10,7 +10,7 @@
                         <slot
                             name="actions"
                             :hasMissingPlugins="hasMissingPlugins"
-                            :missingPlugins="missingPlugins"
+                            :missingTasks="missingTasks"
                         />
                     </div>
                 </div>
@@ -76,7 +76,7 @@
     import {useMediaQuery} from "@vueuse/core"
 
     import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue"
@@ -85,6 +85,9 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {ParsedFlow} from "../../../stores/flow"
+    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const EDITOR_OPTIONS = {
         fullHeight: true,
@@ -95,10 +98,10 @@
 
     const props = withDefaults(defineProps<{
         blueprint: FlowBlueprint & {shortDescription?: string};
-        flowGraph?: any;
+        flowGraph?: FlowGraph;
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>(), {
         flowGraph: undefined,
         tags: undefined,
@@ -111,26 +114,24 @@
     const editorBindings = useEditorBindings()
     const stacked = useMediaQuery("(max-width: 1400px)")
 
-    const parsedFlow = computed(() =>
+    const parsedFlow = computed<ParsedFlow>(() =>
         props.blueprint.source
-            ? {...YAML_UTILS.parse(props.blueprint.source), source: props.blueprint.source}
+            ? {...YAML_UTILS.parse<ParsedFlow>(props.blueprint.source), source: props.blueprint.source}
             : {},
     )
 
-    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {ensureInstalledPluginsLoaded, missingTaskTypes} = useBlueprintPlugins()
 
-    const hasMissingPlugins = computed(() =>
-        missingTaskTypes(props.blueprint.includedTasks).length > 0,
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint.includedTasks),
-    )
+    const hasMissingPlugins = computed(() => missingTasks.value.length > 0)
 
     onMounted(ensureInstalledPluginsLoaded)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprint-detail {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 16.1875rem;

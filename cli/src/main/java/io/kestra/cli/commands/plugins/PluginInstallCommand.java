@@ -4,9 +4,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.LocalPluginManager;
@@ -14,6 +18,7 @@ import io.kestra.core.plugins.MavenPluginDownloader;
 import io.kestra.core.plugins.PluginArtifact;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginManager;
+import io.kestra.core.plugins.PluginResolutionResult;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.http.uri.UriBuilder;
@@ -97,12 +102,25 @@ public class PluginInstallCommand extends AbstractCommand {
             return CommandLine.ExitCode.OK;
         }
 
-        final List<PluginArtifact> pluginArtifacts;
+        final List<PluginArtifact> requestedArtifacts;
         try {
-            pluginArtifacts = dependencies.stream().map(PluginArtifact::fromCoordinates).toList();
+            requestedArtifacts = dependencies.stream().map(PluginArtifact::fromCoordinates).toList();
         } catch (IllegalArgumentException e) {
             stdErr(e.getMessage());
             return CommandLine.ExitCode.USAGE;
+        }
+
+        final List<PluginArtifact> pluginArtifacts;
+        try {
+            pluginArtifacts = resolveCompatibleVersions(requestedArtifacts);
+        } catch (KestraRuntimeException e) {
+            stdErr(e.getMessage());
+            return CommandLine.ExitCode.SOFTWARE;
+        }
+
+        if (pluginArtifacts.isEmpty()) {
+            stdErr("Error: No plugin to install.");
+            return CommandLine.ExitCode.OK;
         }
 
         try (final PluginManager pluginManager = getPluginManager()) {
@@ -123,9 +141,38 @@ public class PluginInstallCommand extends AbstractCommand {
             }
 
             List<URI> uris = installed.stream().map(PluginArtifact::uri).toList();
-            stdOut("Successfully installed plugins {0} into {1}", dependencies, uris);
+            stdOut("Successfully installed plugins {0} into {1}", pluginArtifacts, uris);
             return CommandLine.ExitCode.OK;
         }
+    }
+
+    private List<PluginArtifact> resolveCompatibleVersions(final List<PluginArtifact> artifacts) {
+        List<PluginArtifact> latestOfficial = artifacts.stream()
+            .filter(PluginArtifact::isOfficial)
+            .filter(it -> "LATEST".equals(it.version()))
+            .distinct()
+            .toList();
+        if (latestOfficial.isEmpty()) {
+            return artifacts;
+        }
+
+        Map<PluginArtifact, PluginResolutionResult> resolutions = pluginCatalogService.get()
+            .resolveVersions(latestOfficial)
+            .stream()
+            .collect(Collectors.toMap(PluginResolutionResult::artifact, Function.identity()));
+
+        List<PluginArtifact> resolved = new ArrayList<>(artifacts.size());
+        for (PluginArtifact artifact : artifacts) {
+            PluginResolutionResult resolution = resolutions.get(artifact);
+            if (resolution == null) {
+                resolved.add(artifact);
+            } else if (resolution.resolved()) {
+                resolved.add(artifact.toBuilder().version(resolution.version()).build());
+            } else {
+                stdErr("Skipping plugin {0}: no version is compatible with Kestra {1}.", artifact, KestraContext.getContext().getVersion());
+            }
+        }
+        return resolved;
     }
 
     private PluginManager getPluginManager() {

@@ -6,16 +6,27 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.FlowValidation;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -25,14 +36,19 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 
 import static io.kestra.core.models.Label.READ_ONLY;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
     @Inject
     private NamespaceService namespaceService;
+
+    @Inject
+    private Validator validator;
 
     @Override
     public boolean isValid(
@@ -110,12 +126,14 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
 
-        // No missing defaults for schedule triggers
-        findMissingInputsForScheduleTriggers(value).forEach(violations::add);
+        findMissingInputsForTriggers(value).forEach(violations::add);
+
+        validateDeclaredInputValues(value, violations);
+        validateDeclaredOutputValues(value, violations);
 
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
-            .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX) && !label.key().equals(READ_ONLY))
+            .filter(label -> Label.isSystem(label.key()) && !label.key().equals(READ_ONLY))
             .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
 
         List<Pattern> inputsWithMinusPatterns = ListUtils.emptyOnNull(value.getInputs())
@@ -147,6 +165,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .collect(Collectors.toList());
 
         violations.addAll(EEViolations(value));
+        violations.addAll(assetsDeclarationViolations(value));
 
         if (!invalidTasks.isEmpty()) {
             violations.add(
@@ -178,8 +197,49 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
     }
 
+    private List<String> assetsDeclarationViolations(Flow flow) {
+        List<String> violations = new ArrayList<>();
+        flow.allTasks().filter(Objects::nonNull)
+            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets())));
+        ListUtils.emptyOnNull(flow.getTriggers()).stream().filter(Objects::nonNull)
+            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets())));
+        return violations;
+    }
+
+    private List<String> assetsDeclarationViolations(String kind, String id, AssetsDeclaration assets) {
+        if (assets == null) {
+            return List.of();
+        }
+
+        List<String> violations = new ArrayList<>();
+        violations.addAll(declaredAssetViolations(kind, id, "inputs", assets.getInputs(), AssetIdentifier.class));
+        violations.addAll(declaredAssetViolations(kind, id, "outputs", assets.getOutputs(), Asset.class));
+        return violations;
+    }
+
+    private <T> List<String> declaredAssetViolations(String kind, String id, String field, Property<List<T>> declared, Class<T> itemClass) {
+        try {
+            List<T> items = Property.asStaticList(declared, itemClass).orElse(List.of());
+            if (items.stream().anyMatch(Objects::isNull)) {
+                return List.of("%s '%s' declares a malformed `assets.%s`: an item is empty or unreadable.".formatted(kind, id, field));
+            }
+
+            return items.stream()
+                .flatMap(item -> validator.validate(item).stream())
+                .filter(violation -> !(violation.getInvalidValue() instanceof String value && PebbleUtil.containsOpeningBlockDelimiter(value)))
+                .map(violation -> "%s '%s' declares an invalid asset in `assets.%s`: `%s` %s.".formatted(kind, id, field, violation.getPropertyPath(), violation.getMessage()))
+                .toList();
+        } catch (IllegalVariableEvaluationException e) {
+            if (PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(declared))) {
+                return List.of();
+            }
+
+            return List.of("%s '%s' declares a malformed `assets.%s`: %s.".formatted(kind, id, field, e.getMessage()));
+        }
+    }
+
     protected List<String> EEViolations(Flow flow) {
-        var assetViolations = flow.allTasks().filter(task -> task.getAssets() != null)
+        var assetViolations = flow.allTasks().filter(task -> task != null && task.getAssets() != null)
             .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
             .toList();
         List<String> violations = new ArrayList<>(assetViolations);
@@ -279,38 +339,162 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     }
 
     /**
-     * @return the violation formatted message of missing inputs for each schedule trigger
+     * @return the violation formatted message of missing inputs for each trigger able to supply them
      */
-    private Stream<String> findMissingInputsForScheduleTriggers(Flow value) {
-        if (
-            !ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
-                && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()
-        ) {
-            // Find inputs without defaults (expanded to dotted leaf paths; schedules provide values keyed by
-            // the same dotted path, matching how FlowInputOutput resolves them).
-            Set<String> inputsWithoutDefaults = value.resolvableInputs().stream()
-                .filter(input -> input.getDefaults() == null)
-                .map(Data::getId)
-                .collect(Collectors.toSet());
-            // Find schedules with missing inputs or null inputs
-            return value.getTriggers().stream()
-                .filter(Schedule.class::isInstance)
-                .map(Schedule.class::cast)
-                .flatMap(schedule ->
-                {
-                    Set<String> violations = new HashSet<>();
-                    Map<String, Object> scheduleInputs = schedule.getInputs() != null ? schedule.getInputs() : new HashMap<>();
-                    var missingInputs = inputsWithoutDefaults.stream()
-                        .filter(inputId -> !scheduleInputs.containsKey(inputId))
-                        .collect(Collectors.joining(" | "));
-                    if (!missingInputs.isEmpty()) {
-                        violations.add("Missing inputs for Schedule Trigger '%s', missing inputs: '%s'".formatted(schedule.getId(), missingInputs));
-                    }
-                    return violations.stream();
-                });
-        } else {
+    private Stream<String> findMissingInputsForTriggers(Flow value) {
+        if (ListUtils.emptyOnNull(value.getTriggers()).isEmpty() || ListUtils.emptyOnNull(value.getInputs()).isEmpty()) {
             return Stream.empty();
         }
+
+        // Inputs no execution can fill on its own, expanded to dotted leaf paths: triggers supply values keyed by
+        // the same dotted path, matching how FlowInputOutput resolves them.
+        Set<String> inputsNeedingATriggerValue = value.resolvableInputs().stream()
+            .filter(input -> input.getDefaults() == null && !Boolean.FALSE.equals(input.getRequired()))
+            .map(Data::getId)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (inputsNeedingATriggerValue.isEmpty()) {
+            return Stream.empty();
+        }
+
+        return value.getTriggers().stream()
+            .flatMap(
+                trigger -> inputsSuppliedBy(trigger).stream()
+                    .flatMap(triggerInputs ->
+                    {
+                        String missingInputs = inputsNeedingATriggerValue.stream()
+                            .filter(inputId -> !triggerInputs.supplied().containsKey(inputId))
+                            .collect(Collectors.joining(" | "));
+
+                        return missingInputs.isEmpty()
+                            ? Stream.<String> empty()
+                            : Stream.of("Missing inputs for %s Trigger '%s', missing inputs: '%s'".formatted(triggerInputs.kind(), trigger.getId(), missingInputs));
+                    })
+            );
+    }
+
+    /**
+     * Validates the literal values a flow declares for its own inputs — input {@code defaults} and the values a
+     * trigger supplies to inputs — against each input's declared type and constraints, so a type mismatch (an
+     * {@code INT} default of {@code "abc"}) or an out-of-list {@code SELECT} value is rejected at save time instead
+     * of only failing when the flow runs. Pebble expressions are left untouched: they can only be resolved at runtime.
+     */
+    private void validateDeclaredInputValues(Flow value, List<String> violations) {
+        List<Input<?>> inputs = value.resolvableInputs();
+        if (inputs.isEmpty()) {
+            return;
+        }
+
+        for (Input<?> input : inputs) {
+            if (input.getDefaults() != null) {
+                literalValueViolation(input, input.getDefaults().toString())
+                    .ifPresent(message -> violations.add("Invalid default for input '%s': %s".formatted(input.getId(), message)));
+            }
+        }
+
+        if (ListUtils.emptyOnNull(value.getTriggers()).isEmpty()) {
+            return;
+        }
+
+        Map<String, Input<?>> inputsById = inputs.stream()
+            .collect(Collectors.toMap(Data::getId, input -> input, (first, second) -> first));
+
+        for (AbstractTrigger trigger : value.getTriggers()) {
+            inputsSuppliedBy(trigger).ifPresent(triggerInputs ->
+                triggerInputs.supplied().forEach((inputId, suppliedValue) -> {
+                    Input<?> input = inputsById.get(inputId);
+                    if (input != null) {
+                        literalValueViolation(input, suppliedValue)
+                            .ifPresent(message -> violations.add(
+                                "Invalid value for input '%s' supplied by %s Trigger '%s': %s".formatted(inputId, triggerInputs.kind(), trigger.getId(), message)));
+                    }
+                }));
+        }
+    }
+
+    /**
+     * Validates literal flow output values against their declared scalar type at save time. Pebble expressions are
+     * resolved at execution time and are intentionally skipped here.
+     */
+    private void validateDeclaredOutputValues(Flow value, List<String> violations) {
+        for (Output output : ListUtils.emptyOnNull(value.getOutputs())) {
+            literalOutputValueViolation(output)
+                .ifPresent(message -> violations.add("Invalid value for output '%s': %s".formatted(output.getId(), message)));
+        }
+    }
+
+    /**
+     * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
+     * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
+        if (rawValue == null) {
+            return Optional.empty();
+        }
+
+        String asString = rawValue.toString();
+        if (PebbleUtil.containsOpeningBlockDelimiter(asString)) {
+            return Optional.empty();
+        }
+
+        Object typed;
+        try {
+            typed = FlowInputOutput.parseScalarInputValue(input.getType(), rawValue).orElse(null);
+        } catch (Exception e) {
+            return Optional.of("`%s` is not a valid %s value".formatted(asString, input.getType()));
+        }
+
+        if (typed == null) {
+            return Optional.empty();
+        }
+
+        try {
+            ((Input) input).validate(typed);
+        } catch (ConstraintViolationException e) {
+            String message = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+            return Optional.of(message.isEmpty() ? "invalid value" : message);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * @return the constraint message when a static output literal cannot satisfy the output's declared scalar type, or
+     * empty when it is valid, dynamic, or non-scalar.
+     */
+    private static Optional<String> literalOutputValueViolation(Output output) {
+        Object rawValue = output.getValue();
+        if (rawValue == null) {
+            return Optional.empty();
+        }
+
+        String asString = rawValue.toString();
+        if (PebbleUtil.containsOpeningBlockDelimiter(asString)) {
+            return Optional.empty();
+        }
+
+        try {
+            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+        } catch (Exception e) {
+            return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<TriggerInputs> inputsSuppliedBy(AbstractTrigger trigger) {
+        return switch (trigger) {
+            case Schedule schedule -> Optional.of(new TriggerInputs("Schedule", schedule.getInputs() == null ? Map.of() : schedule.getInputs()));
+            case AbstractWebhookTrigger webhook -> Optional.of(new TriggerInputs("Webhook", webhook.getInputs() == null ? Map.of() : webhook.getInputs()));
+            default -> Optional.empty();
+        };
+    }
+
+    private record TriggerInputs(String kind, Map<String, Object> supplied) {
     }
 
     /**

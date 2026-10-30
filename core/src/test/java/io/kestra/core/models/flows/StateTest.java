@@ -216,4 +216,60 @@ class StateTest {
         // When / Then
         assertThat(State.Type.fail(task)).isEqualTo(State.Type.FAILED);
     }
+
+    @Test
+    void shouldBeResumingFromBreakpointWhenLastTransitionWasBreakpointThenCreated() {
+        // Given
+        State state = new State(
+            State.Type.CREATED, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.BREAKPOINT, START.plusSeconds(1)),
+                new State.History(State.Type.CREATED, START.plusSeconds(2))
+            )
+        );
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isTrue();
+    }
+
+    @Test
+    void shouldNotBeResumingFromBreakpointOnFreshCreated() {
+        // Given
+        State state = new State(State.Type.CREATED, List.of(new State.History(State.Type.CREATED, START)));
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isFalse();
+    }
+
+    @Test
+    void shouldNotBeResumingFromBreakpointWhenCurrentIsNotCreated() {
+        // Given
+        State state = new State(
+            State.Type.RUNNING, List.of(
+                new State.History(State.Type.BREAKPOINT, START),
+                new State.History(State.Type.RUNNING, START.plusSeconds(1))
+            )
+        );
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isFalse();
+    }
+
+    @Test
+    void shouldClassifyPausingAsRunningButNotOnlyRunningNorTerminatedNorPaused() {
+        // Given / When / Then: an execution running its Approval onWait tasks is still schedulable
+        // like RUNNING, but must not be picked up by anything gated on onlyRunning() (e.g. a plain
+        // "is actively executing a task" check) nor mistaken for the terminal PAUSED state.
+        assertThat(State.Type.PAUSING.isRunning()).isTrue();
+        assertThat(State.Type.PAUSING.onlyRunning()).isFalse();
+        assertThat(State.Type.PAUSING.isTerminated()).isFalse();
+        assertThat(State.Type.PAUSING.isPaused()).isFalse();
+        assertThat(State.Type.PAUSING.isCreated()).isFalse();
+    }
+
+    @Test
+    void shouldIncludePausingInRunningTypes() {
+        // Given / When / Then
+        assertThat(State.runningTypes()).contains(State.Type.PAUSING);
+    }
 }

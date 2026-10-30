@@ -36,14 +36,14 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .app-id-display-box {
     position: fixed;
     top: 0;
     left: 0;
     padding: .5rem 1rem;
-    background-color: hotpink;
-    color: black;
+    background-color: var(--ks-btn-primary-bg-default);
+    color: var(--ks-btn-primary-text);
     z-index: 2000;
     display: flex;
     gap: .5rem;
@@ -51,7 +51,7 @@
     border: none;
     border-bottom-right-radius: .5rem;
     &:hover {
-        background-color: pink;
+        background-color: var(--ks-btn-primary-bg-hover);
     }
 }
 </style>

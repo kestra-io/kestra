@@ -2,7 +2,7 @@
     <ul>
         <li>
             <KsButton
-                :type="(props.type || 'primary') as any"
+                :type="props.type || 'primary'"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"
@@ -18,6 +18,8 @@
 
 <script setup lang="ts">
     import type {Component} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
+    import type {KsButtonType} from "@kestra-io/design-system"
 
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -25,8 +27,8 @@
     const props = defineProps<{
         label: string;
         icon?: Component;
-        type?: string;
-        to?: Record<string, any>;
+        type?: KsButtonType;
+        to?: RouteLocationRaw;
         loading?: boolean;
         disabled?: boolean;
     }>()

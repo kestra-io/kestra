@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,14 +19,19 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.testkit.InMemoryMultipleConditionStateStore;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -35,6 +41,7 @@ import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESP
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,13 +57,17 @@ class FlowTriggerServiceTest {
     private ConditionService conditionService;
     @Inject
     private FlowService flowService;
+    @Inject
+    private ExecutionOutputService executionOutputService;
+    @Inject
+    private ExecutionDepthConfiguration executionDepthConfiguration;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore);
+        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
     }
 
     @Test
@@ -218,7 +229,7 @@ class FlowTriggerServiceTest {
             .variables(Map.of("env", "prod"))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -251,7 +262,7 @@ class FlowTriggerServiceTest {
         // Given a flow whose trigger matches but which governance blocks at runtime
         FlowWithSource raw = flowWithFlowTriggerSource();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy"))));
+            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy")))));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -291,7 +302,7 @@ class FlowTriggerServiceTest {
             .labels(List.of(new Label("env", "prod")))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -315,7 +326,7 @@ class FlowTriggerServiceTest {
             .variables(Map.of("env", "prod"))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -354,6 +365,60 @@ class FlowTriggerServiceTest {
     }
 
     @Test
+    void shouldExposeTheOutputsOfEveryDependsOnExecutionScopedByNamespaceAndFlowId() throws Exception {
+        // Given a listener depending on two upstream flows, each producing a flow output
+        var upstreamA = aSimpleFlow().toBuilder().id("upstream-a").build();
+        var upstreamB = aSimpleFlow().toBuilder().id("upstream-b").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOnBoth(upstreamA, upstreamB)))
+            .build();
+        var executionA = successfulExecutionWithOutputs(upstreamA, Map.of("value", "from_a"));
+        var executionB = successfulExecutionWithOutputs(upstreamB, Map.of("value", "from_b"));
+        var service = flowTriggerServiceReturningOutputsOf(executionA, executionB);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When both upstream executions terminate
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(executionA, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(executionB, listener, store);
+
+        // Then the outputs of both are exposed, not only the ones of the last execution
+        assertThat(triggered).hasSize(1);
+        assertThat(triggerOutputs(triggered.getFirst())).containsEntry(
+            TEST_NAMESPACE, Map.of(
+                "upstream-a", Map.of("value", "from_a"),
+                "upstream-b", Map.of("value", "from_b")
+            )
+        );
+    }
+
+    @Test
+    void shouldNotExposeTheOutputsOfAnExecutionThatIsNotInDependsOn() throws Exception {
+        // Given a listener depending on one upstream flow, and an unrelated flow in another namespace
+        var upstream = aSimpleFlow().toBuilder().id("upstream").build();
+        var unrelatedFlow = aSimpleFlow().toBuilder().namespace("io.kestra.other").id("unrelated").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOn(upstream)))
+            .build();
+        var unrelated = successfulExecutionWithOutputs(unrelatedFlow, Map.of("secret", "do_not_leak"));
+        var upstreamExecution = successfulExecutionWithOutputs(upstream, Map.of("value", "from_upstream"));
+        var service = flowTriggerServiceReturningOutputsOf(unrelated, upstreamExecution);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When the unrelated execution terminates first, so it is the one that opens the window
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(unrelated, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(upstreamExecution, listener, store);
+
+        // Then its outputs never reach the listener
+        assertThat(triggered).hasSize(1);
+        Map<String, Object> outputs = triggerOutputs(triggered.getFirst());
+        assertThat(outputs).doesNotContainKey("io.kestra.other");
+        assertThat(outputs.toString()).doesNotContain("do_not_leak");
+        // while the single dependency stays reachable scoped, and through the unscoped shorthand
+        assertThat(outputs).containsEntry(TEST_NAMESPACE, Map.of("upstream", Map.of("value", "from_upstream")));
+        assertThat(outputs).containsEntry("value", "from_upstream");
+    }
+
+    @Test
     void shouldAssignCorrelationIdOnExecutionsComputedFromFlowTriggersWhenUpstreamCarriesNone() {
         // Given an upstream execution stripped of its correlation id
         var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS)
@@ -385,6 +450,33 @@ class FlowTriggerServiceTest {
         // Then the triggered execution stays on the upstream correlation instead of starting a new one
         assertThat(resultingExecutionsToRun).hasSize(1);
         assertThat(resultingExecutionsToRun.getFirst().getLabels()).contains(new Label(Label.CORRELATION_ID, correlationId));
+    }
+
+    @Test
+    void shouldIncrementExecutionDepthOnExecutionsComputedFromFlowTriggers() {
+        // Given an upstream execution three hops into its chain
+        var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
+        upstream = upstream.withMetadata(upstream.getMetadata().withExecutionDepth(3));
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(upstream, flowWithFlowTrigger());
+
+        // Then the triggered execution is one hop further than its cause, not a fresh root
+        assertThat(resultingExecutionsToRun).hasSize(1);
+        assertThat(resultingExecutionsToRun.getFirst().getMetadata().getExecutionDepth()).isEqualTo(4);
+    }
+
+    @Test
+    void shouldDropFlowTriggerWhenExecutionChainExceedsMaxDepth() {
+        // Given an upstream execution already at the configured cap
+        var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
+        upstream = upstream.withMetadata(upstream.getMetadata().withExecutionDepth(executionDepthConfiguration.maxDepth()));
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(upstream, flowWithFlowTrigger());
+
+        // Then the trigger is dropped rather than extending an unbounded chain
+        assertThat(resultingExecutionsToRun).isEmpty();
     }
 
     private static Flow flowWithFlowTrigger() {
@@ -466,14 +558,14 @@ class FlowTriggerServiceTest {
 
     @Test
     void computeExecutionsFromFlowTriggers_whenInvalidExpression() {
-        // Given - malformed Pebble expression causes IllegalVariableEvaluationException, treated as false
+        // Given - a trigger-level `when` that cannot be rendered (unknown variable)
         var simpleFlow = aSimpleFlow();
         var flowWithFlowTrigger = Flow.builder()
             .id("flow-with-flow-trigger")
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .tasks(List.of(simpleLogTask()))
-            .triggers(List.of(flowTriggerWithWhen("{{ invalid-pebble-expression() }}")))
+            .triggers(List.of(flowTriggerWithWhen("{{ namespace }}")))
             .build();
         var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
 
@@ -483,7 +575,66 @@ class FlowTriggerServiceTest {
             flowWithFlowTrigger
         );
 
-        // Then
+        // Then the trigger does not fire (the misconfiguration is logged on both the evaluated execution and the
+        // flow that owns the trigger, see FlowTriggerInvalidWhenCycleTest)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependsOnTriggerLevelWhenCannotBeRendered() {
+        // Given - a dependsOn trigger whose trigger-level `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(flowTriggerDependingOn(upstream, "{{ namespace }}")))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire (the misconfiguration is logged, not turned into an execution)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependencyLevelWhenCannotBeRendered() {
+        // Given - a dependsOn entry whose own `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var dependency = io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+            .namespace(upstream.getNamespace())
+            .flowId(upstream.getId())
+            .when(Property.ofExpression("{{ namespace }}"))
+            .build();
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(List.of(dependency))
+            .build();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire; the unrenderable dependency condition is logged, not fired as an execution
         assertThat(resultingExecutionsToRun).isEmpty();
     }
 
@@ -526,6 +677,38 @@ class FlowTriggerServiceTest {
             .build();
     }
 
+    private FlowTriggerService flowTriggerServiceReturningOutputsOf(Execution... executions) throws Exception {
+        var outputService = mock(ExecutionOutputService.class);
+        for (Execution execution : executions) {
+            when(outputService.getOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
+                .thenReturn(execution.getOutputs());
+        }
+        return new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, outputService, executionDepthConfiguration);
+    }
+
+    @SuppressWarnings("removal")
+    private static Execution successfulExecutionWithOutputs(Flow flow, Map<String, Object> outputs) {
+        return Execution.newExecution(flow, EMPTY_LABELS).withState(State.Type.SUCCESS).withOutputs(outputs);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> triggerOutputs(Execution execution) {
+        return (Map<String, Object>) execution.getTrigger().getVariables().get("outputs");
+    }
+
+    private static io.kestra.plugin.core.trigger.Flow flowTriggerDependingOnBoth(Flow first, Flow second) {
+        return io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(first.getNamespace()).flowId(first.getId()).build(),
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(second.getNamespace()).flowId(second.getId()).build()
+                )
+            )
+            .build();
+    }
+
     private static io.kestra.plugin.core.trigger.Flow flowTriggerDependingOn(Flow upstream) {
         return flowTriggerDependingOn(upstream, null);
     }
@@ -565,8 +748,7 @@ class FlowTriggerServiceTest {
         }
 
         @Override
-        public List<MultipleConditionWindow> expired(String tenantId) {
-            return List.of();
+        public void purgeExpired(Instant now) {
         }
 
         @Override

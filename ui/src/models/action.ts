@@ -10,6 +10,7 @@ export default {
     REPLAY: "REPLAY",
     PAUSE: "PAUSE",
     RESUME: "RESUME",
+    REVIEW: "REVIEW",
     UNQUEUE: "UNQUEUE",
     FORCE_RUN: "FORCE_RUN",
     FOLLOW: "FOLLOW",
@@ -28,4 +29,4 @@ export default {
     MANAGE_MEMBERS: "MANAGE_MEMBERS",
     MANAGE_GROUP_MEMBERSHIP: "MANAGE_GROUP_MEMBERSHIP",
     USE: "USE",
-}
+} as const

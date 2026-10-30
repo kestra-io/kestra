@@ -34,6 +34,9 @@ public class Extension extends AbstractExtension {
     private ReadFileFunction readFileFunction;
 
     @Inject
+    private DataURLFunction dataURLFunction;
+
+    @Inject
     private FileURIFunction fileURIFunction;
 
     @Inject
@@ -146,11 +149,13 @@ public class Extension extends AbstractExtension {
         Map<String, Function> functions = new HashMap<>();
 
         functions.put(NowFunction.NAME, new NowFunction());
+        functions.put(BoundedRangeFunction.NAME, new BoundedRangeFunction());
         functions.put(FromJsonFunction.NAME, new FromJsonFunction());
         functions.put(EnvFunction.NAME, new EnvFunction());
         functions.put(SecretFunction.NAME, secretFunction);
         functions.put(KvFunction.NAME, kvFunction);
         functions.put(ReadFileFunction.NAME, readFileFunction);
+        functions.put(DataURLFunction.NAME, dataURLFunction);
         functions.put(FileURIFunction.NAME, fileURIFunction);
         if (renderFunction != null) {
             functions.put(RenderFunction.NAME, renderFunction);
@@ -178,13 +183,13 @@ public class Extension extends AbstractExtension {
         functions.put(NanoIDFunction.NAME, new NanoIDFunction());
         functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
         functions.put(HttpFunction.NAME, httpFunction);
-        if (subflowFunction != null) {
-            functions.put(SubflowFunction.NAME, subflowFunction);
-        }
+        functions.put(SubflowFunction.NAME, subflowFunction != null ? subflowFunction : SubflowFunction.unavailable());
         functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
         functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
         functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
+        functions.put(IsDateBetweenFunction.NAME, new IsDateBetweenFunction());
         functions.put(IsLastWorkingDayFunction.NAME, new IsLastWorkingDayFunction());
+        functions.put(IsLastDayOfMonthFunction.NAME, new IsLastDayOfMonthFunction());
         functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());

@@ -6,7 +6,7 @@ interface SurveySkipData {
     step_number: number
     survey_action: string
     dialogShown?: boolean
-    [key: string]: any
+    [key: string]: unknown
 }
 
 export function useSurveySkip() {

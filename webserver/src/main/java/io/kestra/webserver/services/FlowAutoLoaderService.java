@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -85,6 +86,9 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                         return body;
                     })
                 )
+                // Hop off the HTTP client's event loop: flowService.create() may block on plugin
+                // auto-install, and parking an event-loop thread starves the client itself.
+                .publishOn(Schedulers.boundedElastic())
                 .map(throwFunction(source ->
                 {
                     GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);

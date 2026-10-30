@@ -14,6 +14,21 @@ import jakarta.inject.Singleton;
 public class SafeRegexValidator implements ConstraintValidator<SafeRegexValidation, String> {
     @Override
     public boolean isValid(@Nullable String value, @NonNull AnnotationValue<SafeRegexValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
-        return value == null || RegexUtils.isSafeUserRegex(value);
+        if (value == null) {
+            return true;
+        }
+
+        if (!RegexUtils.isSafeUserRegex(value)) {
+            return false;
+        }
+
+        return RegexUtils.syntaxError(value)
+            .map(error -> {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("invalid regex pattern '" + value + "': " + error)
+                    .addConstraintViolation();
+                return false;
+            })
+            .orElse(true);
     }
 }

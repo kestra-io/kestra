@@ -109,3 +109,19 @@ kestra:
             access-key: "kestra"
             secret-key: "ChangeMe#1234"
             force-path-style: true
+  # -- see https://artifacthub.io/packages/helm/kestra/kestra for all available configurations
+  # @section -- Kestra Configuration
+  # ingress:
+  #   enabled: true
+  #   className: nginx
+  #   annotations:
+  #     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  #   hosts:
+  #     - host: kestra.example.com
+  #       paths:
+  #         - path: /
+  #           pathType: Prefix
+  #   tls:
+  #     - hosts:
+  #         - kestra.example.com
+  #       secretName: kestra-tls

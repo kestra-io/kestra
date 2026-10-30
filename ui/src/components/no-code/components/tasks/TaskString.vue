@@ -2,10 +2,10 @@
     <div class="wrapper" :class="{'wrapper--toggle': hasToggle, 'wrapper--boolean': schema?.type === 'boolean'}">
         <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
-            :modelValue="modelValue"
+            :modelValue="typeof modelValue === 'string' ? modelValue : undefined"
             type="date"
             :placeholder="$t('no_code.choose_placeholder', {field: root || 'date'})"
-            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
+            @update:model-value="(v: Date | string | null | undefined) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <TaskDuration
             v-if="!pebble && schema?.format === 'duration'"
@@ -23,10 +23,11 @@
             v-if="disabled"
             :modelValue="String(modelValue ?? '')"
             disabled
-            class="w-100 disabled-field"
+            class="disabled-field"
         />
         <KsEditor
             v-else-if="pebble || (!schema?.format && schema?.type !== 'boolean')"
+            ref="editorRef"
             class="string-editor"
             v-bind="editorBindings"
             :modelValue="editorValue"
@@ -38,6 +39,7 @@
             inline
             @update:model-value="onInput"
             @save="saveFlow"
+            @focus="onFocus"
             style="z-index: 1;"
         />
     </div>
@@ -45,9 +47,9 @@
 
 <script lang="ts" setup>
     import {computed, inject, onMounted, ref} from "vue"
-    import $moment from "moment"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {durationUtils, KsEditor, type KsEditorExposes} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
+    import {useFocusedExpressionEditor} from "./useFocusedExpressionEditor"
     import InputText from "../inputs/InputText.vue"
     import TaskDuration from "./TaskDuration.vue"
     import TaskBoolean from "./TaskBoolean.vue"
@@ -62,12 +64,15 @@
     // shell ever sees it — without this the whole form silently ignores it.
     const saveFlow = inject(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {})
 
+    const editorRef = ref<KsEditorExposes>()
+    const {onFocus} = useFocusedExpressionEditor(editorRef)
+
     const props = defineProps<{
         disabled?: boolean;
         modelValue?: string | boolean;
         schema?: Schema;
         root?: string;
-        task?: any;
+        task?: Record<string, unknown>;
     }>()
 
     const emit = defineEmits<{
@@ -99,7 +104,7 @@
         if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
             pebble.value = false
         } else if (schema.format === "duration" && values.value) {
-            pebble.value = !$moment.duration(props.modelValue as string).isValid()
+            pebble.value = !durationUtils.isValidDuration(props.modelValue as string)
         } else if (schema.format === "date-time" && values.value) {
             pebble.value = isNaN(Date.parse(props.modelValue as string))
         }
@@ -128,12 +133,7 @@
 
 </script>
 
-<style scoped lang="scss">
-:deep(.kel-input__inner) {
-    &::placeholder {
-        color: var(--ks-text-inactive) !important;
-    }
-}
+<style scoped>
 :deep(.placeholder) {
     top: -7px !important;
 }
@@ -148,12 +148,13 @@
     width: 100%;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
-    :deep(.disabled-field) {
+    & :deep(.disabled-field) {
         margin: 0!important;
         border-radius: 4px;
+        width: 100%;
     }
 
-    :deep(.ks-editor){
+    & :deep(.ks-editor){
         flex: 1;
     }
 }
@@ -188,13 +189,13 @@
 }
 
 .wrapper--toggle > .string-editor {
-    border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
-    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    transition: box-shadow 0.12s ease;
 }
 
 .wrapper--toggle > .string-editor:focus-within {
-    border-color: var(--ks-border-focus);
+    --ks-editor-single-line-border-color: var(--ks-border-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--ks-border-focus) 22%, transparent);
 }
+
 </style>

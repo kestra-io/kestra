@@ -25,6 +25,9 @@ import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.notification.NotificationItemRepositoryInterface;
+import io.kestra.core.notification.model.NotificationItem;
+import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
@@ -55,6 +58,9 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @Inject
     protected TriggerRepositoryInterface triggerRepository;
+
+    @Inject
+    protected NotificationItemRepositoryInterface notificationItemRepository;
 
     private static TriggerState.TriggerStateBuilder trigger(String tenantId) {
         return TriggerState.builder()
@@ -132,6 +138,106 @@ public abstract class AbstractTriggerRepositoryTest {
         );
     }
 
+    private NotificationItem notificationItem(String operationId, String resourceId, String tenantId) {
+        return notificationItem(operationId, resourceId, tenantId, NotificationItemOutcome.PENDING);
+    }
+
+    private NotificationItem notificationItem(String operationId, String resourceId, String tenantId, NotificationItemOutcome outcome) {
+        return NotificationItem.builder()
+            .operationId(operationId)
+            .tenantId(tenantId)
+            .resourceId(resourceId)
+            .outcome(outcome)
+            .updated(Instant.now())
+            .build();
+    }
+
+    @Test
+    void shouldFilterTriggersByOperationId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState matching = triggerStateStore.save(trigger(tenant).build());
+        triggerStateStore.save(trigger(tenant).build());
+
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationItemRepository.create(List.of(notificationItem(operationId, matching.uid(), tenant)));
+
+        QueryFilter filter = QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value(operationId).build();
+        ArrayListTotal<TriggerState> entries = triggerRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
+
+        assertThat(entries).extracting(TriggerState::uid).containsExactly(matching.uid());
+    }
+
+    @Test
+    void shouldFilterTriggersByOperationIdAndOperationOutcome() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState failed = triggerStateStore.save(trigger(tenant).build());
+        TriggerState succeeded = triggerStateStore.save(trigger(tenant).build());
+
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationItemRepository.create(
+            List.of(
+                notificationItem(operationId, failed.uid(), tenant, NotificationItemOutcome.FAILED),
+                notificationItem(operationId, succeeded.uid(), tenant, NotificationItemOutcome.SUCCEEDED)
+            )
+        );
+
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value(operationId).build(),
+            QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value(NotificationItemOutcome.FAILED.name()).build()
+        );
+        ArrayListTotal<TriggerState> entries = triggerRepository.find(Pageable.UNPAGED, tenant, filters);
+
+        assertThat(entries).extracting(TriggerState::uid).containsExactly(failed.uid());
+    }
+
+    @Test
+    void shouldRejectOperationOutcomeFilterWithoutOperationId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        QueryFilter filter = QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value(NotificationItemOutcome.FAILED.name()).build();
+
+        assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, tenant, List.of(filter)));
+    }
+
+    @Test
+    void shouldFilterTriggersByOperationIdAndOperationOutcomeOnTheSameOperation() {
+        // Given a trigger that SUCCEEDED under operation A and separately FAILED under a later operation B
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState trigger = triggerStateStore.save(trigger(tenant).build());
+
+        String operationA = TestsUtils.randomString(this.getClass().getSimpleName() + "-a");
+        String operationB = TestsUtils.randomString(this.getClass().getSimpleName() + "-b");
+        notificationItemRepository.create(List.of(notificationItem(operationA, trigger.uid(), tenant, NotificationItemOutcome.SUCCEEDED)));
+        notificationItemRepository.create(List.of(notificationItem(operationB, trigger.uid(), tenant, NotificationItemOutcome.FAILED)));
+
+        // When filtering for "failed in operation A" — a combination that doesn't exist on any single row
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value(operationA).build(),
+            QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value(NotificationItemOutcome.FAILED.name()).build()
+        );
+
+        // Then it must not match, proving the two predicates are evaluated against the same notification_items row
+        assertThat(triggerRepository.find(Pageable.UNPAGED, tenant, filters)).isEmpty();
+
+        // And filtering for "failed in operation B" does match
+        List<QueryFilter> matchingFilters = List.of(
+            QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value(operationB).build(),
+            QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value(NotificationItemOutcome.FAILED.name()).build()
+        );
+        assertThat(triggerRepository.find(Pageable.UNPAGED, tenant, matchingFilters))
+            .extracting(TriggerState::uid)
+            .containsExactly(trigger.uid());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenOperationIdIsUnknown() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant).build());
+
+        QueryFilter filter = QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value("unknown-operation-id").build();
+
+        assertThat(triggerRepository.find(Pageable.UNPAGED, tenant, List.of(filter))).isEmpty();
+    }
+
     @Test
     void shouldGetEmptyForFindGivenNoExistingId() {
         // GIVEN
@@ -139,7 +245,7 @@ public abstract class AbstractTriggerRepositoryTest {
         TriggerState.TriggerStateBuilder builder = trigger(tenant);
 
         // WHEN
-        Optional<TriggerState> result = triggerStateStore.findById(builder.build());
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(builder.build());
 
         // THEN
         assertThat(result).isEmpty();
@@ -153,11 +259,31 @@ public abstract class AbstractTriggerRepositoryTest {
         triggerStateStore.save(state);
 
         // WHEN
-        Optional<TriggerState> result = triggerStateStore.findById(state);
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(state);
 
         // THEN
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(state));
+    }
+
+    @Test
+    void shouldKeepStatesDistinctWhenFlowIdsDifferOnlyByCase() {
+        // GIVEN
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState upper = trigger(tenant).flowId("Flow").triggerId("trigger").build();
+        TriggerState lower = trigger(tenant).flowId("flow").triggerId("trigger").build();
+        triggerStateStore.save(upper);
+        triggerStateStore.save(lower);
+
+        // WHEN
+        Optional<TriggerState> foundUpper = triggerStateStore.findByIdWithoutAcl(upper);
+        Optional<TriggerState> foundLower = triggerStateStore.findByIdWithoutAcl(lower);
+        Optional<TriggerState> foundOtherCase = triggerStateStore.findByIdWithoutAcl(trigger(tenant).flowId("FLOW").triggerId("trigger").build());
+
+        // THEN
+        assertThat(foundUpper.map(TriggerState::getFlowId)).contains("Flow");
+        assertThat(foundLower.map(TriggerState::getFlowId)).contains("flow");
+        assertThat(foundOtherCase).isEmpty();
     }
 
     @Test
@@ -174,7 +300,7 @@ public abstract class AbstractTriggerRepositoryTest {
         triggerStateStore.save(updated);
 
         // THEN
-        Optional<TriggerState> result = triggerStateStore.findById(updated);
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(updated);
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(updated));
         assertThat(result.get().getUpdatedAt()).isEqualTo(updatedAt);
@@ -530,6 +656,19 @@ public abstract class AbstractTriggerRepositoryTest {
     private static final TriggerState triggerUnlocked = TriggerState.builder()
         .triggerId("filter-locked-false").namespace("io.kestra.filter").flowId("filter-locked")
         .workerId("worker").locked(false).build();
+
+    // TRIGGER_STATE fixtures
+    private static final TriggerState triggerRuntimeDisabled = TriggerState.builder()
+        .triggerId("filter-state-runtime-disabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").disabled(true).build();
+
+    private static final TriggerState triggerSourceDisabled = TriggerState.builder()
+        .triggerId("filter-state-source-disabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").sourceDisabled(true).build();
+
+    private static final TriggerState triggerStateEnabled = TriggerState.builder()
+        .triggerId("filter-state-enabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").build();
 
     public final static List<Named<FiltersTestCase>> filtersTestCases = Stream.of(
 
@@ -1030,6 +1169,39 @@ public abstract class AbstractTriggerRepositoryTest {
                 QueryFilter.builder()
                     .field(Field.LOCKED).value(false)
                     .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        // --- TRIGGER_STATE ---
+        // A trigger disabled in its flow definition is off for the user just like one disabled at
+        // runtime, so it has to be reported under `disabled` even though `TriggerState.disabled` is false.
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("disabled")
+                    .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerStateEnabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("enabled")
+                    .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerStateEnabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("disabled")
+                    .operation(Op.NOT_EQUALS).build()
             )
             .build()
     ).map(tc -> Named.of(tc.queryFilter().toString(), tc)).toList();

@@ -247,7 +247,7 @@ class FlowableUtilsTest {
     }
 
     @Test
-    void resolveValues_withStringJsonArrayContainingDuplicates_shouldDeduplicate() throws Exception {
+    void resolveValues_withStringJsonArrayContainingDuplicates_shouldKeepThem() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
@@ -256,7 +256,42 @@ class FlowableUtilsTest {
 
         // Then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).containsExactly("a", "b");
+        assertThat(result.getLeft()).containsExactly("a", "b", "a");
+    }
+
+    @Test
+    void resolveValues_withStringJsonArrayOfMixedScalars_shouldReturnTheirJsonForm() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[1, 3000000000, 2.5, true, \"a\", {\"k\": 1}]");
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("1", "3000000000", "2.5", "true", "a", "{\"k\":1}");
+    }
+
+    @Test
+    void resolveValues_withObjectElementContainingNull_shouldOmitTheNullFields() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[{\"a\": 1, \"b\": null, \"c\": {\"d\": null}}]");
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("{\"a\":1,\"c\":{}}");
+    }
+
+    @Test
+    void resolveValues_withNullElementInJsonArray_shouldThrow() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When / Then — a null iteration value is rejected (drives Loop to fail the execution)
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "[\"a\", null, \"c\"]"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Found a null value inside the iteration values");
     }
 
     @Test
@@ -289,7 +324,7 @@ class FlowableUtilsTest {
     }
 
     @Test
-    void resolveValues_withListContainingDuplicates_shouldDeduplicate() throws Exception {
+    void resolveValues_withListContainingDuplicates_shouldKeepThem() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
@@ -298,7 +333,7 @@ class FlowableUtilsTest {
 
         // Then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).containsExactly("x", "y");
+        assertThat(result.getLeft()).containsExactly("x", "y", "x");
     }
 
     @Test
@@ -313,6 +348,30 @@ class FlowableUtilsTest {
         assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, values))
             .isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("Found a null value");
+    }
+
+    @Test
+    void resolveValues_withPlainString_shouldThrowClearMessageNotJacksonError() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When/Then
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "hello world"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("must be a list, a map, or an expression")
+            .hasMessageNotContaining("Unrecognized token")
+            .hasMessageNotContaining("StreamReadFeature");
+    }
+
+    @Test
+    void resolveValues_withNonContainerJson_shouldThrowClearMessage() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When/Then a valid JSON scalar (a number) is still not a list or a map
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "5"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("must be a list, a map, or an expression");
     }
 
     @Test
@@ -482,6 +541,21 @@ class FlowableUtilsTest {
         assertThat(result.getLeft()).containsExactly("x", "y");
     }
 
+    @Test
+    void readLoopValuesFromUri_shouldNotParseRecordsAfterTheRequestedOnes() throws Exception {
+        // Given: valid records followed by a malformed one that must not be reached
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.workingDir().createTempFile(".ion");
+        Files.writeString(path, "\"a\"\n\"b\"\n\"c\"\n{broken\n");
+        URI uri = runContext.storage().putFile(path.toFile());
+
+        // When
+        Pair<List<String>, Long> result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("a", "b");
+    }
+
     /** Creates a text ION file from a list of strings, stores it, and returns its kestra:// URI. */
     private URI createIonFile(RunContext runContext, List<String> values) throws IOException {
         Path path = runContext.workingDir().createTempFile(".ion");
@@ -532,6 +606,79 @@ class FlowableUtilsTest {
         // Then
         assertThat(result.getLeft()).containsExactly("c", "d");
         assertThat(result.getRight()).isEqualTo(4L);
+    }
+
+
+    @Test
+    void resolveSequentialNexts_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {
+        // Regression for #18909: a task run in RETRYING (task-level retry pending its
+        // ExecutionDelay) is neither created/submitted/running nor terminated, so it used to
+        // slip through the in-flight guard. With a terminated predecessor present, the nexts
+        // engine then resolved "the task after the last terminated one" - the retried task
+        // itself - and appended a SECOND task run for the same task id.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS);
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.RETRYING);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveSequentialNexts(
+            execution,
+            List.of(setup, waiting, last)
+        );
+
+        // Then: the retried task is in-flight, so nothing may be dispatched - no duplicate
+        // task run for "waiting" and no premature dispatch of "last".
+        assertThat(next).isEmpty();
+    }
+
+    @Test
+    void resolveWaitForNext_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {
+        // Same RETRYING in-flight leak as above, on the resolveWaitForNext path used by
+        // LoopUntil children.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun parentRun = TaskRun.builder().id("parent").taskId("loop").build();
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS).toBuilder().parentTaskRunId("parent").build();
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.RETRYING).toBuilder().parentTaskRunId("parent").build();
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        List<NextTaskRun> next = FlowableUtils.resolveWaitForNext(
+            execution,
+            List.of(setup, waiting, last),
+            List.of(),
+            List.of(),
+            parentRun
+        );
+
+        assertThat(next).isEmpty();
     }
 
     private static ResolvedTask resolvedTask(String id) {

@@ -7,7 +7,7 @@
         <div v-ks-loading="isLoading">
             <Vars
                 :execution="props.execution"
-                class="table-unrounded mt-1"
+                class="outputs-vars"
                 :data="outputs"
             />
         </div>
@@ -63,3 +63,9 @@
         }
     })
 </script>
+
+<style scoped>
+    .outputs-vars {
+        margin-top: var(--ks-spacing-1);
+    }
+</style>

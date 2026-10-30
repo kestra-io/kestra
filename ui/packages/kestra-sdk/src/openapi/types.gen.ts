@@ -4,6 +4,11 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * How the field is compared to the value.
+ */
+export type AbstractFilterFilterType = 'CONTAINS' | 'ENDS_WITH' | 'EQUAL_TO' | 'GREATER_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'IN' | 'IS_FALSE' | 'IS_NOT_NULL' | 'IS_NULL' | 'IS_TRUE' | 'LESS_THAN' | 'LESS_THAN_OR_EQUAL_TO' | 'NOT_CONTAINS' | 'NOT_EQUAL_TO' | 'NOT_IN' | 'OR' | 'REGEX' | 'STARTS_WITH' | 'PREFIX';
+
 export type AbstractFlow = {
     id: string;
     namespace: string;
@@ -14,7 +19,6 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
-    outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
      *
@@ -27,7 +31,7 @@ export type AbstractFlow = {
     draft: boolean;
     labels?: Array<Label>;
     variables?: {
-        [key: string]: never;
+        [key: string]: unknown;
     };
     /**
      * Routing requirements (tags + fallback) for this flow.
@@ -163,10 +167,6 @@ export type AiControllerAiProviderResponse = {
     isDefault?: boolean;
 };
 
-export type AiControllerDashboardGenerationPrompt = DashboardGenerationPrompt & {
-    providerId?: string;
-};
-
 export type AiControllerFlowGenerationPrompt = FlowGenerationPrompt & {
     providerId?: string;
 };
@@ -242,7 +242,7 @@ export type ApiExecution = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecution = {
@@ -258,7 +258,25 @@ export type ApiLightExecution = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
+};
+
+/**
+ * Slim projection of LoopRun, without the parent `Execution` it carries for internal use. Used wherever a loop iteration's identity needs to reach the API or the UI, so a list of iterations doesn't each embed a copy of the execution that contains the loop.
+ */
+export type ApiLoopRun = {
+    taskId: string;
+    taskRunId: string;
+    index?: number;
+    key?: string | null;
+    value: string;
+    parents?: Array<ApiLoopRunParent>;
+};
+
+export type ApiLoopRunParent = {
+    index?: number;
+    key?: string | null;
+    value: string;
 };
 
 /**
@@ -388,6 +406,10 @@ export type ApiTriggerAndState = {
  * Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`). The
  * scheduler's `type` is exposed as `kind` to not clash with the trigger definition's
  * `type` (the plugin class) when both are merged by API consumers.
+ *
+ *
+ * `disabled` is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read `sourceDisabled` as well, which mirrors the flow definition's own flag.
  */
 export type ApiTriggerState = {
     namespace: string;
@@ -399,6 +421,7 @@ export type ApiTriggerState = {
     backfill?: Backfill;
     stopAfter?: Array<StateType>;
     disabled?: boolean;
+    sourceDisabled?: boolean;
     locked?: boolean;
     workerId?: string;
     lastTriggeredDate?: string;
@@ -414,9 +437,22 @@ export type ArtefactDraft = {
     constraints?: string | null;
 };
 
-export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP' | 'TEST_SUITE';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
+    /**
+     * At most one parent. Parent depth is limited by the service layer, not by this model.
+     */
+    partOf?: AssetRelationRef | null;
+    /**
+     * Assets related to this one.
+     *
+     * Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.
+     */
+    related?: Array<AssetRelationRef> | null;
     namespace?: string;
     id: string;
     type: string;
@@ -427,18 +463,51 @@ export type Asset = {
             [key: string]: unknown;
         };
     };
+    /**
+     * The day-2 actions offered on this asset, each backing onto a flow.
+     *
+     * Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. When it is omitted, the stored actions are kept. It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API.
+     */
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
 
 export type AssetIdentifier = {
-    id?: string;
+    id: string;
     type?: string;
 };
 
+/**
+ * A reference to another asset of the same tenant.
+ */
+export type AssetRelationRef = {
+    /**
+     * The id of the referenced asset.
+     */
+    id: string;
+    /**
+     * The namespace of the referenced asset, informational: asset ids are unique per tenant.
+     */
+    namespace?: string | null;
+    /**
+     * The role this asset plays in the relation, for example primary or backup.
+     */
+    role?: string | null;
+};
+
 export type AssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
     enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
     inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
     outputs?: PropertyListAsset;
     /**
      * Asset failure behavior
@@ -452,6 +521,8 @@ export type AssetsInOut = {
     inputs?: Array<AssetIdentifier>;
     outputs?: Array<Asset>;
 };
+
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
 
 /**
  * A backfill configuration.
@@ -495,6 +566,7 @@ export type BasicAuthCredentials = {
     uid?: string;
     username?: string;
     password?: string;
+    currentPassword?: string;
 };
 
 export type BlueprintControllerApiBlueprintItem = {
@@ -522,19 +594,6 @@ export type BlueprintControllerKind = 'APP' | 'DASHBOARD' | 'FLOW';
 export type Breakpoint = {
     id: string;
     value?: string | null;
-};
-
-export type BulkErrorResponse = {
-    /**
-     * The error message
-     */
-    message?: string;
-    /**
-     * The list of items that failed validation
-     */
-    invalids?: {
-        [key: string]: unknown;
-    };
 };
 
 export type BulkResponse = {
@@ -587,6 +646,7 @@ export type CheckStyle = 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO';
 export type Concurrency = {
     limit: number;
     behavior: ConcurrencyBehavior;
+    queueLimit?: number;
 };
 
 export type ConcurrencyBehavior = 'QUEUE' | 'CANCEL' | 'FAIL';
@@ -651,12 +711,29 @@ export type DailyExecutionStatisticsDuration = {
     count: number;
 };
 
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
     title: string;
     description?: string;
     timeWindow?: TimeWindow;
+    queryTimeout?: string;
     charts?: Array<ChartChartOption>;
     deleted: boolean;
     created?: string;
@@ -669,22 +746,12 @@ export type DashboardControllerPreviewRequest = {
     globalFilter?: ChartFiltersOverrides | null;
 };
 
-export type DashboardGenerationPrompt = {
-    conversationId: string;
-    userPrompt: string;
-    yaml?: string;
-};
-
-export type DashboardSettings = {
-    defaultHomeDashboard?: string;
-    defaultFlowOverviewDashboard?: string;
-    defaultNamespaceOverviewDashboard?: string;
-};
-
 export type DependsOn = {
     inputs?: Array<string> | null;
     condition?: string | null;
 };
+
+export type DescriptionDisplayMode = 'TEXT' | 'TOOLTIP';
 
 export type DocumentationWithSchema = {
     markdown?: string;
@@ -694,37 +761,45 @@ export type DocumentationWithSchema = {
 export type EditionProviderEdition = 'OSS' | 'EE';
 
 export type EventExecutionStatusEvent = {
-    data?: ExecutionStatusEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecution = {
-    data?: Execution;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: Execution;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventFollowLogEvent = {
-    data?: FollowLogEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
+};
+
+export type EventNotification = {
+    data: Notification;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventObject = {
-    data?: {
+    data: {
         [key: string]: unknown;
     };
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutableTaskSubflowId = {
@@ -780,6 +855,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputAndValu
 export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError = {
     message: string;
     renderError?: boolean;
+    path?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -830,6 +906,8 @@ export type ExecutionMetadata = {
     attemptNumber?: number;
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
+    executionDepth?: number;
+    taskRunStatistic?: TaskRunStatistic;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -909,6 +987,26 @@ export type ExpressionControllerRenderedExpressions = {
     };
 };
 
+/**
+ * A condition on one field of a resource.
+ */
+export type FieldCondition = {
+    /**
+     * The field this condition reads.
+     */
+    field: string;
+    /**
+     * How the field is compared to the value.
+     */
+    operator: AbstractFilterFilterType;
+    /**
+     * The value the field is compared to.
+     *
+     * A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`.
+     */
+    value?: string | number | boolean | Array<unknown> | null;
+};
+
 export type FileAttributes = {
     fileName?: string;
     lastModifiedTime?: number;
@@ -954,7 +1052,15 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
-    variables?: {};
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    variables?: {
+        [key: string]: unknown;
+    };
     tasks: Array<Task>;
     errors?: Array<Task>;
     afterExecution?: Array<Task>;
@@ -965,13 +1071,12 @@ export type Flow = AbstractFlow & {
      * Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.
      */
     policyRefs?: Array<string>;
-    concurrency?: Concurrency;
     /**
-     * Output values available and exposes to other flows.
+     * Concurrency
      *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     * Limits the number of concurrent executions of the flow.
      */
-    outputs?: Array<Output>;
+    concurrency?: Concurrency;
     /**
      * Retry
      *
@@ -996,6 +1101,27 @@ export type Flow = AbstractFlow & {
     quotas?: Array<Quota>;
 };
 
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
+    /**
+     * The conditions under which this action is offered.
+     *
+     * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.
+     */
+    when?: Array<FieldCondition> | null;
+};
+
 export type FlowControllerFlowWithDeprecatedTasks = {
     namespace?: string;
     flowId?: string;
@@ -1009,7 +1135,6 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
-    outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
      *
@@ -1024,12 +1149,20 @@ export type FlowForExecution = AbstractFlow & {
      * Labels as a list of Label (key/value pairs) or as a map of string to string.
      */
     labels?: MapObjectObject;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1197,14 +1330,21 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
-    variables?: {};
-    concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
      *
      * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
      */
     outputs?: Array<Output>;
+    variables?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
+    concurrency?: Concurrency;
     sla?: Array<Sla>;
     /**
      * Quotas evaluated before the flow is executed (EE only).
@@ -1257,9 +1397,18 @@ export type InputObject = {
      */
     description?: string;
     /**
+     * How the description of the input is displayed.
+     *
+     * `TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`.
+     */
+    descriptionDisplayMode?: DescriptionDisplayMode;
+    /**
      * The dependencies of the input.
      */
     dependsOn?: DependsOn;
+    /**
+     * Whether the input is required.
+     */
     required?: boolean;
     /**
      * The default value to use if no value is specified.
@@ -1346,12 +1495,14 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 export type LoopRunParent = {
     index?: number;
     key?: string | null;
     value?: string;
+    parseValues?: boolean;
 };
 
 export type MapObjectObject = {
@@ -1475,6 +1626,7 @@ export type MiscControllerConfiguration = {
     chartDefaultDuration?: string;
     flowTemplate?: string;
     commitDate?: string;
+    versionUpgrade?: VersionServiceVersionUpgrade;
     isCustomDashboardsEnabled?: boolean;
     isAnonymousUsageEnabled?: boolean;
     isUiAnonymousUsageEnabled?: boolean;
@@ -1486,7 +1638,10 @@ export type MiscControllerConfiguration = {
     isAiEnabled?: boolean;
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
+    isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
+    isPluginAutoInstallEnabled?: boolean;
+    isPluginEndpointsEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1519,6 +1674,42 @@ export type NamespaceLight = {
     id: string;
 };
 
+export type Notification = {
+    outcome?: NotificationOutcome | null;
+    ongoing?: boolean;
+    id?: string;
+    userId?: string | null;
+    tenantId?: string | null;
+    type: string;
+    asyncOperationType?: string | null;
+    resourceType?: AsyncOperationTypeResourceType | null;
+    title: string;
+    referenceId?: string | null;
+    succeededItems?: number | null;
+    failedItems?: number | null;
+    totalItems?: number | null;
+    read?: boolean;
+    createdDate: string;
+    updatedDate: string;
+};
+
+export type NotificationControllerApiMarkAllRead = {
+    updated?: number;
+};
+
+export type NotificationControllerApiNotificationHistory = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+    nextCursor?: string | null;
+};
+
+export type NotificationControllerApiNotificationsSince = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+};
+
+export type NotificationOutcome = 'SUCCEEDED' | 'PARTIAL' | 'FAILED';
+
 export type Output = {
     id: string;
     description?: string;
@@ -1528,6 +1719,12 @@ export type Output = {
     type: Type;
     displayName?: string;
     required?: boolean;
+    searchable?: boolean;
+};
+
+export type OutputControllerSearchableOutputInformation = {
+    outputId?: string;
+    value?: string;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1536,6 +1733,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**
@@ -1613,18 +1819,6 @@ export type PagedResultsKvEntry = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
 export type PagedResultsMetricEntry = {
     results: Array<MetricEntry>;
     total: number;
@@ -1635,6 +1829,22 @@ export type PagedResultsMetricEntry = {
  */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsOutputControllerSearchableOutputInformation = {
+    results: Array<OutputControllerSearchableOutputInformation>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsPluginControllerApiTicketingSystem = {
+    results: Array<PluginControllerApiTicketingSystem>;
     total: number;
 };
 
@@ -1667,6 +1877,8 @@ export type PaginationType = 'OFFSET' | 'CURSOR';
 export type PebbleFunction = {
     name?: string;
     arguments?: Array<PebbleFunctionArgument>;
+    deprecated?: boolean;
+    replacement?: string | null;
 };
 
 export type PebbleFunctionArgument = {
@@ -1693,6 +1905,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;
@@ -1709,11 +1922,35 @@ export type PluginPluginElementMetadata = {
     deprecated?: boolean;
     title?: string;
     description?: string;
+    aliases?: Array<string>;
+};
+
+export type PluginArtifact = {
+    groupId?: string;
+    artifactId?: string;
+    extension?: string;
+    classifier?: string;
+    version?: string;
+    uri?: string;
 };
 
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
+};
+
+/**
+ * A ticketing system offered by an installed plugin.
+ */
+export type PluginControllerApiTicketingSystem = {
+    /**
+     * the plugin manifest's declared title (`X-Kestra-Title`), stored verbatim on a case when a user picks it
+     */
+    name?: string;
+    /**
+     * icon key resolvable via `GET /api/v1/plugins/icons` --- the class of one task in this plugin that opens a ticket
+     */
+    icon?: string;
 };
 
 /**
@@ -1728,6 +1965,14 @@ export type PluginControllerApiTriggerPlugin = {
      * human-readable name (Schema#title if set, otherwise simple class name)
      */
     name?: string;
+    /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
+    /**
+     * the owning plugin artifact's manifest title (for example `"NATS"` for every subgroup of the NATS plugin) - coarser than `pluginTitle`, which falls back to a bare package segment (such as `"core"`) when a subgroup declares no title; the UI escalates to this when `pluginTitle` alone still collides
+     */
+    pluginGroupTitle?: string;
     /**
      * one-line description from the plugin
      */
@@ -1763,6 +2008,29 @@ export type PluginIcon = {
     monochrome?: boolean;
     hash?: string;
 };
+
+export type PluginInstallJob = {
+    id?: string;
+    status?: PluginInstallJobStatus;
+    artifacts?: Array<PluginArtifact>;
+    progress?: {
+        [key: string]: PluginInstallJobArtifactProgress;
+    };
+    startedAt?: string;
+    finishedAt?: string;
+    error?: string;
+};
+
+export type PluginInstallJobArtifactProgress = {
+    resource?: string;
+    transferred?: number;
+    total?: number;
+    state?: PluginInstallJobArtifactState;
+};
+
+export type PluginInstallJobArtifactState = 'STARTED' | 'PROGRESSING' | 'SUCCEEDED' | 'FAILED';
+
+export type PluginInstallJobStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 
 export type PluginSchema = {
     properties?: {
@@ -1801,6 +2069,62 @@ export type PluginUiModuleWithGroup = {
     styles?: Array<string>;
     sourceHash?: string;
     distribution?: PluginDistribution;
+};
+
+/**
+ * An RFC 9457 problem details document describing a failed request.
+ */
+export type ProblemDetail = {
+    /**
+     * Stable, machine-readable identifier of the problem kind, resolving to its documentation. This is what clients branch on.
+     */
+    type?: string;
+    /**
+     * Short, human-readable summary of the problem kind. Stable for a given type and never parameterised.
+     */
+    title?: string;
+    /**
+     * The HTTP status code, repeated here for convenience.
+     */
+    status?: number;
+    /**
+     * Human-readable explanation specific to this occurrence.
+     */
+    detail?: string;
+    /**
+     * The path of the request that produced this problem.
+     */
+    instance?: string;
+    /**
+     * Field-level errors, when several problems are reported at once.
+     */
+    errors?: Array<ProblemError>;
+    /**
+     * Correlation identifier for the matching server-side log entry. Present on server errors only.
+     */
+    traceId?: string;
+};
+
+/**
+ * A single field-level error inside a problem details document.
+ */
+export type ProblemError = {
+    /**
+     * What is wrong with this field.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the field in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the field, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
+    /**
+     * Problem type of this individual error, when it differs per item. Follows the same URI scheme as the enclosing document.
+     */
+    type?: string;
 };
 
 export type PropertyAssetFailureBehavior = ({
@@ -1862,7 +2186,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -1914,11 +2238,10 @@ export type ServerInstanceType = 'SERVER' | 'STANDALONE';
 export type ServiceServiceState = 'CREATED' | 'RUNNING' | 'ERROR' | 'DISCONNECTED' | 'TERMINATING' | 'TERMINATED_GRACEFULLY' | 'TERMINATED_FORCED' | 'NOT_RUNNING' | 'INACTIVE' | 'MAINTENANCE';
 
 export type ServiceInstance = {
-    server?: ServerInstance;
-    metrics?: Array<Metric>;
-    state?: ServiceServiceState;
     id?: string;
     type?: ServiceType;
+    state?: ServiceServiceState;
+    server?: ServerInstance;
     createdAt?: string;
     updatedAt?: string;
     events?: Array<ServiceInstanceTimestampedEvent>;
@@ -1927,6 +2250,7 @@ export type ServiceInstance = {
             [key: string]: unknown;
         };
     };
+    metrics?: Array<Metric>;
     seqId?: number;
 };
 
@@ -2042,9 +2366,6 @@ export type State = {
     readonly endDate?: string | null;
     current: StateType;
     histories: Array<StateHistory>;
-    readonly getDuration: string;
-    readonly getStartDate: string;
-    readonly getEndDate: string;
 };
 
 export type StateHistory = {
@@ -2098,6 +2419,9 @@ export type Task = {
     runIf?: string;
     allowWarning?: boolean;
     taskCache?: Cache;
+    /**
+     * Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition.
+     */
     assets?: AssetsDeclaration | null;
 };
 
@@ -2164,15 +2488,16 @@ export type TaskRunAttempt = {
     logFile?: string | null;
 };
 
+export type TaskRunStatistic = {
+    count?: number;
+    durationSumMs?: number;
+    durationMinMs?: number | null;
+    durationMaxMs?: number | null;
+};
+
 export type TaskWithVersion = {
     cls?: string;
     version?: string;
-};
-
-export type TenantControllerSetTenantDefaultDashboardsRequest = {
-    defaultHomeDashboard?: string;
-    defaultFlowOverviewDashboard?: string;
-    defaultNamespaceOverviewDashboard?: string;
 };
 
 export type TenantInterface = {
@@ -2188,7 +2513,7 @@ export type TriggerControllerApiCreateBackfillRequest = {
     namespace?: string;
     flowId?: string;
     triggerId?: string;
-    backfill?: TriggerControllerApiCreateBackfillRequestBackfill;
+    backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {
@@ -2238,18 +2563,46 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
 
 export type ValidateConstraintViolation = {
+    errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+/**
+ * A single validation error, located in the submitted source.
+ */
+export type ValidationError = {
+    /**
+     * What is wrong.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the error in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the error, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
+};
+
+export type VersionServiceVersionUpgrade = {
+    from?: string;
+    to?: string;
+    at?: string;
 };
 
 export type WebhookResponse = {
@@ -2307,7 +2660,7 @@ export type ApiExecutionWritable = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecutionWritable = {
@@ -2323,7 +2676,7 @@ export type ApiLightExecutionWritable = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 /**
@@ -2383,19 +2736,19 @@ export type ApiTaskRunWritable = {
 };
 
 export type EventExecutionStatusEventWritable = {
-    data?: ExecutionStatusEventWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEventWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecutionWritable = {
-    data?: ExecutionWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutionWritable = {
@@ -2440,6 +2793,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 /**
@@ -2508,6 +2862,23 @@ export type GetBasicAuthConfigErrorsData = {
     url: '/api/v1/basicAuthValidationErrors';
 };
 
+export type GetBasicAuthConfigErrorsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetBasicAuthConfigErrorsError = GetBasicAuthConfigErrorsErrors[keyof GetBasicAuthConfigErrorsErrors];
+
 export type GetBasicAuthConfigErrorsResponses = {
     /**
      * getBasicAuthConfigErrors 200 response
@@ -2523,6 +2894,23 @@ export type GetConfigurationData = {
     query?: never;
     url: '/api/v1/configs';
 };
+
+export type GetConfigurationErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetConfigurationError = GetConfigurationErrors[keyof GetConfigurationErrors];
 
 export type GetConfigurationResponses = {
     /**
@@ -2540,6 +2928,23 @@ export type GetLoginConfigurationData = {
     url: '/api/v1/configs/login';
 };
 
+export type GetLoginConfigurationErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetLoginConfigurationError = GetLoginConfigurationErrors[keyof GetLoginConfigurationErrors];
+
 export type GetLoginConfigurationResponses = {
     /**
      * getLoginConfiguration 200 response
@@ -2555,6 +2960,23 @@ export type LoginData = {
     query?: never;
     url: '/api/v1/login';
 };
+
+export type LoginErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type LoginError = LoginErrors[keyof LoginErrors];
 
 export type LoginResponses = {
     /**
@@ -2574,6 +2996,23 @@ export type LogoutData = {
     url: '/api/v1/logout';
 };
 
+export type LogoutErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type LogoutError = LogoutErrors[keyof LogoutErrors];
+
 export type LogoutResponses = {
     /**
      * logout 200 response
@@ -2585,25 +3024,6 @@ export type LogoutResponses = {
 
 export type LogoutResponse = LogoutResponses[keyof LogoutResponses];
 
-export type GenerateDashboardData = {
-    /**
-     * Prompt and context required for dashboard generation
-     */
-    body: AiControllerDashboardGenerationPrompt;
-    path?: never;
-    query?: never;
-    url: '/api/v1/main/ai/generate/dashboard';
-};
-
-export type GenerateDashboardResponses = {
-    /**
-     * generateDashboard 200 response
-     */
-    200: string;
-};
-
-export type GenerateDashboardResponse = GenerateDashboardResponses[keyof GenerateDashboardResponses];
-
 export type GenerateFlowData = {
     /**
      * Prompt and context required for flow generation
@@ -2613,6 +3033,23 @@ export type GenerateFlowData = {
     query?: never;
     url: '/api/v1/main/ai/generate/flow';
 };
+
+export type GenerateFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GenerateFlowError = GenerateFlowErrors[keyof GenerateFlowErrors];
 
 export type GenerateFlowResponses = {
     /**
@@ -2630,6 +3067,23 @@ export type GetProvidersData = {
     url: '/api/v1/main/ai/providers';
 };
 
+export type GetProvidersErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetProvidersError = GetProvidersErrors[keyof GetProvidersErrors];
+
 export type GetProvidersResponses = {
     /**
      * getProviders 200 response
@@ -2639,12 +3093,274 @@ export type GetProvidersResponses = {
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
 
+export type ListenUserNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/follow';
+};
+
+export type ListenUserNotificationsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListenUserNotificationsError = ListenUserNotificationsErrors[keyof ListenUserNotificationsErrors];
+
+export type ListenUserNotificationsResponses = {
+    /**
+     * listenUserNotifications 200 response
+     */
+    200: EventNotification;
+};
+
+export type ListenUserNotificationsResponse = ListenUserNotificationsResponses[keyof ListenUserNotificationsResponses];
+
+export type HistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Cursor of the previous page, as `<createdDate>,<id>`. Omit for the first page.
+         */
+        before?: string | null;
+        /**
+         * Maximum number of notifications to return
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notifications/history';
+};
+
+export type HistoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * history 200 response
+     */
+    200: NotificationControllerApiNotificationHistory;
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type MarkAllReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type MarkAllReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkAllReadError = MarkAllReadErrors[keyof MarkAllReadErrors];
+
+export type MarkAllReadResponses = {
+    /**
+     * markAllRead 200 response
+     */
+    200: NotificationControllerApiMarkAllRead;
+};
+
+export type MarkAllReadResponse = MarkAllReadResponses[keyof MarkAllReadResponses];
+
+export type PollSinceData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The server timestamp returned by a previous call to this endpoint (or to /history)
+         */
+        since: string;
+    };
+    url: '/api/v1/notifications/since';
+};
+
+export type PollSinceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PollSinceError = PollSinceErrors[keyof PollSinceErrors];
+
+export type PollSinceResponses = {
+    /**
+     * pollSince 200 response
+     */
+    200: NotificationControllerApiNotificationsSince;
+};
+
+export type PollSinceResponse = PollSinceResponses[keyof PollSinceResponses];
+
+export type UnreadCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/unread-count';
+};
+
+export type UnreadCountErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnreadCountError = UnreadCountErrors[keyof UnreadCountErrors];
+
+export type UnreadCountResponses = {
+    /**
+     * unreadCount 200 response
+     */
+    200: number;
+};
+
+export type UnreadCountResponse = UnreadCountResponses[keyof UnreadCountResponses];
+
+export type MarkReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkReadError = MarkReadErrors[keyof MarkReadErrors];
+
+export type MarkReadResponses = {
+    /**
+     * markRead 200 response
+     */
+    200: unknown;
+};
+
+export type MarkUnreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/unread';
+};
+
+export type MarkUnreadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkUnreadError = MarkUnreadErrors[keyof MarkUnreadErrors];
+
+export type MarkUnreadResponses = {
+    /**
+     * markUnread 200 response
+     */
+    200: unknown;
+};
+
 export type GetExpressionFiltersData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/pebble/filters';
 };
+
+export type GetExpressionFiltersErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExpressionFiltersError = GetExpressionFiltersErrors[keyof GetExpressionFiltersErrors];
 
 export type GetExpressionFiltersResponses = {
     /**
@@ -2661,6 +3377,23 @@ export type GetExpressionFunctionsData = {
     query?: never;
     url: '/api/v1/pebble/functions';
 };
+
+export type GetExpressionFunctionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExpressionFunctionsError = GetExpressionFunctionsErrors[keyof GetExpressionFunctionsErrors];
 
 export type GetExpressionFunctionsResponses = {
     /**
@@ -2695,6 +3428,23 @@ export type ListPluginsData = {
     url: '/api/v1/plugins';
 };
 
+export type ListPluginsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListPluginsError = ListPluginsErrors[keyof ListPluginsErrors];
+
 export type ListPluginsResponses = {
     /**
      * listPlugins 200 response
@@ -2704,12 +3454,64 @@ export type ListPluginsResponses = {
 
 export type ListPluginsResponse = ListPluginsResponses[keyof ListPluginsResponses];
 
+export type DetectMissingPluginsData = {
+    body: string;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/auto-install/detect';
+};
+
+export type DetectMissingPluginsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DetectMissingPluginsError = DetectMissingPluginsErrors[keyof DetectMissingPluginsErrors];
+
+export type DetectMissingPluginsResponses = {
+    /**
+     * Detection result
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DetectMissingPluginsResponse = DetectMissingPluginsResponses[keyof DetectMissingPluginsResponses];
+
 export type GetPluginBySubgroupsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/plugins/groups/subgroups';
 };
+
+export type GetPluginBySubgroupsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginBySubgroupsError = GetPluginBySubgroupsErrors[keyof GetPluginBySubgroupsErrors];
 
 export type GetPluginBySubgroupsResponses = {
     /**
@@ -2726,6 +3528,23 @@ export type GetPluginIconsData = {
     query?: never;
     url: '/api/v1/plugins/icons';
 };
+
+export type GetPluginIconsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginIconsError = GetPluginIconsErrors[keyof GetPluginIconsErrors];
 
 export type GetPluginIconsResponses = {
     /**
@@ -2744,6 +3563,23 @@ export type GetPluginGroupIconsData = {
     query?: never;
     url: '/api/v1/plugins/icons/groups';
 };
+
+export type GetPluginGroupIconsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginGroupIconsError = GetPluginGroupIconsErrors[keyof GetPluginGroupIconsErrors];
 
 export type GetPluginGroupIconsResponses = {
     /**
@@ -2768,6 +3604,23 @@ export type GetPluginIconData = {
     url: '/api/v1/plugins/icons/{cls}';
 };
 
+export type GetPluginIconErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginIconError = GetPluginIconErrors[keyof GetPluginIconErrors];
+
 export type GetPluginIconResponses = {
     /**
      * getPluginIcon 200 response
@@ -2789,11 +3642,28 @@ export type GetPluginIconSvgData = {
     url: '/api/v1/plugins/icons/{cls}/icon.svg';
 };
 
+export type GetPluginIconSvgErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginIconSvgError = GetPluginIconSvgErrors[keyof GetPluginIconSvgErrors];
+
 export type GetPluginIconSvgResponses = {
     /**
      * getPluginIconSvg 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type GetPluginIconSvgResponse = GetPluginIconSvgResponses[keyof GetPluginIconSvgResponses];
@@ -2804,6 +3674,23 @@ export type GetAllInputTypesData = {
     query?: never;
     url: '/api/v1/plugins/inputs';
 };
+
+export type GetAllInputTypesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetAllInputTypesError = GetAllInputTypesErrors[keyof GetAllInputTypesErrors];
 
 export type GetAllInputTypesResponses = {
     /**
@@ -2826,6 +3713,23 @@ export type GetSchemaFromInputTypeData = {
     url: '/api/v1/plugins/inputs/{type}';
 };
 
+export type GetSchemaFromInputTypeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetSchemaFromInputTypeError = GetSchemaFromInputTypeErrors[keyof GetSchemaFromInputTypeErrors];
+
 export type GetSchemaFromInputTypeResponses = {
     /**
      * getSchemaFromInputType 200 response
@@ -2835,12 +3739,107 @@ export type GetSchemaFromInputTypeResponses = {
 
 export type GetSchemaFromInputTypeResponse = GetSchemaFromInputTypeResponses[keyof GetSchemaFromInputTypeResponses];
 
+export type InstallPluginsData = {
+    body: Array<PluginArtifact>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/install';
+};
+
+export type InstallPluginsErrors = {
+    /**
+     * An artifact is not part of the plugin catalog
+     */
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: ProblemDetail;
+    /**
+     * Too many install jobs are already pending or running
+     */
+    429: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InstallPluginsError = InstallPluginsErrors[keyof InstallPluginsErrors];
+
+export type InstallPluginsResponses = {
+    /**
+     * Installation job accepted
+     */
+    202: unknown;
+};
+
+export type GetInstallJobData = {
+    body?: never;
+    path: {
+        jobId: string;
+    };
+    query?: never;
+    url: '/api/v1/plugins/install/{jobId}';
+};
+
+export type GetInstallJobErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Job not found
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetInstallJobError = GetInstallJobErrors[keyof GetInstallJobErrors];
+
+export type GetInstallJobResponses = {
+    /**
+     * Job snapshot
+     */
+    200: PluginInstallJob;
+};
+
+export type GetInstallJobResponse = GetInstallJobResponses[keyof GetInstallJobResponses];
+
 export type GetPluginUiManifestData = {
     body: Array<TaskWithVersion>;
     path?: never;
     query?: never;
     url: '/api/v1/plugins/pluginUiManifest';
 };
+
+export type GetPluginUiManifestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginUiManifestError = GetPluginUiManifestErrors[keyof GetPluginUiManifestErrors];
 
 export type GetPluginUiManifestResponses = {
     /**
@@ -2862,6 +3861,23 @@ export type GetPropertiesFromTypeData = {
     query?: never;
     url: '/api/v1/plugins/properties/{type}';
 };
+
+export type GetPropertiesFromTypeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPropertiesFromTypeError = GetPropertiesFromTypeErrors[keyof GetPropertiesFromTypeErrors];
 
 export type GetPropertiesFromTypeResponses = {
     /**
@@ -2889,9 +3905,30 @@ export type GetSchemasFromTypeData = {
          * If schema should be an array of requested type
          */
         arrayOf?: boolean | null;
+        /**
+         * Whether to merge the pre-baked plugin schema bundle for un-installed types
+         */
+        includeCatalog?: boolean | null;
     };
     url: '/api/v1/plugins/schemas/{type}';
 };
+
+export type GetSchemasFromTypeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetSchemasFromTypeError = GetSchemasFromTypeErrors[keyof GetSchemasFromTypeErrors];
 
 export type GetSchemasFromTypeResponses = {
     /**
@@ -2906,12 +3943,62 @@ export type GetSchemasFromTypeResponses = {
 
 export type GetSchemasFromTypeResponse = GetSchemasFromTypeResponses[keyof GetSchemasFromTypeResponses];
 
+export type ListTicketingSystemsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/ticketing-systems';
+};
+
+export type ListTicketingSystemsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTicketingSystemsError = ListTicketingSystemsErrors[keyof ListTicketingSystemsErrors];
+
+export type ListTicketingSystemsResponses = {
+    /**
+     * listTicketingSystems 200 response
+     */
+    200: PagedResultsPluginControllerApiTicketingSystem;
+};
+
+export type ListTicketingSystemsResponse = ListTicketingSystemsResponses[keyof ListTicketingSystemsResponses];
+
 export type ListTriggerPluginsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/plugins/triggers';
 };
+
+export type ListTriggerPluginsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTriggerPluginsError = ListTriggerPluginsErrors[keyof ListTriggerPluginsErrors];
 
 export type ListTriggerPluginsResponses = {
     /**
@@ -2939,6 +4026,23 @@ export type GetPluginDocumentationData = {
     url: '/api/v1/plugins/{cls}';
 };
 
+export type GetPluginDocumentationErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginDocumentationError = GetPluginDocumentationErrors[keyof GetPluginDocumentationErrors];
+
 export type GetPluginDocumentationResponses = {
     /**
      * getPluginDocumentation 200 response
@@ -2959,6 +4063,23 @@ export type GetPluginVersionsData = {
     query?: never;
     url: '/api/v1/plugins/{cls}/versions';
 };
+
+export type GetPluginVersionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginVersionsError = GetPluginVersionsErrors[keyof GetPluginVersionsErrors];
 
 export type GetPluginVersionsResponses = {
     /**
@@ -2990,6 +4111,23 @@ export type GetPluginDocumentationFromVersionData = {
     url: '/api/v1/plugins/{cls}/versions/{version}';
 };
 
+export type GetPluginDocumentationFromVersionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginDocumentationFromVersionError = GetPluginDocumentationFromVersionErrors[keyof GetPluginDocumentationFromVersionErrors];
+
 export type GetPluginDocumentationFromVersionResponses = {
     /**
      * getPluginDocumentationFromVersion 200 response
@@ -3015,6 +4153,23 @@ export type GetPluginUiData = {
     url: '/api/v1/plugins/{group}/pluginUi/{path}';
 };
 
+export type GetPluginUiErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetPluginUiError = GetPluginUiErrors[keyof GetPluginUiErrors];
+
 export type GetPluginUiResponses = {
     /**
      * getPluginUi 200 response
@@ -3024,22 +4179,6 @@ export type GetPluginUiResponses = {
 
 export type GetPluginUiResponse = GetPluginUiResponses[keyof GetPluginUiResponses];
 
-export type SetTenantDefaultDashboardData = {
-    body: TenantControllerSetTenantDefaultDashboardsRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/tenants/main/settings/default-dashboards';
-};
-
-export type SetTenantDefaultDashboardResponses = {
-    /**
-     * setTenantDefaultDashboard 200 response
-     */
-    200: DashboardSettings;
-};
-
-export type SetTenantDefaultDashboardResponse = SetTenantDefaultDashboardResponses[keyof SetTenantDefaultDashboardResponses];
-
 export type CreateData = {
     body: ApiCreateThreadRequest;
     path: {
@@ -3048,6 +4187,23 @@ export type CreateData = {
     query?: never;
     url: '/api/v1/{tenant}/ai/threads';
 };
+
+export type CreateErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
 
 export type CreateResponses = {
     /**
@@ -3068,6 +4224,23 @@ export type GetData = {
     url: '/api/v1/{tenant}/ai/threads/{threadId}';
 };
 
+export type GetErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetError = GetErrors[keyof GetErrors];
+
 export type GetResponses = {
     /**
      * get 200 response
@@ -3086,6 +4259,23 @@ export type ChatData = {
     query?: never;
     url: '/api/v1/{tenant}/ai/threads/{threadId}/chat';
 };
+
+export type ChatErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ChatError = ChatErrors[keyof ChatErrors];
 
 export type ChatResponses = {
     /**
@@ -3106,6 +4296,23 @@ export type ConfirmData = {
     url: '/api/v1/{tenant}/ai/threads/{threadId}/confirm';
 };
 
+export type ConfirmErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ConfirmError = ConfirmErrors[keyof ConfirmErrors];
+
 export type ConfirmResponses = {
     /**
      * confirm 200 response
@@ -3123,6 +4330,23 @@ export type CreateBasicAuthData = {
     query?: never;
     url: '/api/v1/{tenant}/basicAuth';
 };
+
+export type CreateBasicAuthErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateBasicAuthError = CreateBasicAuthErrors[keyof CreateBasicAuthErrors];
 
 export type CreateBasicAuthResponses = {
     /**
@@ -3165,6 +4389,23 @@ export type SearchBlueprintsData = {
     url: '/api/v1/{tenant}/blueprints/community/{kind}';
 };
 
+export type SearchBlueprintsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchBlueprintsError = SearchBlueprintsErrors[keyof SearchBlueprintsErrors];
+
 export type SearchBlueprintsResponses = {
     /**
      * searchBlueprints 200 response
@@ -3192,6 +4433,23 @@ export type ListBlueprintTagsData = {
     url: '/api/v1/{tenant}/blueprints/community/{kind}/tags';
 };
 
+export type ListBlueprintTagsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListBlueprintTagsError = ListBlueprintTagsErrors[keyof ListBlueprintTagsErrors];
+
 export type ListBlueprintTagsResponses = {
     /**
      * listBlueprintTags 200 response
@@ -3218,6 +4476,23 @@ export type GetBlueprintData = {
     url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}';
 };
 
+export type GetBlueprintErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetBlueprintError = GetBlueprintErrors[keyof GetBlueprintErrors];
+
 export type GetBlueprintResponses = {
     /**
      * getBlueprint 200 response
@@ -3243,6 +4518,23 @@ export type GetBlueprintGraphData = {
     query?: never;
     url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}/graph';
 };
+
+export type GetBlueprintGraphErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetBlueprintGraphError = GetBlueprintGraphErrors[keyof GetBlueprintGraphErrors];
 
 export type GetBlueprintGraphResponses = {
     /**
@@ -3274,6 +4566,23 @@ export type GetBlueprintSourceData = {
     url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}/source';
 };
 
+export type GetBlueprintSourceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetBlueprintSourceError = GetBlueprintSourceErrors[keyof GetBlueprintSourceErrors];
+
 export type GetBlueprintSourceResponses = {
     /**
      * getBlueprintSource 200 response
@@ -3294,6 +4603,23 @@ export type MetricsData = {
     url: '/api/v1/{tenant}/cluster/metrics/{serviceType}';
 };
 
+export type MetricsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MetricsError = MetricsErrors[keyof MetricsErrors];
+
 export type MetricsResponses = {
     /**
      * metrics 200 response
@@ -3313,6 +4639,23 @@ export type GetServiceData = {
     url: '/api/v1/{tenant}/cluster/services/{id}';
 };
 
+export type GetServiceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetServiceError = GetServiceErrors[keyof GetServiceErrors];
+
 export type GetServiceResponses = {
     /**
      * getService 200 response
@@ -3331,6 +4674,23 @@ export type SearchConcurrencyLimitsData = {
     url: '/api/v1/{tenant}/concurrency-limit/search';
 };
 
+export type SearchConcurrencyLimitsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchConcurrencyLimitsError = SearchConcurrencyLimitsErrors[keyof SearchConcurrencyLimitsErrors];
+
 export type SearchConcurrencyLimitsResponses = {
     /**
      * searchConcurrencyLimits 200 response
@@ -3339,6 +4699,43 @@ export type SearchConcurrencyLimitsResponses = {
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
+
+export type GetConcurrencyLimitData = {
+    body?: never;
+    path: {
+        namespace: string;
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
+};
+
+export type GetConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetConcurrencyLimitError = GetConcurrencyLimitErrors[keyof GetConcurrencyLimitErrors];
+
+export type GetConcurrencyLimitResponses = {
+    /**
+     * getConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
 
 export type UpdateConcurrencyLimitData = {
     body: ConcurrencyLimit;
@@ -3350,6 +4747,23 @@ export type UpdateConcurrencyLimitData = {
     query?: never;
     url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
 };
+
+export type UpdateConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
 
 export type UpdateConcurrencyLimitResponses = {
     /**
@@ -3386,6 +4800,23 @@ export type SearchDashboardsData = {
     url: '/api/v1/{tenant}/dashboards';
 };
 
+export type SearchDashboardsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchDashboardsError = SearchDashboardsErrors[keyof SearchDashboardsErrors];
+
 export type SearchDashboardsResponses = {
     /**
      * searchDashboards 200 response
@@ -3394,34 +4825,6 @@ export type SearchDashboardsResponses = {
 };
 
 export type SearchDashboardsResponse = SearchDashboardsResponses[keyof SearchDashboardsResponses];
-
-export type CreateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards';
-};
-
-export type CreateDashboardErrors = {
-    /**
-     * If the dashboard id is reserved ('_default')
-     */
-    422: unknown;
-};
-
-export type CreateDashboardResponses = {
-    /**
-     * createDashboard 200 response
-     */
-    200: DashboardControllerDashboardResponse;
-};
-
-export type CreateDashboardResponse = CreateDashboardResponses[keyof CreateDashboardResponses];
 
 export type ExportChartData = {
     body: DashboardControllerPreviewRequest;
@@ -3437,11 +4840,28 @@ export type ExportChartData = {
     url: '/api/v1/{tenant}/dashboards/charts/export';
 };
 
+export type ExportChartErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportChartError = ExportChartErrors[keyof ExportChartErrors];
+
 export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -3455,11 +4875,28 @@ export type PreviewChartData = {
     url: '/api/v1/{tenant}/dashboards/charts/preview';
 };
 
+export type PreviewChartErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PreviewChartError = PreviewChartErrors[keyof PreviewChartErrors];
+
 export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
@@ -3473,6 +4910,23 @@ export type GetDefaultDashboardDefinitionsData = {
     url: '/api/v1/{tenant}/dashboards/defaults/definitions';
 };
 
+export type GetDefaultDashboardDefinitionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetDefaultDashboardDefinitionsError = GetDefaultDashboardDefinitionsErrors[keyof GetDefaultDashboardDefinitionsErrors];
+
 export type GetDefaultDashboardDefinitionsResponses = {
     /**
      * getDefaultDashboardDefinitions 200 response
@@ -3483,86 +4937,6 @@ export type GetDefaultDashboardDefinitionsResponses = {
 };
 
 export type GetDefaultDashboardDefinitionsResponse = GetDefaultDashboardDefinitionsResponses[keyof GetDefaultDashboardDefinitionsResponses];
-
-export type GetDefaultDashboardsData = {
-    body?: never;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/settings/default-dashboards';
-};
-
-export type GetDefaultDashboardsResponses = {
-    /**
-     * getDefaultDashboards 200 response
-     */
-    200: DashboardSettings;
-};
-
-export type GetDefaultDashboardsResponse = GetDefaultDashboardsResponses[keyof GetDefaultDashboardsResponses];
-
-export type ValidateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/validate';
-};
-
-export type ValidateDashboardResponses = {
-    /**
-     * validateDashboard 200 response
-     */
-    200: ValidateConstraintViolation;
-};
-
-export type ValidateDashboardResponse = ValidateDashboardResponses[keyof ValidateDashboardResponses];
-
-export type ValidateChartData = {
-    /**
-     * The chart definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/validate/chart';
-};
-
-export type ValidateChartResponses = {
-    /**
-     * validateChart 200 response
-     */
-    200: ValidateConstraintViolation;
-};
-
-export type ValidateChartResponse = ValidateChartResponses[keyof ValidateChartResponses];
-
-export type DeleteDashboardData = {
-    body?: never;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}';
-};
-
-export type DeleteDashboardResponses = {
-    /**
-     * deleteDashboard 200 response
-     */
-    200: unknown;
-};
 
 export type GetDashboardData = {
     body?: never;
@@ -3577,6 +4951,23 @@ export type GetDashboardData = {
     url: '/api/v1/{tenant}/dashboards/{id}';
 };
 
+export type GetDashboardErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetDashboardError = GetDashboardErrors[keyof GetDashboardErrors];
+
 export type GetDashboardResponses = {
     /**
      * getDashboard 200 response
@@ -3585,67 +4976,6 @@ export type GetDashboardResponses = {
 };
 
 export type GetDashboardResponse = GetDashboardResponses[keyof GetDashboardResponses];
-
-export type UpdateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}';
-};
-
-export type UpdateDashboardErrors = {
-    /**
-     * If the dashboard id is reserved ('_default')
-     */
-    422: unknown;
-};
-
-export type UpdateDashboardResponses = {
-    /**
-     * updateDashboard 200 response
-     */
-    200: DashboardControllerDashboardResponse;
-};
-
-export type UpdateDashboardResponse = UpdateDashboardResponses[keyof UpdateDashboardResponses];
-
-export type GetDashboardChartDataData = {
-    /**
-     * The filters to apply, some can override chart definition like labels & namespace
-     */
-    body: ChartFiltersOverrides;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        /**
-         * The chart id
-         */
-        chartId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}';
-};
-
-export type GetDashboardChartDataResponses = {
-    /**
-     * getDashboardChartData 200 response
-     */
-    200: PagedResultsMapStringObject;
-};
-
-export type GetDashboardChartDataResponse = GetDashboardChartDataResponses[keyof GetDashboardChartDataResponses];
 
 export type ExportDashboardChartData = {
     /**
@@ -3672,11 +5002,28 @@ export type ExportDashboardChartData = {
     url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export';
 };
 
+export type ExportDashboardChartErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportDashboardChartError = ExportDashboardChartErrors[keyof ExportDashboardChartErrors];
+
 export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -3706,6 +5053,23 @@ export type SearchExecutionsByFlowIdData = {
     };
     url: '/api/v1/{tenant}/executions';
 };
+
+export type SearchExecutionsByFlowIdErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchExecutionsByFlowIdError = SearchExecutionsByFlowIdErrors[keyof SearchExecutionsByFlowIdErrors];
 
 export type SearchExecutionsByFlowIdResponses = {
     /**
@@ -3747,9 +5111,21 @@ export type DeleteExecutionsByIdsData = {
 
 export type DeleteExecutionsByIdsErrors = {
     /**
-     * Deleted with errors
+     * Validation errors
      */
-    422: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type DeleteExecutionsByIdsError = DeleteExecutionsByIdsErrors[keyof DeleteExecutionsByIdsErrors];
@@ -3795,9 +5171,21 @@ export type DeleteExecutionsByQueryData = {
 
 export type DeleteExecutionsByQueryErrors = {
     /**
-     * Deleted with errors
+     * Validation errors
      */
-    422: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type DeleteExecutionsByQueryError = DeleteExecutionsByQueryErrors[keyof DeleteExecutionsByQueryErrors];
@@ -3832,7 +5220,19 @@ export type UpdateExecutionsStatusByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type UpdateExecutionsStatusByIdsError = UpdateExecutionsStatusByIdsErrors[keyof UpdateExecutionsStatusByIdsErrors];
@@ -3868,7 +5268,19 @@ export type UpdateExecutionsStatusByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type UpdateExecutionsStatusByQueryError = UpdateExecutionsStatusByQueryErrors[keyof UpdateExecutionsStatusByQueryErrors];
@@ -3904,6 +5316,23 @@ export type FindDistinctFieldValuesData = {
     url: '/api/v1/{tenant}/executions/distinct-field-values';
 };
 
+export type FindDistinctFieldValuesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type FindDistinctFieldValuesError = FindDistinctFieldValuesErrors[keyof FindDistinctFieldValuesErrors];
+
 export type FindDistinctFieldValuesResponses = {
     /**
      * findDistinctFieldValues 200 response
@@ -3926,6 +5355,23 @@ export type ExportExecutionsData = {
     };
     url: '/api/v1/{tenant}/executions/export/by-query/csv';
 };
+
+export type ExportExecutionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportExecutionsError = ExportExecutionsErrors[keyof ExportExecutionsErrors];
 
 export type ExportExecutionsResponses = {
     /**
@@ -3958,6 +5404,23 @@ export type GetFlowFromExecutionData = {
     url: '/api/v1/{tenant}/executions/flows/{namespace}/{flowId}';
 };
 
+export type GetFlowFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFlowFromExecutionError = GetFlowFromExecutionErrors[keyof GetFlowFromExecutionErrors];
+
 export type GetFlowFromExecutionResponses = {
     /**
      * getFlowFromExecution 200 response
@@ -3983,7 +5446,19 @@ export type ForceRunByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ForceRunByIdsError = ForceRunByIdsErrors[keyof ForceRunByIdsErrors];
@@ -4015,7 +5490,19 @@ export type ForceRunExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ForceRunExecutionsByQueryError = ForceRunExecutionsByQueryErrors[keyof ForceRunExecutionsByQueryErrors];
@@ -4045,7 +5532,19 @@ export type KillExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type KillExecutionsByIdsError = KillExecutionsByIdsErrors[keyof KillExecutionsByIdsErrors];
@@ -4077,7 +5576,19 @@ export type KillExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type KillExecutionsByQueryError = KillExecutionsByQueryErrors[keyof KillExecutionsByQueryErrors];
@@ -4107,7 +5618,19 @@ export type SetLabelsOnTerminatedExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type SetLabelsOnTerminatedExecutionsByIdsError = SetLabelsOnTerminatedExecutionsByIdsErrors[keyof SetLabelsOnTerminatedExecutionsByIdsErrors];
@@ -4142,7 +5665,19 @@ export type SetLabelsOnTerminatedExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type SetLabelsOnTerminatedExecutionsByQueryError = SetLabelsOnTerminatedExecutionsByQueryErrors[keyof SetLabelsOnTerminatedExecutionsByQueryErrors];
@@ -4165,6 +5700,23 @@ export type GetLatestExecutionsData = {
     url: '/api/v1/{tenant}/executions/latest';
 };
 
+export type GetLatestExecutionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetLatestExecutionsError = GetLatestExecutionsErrors[keyof GetLatestExecutionsErrors];
+
 export type GetLatestExecutionsResponses = {
     /**
      * getLatestExecutions 200 response
@@ -4182,6 +5734,23 @@ export type ListExecutableDistinctNamespacesData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/namespaces';
 };
+
+export type ListExecutableDistinctNamespacesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListExecutableDistinctNamespacesError = ListExecutableDistinctNamespacesErrors[keyof ListExecutableDistinctNamespacesErrors];
 
 export type ListExecutableDistinctNamespacesResponses = {
     /**
@@ -4204,6 +5773,23 @@ export type ListFlowExecutionsByNamespaceData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows';
 };
+
+export type ListFlowExecutionsByNamespaceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListFlowExecutionsByNamespaceError = ListFlowExecutionsByNamespaceErrors[keyof ListFlowExecutionsByNamespaceErrors];
 
 export type ListFlowExecutionsByNamespaceResponses = {
     /**
@@ -4231,6 +5817,23 @@ export type GetExecutionAverageDurationData = {
     url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows/{flowId}/average-duration';
 };
 
+export type GetExecutionAverageDurationErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExecutionAverageDurationError = GetExecutionAverageDurationErrors[keyof GetExecutionAverageDurationErrors];
+
 export type GetExecutionAverageDurationResponses = {
     /**
      * getExecutionAverageDuration 200 response
@@ -4256,7 +5859,19 @@ export type PauseExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type PauseExecutionsByIdsError = PauseExecutionsByIdsErrors[keyof PauseExecutionsByIdsErrors];
@@ -4288,7 +5903,19 @@ export type PauseExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type PauseExecutionsByQueryError = PauseExecutionsByQueryErrors[keyof PauseExecutionsByQueryErrors];
@@ -4323,7 +5950,19 @@ export type ReplayExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ReplayExecutionsByIdsError = ReplayExecutionsByIdsErrors[keyof ReplayExecutionsByIdsErrors];
@@ -4359,7 +5998,19 @@ export type ReplayExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ReplayExecutionsByQueryError = ReplayExecutionsByQueryErrors[keyof ReplayExecutionsByQueryErrors];
@@ -4383,7 +6034,9 @@ export type RestartExecutionsByIdsData = {
     };
     query?: {
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -4394,7 +6047,19 @@ export type RestartExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type RestartExecutionsByIdsError = RestartExecutionsByIdsErrors[keyof RestartExecutionsByIdsErrors];
@@ -4419,7 +6084,9 @@ export type RestartExecutionsByQueryData = {
          */
         filters?: Array<QueryFilter> | null;
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -4430,7 +6097,19 @@ export type RestartExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type RestartExecutionsByQueryError = RestartExecutionsByQueryErrors[keyof RestartExecutionsByQueryErrors];
@@ -4460,7 +6139,19 @@ export type ResumeExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ResumeExecutionsByIdsError = ResumeExecutionsByIdsErrors[keyof ResumeExecutionsByIdsErrors];
@@ -4492,7 +6183,19 @@ export type ResumeExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type ResumeExecutionsByQueryError = ResumeExecutionsByQueryErrors[keyof ResumeExecutionsByQueryErrors];
@@ -4536,6 +6239,23 @@ export type SearchExecutionsData = {
     url: '/api/v1/{tenant}/executions/search';
 };
 
+export type SearchExecutionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchExecutionsError = SearchExecutionsErrors[keyof SearchExecutionsErrors];
+
 export type SearchExecutionsResponses = {
     /**
      * searchExecutions 200 response
@@ -4566,7 +6286,19 @@ export type UnqueueExecutionsByIdsErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type UnqueueExecutionsByIdsError = UnqueueExecutionsByIdsErrors[keyof UnqueueExecutionsByIdsErrors];
@@ -4602,7 +6334,19 @@ export type UnqueueExecutionsByQueryErrors = {
     /**
      * Validation errors
      */
-    400: BulkErrorResponse;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
 
 export type UnqueueExecutionsByQueryError = UnqueueExecutionsByQueryErrors[keyof UnqueueExecutionsByQueryErrors];
@@ -4637,6 +6381,23 @@ export type TriggerExecutionByGetWebhookData = {
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}';
 };
 
+export type TriggerExecutionByGetWebhookErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByGetWebhookError = TriggerExecutionByGetWebhookErrors[keyof TriggerExecutionByGetWebhookErrors];
+
 export type TriggerExecutionByGetWebhookResponses = {
     /**
      * On success
@@ -4669,6 +6430,23 @@ export type TriggerExecutionByPostWebhookData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}';
 };
+
+export type TriggerExecutionByPostWebhookErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByPostWebhookError = TriggerExecutionByPostWebhookErrors[keyof TriggerExecutionByPostWebhookErrors];
 
 export type TriggerExecutionByPostWebhookResponses = {
     /**
@@ -4703,6 +6481,23 @@ export type TriggerExecutionByPutWebhookData = {
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}';
 };
 
+export type TriggerExecutionByPutWebhookErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByPutWebhookError = TriggerExecutionByPutWebhookErrors[keyof TriggerExecutionByPutWebhookErrors];
+
 export type TriggerExecutionByPutWebhookResponses = {
     /**
      * On success
@@ -4736,6 +6531,23 @@ export type TriggerExecutionByGetWebhookWithPathData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}';
 };
+
+export type TriggerExecutionByGetWebhookWithPathErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByGetWebhookWithPathError = TriggerExecutionByGetWebhookWithPathErrors[keyof TriggerExecutionByGetWebhookWithPathErrors];
 
 export type TriggerExecutionByGetWebhookWithPathResponses = {
     /**
@@ -4774,6 +6586,23 @@ export type TriggerExecutionByPostWebhookWithPathData = {
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}';
 };
 
+export type TriggerExecutionByPostWebhookWithPathErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByPostWebhookWithPathError = TriggerExecutionByPostWebhookWithPathErrors[keyof TriggerExecutionByPostWebhookWithPathErrors];
+
 export type TriggerExecutionByPostWebhookWithPathResponses = {
     /**
      * On success
@@ -4811,6 +6640,23 @@ export type TriggerExecutionByPutWebhookWithPathData = {
     url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}';
 };
 
+export type TriggerExecutionByPutWebhookWithPathErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type TriggerExecutionByPutWebhookWithPathError = TriggerExecutionByPutWebhookWithPathErrors[keyof TriggerExecutionByPutWebhookWithPathErrors];
+
 export type TriggerExecutionByPutWebhookWithPathResponses = {
     /**
      * On success
@@ -4846,6 +6692,23 @@ export type DeleteExecutionData = {
     url: '/api/v1/{tenant}/executions/{executionId}';
 };
 
+export type DeleteExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteExecutionError = DeleteExecutionErrors[keyof DeleteExecutionErrors];
+
 export type DeleteExecutionResponses = {
     /**
      * On success
@@ -4867,6 +6730,23 @@ export type GetExecutionData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/{executionId}';
 };
+
+export type GetExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExecutionError = GetExecutionErrors[keyof GetExecutionErrors];
 
 export type GetExecutionResponses = {
     /**
@@ -4897,10 +6777,24 @@ export type UpdateExecutionStatusData = {
 
 export type UpdateExecutionStatusErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution state cannot be changed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type UpdateExecutionStatusError = UpdateExecutionStatusErrors[keyof UpdateExecutionStatusErrors];
 
 export type UpdateExecutionStatusResponses = {
     /**
@@ -4926,6 +6820,23 @@ export type EvalExpressionData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/{executionId}/actions/eval';
 };
+
+export type EvalExpressionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type EvalExpressionError = EvalExpressionErrors[keyof EvalExpressionErrors];
 
 export type EvalExpressionResponses = {
     /**
@@ -4956,6 +6867,23 @@ export type EvalTaskRunExpressionData = {
     url: '/api/v1/{tenant}/executions/{executionId}/actions/eval/{taskRunId}';
 };
 
+export type EvalTaskRunExpressionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type EvalTaskRunExpressionError = EvalTaskRunExpressionErrors[keyof EvalTaskRunExpressionErrors];
+
 export type EvalTaskRunExpressionResponses = {
     /**
      * evalTaskRunExpression 200 response
@@ -4980,10 +6908,24 @@ export type ForceRunExecutionData = {
 
 export type ForceRunExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution cannot be force-run
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ForceRunExecutionError = ForceRunExecutionErrors[keyof ForceRunExecutionErrors];
 
 export type ForceRunExecutionResponses = {
     /**
@@ -4993,6 +6935,54 @@ export type ForceRunExecutionResponses = {
 };
 
 export type ForceRunExecutionResponse = ForceRunExecutionResponses[keyof ForceRunExecutionResponses];
+
+export type InterruptTaskRunData = {
+    /**
+     * the taskRun id and the state to apply to it
+     */
+    body: ExecutionControllerStateRequest;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/interrupt';
+};
+
+export type InterruptTaskRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run cannot be interrupted
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InterruptTaskRunError = InterruptTaskRunErrors[keyof InterruptTaskRunErrors];
+
+export type InterruptTaskRunResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
 
 export type KillExecutionData = {
     body?: never;
@@ -5014,14 +7004,28 @@ export type KillExecutionData = {
 
 export type KillExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the executions is not found
      */
-    404: unknown;
+    404: ProblemDetail;
     /**
-     * if the executions is already finished
+     * if the execution is already finished and has no running task or sub-execution left to kill
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type KillExecutionError = KillExecutionErrors[keyof KillExecutionErrors];
 
 export type KillExecutionResponses = {
     /**
@@ -5052,16 +7056,30 @@ export type SetLabelsOnTerminatedExecutionErrors = {
     /**
      * If the execution is not terminated
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
     /**
      * If the execution cannot be found
      */
-    404: unknown;
+    404: ProblemDetail;
     /**
      * If labels cannot be applied
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type SetLabelsOnTerminatedExecutionError = SetLabelsOnTerminatedExecutionErrors[keyof SetLabelsOnTerminatedExecutionErrors];
 
 export type SetLabelsOnTerminatedExecutionResponses = {
     /**
@@ -5087,10 +7105,24 @@ export type PauseExecutionData = {
 
 export type PauseExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the executions is not running
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type PauseExecutionError = PauseExecutionErrors[keyof PauseExecutionErrors];
 
 export type PauseExecutionResponses = {
     /**
@@ -5129,10 +7161,24 @@ export type ReplayExecutionData = {
 
 export type ReplayExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution cannot be replayed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ReplayExecutionError = ReplayExecutionErrors[keyof ReplayExecutionErrors];
 
 export type ReplayExecutionResponses = {
     /**
@@ -5174,10 +7220,24 @@ export type ReplayExecutionWithinputsData = {
 
 export type ReplayExecutionWithinputsErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution cannot be replayed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ReplayExecutionWithinputsError = ReplayExecutionWithinputsErrors[keyof ReplayExecutionWithinputsErrors];
 
 export type ReplayExecutionWithinputsResponses = {
     /**
@@ -5187,6 +7247,108 @@ export type ReplayExecutionWithinputsResponses = {
 };
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
+
+export type ValidateReplayExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The taskrun id
+         */
+        taskRunId?: string | null;
+        /**
+         * The flow revision to use for new execution
+         */
+        revision?: number | null;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay/validate';
+};
+
+export type ValidateReplayExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReplayExecutionError = ValidateReplayExecutionErrors[keyof ValidateReplayExecutionErrors];
+
+export type ValidateReplayExecutionResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
+export type RescheduleExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The new scheduled start date
+         */
+        scheduleDate: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/reschedule';
+};
+
+export type RescheduleExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution is not scheduled, has already started, or its scheduled start is being processed
+     */
+    409: ProblemDetail;
+    /**
+     * if the scheduleDate is not in the future
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type RescheduleExecutionError = RescheduleExecutionErrors[keyof RescheduleExecutionErrors];
+
+export type RescheduleExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type RescheduleExecutionResponse = RescheduleExecutionResponses[keyof RescheduleExecutionResponses];
 
 export type RestartExecutionData = {
     body?: never;
@@ -5199,7 +7361,9 @@ export type RestartExecutionData = {
     };
     query?: {
         /**
-         * The flow revision to use for new execution
+         * Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.
+         *
+         * @deprecated
          */
         revision?: number | null;
     };
@@ -5208,10 +7372,24 @@ export type RestartExecutionData = {
 
 export type RestartExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution cannot be restarted
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type RestartExecutionError = RestartExecutionErrors[keyof RestartExecutionErrors];
 
 export type RestartExecutionResponses = {
     /**
@@ -5240,10 +7418,24 @@ export type ResumeExecutionData = {
 
 export type ResumeExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the executions is not paused
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ResumeExecutionError = ResumeExecutionErrors[keyof ResumeExecutionErrors];
 
 export type ResumeExecutionResponses = {
     /**
@@ -5274,10 +7466,24 @@ export type ResumeExecutionFromBreakpointData = {
 
 export type ResumeExecutionFromBreakpointErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the executions is not in the 'BREAKPOINT' state or has no breakpoint
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ResumeExecutionFromBreakpointError = ResumeExecutionFromBreakpointErrors[keyof ResumeExecutionFromBreakpointErrors];
 
 export type ResumeExecutionFromBreakpointResponses = {
     /**
@@ -5306,10 +7512,24 @@ export type ValidateResumeExecutionInputsData = {
 
 export type ValidateResumeExecutionInputsErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the executions is not paused
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ValidateResumeExecutionInputsError = ValidateResumeExecutionInputsErrors[keyof ValidateResumeExecutionInputsErrors];
 
 export type ValidateResumeExecutionInputsResponses = {
     /**
@@ -5338,10 +7558,24 @@ export type UpdateTaskRunStateData = {
 
 export type UpdateTaskRunStateErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the task run state cannot be changed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type UpdateTaskRunStateError = UpdateTaskRunStateErrors[keyof UpdateTaskRunStateErrors];
 
 export type UpdateTaskRunStateResponses = {
     /**
@@ -5372,10 +7606,24 @@ export type UnqueueExecutionData = {
 
 export type UnqueueExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the execution cannot be unqueued
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type UnqueueExecutionError = UnqueueExecutionErrors[keyof UnqueueExecutionErrors];
 
 export type UnqueueExecutionResponses = {
     /**
@@ -5408,6 +7656,23 @@ export type DownloadFileFromExecutionData = {
     url: '/api/v1/{tenant}/executions/{executionId}/file';
 };
 
+export type DownloadFileFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DownloadFileFromExecutionError = DownloadFileFromExecutionErrors[keyof DownloadFileFromExecutionErrors];
+
 export type DownloadFileFromExecutionResponses = {
     /**
      * downloadFileFromExecution 200 response
@@ -5434,6 +7699,23 @@ export type GetFileMetadatasFromExecutionData = {
     };
     url: '/api/v1/{tenant}/executions/{executionId}/file/metas';
 };
+
+export type GetFileMetadatasFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFileMetadatasFromExecutionError = GetFileMetadatasFromExecutionErrors[keyof GetFileMetadatasFromExecutionErrors];
 
 export type GetFileMetadatasFromExecutionResponses = {
     /**
@@ -5470,6 +7752,23 @@ export type PreviewFileFromExecutionData = {
     url: '/api/v1/{tenant}/executions/{executionId}/file/preview';
 };
 
+export type PreviewFileFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PreviewFileFromExecutionError = PreviewFileFromExecutionErrors[keyof PreviewFileFromExecutionErrors];
+
 export type PreviewFileFromExecutionResponses = {
     /**
      * previewFileFromExecution 200 response
@@ -5494,6 +7793,23 @@ export type GetFlowFromExecutionByIdData = {
     url: '/api/v1/{tenant}/executions/{executionId}/flow';
 };
 
+export type GetFlowFromExecutionByIdErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFlowFromExecutionByIdError = GetFlowFromExecutionByIdErrors[keyof GetFlowFromExecutionByIdErrors];
+
 export type GetFlowFromExecutionByIdResponses = {
     /**
      * getFlowFromExecutionById 200 response
@@ -5515,6 +7831,23 @@ export type FollowExecutionData = {
     query?: never;
     url: '/api/v1/{tenant}/executions/{executionId}/follow';
 };
+
+export type FollowExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type FollowExecutionError = FollowExecutionErrors[keyof FollowExecutionErrors];
 
 export type FollowExecutionResponses = {
     /**
@@ -5547,6 +7880,23 @@ export type FollowDependenciesExecutionsData = {
     url: '/api/v1/{tenant}/executions/{executionId}/follow-dependencies';
 };
 
+export type FollowDependenciesExecutionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type FollowDependenciesExecutionsError = FollowDependenciesExecutionsErrors[keyof FollowDependenciesExecutionsErrors];
+
 export type FollowDependenciesExecutionsResponses = {
     /**
      * followDependenciesExecutions 200 response
@@ -5573,6 +7923,23 @@ export type GetExecutionFlowGraphData = {
     };
     url: '/api/v1/{tenant}/executions/{executionId}/graph';
 };
+
+export type GetExecutionFlowGraphErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExecutionFlowGraphError = GetExecutionFlowGraphErrors[keyof GetExecutionFlowGraphErrors];
 
 export type GetExecutionFlowGraphResponses = {
     /**
@@ -5630,10 +7997,24 @@ export type CreateExecutionData = {
 
 export type CreateExecutionErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the flow is disabled
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type CreateExecutionError = CreateExecutionErrors[keyof CreateExecutionErrors];
 
 export type CreateExecutionResponses = {
     /**
@@ -5675,10 +8056,24 @@ export type ValidateNewExecutionInputsData = {
 
 export type ValidateNewExecutionInputsErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * if the flow is disabled
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type ValidateNewExecutionInputsError = ValidateNewExecutionInputsErrors[keyof ValidateNewExecutionInputsErrors];
 
 export type ValidateNewExecutionInputsResponses = {
     /**
@@ -5697,6 +8092,23 @@ export type RenderExpressionsData = {
     query?: never;
     url: '/api/v1/{tenant}/expressions/render';
 };
+
+export type RenderExpressionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type RenderExpressionsError = RenderExpressionsErrors[keyof RenderExpressionsErrors];
 
 export type RenderExpressionsResponses = {
     /**
@@ -5723,6 +8135,23 @@ export type CreateFlowData = {
     };
     url: '/api/v1/{tenant}/flows';
 };
+
+export type CreateFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateFlowError = CreateFlowErrors[keyof CreateFlowErrors];
 
 export type CreateFlowResponses = {
     /**
@@ -5758,6 +8187,23 @@ export type BulkUpdateFlowsData = {
     url: '/api/v1/{tenant}/flows/bulk';
 };
 
+export type BulkUpdateFlowsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type BulkUpdateFlowsError = BulkUpdateFlowsErrors[keyof BulkUpdateFlowsErrors];
+
 export type BulkUpdateFlowsResponses = {
     /**
      * bulkUpdateFlows 200 response
@@ -5778,6 +8224,27 @@ export type DeleteFlowsByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/delete/by-ids';
 };
+
+export type DeleteFlowsByIdsErrors = {
+    /**
+     * Validation errors
+     */
+    400: ProblemDetail;
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteFlowsByIdsError = DeleteFlowsByIdsErrors[keyof DeleteFlowsByIdsErrors];
 
 export type DeleteFlowsByIdsResponses = {
     /**
@@ -5802,6 +8269,23 @@ export type DeleteFlowsByQueryData = {
     url: '/api/v1/{tenant}/flows/delete/by-query';
 };
 
+export type DeleteFlowsByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteFlowsByQueryError = DeleteFlowsByQueryErrors[keyof DeleteFlowsByQueryErrors];
+
 export type DeleteFlowsByQueryResponses = {
     /**
      * On success
@@ -5825,6 +8309,23 @@ export type ListDeprecatedData = {
     url: '/api/v1/{tenant}/flows/deprecated';
 };
 
+export type ListDeprecatedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListDeprecatedError = ListDeprecatedErrors[keyof ListDeprecatedErrors];
+
 export type ListDeprecatedResponses = {
     /**
      * listDeprecated 200 response
@@ -5845,6 +8346,23 @@ export type DisableFlowsByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/disable/by-ids';
 };
+
+export type DisableFlowsByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DisableFlowsByIdsError = DisableFlowsByIdsErrors[keyof DisableFlowsByIdsErrors];
 
 export type DisableFlowsByIdsResponses = {
     /**
@@ -5869,6 +8387,23 @@ export type DisableFlowsByQueryData = {
     url: '/api/v1/{tenant}/flows/disable/by-query';
 };
 
+export type DisableFlowsByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DisableFlowsByQueryError = DisableFlowsByQueryErrors[keyof DisableFlowsByQueryErrors];
+
 export type DisableFlowsByQueryResponses = {
     /**
      * On success
@@ -5892,6 +8427,23 @@ export type ListDistinctNamespacesData = {
     url: '/api/v1/{tenant}/flows/distinct-namespaces';
 };
 
+export type ListDistinctNamespacesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListDistinctNamespacesError = ListDistinctNamespacesErrors[keyof ListDistinctNamespacesErrors];
+
 export type ListDistinctNamespacesResponses = {
     /**
      * listDistinctNamespaces 200 response
@@ -5912,6 +8464,23 @@ export type EnableFlowsByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/enable/by-ids';
 };
+
+export type EnableFlowsByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type EnableFlowsByIdsError = EnableFlowsByIdsErrors[keyof EnableFlowsByIdsErrors];
 
 export type EnableFlowsByIdsResponses = {
     /**
@@ -5936,6 +8505,23 @@ export type EnableFlowsByQueryData = {
     url: '/api/v1/{tenant}/flows/enable/by-query';
 };
 
+export type EnableFlowsByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type EnableFlowsByQueryError = EnableFlowsByQueryErrors[keyof EnableFlowsByQueryErrors];
+
 export type EnableFlowsByQueryResponses = {
     /**
      * On success
@@ -5957,11 +8543,28 @@ export type ExportFlowsByIdsData = {
     url: '/api/v1/{tenant}/flows/export/by-ids';
 };
 
+export type ExportFlowsByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportFlowsByIdsError = ExportFlowsByIdsErrors[keyof ExportFlowsByIdsErrors];
+
 export type ExportFlowsByIdsResponses = {
     /**
      * exportFlowsByIds 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByIdsResponse = ExportFlowsByIdsResponses[keyof ExportFlowsByIdsResponses];
@@ -5980,11 +8583,28 @@ export type ExportFlowsByQueryData = {
     url: '/api/v1/{tenant}/flows/export/by-query';
 };
 
+export type ExportFlowsByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportFlowsByQueryError = ExportFlowsByQueryErrors[keyof ExportFlowsByQueryErrors];
+
 export type ExportFlowsByQueryResponses = {
     /**
      * exportFlowsByQuery 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByQueryResponse = ExportFlowsByQueryResponses[keyof ExportFlowsByQueryResponses];
@@ -6002,6 +8622,23 @@ export type ExportFlowsData = {
     };
     url: '/api/v1/{tenant}/flows/export/by-query/csv';
 };
+
+export type ExportFlowsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportFlowsError = ExportFlowsErrors[keyof ExportFlowsErrors];
 
 export type ExportFlowsResponses = {
     /**
@@ -6029,6 +8666,23 @@ export type ExpressionsData = {
     url: '/api/v1/{tenant}/flows/expressions';
 };
 
+export type ExpressionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExpressionsError = ExpressionsErrors[keyof ExpressionsErrors];
+
 export type ExpressionsResponses = {
     /**
      * Categorized expressions map
@@ -6054,6 +8708,23 @@ export type GenerateFlowGraphFromSourceData = {
     };
     url: '/api/v1/{tenant}/flows/graph';
 };
+
+export type GenerateFlowGraphFromSourceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GenerateFlowGraphFromSourceError = GenerateFlowGraphFromSourceErrors[keyof GenerateFlowGraphFromSourceErrors];
 
 export type GenerateFlowGraphFromSourceResponses = {
     /**
@@ -6082,6 +8753,23 @@ export type ImportFlowsData = {
     };
     url: '/api/v1/{tenant}/flows/import';
 };
+
+export type ImportFlowsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ImportFlowsError = ImportFlowsErrors[keyof ImportFlowsErrors];
 
 export type ImportFlowsResponses = {
     /**
@@ -6117,6 +8805,23 @@ export type SearchFlowsData = {
     };
     url: '/api/v1/{tenant}/flows/search';
 };
+
+export type SearchFlowsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchFlowsError = SearchFlowsErrors[keyof SearchFlowsErrors];
 
 export type SearchFlowsResponses = {
     /**
@@ -6173,6 +8878,23 @@ export type SearchFlowsBySourceCodeData = {
     url: '/api/v1/{tenant}/flows/source';
 };
 
+export type SearchFlowsBySourceCodeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchFlowsBySourceCodeError = SearchFlowsBySourceCodeErrors[keyof SearchFlowsBySourceCodeErrors];
+
 export type SearchFlowsBySourceCodeResponses = {
     /**
      * searchFlowsBySourceCode 200 response
@@ -6193,6 +8915,23 @@ export type ApplyReplaceBySourceCodeData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/source/replace/apply';
 };
+
+export type ApplyReplaceBySourceCodeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ApplyReplaceBySourceCodeError = ApplyReplaceBySourceCodeErrors[keyof ApplyReplaceBySourceCodeErrors];
 
 export type ApplyReplaceBySourceCodeResponses = {
     /**
@@ -6215,6 +8954,23 @@ export type ReplaceLineBySourceCodeData = {
     url: '/api/v1/{tenant}/flows/source/replace/line';
 };
 
+export type ReplaceLineBySourceCodeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplaceLineBySourceCodeError = ReplaceLineBySourceCodeErrors[keyof ReplaceLineBySourceCodeErrors];
+
 export type ReplaceLineBySourceCodeResponses = {
     /**
      * replaceLineBySourceCode 200 response
@@ -6236,6 +8992,23 @@ export type PreviewReplaceBySourceCodeData = {
     url: '/api/v1/{tenant}/flows/source/replace/preview';
 };
 
+export type PreviewReplaceBySourceCodeErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PreviewReplaceBySourceCodeError = PreviewReplaceBySourceCodeErrors[keyof PreviewReplaceBySourceCodeErrors];
+
 export type PreviewReplaceBySourceCodeResponses = {
     /**
      * previewReplaceBySourceCode 200 response
@@ -6256,6 +9029,23 @@ export type ValidateFlowsData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/validate';
 };
+
+export type ValidateFlowsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateFlowsError = ValidateFlowsErrors[keyof ValidateFlowsErrors];
 
 export type ValidateFlowsResponses = {
     /**
@@ -6285,6 +9075,23 @@ export type ValidateTaskData = {
     url: '/api/v1/{tenant}/flows/validate/task';
 };
 
+export type ValidateTaskErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateTaskError = ValidateTaskErrors[keyof ValidateTaskErrors];
+
 export type ValidateTaskResponses = {
     /**
      * validateTask 200 response
@@ -6308,6 +9115,23 @@ export type ValidateTriggerData = {
     url: '/api/v1/{tenant}/flows/validate/trigger';
 };
 
+export type ValidateTriggerErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateTriggerError = ValidateTriggerErrors[keyof ValidateTriggerErrors];
+
 export type ValidateTriggerResponses = {
     /**
      * validateTrigger 200 response
@@ -6329,6 +9153,23 @@ export type ListFlowsByNamespaceData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/{namespace}';
 };
+
+export type ListFlowsByNamespaceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListFlowsByNamespaceError = ListFlowsByNamespaceErrors[keyof ListFlowsByNamespaceErrors];
 
 export type ListFlowsByNamespaceResponses = {
     /**
@@ -6364,6 +9205,23 @@ export type UpdateFlowsInNamespaceData = {
     url: '/api/v1/{tenant}/flows/{namespace}';
 };
 
+export type UpdateFlowsInNamespaceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateFlowsInNamespaceError = UpdateFlowsInNamespaceErrors[keyof UpdateFlowsInNamespaceErrors];
+
 export type UpdateFlowsInNamespaceResponses = {
     /**
      * updateFlowsInNamespace 200 response
@@ -6389,6 +9247,23 @@ export type DeleteFlowData = {
     query?: never;
     url: '/api/v1/{tenant}/flows/{namespace}/{id}';
 };
+
+export type DeleteFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteFlowError = DeleteFlowErrors[keyof DeleteFlowErrors];
 
 export type DeleteFlowResponses = {
     /**
@@ -6429,6 +9304,23 @@ export type GetFlowData = {
     url: '/api/v1/{tenant}/flows/{namespace}/{id}';
 };
 
+export type GetFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFlowError = GetFlowErrors[keyof GetFlowErrors];
+
 export type GetFlowResponses = {
     /**
      * On success
@@ -6462,6 +9354,23 @@ export type UpdateFlowData = {
     };
     url: '/api/v1/{tenant}/flows/{namespace}/{id}';
 };
+
+export type UpdateFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateFlowError = UpdateFlowErrors[keyof UpdateFlowErrors];
 
 export type UpdateFlowResponses = {
     /**
@@ -6498,6 +9407,23 @@ export type GetFlowDependenciesData = {
     url: '/api/v1/{tenant}/flows/{namespace}/{id}/dependencies';
 };
 
+export type GetFlowDependenciesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFlowDependenciesError = GetFlowDependenciesErrors[keyof GetFlowDependenciesErrors];
+
 export type GetFlowDependenciesResponses = {
     /**
      * getFlowDependencies 200 response
@@ -6533,6 +9459,23 @@ export type GenerateFlowGraphData = {
     url: '/api/v1/{tenant}/flows/{namespace}/{id}/graph';
 };
 
+export type GenerateFlowGraphErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GenerateFlowGraphError = GenerateFlowGraphErrors[keyof GenerateFlowGraphErrors];
+
 export type GenerateFlowGraphResponses = {
     /**
      * Return a FlowGraph object
@@ -6561,6 +9504,23 @@ export type DeleteRevisionsData = {
     url: '/api/v1/{tenant}/flows/{namespace}/{id}/revisions';
 };
 
+export type DeleteRevisionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteRevisionsError = DeleteRevisionsErrors[keyof DeleteRevisionsErrors];
+
 export type DeleteRevisionsResponses = {
     /**
      * deleteRevisions 200 response
@@ -6586,6 +9546,23 @@ export type ListFlowRevisionsData = {
     };
     url: '/api/v1/{tenant}/flows/{namespace}/{id}/revisions';
 };
+
+export type ListFlowRevisionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListFlowRevisionsError = ListFlowRevisionsErrors[keyof ListFlowRevisionsErrors];
 
 export type ListFlowRevisionsResponses = {
     /**
@@ -6622,6 +9599,23 @@ export type GetTaskFromFlowData = {
     url: '/api/v1/{tenant}/flows/{namespace}/{id}/tasks/{taskId}';
 };
 
+export type GetTaskFromFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskFromFlowError = GetTaskFromFlowErrors[keyof GetTaskFromFlowErrors];
+
 export type GetTaskFromFlowResponses = {
     /**
      * getTaskFromFlow 200 response
@@ -6656,6 +9650,23 @@ export type ListAllKeysData = {
     };
     url: '/api/v1/{tenant}/kv';
 };
+
+export type ListAllKeysErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListAllKeysError = ListAllKeysErrors[keyof ListAllKeysErrors];
 
 export type ListAllKeysResponses = {
     /**
@@ -6696,6 +9707,23 @@ export type SearchLogsData = {
     url: '/api/v1/{tenant}/logs/search';
 };
 
+export type SearchLogsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchLogsError = SearchLogsErrors[keyof SearchLogsErrors];
+
 export type SearchLogsResponses = {
     /**
      * searchLogs 200 response
@@ -6735,6 +9763,23 @@ export type DeleteLogsFromExecutionData = {
     url: '/api/v1/{tenant}/logs/{executionId}';
 };
 
+export type DeleteLogsFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsFromExecutionError = DeleteLogsFromExecutionErrors[keyof DeleteLogsFromExecutionErrors];
+
 export type DeleteLogsFromExecutionResponses = {
     /**
      * deleteLogsFromExecution 200 response
@@ -6753,12 +9798,41 @@ export type ListLogsFromExecutionData = {
     };
     query?: {
         /**
+         * The current page, enables pagination when set
+         */
+        page?: number | null;
+        /**
+         * The current page size, enables pagination when set (defaults to 10)
+         */
+        size?: number | null;
+        /**
+         * The sort of the page, defaults to `timestamp:asc`
+         */
+        sort?: Array<string> | null;
+        /**
          * Filters
          */
         filters?: Array<QueryFilter> | null;
     };
     url: '/api/v1/{tenant}/logs/{executionId}';
 };
+
+export type ListLogsFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListLogsFromExecutionError = ListLogsFromExecutionErrors[keyof ListLogsFromExecutionErrors];
 
 export type ListLogsFromExecutionResponses = {
     /**
@@ -6787,6 +9861,23 @@ export type DownloadLogsFromExecutionData = {
     url: '/api/v1/{tenant}/logs/{executionId}/download';
 };
 
+export type DownloadLogsFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DownloadLogsFromExecutionError = DownloadLogsFromExecutionErrors[keyof DownloadLogsFromExecutionErrors];
+
 export type DownloadLogsFromExecutionResponses = {
     /**
      * downloadLogsFromExecution 200 response
@@ -6813,6 +9904,23 @@ export type FollowLogsFromExecutionData = {
     };
     url: '/api/v1/{tenant}/logs/{executionId}/follow';
 };
+
+export type FollowLogsFromExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type FollowLogsFromExecutionError = FollowLogsFromExecutionErrors[keyof FollowLogsFromExecutionErrors];
 
 export type FollowLogsFromExecutionResponses = {
     /**
@@ -6845,6 +9953,23 @@ export type DeleteLogsFromFlowData = {
     url: '/api/v1/{tenant}/logs/{namespace}/{flowId}';
 };
 
+export type DeleteLogsFromFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsFromFlowError = DeleteLogsFromFlowErrors[keyof DeleteLogsFromFlowErrors];
+
 export type DeleteLogsFromFlowResponses = {
     /**
      * deleteLogsFromFlow 200 response
@@ -6871,8 +9996,25 @@ export type ListMcpsData = {
          */
         sort?: Array<string> | null;
     };
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
+
+export type ListMcpsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListMcpsError = ListMcpsErrors[keyof ListMcpsErrors];
 
 export type ListMcpsResponses = {
     /**
@@ -6892,8 +10034,25 @@ export type CreateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
+
+export type CreateMcpErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateMcpError = CreateMcpErrors[keyof CreateMcpErrors];
 
 export type CreateMcpResponses = {
     /**
@@ -6914,8 +10073,25 @@ export type DeleteMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
+
+export type DeleteMcpErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteMcpError = DeleteMcpErrors[keyof DeleteMcpErrors];
 
 export type DeleteMcpResponses = {
     /**
@@ -6934,8 +10110,25 @@ export type GetMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
+
+export type GetMcpErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetMcpError = GetMcpErrors[keyof GetMcpErrors];
 
 export type GetMcpResponses = {
     /**
@@ -6959,8 +10152,25 @@ export type UpdateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
+
+export type UpdateMcpErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateMcpError = UpdateMcpErrors[keyof UpdateMcpErrors];
 
 export type UpdateMcpResponses = {
     /**
@@ -6981,8 +10191,25 @@ export type ToggleMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/toggle';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/toggle';
 };
+
+export type ToggleMcpErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ToggleMcpError = ToggleMcpErrors[keyof ToggleMcpErrors];
 
 export type ToggleMcpResponses = {
     /**
@@ -7003,8 +10230,25 @@ export type ListToolsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/tools';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/tools';
 };
+
+export type ListToolsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListToolsError = ListToolsErrors[keyof ListToolsErrors];
 
 export type ListToolsResponses = {
     /**
@@ -7112,6 +10356,23 @@ export type AggregateMetricsFromFlowData = {
     url: '/api/v1/{tenant}/metrics/aggregates/{namespace}/{flowId}/{metric}';
 };
 
+export type AggregateMetricsFromFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type AggregateMetricsFromFlowError = AggregateMetricsFromFlowErrors[keyof AggregateMetricsFromFlowErrors];
+
 export type AggregateMetricsFromFlowResponses = {
     /**
      * aggregateMetricsFromFlow 200 response
@@ -7159,6 +10420,23 @@ export type AggregateMetricsFromTaskData = {
     url: '/api/v1/{tenant}/metrics/aggregates/{namespace}/{flowId}/{taskId}/{metric}';
 };
 
+export type AggregateMetricsFromTaskErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type AggregateMetricsFromTaskError = AggregateMetricsFromTaskErrors[keyof AggregateMetricsFromTaskErrors];
+
 export type AggregateMetricsFromTaskResponses = {
     /**
      * aggregateMetricsFromTask 200 response
@@ -7184,6 +10462,23 @@ export type ListFlowMetricsData = {
     query?: never;
     url: '/api/v1/{tenant}/metrics/names/{namespace}/{flowId}';
 };
+
+export type ListFlowMetricsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListFlowMetricsError = ListFlowMetricsErrors[keyof ListFlowMetricsErrors];
 
 export type ListFlowMetricsResponses = {
     /**
@@ -7215,6 +10510,23 @@ export type ListTaskMetricsData = {
     url: '/api/v1/{tenant}/metrics/names/{namespace}/{flowId}/{taskId}';
 };
 
+export type ListTaskMetricsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTaskMetricsError = ListTaskMetricsErrors[keyof ListTaskMetricsErrors];
+
 export type ListTaskMetricsResponses = {
     /**
      * listTaskMetrics 200 response
@@ -7240,6 +10552,23 @@ export type ListTasksWithMetricsData = {
     query?: never;
     url: '/api/v1/{tenant}/metrics/tasks/{namespace}/{flowId}';
 };
+
+export type ListTasksWithMetricsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTasksWithMetricsError = ListTasksWithMetricsErrors[keyof ListTasksWithMetricsErrors];
 
 export type ListTasksWithMetricsResponses = {
     /**
@@ -7284,6 +10613,23 @@ export type SearchByExecutionData = {
     url: '/api/v1/{tenant}/metrics/{executionId}';
 };
 
+export type SearchByExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchByExecutionError = SearchByExecutionErrors[keyof SearchByExecutionErrors];
+
 export type SearchByExecutionResponses = {
     /**
      * searchByExecution 200 response
@@ -7301,6 +10647,23 @@ export type AutocompleteNamespacesData = {
     query?: never;
     url: '/api/v1/{tenant}/namespaces/autocomplete';
 };
+
+export type AutocompleteNamespacesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type AutocompleteNamespacesError = AutocompleteNamespacesErrors[keyof AutocompleteNamespacesErrors];
 
 export type AutocompleteNamespacesResponses = {
     /**
@@ -7341,6 +10704,23 @@ export type SearchNamespacesData = {
     url: '/api/v1/{tenant}/namespaces/search';
 };
 
+export type SearchNamespacesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchNamespacesError = SearchNamespacesErrors[keyof SearchNamespacesErrors];
+
 export type SearchNamespacesResponses = {
     /**
      * searchNamespaces 200 response
@@ -7362,6 +10742,23 @@ export type GetNamespaceData = {
     query?: never;
     url: '/api/v1/{tenant}/namespaces/{id}';
 };
+
+export type GetNamespaceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetNamespaceError = GetNamespaceErrors[keyof GetNamespaceErrors];
 
 export type GetNamespaceResponses = {
     /**
@@ -7390,6 +10787,23 @@ export type GetFlowDependenciesFromNamespaceData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/dependencies';
 };
 
+export type GetFlowDependenciesFromNamespaceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFlowDependenciesFromNamespaceError = GetFlowDependenciesFromNamespaceErrors[keyof GetFlowDependenciesFromNamespaceErrors];
+
 export type GetFlowDependenciesFromNamespaceResponses = {
     /**
      * getFlowDependenciesFromNamespace 200 response
@@ -7416,6 +10830,23 @@ export type DeleteFileDirectoryData = {
     };
     url: '/api/v1/{tenant}/namespaces/{namespace}/files';
 };
+
+export type DeleteFileDirectoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteFileDirectoryError = DeleteFileDirectoryErrors[keyof DeleteFileDirectoryErrors];
 
 export type DeleteFileDirectoryResponses = {
     /**
@@ -7445,6 +10876,23 @@ export type GetFileContentData = {
     };
     url: '/api/v1/{tenant}/namespaces/{namespace}/files';
 };
+
+export type GetFileContentErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFileContentError = GetFileContentErrors[keyof GetFileContentErrors];
 
 export type GetFileContentResponses = {
     /**
@@ -7478,6 +10926,23 @@ export type CreateNamespaceFileData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files';
 };
 
+export type CreateNamespaceFileErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateNamespaceFileError = CreateNamespaceFileErrors[keyof CreateNamespaceFileErrors];
+
 export type CreateNamespaceFileResponses = {
     /**
      * createNamespaceFile 200 response
@@ -7507,6 +10972,23 @@ export type MoveFileDirectoryData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files';
 };
 
+export type MoveFileDirectoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MoveFileDirectoryError = MoveFileDirectoryErrors[keyof MoveFileDirectoryErrors];
+
 export type MoveFileDirectoryResponses = {
     /**
      * moveFileDirectory 200 response
@@ -7531,6 +11013,23 @@ export type ListNamespaceDirectoryFilesData = {
     };
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/directory';
 };
+
+export type ListNamespaceDirectoryFilesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListNamespaceDirectoryFilesError = ListNamespaceDirectoryFilesErrors[keyof ListNamespaceDirectoryFilesErrors];
 
 export type ListNamespaceDirectoryFilesResponses = {
     /**
@@ -7559,6 +11058,23 @@ export type CreateNamespaceDirectoryData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/directory';
 };
 
+export type CreateNamespaceDirectoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CreateNamespaceDirectoryError = CreateNamespaceDirectoryErrors[keyof CreateNamespaceDirectoryErrors];
+
 export type CreateNamespaceDirectoryResponses = {
     /**
      * createNamespaceDirectory 200 response
@@ -7579,11 +11095,28 @@ export type ExportNamespaceFilesData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/export';
 };
 
+export type ExportNamespaceFilesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportNamespaceFilesError = ExportNamespaceFilesErrors[keyof ExportNamespaceFilesErrors];
+
 export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];
@@ -7605,6 +11138,23 @@ export type GetFileRevisionsData = {
     };
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/revisions';
 };
+
+export type GetFileRevisionsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFileRevisionsError = GetFileRevisionsErrors[keyof GetFileRevisionsErrors];
 
 export type GetFileRevisionsResponses = {
     /**
@@ -7633,6 +11183,23 @@ export type SearchNamespaceFilesData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/search';
 };
 
+export type SearchNamespaceFilesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchNamespaceFilesError = SearchNamespaceFilesErrors[keyof SearchNamespaceFilesErrors];
+
 export type SearchNamespaceFilesResponses = {
     /**
      * searchNamespaceFiles 200 response
@@ -7660,6 +11227,23 @@ export type GetFileMetadatasData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/files/stats';
 };
 
+export type GetFileMetadatasErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetFileMetadatasError = GetFileMetadatasErrors[keyof GetFileMetadatasErrors];
+
 export type GetFileMetadatasResponses = {
     /**
      * getFileMetadatas 200 response
@@ -7681,6 +11265,23 @@ export type GetInheritedSecretsData = {
     query?: never;
     url: '/api/v1/{tenant}/namespaces/{namespace}/inherited-secrets';
 };
+
+export type GetInheritedSecretsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetInheritedSecretsError = GetInheritedSecretsErrors[keyof GetInheritedSecretsErrors];
 
 export type GetInheritedSecretsResponses = {
     /**
@@ -7709,6 +11310,23 @@ export type DeleteKeyValuesData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/kv';
 };
 
+export type DeleteKeyValuesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteKeyValuesError = DeleteKeyValuesErrors[keyof DeleteKeyValuesErrors];
+
 export type DeleteKeyValuesResponses = {
     /**
      * deleteKeyValues 200 response
@@ -7730,6 +11348,23 @@ export type ListKeysWithInheritenceData = {
     query?: never;
     url: '/api/v1/{tenant}/namespaces/{namespace}/kv/inheritance';
 };
+
+export type ListKeysWithInheritenceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListKeysWithInheritenceError = ListKeysWithInheritenceErrors[keyof ListKeysWithInheritenceErrors];
 
 export type ListKeysWithInheritenceResponses = {
     /**
@@ -7757,6 +11392,23 @@ export type DeleteKeyValueData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}';
 };
 
+export type DeleteKeyValueErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteKeyValueError = DeleteKeyValueErrors[keyof DeleteKeyValueErrors];
+
 export type DeleteKeyValueResponses = {
     /**
      * deleteKeyValue 200 response
@@ -7782,6 +11434,23 @@ export type GetKeyValueData = {
     query?: never;
     url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}';
 };
+
+export type GetKeyValueErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetKeyValueError = GetKeyValueErrors[keyof GetKeyValueErrors];
 
 export type GetKeyValueResponses = {
     /**
@@ -7812,12 +11481,118 @@ export type SetKeyValueData = {
     url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}';
 };
 
+export type SetKeyValueErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SetKeyValueError = SetKeyValueErrors[keyof SetKeyValueErrors];
+
 export type SetKeyValueResponses = {
     /**
      * setKeyValue 200 response
      */
     200: unknown;
 };
+
+export type GetExecutionOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/outputs/executions/{executionId}';
+};
+
+export type GetExecutionOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetExecutionOutputsError = GetExecutionOutputsErrors[keyof GetExecutionOutputsErrors];
+
+export type GetExecutionOutputsResponses = {
+    /**
+     * The execution outputs as a map of output names to their values
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
+export type ListSearchableOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
+};
+
+export type ListSearchableOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
+
+export type ListSearchableOutputsResponses = {
+    /**
+     * listSearchableOutputs 200 response
+     */
+    200: PagedResultsOutputControllerSearchableOutputInformation;
+};
+
+export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
 
 export type GetTaskOutputsInformationData = {
     body?: never;
@@ -7829,8 +11604,25 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
+
+export type GetTaskOutputsInformationErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskOutputsInformationError = GetTaskOutputsInformationErrors[keyof GetTaskOutputsInformationErrors];
 
 export type GetTaskOutputsInformationResponses = {
     /**
@@ -7855,8 +11647,25 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
+
+export type GetTaskRunOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskRunOutputsError = GetTaskRunOutputsErrors[keyof GetTaskRunOutputsErrors];
 
 export type GetTaskRunOutputsResponses = {
     /**
@@ -7868,6 +11677,88 @@ export type GetTaskRunOutputsResponses = {
 };
 
 export type GetTaskRunOutputsResponse = GetTaskRunOutputsResponses[keyof GetTaskRunOutputsResponses];
+
+export type Get1Data = {
+    body?: never;
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type Get1Errors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type Get1Error = Get1Errors[keyof Get1Errors];
+
+export type Get1Responses = {
+    /**
+     * get_1 200 response
+     */
+    200: Blob | File;
+};
+
+export type Get1Response = Get1Responses[keyof Get1Responses];
+
+export type PostData = {
+    body?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type PostErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PostError = PostErrors[keyof PostErrors];
+
+export type PostResponses = {
+    /**
+     * post 200 response
+     */
+    200: Blob | File;
+};
+
+export type PostResponse = PostResponses[keyof PostResponses];
 
 export type ListSecretsData = {
     body?: never;
@@ -7895,6 +11786,23 @@ export type ListSecretsData = {
     url: '/api/v1/{tenant}/secrets';
 };
 
+export type ListSecretsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSecretsError = ListSecretsErrors[keyof ListSecretsErrors];
+
 export type ListSecretsResponses = {
     /**
      * listSecrets 200 response
@@ -7915,10 +11823,28 @@ export type CreateBackfillData = {
 
 export type CreateBackfillErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the backfill cannot be created
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * If the backfill end date is not after its start date, or if the trigger is not a schedule trigger
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type CreateBackfillError = CreateBackfillErrors[keyof CreateBackfillErrors];
 
 export type CreateBackfillResponses = {
     /**
@@ -7940,10 +11866,24 @@ export type DeleteBackfillData = {
 
 export type DeleteBackfillErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the backfill cannot be deleted
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type DeleteBackfillError = DeleteBackfillErrors[keyof DeleteBackfillErrors];
 
 export type DeleteBackfillResponses = {
     /**
@@ -7968,6 +11908,23 @@ export type DeleteBackfillByQueryData = {
     url: '/api/v1/{tenant}/triggers/backfill/delete/by-query';
 };
 
+export type DeleteBackfillByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteBackfillByQueryError = DeleteBackfillByQueryErrors[keyof DeleteBackfillByQueryErrors];
+
 export type DeleteBackfillByQueryResponses = {
     /**
      * Accepted
@@ -7985,6 +11942,23 @@ export type DeleteBackfillByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/triggers/backfill/delete/by-triggers';
 };
+
+export type DeleteBackfillByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteBackfillByIdsError = DeleteBackfillByIdsErrors[keyof DeleteBackfillByIdsErrors];
 
 export type DeleteBackfillByIdsResponses = {
     /**
@@ -8006,10 +11980,24 @@ export type PauseBackfillData = {
 
 export type PauseBackfillErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the backfill cannot be paused
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type PauseBackfillError = PauseBackfillErrors[keyof PauseBackfillErrors];
 
 export type PauseBackfillResponses = {
     /**
@@ -8034,6 +12022,23 @@ export type PauseBackfillByQueryData = {
     url: '/api/v1/{tenant}/triggers/backfill/pause/by-query';
 };
 
+export type PauseBackfillByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PauseBackfillByQueryError = PauseBackfillByQueryErrors[keyof PauseBackfillByQueryErrors];
+
 export type PauseBackfillByQueryResponses = {
     /**
      * Accepted
@@ -8051,6 +12056,23 @@ export type PauseBackfillByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/triggers/backfill/pause/by-triggers';
 };
+
+export type PauseBackfillByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PauseBackfillByIdsError = PauseBackfillByIdsErrors[keyof PauseBackfillByIdsErrors];
 
 export type PauseBackfillByIdsResponses = {
     /**
@@ -8072,10 +12094,24 @@ export type UnpauseBackfillData = {
 
 export type UnpauseBackfillErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the backfill cannot be resumed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type UnpauseBackfillError = UnpauseBackfillErrors[keyof UnpauseBackfillErrors];
 
 export type UnpauseBackfillResponses = {
     /**
@@ -8100,6 +12136,23 @@ export type UnpauseBackfillByQueryData = {
     url: '/api/v1/{tenant}/triggers/backfill/unpause/by-query';
 };
 
+export type UnpauseBackfillByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnpauseBackfillByQueryError = UnpauseBackfillByQueryErrors[keyof UnpauseBackfillByQueryErrors];
+
 export type UnpauseBackfillByQueryResponses = {
     /**
      * Accepted
@@ -8117,6 +12170,23 @@ export type UnpauseBackfillByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/triggers/backfill/unpause/by-triggers';
 };
+
+export type UnpauseBackfillByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnpauseBackfillByIdsError = UnpauseBackfillByIdsErrors[keyof UnpauseBackfillByIdsErrors];
 
 export type UnpauseBackfillByIdsResponses = {
     /**
@@ -8141,9 +12211,26 @@ export type DeleteTriggersByQueryData = {
     url: '/api/v1/{tenant}/triggers/delete/by-query';
 };
 
+export type DeleteTriggersByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteTriggersByQueryError = DeleteTriggersByQueryErrors[keyof DeleteTriggersByQueryErrors];
+
 export type DeleteTriggersByQueryResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -8159,9 +12246,26 @@ export type DeleteTriggersByIdsData = {
     url: '/api/v1/{tenant}/triggers/delete/by-triggers';
 };
 
+export type DeleteTriggersByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteTriggersByIdsError = DeleteTriggersByIdsErrors[keyof DeleteTriggersByIdsErrors];
+
 export type DeleteTriggersByIdsResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -8181,6 +12285,23 @@ export type ExportTriggersData = {
     };
     url: '/api/v1/{tenant}/triggers/export/by-query/csv';
 };
+
+export type ExportTriggersErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ExportTriggersError = ExportTriggersErrors[keyof ExportTriggersErrors];
 
 export type ExportTriggersResponses = {
     /**
@@ -8221,6 +12342,23 @@ export type SearchTriggersData = {
     url: '/api/v1/{tenant}/triggers/search';
 };
 
+export type SearchTriggersErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchTriggersError = SearchTriggersErrors[keyof SearchTriggersErrors];
+
 export type SearchTriggersResponses = {
     /**
      * searchTriggers 200 response
@@ -8241,10 +12379,24 @@ export type DisableTriggerByIdData = {
 
 export type DisableTriggerByIdErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the trigger state cannot be changed
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type DisableTriggerByIdError = DisableTriggerByIdErrors[keyof DisableTriggerByIdErrors];
 
 export type DisableTriggerByIdResponses = {
     /**
@@ -8277,6 +12429,23 @@ export type DisabledTriggersByQueryData = {
     url: '/api/v1/{tenant}/triggers/set-disabled/by-query';
 };
 
+export type DisabledTriggersByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DisabledTriggersByQueryError = DisabledTriggersByQueryErrors[keyof DisabledTriggersByQueryErrors];
+
 export type DisabledTriggersByQueryResponses = {
     /**
      * Accepted
@@ -8294,6 +12463,23 @@ export type DisabledTriggersByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/triggers/set-disabled/by-triggers';
 };
+
+export type DisabledTriggersByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DisabledTriggersByIdsError = DisabledTriggersByIdsErrors[keyof DisabledTriggersByIdsErrors];
 
 export type DisabledTriggersByIdsResponses = {
     /**
@@ -8318,6 +12504,23 @@ export type UnlockTriggersByQueryData = {
     url: '/api/v1/{tenant}/triggers/unlock/by-query';
 };
 
+export type UnlockTriggersByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnlockTriggersByQueryError = UnlockTriggersByQueryErrors[keyof UnlockTriggersByQueryErrors];
+
 export type UnlockTriggersByQueryResponses = {
     /**
      * Accepted
@@ -8335,6 +12538,23 @@ export type UnlockTriggersByIdsData = {
     query?: never;
     url: '/api/v1/{tenant}/triggers/unlock/by-triggers';
 };
+
+export type UnlockTriggersByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnlockTriggersByIdsError = UnlockTriggersByIdsErrors[keyof UnlockTriggersByIdsErrors];
 
 export type UnlockTriggersByIdsResponses = {
     /**
@@ -8379,6 +12599,23 @@ export type SearchTriggersForFlowData = {
     url: '/api/v1/{tenant}/triggers/{namespace}/{flowId}';
 };
 
+export type SearchTriggersForFlowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type SearchTriggersForFlowError = SearchTriggersForFlowErrors[keyof SearchTriggersForFlowErrors];
+
 export type SearchTriggersForFlowResponses = {
     /**
      * searchTriggersForFlow 200 response
@@ -8411,10 +12648,24 @@ export type DeleteTriggerData = {
 
 export type DeleteTriggerErrors = {
     /**
-     * If the trigger cannot be deleted
+     * Authentication required
      */
-    409: unknown;
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * If the flow still declares the trigger, or the scheduler failed to delete the trigger state
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type DeleteTriggerError = DeleteTriggerErrors[keyof DeleteTriggerErrors];
 
 export type DeleteTriggerResponses = {
     /**
@@ -8448,10 +12699,24 @@ export type RestartTriggerData = {
 
 export type RestartTriggerErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the trigger cannot be restarted
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type RestartTriggerError = RestartTriggerErrors[keyof RestartTriggerErrors];
 
 export type RestartTriggerResponses = {
     /**
@@ -8485,10 +12750,24 @@ export type UnlockTriggerData = {
 
 export type UnlockTriggerErrors = {
     /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
      * If the trigger is already unlocked or is a realtime trigger
      */
-    409: unknown;
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
 };
+
+export type UnlockTriggerError = UnlockTriggerErrors[keyof UnlockTriggerErrors];
 
 export type UnlockTriggerResponses = {
     /**
@@ -8504,9 +12783,31 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
+
+export type GetUsagesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetUsagesError = GetUsagesErrors[keyof GetUsagesErrors];
 
 export type GetUsagesResponses = {
     /**

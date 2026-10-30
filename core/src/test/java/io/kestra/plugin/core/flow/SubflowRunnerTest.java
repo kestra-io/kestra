@@ -1,6 +1,6 @@
 package io.kestra.plugin.core.flow;
 
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,23 +22,30 @@ import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
 
+import io.micronaut.context.annotation.Property;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
+@Property(name = "kestra.execution.depth.max-depth", value = "3")
 class SubflowRunnerTest {
 
     @Inject
@@ -50,6 +58,12 @@ class SubflowRunnerTest {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
+    private FlowMetaStoreInterface flowMetaStore;
+
+    @Inject
+    protected BroadcastQueueInterface<FlowInterface> flowQueue;
+
+    @Inject
     protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
@@ -60,6 +74,22 @@ class SubflowRunnerTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Test
+    @LoadFlows({ "flows/valids/subflow-select-expression-child.yaml", "flows/valids/subflow-select-expression-parent.yaml" })
+    void shouldSkipSelectExpressionWhenSubflowPassesCustomValue() throws QueueException, TimeoutException {
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-select-expression-parent");
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/subflow-select-expression-child.yaml", "flows/valids/subflow-select-expression-parent-no-value.yaml" })
+    void shouldFailWhenSubflowPassesNoValueForSelectWithSubflowExpression() throws QueueException, TimeoutException {
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-select-expression-parent-no-value");
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
 
     @Test
     @LoadFlows({ "flows/valids/subflow-inherited-labels-child.yaml", "flows/valids/subflow-inherited-labels-parent.yaml" })
@@ -116,28 +146,23 @@ class SubflowRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/subflow-parent-retry.yaml", "flows/valids/subflow-to-retry.yaml" })
-    void subflowOutputWithWait() throws QueueException, TimeoutException, InterruptedException {
-        List<Execution> childExecution = new ArrayList<>();
-        CountDownLatch countDownLatch = new CountDownLatch(4);
-        QueueSubscriber<FollowExecutionEvent> closing = executionEventQueue.subscriber().subscribe(either ->
-        {
-            if (either.isLeft() && either.getLeft().flowId().equals("subflow-to-retry") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
-                var execution = executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow();
-                childExecution.add(execution);
-                countDownLatch.countDown();
-            }
-        });
-
+    void subflowOutputWithWait() throws QueueException, TimeoutException {
         Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent-retry");
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(parentExecution.getTaskRunList()).hasSize(5);
 
-        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        Supplier<List<Execution>> terminatedChildren = () -> executionRepository
+            .findByFlowId(MAIN_TENANT, "io.kestra.tests", "subflow-to-retry", Pageable.UNPAGED)
+            .stream()
+            .filter(e -> e.getTrigger() != null && parentExecution.getId().equals(e.getTrigger().getVariables().get("executionId")))
+            .filter(e -> e.getState().isTerminated())
+            .toList();
+        await().atMost(Duration.ofSeconds(10)).until(() -> terminatedChildren.get().size() == 4);
+
         // we should have 4 executions, two in SUCCESS and two in FAILED
-        assertThat(childExecution).hasSize(4);
+        List<Execution> childExecution = terminatedChildren.get();
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.SUCCESS).count()).isEqualTo(2);
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.FAILED).count()).isEqualTo(2);
-        closing.close();
     }
 
     @Test
@@ -199,6 +224,40 @@ class SubflowRunnerTest {
         assertTrue(grandChildExecution.isPresent());
         assertThat(grandChildExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(grandChildExecution.get().getTaskRunList()).hasSize(1);
+    }
+
+    @Test
+    void shouldFailRatherThanRecurseForeverWhenTwoFlowsSubflowEachOther() throws QueueException, TimeoutException {
+        // Given two flows that Subflow-call each other. FlowService.create() now rejects this shape (see FlowServiceTest),
+        // so the pair is seeded directly through the repository and flow queue, bypassing that save-time check.
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("io.kestra.tests").flowId(flowBId).build()))
+            .build();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("io.kestra.tests").flowId(flowAId).build()))
+            .build();
+        flowRepository.create(GenericFlow.of(flowA));
+        flowRepository.create(GenericFlow.of(flowB));
+        flowQueue.emit(flowA);
+        flowQueue.emit(flowB);
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowAId))
+                && flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId))
+        );
+
+        // When
+        Execution execution = runnerUtils.runOne(flowA, null);
+
+        // Then the chain is stopped rather than left to recurse forever
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test

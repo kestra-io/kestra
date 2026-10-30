@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar class="plugin-toc" aria-label="Plugins">
+    <KsSideBar class="plugin-toc" :aria-label="$t('plugins.names')">
         <template #header>
             <KsSearch
                 class="plugin-toc__search"
@@ -136,12 +136,12 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-toc {
         height: 100%;
+    }
 
-        &__search {
-            width: 100%;
-        }
+    .plugin-toc__search {
+        width: 100%;
     }
 </style>

@@ -1,21 +1,21 @@
 <template>
     <KsAlert
         v-if="duplicatedKeys?.length"
-        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        :title="$t('duplicate-pair', {label: $t('key'), key: duplicatedKeys[0]})"
         type="error"
         :closable="false"
         class="mb-2"
     />
     <div class="task-collection" :class="{'task-collection--filled': currentValue.length > 0}">
         <template v-if="componentType">
-            <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
+            <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
                 <template #tasks>
                     <InputText
                         :ref="el => { if (el) keyInputRefs[index] = el }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
-                        placeholder="Key"
+                        :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                     />
                     <hr>
@@ -32,21 +32,21 @@
                     />
                     <div class="delete-container">
                         <button @click="removeItem(index)" class="remove-entry">
-                            {{ te(`no_code.remove.${root}`) ? t(`no_code.remove.${root}`) : t('no_code.remove.default') }} <DeleteOutline />
+                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <Delete />
                         </button>
                     </div>
                 </template>
             </Wrapper>
         </template>
         <template v-else>
-            <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
                 <KsCol :span="6">
                     <InputText
                         :ref="el => { if (el) keyInputRefs[index] = el }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
-                        placeholder="Key"
+                        :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                         :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
                     />
@@ -62,7 +62,7 @@
                     />
                 </KsCol>
                 <KsCol :span="2" class="col align-self-center delete">
-                    <DeleteOutline @click="removeItem(index)" />
+                    <Delete @click="removeItem(index)" />
                 </KsCol>
             </KsRow>
         </template>
@@ -71,18 +71,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, nextTick} from "vue"
+    import {computed, ref, watch, nextTick, onBeforeUnmount} from "vue"
+    import {rowKey, debounce} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
-    import {DeleteOutline} from "../../utils/icons"
+    import {Delete} from "../../utils/icons"
 
     import InputText from "../inputs/InputText.vue"
     import TaskExpression from "./TaskExpression.vue"
     import Add from "../Add.vue"
-    import debounce from "lodash/debounce"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
 
-    const {t, te} = useI18n()
+    const {te} = useI18n()
 
     defineOptions({
         inheritAttrs: false,
@@ -152,6 +152,9 @@
         emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
     }, 200)
 
+    // A debounced update still pending when the panel closes would be dropped, losing the user's last edit
+    onBeforeUnmount(() => emitUpdate.flush())
+
     const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
@@ -191,9 +194,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-container{
     margin-bottom: 1rem;
 }

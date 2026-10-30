@@ -94,8 +94,8 @@ public class ExecutorsUtils {
         );
     }
 
-    public ExecutorService singleThreadScheduledExecutor(String name) {
-        return this.wrap(
+    public ScheduledExecutorService singleThreadScheduledExecutor(String name) {
+        return this.wrapScheduled(
             name,
             Executors.newSingleThreadScheduledExecutor(
                 ThreadMainFactoryBuilder.build(name + "_%d")
@@ -124,6 +124,14 @@ public class ExecutorsUtils {
             Thread.currentThread().interrupt();
             log.debug("Failed to shutdown the ScheduledThreadPoolExecutor.");
         }
+    }
+
+    private ScheduledExecutorService wrapScheduled(String name, ScheduledExecutorService executorService) {
+        return ExecutorServiceMetrics.monitor(
+            meterRegistry,
+            executorService,
+            name
+        );
     }
 
     private ExecutorService wrap(String name, ExecutorService executorService) {

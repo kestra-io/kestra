@@ -1,21 +1,22 @@
 package io.kestra.core.serializers;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.kestra.core.plugins.PluginModule;
+import io.kestra.core.plugins.Jackson3PluginModule;
 
 import io.micronaut.context.annotation.BootstrapContextCompatible;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Secondary;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.jackson.JacksonConfiguration;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Custom Micronaut ObjectMapperFactory to add the PluginModule.
+ * Custom Micronaut mapper factory for the HTTP request/response boundary.
+ * <p>
+ * Micronaut 5 is Jackson 3 based, whereas Kestra's own {@link JacksonMapper} hub stays on Jackson 2, so this
+ * mapper restore plugin polymorphic deserialization, and flips the defaults back to what we used with Jackson 2.
  */
 @Factory
 @BootstrapContextCompatible
@@ -27,9 +28,18 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
     @Named("json")
     @BootstrapContextCompatible
     @Override
-    public ObjectMapper objectMapper(@Nullable JacksonConfiguration jacksonConfiguration, @Nullable JsonFactory jsonFactory) {
-        ObjectMapper objectMapper = super.objectMapper(jacksonConfiguration, jsonFactory);
-        objectMapper.registerModule(new PluginModule());
-        return objectMapper;
+    public JsonMapper jsonMapper(JsonMapper.Builder jsonMapperBuilder) {
+        return jsonMapperBuilder
+            .addModule(new Jackson3PluginModule())
+            // Jackson 3 flips these two relative to Jackson 2. Sorting would reorder every API payload, and
+            // failing on trailing tokens would reject bodies Jackson 2 accepted.
+            .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+            .disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            // Without this, Jackson 3 silently ignores final fields carrying a @Builder.Default initializer
+            // (e.g. Property<T> fields on plugin tasks), leaving the default instead of the parsed value.
+            .enable(MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS)
+            // A null for a primitive (e.g. a final boolean field) should fall back to its default, not throw.
+            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+            .build();
     }
 }

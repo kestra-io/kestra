@@ -53,10 +53,11 @@ public abstract class AbstractDate {
 
         ZoneId zoneId = zoneId(timeZone);
         ZonedDateTime date = convert(input, zoneId, existingFormat);
+        ZoneId outputZone = timeZone != null ? zoneId : date.getZone();
 
         DateTimeFormatter formatter = formatter(format)
             .withLocale(locale)
-            .withZone(zoneId);
+            .withZone(outputZone);
 
         return formatter.format(date);
     }
@@ -104,9 +105,9 @@ public abstract class AbstractDate {
         }
 
         if (value instanceof Long longValue) {
-            if (value.toString().length() == 13) {
+            if (digitCount(longValue) == 13) {
                 return Instant.ofEpochMilli(longValue).atZone(zoneId);
-            } else if (value.toString().length() == 19) {
+            } else if (digitCount(longValue) == 19) {
                 if (value.toString().endsWith("000")) {
                     long seconds = longValue / 1_000_000_000;
                     int nanos = (int) (longValue % 1_000_000_000);
@@ -141,5 +142,10 @@ public abstract class AbstractDate {
                 }
             }
         }
+    }
+
+    private static int digitCount(long value) {
+        int length = Long.toString(value).length();
+        return value < 0 ? length - 1 : length;
     }
 }

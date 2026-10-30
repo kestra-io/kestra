@@ -110,7 +110,12 @@ public record QueryFilter(
         IS_NULL,
         IS_NOT_NULL,
         REGEX,
-        PREFIX
+        PREFIX;
+
+        @JsonCreator
+        public static Op fromString(String value) {
+            return Enums.getForNameIgnoreCase(value, Op.class);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -169,6 +174,27 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        @JsonProperty("flowNamespace")
+        FLOW_NAMESPACE("flowNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        @JsonProperty("targetNamespace")
+        TARGET_NAMESPACE("targetNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        @JsonProperty("targetAssetType")
+        TARGET_ASSET_TYPE("targetAssetType") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("kind")
         KIND("kind") {
             @Override
@@ -209,6 +235,20 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
+            }
+        },
+        @JsonProperty("outputs")
+        OUTPUTS("outputs") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("assetExpiry")
+        ASSET_EXPIRY("assetExpiry") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
         @JsonProperty("flowId")
@@ -335,6 +375,27 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("origin")
+        ORIGIN("origin") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("sourceId")
+        SOURCE_ID("sourceId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("targetId")
+        TARGET_ID("targetId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("triggerExecutionId")
         TRIGGER_EXECUTION_ID("triggerExecutionId") {
             @Override
@@ -368,6 +429,27 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("loopRunValue")
+        LOOP_RUN_VALUE("loopRunValue") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("operationId")
+        OPERATION_ID("operationId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        @JsonProperty("operationOutcome")
+        OPERATION_OUTCOME("operationOutcome") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
             }
         },
         @JsonProperty("taskRunId")
@@ -496,8 +578,8 @@ public record QueryFilter(
                 return List.of();
             }
         },
-        @JsonProperty("super_admin")
-        SUPER_ADMIN("super_admin") {
+        @JsonProperty("instance_owner")
+        INSTANCE_OWNER("instance_owner") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
@@ -579,8 +661,9 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
-                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
-                    Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID
+                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
+                    Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.OUTPUTS
                 );
             }
         },
@@ -615,14 +698,15 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
                     Field.TRIGGER_ID, Field.TRIGGER_STATE,
-                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE
+                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE,
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME
                 );
             }
         },
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.INSTANCE_OWNER);
             }
         },
         ROLE {
@@ -634,7 +718,7 @@ public record QueryFilter(
         INVITATION {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.INSTANCE_OWNER);
             }
 
             @Override
@@ -719,8 +803,11 @@ public record QueryFilter(
                     Field.TYPE,
                     Field.NAMESPACE,
                     Field.METADATA,
+                    Field.STATUS,
+                    Field.ASSET_EXPIRY,
                     Field.UPDATED,
-                    Field.LOCKED
+                    Field.LOCKED,
+                    Field.PARENT_ID
                 );
             }
         },
@@ -740,18 +827,26 @@ public record QueryFilter(
                 );
             }
         },
-        ASSET_LINEAGE_EVENT {
+        ASSET_RELATION {
             @Override
             public List<Field> supportedField() {
-                // ASSET_ID is not supported for now as it needs complex json parsing
                 return List.of(
+                    Field.KIND,
+                    Field.ASSET_ID,
+                    Field.SOURCE_ID,
+                    Field.TARGET_ID,
+                    Field.TARGET_NAMESPACE,
+                    Field.TARGET_ASSET_TYPE,
+                    Field.ORIGIN,
                     Field.NAMESPACE,
+                    Field.FLOW_NAMESPACE,
                     Field.FLOW_ID,
-                    Field.FLOW_REVISION,
                     Field.EXECUTION_ID,
                     Field.TASK_ID,
                     Field.TASK_RUN_ID,
-                    Field.CREATED
+                    Field.CREATED,
+                    Field.START_DATE,
+                    Field.END_DATE
                 );
             }
         },
@@ -838,6 +933,7 @@ public record QueryFilter(
                     Field.STATUS,
                     Field.SEVERITY,
                     Field.ASSIGNEE,
+                    Field.KIND,
                     Field.START_DATE,
                     Field.END_DATE,
                     Field.CREATED,
@@ -895,6 +991,9 @@ public record QueryFilter(
         }
         List<String> errors = new ArrayList<>();
         filters.forEach(filter -> collectValidationErrors(filter, resource, errors));
+        if (hasField(filters, Field.OPERATION_OUTCOME) && !hasField(filters, Field.OPERATION_ID)) {
+            errors.add("Field OPERATION_OUTCOME requires field OPERATION_ID to also be present in the filters.");
+        }
         if (!errors.isEmpty()) {
             throw new InvalidQueryFiltersException(errors);
         }
@@ -921,14 +1020,42 @@ public record QueryFilter(
                 )
             );
         }
-        if (
-            filter.operation() == Op.REGEX
-                && filter.value() instanceof String pattern
-                && !RegexUtils.isSafeUserRegex(pattern)
-        ) {
-            errors.add(
-                "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
-            );
+        collectRegexErrors(filter, errors);
+    }
+
+    /**
+     * Validates only the REGEX filters, for callers whose filters do not map to a {@link Resource}.
+     *
+     * @throws InvalidQueryFiltersException when a REGEX value is unsafe or not a valid regular expression.
+     */
+    public static void validateRegexFilters(List<QueryFilter> filters) {
+        if (filters == null) {
+            return;
+        }
+        List<String> errors = new ArrayList<>();
+        filters.forEach(filter -> collectRegexErrors(filter, errors));
+        if (!errors.isEmpty()) {
+            throw new InvalidQueryFiltersException(errors);
+        }
+    }
+
+    private static void collectRegexErrors(QueryFilter filter, List<String> errors) {
+        if (filter.isNode()) {
+            filter.children().forEach(child -> collectRegexErrors(child, errors));
+            return;
+        }
+        if (filter.operation() == Op.REGEX && filter.value() instanceof String pattern) {
+            if (!RegexUtils.isSafeUserRegex(pattern)) {
+                errors.add(
+                    "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
+                );
+            } else {
+                RegexUtils.syntaxError(pattern).ifPresent(
+                    error -> errors.add(
+                        "REGEX pattern '%s' for field %s is not a valid regular expression: %s".formatted(pattern, filter.field().name(), error)
+                    )
+                );
+            }
         }
     }
 

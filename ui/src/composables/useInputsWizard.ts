@@ -14,11 +14,11 @@ interface UseInputsWizardDeps {
         initialInputs?: InputMetaData[];
         flow?: Flow;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
     };
     inputsMetaData: Ref<InputMetaData[]>;
-    inputsValues: Record<string, any>;
-    multiSelectInputs: Record<string, any>;
+    inputsValues: Record<string, unknown>;
+    multiSelectInputs: Record<string, unknown>;
     inputsValidated: Ref<Set<string>>;
     validateInputs: () => Promise<void>;
     onRecapChange: (value: boolean) => void;
@@ -43,7 +43,7 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
     // cleared on unmount (dialog discard or execution creation) so a fresh open starts blank.
     const formValuesStorageKey = computed(() => isWizard.value ? executeFormValuesStorageKey(props.flow) : undefined)
 
-    const steps = computed<WizardStep[]>(() => isWizard.value ? buildWizardSteps(props.initialInputs as any) : [])
+    const steps = computed<WizardStep[]>(() => isWizard.value ? buildWizardSteps(props.initialInputs) : [])
 
     const currentStep = ref(0)
     // Steps the user has passed via Next (sticky — never cleared, so editing from recap and

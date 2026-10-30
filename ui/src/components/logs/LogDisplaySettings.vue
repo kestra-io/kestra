@@ -1,32 +1,32 @@
 <template>
-    <KsPopover placement="bottom-end" trigger="click" :title="t('display_settings')" width="300">
+    <KsPopover placement="bottom-end" trigger="click" :title="$t('display_settings')" width="300">
         <template #reference>
-            <KsButton square type="default" size="default" :icon="Cog" :aria-label="t('display_settings')" />
+            <KsButton square type="default" size="default" :icon="Cog" :aria-label="$t('display_settings')" />
         </template>
         <template #default>
             <div class="log-display-settings">
                 <div class="row row--stack">
-                    <span class="row-label">{{ t('density') }}</span>
+                    <span class="row-label">{{ $t('density') }}</span>
                     <KsSegmented v-model="logsDensity" :options="densityOptions" block class="density-segmented" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('font size') }}</span>
+                    <span class="row-label">{{ $t('font size') }}</span>
                     <KsInputNumber v-model="logsFontSize" :min="10" :max="24" :step="1" controlsPosition="right" class="row-number" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('pretty_json') }}</span>
+                    <span class="row-label">{{ $t('pretty_json') }}</span>
                     <KsSwitch v-model="logsPrettyJson" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('expand_by_default') }}</span>
+                    <span class="row-label">{{ $t('expand_by_default') }}</span>
                     <KsSwitch v-model="logsExpandByDefault" :disabled="!logsPrettyJson" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('body_line_clamp') }}</span>
+                    <span class="row-label">{{ $t('body_line_clamp') }}</span>
                     <div class="clamp-control">
                         <KsInputNumber
-                            v-if="clampEnabled"
-                            v-model="logsBodyClamp"
+                            v-model="clampModel"
+                            :disabled="!clampEnabled"
                             :min="1"
                             :max="50"
                             :step="1"
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import Cog from "vue-material-design-icons/Cog.vue"
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} from "../../composables/useLogDisplay"
@@ -55,15 +55,26 @@
         {label: t("density_expanded"), value: "expanded"},
     ])
 
+    const lastClampValue = ref(logsBodyClamp.value > 0 ? logsBodyClamp.value : 5)
+
     const clampEnabled = computed({
         get: () => logsBodyClamp.value > 0,
         set: (value: boolean) => {
-            logsBodyClamp.value = value ? (logsBodyClamp.value || 5) : 0
+            logsBodyClamp.value = value ? (lastClampValue.value || 5) : 0
+        },
+    })
+
+    const clampModel = computed({
+        get: () => (clampEnabled.value ? logsBodyClamp.value : lastClampValue.value),
+        set: (val: number | null | undefined) => {
+            if (val == null || val < 1) return
+            lastClampValue.value = val
+            logsBodyClamp.value = val
         },
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .log-display-settings {
         display: flex;
         flex-direction: column;

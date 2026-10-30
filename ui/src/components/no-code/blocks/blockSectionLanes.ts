@@ -21,7 +21,6 @@ export interface SectionLaneConfig {
     listTest?: string
     endDropTest?: string
     supportsFlowable?: boolean
-    clusterAcceptsDrop?: boolean
     playgroundEnabled: boolean
 }
 
@@ -64,7 +63,6 @@ export function buildSectionLanes(
             listTest: "block-editor-task-list",
             endDropTest: "block-editor-tasks-end",
             supportsFlowable: true,
-            clusterAcceptsDrop: true,
             playgroundEnabled,
         },
         {

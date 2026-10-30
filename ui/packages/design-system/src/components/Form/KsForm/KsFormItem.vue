@@ -1,7 +1,7 @@
 <template>
     <ElFormItem
         :class="{'is-inline-row': inline}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as FormItemProps)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem, type FormItemRule} from "element-plus"
+    import {ElFormItem, type FormItemProps, type FormItemRule} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -56,8 +56,15 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/form-item';
+</style>
+
+<style>
     .kel-form-item {
-        .kel-form-item__error {
+        &:has(.kel-switch:not(.is-disabled)) .kel-form-item__label {
+            cursor: pointer;
+        }
+
+        & .kel-form-item__error {
             &.kel-form-item__error--inline {
                 margin-top: 3px;
                 width: 100%;
@@ -65,7 +72,7 @@
             }
         }
 
-        .kel-input-group__append, .kel-input-group__prepend {
+        & .kel-input-group__append, & .kel-input-group__prepend {
             background-color: transparent;
             color: var(--ks-text-primary);
         }
@@ -76,13 +83,13 @@
             justify-content: space-between;
             gap: var(--ks-spacing-4);
 
-            .kel-form-item__label {
+            & .kel-form-item__label {
                 width: auto;
                 margin: 0;
                 padding: 0;
             }
 
-            .kel-form-item__content {
+            & .kel-form-item__content {
                 flex: 0 0 auto;
             }
         }

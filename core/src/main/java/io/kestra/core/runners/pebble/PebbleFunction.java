@@ -9,7 +9,12 @@ import io.micronaut.core.annotation.Nullable;
  * Represents a Pebble function with its name, arguments and their autocompletion defaults.
  * Argument order matches the function's positional argument order.
  */
-public record PebbleFunction(String name, List<Argument> arguments) {
+public record PebbleFunction(String name, List<Argument> arguments, boolean deprecated, @Nullable String replacement) {
+
+    public PebbleFunction(String name, List<Argument> arguments) {
+        this(name, arguments, false, null);
+    }
+
 
     /**
      * Returns a human-readable representation, e.g. {@code secret(key='MY_SECRET')} or {@code now()}.

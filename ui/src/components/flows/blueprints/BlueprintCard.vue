@@ -65,6 +65,7 @@
     import {canCreate} from "override/composables/blueprintsPermissions"
     import {blueprintTaskTypes, useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const {t} = useI18n()
 
@@ -77,8 +78,8 @@
         system?: boolean;
         embed?: boolean;
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>(), {
         system: false,
         embed: false,
@@ -116,7 +117,7 @@
         canCreate(props.blueprintKind),
     )
 
-    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {missingTaskTypes} = useBlueprintPlugins()
 
     const missingTasks = computed(() =>
         missingTaskTypes(props.blueprint.includedTasks),
@@ -126,12 +127,12 @@
 
     const missingPluginsMessage = computed(() =>
         t("blueprints.missingPlugins.card", {
-            plugins: missingPluginNames(props.blueprint.includedTasks).join(", "),
+            tasks: missingTasks.value.join(", "),
         }),
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprint-card {
         display: flex;
         cursor: pointer;
@@ -146,7 +147,7 @@
             box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             width: 100%;
             height: 100%;
         }
@@ -211,7 +212,7 @@
                 display: flex;
                 flex-shrink: 0;
 
-                :deep(.task-icon) {
+                & :deep(.task-icon) {
                     width: 1.5rem;
                     height: 1.5rem;
                 }

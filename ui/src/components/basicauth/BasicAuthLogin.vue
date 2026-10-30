@@ -3,6 +3,12 @@
         <img src="../../assets/monogram.svg" alt="Kestra" class="oss-login__icon" />
         <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
 
+        <div v-if="hint" class="oss-login__hint" data-test="login-after-sign-in">
+            <span class="oss-login__hint-label">{{ $t("login_redirect_hint.after_sign_in") }}</span>
+            <strong class="oss-login__hint-target">{{ hint.namespace }} / {{ hint.flowId }}</strong>
+            <span v-if="hintDetail" class="oss-login__hint-detail">{{ hintDetail }}</span>
+        </div>
+
         <KsForm ref="form" :model="credentials" :rules="rules" class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
 
@@ -56,6 +62,7 @@
     import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -68,6 +75,8 @@
     import * as BasicAuth from "../../utils/basicAuth"
     import {shouldShowWelcome} from "../../utils/welcomeGuard"
     import {identifyPosthogUser} from "../../utils/posthog"
+    import {storageKeys} from "../../utils/constants"
+    import {loginRedirectHint} from "../../utils/loginRedirectHint"
 
     interface Credentials {
         username: string
@@ -86,11 +95,31 @@
     const isLoading = ref(false)
     const credentials = ref<Credentials>({username: "", password: ""})
 
+    const SHORT_ID_LENGTH = 8
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    const withoutRouterBase = (path: string) => {
+        const base = router.options.history.base
+        if (!base || base === "/") return path
+        if (path === base) return "/"
+        return path.startsWith(`${base}/`) ? path.slice(base.length) : path
+    }
 
     const redirectPath = computed(() => {
         const raw = route.query.from as string | undefined
-        return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined
+        return raw && raw.startsWith("/") && !raw.startsWith("//") ? withoutRouterBase(raw) : undefined
+    })
+
+    const hint = computed(() => loginRedirectHint(redirectPath.value))
+
+    const hintDetail = computed(() => {
+        const current = hint.value
+        if (!current) return ""
+        const id = current.executionId?.slice(0, SHORT_ID_LENGTH)
+        const tab = current.tabLabelKey ? t(current.tabLabelKey) : undefined
+        if (id && tab) return t("login_redirect_hint.execution_tab", {id, tab})
+        if (id) return t("login_redirect_hint.execution", {id})
+        return tab ? t("login_redirect_hint.tab", {tab}) : ""
     })
 
     const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
@@ -124,11 +153,15 @@
         return response.data?.isBasicAuthInitialized
     }
 
-    const handleNetworkError = (error: any) => {
-        return error.code === "ERR_NETWORK" ||
-            error.code === "ECONNREFUSED" ||
-            (!error.response && error instanceof TypeError)
-    }
+    /**
+     * `useClient()` is a fetch-based facade, not axios. A network-level failure rejects with the raw
+     * fetch `TypeError`, before the interceptors in `kestraHttp` can attach a `response`; the axios-only
+     * `ERR_NETWORK` and `ECONNREFUSED` codes this used to also test for are never set by the facade.
+     */
+    const handleNetworkError = (error: unknown) => error instanceof TypeError
+
+    /** Every other rejection is a `KestraHttpError`: the parsed error body those same interceptors decorate. */
+    const responseStatus = (error: unknown) => (error as KestraHttpError | null)?.response?.status
 
     const loadAuthConfigErrors = async () => {
         try {
@@ -157,27 +190,35 @@
             if (!isInitialized) { router.push({name: "setup"}); return }
 
             const {username: trimmedUsername} = await BasicAuth.signIn(credentials.value)
-            localStorage.removeItem("basicAuthSetupInProgress")
-            sessionStorage.setItem("sessionActive", "true")
+            localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+            sessionStorage.setItem(storageKeys.SESSION_ACTIVE, "true")
 
             const configs = await miscStore.loadConfigs()
             await identifyPosthogUser(configs, {email: trimmedUsername})
             credentials.value = {username: "", password: ""}
 
-            if (shouldShowHelloDialog()) localStorage.setItem("showSurveyDialogAfterLogin", "true")
+            if (shouldShowHelloDialog()) localStorage.setItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN, "true")
 
-            if (await shouldShowWelcome()) {
+            if (redirectPath.value && hint.value) {
+                router.push(redirectPath.value)
+            } else if (await shouldShowWelcome()) {
                 router.push({name: "ai"})
             } else if (redirectPath.value) {
                 router.push(redirectPath.value)
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
-        } catch (error: any) {
-            if (handleNetworkError(error)) { router.push({name: "setup"}); return }
-            if (error?.response?.status === 401) {
+        } catch (error: unknown) {
+            if (handleNetworkError(error)) {
+                router.push({name: "setup"})
+                return
+            }
+
+            const status = responseStatus(error)
+
+            if (status === 401) {
                 await loadAuthConfigErrors()
-            } else if (error?.response?.status === 404) {
+            } else if (status === 404) {
                 router.push({name: "setup"})
             } else {
                 KsMessage.error(t("setup.validation.incorrect_creds"))
@@ -193,7 +234,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     :global(body .fullscreen-layout:has(.oss-login)) {
         background: var(--ks-bg-base) url("../onboarding/assets/grid.svg") center calc(50% + 165px) / auto no-repeat;
     }
@@ -203,7 +244,35 @@
         flex-direction: column;
         align-items: center;
         gap: var(--ks-spacing-6);
-        width: 320px;
+        width: min(20rem, 100%);
+    }
+
+    .oss-login__hint {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+        width: 100%;
+        padding: var(--ks-spacing-3);
+        background: var(--ks-bg-info);
+        border: 1px solid var(--ks-border-info);
+        border-radius: var(--ks-radius-base);
+        overflow-wrap: anywhere;
+    }
+
+    .oss-login__hint-label {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .oss-login__hint-target {
+        color: var(--ks-text-primary);
+    }
+
+    .oss-login__hint-detail {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
     }
 
     .oss-login__icon {

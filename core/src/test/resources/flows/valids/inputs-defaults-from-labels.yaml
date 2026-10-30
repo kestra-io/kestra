@@ -1,0 +1,18 @@
+id: inputs-defaults-from-labels
+namespace: io.kestra.tests
+
+labels:
+  managed-by: kestra
+
+inputs:
+  - id: fromFlowLabel
+    type: STRING
+    defaults: "{{ labels['managed-by'] }}"
+  - id: fromExecutionLabel
+    type: STRING
+    defaults: "{{ labels.caller }}"
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ inputs.fromFlowLabel }} / {{ inputs.fromExecutionLabel }}"

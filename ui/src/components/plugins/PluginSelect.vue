@@ -5,6 +5,8 @@
         filterable
         :filterMethod="onFilter"
         clearable
+        fitInputWidth
+        :fallbackPlacements="['bottom-start', 'top-start']"
         @visible-change="onVisibleChange"
     >
         <KsOption
@@ -40,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount, ref} from "vue"
+    import {computed, inject, onBeforeMount, ref, type Ref} from "vue"
     import TaskIcon from "./TaskIcon.vue"
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
@@ -52,31 +54,43 @@
 
     const pluginsStore = usePluginsStore()
 
+    interface SchemaNode {
+        $deprecated?: boolean;
+        $ref?: string;
+        allOf?: SchemaNode[];
+        anyOf?: SchemaNode[];
+        const?: string;
+        definitions?: Record<string, SchemaNode>;
+        enum?: string[];
+        properties?: Record<string, SchemaNode>;
+        title?: string;
+    }
+
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
-    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({definitions: {}, $ref: ""})) as Ref<SchemaNode>
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref({})) as Ref<Record<string, SchemaNode>>
 
     const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
     const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)
 
-    const fieldDefinition = computed(() => {
+    const fieldDefinition = computed<SchemaNode | undefined>(() => {
         if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath) as SchemaNode | undefined
     })
 
     onBeforeMount(() => {
         if (isPluginBlock) {
-            pluginsStore.listWithSubgroup({includeDeprecated: false})
+            pluginsStore.listWithSubgroup()
         }
         pluginsStore.fetchIcons()
     })
 
-    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
+    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map(item => {
         if (item.allOf) {
             // if the item is an allOf, we need to find the first item that has a $ref
-            const refItem = item.allOf.find((d: any) => d.$ref)
+            const refItem = item.allOf.find(definition => definition.$ref)
             if (refItem?.$ref) {
                 return removeRefPrefix(refItem.$ref)
             }
@@ -93,7 +107,7 @@
             }
 
             const consolidatedType = def.allOf
-                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
+                ? def.allOf.find(definition => definition.properties?.type)?.properties?.type
                 : def.properties?.type
 
             if (consolidatedType?.const) {
@@ -151,7 +165,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     :deep(div.task-icon) {
         display: inline-block;
         width: var(--ks-font-size-lg);
@@ -181,7 +195,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.task-icon) {
+        & :deep(.task-icon) {
             width: 2rem;
             height: 2rem;
         }
@@ -193,11 +207,10 @@
             gap: 0.25rem;
 
             .cls {
-                font-weight: 600;
+                font-weight: var(--ks-font-weight-semibold);
                 line-height: 1.2;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                overflow-wrap: anywhere;
             }
 
             .title {
@@ -210,4 +223,3 @@
     }
 
 </style>
-

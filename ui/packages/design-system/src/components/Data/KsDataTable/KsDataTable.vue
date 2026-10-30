@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter, 'ks-data-table-wrapper--cards': mobileColumns}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -13,11 +13,11 @@
                 <slot name="top" />
             </div>
 
-            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}">
                 <slot name="table" />
             </div>
 
-            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter, 'ks-data-table-content--cards': mobileColumns, 'ks-data-table-content--leading': mobileColumns?.leading}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                 <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                     <KsBulkSelect
                         :selectAll="queryBulkAction"
@@ -42,16 +42,25 @@
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
                     :rowClassName="composedRowClassName"
+                    :cellStyle="composedCellStyle"
                     :emptyText="noDataText"
                     @selection-change="selectionChanged"
                     @select="onSelect"
                     @sort-change="onSortChange"
+                    @row-click="(row, column, event) => emit('row-click', row, column, event)"
                     @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
                 >
                     <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
                     <slot />
                     <template #empty>
-                        <KsNoData :title="noDataText" />
+                        <slot v-if="loadError" name="error" :error="loadError" :retry="reload">
+                            <div class="load-error">
+                                <AlertCircleOutlineIcon class="load-error-icon" />
+                                <strong>{{ $t("ks_data_table.load_failed") }}</strong>
+                                <KsButton size="small" @click="reload">{{ $t("ks_data_table.retry") }}</KsButton>
+                            </div>
+                        </slot>
+                        <KsNoData v-else :title="noDataText" :description="noDataDescription" />
                     </template>
                 </KsTable>
             </div>
@@ -66,21 +75,24 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="my-3"
+                class="pagination"
             />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
+    import {MOBILE_COLUMNS_KEY, mobileColumnOrder, type KsDataTableMobileColumns} from "./mobileColumns"
     import KsNoData from "../KsNoData.vue"
+    import KsButton from "../../Basic/KsButton/KsButton.vue"
+    import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -99,8 +111,10 @@
         showSelection?: boolean
         rowKey?: string | ((row: any) => string)
         noDataText?: string
+        noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
+        sortKeyMapper?: (key: string) => string
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
@@ -108,6 +122,7 @@
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
+        mobileColumns?: KsDataTableMobileColumns
     }>(), {
         data: () => [],
         total: 0,
@@ -119,8 +134,10 @@
         showSelection: true,
         rowKey: "id",
         noDataText: undefined,
+        noDataDescription: undefined,
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
+        sortKeyMapper: undefined,
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
@@ -128,6 +145,7 @@
         noFirstColumnGutter: false,
         tableLayout: "auto",
         fitHeight: false,
+        mobileColumns: undefined,
     })
 
     export interface SortItem {
@@ -143,9 +161,11 @@
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
+        "row-click": [row: any, column: any, event: Event]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
         "loaded": []
+        "load-error": [error: unknown]
     }>()
 
     defineSlots<{
@@ -154,9 +174,12 @@
         top?(): unknown
         table?(): unknown
         empty?(): unknown
+        error?(props: {error: unknown; retry: () => void}): unknown
         "bulk-actions"?(): unknown
         "select-actions"?(): unknown
     }>()
+
+    provide(MOBILE_COLUMNS_KEY, computed(() => props.mobileColumns))
 
     const slots = useSlots()
     const attrs = useAttrs()
@@ -171,6 +194,20 @@
         const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    type CellStyleArg = {column: {property?: string; columnKey?: string}}
+    type CellStyle = Record<string, string | number> | undefined
+
+    const composedCellStyle = computed(() => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as ((arg: CellStyleArg) => CellStyle) | CellStyle
+        const columns = props.mobileColumns
+        if (!columns) return userStyle
+        return (arg: CellStyleArg) => {
+            const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
+            const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
+            return order === undefined ? own : {...own, "--ks-mobile-order": order}
+        }
     })
 
     const composedRowClassName = computed(() => {
@@ -190,6 +227,7 @@
     })
 
     const isLoading = ref(props.loading)
+    const loadError = ref<unknown>()
     const isReady = ref(false)
 
     const normalizePage = (value: number | undefined): number => {
@@ -206,8 +244,20 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    const tableRef = ref<InstanceType<typeof KsTable>>()
+    type DataRow = NonNullable<typeof props.data>[number]
+
+    interface KsTableHandle {
+        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        clearSelection: () => void
+        toggleAllSelection: () => void
+        getSelectionRows: () => DataRow[]
+        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        setScrollTop: (top: number) => void
+        $el?: HTMLElement
+    }
+    const tableRef = ref<KsTableHandle>()
     const container = ref<HTMLElement | null>(null)
+    const wrapper = ref<HTMLElement | null>(null)
     const hasSelection = ref(false)
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
@@ -252,11 +302,12 @@
                 : s[rowKey as string] === row[rowKey as string],
         )
 
-        if (isShiftPressed.value && lastCheckedIndex.value !== null) {
+        if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
             const end = Math.max(lastCheckedIndex.value, currentIndex)
             for (let i = start; i <= end; i++) {
-                tableRef.value?.toggleRowSelection(data[i], isChecked)
+                const pageRow = data[i]
+                if (pageRow !== undefined) tableRef.value?.toggleRowSelection(pageRow, isChecked)
             }
             await nextTick()
             const finalSelection = tableRef.value?.getSelectionRows() ?? []
@@ -322,12 +373,16 @@
     const callLoad = async () => {
         if (!props.loadData) return
         isLoading.value = true
+        loadError.value = undefined
         try {
             await props.loadData({
                 page: currentPageValue.value,
                 size: currentSizeValue.value,
                 sort: internalSort.value,
             })
+        } catch (error) {
+            loadError.value = error ?? new Error("loadData failed")
+            emit("load-error", error)
         } finally {
             isLoading.value = false
             if (!isReady.value) {
@@ -339,7 +394,11 @@
         }
     }
 
-    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
+    /** Coalesces same-tick load triggers into one post-flush load, never with a stale page size. */
+    const loadRequest = ref(0)
+    const requestLoad = () => { loadRequest.value++ }
+
+    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value && !loadError.value)
 
     const showPagination = computed(() => {
         if (!props.total || props.total <= 0) return false
@@ -354,7 +413,7 @@
             emit("update:currentPage", 1)
             emit("page-changed", {page: 1, size: currentSizeValue.value})
         } else {
-            callLoad()
+            requestLoad()
         }
     }
 
@@ -373,16 +432,20 @@
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
             const rowKey = props.rowKey
-            const validSelection = currentSelection.filter((sel: unknown) => {
+            const validSelection = currentSelection.filter((sel) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+                    : r[rowKey as string] === sel[rowKey as string])
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
-                hasSelection.value = false
+                for (const row of validSelection) {
+                    tableRef.value?.toggleRowSelection(row, true)
+                }
+                hasSelection.value = validSelection.length > 0
                 lastCheckedIndex.value = null
+                selectionChanged(validSelection)
             } else if (tableRef.value) {
                 selectionChanged(currentSelection)
             }
@@ -391,14 +454,31 @@
 
     watch(() => props.loading, (val) => { isLoading.value = val })
 
-    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
+    watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
+
+    const scrollingAncestor = computed(() => {
+        for (let ancestor = wrapper.value?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (/auto|scroll/.test(getComputedStyle(ancestor).overflowY)) return ancestor
+        }
+        return undefined
+    })
+
+    const scrollBackToTop = () => {
+        tableRef.value?.setScrollTop(0)
+
+        if (!wrapper.value) return
+        const visibleTop = scrollingAncestor.value?.getBoundingClientRect().top ?? 0
+        if (wrapper.value.getBoundingClientRect().top < visibleTop) wrapper.value.scrollIntoView({block: "start"})
+    }
 
     const onPageChange = (page: number) => {
+        scrollBackToTop()
         emit("update:currentPage", page)
         emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
+        scrollBackToTop()
         emit("update:currentPage", 1)
         emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
@@ -406,12 +486,13 @@
 
     const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
-            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
+            const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
+            internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
             internalSort.value = undefined
         }
         emit("sort-change", sort)
-        callLoad()
+        requestLoad()
     }
 
     defineExpose({
@@ -431,27 +512,57 @@
     })
 </script>
 
-<style lang="scss">
+<style>
+    /* Registered rather than declared on the wrapper: a plain declaration there would shadow a value */
+    /* an ancestor sets, which is the opposite of the override hook this is meant to be. */
+
+    @property --ks-data-table-navbar-padding-block-start {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 0;
+    }
+
+    .load-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.4;
+        gap: var(--ks-spacing-2);
+        text-align: center;
+
+        & strong {
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-md);
+            font-weight: var(--ks-font-weight-bold);
+        }
+    }
+
+    .load-error-icon {
+        height: 24px;
+        width: 24px;
+        color: var(--ks-icon-error);
+    }
+
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
         height: 100%;
         display: flex;
         flex-direction: column;
 
-        > .ks-data-table-navbar,
-        .ks-data-table-top {
+        & > .ks-data-table-navbar,
+        & .ks-data-table-top {
             padding-inline: var(--ks-data-table-gutter);
         }
 
-        > .ks-data-table-navbar {
-            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+        & > .ks-data-table-navbar {
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
-        .kel-pagination {
+        & .kel-pagination {
             display: flex;
             padding-inline: var(--ks-data-table-gutter);
 
-            .kel-pagination__sizes {
+            & .kel-pagination__sizes {
                 display: flex;
                 flex: 1;
             }
@@ -462,14 +573,14 @@
         }
 
         &.no-gutter {
-            > .ks-data-table-navbar,
-            .ks-data-table-top,
-            .kel-pagination {
+            & > .ks-data-table-navbar,
+            & .ks-data-table-top,
+            & .kel-pagination {
                 padding-inline: 0;
             }
         }
 
-        .kel-checkbox__inner {
+        & .kel-checkbox__inner {
             width: 16px;
             height: 16px;
             border-radius: 4.8px;
@@ -477,7 +588,7 @@
             border: 0.8px solid var(--ks-border-strong);
         }
 
-        .kel-scrollbar__view {
+        & .kel-scrollbar__view {
             height: 100%;
         }
     }
@@ -486,38 +597,47 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+    }
 
-        &--fit {
+    .ks-data-table-body--fit {
+        min-height: 0;
+
+        & .ks-data-table-content {
+            flex: 1 1 0;
             min-height: 0;
             overflow: hidden;
+        }
 
-            .ks-data-table-content {
-                flex: 1 1 0;
-                min-height: 0;
+        & .ks-data-table-content--slot {
+            overflow: auto;
+        }
 
-                &--slot {
-                    overflow: auto;
-                }
-            }
-
-            .kel-pagination {
-                margin-top: auto;
-            }
+        & .kel-pagination {
+            margin-top: auto;
         }
     }
 
     .ks-data-table-content {
         position: relative;
-        height:100%;
+        height: 100%;
 
-        &.no-selection-gutter {
-            .kel-table th.kel-table__cell:first-child > .cell,
-            .kel-table td.kel-table__cell:first-child > .cell {
+        &.no-selection-gutter:not(.ks-data-table-content--cards) {
+            & .kel-table th.kel-table__cell:first-child > .cell,
+            & .kel-table td.kel-table__cell:first-child > .cell {
                 padding-left: var(--ks-spacing-5);
             }
         }
 
-        .bulk-select-header {
+        @media (min-width: 768px) {
+            &.no-selection-gutter.ks-data-table-content--cards {
+                & .kel-table th.kel-table__cell:first-child > .cell,
+                & .kel-table td.kel-table__cell:first-child > .cell {
+                    padding-left: var(--ks-spacing-5);
+                }
+            }
+        }
+
+        & .bulk-select-header {
             z-index: 1;
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
@@ -531,7 +651,7 @@
             }
         }
 
-        .kel-table__empty-text {
+        & .kel-table__empty-text {
             @media (max-width: 500px) {
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -539,16 +659,159 @@
             }
         }
 
-        // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
-        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
-        // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
-        .kel-table__empty-block {
+        /* element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own */
+        /* height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any */
+        /* empty-state layout). Subtract the header height we already track for the bulk-select overlay above. */
+
+        & .kel-table__empty-block {
             height: calc(100% - var(--table-header-height, 0px)) !important;
         }
 
-        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+        & .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
         }
     }
+
+    @media (max-width: 767px) {
+        .ks-data-table-wrapper--cards {
+            --ks-data-table-gutter: var(--ks-spacing-4);
+        }
+
+        .ks-data-table-content--leading {
+            --ks-data-table-leading-offset: calc(var(--ks-data-table-leading-width) + var(--ks-spacing-2));
+        }
+
+        .ks-data-table-content--cards {
+            --ks-data-table-leading-width: 0.625rem;
+
+            & .kel-table {
+                --kel-table-bg-color: transparent;
+                --kel-table-tr-bg-color: transparent;
+            }
+
+            & .kel-table__header-wrapper,
+            & .kel-table__body colgroup,
+            & .kel-table__body thead {
+                display: none;
+            }
+
+            & .kel-scrollbar__view {
+                max-width: 100%;
+            }
+
+            & .kel-table__body,
+            & .kel-table__body tbody {
+                display: block;
+                max-width: 100%;
+            }
+
+            & .kel-table__row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: var(--ks-spacing-2);
+                margin: 0 var(--ks-data-table-gutter) var(--ks-spacing-2);
+                padding: var(--ks-spacing-3);
+                background: var(--ks-bg-surface);
+                border: 1px solid var(--ks-border-default);
+                border-radius: var(--ks-radius-base);
+
+                &::after {
+                    content: "";
+                    order: 4;
+                    flex-basis: 100%;
+                    height: 0;
+                }
+            }
+
+            & .kel-table__cell {
+                min-width: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+
+                & > .cell {
+                    padding: 0;
+                    line-height: var(--ks-line-height-base);
+                    word-break: normal;
+                    overflow-wrap: anywhere;
+                }
+            }
+
+            & .ks-mobile-hidden {
+                display: none;
+            }
+
+            & .ks-mobile-leading {
+                order: 1;
+                flex: none;
+                width: var(--ks-data-table-leading-width);
+            }
+
+            & .ks-mobile-title {
+                order: 2;
+                flex: 1 1 0;
+                color: var(--ks-text-primary);
+
+                & > .cell,
+                & .ks-entity-link {
+                    font-weight: var(--ks-font-weight-bold);
+                }
+            }
+
+            & .ks-mobile-actions {
+                order: 3;
+            }
+
+            & .ks-mobile-title-aside {
+                order: 3;
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta,
+            & .ks-mobile-meta-aside {
+                margin-top: var(--ks-spacing-1);
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta {
+                order: calc(10 + var(--ks-mobile-order, 0));
+            }
+
+            & .ks-mobile-meta-first {
+                margin-inline-start: var(--ks-data-table-leading-offset, 0);
+            }
+
+            & .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
+                content: "·";
+                margin-inline-end: var(--ks-spacing-2);
+            }
+
+            & .ks-mobile-meta-aside {
+                order: 20;
+                margin-left: auto;
+            }
+
+            & .kel-table__cell .ks-entity-link {
+                padding: 0;
+                background: transparent;
+                color: inherit;
+                font-weight: inherit;
+
+                & .ks-entity-link__icon {
+                    display: none;
+                }
+            }
+        }
+    }
 </style>
+
+<style scoped>
+    .ks-data-table-wrapper :deep(.pagination) {
+        margin-block: var(--ks-spacing-4);
+    }
+</style>
+

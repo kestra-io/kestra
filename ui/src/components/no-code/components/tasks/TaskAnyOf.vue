@@ -1,38 +1,40 @@
 <template>
-    <TaskString
-        v-if="durationSchema"
-        :schema="durationSchema"
+    <TaskEnum
+        v-if="enumSchema"
+        :schema="enumSchema"
         :modelValue="model"
+        :required="required"
+        :root="root"
+        :allowCreate="enumAllowsCustomValues"
+        @update:model-value="onInput"
+    />
+    <TaskString
+        v-else-if="constraintOnlySchema"
+        :schema="constraintOnlySchema"
+        :modelValue="stringModel"
+        @update:model-value="onInput"
+    />
+    <TaskString
+        v-else-if="durationSchema"
+        :schema="durationSchema"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <TaskString
         v-else-if="booleanStringSchema"
         :schema="booleanStringSchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <TaskString
         v-else-if="singleStringSchema"
         :schema="singleStringSchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <template v-else>
-        <KsFormItem :class="{'anyof-switch': !isSelectingPlugins}">
-            <KsSelect
-                v-if="isSelectingPlugins"
-                v-model="selectedSchema"
-                filterable
-            >
-                <KsOption
-                    v-for="item in schemaOptions"
-                    :key="item.value"
-                    :label="item.id"
-                    :value="item.value"
-                />
-            </KsSelect>
+        <KsFormItem class="anyof-switch">
             <KsSegmented
-                v-else
                 v-model="selectedSchema"
                 :options="schemaOptions"
                 size="small"
@@ -57,10 +59,12 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
     import {Schema} from "./getTaskComponent"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {isPlainObject} from "@kestra-io/design-system"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
     import TaskString from "./TaskString.vue"
+    import TaskEnum from "./TaskEnum.vue"
 
     const props = defineProps<{
         schema: Schema,
@@ -70,8 +74,20 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    type ModelValue =
+        | string
+        | number
+        | boolean
+        | unknown[]
+        | Record<string, unknown>
+        | undefined
 
+    const model = defineModel<ModelValue>()
+    const stringModel = computed(() =>
+        typeof model.value === "string" || typeof model.value === "boolean"
+            ? model.value
+            : undefined,
+    )
     const emit = defineEmits(["update:selectedSchema"])
 
     const selectedSchema = ref<string>()
@@ -149,6 +165,30 @@
         })
     })
 
+    // Branches that only constrain the value (`enum`, `pattern`, ...) without naming a type of their own, as the
+    // backend emits for `@TimezoneId` fields: `anyOf: [{enum: [...zone ids]}, {pattern: ...offset...}]`. There is
+    // nothing to choose between, so the property renders as a single field of its own type instead of a switch.
+    const constraintOnlySchemas = computed(() => {
+        const list = schemas.value
+        return list.length > 0 && list.every((item: Schema) =>
+            item.type === undefined && item.$ref === undefined
+            && !item.properties && !item.items && !item.allOf && !item.anyOf && !item.oneOf,
+        )
+    })
+
+    const enumSchema = computed<Record<string, unknown> | null>(() => {
+        if (!constraintOnlySchemas.value) return null
+        const values = [...new Set(schemas.value.flatMap((item: Schema) => item.enum ?? []))]
+        return values.length ? {...props.schema, anyOf: undefined, enum: values} : null
+    })
+
+    // A branch without an `enum` (e.g. the offset `pattern`) accepts values outside the list.
+    const enumAllowsCustomValues = computed(() => schemas.value.some((item: Schema) => item.enum === undefined))
+
+    const constraintOnlySchema = computed<Schema | null>(() =>
+        constraintOnlySchemas.value ? {...props.schema, anyOf: undefined} : null,
+    )
+
     const singleStringSchema = computed<Schema | null>(() => {
         const list = schemas.value
         return list.length === 1 && list[0].type === "string" && !list[0].properties ? list[0] : null
@@ -190,8 +230,8 @@
     }
 
     const schemaByType = computed(() => {
-        return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
-            acc[makeKey(schema)] = schema
+        return schemas.value.reduce((acc: Record<string, Schema>, schema: Schema) => {
+            acc[makeKey(schema) ?? ""] = schema
             return acc
         }, {})
     })
@@ -215,10 +255,8 @@
     const {getBlockComponent} = useBlockComponent()
 
     const currentSchemaType = computed(() =>
-        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
+        currentSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
     )
-
-    const isSelectingPlugins = computed(() => schemas.value.length > 4)
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
         if(allSchemaSameType.value){
@@ -228,8 +266,8 @@
 
                 return {
                     label: itemsTypeString ? itemsTypeString.charAt(0).toUpperCase() + itemsTypeString.slice(1) : "Unknown",
-                    value: makeKey(schema),
-                    id: itemsTypeString,
+                    value: makeKey(schema) ?? "",
+                    id: itemsTypeString ?? "",
                 }
             })
         }
@@ -254,7 +292,7 @@
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("")
 
-        return schemas.value.map((schema: any) => {
+        return schemas.value.map((schema: Schema) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()
                 : schema.type
@@ -267,15 +305,15 @@
                 }
             }
 
-            const cleanSchemaRef = schemaRef.replace(/-\d+$/, "")
+            const cleanSchemaRef = typeof schemaRef === "string" ? schemaRef.replace(/-\d+$/, "") : schemaRef.const
             const lastPartOfValue = cleanSchemaRef.slice(commonPart.length)
 
             return {
                 label: lastPartOfValue?.charAt(0).toUpperCase() + lastPartOfValue?.slice(1),
-                value: schemaRef,
+                value: typeof schemaRef === "string" ? schemaRef : schemaRef.const,
                 id: cleanSchemaRef,
             }
-        }).filter((schema: any) => schema.value !== undefined)
+        }).filter((schema) => schema.value !== undefined)
     })
 
     watch(() => constantType.value, (val) => {
@@ -284,14 +322,16 @@
             onInput(undefined)
             return
         }
-        if (model.value) {
+        if (isPlainObject(model.value)) {
             for (const key in model.value) {
                 if (key !== "type" && !filteredProperties.value?.some(([k]) => k === key)) {
                     delete model.value[key]
                 }
             }
         }
-        onAnyOfInput(model.value ? {...model.value} : {type: val})
+        onAnyOfInput(
+            isPlainObject(model.value) ? {...model.value} : {type: val},
+        )
     })
 
     watch(selectedSchema, (val) => {
@@ -302,31 +342,30 @@
     })
 
     onMounted(() => {
-        if (durationSchema.value) return
-        let schema = schemaOptions.value?.find((item: any) =>
-            item.value === model.value?.type ||
+        if (durationSchema.value || constraintOnlySchemas.value) return
+        let schema = schemaOptions.value?.find((item) =>
+            item.value === (
+                isPlainObject(model.value) ? model.value.type : undefined
+            ) ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
             (Array.isArray(model.value) && item.value === "array") ||
             (typeof model.value === "object" && item.value === "object") ||
             (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
-            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value)) && item.value === "array.string.date-time") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
         )
-
-        if (!schema && model.value && typeof model.value === "object" && !Array.isArray(model.value) && model.value.type) {
-            schema = schemaOptions.value?.find((item: any) => {
+        if (!schema && isPlainObject(model.value) && model.value.type) {
+            const type = model.value.type
+            schema = schemaOptions.value?.find((item) => {
                 const raw = definitions.value[item.value] ?? schemaByType.value[item.value]
-                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === model.value.type
+                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === type
             })
         }
-
         selectedSchema.value = schema?.value
-
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
             selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type
         }
-
         if (schema) {
             onSelectType(schema.value)
         }
@@ -337,7 +376,7 @@
 
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
-            let parsedValue: any = {}
+            let parsedValue: unknown = {}
             try {
                 parsedValue = YAML_UTILS.parse(model.value) ?? {}
                 if (value === "array" && !Array.isArray(parsedValue)) {
@@ -348,14 +387,14 @@
         }
         if (value === "string") {
             if (Array.isArray(model.value) && model.value.length === 1) {
-                model.value = model.value[0]
+                model.value = model.value[0] as string
             } else if (typeof model.value !== "string") {
                 model.value = YAML_UTILS.stringify(model.value)
             }
         }
         selectedSchema.value = value
         if (currentSchema.value?.properties && model.value === undefined) {
-            const defaultValues: Record<string, any> = {}
+            const defaultValues: Record<string, unknown> = {}
             for (let prop in currentSchema.value.properties) {
                 if (
                     currentSchema.value.properties[prop].$required &&
@@ -369,15 +408,23 @@
         delayedSelectedSchema.value = value
     }
 
-    function onAnyOfInput(value: any) {
-        if (constantType.value?.length && typeof value === "object") {
-            value.type = constantType.value
+    function onAnyOfInput(value: unknown) {
+        if (
+            constantType.value?.length &&
+            typeof value === "object" &&
+            value !== null &&
+            !Array.isArray(value)
+        ) {
+            value = {
+                ...value,
+                type: constantType.value,
+            }
         }
         onInput(value)
     }
 
-    function onInput(value: any) {
-        model.value = value
+    function onInput(value: unknown) {
+        model.value = value as ModelValue
     }
 
     function resetSelectType() {
@@ -392,7 +439,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-form {
     width: 100%;
 }

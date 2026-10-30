@@ -53,10 +53,10 @@ public class V2ExecutionResubmitMigrationCommand extends AbstractCommand {
                 .blockOptional()
                 .orElse(0L);
 
-            System.out.println("✅ Migration complete for tenant '" + tenant + "': " + count + " executions resubmitted.");
+            stdOut("✅ Migration complete for tenant '" + tenant + "': " + count + " executions resubmitted.");
         });
 
-        System.out.println("✅ Migration complete.");
+        stdOut("✅ Migration complete.");
         return 0;
     }
 }

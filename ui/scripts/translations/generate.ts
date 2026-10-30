@@ -3,11 +3,15 @@
  *
  * The implementation lives in `./generateTranslations.ts` and is shared with EE
  * (`kestra-ee/ui-ee/scripts/translations/generate.ts`); this file only supplies what is
- * OSS-specific — the Gemini client, the translations directory, and the design-system
+ * OSS-specific — the Vertex AI client, the translations directory, and the design-system
  * `*.locale.ts` files, which exist only in this repo.
  *
  * Runs from anywhere — from `ui/` via `npm run translations:generate`, or from the repository root:
- *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/translations/generate.ts [true]
+ *   GOOGLE_CLOUD_PROJECT=... node --experimental-strip-types ui/scripts/translations/generate.ts [true]
+ *
+ * Gemini is reached through Vertex AI with Application Default Credentials, never an AI Studio API
+ * key: locally run `gcloud auth application-default login` first; CI authenticates with the
+ * `GCP_SERVICE_ACCOUNT` key. `GOOGLE_CLOUD_LOCATION` defaults to `global`.
  *
  * Keys whose English source has changed since they were last translated are detected from the
  * fingerprint files below and re-translated automatically. The optional positional "true" forces a
@@ -24,7 +28,12 @@ import {generateTranslations, translateLocaleFiles} from "./generateTranslations
 const here = dirname(fileURLToPath(import.meta.url))
 const uiRoot = resolve(here, "../..")
 
-const client = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
+const project = process.env.GOOGLE_CLOUD_PROJECT
+if (!project) {
+    throw new Error("GOOGLE_CLOUD_PROJECT is not set. Translations are generated through Vertex AI: set it to the GCP project to bill and authenticate with Application Default Credentials (`gcloud auth application-default login`).")
+}
+
+const client = new GoogleGenAI({vertexai: true, project, location: process.env.GOOGLE_CLOUD_LOCATION ?? "global"})
 
 const force = process.argv[2]?.toLowerCase() === "true"
 

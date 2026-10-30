@@ -3,10 +3,10 @@
     <Empty
         type="dashboards"
         demoCta
-        :title="t(`${keyPrefix}.title`)"
+        :title="$t(`${keyPrefix}.title`)"
     >
         <template #description>
-            {{ t(`${keyPrefix}.message`) }}
+            {{ $t(`${keyPrefix}.message`) }}
         </template>
     </Empty>
 </template>

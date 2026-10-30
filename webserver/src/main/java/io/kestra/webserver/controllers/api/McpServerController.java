@@ -35,7 +35,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
-@Controller("/api/v1/{tenant}/mcp/servers")
+@Controller("/api/v1/{tenant}/mcp-servers")
 @Slf4j
 public class McpServerController {
 

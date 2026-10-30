@@ -19,7 +19,6 @@ public interface IMetrics extends IData<IMetrics.Fields> {
 
         List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
-            updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
             namespaceFilters.forEach(f ->
             {
                 updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
@@ -28,7 +27,6 @@ public interface IMetrics extends IData<IMetrics.Fields> {
 
         List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
         if (!flowFilters.isEmpty()) {
-            updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
             flowFilters.forEach(f ->
             {
                 updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));

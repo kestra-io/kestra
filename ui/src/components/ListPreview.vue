@@ -41,9 +41,11 @@
 
     const MAX_CELL_CHARS = 2000
 
+    export type PreviewCell = string | number | boolean | null | PreviewCell[] | {[key: string]: PreviewCell}
+
     const props = defineProps({
         value: {
-            type: Array as () => Record<string, any>[],
+            type: Array as () => PreviewCell[],
             required: true,
         },
     })
@@ -81,7 +83,7 @@
     })
 
 
-    const isComplex = (data: any): boolean => {
+    const isComplex = (data: PreviewCell): boolean => {
         return data !== null && typeof data === "object"
     }
 
@@ -89,12 +91,12 @@
         return `${rowIndex}-${column}`
     }
 
-    const needsExpansion = (data: any): boolean => {
+    const needsExpansion = (data: PreviewCell): boolean => {
         const stringified = JSON.stringify(data, null, 2)
         return stringified.length > MAX_CELL_CHARS
     }
 
-    const getTruncatedContent = (data: any, rowIndex: number, column: string): string => {
+    const getTruncatedContent = (data: PreviewCell, rowIndex: number, column: string): string => {
         const cellKey = getCellKey(rowIndex, column)
         const stringified = JSON.stringify(data, null, 2)
 
@@ -119,7 +121,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .list-preview-container {
         width: 100%;
         overflow: auto;
@@ -129,7 +131,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.kel-table__body-wrapper) {
+        & :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }

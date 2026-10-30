@@ -2,7 +2,7 @@
     <div class="dot-node" :class="classes">
         <Handle type="source" class="custom-handle" :position="sourcePosition" />
         <div class="dot" :class="classes">
-            <CircleIcon :class="{'text-danger': data.node.branchType === 'ERROR'}" class="circle" alt="circle" :size="5" />
+            <CircleIcon :class="{'error-branch': data.node.branchType === 'ERROR'}" class="circle" alt="circle" :size="5" />
         </div>
         <Handle type="target" class="custom-handle" :position="targetPosition" />
     </div>
@@ -17,10 +17,9 @@
     defineOptions({name: "Dot", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition} = defineProps<{
-        data: any;
-        sourcePosition: Position;
-        targetPosition: Position;
-        label?: string;
+        data: {unused?: boolean; node: {type: string; branchType?: string}};
+        sourcePosition?: Position;
+        targetPosition?: Position;
     }>()
 
     const classes = computed(() => ({
@@ -42,10 +41,17 @@
         justify-content: center;
     }
 
+    /* A joint in the line, not something to press: filled at full strength it outweighed the
+       1.5px dashed stroke it punctuates, and read as the affordance the `+` actually is. */
     .dot {
         display: flex;
         flex-direction: column;
         align-items: center;
         color: var(--ks-topology-dash);
+        opacity: 0.4;
+    }
+
+    .error-branch {
+        color: var(--ks-text-error);
     }
 </style>

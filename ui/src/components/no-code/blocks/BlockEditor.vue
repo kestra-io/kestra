@@ -19,6 +19,7 @@
         :flowId="flowId"
         :namespace="namespace"
         :editorKey="editingItemPath"
+        :taskPath="editingPath"
         :isHidden="true"
         presentation="panel"
         :hideTabstrip="true"
@@ -40,23 +41,23 @@
     >
         <KsSplitter class="block-editor-split">
             <KsSplitterPanel min="18%">
-                <div class="block-editor-main">
+                <div class="block-editor-main" data-test="block-editor-scrollport">
                     <div
                         class="block-editor-canvas"
                         data-test="block-editor-canvas"
                         :tabindex="focusedId ? -1 : 0"
                         role="group"
-                        :aria-label="t('block_editor.canvas_aria')"
+                        :aria-label="$t('block_editor.canvas_aria')"
                         @focus="onCanvasEntryFocus"
                     >
                         <BlockSectionCard
                             name="flow"
-                            :title="t('no_code.sections.flow')"
+                            :title="$t('no_code.sections.flow')"
                             :icon="FlowIcon"
                             :actionIcon="Cog"
                             hideCount
                             :count="0"
-                            :addLabel="t('block_editor.configure')"
+                            :addLabel="$t('block_editor.configure')"
                             addTest="block-editor-configure-flow"
                             @add="openFlowProperties"
                         >
@@ -81,7 +82,6 @@
                             :icons="pluginsStore.icons"
                             :selectedId="activeSelectedId"
                             :focusedId="focusedId"
-                            :dnd="dndFor(lane.section)"
                             @add="(e) => openTaskPicker(lane.section, e)"
                             @select="(block) => selectBlock(lane.section, block)"
                             @open-split="(block) => selectBlock(lane.section, block, true)"
@@ -94,7 +94,6 @@
                             @duplicate-path="onDuplicateAtPath"
                             @add-at-path="openTaskPickerAtPath"
                             @update-depends-on="onUpdateDependsOn"
-                            @reorder="onNestedReorder"
                         />
                     </div>
                 </div>
@@ -106,7 +105,7 @@
             :shortcutGroups="shortcutGroups"
             :footerContext="footerContext"
             :footerHints="footerHints"
-            :undoState="undoState"
+            :undoState="visibleUndoState"
             @undo="performUndo"
         />
 
@@ -130,6 +129,7 @@
         :editorKey="modalItemPath"
         :parentPath="modalTarget.parentPath"
         :refPath="modalTarget.refPath"
+        :editedPath="modalPath"
         :blockSchemaPath="modalTarget.blockSchemaPath"
         :crumbs="modalCrumbs"
         :creating="modalTarget.creating"
@@ -148,13 +148,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
+    import {useShownValidationErrors} from "../utils/useFieldValidationErrors"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
 
     import {KsTag} from "@kestra-io/design-system"
-    import {flowYamlUtils} from "@kestra-io/topology"
+    import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
     import {useFlowStore} from "../../../stores/flow"
     import {useCoreStore} from "../../../stores/core"
@@ -172,12 +173,14 @@
     import BlockCommandMenu, {type BlockCommandMenuItem} from "./BlockCommandMenu.vue"
     import TaskEdit from "../../flows/TaskEdit.vue"
     import TaskEditModal from "./TaskEditModal.vue"
+    import {useFieldValidationErrors} from "../utils/useFieldValidationErrors"
     import BlockTaskPicker from "./BlockTaskPicker.vue"
     import BlockEditorStatusBar from "./BlockEditorStatusBar.vue"
     import {useBlockEditorProvides} from "./useBlockEditorProvides"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
+    import {BLOCK_DRAG_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -196,12 +199,16 @@
         sectionSentinelId,
     } from "./blockSections"
     import {useYamlUndo} from "./useYamlUndo"
+    import {useBlockClipboard} from "./useBlockClipboard"
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "./flowSummary"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
+    import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
+    import {trackAuthoringAction} from "../../../utils/tabTracking"
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
@@ -235,11 +242,11 @@
         }
     }
 
-    const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
-    )
+    const shownValidationErrors = useShownValidationErrors()
 
-    const inlineEditPanel = ref()
+    const validationIssuesByTask = computed<Map<string, string[]>>(() =>
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
+    )
 
     // Only a lane of tasks can be filled from the task picker; every other list needs its own
     // schema-driven form, which opens exactly where editing a task would — modal or tab.
@@ -262,7 +269,6 @@
         props,
         flowYaml,
         validationIssuesByTask,
-        inlineEditPanel,
         createTask: onCreateBlockInList,
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),
@@ -278,23 +284,9 @@
         }
     })
 
-    const flowDescription = computed<string | undefined>(() => {
-        const description = parsedFlow.value?.description
-        return typeof description === "string" ? description : undefined
-    })
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlow.value))
 
-    const flowLabelEntries = computed<[string, string][]>(() => {
-        const labels = parsedFlow.value?.labels
-        if (Array.isArray(labels)) {
-            return labels
-                .filter((label): label is {key: string; value: unknown} => Boolean(label) && typeof label === "object" && "key" in label)
-                .map((label) => [String(label.key), String(label.value ?? "")])
-        }
-        if (labels && typeof labels === "object") {
-            return Object.entries(labels).map(([key, value]) => [key, String(value ?? "")])
-        }
-        return []
-    })
+    const flowLabelEntries = computed(() => flowLabelEntriesOf(parsedFlow.value))
 
     const editingItemPath = computed<string>(() => {
         if (!props.editingTask) return props.parentPath ?? ""
@@ -323,6 +315,7 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: editingTaskData.value?.type as string | undefined})
     }
 
     // The entry now exists, so hand the tab over to the edit surface pointed at it.
@@ -339,6 +332,8 @@
         modalStack.value.map((target) => taskCrumbAt(flowYaml.value, modalItemPathOf(target))),
     )
 
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => editingPath.value || undefined))
+
     const alwaysResolved = computed(() => true)
 
     const {
@@ -352,6 +347,7 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: modalTaskData.value?.type as string | undefined})
     }
 
     function onModalOpenInTabs() {
@@ -421,7 +417,7 @@
             coreStore.message = {
                 variant: "error",
                 title: t("block_editor.save_blocked.title"),
-                message: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
+                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
             }
         }
     }
@@ -466,10 +462,12 @@
         onCloseTask: () => emit("closeTask"),
     })
 
-    const {undoState, applyYaml, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
+
+    const clipboard = useBlockClipboard()
 
     const {
         deleteInSection: onDelete,
@@ -491,6 +489,7 @@
         laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
+        surface: "no_code",
     })
 
     const {
@@ -514,7 +513,8 @@
         if (movedIndex >= lo && movedIndex <= hi) deselectIfCurrent(id)
     }
 
-    const {dndFor, reorder: onNestedReorder} = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    provide(BLOCK_DRAG_INJECTION_KEY, dragContext)
 
     const lanes = computed(() => buildSectionLanes(t, {
         triggers: parsedTriggers.value,
@@ -579,8 +579,10 @@
             return
         }
         if (id === "undo") {
-            performUndo()
-            return
+            return performUndo()
+        }
+        if (id === "redo") {
+            return performRedo()
         }
         if (id === "command-menu") {
             openCommandMenu()
@@ -624,6 +626,12 @@
             } else if (activeSelectedId.value) {
                 duplicateSelected()
             }
+        } else if (id === "copy") {
+            copyFocusedOrSelected()
+        } else if (id === "cut") {
+            cutFocusedOrSelected()
+        } else if (id === "paste") {
+            return pasteRelative()
         } else if (id === "delete") {
             if (focusedId.value) {
                 requestDeleteFocused()
@@ -637,10 +645,15 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(editorEl)
+
+    const visibleUndoState = computed(() => (authoringSurface.isActive() ? undoState.value : null))
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchBlockEditorAction,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
+        root: editorEl,
     })
 
     const {
@@ -649,6 +662,10 @@
         requestDeleteFocused,
         requestDeleteSelected,
         duplicateSelected,
+        copyFocusedOrSelected,
+        cutFocusedOrSelected,
+        canPasteHere,
+        pasteRelative,
         moveFocused,
         moveSelected,
     } = useBlockOperations({
@@ -664,9 +681,10 @@
         deleteAtPath: onDeleteAtPath,
         duplicateInSection: onDuplicate,
         duplicateAtPath: onDuplicateAtPath,
+        clipboard,
     })
 
-    const shortcutGroups = computed(buildShortcutGroups)
+    const shortcutGroups = computed(() => buildShortcutGroups())
 
     const footerContext = computed(() => {
         if (commandMenuOpen.value) return t("block_editor.footer.command_menu")
@@ -699,9 +717,19 @@
         openFocused,
         duplicateFocused: () => actionInFocused("[data-test='block-card-duplicate']"),
         deleteFocused: requestDeleteFocused,
+        copyFocused: copyFocusedOrSelected,
+        cutFocused: cutFocusedOrSelected,
+        pasteRelative,
+        canPaste: canPasteHere(),
         goToSection: (section) => {
             const list = sectionList(section)
-            focusCanvasCard(list.length ? String(list[0].id ?? 0) : sectionSentinelId(section))
+            // A palette jump crosses the whole canvas, unlike an arrow-key step
+            // between neighbours, so centre the destination — `nearest` would
+            // leave it flush against the edge of the viewport.
+            focusCanvasCard(
+                list.length ? String(list[0].id ?? 0) : sectionSentinelId(section),
+                {align: "center"},
+            )
         },
         saveFlow: saveFlowWithPendingEdits,
         taskEntries: picker.focusedContextEntries.value,
@@ -713,12 +741,14 @@
     const commandMenuItems = computed<BlockCommandMenuItem[]>(() => buildCommandMenuItems(commandMenuContext.value))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor {
         position: relative;
         height: 100%;
         overflow: hidden;
         background: var(--ks-bg-base);
+
+        --status-bar-height: 2.25rem;
     }
 
     .block-editor-split {
@@ -728,7 +758,9 @@
     .block-editor-main {
         height: 100%;
         overflow-y: auto;
-        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(var(--status-bar-height) + var(--ks-spacing-6));
+        /* The status bar is painted over this scroll container, so scrollIntoView has to stop short of it. */
+        scroll-padding-bottom: calc(var(--status-bar-height) + var(--ks-spacing-6));
     }
 
     .block-editor-inline-edit {

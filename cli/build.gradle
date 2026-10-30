@@ -73,3 +73,34 @@ dependencies {
     testImplementation project(':tests')
     testImplementation "org.wiremock:wiremock-jetty12"
 }
+/**********************************************************************************************************************\
+ * Plugin schema bundle embedded in the JAR
+ *
+ * `-PpluginsSchemaBundle=<path>` (relative to the repository root, or absolute) stages a
+ * pre-generated bundle as the `/plugins-schema.json` classpath resource. It then travels with
+ * every distribution built from this jar — the shadow jar, `java -jar`, the zip/tar install, the
+ * executable and both Docker images — so `PluginSchemaBundleService` resolves it offline instead
+ * of falling back to the remote `schema-bundle-url-template`.
+ *
+ * The bundle is deliberately *not* generated here: it must cover plugin types that are not build
+ * dependencies of this project, so it can only be produced by running the `plugins-schema` CLI
+ * command against a full plugin catalog (release CI, or plugin-devtools locally). Without the
+ * property the resource is simply absent and the runtime falls back to the URL template.
+ **********************************************************************************************************************/
+def pluginsSchemaBundleProperty = providers.gradleProperty("pluginsSchemaBundle")
+
+if (pluginsSchemaBundleProperty.isPresent()) {
+    def pluginsSchemaBundle = rootProject.file(pluginsSchemaBundleProperty.get())
+
+    // Fail fast: a typo'd path would otherwise silently ship a distribution with no bundle at all,
+    // which only surfaces much later as missing editor autocompletion.
+    if (!pluginsSchemaBundle.isFile()) {
+        throw new GradleException("Cannot embed the plugin schema bundle: '${pluginsSchemaBundle}' is not a readable file. Generate it first with 'kestra plugins-schema --plugins <catalog-dir> -o <path>'.")
+    }
+
+    processResources {
+        from(pluginsSchemaBundle) {
+            rename { "plugins-schema.json" }
+        }
+    }
+}

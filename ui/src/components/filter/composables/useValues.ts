@@ -3,7 +3,7 @@ import {computed} from "vue"
 import {useMiscStore} from "override/stores/misc"
 import {FilterValue} from "@kestra-io/design-system"
 
-import {State} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, State} from "@kestra-io/design-system"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 
@@ -45,6 +45,8 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
+
+    const RELATIVE_DATE_OR_ALL_TIME = [...RELATIVE_DATE, {label: t("datepicker.allTime"), value: ALL_TIME_RANGE}]
 
     // Future-direction interval labels — used by filters whose selected date field points to a future
     // event (e.g. the trigger Interval filter when "Apply to" is set to "Next execution date").
@@ -129,11 +131,24 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        RELATIVE_DATE_OR_ALL_TIME,
         RELATIVE_DATE_NEXT,
         TRIGGER_STATES:[
         {label: t("filter.triggerState.enabled"), value: "enabled"},
         {label: t("filter.triggerState.disabled"), value: "disabled"},
     ],
+        // Stringified booleans: the filter query serializer calls `toString()` on the value, and the
+        // backend parses it back with `Boolean.parseBoolean`.
+        TRIGGER_LOCK_STATES: [
+            {label: t("filter.triggerLocked.locked"), value: "true"},
+            {label: t("filter.triggerLocked.unlocked"), value: "false"},
+        ],
+        // Mirrors the scheduler's TriggerType enum, exposed by the trigger API as `state.kind`.
+        TRIGGER_KINDS: [
+            {label: t("filter.triggerKind.schedule"), value: "SCHEDULE"},
+            {label: t("filter.triggerKind.polling"), value: "POLLING"},
+            {label: t("filter.triggerKind.realtime"), value: "REALTIME"},
+        ],
     }
 
     return {VALUES, getRelativeDateLabel}

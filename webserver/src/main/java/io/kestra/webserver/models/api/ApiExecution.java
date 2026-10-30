@@ -20,7 +20,6 @@ public record ApiExecution(@NotNull String tenantId,
     @NotNull Integer flowRevision,
     List<ApiTaskRun> taskRunList,
     Map<String, Object> inputs,
-    Map<String, Object> outputs,
     List<Label> labels,
     Map<String, Object> variables,
     @NotNull State state,
@@ -33,14 +32,14 @@ public record ApiExecution(@NotNull String tenantId,
     List<TaskFixture> fixtures,
     ExecutionKind kind,
     List<Breakpoint> breakpoints,
-    LoopRun loopRun) {
+    ApiLoopRun loopRun) {
 
     public static ApiExecution of(Execution execution) {
         return new ApiExecution(
             execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream().map(ApiTaskRun::of).toList(), execution.getInputs(), execution.getOutputs(), execution.getLabels(),
+            ListUtils.emptyOnNull(execution.getTaskRunList()).stream().map(ApiTaskRun::of).toList(), execution.getInputs(), execution.getLabels(),
             execution.getVariables(), execution.getState(), execution.getParentId(), execution.getOriginalId(), execution.getTrigger(), execution.getMetadata(), execution.getScheduleDate(),
-            execution.getTraceParent(), execution.getFixtures(), execution.getKind(), execution.getBreakpoints(), execution.getLoopRun()
+            execution.getTraceParent(), execution.getFixtures(), execution.getKind(), execution.getBreakpoints(), ApiLoopRun.of(execution.getLoopRun())
         );
     }
 }

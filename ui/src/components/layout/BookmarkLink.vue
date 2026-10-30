@@ -14,15 +14,15 @@
             <router-link
                 class="bookmark-anchor"
                 :to="href"
-                :title="updatedTitle"
+                :title="title"
             >
-                <span class="bookmark-title">{{ updatedTitle }}</span>
+                <span class="bookmark-title">{{ title }}</span>
                 <div class="buttons">
-                    <PencilOutline
+                    <Pencil
                         @click.stop.prevent="startEditBookmark"
                         :title="$t('edit')"
                     />
-                    <DeleteOutline
+                    <Delete
                         @click.prevent="deleteBookmark"
                         :title="$t('delete')"
                     />
@@ -35,8 +35,8 @@
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import {KsMessageBox} from "@kestra-io/design-system"
     import {useBookmarksStore} from "../../stores/bookmarks"
@@ -50,7 +50,7 @@
     const bookmarksStore = useBookmarksStore()
 
     const editing = ref(false)
-    const updatedTitle = ref(props.title)
+    const updatedTitle = ref("")
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null)
 
     function deleteBookmark() {
@@ -64,6 +64,9 @@
     }
 
     function startEditBookmark() {
+        // Seed the buffer here rather than at setup: the stored label can change under us when
+        // the page it points at is revisited in another language.
+        updatedTitle.value = props.title
         editing.value = true
         nextTick(() => {
             titleInput.value?.focus()
@@ -131,6 +134,13 @@
 .bookmark-link:not(.editing) .bookmark-anchor:hover .buttons {
     opacity: 1;
     visibility: visible;
+}
+
+@media (hover: none) {
+    .bookmark-link:not(.editing) .buttons {
+        opacity: 1;
+        visibility: visible;
+    }
 }
 
 .bookmark-title {

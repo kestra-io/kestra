@@ -174,9 +174,10 @@ public class GrpcWorkerNamespaceFileMetadataStateStore implements NamespaceFileM
     public NamespaceFileMetadata save(NamespaceFileMetadata item) {
         log.trace("Saving namespace file metadata via gRPC: namespace={}, path={}", item.getNamespace(), item.getPath());
 
-        OpaqueData request = OpaqueData.newBuilder()
+        NamespaceFileMetadataSaveRequest request = NamespaceFileMetadataSaveRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
             .setMessage(MESSAGE_FORMAT.toByteString(item))
+            .setTenantId(item.getTenantId())
             .build();
 
         OpaqueData response = stub.save(request);

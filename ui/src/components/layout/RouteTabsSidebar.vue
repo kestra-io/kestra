@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar v-if="hasTabs && displayMode === 'sidebar'" class="route-tabs-sidebar" aria-label="Tabs">
+    <KsSideBar v-if="hasTabs && displayMode === 'sidebar'" class="route-tabs-sidebar" :aria-label="$t('tabs')">
         <div class="tabs-list">
             <template v-for="(tab, index) in visibleTabs" :key="tab.name ?? `header-${index}`">
                 <div v-if="tab.header" class="tab-header">{{ tab.title }}</div>
@@ -21,7 +21,7 @@
                             @click="navigate"
                         >
                             <template v-if="tab.count !== undefined" #suffix>
-                                <KsBadge :value="tab.count" type="primary" class="count" />
+                                <KsBadge :value="tab.count" :max="tab.max" type="primary" inline class="count" />
                             </template>
                         </KsSideBarItem>
                     </router-link>
@@ -103,7 +103,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .route-tabs-sidebar {
         width: 200px;
         flex-shrink: 0;
@@ -135,10 +135,35 @@
 
     .count {
         flex-shrink: 0;
-        :deep(.kel-badge__content) {
-            position: static;
-            border: none;
-            margin-top: 0;
+    }
+
+    @media (max-width: 767px) {
+        nav.route-tabs-sidebar {
+            width: 100%;
+            height: auto;
+            padding: var(--ks-spacing-2) 0;
+            border-right: 0;
+            border-bottom: 1px solid var(--ks-border-default);
+        }
+
+        .tabs-list {
+            flex-direction: row;
+            align-items: center;
+            gap: var(--ks-spacing-1);
+            padding: 0 var(--ks-spacing-3);
+            overflow-x: auto;
+        }
+
+        .tabs-list > * {
+            flex: none;
+        }
+
+        .tab-header {
+            display: none;
+        }
+
+        .indented {
+            margin-left: 0;
         }
     }
 </style>

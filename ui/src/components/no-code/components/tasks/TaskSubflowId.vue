@@ -5,7 +5,7 @@
         filterable
         clearable
         allowCreate
-        :placeholder="task?.namespace ? 'Select' : 'Select namespace first'"
+        :placeholder="task?.namespace ? $t('select') : $t('no_code.select.namespace_first')"
         :disabled="!task?.namespace"
     >
         <KsOption
@@ -21,8 +21,10 @@
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
     import {useFlowStore} from "../../../../stores/flow"
 
+    type ModelValue = object | string | number | boolean | unknown[]
+
     const props = withDefaults(defineProps<{
-        modelValue?: object | string | number | boolean | unknown[]
+        modelValue?: ModelValue
         schema?: Record<string, unknown>
         required?: boolean
         task?: Record<string, unknown>
@@ -38,14 +40,14 @@
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: unknown]
+        "update:modelValue": [value: ModelValue | undefined]
     }>()
 
     const flowStore = useFlowStore()
 
     const flowIds = ref<string[]>([])
 
-    const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
+    const values = computed(() => props.modelValue ?? (props.schema?.default as ModelValue | undefined))
 
     const namespace = computed(() => {
         return (props.task?.namespace as string | undefined) ?? flowStore.flow?.namespace
@@ -61,7 +63,7 @@
         }
     }, {immediate: true})
 
-    function onInput(value: unknown) {
+    function onInput(value: ModelValue | undefined) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

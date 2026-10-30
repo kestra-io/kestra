@@ -44,4 +44,25 @@ public class ConstantRetryValidationTest {
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).contains("'interval' must be less than 'maxDuration'");
     }
+
+    @Test
+    void shouldRejectIntervalAboveTenYears() {
+        // an interval beyond the 10-year @DurationMax cap
+        var retry = Constant.builder()
+            .interval(Duration.ofDays(3651))
+            .build();
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
+        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid.get().getMessage()).contains("must not exceed P3650D");
+    }
+
+    @Test
+    void shouldAcceptIntervalAtTenYears() {
+        var retry = Constant.builder()
+            .interval(Duration.ofDays(3650))
+            .build();
+
+        assertThat(modelValidator.isValid(retry).isEmpty()).isTrue();
+    }
 }

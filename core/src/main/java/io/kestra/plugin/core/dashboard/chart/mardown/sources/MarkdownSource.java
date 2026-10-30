@@ -14,7 +14,8 @@ import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     property = "type",
-    visible = true
+    visible = true,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY
 )
 @JsonSubTypes(
     {

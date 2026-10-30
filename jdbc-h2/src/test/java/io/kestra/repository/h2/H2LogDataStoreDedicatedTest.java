@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Proves the dedicated-datasource path: with {@code kestra.logs.type=h2} + a distinct
  * {@code kestra.logs.h2.url}, the log store writes/reads a separate H2 database (created by the
- * {@code 2.0.14-logs-h2} migration), and the primary database receives none of those logs.
+ * {@code 2.0.05-logs-h2} migration), and the primary database receives none of those logs.
  */
 @MicronautTest
 @Property(name = "kestra.logs.type", value = "h2")

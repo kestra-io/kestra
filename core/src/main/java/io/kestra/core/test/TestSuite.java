@@ -8,8 +8,10 @@ import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 import io.kestra.core.validations.TestSuiteValidation;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -33,7 +35,7 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     private String id;
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     private String tenantId;
 
     private String description;
@@ -48,14 +50,15 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     @Size(min = 1, max = 100)
     private String flowId;
 
+    @ServerOwned
     private String source;
 
     @NotNull
     @NotEmpty
-    @Valid
-    private List<UnitTest> testCases;
+    private List<@Valid UnitTest> testCases;
 
     @Builder.Default
+    @ServerOwned
     private boolean deleted = Boolean.FALSE;
 
     @Builder.Default

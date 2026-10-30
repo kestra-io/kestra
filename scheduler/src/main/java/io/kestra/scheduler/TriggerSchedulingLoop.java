@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -14,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -36,6 +36,8 @@ public class TriggerSchedulingLoop implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(TriggerSchedulingLoop.class);
 
     private static final long SCHEDULE_INTERVAL_MILLIS = Duration.ofSeconds(1).toMillis();
+    // Trigger work overrunning the interval has already cost a scheduling slot, so only jitter is tolerated.
+    private static final long MAX_CYCLE_WORK_MILLIS = SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10);
 
     private final int schedulingLoopId;
     private final TriggerScheduler triggerScheduler;
@@ -53,7 +55,7 @@ public class TriggerSchedulingLoop implements Runnable {
     private volatile Thread thread;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicReference<State> state = new AtomicReference<>(State.STARTING);
     private volatile CountDownLatch started = new CountDownLatch(1);
     private volatile CountDownLatch stopped = new CountDownLatch(1);
 
@@ -64,7 +66,7 @@ public class TriggerSchedulingLoop implements Runnable {
 
     private final BlockingQueue<Runnable> internalLoopCallables = new LinkedBlockingQueue<>();
 
-    private final Set<Integer> assignments = new HashSet<>();
+    private volatile Set<Integer> assignments = Set.of();
 
     // Metrics
     private final Timer metricEventLoopTickTimer;
@@ -113,8 +115,15 @@ public class TriggerSchedulingLoop implements Runnable {
      **/
     @Override
     public void run() {
-        if (!this.running.compareAndSet(false, true)) {
+        State previous = state.getAndUpdate(current -> current == State.STARTING ? State.RUNNING : current);
+        if (State.RUNNING == previous) {
             throw new IllegalStateException("Already running");
+        }
+        if (State.STARTING != previous) {
+            // stop() already ran: release whoever waits on the latches, and never enter the loop.
+            started.countDown();
+            stopped.countDown();
+            return;
         }
 
         this.thread = Thread.currentThread();
@@ -122,23 +131,17 @@ public class TriggerSchedulingLoop implements Runnable {
         // submission cannot race startup and be silently dropped (see awaitStarted/stop).
         this.started.countDown();
         Instant nextScheduleTime = clock.instant();
-        // Use the monotonic clock to measure the loop period.
-        long tick = System.nanoTime();
+        // An evaluation that follows an initialization re-reads the whole trigger set on a cold path, so its
+        // duration says nothing about whether this loop can keep up.
+        boolean coldEvaluation = true;
         try {
-            while (running.get()) {
+            while (isRunning()) {
                 long start = System.nanoTime();
                 try {
-                    long elapsed = (start - tick) / 1_000_000;
-                    if (elapsed > (SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10))) {
-                        // useful for debugging unexpected schedule delay
-                        LOG.warn("Thread starvation or too many triggers to evaluate (elapsed since previous loop {}ms)", elapsed);
-                    }
-                    tick = start;
-
                     waitIfPaused();
 
                     // Check if the loop was stopped while being paused
-                    if (!running.get()) {
+                    if (!isRunning()) {
                         continue;
                     }
 
@@ -155,21 +158,48 @@ public class TriggerSchedulingLoop implements Runnable {
                         continue;
                     }
 
-                    final Instant now = clock.instant();
-
                     if (!initialized.get()) {
-                        triggerScheduler.onStart(clock, now, assignments);
+                        triggerScheduler.onStart(clock, clock.instant(), assignments);
                         initialized.set(true);
+                        // setAssignments() resets `initialized`, so a rebalance goes through here too.
+                        coldEvaluation = true;
                     }
+
+                    // Only the trigger work is measured: a pause, the initialization above and the end-loop
+                    // actions below are not the load this loop is sized for.
+                    long workStart = System.nanoTime();
 
                     // Process all received triggers events for current assignments.
-                    processTriggerEvents();
+                    int processedEvents = processTriggerEvents();
+
+                    // Sampled after the initialization and the event drain, either of which can take seconds:
+                    // this instant is the eligibility cut-off, the schedule date of the executions created from
+                    // it, and the left bound of scheduler.evaluation.loop.duration.
+                    Instant now = clock.instant();
 
                     // Check whether triggers should be scheduled
-                    if (now.isAfter(nextScheduleTime) || now.equals(nextScheduleTime)) {
-                        triggerScheduler.onSchedule(clock, now, assignments);
-                        nextScheduleTime = nextScheduleTime.plusMillis(SCHEDULE_INTERVAL_MILLIS);
+                    int evaluatedTriggers = 0;
+                    boolean evaluated = !now.isBefore(nextScheduleTime);
+                    if (evaluated) {
+                        evaluatedTriggers = triggerScheduler.onSchedule(clock, now, assignments);
+                        // Move to the first slot after `now`: the slots in between are not replayed, since the
+                        // evaluation above already served their triggers, but the one-second grid is kept so
+                        // that the schedule dates never drift.
+                        long slots = (now.toEpochMilli() - nextScheduleTime.toEpochMilli()) / SCHEDULE_INTERVAL_MILLIS + 1;
+                        nextScheduleTime = nextScheduleTime.plusMillis(SCHEDULE_INTERVAL_MILLIS * slots);
                     }
+
+                    long workMillis = (System.nanoTime() - workStart) / 1_000_000;
+                    if (workMillis > MAX_CYCLE_WORK_MILLIS && !coldEvaluation) {
+                        LOG.warn(
+                            "Scheduling loop {} cannot keep up with its trigger load: one cycle spent {}ms processing {} trigger event(s) and evaluating {} trigger(s).",
+                            schedulingLoopId,
+                            workMillis,
+                            processedEvents,
+                            evaluatedTriggers
+                        );
+                    }
+                    coldEvaluation &= !evaluated;
 
                     // Execute end-loop actions
                     doOnEndLoop();
@@ -183,7 +213,7 @@ public class TriggerSchedulingLoop implements Runnable {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LOG.warn("Interrupted while waiting in scheduling loop. Stopping.");
-                    running.set(false);
+                    state.compareAndSet(State.RUNNING, State.STOPPED);
                 } catch (Exception e) {
                     LOG.error("Error in scheduling loop", e);
                 } finally {
@@ -221,6 +251,7 @@ public class TriggerSchedulingLoop implements Runnable {
     public void prepareForStart() {
         this.started = new CountDownLatch(1);
         this.stopped = new CountDownLatch(1);
+        this.state.set(State.STARTING);
     }
 
     /**
@@ -244,22 +275,34 @@ public class TriggerSchedulingLoop implements Runnable {
      * This method blocks until the current processing loop is completed.
      */
     public void stop() {
-        if (!running.compareAndSet(true, false)) {
+        State previous = state.getAndSet(State.STOPPED);
+
+        if (State.STARTING == previous) {
+            // No thread to interrupt yet: the pending run() will see STOPPED and decline to start.
+            started.countDown();
+            stopped.countDown();
+            return;
+        }
+
+        if (State.RUNNING != previous) {
             LOG.debug("[{}] stop() called but not running", getClass().getSimpleName());
             return;
         }
 
         resume(); // In case it's paused and blocked
 
-        if (this.thread != null) {
-            this.thread.interrupt();
-            try {
-                if (!stopped.await(5, TimeUnit.SECONDS)) {
-                    LOG.warn("Timeout while waiting for {} to complete", this.thread.getName());
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        Thread runner = this.thread;
+        if (runner != null) {
+            runner.interrupt();
+        }
+
+        // Awaited even with no thread to interrupt: the loop exits on the state change, not the interrupt.
+        try {
+            if (!stopped.await(5, TimeUnit.SECONDS)) {
+                LOG.warn("Timeout while waiting for scheduling loop {} to complete", schedulingLoopId);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -269,7 +312,7 @@ public class TriggerSchedulingLoop implements Runnable {
         }
         pauseLock.lock();
         try {
-            while (paused.get() && running.get()) {
+            while (paused.get() && isRunning()) {
                 LOG.info("Paused. Waiting for scheduling loop to resume");
                 unpaused.await(); // Wait until resume() signals
                 LOG.info("Resumed");
@@ -289,10 +332,7 @@ public class TriggerSchedulingLoop implements Runnable {
     }
 
     public void setAssignments(final Set<Integer> assignments) {
-        this.assignments.clear();
-        if (assignments != null) {
-            this.assignments.addAll(assignments);
-        }
+        this.assignments = assignments == null ? Set.of() : Set.copyOf(assignments);
         this.initialized.set(false);
     }
 
@@ -408,7 +448,13 @@ public class TriggerSchedulingLoop implements Runnable {
      * @return {@code true} if running.
      */
     public boolean isRunning() {
-        return this.running.get();
+        return State.RUNNING == state.get();
+    }
+
+    private enum State {
+        STARTING,
+        RUNNING,
+        STOPPED
     }
 
     /**

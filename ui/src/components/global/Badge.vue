@@ -1,8 +1,6 @@
 <template>
     <KsTooltip :content="props.tooltip ?? props.label">
-        <KsButton type="primary" size="small" class="badge">
-            {{ props.label }}
-        </KsButton>
+        <KsTag type="primary" size="small" round class="badge" :label="props.label" />
     </KsTooltip>
 </template>
 
@@ -14,16 +12,8 @@
     const props = defineProps<Props>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .badge {
-    --kel-button-border-color: var(--ks-btn-primary-text);
-
-    margin-left: 0.5rem;
-    border-color: var(--ks-btn-primary-text);
-    border-radius: calc(var(--kel-border-radius-round) * 2);
-
-    &:hover {
-        border-color: var(--ks-btn-primary-text);
-    }
+    margin-left: var(--ks-spacing-2);
 }
 </style>

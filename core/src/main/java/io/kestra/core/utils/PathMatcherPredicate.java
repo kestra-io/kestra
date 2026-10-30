@@ -110,7 +110,7 @@ public final class PathMatcherPredicate implements Predicate<Path> {
     }
 
     private static String mayAddRecursiveMatch(final String p) {
-        return p.matches("\\w+[\\s\\S]*") ? "**/" + p : p;
+        return p.matches("\\w+[\\s\\S]*") || p.matches("\\.[\\w-][\\w.-]*") ? "**/" + p : p;
     }
 
     public List<String> syntaxAndPatterns() {

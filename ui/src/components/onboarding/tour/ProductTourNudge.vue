@@ -1,39 +1,37 @@
 <template>
     <div v-if="visible && isBlueprints" class="product-tour-nudge">
         <span class="product-tour-nudge__dismiss">
-            <KsIconButton :tooltip="t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(translationKey('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
         <p class="product-tour-nudge__title">
-            {{ t("onboarding.tour.nudge.title") }}
+            {{ $t(translationKey("nudge.title")) }}
         </p>
         <RouterLink :to="tourRoute" class="product-tour-nudge__link">
             <span class="product-tour-nudge__play">
                 <Play :size="14" />
             </span>
-            <span>{{ t("onboarding.tour.nudge.action") }}</span>
+            <span>{{ $t(translationKey("nudge.action")) }}</span>
         </RouterLink>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import Play from "vue-material-design-icons/Play.vue"
     import Close from "vue-material-design-icons/Close.vue"
 
     import {useProductTourNudge} from "./useProductTourEntry"
 
-    const {t} = useI18n()
     const route = useRoute()
-    const {visible, tourRoute, dismiss} = useProductTourNudge()
+    const {visible, tourRoute, translationKey, dismiss} = useProductTourNudge()
 
     const isBlueprints = computed(() => String(route.name ?? "").startsWith("blueprints"))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .product-tour-nudge {
         position: relative;
         margin: var(--ks-spacing-4) var(--ks-spacing-2) 0;

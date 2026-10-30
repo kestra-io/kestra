@@ -1,5 +1,5 @@
 import {vi} from "vitest"
-import {AppContext, ref} from "vue"
+import {ref} from "vue"
 import {config} from "@vue/test-utils"
 import {installMonacoCssEscapePolyfill} from "../../../../tests/unit/monacoCssEscapePolyfill"
 
@@ -34,17 +34,6 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
     })
 }
 installMonacoCssEscapePolyfill()
-
-vi.mock("vue-i18n", () => ({
-  useI18n: () => ({
-    t: (key:string) => key,
-  }),
-  createI18n: () => ({
-    install(app:AppContext) {
-      app.config.globalProperties.$t = (key:string) => key
-    },
-  }),
-}))
 
 // jsdom doesn't run layout, so ResizeObserver-backed hooks like useElementSize
 // would report 0×0 forever, and any v-if gated on dimensions never renders.

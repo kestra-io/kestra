@@ -4,12 +4,12 @@
         class="task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel" loading="lazy" decoding="async">
             <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </KsTooltip>
 
         <template v-else>
-            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel" loading="lazy" decoding="async">
             <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </template>
     </div>
@@ -118,14 +118,14 @@
     }))
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-icon {
         display: inline-block;
         width: 100%;
         height: 100%;
         position: relative;
 
-        :deep(span) {
+        & :deep(span) {
             position: absolute;
             padding: 1px;
             left: 0;
@@ -133,23 +133,23 @@
             width: 100%;
             height: 100%;
         }
+    }
 
-        &__icon {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 3px;
-            object-fit: contain;
-            object-position: center center;
+    .task-icon__icon {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 3px;
+        object-fit: contain;
+        object-position: center center;
+    }
 
-            &--mask {
-                mask-repeat: no-repeat;
-                mask-position: center;
-                mask-size: contain;
-                -webkit-mask-repeat: no-repeat;
-                -webkit-mask-position: center;
-                -webkit-mask-size: contain;
-            }
-        }
+    .task-icon__icon--mask {
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        -webkit-mask-size: contain;
     }
 </style>

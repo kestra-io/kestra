@@ -1,12 +1,13 @@
 import {describe, test, expect} from "vitest"
-import {defineComponent, computed, watch, reactive, ref} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {defineComponent, computed, watch, reactive, useTemplateRef} from "vue"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
+    plugins: [KestraDesignSystem],
 }
 
 function makeHarness(initialQuery: Record<string, string> = {}) {
@@ -17,8 +18,7 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
     const Harness = defineComponent({
         components: {KsDataTable},
         setup() {
-            const dataTable = ref<any>(null)
-            const setDataTable = (el: any) => { dataTable.value = el }
+            const dataTable = useTemplateRef<InstanceType<typeof KsDataTable>>("dataTable")
 
             const loadData = async ({page, size}: {page: number; size: number}) => {
                 loadCalls.push({page, size})
@@ -41,11 +41,11 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
                 routeQuery.size = String(size)
             }
 
-            return {setDataTable, loadData, urlPage, urlSize, onPageChanged}
+            return {loadData, urlPage, urlSize, onPageChanged}
         },
         template: `
             <KsDataTable
-                :ref="setDataTable"
+                ref="dataTable"
                 :loadData="loadData"
                 :currentPage="urlPage"
                 :pageSize="urlSize"
@@ -66,7 +66,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
 
         expect(loadCalls.length).toBeGreaterThan(0)
@@ -80,7 +80,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         const baseline = filterResets.count
 
@@ -96,7 +96,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         const baseline = filterResets.count
 
@@ -113,7 +113,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         loadCalls.length = 0
 

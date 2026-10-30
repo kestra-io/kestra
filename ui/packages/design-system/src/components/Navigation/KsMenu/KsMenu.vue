@@ -1,6 +1,6 @@
 <template>
     <ElMenu
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @select="(index, indexPath) => emit('select', index, indexPath)"
     >
         <template v-if="$slots.default" #default>
@@ -37,4 +37,7 @@
     @use 'element-plus/theme-chalk/src/menu';
     @use 'element-plus/theme-chalk/src/menu-item-group';
     @use 'element-plus/theme-chalk/src/sub-menu';
+</style>
+
+<style>
 </style>

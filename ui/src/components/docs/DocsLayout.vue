@@ -1,32 +1,32 @@
 <template>
-    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
+    <div class="docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
         <div
             v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
             @click="mobileMenuOpen = false"
         />
 
-        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar">
             <KsButton
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
                 @click="mobileMenuOpen = false"
                 :icon="Close"
-                :aria-label="'Close menu'"
+                :aria-label="$t('docsPage.close_menu')"
                 link
             />
             <div v-if="!collapsed" class="menu-slot-wrapper">
                 <slot name="menu" />
             </div>
         </div>
-        <div class="main-content-wrapper">
+        <div ref="mainContent" class="main-content-wrapper">
             <div v-if="$slots['secondary-header']" class="secondary-header">
                 <KsButton
                     v-if="$slots.menu && isPluginsRoute"
                     :class="['mobile-menu-toggle']"
                     @click="mobileMenuOpen = !mobileMenuOpen"
                     :icon="Menu"
-                    :aria-label="'Open menu'"
+                    :aria-label="$t('docsPage.open_menu')"
                     link
                 />
                 <slot name="secondary-header" />
@@ -60,7 +60,9 @@
             (typeof route.name === "string" && route.name.startsWith("plugins/"))
     })
 
-    useScrollMemory(scrollKey, undefined, true)
+    const mainContent = ref<HTMLElement | null>(null)
+
+    useScrollMemory(scrollKey, mainContent, !hasMenu.value)
 
     watch(() => route.fullPath, () => {
         mobileMenuOpen.value = false
@@ -68,10 +70,19 @@
 
 </script>
 
-<style scoped lang="scss">
-    @use '../../styles/responsive' as *;
+<style scoped>
+    .docs-layout-container {
+        display: flex;
+    }
+
+    .docs-layout-container.full-height {
+        min-height: 0;
+    }
 
     .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         padding: 2rem;
         height: 100%;
@@ -88,7 +99,7 @@
             font-size: var(--ks-font-size-xs);
         }
 
-        > div > ul > li > span:first-child {
+        & > div > ul > li > span:first-child {
             font-size: var(--ks-font-size-xs);
         }
     }
@@ -119,7 +130,7 @@
         flex-shrink: 0;
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
 
         .mobile-menu-toggle {
             display: none;
@@ -191,7 +202,7 @@
                     transform: scale(0.95);
                 }
 
-                :deep(.material-design-icon) {
+                & :deep(.material-design-icon) {
                     width: 24px;
                     height: 24px;
                 }
@@ -205,7 +216,7 @@
             position: absolute;
             top: 1rem;
             right: 1rem;
-            z-index: 1001;
+            z-index: calc(var(--ks-z-overlay) + 2);
             width: 44px;
             height: 44px;
             padding: 0;
@@ -219,7 +230,7 @@
                 transform: scale(0.95);
             }
 
-            :deep(.material-design-icon) {
+            & :deep(.material-design-icon) {
                 width: 24px;
                 height: 24px;
             }
@@ -232,8 +243,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 999;
+            background: var(--ks-bg-scrim);
+            z-index: var(--ks-z-overlay);
             animation: fadeIn 0.3s ease;
         }
 
@@ -249,9 +260,9 @@
             height: 100vh;
             width: calc(100vw - 44px);
             max-width: 100vw;
-            z-index: 1000;
+            z-index: calc(var(--ks-z-overlay) + 1);
             transition: left 0.3s ease-in-out;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             padding: 1rem;
             padding-top: 3.5rem;
             padding-right: 0.5rem;
@@ -263,7 +274,7 @@
                 left: 0;
             }
 
-            > div {
+            & > div {
                 flex: 1;
                 overflow: hidden;
                 display: flex;
@@ -292,7 +303,7 @@
         }
     }
 
-    @include res(md) {
+    @media only screen and (min-width: 992px) {
         .mobile-menu-toggle {
             display: none;
         }
@@ -319,6 +330,11 @@
             }
         }
 
+        .full-height .sidebar {
+            height: 100%;
+            padding-bottom: 0;
+        }
+
         .main-content-wrapper {
             overflow-y: auto;
         }
@@ -336,7 +352,7 @@
         }
     }
 
-    @include res(lg) {
+    @media only screen and (min-width: 1200px) {
         .content {
             padding: 2rem;
             padding-top: 1rem;

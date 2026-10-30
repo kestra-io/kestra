@@ -2,12 +2,13 @@ package io.kestra.core.models.triggers;
 
 import org.reactivestreams.Publisher;
 
+import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 
 import reactor.core.publisher.Flux;
 
-public interface RealtimeTriggerInterface extends WorkerTriggerInterface {
+public interface RealtimeTriggerInterface extends WorkerTriggerInterface, WorkerJobLifecycle {
 
     /**
      * Evaluate the trigger and produce a stream of lightweight results.

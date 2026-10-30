@@ -39,6 +39,10 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
+  executor:
+    execution-delay-loop-periodicity-ms: 250
+    monitor-sla-loop-periodicity-ms: 250
+    multiple-condition-purge-loop-periodicity-ms: 1000
   grpc:
     maxRetryAttempts: 1
     shutdownTimeout: 3s
@@ -58,3 +62,7 @@ grpc:
     enabled: false
     health:
       enabled: false
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

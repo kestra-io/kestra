@@ -1,0 +1,17 @@
+id: retry-flowable-behavior-allow-failure
+namespace: io.kestra.tests
+
+tasks:
+  - id: allow
+    type: io.kestra.plugin.core.flow.AllowFailure
+    retry:
+      type: constant
+      behavior: RETRY_FLOWABLE
+      maxAttempts: 2
+      interval: PT1S
+    tasks:
+      - id: always_fails
+        type: io.kestra.plugin.core.execution.Fail
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: "reached"

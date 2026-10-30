@@ -3,13 +3,13 @@
     <section
         v-if="vertical && activeTab"
         v-bind="attrsWithoutClass"
-        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow, 'full-height': (activeTab as Tab).fullHeight}]"
     >
         <TabBody />
     </section>
 
     <template v-else>
-        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box">
+        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box" @tab-change="handleTabChange">
             <KsTabPane
                 v-for="tab in visibleTabs"
                 :key="tab.name ?? 'default'"
@@ -21,7 +21,6 @@
                     <component
                         :is="isEmbedded || tab.disabled ? 'a' : 'router-link'"
                         :to="isEmbedded ? undefined : toRoute(tab)"
-                        @click="handleTabClick(tab)"
                     >
                         <KsTooltip
                             v-if="tab.disabled && (tab as Tab).props?.showTooltip"
@@ -33,7 +32,7 @@
                         <EnterpriseBadge :enable="(tab as Tab).locked">
                             <span class="tab-label-wrapper">
                                 {{ tab.title }}
-                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" :max="tab.max" type="primary" inline />
                             </span>
                         </EnterpriseBadge>
                     </component>
@@ -45,7 +44,7 @@
              Events flow through Pinia stores, so the wrapper injects no handlers. -->
         <router-view v-if="useRouterView" v-slot="{Component, route: childRoute}">
             <section
-                :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow}]"
+                :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow, 'full-height': childRoute.meta.fullHeight}]"
             >
                 <component :is="Component" :embed="childRoute.meta.embed ?? true" />
             </section>
@@ -58,7 +57,7 @@
         <section
             v-else-if="activeTab && hasTabBody"
             v-bind="attrsWithoutClass"
-            :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+            :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow, 'full-height': (activeTab as Tab).fullHeight}]"
         >
             <TabBody />
         </section>
@@ -69,7 +68,6 @@
     import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, nextTick, h, defineComponent, toHandlers, type Component} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import {useRouteTabsStore, type RouteTab} from "../stores/routeTabs"
     import {useActiveTab} from "../composables/useActiveTab"
     import {routeFamily} from "../utils/routeFamily"
@@ -82,7 +80,6 @@
          * for tabs hosting a full-page listing (e.g. KsDataTable with fitHeight).
          */
         fullContainer?: boolean;
-        blueprintDetail?: boolean;
     }
 
     defineOptions({inheritAttrs: false})
@@ -125,8 +122,6 @@
     const activeTabName = useActiveTab()
     const tabsOwnerId = Symbol("route-tabs-owner")
 
-    const selectedBlueprintId = ref<string | undefined>(undefined)
-
     const isEmbedded = computed(() => props.embedActiveTab !== undefined)
 
     const visibleTabs = computed(() => props.tabs.filter(t => !t.hidden))
@@ -139,18 +134,15 @@
     /**
      * A page is router-driven when its active route exposes a `meta.tab`, i.e. tab
      * identity lives in a matched child route and `<router-view>` owns the content.
-     * Embedded mode, the blueprint modal, and not-yet-migrated pages keep the
-     * dynamic `<component :is>` path below.
+     * Embedded mode and not-yet-migrated pages keep the dynamic
+     * `<component :is>` path below.
      */
     const isRouterDriven = computed(() => route?.meta?.tab !== undefined)
 
-    const useRouterView = computed(() =>
-        !props.vertical && !isEmbedded.value && !selectedBlueprintId.value && isRouterDriven.value,
-    )
+    const useRouterView = computed(() => !props.vertical && !isEmbedded.value && isRouterDriven.value)
 
     /** Whether TabBody would render anything — mirrors the null cases in TabBody's render. */
     const hasTabBody = computed(() => {
-        if (selectedBlueprintId.value) return true
         const tab = activeTab.value as Tab | undefined
         return tab !== undefined && (isEditorActiveTab(tab) || Boolean(tab.component))
     })
@@ -181,7 +173,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"px-0": true, "full-container": true}
+        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 
@@ -192,8 +184,9 @@
         activeName.value = activeTab.value?.name ?? "default"
     }
 
-    const handleTabClick = (tab: Tab) => {
-        if (isEmbedded.value) {
+    const handleTabChange = (name: string | number) => {
+        const tab = visibleTabs.value.find(t => (t.name ?? "default") === name)
+        if (isEmbedded.value && tab) {
             emit("changed", tab)
         }
     }
@@ -246,10 +239,6 @@
         {deep: true},
     )
 
-    watch(activeTab, () => {
-        selectedBlueprintId.value = undefined
-    })
-
     /**
      * Each tab's route component is code-split (`() => import(...)`), and vue-router
      * doesn't commit a navigation until that chunk resolves — so the first visit to
@@ -290,31 +279,24 @@
         setup() {
             return () => {
                 const tab = activeTab.value as Tab | undefined
-                if (selectedBlueprintId.value) {
-                    return h(BlueprintDetail, {
-                        blueprintId: selectedBlueprintId.value,
-                        blueprintType: "community",
-                        onBack: () => (selectedBlueprintId.value = undefined),
-                        combinedView: true,
-                        kind: tab?.props?.blueprintKind,
-                        embed: tab?.props?.embed ?? true,
-                        system: tab?.props?.system ?? false,
-                    })
-                }
                 if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
                 return h(tab.component as Component, {
                     ...tab.props,
                     ...attrsWithoutClass.value,
                     ...toHandlers(tab["v-on"] ?? {}),
                     namespace: getNamespaceToForward(tab),
-                    ...(tab.blueprintDetail ? {onGoToDetail: (id: string) => (selectedBlueprintId.value = id)} : {}),
                 })
             }
         },
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .full-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     section.maximized {
         margin: 0 !important;
         padding: 0;
@@ -330,7 +312,7 @@
     .editor-splitter {
         height: 100%;
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             display: flex;
             flex-direction: column;
         }
@@ -348,18 +330,8 @@
         font-weight: var(--ks-font-weight-regular);
     }
 
-    .inline-badge {
-        :deep(.kel-badge__content) {
-            transform: translateY(-1px);
-            position: static;
-            border: none;
-            margin-top: 0;
-            vertical-align: middle;
-        }
-    }
-
     .ks-tabs-bar {
-        :deep(.kel-tabs__item.is-disabled) {
+        & :deep(.kel-tabs__item.is-disabled) {
             &:after {
                 top: 0;
                 content: "";
@@ -367,7 +339,7 @@
                 display: block;
                 width: 100%;
                 height: 100%;
-                z-index: 1000;
+                z-index: var(--ks-z-dropdown);
             }
 
             a {
@@ -375,8 +347,8 @@
             }
         }
 
-        :deep(.kel-tabs__nav-next.is-disabled),
-        :deep(.kel-tabs__nav-prev.is-disabled) {
+        & :deep(.kel-tabs__nav-next.is-disabled),
+        & :deep(.kel-tabs__nav-prev.is-disabled) {
             display: none;
         }
     }

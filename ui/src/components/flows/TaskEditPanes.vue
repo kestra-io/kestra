@@ -21,7 +21,7 @@
                 v-bind="editorBindings"
                 :readOnly="readOnly"
                 :modelValue="modelValue"
-                :schemaType="section.toLowerCase()"
+                :schemaType="sectionSchemaType(section)"
                 :path="editorPath"
                 :options="{fullHeight: false}"
                 :navbar="false"
@@ -45,6 +45,7 @@
     import {KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import TaskEditor from "../no-code/components/TaskEditor.vue"
+    import {sectionSchemaType} from "./sectionSchemaType"
 
     withDefaults(defineProps<{
         modelValue: string
@@ -62,7 +63,7 @@
     })
 
     const emit = defineEmits<{
-        "input": [value: string | Record<string, any>]
+        "input": [value: string]
         "update:activeTab": [value: string]
         "save": []
     }>()
@@ -70,7 +71,7 @@
     const editorBindings = useEditorBindings()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .documentation {
         padding: var(--ks-spacing-4);
     }

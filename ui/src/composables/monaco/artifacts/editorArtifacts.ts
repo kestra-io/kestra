@@ -2,7 +2,7 @@ export const ARTIFACT_COPY_COMMAND = "kestra.editorArtifact.copyToClipboard"
 
 export interface ArtifactBlock {
     type: string;
-    value: Record<string, any>;
+    value: Record<string, unknown>;
     range: [number, number, number];
     path: string;
 }

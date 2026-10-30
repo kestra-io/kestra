@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {parseQuery, stringifyQuery} from "vue-router"
 import {
     decodeSearchParams,
     encodeFiltersToQuery,
@@ -17,9 +18,10 @@ import {
     pickStarterField,
     parseFilterKey,
 } from "@kestra-io/design-system"
-import type {FilterGroup, LeafFilterGroup, WrapperGroup} from "@kestra-io/design-system"
+import type {AppliedFilter, FilterGroup, FilterKeyConfig, LeafFilterGroup, WrapperGroup} from "@kestra-io/design-system"
 
-const leaf = (id: string, filters: any[]): LeafFilterGroup => ({id, kind: "leaf", filters})
+const leaf = (id: string, filters: Pick<AppliedFilter, "key" | "comparator" | "value">[]): LeafFilterGroup =>
+    ({id, kind: "leaf", filters} as LeafFilterGroup)
 const wrapper = (id: string, logical: "AND" | "OR", children: LeafFilterGroup[]): WrapperGroup =>
     ({id, kind: "wrapper", logical, children})
 
@@ -140,6 +142,95 @@ describe("Filter Helpers", () => {
     })
 
     describe("encodeFilterGroupsToQuery", () => {
+        it.each([Comparators.IN, Comparators.NOT_IN])(
+            "preserves repeated label values for %s",
+            (comparator) => {
+                const groups: FilterGroup[] = [
+                    leaf("g1", [{
+                        key: "labels",
+                        comparator,
+                        value: ["environment:production", "environment:staging"],
+                    }]),
+                ]
+
+                expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                    [`filters[labels][${keyOfComparator(comparator)}][environment]`]: ["production", "staging"],
+                })
+            },
+        )
+
+        it.each([Comparators.IN, Comparators.NOT_IN])(
+            "preserves colons in repeated label values for %s",
+            (comparator) => {
+                const groups: FilterGroup[] = [
+                    leaf("g1", [{
+                        key: "labels",
+                        comparator,
+                        value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                    }]),
+                ]
+                const operation = keyOfComparator(comparator)
+                const query = encodeFilterGroupsToQuery(groups, keyOfComparator)
+
+                expect(query).toEqual({
+                    [`filters[labels][${operation}][url]`]: ["https://prod:8443/a", "https://stage:9443/b"],
+                })
+                expect(decodeSearchParams(query)).toEqual([
+                    {
+                        field: "labels",
+                        value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                        operation,
+                    },
+                ])
+            },
+        )
+
+        it("preserves percent characters after vue-router decodes the query", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                }]),
+            ]
+            const query = encodeFilterGroupsToQuery(groups, keyOfComparator)
+            const routed = parseQuery(stringifyQuery(query))
+
+            expect(decodeSearchParams(routed)).toEqual([
+                {
+                    field: "labels",
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                    operation: "IN",
+                },
+            ])
+        })
+
+        it("ignores malformed key-value entries while preserving valid labels", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["environment:production", "invalid", ":missing-key", "empty-value:"],
+                }]),
+            ]
+
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                "filters[labels][IN][environment]": "production",
+            })
+        })
+
+        it("drops an all-malformed labels array instead of encoding a scalar label filter", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["invalid"],
+                }]),
+            ]
+
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({})
+        })
+
         it("emits the flat legacy format for a single leaf group", () => {
             const groups: FilterGroup[] = [
                 leaf("g1", [{key: "namespace", comparator: Comparators.EQUALS, value: "io.kestra"}]),
@@ -344,7 +435,7 @@ describe("Filter Helpers", () => {
             const startDate = new Date("2023-01-01")
             const endDate = new Date("2023-01-31")
             expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}})).toBe(true)
-            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as any, endDate}})).toBe(false)
+            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as unknown as Date, endDate}})).toBe(false)
         })
     })
 
@@ -399,7 +490,7 @@ describe("Filter Helpers", () => {
 })
 
 describe("validStructureSignature", () => {
-    const valid = (key: string, comparator = Comparators.IN, value: any = ["x"]) => ({key, comparator, value})
+    const valid = (key: string, comparator = Comparators.IN, value: AppliedFilter["value"] = ["x"]) => ({key, comparator, value})
     const empty = (key: string) => ({key, comparator: Comparators.IN, value: []})
 
     it("ignores in-progress (empty) conditions", () => {
@@ -452,7 +543,7 @@ describe("validStructureSignature", () => {
 
 describe("pickStarterField", () => {
     const key = (k: string, comparators: Comparators[] = [Comparators.IN], groupable = true) =>
-        ({key: k, label: k, comparators, groupable}) as any
+        ({key: k, label: k, comparators, groupable}) as FilterKeyConfig
     const keys = [key("namespace"), key("flowId"), key("state", [Comparators.IN, Comparators.NOT_IN])]
 
     it("picks the first key not already used in the target leaf", () => {

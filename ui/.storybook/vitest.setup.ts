@@ -1,0 +1,24 @@
+// Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
+// preview.ts imports it too — the install is idempotent. Importing from both files removes any
+// dependence on the relative order of this setup file and the one addon-vitest injects itself.
+import "./apiMock"
+import {afterAll} from "vitest"
+
+// Story templates are runtime-compiled by Vue in the browser, which triggers
+// "@vue/compiler-core: decodeEntities option is passed but will be ignored in
+// non-browser builds" — a false-positive from the esm-bundler Vue build that
+// sets __BROWSER__=false even in browser environments.
+// Suppress it so test output stays clean.
+const origWarn = console.warn.bind(console)
+console.warn = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
+    origWarn(...args)
+}
+
+afterAll(() => {
+    for (const node of [...document.body.children]) {
+        if (!node.id.startsWith("topnav-")) {
+            node.remove()
+        }
+    }
+})

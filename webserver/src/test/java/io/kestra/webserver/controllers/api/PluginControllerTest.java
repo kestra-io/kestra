@@ -1,8 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,12 +17,21 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.TicketingTaskInterface;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.ExternalPlugin;
+import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.PluginController.ApiTicketingSystem;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -93,23 +105,66 @@ class PluginControllerTest {
     }
 
     @Test
+    void assetsAreListedSoTheUiNeedsNoHardcodedTypeList() {
+        PagedResults<Plugin> page = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH),
+            Argument.of(PagedResults.class, Plugin.class)
+        );
+
+        List<String> assets = page.getResults().stream()
+            .flatMap(plugin -> ListUtils.emptyOnNull(plugin.getAssets()).stream())
+            .map(Plugin.PluginElementMetadata::cls)
+            .toList();
+
+        // External is inferred and Custom is the fallback an unknown type deserializes into, so neither is a type to offer.
+        assertThat(assets).doesNotContain("io.kestra.core.models.assets.External", "io.kestra.core.models.assets.Custom");
+    }
+
+    @Test
     void icons() {
         Map<String, PluginIcon> list = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/icons"),
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals(Log.class.getName()))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon log = list.get(Log.class.getName());
+        assertThat(log).isNotNull();
+        assertThat(log.getHash()).isNotBlank();
         // test an alias
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon alias = list.get("io.kestra.core.runners.test.task.Alias");
+        assertThat(alias).isNotNull();
+        assertThat(alias.getHash()).isNotBlank();
+    }
+
+    @Test
+    void shouldNotInlineIconBytesInIconsIndex() {
+        Map<String, PluginIcon> list = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(list).isNotEmpty();
+        assertThat(list.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
+    }
+
+    @Test
+    void shouldAnswerGroupsRatherThanClassesForGroupIcons() {
+        // Ask for the class index first: both indexes are keyed by no argument, so before they were split apart
+        // this call is what filled the shared cache key that the group index then answered from. Without it the
+        // assertions below would pass against the unsplit code whenever this test happened to run first.
+        client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        Map<String, PluginIcon> groups = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/groups"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(groups).isNotEmpty();
+        assertThat(groups).doesNotContainKey(Log.class.getName());
+        assertThat(groups.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
     }
 
     @Test
@@ -216,7 +271,7 @@ class PluginControllerTest {
         assertThat(doc.getMarkdown()).contains("Return a value for debugging purposes.");
         assertThat(doc.getMarkdown()).contains("The templated string to render");
         assertThat(doc.getMarkdown()).contains("The generated string");
-        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(1);
+        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(2);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 
@@ -229,7 +284,7 @@ class PluginControllerTest {
         );
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(5);
+        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(6);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 
@@ -330,9 +385,9 @@ class PluginControllerTest {
         );
 
         assertThat((Map<String, Object>) doc.get("properties"))
-            .as("flow schema exposes every flow property, including the draft revision flag")
-            .hasSize(24)
-            .containsKey("draft");
+            .as("flow schema exposes every property an author writes, but none of the server-owned ones")
+            .hasSize(20)
+            .doesNotContainKeys("revision", "updated", "deleted", "draft");
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
@@ -344,6 +399,19 @@ class PluginControllerTest {
         );
 
         assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.tasks.Task");
+    }
+
+    @Test
+    void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
+        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+
+        // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
+        // covers the bundle fingerprint so it changes when a different bundle is loaded.
+        assertThat(local.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("ETag")).isNotNull();
+        assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
     }
 
     @Test
@@ -366,7 +434,7 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(8);
+        assertThat(properties.size()).isEqualTo(9);
     }
 
     @Test
@@ -462,5 +530,121 @@ class PluginControllerTest {
         assertThat(result.getResults())
             .map(ApiTriggerPlugin::name)
             .contains("Webhook");
+    }
+
+    @Test
+    void triggerPluginTitleDisambiguatesPluginsThatShareAPackageSegment() {
+        // Regression test for the "Add Trigger" picker showing colliding, wrongly-cased labels for
+        // unrelated plugins whose package happens to share a segment (e.g. io.kestra.plugin.mongodb
+        // vs io.kestra.plugin.debezium.mongodb, both conventionally named `Trigger`). The picker label
+        // must come from each plugin's own declared title, not from the trigger class' package name -
+        // this only exercises the resolution, using two real trigger classes as arbitrary stand-ins.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin mongodb = pluginWithTitle("MongoDB");
+        RegisteredPlugin debeziumMongodb = pluginWithTitle("Debezium MongoDB");
+
+        ApiTriggerPlugin mongodbTrigger = controller.toApiTriggerPlugin(mongodb, Schedule.class);
+        ApiTriggerPlugin debeziumMongodbTrigger = controller.toApiTriggerPlugin(debeziumMongodb, Webhook.class);
+
+        assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
+        assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
+        assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+        assertThat(mongodbTrigger.pluginGroupTitle()).isEqualTo("MongoDB");
+    }
+
+    @Test
+    void shouldReturnASingleCatalogEntryPerTriggerTypeWhenAPluginIsRegisteredInSeveralVersions() {
+        // Regression test for https://github.com/kestra-io/kestra/issues/18419: a plugin installed
+        // in several versions registers one RegisteredPlugin per version, and the duplicated trigger
+        // types corrupted the "Add Trigger" grid, which keys its cards by type.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin plugin = pluginWithTriggers(Schedule.class, Webhook.class);
+        RegisteredPlugin samePluginOtherVersion = pluginWithTriggers(Schedule.class, Webhook.class);
+
+        List<ApiTriggerPlugin> catalog = controller.toTriggerPluginCatalog(List.of(plugin, samePluginOtherVersion));
+
+        assertThat(catalog).map(ApiTriggerPlugin::type).containsExactlyInAnyOrder(Schedule.class.getName(), Webhook.class.getName());
+    }
+
+    @Test
+    void shouldReturnOneTicketingSystemPerPluginTitle() {
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin github = pluginWithTasks("GitHub", CreateTicketTask.class, CloseTicketTask.class);
+        RegisteredPlugin githubOtherVersion = pluginWithTasks("GitHub", CreateTicketTask.class, CloseTicketTask.class);
+        RegisteredPlugin jira = pluginWithTasks("Atlassian Jira", CreateTicketTask.class);
+
+        List<ApiTicketingSystem> catalog = controller.toTicketingSystemCatalog(List.of(github, githubOtherVersion, jira));
+
+        assertThat(catalog).map(ApiTicketingSystem::name).containsExactly("Atlassian Jira", "GitHub");
+        assertThat(catalog)
+            .filteredOn(system -> system.name().equals("GitHub"))
+            .singleElement()
+            .extracting(ApiTicketingSystem::icon)
+            .isEqualTo(CreateTicketTask.class.getName());
+    }
+
+    @Test
+    void shouldIgnoreTasksThatDoNotImplementTheMarker() {
+        PluginController controller = new PluginController();
+
+        assertThat(controller.toTicketingSystemCatalog(List.of(pluginWithTasks("GitHub", SearchIssuesTask.class)))).isEmpty();
+    }
+
+    @Test
+    void shouldSkipAPluginWhoseManifestDeclaresNoTitle() throws Exception {
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin uberJar = RegisteredPlugin.builder()
+            .manifest(new Manifest())
+            .externalPlugin(new ExternalPlugin(URI.create("file:/plugins/plugin-github-0.24.0.jar").toURL(), new URL[0]))
+            .tasks(List.of(CreateTicketTask.class))
+            .build();
+
+        // Without the guard the system would be named after the jar, be stored verbatim on a case,
+        // and never group with "GitHub".
+        assertThat(uberJar.title()).isEqualTo("plugin-github-0.24.0");
+        assertThat(controller.toTicketingSystemCatalog(List.of(uberJar))).isEmpty();
+    }
+
+    @Test
+    void should_list_ticketing_systems() {
+        PagedResults<ApiTicketingSystem> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/ticketing-systems"),
+            Argument.of(PagedResults.class, PluginController.ApiTicketingSystem.class)
+        );
+
+        assertThat(result.getTotal()).isZero();
+    }
+
+    private static RegisteredPlugin pluginWithTitle(String title) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");
+        return RegisteredPlugin.builder().manifest(manifest).triggers(List.of(triggers)).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTasks(String title, Class<? extends Task>... tasks) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).tasks(List.of(tasks)).build();
+    }
+
+    private abstract static class CreateTicketTask extends Task implements TicketingTaskInterface {
+    }
+
+    private abstract static class CloseTicketTask extends Task implements TicketingTaskInterface {
+    }
+
+    private abstract static class SearchIssuesTask extends Task {
     }
 }

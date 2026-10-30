@@ -1,0 +1,12 @@
+id: replay-moved-task
+namespace: io.kestra.tests
+
+tasks:
+  - id: standalone
+    type: io.kestra.plugin.core.log.Log
+    message: standalone ran at top level
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: boom
+        type: io.kestra.plugin.core.execution.Fail

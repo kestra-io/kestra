@@ -26,16 +26,24 @@
             </div>
         </section>
 
-        <section v-if="missingPlugins.length" class="block">
+        <section v-if="missingTasks.length" class="block">
             <KsAlert
                 type="warning"
                 :closable="false"
                 :title="$t('blueprints.missingPlugins.title')"
             >
                 <p class="missing-description">
-                    {{ $t("blueprints.missingPlugins.description", {plugins: missingPlugins.join(", ")}) }}
+                    {{ $t("blueprints.missingPlugins.description") }}
                 </p>
-                <slot name="missing-plugins-action" :missingPlugins="missingPlugins" />
+                <p class="missing-types">
+                    <code v-for="task in missingTasks" :key="task">{{ task }}</code>
+                </p>
+                <template v-if="uninstalledPlugins.length">
+                    <p class="missing-description">
+                        {{ $t("blueprints.missingPlugins.installHint", {plugins: uninstalledPlugins.join(", ")}) }}
+                    </p>
+                    <slot name="missing-plugins-action" :uninstalledPlugins="uninstalledPlugins" />
+                </template>
             </KsAlert>
         </section>
 
@@ -64,12 +72,13 @@
 
     import {blueprintTaskTypes, useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {kind?: "FLOW" | "DASHBOARD" | "APP"};
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         columns?: number;
     }>(), {
         blueprint: undefined,
@@ -100,18 +109,18 @@
 
     const taskName = (cls: string) => stringUtils.afterLastDot(cls)
 
-    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {missingTaskTypes, uninstalledPluginNames} = useBlueprintPlugins()
 
     const missingTasks = computed(() =>
         missingTaskTypes(props.blueprint?.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint?.includedTasks),
+    const uninstalledPlugins = computed(() =>
+        uninstalledPluginNames(props.blueprint?.includedTasks),
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .overview {
         display: flex;
         flex-direction: column;
@@ -164,7 +173,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
 
-            :deep(.task-icon) {
+            & :deep(.task-icon) {
                 flex-shrink: 0;
                 width: 1.5rem;
                 height: 1.5rem;
@@ -173,7 +182,7 @@
             &.missing {
                 color: var(--ks-text-secondary);
 
-                :deep(.task-icon) {
+                & :deep(.task-icon) {
                     opacity: 0.4;
                     filter: grayscale(1);
                 }
@@ -184,6 +193,26 @@
             margin: 0;
         }
 
+        .missing-types {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--ks-spacing-1);
+            margin: var(--ks-spacing-2) 0 0;
+
+            code {
+                padding: 0 var(--ks-spacing-1);
+                border-radius: var(--ks-radius-xs);
+                background: var(--ks-bg-tag);
+                font-family: var(--ks-font-family-mono);
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .missing-types + .missing-description {
+            margin-top: var(--ks-spacing-2);
+        }
+
         .pill {
             width: fit-content;
             padding: 0 var(--ks-spacing-3);
@@ -192,7 +221,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-bold);
 
-            :deep(.open-in-new-icon) {
+            & :deep(.open-in-new-icon) {
                 margin-left: 0.25rem;
             }
         }

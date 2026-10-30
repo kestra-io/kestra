@@ -80,7 +80,7 @@ charts:
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
-      displayName: Total Executions
+      displayName: Executions over time
       description: Executions duration and count per date
       legend:
         enabled: true
@@ -108,7 +108,7 @@ charts:
   - id: total_executions_pie
     type: io.kestra.plugin.core.dashboard.chart.Pie
     chartOptions:
-      displayName: Total Executions
+      displayName: Executions by status
       graphStyle: DONUT
       tooltip: ALL
       width: 3

@@ -234,7 +234,12 @@ public class LocalWorkingDir implements WorkingDir {
         }
         MatcherFileVisitor visitor = new MatcherFileVisitor(PathMatcherPredicate.matches(path(), patterns));
         Files.walkFileTree(path(), visitor);
-        return visitor.getMatchedFiles();
+        // the execution context is Kestra's own file and holds decrypted secrets: a user pattern
+        // must never collect it, and Java globs match leading dots where a shell would not
+        return visitor.getMatchedFiles()
+            .stream()
+            .filter(path -> !path.getFileName().toString().equals(WorkingDir.EXECUTION_CONTEXT_FILE_NAME))
+            .toList();
     }
 
     /**

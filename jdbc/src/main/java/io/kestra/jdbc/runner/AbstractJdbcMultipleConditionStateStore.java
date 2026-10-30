@@ -2,7 +2,6 @@ package io.kestra.jdbc.runner;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -42,7 +41,7 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
                 var txContext = new JdbcTransactionContext(dslContext);
                 Execution newExecution = consumer.apply(txContext, multipleConditionWindow);
 
-                if (newExecution != null && !Boolean.FALSE.equals(multipleCondition.getResetOnSuccess())) {
+                if (newExecution != null) {
                     // re-fetch within the same transaction to get the state after the consumer's save(),
                     // then delete if all conditions are now satisfied
                     get(dslContext, flow, multipleCondition.getId())
@@ -81,25 +80,19 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
     }
 
     @Override
-    public List<MultipleConditionWindow> expired(String tenantId) {
-        return this.jdbcRepository
+    public void purgeExpired(Instant now) {
+        this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable())
-                    .where(
-                        getEndDataCondition().and(buildTenantCondition(tenantId))
-                    );
-
-                return this.jdbcRepository.fetch(select);
-            });
+            .transaction(configuration ->
+                DSL.using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(getEndDateCondition(now))
+                    .execute()
+            );
     }
 
-    protected Condition getEndDataCondition() {
-        return field("end_date").lt(Timestamp.from(Instant.now()));
+    protected Condition getEndDateCondition(Instant now) {
+        return field("end_date").lt(Timestamp.from(now));
     }
 
     @Override

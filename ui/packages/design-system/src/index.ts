@@ -1,9 +1,21 @@
 import {defineAsyncComponent} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import {
+    INSTALLED_KEY,
+    provideGlobalConfig,
+    ElInfiniteScroll,
+    ElLoading,
+    ElMessage,
+    ElMessageBox,
+    ElNotification,
+    ElPopoverDirective,
+} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
+type InstalledApp = App & {
+    [INSTALLED_KEY]?: boolean
+}
 // defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
@@ -11,11 +23,29 @@ const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
     Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
-import KsEchart from "./components/Charts/KsEchart.vue"
-import KsGraph from "./components/Charts/KsGraph.vue"
-import KsLine from "./components/Charts/KsLine.vue"
-import KsBar from "./components/Charts/KsBar.vue"
-import KsPie from "./components/Charts/KsPie.vue"
+// Async on purpose: every chart statically pulls ECharts, which the barrel would
+// otherwise put in the app's eager bundle on behalf of consumers that never
+// render a chart.
+import type KsEchartSfc from "./components/Charts/KsEchart.vue"
+import type KsGraphSfc from "./components/Charts/KsGraph.vue"
+import type KsLineSfc from "./components/Charts/KsLine.vue"
+import type KsBarSfc from "./components/Charts/KsBar.vue"
+import type KsPieSfc from "./components/Charts/KsPie.vue"
+const KsEchart = asyncComponent("KsEchart",
+    () => import("./components/Charts/KsEchart.vue"),
+) as unknown as typeof KsEchartSfc
+const KsGraph = asyncComponent("KsGraph",
+    () => import("./components/Charts/KsGraph.vue"),
+) as unknown as typeof KsGraphSfc
+const KsLine = asyncComponent("KsLine",
+    () => import("./components/Charts/KsLine.vue"),
+) as unknown as typeof KsLineSfc
+const KsBar = asyncComponent("KsBar",
+    () => import("./components/Charts/KsBar.vue"),
+) as unknown as typeof KsBarSfc
+const KsPie = asyncComponent("KsPie",
+    () => import("./components/Charts/KsPie.vue"),
+) as unknown as typeof KsPieSfc
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -23,6 +53,7 @@ import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
+export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
 import KsTopologyDetails from "./components/Data/KsTopologyDetails.vue"
@@ -57,7 +88,7 @@ const KsEditor = asyncComponent("KsEditor",
 ) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
-export type {TaskIconProps} from "./composables/taskIcon"
+export type {TaskIconProps, PluginIconData, PluginIconMap} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
 export type {EditorMarker} from "./utils/yamlValidation"
 export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
@@ -69,6 +100,7 @@ import KsEmptyState from "./components/Data/KsEmptyState.vue"
 import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
 export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
+import KsFileTag from "./components/Data/KsFileTag.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
@@ -105,6 +137,7 @@ import KsSelect from "./components/Form/KsSelect/KsSelect.vue"
 import KsSideBar from "./components/Navigation/KsSideBar/KsSideBar.vue"
 import KsSideBarItem from "./components/Navigation/KsSideBar/KsSideBarItem.vue"
 import KsSideBarSection from "./components/Navigation/KsSideBar/KsSideBarSection.vue"
+import KsSelectableListItem from "./components/Navigation/KsSelectableListItem.vue"
 import KsSkeleton from "./components/Data/KsSkeleton.vue"
 import KsSplitter from "./components/Basic/KsSplitter/KsSplitter.vue"
 import KsSplitterPanel from "./components/Basic/KsSplitter/KsSplitterPanel.vue"
@@ -119,6 +152,8 @@ import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 export type {KsTagType} from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
+import KsThemePicker from "./components/Form/KsThemePicker/KsThemePicker.vue"
+export type {ThemeOption} from "./components/Form/KsThemePicker/KsThemePicker.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
@@ -126,6 +161,7 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
 import KsTree from "./components/Data/KsTree.vue"
+export type {KsTreeNode} from "./components/Data/KsTree.vue"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
@@ -149,18 +185,43 @@ export {cssVar} from "./utils/css"
 export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
+export {rowKey} from "./utils/rowKey"
+export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
+export {
+    cloneDeep,
+    debounce,
+    deepMerge,
+    escapeHtml,
+    getPath,
+    groupBy,
+    isDeepEqual,
+    isPlainObject,
+    mapValues,
+    setPath,
+    throttle,
+} from "./utils/lang"
+export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
-export {setMomentInstance, setDateFormatter} from "./date/index"
+export {editorFontFamily} from "./utils/editorFont"
+export {dayjs, type Dayjs} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
+export type {KsBreadcrumbItem, KsBreadcrumbLoader} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export {ALL_TIME_RANGE} from "./components/Data/KsDataTable/filter/utils/constants"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
+export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+
+let i18nRegistration: Promise<void> = Promise.resolve()
+
+/** The registration `install` started, so a caller can await it rather than leave it in flight. */
+export const designSystemI18nReady = (): Promise<void> => i18nRegistration
+export {useDiscardGuard} from "./composables/useDiscardGuard"
+export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -175,6 +236,8 @@ export {
     emptyLeafGroup,
 } from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
 export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
+export {useTableColumns} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
+export type {ColumnConfig, UseTableColumnsOptions} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
@@ -193,6 +256,7 @@ export {
     validStructureSignature,
     parseFilterKey,
     decodeFilterValue,
+    type DecodedParam,
     type ParsedFilterKey,
     type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
@@ -278,6 +342,7 @@ const components: Record<string, Component> = {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -309,6 +374,7 @@ const components: Record<string, Component> = {
     KsSideBar,
     KsSideBarItem,
     KsSideBarSection,
+    KsSelectableListItem,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -323,6 +389,7 @@ const components: Record<string, Component> = {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -388,6 +455,7 @@ export {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -419,6 +487,7 @@ export {
     KsSideBar,
     KsSideBarItem,
     KsSideBarSection,
+    KsSelectableListItem,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -433,6 +502,7 @@ export {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -454,8 +524,18 @@ export {
 
 const KestraDesignSystem = {
     install(app: App) {
-        if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
+        const installedApp = app as InstalledApp
+        if (!installedApp[INSTALLED_KEY]) {
+            // Every Ks* component imports its own El* dependency directly, so global registration
+            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components. The
+            // services below still need app.use(): it's what wires their _context to this app, so
+            // their detached render trees (e.g. an ElNotification's content) can still resolve
+            // globally-registered Ks* components like KsButton/KsMarkdown.
+            installedApp[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
+            for (const plugin of [ElInfiniteScroll, ElLoading, ElMessage, ElMessageBox, ElNotification, ElPopoverDirective]) {
+                app.use(plugin)
+            }
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)
@@ -464,7 +544,12 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        // Chained rather than replaced, so a second install cannot drop a pending registration and
+        // leave its locale imports unawaitable; settled either way, so one failure blocks no other.
+        if (i18n) {
+            const register = () => registerDesignSystemI18n(i18n)
+            i18nRegistration = i18nRegistration.then(register, register)
+        }
     },
 }
 
@@ -517,6 +602,7 @@ declare module "vue" {
         KsEmptyState: typeof KsEmptyState
         KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
+        KsFileTag: typeof KsFileTag
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem
@@ -548,6 +634,7 @@ declare module "vue" {
         KsSideBar: typeof KsSideBar
         KsSideBarItem: typeof KsSideBarItem
         KsSideBarSection: typeof KsSideBarSection
+        KsSelectableListItem: typeof KsSelectableListItem
         KsSkeleton: typeof KsSkeleton
         KsSplitter: typeof KsSplitter
         KsSplitterPanel: typeof KsSplitterPanel
@@ -562,6 +649,7 @@ declare module "vue" {
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
         KsText: typeof KsText
+        KsThemePicker: typeof KsThemePicker
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem
         KsTimePicker: typeof KsTimePicker

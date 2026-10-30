@@ -24,7 +24,7 @@
     const copyText = () => Utils.copy(props.text)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .clipboard {
     z-index: 1;
@@ -39,5 +39,12 @@
     min-width: 2rem;
     height: 2rem;
     padding: 0;
+    cursor: pointer;
+
+    @media (pointer: coarse) {
+        width: 2.75rem;
+        min-width: 2.75rem;
+        height: 2.75rem;
+    }
 }
 </style>

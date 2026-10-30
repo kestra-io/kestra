@@ -7,8 +7,17 @@ import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {handledIf} from "../utils/kestraHttp"
+
+export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
+
+export interface PluginAutoInstallDetectResult {
+    enabled: boolean;
+    missingTypes: string[];
+    artifacts: PluginArtifact[];
+}
 
 export interface PluginComponent {
     icon?: string;
@@ -17,7 +26,7 @@ export interface PluginComponent {
     deprecated?: boolean;
     version?: string;
     description?: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     schema: JSONSchema;
     markdown?: string;
 }
@@ -26,6 +35,14 @@ export type {Plugin} from "../utils/pluginUtils"
 export interface TriggerPluginDto {
     type: string;
     name: string;
+    // The owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB" or
+    // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
+    // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
+    pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -40,11 +57,22 @@ interface LoadOptions {
     hash?: number;
 }
 
-interface JsonSchemaDef {
-    $ref?: string,
-    allOf?: JsonSchemaDef[],
-    type?: string,
-    properties?: Record<string, any>,
+export interface JsonSchemaDef {
+    [key: string]: unknown;
+    $ref?: string;
+    allOf?: JsonSchemaDef[];
+    anyOf?: JsonSchemaDef[];
+    oneOf?: JsonSchemaDef[];
+    type?: string;
+    required?: string[];
+    items?: JsonSchemaDef;
+    properties?: Record<string, JsonSchemaDef>;
+    definitions?: Record<string, JsonSchemaDef>;
+}
+
+export interface RootJsonSchema extends JsonSchemaDef {
+    $ref: string;
+    definitions: Record<string, JsonSchemaDef>;
 }
 
 export function removeRefPrefix(refStr?: string): string {
@@ -66,11 +94,13 @@ interface RawPluginIcon {
     hash?: string;
 }
 
+// Bulk indexes carry icon metadata only; `hash` is set exactly when the class has an icon, whose bytes are
+// then fetched per class from `/plugins/icons/{cls}/icon.svg`.
 function toPluginIconData(raw: RawPluginIcon): PluginIconData {
     return {
         flowable: raw.flowable,
         monochrome: raw.monochrome ?? false,
-        hasIcon: raw.icon != null,
+        hasIcon: raw.icon != null || raw.hash != null,
         hash: raw.hash,
     }
 }
@@ -78,6 +108,17 @@ function toPluginIconData(raw: RawPluginIcon): PluginIconData {
 function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
     return Object.fromEntries(
         Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+    )
+}
+
+// The group index holds an entry for every group and subgroup, iconless ones included. Callers treat any entry as
+// "this group has an icon", so keeping the iconless ones would render the generic icon instead of letting
+// TaskIcon fall through to its lazy lookup and the ecosystem catalog.
+function toGroupIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+    return Object.fromEntries(
+        Object.entries(raw ?? {})
+            .filter(([, icon]) => icon.icon != null || icon.hash != null)
+            .map(([cls, icon]) => [cls, toPluginIconData(icon)]),
     )
 }
 
@@ -107,9 +148,13 @@ function usePluginsIcons() {
         }
 
         iconsPromiseLocal.value =
-            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
                 pluginsIcons.value = toPluginIconDataMap(response.data)
                 iconsLoaded.value = true
+                return icons.value
+            }).catch(() => {
+                // rejected request -> try again
+                iconsPromiseLocal.value = undefined
                 return icons.value
             })
 
@@ -148,7 +193,7 @@ function usePluginsIcons() {
             return pending
         }
 
-        const localLookup = iconsLoaded.value
+        const localLookup = () => iconsLoaded.value
             ? Promise.resolve(undefined)
             : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
                 .then(response => {
@@ -162,7 +207,11 @@ function usePluginsIcons() {
                 })
                 .catch(() => undefined)
 
-        const request = localLookup
+        // A bulk fetch in flight (the topology asks for one on mount) answers most classes, so
+        // wait for it instead of racing it with one request per rendered node.
+        const catalogPending = !iconsLoaded.value ? iconsPromiseLocal.value : undefined
+
+        const request = (catalogPending ? catalogPending.then(() => icons.value[cls] ?? localLookup()) : localLookup())
             .then(icon => icon ?? loadEcosystemIcon(cls))
             .finally(() => iconRequests.delete(cls))
 
@@ -182,15 +231,15 @@ export const usePluginsStore = defineStore("plugins", () => {
     const axios = useClient()
 
     const plugin = ref<PluginComponent>()
-    const versions = ref<string[]>()
+    const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, any>>()
+    const schemaType = ref<Record<string, RootJsonSchema>>()
     const forceIncludeProperties = ref<string[]>()
 
-    const flowSchema = computed(() => {
+    const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
     const flowDefinitions = computed(() => {
@@ -203,9 +252,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         return flowRootSchema.value?.properties
     })
     const allTypes = computed(() => {
-        return plugins.value?.flatMap(p => Object.entries(p))
+        const declared = plugins.value?.flatMap(p => Object.entries(p))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? []
+        return [...declared, ...(plugins.value?.flatMap(({aliases}) => aliases ?? []) ?? [])]
     })
     const deprecatedTypes = computed(() => {
         const deprecatedPlugins = plugins.value?.flatMap(p => Object.entries(p))
@@ -222,7 +272,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return flowDefinitions.value?.[removeRefPrefix(obj.$ref)]
         }
         if (obj?.allOf) {
-            const def = obj.allOf.reduce((acc: any, item) => {
+            const def = obj.allOf.reduce<JsonSchemaDef>((acc, item) => {
                 if (item.$ref) {
                     const resolved = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)])
                     if (resolved?.type === "object" && resolved?.properties) {
@@ -285,10 +335,18 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listTriggers() {
         const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
-        return response?.results ?? []
+        // The triggers grid keys its cards by type, and duplicate keys corrupt Vue's keyed diff on
+        // every filter change (https://github.com/kestra-io/kestra/issues/18419), so drop duplicates
+        // even if the API misbehaves.
+        const seen = new Set<string>()
+        return (response?.results ?? []).filter(trigger => {
+            if (seen.has(trigger.type)) return false
+            seen.add(trigger.type)
+            return true
+        })
     }
 
-    async function listWithSubgroup(_options?: Record<string, any>) {
+    async function listWithSubgroup() {
         const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
         plugins.value = response
         return response
@@ -298,7 +356,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function ensurePlugins(): Promise<Plugin[]> {
         if (plugins.value) return plugins.value
         if (pluginsPending) return pluginsPending
-        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+        pluginsPending = listWithSubgroup().finally(() => {
             pluginsPending = null
         })
         return pluginsPending
@@ -310,34 +368,43 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls
-        const cacheKey = options.hash ? options.hash + id : id
+        // `all` returns a superset of the properties, so it gets its own key and never satisfies (or
+        // gets satisfied by) a request that did not ask for it.
+        const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
-        if (!options.all && cachedPluginDoc) {
-            nextTick(() => {
-                plugin.value = cachedPluginDoc
-            })
+        if (cachedPluginDoc) {
+            if (options.all !== true) {
+                nextTick(() => {
+                    plugin.value = cachedPluginDoc
+                })
+            }
             return cachedPluginDoc
         }
 
-        const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
+        let data: PluginComponent
+        try {
+            data = (options.version
+                ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
+                : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
+        } catch (e: unknown) {
+            handledIf(e, [404])
+            throw e
+        }
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
         }
 
-        if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = data
-        }
+        pluginsDocumentation.value[cacheKey] = data
 
         return data
     }
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
         const data = await PluginsAPI.pluginVersions({cls: options.cls}) as {type: string, versions: string[]}
+        
         if (options.commit !== false) {
-            versions.value = data.versions
+            versions.value[options.cls] = data.versions
         }
 
         return data
@@ -353,9 +420,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
+            const schema = data as RootJsonSchema
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            schemaType.value[options.type] = schema
+            return schema
         })
     }
 
@@ -401,7 +469,19 @@ export const usePluginsStore = defineStore("plugins", () => {
             version,
         }
 
-        const pluginData = await load(payload)
+        let pluginData
+        try {
+            pluginData = await load(payload)
+        } catch {
+            // catalog-only type: no local doc until the plugin is actually installed
+            editorPlugin.value = undefined
+            currentlyLoading = undefined
+            return
+        }
+
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
+            return
+        }
 
         editorPlugin.value = {
             cls,
@@ -423,7 +503,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (groupIconsPending) return groupIconsPending
         groupIconsPending = axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
             .then(response => {
-                groupIcons.value = toPluginIconDataMap(response.data)
+                groupIcons.value = toGroupIconDataMap(response.data)
                 return groupIcons.value
             })
             .finally(() => {
@@ -434,16 +514,14 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function findPluginByCls(cls: string | null | undefined): Plugin | null {
         if (!cls || !plugins.value) return null
-        const subgroupMatch = plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
-        if (subgroupMatch) return subgroupMatch
-        for (const plugin of plugins.value) {
-            for (const [key, value] of Object.entries(plugin)) {
-                if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
-                    return plugin
-                }
-            }
-        }
-        return null
+        // A declared class, then a declared alias, then the package-prefix guess: an alias such as
+        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
+        const declaring = plugins.value.filter(p => Object.entries(p)
+            .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
+        if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
+        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
+        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
+        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
@@ -469,6 +547,46 @@ export const usePluginsStore = defineStore("plugins", () => {
         const sameGroup = all.filter(p => p.group === ownerGroup)
         const subgroups = sameGroup.filter(p => p.subGroup)
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
+    }
+
+    async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
+        try {
+            const response = await axios.post<PluginAutoInstallDetectResult>(
+                `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+                flowYaml,
+                {headers: {"Content-Type": "text/plain"}},
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
+    }
+
+    async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
+        try {
+            const response = await axios.post<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install`,
+                artifacts,
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
+    }
+
+    async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
+        try {
+            const response = await axios.get<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
+            )
+            return response.data
+        } catch (error: unknown) {
+            // The install toast counts a null as one failed poll and gives up after a few.
+            handledIf(error, [403, 404])
+            return null
+        }
     }
 
     return {
@@ -511,5 +629,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadIcon,
         groupIcons,
         ensureGroupIcons,
+
+        // auto-install
+        detectMissingPlugins,
+        startInstall,
+        getInstallJob,
     }
 })

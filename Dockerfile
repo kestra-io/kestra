@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-no-plugins"
+ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-slim"
 FROM ${BASE_IMAGE}
 
 ENV PATH="/app/.venv/bin:$PATH"

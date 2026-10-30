@@ -71,7 +71,7 @@
                                         type="password"
                                         showPassword
                                         v-model="confirmPassword"
-                                        placeholder="Re-enter your password"
+                                        :placeholder="$t('confirm password')"
                                     />
                                 </KsFormItem>
                                 <KsCheckItem :met="passwordsMatch">
@@ -91,7 +91,7 @@
                             <KsFormItem :label="$t('setup.survey.company_size')">
                                 <KsSelect
                                     v-model="surveyData.mainGoal"
-                                    placeholder="Select"
+                                    :placeholder="$t('select')"
                                     class="survey-select"
                                 >
                                     <KsOption
@@ -153,12 +153,13 @@
 </template>
 
 <script setup lang="ts">
-    import MailChecker from "mailchecker"
-    import {ref, computed, onUnmounted, type Ref} from "vue"
+    import {ref, computed, watch, onUnmounted, type Ref} from "vue"
+    import type {FormInstance} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
+    import {useDisposableEmailGuard} from "./disposableEmailGuard"
     import {trackSetupEvent} from "../../composables/usePosthog"
     import {identifyPosthogUser} from "../../utils/posthog"
 
@@ -167,6 +168,7 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import {storageKeys} from "../../utils/constants"
 
     interface UserFormData {
         username: string
@@ -191,7 +193,7 @@
     const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
-    const userForm: Ref<any> = ref(null)
+    const userForm: Ref<FormInstance | null> = ref(null)
 
     const userFormData = ref<UserFormData>({
         username: "",
@@ -214,8 +216,8 @@
             const loginConfig = await miscStore.loadLoginConfig()
 
             if (loginConfig?.isBasicAuthInitialized) {
-                localStorage.removeItem("basicAuthSetupInProgress")
-                localStorage.removeItem("setupStartTime")
+                localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+                localStorage.removeItem(storageKeys.SETUP_START_TIME)
                 router.push({name: "login"})
                 return
             }
@@ -224,8 +226,8 @@
             // authentication and is not available until the account below has been created;
             // trackSetupEvent/initPosthogIfEnabled no-op gracefully without it.
 
-            localStorage.setItem("basicAuthSetupInProgress", "true")
-            localStorage.setItem("setupStartTime", Date.now().toString())
+            localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS, "true")
+            localStorage.setItem(storageKeys.SETUP_START_TIME, Date.now().toString())
         } catch {
             /* Silently handle config loading errors */
         }
@@ -234,8 +236,8 @@
     initializeSetup()
 
     onUnmounted(() => {
-        if (localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-            localStorage.removeItem("basicAuthSetupInProgress")
+        if (localStorage.getItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED) !== "true") {
+            localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
         }
     })
 
@@ -257,7 +259,15 @@
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
 
-    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+    const disposableEmail = useDisposableEmailGuard(async () => (await import("mailchecker")).default)
+
+    const isEmailAllowed = computed(() => disposableEmail.isAllowed(userFormData.value.username))
+
+    watch(() => userFormData.value.username, (email) => {
+        if (email) void disposableEmail.ensureLoaded()
+    }, {immediate: true})
+
+    const validateEmail = async (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (!value) {
             callback(new Error(t("setup.validation.email_required")))
             return
@@ -268,7 +278,8 @@
             return
         }
 
-        if (!MailChecker.isValid(value)) {
+        const checker = await disposableEmail.ensureLoaded()
+        if (checker && !checker.isValid(value)) {
             callback(new Error(t("setup.validation.email_temporary_not_allowed")))
             return
         }
@@ -291,15 +302,15 @@
         const data = userFormData.value
         return Boolean(data.username) &&
             EMAIL_REGEX.test(data.username) &&
-            MailChecker.isValid(data.username) &&
+            isEmailAllowed.value &&
             isPasswordValid.value &&
             passwordsMatch.value
     })
 
     const getFieldError = (fieldName: string) => {
-        if (!userForm.value) return null
-        const field = userForm.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : null
+        if (!userForm.value) return undefined
+        const field = userForm.value.fields?.find((f) => f.prop === fieldName)
+        return field?.validateState === "error" ? field.validateMessage : undefined
     }
 
     const handleUserFormSubmit = async () => {
@@ -318,21 +329,21 @@
             }, userFormData.value)
 
 
-            localStorage.setItem("basicAuthUserCreated", "true")
+            localStorage.setItem(storageKeys.BASIC_AUTH_USER_CREATED, "true")
 
             activeStep.value = 1
-        } catch (error: any) {
+        } catch (error: unknown) {
             trackSetupEvent("setup_flow:account_creation_failed", {
-                error_message: error.message || "Unknown error",
+                error_message: error instanceof Error ? error.message : "Unknown error",
             }, userFormData.value)
             console.error("Failed to create basic auth account:", error)
         }
     }
 
     const handleSurveyContinue = () => {
-        localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
+        localStorage.setItem(storageKeys.BASIC_AUTH_SURVEY_DATA, JSON.stringify(surveyData.value))
 
-        const surveySelections: Record<string, any> = {
+        const surveySelections: Record<string, unknown> = {
             main_goal: surveyData.value.mainGoal,
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,
@@ -354,7 +365,7 @@
     }
 
     const handleSurveySkip = () => {
-        const surveySelections: Record<string, any> = {
+        const surveySelections: Record<string, unknown> = {
             main_goal: surveyData.value.mainGoal,
             newsletter_opted_in: surveyData.value.newsletter,
             survey_action: "skipped",
@@ -378,11 +389,11 @@
     }
 
     const completeSetup = () => {
-        const savedSurveyData = localStorage.getItem("basicAuthSurveyData")
+        const savedSurveyData = localStorage.getItem(storageKeys.BASIC_AUTH_SURVEY_DATA)
         const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
         const normalizedEmail = userFormData.value.username.trim()
 
-        const completeEventPayload: Record<string, any> = {
+        const completeEventPayload: Record<string, unknown> = {
             user_email: normalizedEmail,
             newsletter_opted_in: surveyData.value.newsletter,
             ...surveySelections,
@@ -390,15 +401,15 @@
 
         trackSetupEvent("setup_flow:completed", completeEventPayload, userFormData.value)
 
-        localStorage.setItem("basicAuthSetupCompleted", "true")
-        localStorage.removeItem("basicAuthSetupInProgress")
-        localStorage.removeItem("setupStartTime")
-        localStorage.removeItem("basicAuthSurveyData")
-        localStorage.removeItem("basicAuthUserCreated")
-        localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
+        localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED, "true")
+        localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+        localStorage.removeItem(storageKeys.SETUP_START_TIME)
+        localStorage.removeItem(storageKeys.BASIC_AUTH_SURVEY_DATA)
+        localStorage.removeItem(storageKeys.BASIC_AUTH_USER_CREATED)
+        localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED_AT, new Date().toISOString())
 
         router.push({name: "ai"})
     }
 </script>
 
-<style src="./setup.scss" scoped lang="scss" />
+<style src="./setup.css" scoped />

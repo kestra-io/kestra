@@ -13,7 +13,7 @@ export default {
             "length": "Mindestens 8 Zeichen",
             "uppercase": "Ein Großbuchstabe",
             "lowercase": "Ein Kleinbuchstabe",
-            "number": "Eine Zahl",
+            "number": "Eine Ziffer",
             "match": "Passwörter stimmen überein",
         },
     },

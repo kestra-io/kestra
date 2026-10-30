@@ -185,4 +185,24 @@ public class DockerService {
         return URI.create(imageParse.repos.startsWith("http") ? imageParse.repos : "https://" + imageParse.repos)
             .getHost();
     }
+
+    /**
+     * Splits an image reference into the repository and what {@code /images/create} calls the tag, which
+     * is the digest when the part after {@code @} carries a colon, and otherwise leaves that part in
+     * place so the daemon rejects the reference instead of pulling something else.
+     */
+    static NameParser.ReposTag parseImageReference(String image) {
+        int digestSeparator = image.indexOf('@');
+        String digest = digestSeparator > -1 ? image.substring(digestSeparator + 1) : "";
+
+        if (digest.contains(":")) {
+            NameParser.ReposTag repository = NameParser.parseRepositoryTag(image.substring(0, digestSeparator));
+
+            return new NameParser.ReposTag(repository.repos, digest);
+        }
+
+        NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(image);
+
+        return reposTag.tag.isEmpty() ? new NameParser.ReposTag(reposTag.repos, "latest") : reposTag;
+    }
 }

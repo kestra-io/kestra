@@ -1,5 +1,7 @@
 <template>
-    <section v-if="data" class="kpi">
+    <KsSkeleton v-if="loading && !data" animated :rows="1" />
+
+    <section v-else-if="data" class="kpi">
         <span class="title">{{ getChartTitle(props.chart) }}</span>
 
         <p class="value">
@@ -26,12 +28,12 @@
     import {computed, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import {KsProgress} from "@kestra-io/design-system"
+    import {KsProgress, KsSkeleton} from "@kestra-io/design-system"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
-    import {useTheme} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -47,7 +49,7 @@
     const route = useRoute()
     const theme = useTheme()
 
-    const {percentageShown, data, generate} = useChartGenerator(props.dashboardId, props)
+    const {percentageShown, data, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const description = computed(() => props.chart.chartOptions?.description)
 
@@ -67,10 +69,10 @@
 
     defineExpose({refresh})
 
-    watch(() => route.params.filters, refresh, {deep: true})
+    watch(() => route.fullPath, refresh)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kpi {
         display: flex;
         flex-direction: column;
@@ -100,7 +102,7 @@
             width: 100%;
             margin-top: var(--ks-spacing-3);
 
-            :deep(.kel-progress-bar__outer) {
+            & :deep(.kel-progress-bar__outer) {
                 background-color: var(--ks-bg-base);
             }
         }

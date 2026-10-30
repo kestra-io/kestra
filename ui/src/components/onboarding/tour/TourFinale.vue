@@ -29,12 +29,18 @@
             </div>
         </div>
 
-        <p class="tour-lead" v-html="namespaceNote" />
+        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" scope="global" class="tour-lead">
+            <template #namespace>{{ TOUR_NAMESPACE }}</template>
+            <template #secrets>
+                <a :href="docsUrl('secret')" target="_blank" rel="noopener">{{ $t("onboarding.tour.finale.docs.secret") }}</a>
+            </template>
+        </i18n-t>
 
         <p class="resources-title">
             {{ $t("onboarding.tour.finale.keep_going") }}
         </p>
-        <OnboardingResourceList :items="resources" />
+        <!-- An in-app link navigated the page underneath while this dialog stayed on top of it. -->
+        <OnboardingResourceList :items="resources" @navigate="isOpen = false" />
 
         <template #footer>
             <KsButton @click="emit('restart')">
@@ -48,8 +54,6 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useOnboardingResources} from "../useOnboardingResources"
     import OnboardingResourceList from "../OnboardingResourceList.vue"
@@ -61,7 +65,6 @@
 
     const isOpen = defineModel<boolean>()
 
-    const {t} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const {onboardingResources: resources} = useOnboardingResources()
@@ -87,12 +90,6 @@
         return `${base}${DOCS_UTM}${fragment ? `#${fragment}` : ""}`
     }
 
-    const namespaceNote = computed(() =>
-        t("onboarding.tour.finale.namespace_note", {
-            namespace: TOUR_NAMESPACE,
-            secrets: `<a href="${docsUrl("secret")}" target="_blank" rel="noopener">${t("onboarding.tour.finale.docs.secret")}</a>`,
-        }))
-
     const TAKEAWAYS = [
         {key: "copilot", docs: ["copilot", "agentSkills", "autocompletion"]},
         {key: "restart", docs: ["replay", "revision"]},
@@ -100,19 +97,17 @@
         {key: "chain", docs: ["flowTrigger", "namespace"]},
     ] as const
 
-    // `blank` skips the creation funnel: the tour has just guided the user for twenty
-    // minutes and ends on "now build one yourself", so a chooser here is a step backwards.
     const startBuilding = async () => {
         isOpen.value = false
         await router.push({
             name: "flows/create",
             params: {tenant: route.params.tenant},
-            query: {namespace: TOUR_NAMESPACE, blank: "true"},
+            query: {namespace: TOUR_NAMESPACE},
         })
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour-title {
         font-size: var(--ks-font-size-2xl);
     }
@@ -131,7 +126,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
-        :deep(a) {
+        & :deep(a) {
             color: var(--ks-text-link);
             text-decoration: none;
 

@@ -66,6 +66,12 @@ class DefaultSchedulerTest {
 
     private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(16, Duration.ofSeconds(5), 100);
 
+    // The injected publisher would run ServiceLivenessManager on this thread, where its state write
+    // contends with the heartbeat for the whole 30s H2 lock timeout; no assertion reads those events.
+    private static final ApplicationEventPublisher<ServiceStateChangeEvent> NOOP_EVENT_PUBLISHER = event ->
+    {
+    };
+
     @Inject
     MetricRegistry metricRegistry;
 
@@ -86,9 +92,6 @@ class DefaultSchedulerTest {
 
     @Inject
     ExecutorsUtils executorsUtils;
-
-    @Inject
-    ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
     @Inject
     private LockService lockService;
@@ -247,6 +250,66 @@ class DefaultSchedulerTest {
         }
     }
 
+    @Test
+    void shouldRestoreVNodesAssignmentsOnSchedulingLoopsWhenExitingMaintenanceMode() {
+        // GIVEN
+        try (DefaultScheduler scheduler = createDefaultScheduler();) {
+            scheduler.start(2);
+            serviceLivenessStore.put(scheduler);
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // WHEN
+            maintenanceService.setMaintenanceMode(true);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            });
+            maintenanceService.setMaintenanceMode(false);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            });
+
+            // THEN
+            Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                .stream()
+                .flatMap(loop -> loop.assignments().stream())
+                .collect(Collectors.toSet());
+            assertThat(loopAssignments).isNotEmpty();
+            assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+        }
+    }
+
+    @Test
+    void shouldAssignAllVNodesToSchedulingLoopsWhenMaxThreadsIsGreaterThanAssignedVNodes() {
+        // GIVEN
+        try (DefaultScheduler scheduler1 = createDefaultScheduler();
+            DefaultScheduler scheduler2 = createDefaultScheduler();
+            DefaultScheduler scheduler3 = createDefaultScheduler();) {
+            scheduler1.start(8);
+            scheduler2.start(8);
+            scheduler3.start(8);
+            serviceLivenessStore.put(scheduler1);
+            serviceLivenessStore.put(scheduler2);
+            serviceLivenessStore.put(scheduler3);
+
+            // WHEN
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // THEN
+            List.of(scheduler1, scheduler2, scheduler3).forEach(scheduler ->
+            {
+                Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                    .stream()
+                    .flatMap(loop -> loop.assignments().stream())
+                    .collect(Collectors.toSet());
+                assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+            });
+        }
+    }
+
     private TriggerScheduler newTriggerScheduler() {
         return new TriggerScheduler(
             triggerStateStore,
@@ -268,7 +331,7 @@ class DefaultSchedulerTest {
             triggerSchedulingLoopFactory,
             vNodesAssigner,
             executorsUtils,
-            eventPublisher,
+            NOOP_EVENT_PUBLISHER,
             triggerEventQueue,
             triggerStateStore,
             metricRegistry,

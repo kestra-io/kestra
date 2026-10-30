@@ -39,6 +39,9 @@
             </button>
             <span v-else class="chevron-spacer" />
             <slot name="label" />
+            <div v-if="$slots['label-footer']" class="row-label-footer" :style="{'--gantt-depth': depth}">
+                <slot name="label-footer" />
+            </div>
         </div>
         <div v-if="!compact" class="row-offset" role="gridcell" data-test="gantt-task-offset">
             {{ offset }}
@@ -116,6 +119,19 @@
             --gantt-indent: var(--ks-spacing-4);
         }
 
+        &:has(.row-label-footer:not(:empty)) {
+            min-height: calc(2.75rem + var(--ks-spacing-3));
+            padding-bottom: var(--ks-spacing-3);
+
+            .guides {
+                margin-bottom: calc(-1 * (var(--ks-border-width-thin) + var(--ks-spacing-3)));
+            }
+
+            .row-actions {
+                top: calc(50% - var(--ks-spacing-3) / 2);
+            }
+        }
+
         &.is-selected {
             background: var(--ks-bg-tag-hover);
             box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-focus);
@@ -130,6 +146,7 @@
     .row-label {
         --gantt-label-gap: var(--ks-spacing-2);
 
+        position: relative;
         flex: 1 1 0;
         min-width: 6rem;
         overflow-x: clip;
@@ -141,6 +158,13 @@
         code {
             color: var(--ks-text-primary);
         }
+    }
+
+    .row-label-footer {
+        position: absolute;
+        top: calc(100% + var(--ks-spacing-1));
+        right: var(--ks-spacing-4);
+        left: calc(var(--gantt-indent) * (var(--gantt-depth) + 1) + var(--ks-spacing-3));
     }
 
     .guides {
@@ -262,9 +286,22 @@
             padding: 0;
         }
 
+        &:has(.row-label-footer:not(:empty)) {
+            min-height: 0;
+        }
+
         .row-label {
             grid-area: label;
             min-width: 0;
+        }
+
+        &:has(.row-label-footer:not(:empty)) .row-label {
+            padding-bottom: var(--ks-spacing-3);
+        }
+
+        .row-label-footer {
+            top: auto;
+            bottom: var(--ks-spacing-1);
         }
 
         .row-duration {

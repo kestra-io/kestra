@@ -1,11 +1,12 @@
 import {computed, inject, nextTick, provide, reactive, ref, watch, type ComputedRef, type InjectionKey, type Ref} from "vue"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
-import type {LevelFilterValue} from "@kestra-io/design-system"
+import {State, type LevelFilterValue} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import * as FlowUtils from "../../../utils/flowUtils"
 import {buildTaskRunHierarchy} from "../../../utils/taskRunHierarchy"
 import {firstFailedLeaf, isFailedTaskRunState as isFailed, isHiddenTaskType} from "../../../utils/executionUtils"
 import {useLoopIterations, type LoopIterationRow} from "../../../composables/useLoopIterations"
+import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
 import type {ExecutionTaskRun} from "../executionTaskRun"
 
 export const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
@@ -62,6 +63,15 @@ export interface ExecutionEntry {
     loading: boolean;
 }
 
+export const LOOP_OUTPUTS_REFRESH_MS = 10_000
+
+export interface LoopOutputsEntry {
+    outputs?: Record<string, unknown>;
+    fetchedAt: number;
+    terminal: boolean;
+    failed: boolean;
+}
+
 export interface GanttTree {
     selected: Ref<GanttNode | undefined>;
     panelOpen: Ref<boolean>;
@@ -80,6 +90,8 @@ export interface GanttTree {
     loopHandle: (loop: LoopRef) => LoopHandle;
     executionEntry: (executionId: string) => ExecutionEntry;
     loadExecution: (executionId: string, force?: boolean) => Promise<Execution | undefined>;
+    loopOutputs: (taskRunId: string) => LoopOutputsEntry | undefined;
+    loadLoopOutputs: (node: TaskRunNode) => Promise<void>;
     taskType: (taskId: string) => string | undefined;
     hasFailure: (node: TaskRunNode) => boolean;
     selectIteration: (loopNode: TaskRunNode, row: LoopIterationRow) => Promise<void>;
@@ -212,6 +224,8 @@ export function createGanttTree(options: {
     const loops = new Map<string, LoopHandle>()
     const executions = reactive(new Map<string, ExecutionEntry>())
     const inFlight = new Map<string, Promise<Execution | undefined>>()
+    const loopOutputsByTaskRun = reactive(new Map<string, LoopOutputsEntry>())
+    const loopOutputsInFlight = new Map<string, Promise<void>>()
 
     function taskType(taskId: string): string | undefined {
         return FlowUtils.findTaskById(executionsStore.flow, taskId)?.type
@@ -324,6 +338,34 @@ export function createGanttTree(options: {
         return request
     }
 
+    function needsLoopOutputs(cached: LoopOutputsEntry | undefined, terminal: boolean): boolean {
+        if (!cached) return true
+        const stale = Date.now() - cached.fetchedAt >= LOOP_OUTPUTS_REFRESH_MS
+        if (terminal) return !cached.terminal && (!cached.failed || stale)
+        return cached.terminal || stale
+    }
+
+    function loadLoopOutputs(node: TaskRunNode): Promise<void> {
+        const taskRunId = node.taskRun.id
+        const pending = loopOutputsInFlight.get(taskRunId)
+        if (pending) return pending.then(() => loadLoopOutputs(node))
+
+        const terminal = State.isTerminated(node.taskRun.state.current)
+        const cached = loopOutputsByTaskRun.get(taskRunId)
+        if (!needsLoopOutputs(cached, terminal)) return Promise.resolve()
+
+        const request = loadTaskRunOutputs(node.executionId, taskRunId).then(
+            (outputs): LoopOutputsEntry => ({outputs, fetchedAt: Date.now(), terminal, failed: false}),
+            (): LoopOutputsEntry => ({outputs: cached?.outputs, fetchedAt: Date.now(), terminal: false, failed: true}),
+        ).then((entry) => {
+            loopOutputsByTaskRun.set(taskRunId, entry)
+        }).finally(() => {
+            loopOutputsInFlight.delete(taskRunId)
+        })
+        loopOutputsInFlight.set(taskRunId, request)
+        return request
+    }
+
     async function selectIteration(loopNode: TaskRunNode, row: LoopIterationRow) {
         const node = createIterationNode(loopRefOf(loopNode), row, loopAncestors(loopNode))
         select(node)
@@ -428,6 +470,8 @@ export function createGanttTree(options: {
         loopHandle,
         executionEntry,
         loadExecution,
+        loopOutputs: (taskRunId) => loopOutputsByTaskRun.get(taskRunId),
+        loadLoopOutputs,
         taskType,
         hasFailure,
         selectIteration,

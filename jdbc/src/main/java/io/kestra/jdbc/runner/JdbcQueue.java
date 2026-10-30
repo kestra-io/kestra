@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -384,10 +385,33 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     public Runnable receiveTransaction(String consumerGroup, Class<?> queueType, BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer) {
+        return this.receiveTransaction(consumerGroup, queueType, consumer, null);
+    }
+
+    /**
+     * Consume messages inside the transaction that claims them, then hand them to {@code afterCommit} once that
+     * transaction committed.
+     * <p>
+     * The claiming transaction (fetch with FOR UPDATE SKIP LOCKED, {@code inTransaction} consumer, consumers update)
+     * is retried as a whole on a deadlock or lock wait timeout, see {@link io.kestra.jdbc.JooqDSLContextWrapper}.
+     * Anything done inside it must therefore be undone by the rollback. Side effects that cannot be rolled back
+     * (starting a job on a thread pool, calling an external system) belong in {@code afterCommit}: on a rollback the
+     * messages are unclaimed again and may be consumed by another instance, so doing them inside the transaction
+     * executes them twice.
+     *
+     * @param inTransaction invoked inside the claiming transaction with the DSLContext bound to it
+     * @param afterCommit   invoked with the same messages after the claiming transaction committed, may be null
+     */
+    public Runnable receiveTransaction(
+        String consumerGroup,
+        Class<?> queueType,
+        BiConsumer<DSLContext, List<Either<T, DeserializationException>>> inTransaction,
+        Consumer<List<Either<T, DeserializationException>>> afterCommit) {
         return this.receiveImpl(
             consumerGroup,
             queueType,
-            consumer,
+            inTransaction,
+            afterCommit,
             true,
             true
         );
@@ -397,6 +421,16 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         String consumerGroup,
         Class<?> queueType,
         BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer,
+        Boolean inTransaction,
+        boolean forUpdate) {
+        return this.receiveImpl(consumerGroup, queueType, consumer, null, inTransaction, forUpdate);
+    }
+
+    private Runnable receiveImpl(
+        String consumerGroup,
+        Class<?> queueType,
+        BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer,
+        Consumer<List<Either<T, DeserializationException>>> afterCommit,
         Boolean inTransaction,
         boolean forUpdate) {
         String queueName = queueName(queueType);
@@ -410,6 +444,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
         return this.poll(() -> timer.record(() ->
         {
+            // Messages mapped by the attempt that committed: a rolled-back attempt is retried as a whole, so
+            // only the last attempt's messages may reach afterCommit.
+            AtomicReference<List<Either<T, DeserializationException>>> committed = new AtomicReference<>();
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration ->
             {
                 DSLContext ctx = DSL.using(configuration);
@@ -417,17 +454,23 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
                 if (!result.isEmpty() && inTransaction) {
-                    consumer.accept(ctx, this.map(result));
+                    List<Either<T, DeserializationException>> eithers = this.map(result);
+                    consumer.accept(ctx, eithers);
                     this.updateGroupOffsets(
                         ctx,
                         consumerGroup,
                         queueName,
                         result.map(record -> record.get("offset", Long.class))
                     );
+                    committed.set(eithers);
                 }
 
                 return result;
             });
+
+            if (inTransaction && afterCommit != null && committed.get() != null) {
+                afterCommit.accept(committed.get());
+            }
 
             if (!inTransaction) {
                 consumer.accept(null, this.map(fetch));

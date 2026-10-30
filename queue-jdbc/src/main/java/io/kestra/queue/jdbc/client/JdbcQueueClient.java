@@ -2,7 +2,7 @@ package io.kestra.queue.jdbc.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -263,11 +263,27 @@ public class JdbcQueueClient {
         return initialOffset != null ? initialOffset : 0L;
     }
 
+    public record OffsetRange(long from, long to) {
+    }
+
+    public record BroadcastPollResult(int count, @Nullable Long maxOffset, List<Long> deliveredOffsets) {
+    }
+
     protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<byte[]> consumer) {
+        BroadcastPollResult result = subscribeBroadcast(queue, maxOffset, null, consumer);
+        return Pair.of(result.count(), result.maxOffset());
+    }
+
+    public BroadcastPollResult subscribeBroadcast(
+        String queue,
+        @Nullable Long maxOffset,
+        @Nullable List<OffsetRange> gapRanges,
+        Consumer<byte[]> consumer) {
         return dslContextWrapper.transactionResult(conf ->
         {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
+            List<Long> deliveredOffsets = new ArrayList<>();
 
             // Broadcast messages are always published with a null routing key. Binding it explicitly here
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
@@ -277,8 +293,22 @@ public class JdbcQueueClient {
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 
+            Condition offsetCondition = null;
             if (maxOffset != null) {
-                select = select.and(OFFSET.gt(maxOffset));
+                offsetCondition = OFFSET.gt(maxOffset);
+            }
+
+            if (gapRanges != null && !gapRanges.isEmpty()) {
+                Condition gapsCondition = DSL.or(
+                    gapRanges.stream()
+                        .map(r -> OFFSET.ge(r.from()).and(OFFSET.le(r.to())))
+                        .toList()
+                );
+                offsetCondition = offsetCondition != null ? offsetCondition.or(gapsCondition) : gapsCondition;
+            }
+
+            if (offsetCondition != null) {
+                select = select.and(offsetCondition);
             }
 
             var result = select
@@ -289,22 +319,37 @@ public class JdbcQueueClient {
             if (!result.isEmpty()) {
                 result.forEach(record -> consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)));
 
-                maxOffsetResult = result
+                deliveredOffsets = result
                     .stream()
                     .map(record -> record.get(OFFSET))
+                    .toList();
+
+                maxOffsetResult = deliveredOffsets
+                    .stream()
                     .max(Long::compareTo)
                     .orElse(null);
             }
 
-            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
+            Long effectiveMaxOffset = maxOffset == null ? maxOffsetResult : (maxOffsetResult != null ? Math.max(maxOffset, maxOffsetResult) : maxOffset);
+            return new BroadcastPollResult(result.size(), effectiveMaxOffset, deliveredOffsets);
         });
     }
 
     public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<byte[]>> consumer) {
+        BroadcastPollResult result = subscribeBroadcastBatch(queue, maxOffset, null, consumer);
+        return Pair.of(result.count(), result.maxOffset());
+    }
+
+    public BroadcastPollResult subscribeBroadcastBatch(
+        String queue,
+        @Nullable Long maxOffset,
+        @Nullable List<OffsetRange> gapRanges,
+        Consumer<List<byte[]>> consumer) {
         return dslContextWrapper.transactionResult(conf ->
         {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
+            List<Long> deliveredOffsets = new ArrayList<>();
 
             // Broadcast messages are always published with a null routing key. Binding it explicitly here
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
@@ -314,8 +359,22 @@ public class JdbcQueueClient {
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 
+            Condition offsetCondition = null;
             if (maxOffset != null) {
-                select = select.and(OFFSET.gt(maxOffset));
+                offsetCondition = OFFSET.gt(maxOffset);
+            }
+
+            if (gapRanges != null && !gapRanges.isEmpty()) {
+                Condition gapsCondition = DSL.or(
+                    gapRanges.stream()
+                        .map(r -> OFFSET.ge(r.from()).and(OFFSET.le(r.to())))
+                        .toList()
+                );
+                offsetCondition = offsetCondition != null ? offsetCondition.or(gapsCondition) : gapsCondition;
+            }
+
+            if (offsetCondition != null) {
+                select = select.and(offsetCondition);
             }
 
             var result = select
@@ -326,14 +385,19 @@ public class JdbcQueueClient {
             if (!result.isEmpty()) {
                 consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
 
-                maxOffsetResult = result
+                deliveredOffsets = result
                     .stream()
                     .map(record -> record.get(OFFSET))
+                    .toList();
+
+                maxOffsetResult = deliveredOffsets
+                    .stream()
                     .max(Long::compareTo)
                     .orElse(null);
             }
 
-            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
+            Long effectiveMaxOffset = maxOffset == null ? maxOffsetResult : (maxOffsetResult != null ? Math.max(maxOffset, maxOffsetResult) : maxOffset);
+            return new BroadcastPollResult(result.size(), effectiveMaxOffset, deliveredOffsets);
         });
     }
 }

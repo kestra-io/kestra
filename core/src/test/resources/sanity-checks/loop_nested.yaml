@@ -1,0 +1,48 @@
+id: loop_nested
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Two nested `Loop` tasks. Inner iterations access the outer iteration via `item.parent.value`
+  and the grand-parent via `item.parents[N].value` where N counts levels up.
+
+inputs:
+  - id: buckets
+    type: ARRAY
+    itemType: STRING
+    defaults:
+      - bucket1
+      - bucket2
+  - id: years
+    type: ARRAY
+    itemType: INT
+    defaults:
+      - 2025
+      - 2026
+  - id: months
+    type: ARRAY
+    itemType: STRING
+    defaults:
+      - March
+      - April
+
+tasks:
+  - id: outer
+    type: io.kestra.plugin.core.flow.Loop
+    values: "{{ inputs.buckets }}"
+    tasks:
+      - id: middle
+        type: io.kestra.plugin.core.flow.Loop
+        values: "{{ inputs.years }}"
+        tasks:
+          - id: inner
+            type: io.kestra.plugin.core.flow.Loop
+            values: "{{ inputs.months }}"
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: |
+                  Path: {{ item.parents[1].value }}/{{ item.parent.value }}/{{ item.value }}
+                  Current month: {{ item.value }}
+                  Year (parent): {{ item.parent.value }}
+                  Bucket (grand-parent): {{ item.parents[1].value }}

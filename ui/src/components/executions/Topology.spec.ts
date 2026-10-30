@@ -38,7 +38,7 @@ const iteration = (id: string, childExecutionId: string) => ({
     taskRunList: [{id: `${id}-call`, taskId: "call", state: {current: "RUNNING"}, outputs: {executionId: childExecutionId}}],
 })
 
-function setup() {
+function setup(loadFlow = vi.fn().mockResolvedValue(undefined)) {
     const store = useExecutionsStore()
     store.execution = {id: "root", namespace: "ns", flowId: "flow", state: {current: "SUCCESS"}, taskRunList: [{id: "loop-run", taskId: "per_region", state: {current: "SUCCESS"}}]} as never
     store.flowGraph = flowGraph as never
@@ -50,12 +50,27 @@ function setup() {
         return subscription
     }) as never
     const flowStore = useFlowStore()
-    flowStore.loadFlow = vi.fn() as never
+    flowStore.loadFlow = loadFlow as never
 
     const wrapper = i18nMount(Topology)
     const expand = (subflows: string[]) => wrapper.findComponent({name: "LowCodeEditorStub"}).vm.$emit("expand-subflow", subflows)
     return {store, subscriptions, wrapper, expand}
 }
+
+describe("executions/Topology flow source", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    it("loads the flow source as optional, so a viewer without access to the flow sees no error", async () => {
+        const loadFlow = vi.fn().mockResolvedValue({})
+
+        setup(loadFlow)
+        await flushPromises()
+
+        expect(loadFlow).toHaveBeenCalledWith({namespace: "ns", id: "flow", optional: true})
+    })
+})
 
 describe("executions/Topology subflow expanded inside a loop", () => {
     beforeEach(() => {

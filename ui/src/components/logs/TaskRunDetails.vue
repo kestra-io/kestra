@@ -766,7 +766,8 @@
                     if (parentScroller) {
                         const scrollerStyles =
                             window.getComputedStyle(parentScroller)
-                        scrollerElement.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px`
+                        const availableHeight = parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight
+                        if (availableHeight > 0) scrollerElement.style.maxHeight = `${availableHeight}px`
                     }
                 })
             }

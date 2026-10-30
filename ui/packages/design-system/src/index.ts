@@ -112,7 +112,6 @@ import KsSearch from "./components/Form/KsSearch.vue"
 import KsPassword from "./components/Form/KsPassword.vue"
 import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
-import KsInputTag from "./components/Form/KsInputTag.vue"
 import KsLink from "./components/Basic/KsLink.vue"
 // Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
 // must stay out of the app's eager bundle (see the "markdown" chunk group).
@@ -352,7 +351,6 @@ const components: Record<string, Component> = {
     KsIconButton,
     KsInput,
     KsInputNumber,
-    KsInputTag,
     KsPassword,
     KsPasswordRequirements,
     KsLink,
@@ -466,7 +464,6 @@ export {
     KsIconButton,
     KsInput,
     KsInputNumber,
-    KsInputTag,
     KsPassword,
     KsPasswordRequirements,
     KsLink,
@@ -614,7 +611,6 @@ declare module "vue" {
         KsIconButton: typeof KsIconButton
         KsInput: typeof KsInput
         KsInputNumber: typeof KsInputNumber
-        KsInputTag: typeof KsInputTag
         KsPassword: typeof KsPassword
         KsPasswordRequirements: typeof KsPasswordRequirements
         KsLink: typeof KsLink

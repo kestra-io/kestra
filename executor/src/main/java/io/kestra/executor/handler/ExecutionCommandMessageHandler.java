@@ -124,7 +124,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     case Resume resumeCommand when resumeCommand.decision() != null ->
                         executionService.decide(execution, flow, resumeCommand.taskRunId(), resumeCommand.decision(), resumeCommand.resumeInputs(), resumeCommand.resumed(), true);
                     case Resume resumeCommand when resumeCommand.taskRunId() != null ->
-                        executionService.cancelApproval(execution, flow, resumeCommand.taskRunId(), resumeCommand.resumed());
+                        executionService.cancelApproval(execution, flow, resumeCommand.taskRunId(), resumeCommand.resumed(), resumeCommand.bulk());
                     case Resume resumeCommand ->
                         executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
                     case ExecutionCommand.Invalid ignored -> {

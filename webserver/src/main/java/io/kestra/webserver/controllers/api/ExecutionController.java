@@ -2177,7 +2177,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             execution.getId(), "Cancel approval",
-            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed, false).withOperationId(operationId))
         ).map(r -> (HttpResponse<?>) r);
     }
 

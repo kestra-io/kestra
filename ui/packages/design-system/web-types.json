@@ -40,6 +40,7 @@
                 {"name": "KsIcon", "source": {"symbol": "KsIcon"}},
                 {"name": "KsInput", "source": {"symbol": "KsInput"}},
                 {"name": "KsInputNumber", "source": {"symbol": "KsInputNumber"}},
+                {"name": "KsInputTag", "source": {"symbol": "KsInputTag"}},
                 {"name": "KsLink", "source": {"symbol": "KsLink"}},
                 {"name": "KsMain", "source": {"symbol": "KsMain"}},
                 {"name": "KsMenu", "source": {"symbol": "KsMenu"}},

@@ -1,5 +1,5 @@
 <template>
-    <button type="button" class="list-row" role="listitem">
+    <button type="button" class="list-row">
         <slot name="leading" />
         <code class="list-name" :class="{'is-emphasized': emphasized}">{{ name }}</code>
         <span class="list-meta">{{ offset }}</span>

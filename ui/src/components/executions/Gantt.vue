@@ -1,5 +1,5 @@
 <template>
-    <div class="gantt-root" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+    <div ref="root" class="gantt-root" :style="{'--execution-banner-height': `${bannerHeight}px`}">
         <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <ExecutionPending
             v-if="isQueued"
@@ -86,6 +86,8 @@
                                 <template #default>
                                     <DynamicScroller
                                         v-if="filteredSeries.length > 0"
+                                        :key="execution.id"
+                                        ref="scroller"
                                         class="gantt-scroller"
                                         :items="filteredSeries"
                                         :minItemSize="44"
@@ -187,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onUnmounted, provide} from "vue"
+    import {ref, computed, watch, onUnmounted, provide, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {RouterLink, useRoute} from "vue-router"
 
@@ -195,7 +197,7 @@
     import {useEventListener} from "@vueuse/core"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useFirstFailure} from "../../composables/useFirstFailure"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
@@ -249,6 +251,8 @@
         owningIteration,
         provideGanttTree,
         taskRunAncestors,
+        taskRunKey,
+        type GanttNode,
         type TaskRunNode,
     } from "./gantt/ganttTree"
     import {GANTT_TIMELINE, clampedBarStyle, formatGanttDuration as formatDuration} from "./ganttTimeline"
@@ -324,7 +328,9 @@
     })
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
     const firstFailure = useFirstFailure(execution, verticalLayout)
-    const tree = provideGanttTree({compact: verticalLayout, levelFilter: effectiveSelectedLogLevel})
+    const root = useTemplateRef<HTMLElement>("root")
+    const scroller = useTemplateRef<DynamicScrollerExposed>("scroller")
+    const tree = provideGanttTree({compact: verticalLayout, levelFilter: effectiveSelectedLogLevel, scrollToRow})
     const hasPanel = computed(() => Boolean(tree.selected.value && tree.panelOpen.value))
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
@@ -344,7 +350,11 @@
         if (event.defaultPrevented || !tree.panelOpen.value || !selected) {
             return
         }
-        if (event.target instanceof Element && event.target.closest("input, textarea, [contenteditable='true']")) {
+        const target = event.target
+        if (target instanceof Element && target !== document.body && !root.value?.contains(target)) {
+            return
+        }
+        if (target instanceof Element && target.closest("input, textarea, [contenteditable='true']")) {
             return
         }
         if (event.key === "Escape") {
@@ -355,6 +365,14 @@
     }
 
     useEventListener(document, "keydown", onPanelKeydown)
+
+    function scrollToRow(node: GanttNode): void {
+        const keys = [node.key, ...node.ancestors.map(ancestor => ancestor.key).reverse()]
+        const index = keys
+            .map(key => filteredSeries.value.findIndex(item => taskRunKey(item.id) === key))
+            .find(position => position >= 0)
+        if (index !== undefined) scroller.value?.scrollToItem(index)
+    }
 
     const start = computed<number>(() => {
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
@@ -620,6 +638,12 @@
         if (selected.executionId !== execution.value?.id) return
         const fresh = nodes.get(selected.taskRun.id)
         if (fresh && (fresh.taskRun !== selected.taskRun || fresh.kind !== selected.kind)) tree.selected.value = fresh
+    })
+
+    watch(() => execution.value?.id, (id, previousId) => {
+        if (previousId === undefined || id === previousId) return
+        tree.reset()
+        expandedFromRoute.value = false
     })
 
     watch(() => route.query.autoExpandGantt,() => applyAutoExpandFromRoute(execution.value))

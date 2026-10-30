@@ -78,6 +78,7 @@ export interface GanttTree {
     stepping: Ref<boolean>;
     select: (node: GanttNode, options?: {reveal?: boolean}) => void;
     closePanel: () => void;
+    reset: () => void;
     isExpanded: (key: string) => boolean;
     setExpanded: (key: string, value: boolean) => void;
     toggleExpanded: (key: string) => void;
@@ -102,6 +103,11 @@ export function useGanttTree(): GanttTree {
 }
 
 const MAX_FAILED_STEP_PAGES = 5
+const MAX_REVEAL_FRAMES = 30
+const SETTLE_FRAMES = 6
+
+const nextFrame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+const rowElement = (key: string) => document.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(key)}"]`)
 
 const ts = (date: string): number => new Date(date).getTime()
 
@@ -191,6 +197,7 @@ export function owningIteration(node: GanttNode): IterationNode | undefined {
 export function createGanttTree(options: {
     compact: Ref<boolean>;
     levelFilter: Ref<LevelFilterValue | undefined>;
+    scrollToRow?: (node: GanttNode) => void;
 }): GanttTree {
     const executionsStore = useExecutionsStore()
     const selected = ref<GanttNode | undefined>(undefined)
@@ -216,26 +223,46 @@ export function createGanttTree(options: {
         return node.kind === "loop" && loopHandle(loopRefOf(node)).failedCount.value !== 0
     }
 
-    function focusRow(key: string, scroll: boolean) {
-        nextTick(() => requestAnimationFrame(() => {
-            const row = document.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(key)}"]`)
-            if (!row) return
-            if (scroll && selected.value?.key !== key) return
-            if (scroll) row.scrollIntoView({block: "nearest"})
-            else row.focus()
-        }))
+    function focusRow(key: string) {
+        nextTick(() => requestAnimationFrame(() => rowElement(key)?.focus()))
+    }
+
+    async function scrollRowIntoView(node: GanttNode) {
+        await nextTick()
+        let framesInView = 0
+        for (let frame = 0; frame < MAX_REVEAL_FRAMES && framesInView < SETTLE_FRAMES; frame++) {
+            await nextFrame()
+            if (selected.value?.key !== node.key) return
+            const row = rowElement(node.key)
+            if (row) {
+                row.scrollIntoView({block: "nearest"})
+                framesInView++
+            } else {
+                framesInView = 0
+                options.scrollToRow?.(node)
+            }
+        }
     }
 
     function select(node: GanttNode, selectOptions: {reveal?: boolean} = {}) {
         for (const ancestor of node.ancestors) expanded.add(ancestor.key)
         selected.value = node
         panelOpen.value = true
-        if (selectOptions.reveal) focusRow(node.key, true)
+        if (selectOptions.reveal) scrollRowIntoView(node)
     }
 
     function closePanel() {
         panelOpen.value = false
-        if (selected.value) focusRow(selected.value.key, false)
+        if (selected.value) focusRow(selected.value.key)
+    }
+
+    function reset() {
+        selected.value = undefined
+        panelOpen.value = false
+        expanded.clear()
+        loops.clear()
+        executions.clear()
+        inFlight.clear()
     }
 
     function loopHandle(loop: LoopRef): LoopHandle {
@@ -297,7 +324,7 @@ export function createGanttTree(options: {
         const handle = loopHandle(node.loop)
         await handle.ensureLoaded()
         if (selected.value?.key === node.key && handle.iterations.value.some(loaded => loaded.id === row.id)) {
-            focusRow(node.key, true)
+            scrollRowIntoView(node)
         }
     }
 
@@ -398,6 +425,7 @@ export function createGanttTree(options: {
         stepping,
         select,
         closePanel,
+        reset,
         isExpanded: (key) => expanded.has(key),
         setExpanded: (key, value) => {
             if (value) expanded.add(key)

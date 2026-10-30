@@ -1,6 +1,6 @@
 import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, type VueWrapper} from "@vue/test-utils"
-import {defineComponent, type PropType} from "vue"
+import {defineComponent, ref, type PropType} from "vue"
 import {createPinia} from "pinia"
 import {createApp} from "vue"
 import {createMemoryHistory, createRouter} from "vue-router"
@@ -41,6 +41,7 @@ async function mountGantt(
     flowLoadsLast = false,
     findExecutions: (params: Record<string, unknown>) => Promise<unknown> = async () => 0,
     props: {showBanner?: boolean} = {},
+    mountOptions: {stubs?: Record<string, unknown>; attachTo?: HTMLElement} = {},
 ) {
     const pinia = createPinia()
     const router = createRouter({
@@ -67,6 +68,7 @@ async function mountGantt(
     await router.push("/")
     const wrapper = i18nMount(Gantt, {
         props,
+        attachTo: mountOptions.attachTo,
         global: {
             plugins: [pinia, router],
             stubs: {
@@ -79,9 +81,11 @@ async function mountGantt(
                 KsSplitterPanel: {template: "<div><slot /></div>"},
                 DynamicScroller: {
                     props: ["items"],
+                    methods: {scrollToItem: () => undefined},
                     template: "<div><slot v-for='(item, index) in items' :item='item' :index='index' :active='true' /></div>",
                 },
                 DynamicScrollerItem: {template: "<div><slot /></div>"},
+                ...mountOptions.stubs,
             },
         },
     })
@@ -252,6 +256,7 @@ async function mountRefreshGantt(initialExecution: Execution) {
                 Duration: true,
                 DynamicScroller: {
                     props: ["items"],
+                    methods: {scrollToItem: () => undefined},
                     template: "<div><slot v-for='(item, index) in items' :item='item' :index='index' :active='true' /></div>",
                 },
                 DynamicScrollerItem: {template: "<div><slot /></div>"},
@@ -408,6 +413,65 @@ describe("Gantt selection", () => {
             await flushPromises()
 
             expect(rowOf(wrapper, 1).attributes("aria-selected")).toBe("true")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    it("shouldScrollTheVirtualScrollerToTheFirstFailureWhenItsRowIsNotRendered", async () => {
+        const scrollToItem = vi.fn()
+        const scrollIntoView = vi.fn()
+        Element.prototype.scrollIntoView = scrollIntoView
+        const OneRowScroller = defineComponent({
+            props: {items: {type: Array as PropType<Array<{id: string}>>, required: true}},
+            setup(_, {expose}) {
+                const first = ref(0)
+                expose({scrollToItem: (index: number) => {
+                    scrollToItem(index)
+                    first.value = index
+                }})
+                return {first}
+            },
+            template: "<div><template v-for='(item, index) in items' :key='item.id'><slot v-if='index === first' :item='item' :index='index' :active='true' /></template></div>",
+        })
+        const {wrapper} = await mountGantt(
+            [logTask("first"), logTask("second"), logTask("third")],
+            [
+                {id: "tr-1", taskId: "first", state: {current: "SUCCESS", histories}},
+                {id: "tr-2", taskId: "second", state: {current: "SUCCESS", histories}},
+                {id: "tr-3", taskId: "third", state: {current: "FAILED", histories}},
+            ],
+            false,
+            undefined,
+            {},
+            {stubs: {DynamicScroller: OneRowScroller}, attachTo: document.body},
+        )
+        try {
+            expect(wrapper.find("[data-row-key='tr:tr-3']").exists()).toBe(false)
+
+            await wrapper.get("[data-test='gantt-first-failure']").trigger("click")
+
+            await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
+            expect(scrollToItem).toHaveBeenCalledWith(2)
+            expect(scrollIntoView.mock.contexts[0]).toBe(wrapper.get("[data-row-key='tr:tr-3']").element)
+        } finally {
+            wrapper.unmount()
+            delete (Element.prototype as Partial<Element>).scrollIntoView
+        }
+    })
+
+    it("shouldClosePanelWhenTheExecutionChanges", async () => {
+        const taskRunList = [{id: "tr-1", taskId: "first", state: {current: "SUCCESS", histories}}]
+        const {wrapper, store} = await mountGantt([logTask("first")], taskRunList)
+        try {
+            await wrapper.get("[role='row']").trigger("click")
+            expect(wrapper.find("[data-test='gantt-run-panel']").exists()).toBe(true)
+
+            store.execution = {...store.execution!, id: "other-execution", taskRunList: [{...taskRunList[0], id: "tr-other"}]} as Execution
+            await flushPromises()
+
+            expect(wrapper.find("[data-test='gantt-run-panel']").exists()).toBe(false)
+            expect(wrapper.get("[role='row']").attributes("aria-selected")).toBe("false")
         } finally {
             wrapper.unmount()
         }
@@ -591,6 +655,27 @@ describe("Gantt panel keyboard shortcuts", () => {
             expect(wrapper.find("[data-test='gantt-run-panel']").exists()).toBe(false)
         } finally {
             input.remove()
+            wrapper.unmount()
+        }
+    })
+
+    it("shouldKeepPanelOpenWhenEscapeClosesADialogOutsideTheGantt", async () => {
+        const {wrapper} = await mountGantt([logTask("first")], [{id: "tr-1", taskId: "first", state: {current: "SUCCESS", histories}}])
+        const dialog = document.createElement("div")
+        dialog.setAttribute("role", "dialog")
+        const button = document.createElement("button")
+        dialog.appendChild(button)
+        document.body.appendChild(dialog)
+        try {
+            await wrapper.get("[role='row']").trigger("click")
+
+            await press("Escape", button)
+            expect(wrapper.find("[data-test='gantt-run-panel']").exists()).toBe(true)
+
+            await press("Escape", document.body)
+            expect(wrapper.find("[data-test='gantt-run-panel']").exists()).toBe(false)
+        } finally {
+            dialog.remove()
             wrapper.unmount()
         }
     })

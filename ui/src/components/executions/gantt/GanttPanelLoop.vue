@@ -24,7 +24,7 @@
             <KsButton size="small" link @click="drillDown.load()">{{ $t("retry") }}</KsButton>
         </KsAlert>
         <p v-else-if="drillDown.rows.value.length === 0" class="loop-empty">{{ $t("no_iterations") }}</p>
-        <div v-else class="mini-list" role="list">
+        <div v-else class="mini-list">
             <GanttPanelListRow
                 v-for="row in drillDown.rows.value"
                 :key="row.id"

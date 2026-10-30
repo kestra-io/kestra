@@ -49,7 +49,7 @@
 
         small {
             margin-left: var(--ks-spacing-1);
-            font-family: var(--kel-font-family-monospace);
+            font-family: var(--ks-font-family-mono);
             font-size: var(--ks-font-size-xs);
         }
     }

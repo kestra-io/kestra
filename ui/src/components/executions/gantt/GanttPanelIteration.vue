@@ -16,7 +16,7 @@
                 <KsButton size="small" link @click="tree.loadExecution(node.row.id, true)">{{ $t("retry") }}</KsButton>
             </KsAlert>
             <p v-else-if="runs.length === 0" class="panel-empty">{{ $t("gantt_iteration_no_tasks") }}</p>
-            <div v-else class="mini-list" role="list">
+            <div v-else class="mini-list">
                 <GanttPanelListRow
                     v-for="run in runs"
                     :key="run.key"

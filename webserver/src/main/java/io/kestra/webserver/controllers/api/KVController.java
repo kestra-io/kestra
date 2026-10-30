@@ -163,12 +163,12 @@ public class KVController {
     @Put(uri = "/namespaces/{namespace}/kv/{key}", consumes = { MediaType.TEXT_PLAIN })
     @Operation(tags = { "KV" }, summary = "Puts a key-value pair in store")
     public void setKeyValue(
-        HttpHeaders httpHeaders,
+        @Parameter(description = "Description of the key", required = false) @Header("description") String description,
+        @Parameter(description = "TTL as an ISO-8601 duration, e.g. PT1H", required = false) @Header("ttl") String ttl,
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key,
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
-        String description = httpHeaders.get("description");
-        String ttl = httpHeaders.get("ttl");
+        
         KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
         try {
             try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {

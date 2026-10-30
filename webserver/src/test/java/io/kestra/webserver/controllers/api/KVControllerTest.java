@@ -377,6 +377,25 @@ class KVControllerTest {
         assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
         assertThat(kvEntry.description()).isEqualTo(myDescription);
     }
+    
+    @ParameterizedTest
+    @MethodSource("kvSetKeyValueArgs")
+    void setKeyValueWithoutOptionalHeaders(MediaType mediaType, String value, Class<?> expectedClass) throws IOException, ResourceExpiredException {
+
+      client.toBlocking()
+          .exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType));
+
+      KVStore kvStore = kvStore();
+      Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
+      assertThat(expectedClass.isAssignableFrom(valueClazz))
+          .as("Expected value to be a " + expectedClass + " but was " + valueClazz).isTrue();
+
+      List<KVEntry> list = kvStore.list();
+      assertThat(list.size()).isEqualTo(1);
+      KVEntry kvEntry = list.get(0);
+      assertThat(kvEntry.expirationDate()).isNull();
+      assertThat(kvEntry.description()).isNull();
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"hello world", "hello-world-123", "John Doe Smith", "a description with several words"})

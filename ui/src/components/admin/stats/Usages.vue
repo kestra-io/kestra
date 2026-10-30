@@ -41,34 +41,9 @@
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
     import {dateUtils, dayjs, KsOption, KsSelect} from "@kestra-io/design-system"
+    import type {MiscControllerApiUsage, DailyExecutionStatistics} from "@kestra-io/kestra-sdk"
 
     type UsagePeriod = 1 | 7 | 30
-
-    interface DailyExecution {
-        groupBy: string;
-        startDate?: string;
-        duration: {
-            count?: number;
-            sum?: string;
-        };
-        taskRunsDuration?: {
-            count?: number;
-            sum?: string;
-        };
-    }
-
-    interface UsageData {
-        flows?: {
-            namespacesCount?: number;
-            count?: number;
-            taskTypeCount?: Record<string, number>;
-            triggerTypeCount?: Record<string, number>;
-            taskRunnerTypeCount?: Record<string, number>;
-        };
-        executions?: {
-            dailyExecutionsCount?: DailyExecution[];
-        };
-    }
 
     interface UsageItem {
         key: string;
@@ -79,7 +54,7 @@
     }
 
     const props = defineProps<{
-        fetchedUsages?: UsageData;
+        fetchedUsages?: MiscControllerApiUsage;
     }>()
 
     const emit = defineEmits<{
@@ -93,7 +68,7 @@
     const miscStore = useMiscStore()
     const {t} = useI18n()
 
-    const usages = ref<UsageData>()
+    const usages = ref<MiscControllerApiUsage>()
 
     const periodOptions = computed(() => [
         {value: 1 as UsagePeriod, label: t("datepicker.24hours")},
@@ -120,7 +95,7 @@
         }
     })
 
-    const dailyExecutions = computed<DailyExecution[]>(() =>
+    const dailyExecutions = computed<DailyExecutionStatistics[]>(() =>
         (usages.value?.executions?.dailyExecutionsCount ?? []).filter((entry) => entry.groupBy === "day"),
     )
 
@@ -244,7 +219,7 @@
     watch(
         () => props.fetchedUsages,
         async (next) => {
-            usages.value = next ?? await miscStore.loadAllUsages(period.value) as UsageData
+            usages.value = next ?? await miscStore.loadAllUsages(period.value)
             emit("loaded")
         },
         {immediate: true},
@@ -253,7 +228,7 @@
     // Without usages handed in, this component loads them itself, so it also reloads them for the new window.
     watch(period, async (next) => {
         if (props.fetchedUsages === undefined) {
-            const loaded = await miscStore.loadAllUsages(next) as UsageData
+            const loaded = await miscStore.loadAllUsages(next)
             // A slower response for a window the user already left must not land under the current label.
             if (period.value === next) {
                 usages.value = loaded

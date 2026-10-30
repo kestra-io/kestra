@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
+import {useClient, type ChartFiltersOverrides, type ExportFormat, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -264,7 +264,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const validation = ++latestValidation
         const isLatest = () => validation === latestValidation
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
                 setValidationErrors(data.errors)
             }
@@ -279,7 +279,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
@@ -288,7 +288,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateChart(source: string) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
         return data
     }

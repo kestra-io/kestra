@@ -88,6 +88,12 @@ class PlaygroundControllerTest {
         );
         String reusedA = executionRepository.findById(tenantId, second.getId()).orElseThrow().findTaskRunsByTaskId("a").getFirst().getId();
         assertThat(reused.taskRuns().get(reusedA).executionId()).isEqualTo(first.getId());
+
+        Map<String, Object> session = client.toBlocking().retrieve(
+            HttpRequest.GET(playground(tenantId, "playground-session") + "/runs"),
+            Argument.mapOf(String.class, Object.class)
+        );
+        assertThat(String.valueOf(((List<?>) session.get("results")).getFirst())).as("a replay keeps its source's start date, yet is the newer run").contains(second.getId());
     }
 
     @Test

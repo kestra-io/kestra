@@ -2,7 +2,9 @@ package io.kestra.webserver.services.playground;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,11 +38,9 @@ import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
@@ -101,7 +101,9 @@ public class PlaygroundService {
 
     /** The current caller's runs of the flow, newest first. */
     public ArrayListTotal<Execution> runs(String tenantId, String namespace, String flowId, int page, int size) {
-        return executionRepository.find(newestFirst(page, size), tenantId, sessionFilters(namespace, flowId, ownerResolver.owner()));
+        List<Execution> session = session(tenantId, namespace, flowId, ownerResolver.owner());
+        int from = Math.min((page - 1) * size, session.size());
+        return new ArrayListTotal<>(session.subList(from, Math.min(from + size, session.size())), session.size());
     }
 
     /**
@@ -147,8 +149,7 @@ public class PlaygroundService {
         }
 
         try {
-            List<Execution> previousRuns = executionRepository
-                .find(allNewestFirst(), newRun.getTenantId(), sessionFilters(newRun.getNamespace(), newRun.getFlowId(), owner(newRun)))
+            List<Execution> previousRuns = session(newRun.getTenantId(), newRun.getNamespace(), newRun.getFlowId(), owner(newRun))
                 .stream()
                 .filter(run -> !run.getId().equals(newRun.getId()))
                 .toList();
@@ -274,12 +275,25 @@ public class PlaygroundService {
         return references.toString();
     }
 
-    private Pageable newestFirst(int page, int size) {
-        return PageableUtils.from(page, size, List.of(Execution.STATE_START_DATE_FIELD + ":desc"), executionRepository.sortMapping());
+    /** The session's runs newest first; retention keeps it small enough to sort in memory. */
+    private List<Execution> session(String tenantId, String namespace, String flowId, Optional<String> owner) {
+        return executionRepository.find(Pageable.UNPAGED, tenantId, sessionFilters(namespace, flowId, owner))
+            .stream()
+            .sorted(Comparator.comparing(PlaygroundService::createdAt).reversed())
+            .toList();
     }
 
-    private Pageable allNewestFirst() {
-        return Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc(executionRepository.sortMapping().apply(Execution.STATE_START_DATE_FIELD))));
+    /** A replay copies its source's state history, so it was created at the last RESTARTED entry it appended. */
+    static Instant createdAt(Execution run) {
+        Instant started = run.getState().getStartDate();
+        if (run.getParentId() == null) {
+            return started;
+        }
+        return run.getState().getHistories().stream()
+            .filter(history -> State.Type.RESTARTED == history.getState())
+            .map(State.History::getDate)
+            .max(Comparator.naturalOrder())
+            .orElse(started);
     }
 
     private static List<QueryFilter> sessionFilters(String namespace, String flowId, Optional<String> owner) {

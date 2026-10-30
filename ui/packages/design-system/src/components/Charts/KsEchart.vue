@@ -40,10 +40,12 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, watch} from "vue"
 
-    import {useElementSize} from "@vueuse/core"
+    import {useDevicePixelRatio, useElementSize} from "@vueuse/core"
     import VChart from "vue-echarts"
     import {use, type ECharts} from "echarts/core"
     import {CanvasRenderer, SVGRenderer} from "echarts/renderers"
+    import type CanvasPainter from "zrender/lib/canvas/Painter"
+    import type {ZRCanvasRenderingContext} from "zrender/lib/core/types.js"
     import {GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, GraphicComponent} from "echarts/components"
 
     import {vKsLoading} from "../Feedback/KsLoading"
@@ -95,13 +97,22 @@
         },
     )
 
+    const cappedPixelRatio = (ratio: number): number => {
+        if (props.maxPixelRatio === undefined) {
+            return ratio
+        } else {
+            return Math.min(ratio, props.maxPixelRatio)
+        }
+    }
+
+    const {pixelRatio} = useDevicePixelRatio()
+
     // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
     // a page holding many charts affordable on a high-DPI screen.
+    // Read from window rather than pixelRatio: a reactive initOptions makes vue-echarts re-create the chart on every zoom.
     const initOptions = computed(() => ({
         renderer: props.renderer,
-        ...(props.maxPixelRatio === undefined
-            ? {}
-            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+        devicePixelRatio: cappedPixelRatio(window.devicePixelRatio || 1),
     }))
 
     const isDark = ref(false)
@@ -270,6 +281,22 @@
     }
 
     watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
+
+    /** zrender fixes the canvas pixel ratio at init with no setter, and re-initialising on zoom would drop the layout, camera and listeners callers set on the instance. */
+    watch(pixelRatio, (ratio) => {
+        const painter = (vChartRef.value?.chart as ECharts | undefined)?.getZr().painter as CanvasPainter | undefined
+        const dpr = cappedPixelRatio(ratio)
+        if (painter?.type !== "canvas" || painter.dpr === dpr) {
+            return
+        }
+        painter.dpr = dpr
+        painter.eachLayer((layer) => {
+            const ctx = layer.ctx as ZRCanvasRenderingContext
+            layer.dpr = ctx.dpr = dpr
+            layer.resize(painter.getWidth(), painter.getHeight())
+        })
+        painter.refresh(true)
+    })
 
     onUnmounted(() => bindZr())
 

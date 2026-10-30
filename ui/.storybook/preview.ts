@@ -4,7 +4,7 @@ import {setup, type Preview} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
 import initApp from "../src/utils/init"
 import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n"
-import {configureClient, useClient} from "@kestra-io/kestra-sdk"
+import {configureClient, setMockClient, useClient} from "@kestra-io/kestra-sdk"
 import {createMemoryHistory, type RouterOptions} from "vue-router"
 import {vueRouter} from "storybook-vue3-router"
 import "../src/styles/vendor.css"
@@ -14,6 +14,9 @@ import en from "../src/translations/en.json"
 
 window.KESTRA_BASE_PATH = "/ui/"
 window.KESTRA_UI_PATH = "./"
+
+const unmockedClient = {...useClient()}
+let renderError: unknown
 
 // Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
 // TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
@@ -72,10 +75,22 @@ const preview: Preview = {
   // fix rather than at nothing.
   beforeEach({title, name}) {
     beginStoryScope(`${title} > ${name}`)
+    setMockClient(unmockedClient)
+    renderError = undefined
+  },
+  afterEach() {
+    if (renderError) {
+      throw renderError
+    }
   },
 }
 
 setup(async (app) => {
+  const reportError = app.config.errorHandler
+  app.config.errorHandler = (error, instance, info) => {
+    renderError ??= error
+    reportError?.(error, instance, info)
+  }
   const {piniaStore} = await initApp(app, [], {}, en)
   // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
   // noisy "Not found" warnings in Storybook (it already falls back to the key).

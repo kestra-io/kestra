@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
@@ -77,12 +77,6 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
-    onMounted(() => {
-        if (enabled.value) {
-            loadDefinition()
-        }
-    })
-
     function click() {
         if (needInputs.value) {
             isDrawerOpen.value = true
@@ -117,13 +111,5 @@
                 isDrawerOpen.value = false
                 toast.success(t("resumed done"))
             })
-    }
-
-    function loadDefinition() {
-        executionsStore.loadFlowForExecution({
-            flowId: props.execution.flowId,
-            namespace: props.execution.namespace,
-            store: true,
-        })
     }
 </script>

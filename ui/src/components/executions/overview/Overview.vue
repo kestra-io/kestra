@@ -56,7 +56,7 @@
 
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
-    import Banner from "./components/Banner.vue"
+    import Banner from "../components/Banner.vue"
     import FailedTaskCard from "./components/FailedTaskCard.vue"
     import MobileSummary from "./components/MobileSummary.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"

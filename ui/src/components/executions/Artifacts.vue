@@ -17,22 +17,18 @@
                     <KsText size="small" class="muted">{{ afterLastDot(group.cls) }}</KsText>
                     <KsText v-if="durations[group.taskId]" size="small" class="muted artifacts-duration">{{ durations[group.taskId] }}</KsText>
                 </div>
-                <button
+                <KsSelectableListItem
                     v-for="artifact in group.artifacts"
                     :key="artifact.key"
-                    type="button"
-                    class="artifacts-item"
-                    :class="{selected: artifact.key === selected?.key}"
-                    :aria-current="artifact.key === selected?.key"
+                    :title="artifact.title"
+                    :subtitle="subtitles[artifact.key] ?? artifact.description"
+                    :selected="artifact.key === selected?.key"
+                    inset
                     :data-test="`execution-artifact-${artifact.key}`"
                     @click="selectedKey = artifact.key"
                 >
-                    <KsIcon class="artifacts-item-icon"><FileDocumentOutline /></KsIcon>
-                    <span class="artifacts-item-text">
-                        <KsText>{{ artifact.title }}</KsText>
-                        <KsText v-if="subtitles[artifact.key] ?? artifact.description" size="small" class="muted">{{ subtitles[artifact.key] ?? artifact.description }}</KsText>
-                    </span>
-                </button>
+                    <template #leading><KsIcon><FileDocumentOutline /></KsIcon></template>
+                </KsSelectableListItem>
             </section>
         </nav>
         <div ref="inlineViewerTarget" class="artifacts-viewer-slot" />
@@ -100,7 +96,7 @@
     import {useI18n} from "vue-i18n"
     import type {PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
@@ -267,18 +263,6 @@
         margin-left: auto;
     }
 
-    .artifacts-item-icon {
-        color: var(--ks-icon-muted);
-    }
-
-    .artifacts-item-text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        min-width: 0;
-        text-align: left;
-    }
-
     .muted {
         color: var(--ks-text-secondary);
     }
@@ -298,34 +282,6 @@
         align-items: center;
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-2);
-    }
-
-    .artifacts-item {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: var(--ks-spacing-2);
-        margin-left: var(--ks-spacing-4);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: var(--ks-radius-base);
-
-        &:hover {
-            background: var(--ks-bg-hover);
-        }
-
-        &.selected {
-            background: var(--ks-bg-active);
-            border-color: var(--ks-border-focus);
-
-            & .artifacts-item-icon {
-                color: var(--ks-icon-active);
-            }
-        }
     }
 
     .artifacts-viewer-slot {

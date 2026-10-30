@@ -32,7 +32,8 @@
                     <KsAlert
                         :closable="false"
                         class="task-edit-revision-alert"
-                        v-if="revision && revisions?.length !== revision"
+                        data-test="task-edit-revision-alert"
+                        v-if="isOldRevision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -515,9 +516,14 @@
 
     const isLoading = computed(() => taskYaml.value === undefined)
 
+    // Revision numbers are not list indexes: deleting a flow consumes a revision that the list leaves out.
+    const selectedRevision = computed(() => revisions.value?.find(({revision}) => revision === props.revision))
+
+    const isOldRevision = computed(() => Boolean(props.revision) && props.revision !== revisions.value?.at(-1)?.revision)
+
     const source = computed(() => {
         return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
+            ? selectedRevision.value?.source
             : flowStore.flow?.source
     })
 
@@ -528,7 +534,7 @@
             revision: props.revision?.toString(),
         })
         if (props.revision) {
-            if (!revisions.value?.[props.revision - 1]) {
+            if (!selectedRevision.value) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,

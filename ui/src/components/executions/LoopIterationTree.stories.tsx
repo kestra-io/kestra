@@ -1,9 +1,8 @@
-import {vi} from "vitest";
 import {userEvent, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
-
-// SDK submodule mock - both calls bypass axios.
-const mockState = vi.hoisted(() => ({total: 3}))
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {mockStoryApiRoutes, type ApiRouteContext} from "../../../.storybook/apiMock";
+import LoopIterationTree from "./LoopIterationTree.vue";
 
 function iterationRow(index: number, value: string) {
     return {
@@ -15,36 +14,35 @@ function iterationRow(index: number, value: string) {
     }
 }
 
-vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    searchExecutions: async (params: {page?: number}) => {
-        const page = params?.page ?? 1
-        const start = (page - 1) * 10
-        const limit = Math.min(start + 10, mockState.total)
+function mockIterationRoutes(total: number) {
+    mockStoryApiRoutes({
+        "GET /executions/search": ({query}: ApiRouteContext) => {
+            const page = Number(query.get("page") ?? 1)
+            const start = (page - 1) * 10
+            const limit = Math.min(start + 10, total)
 
-        const results = Array.from({length: Math.max(0, limit - start)}, (_, i) => {
-            const index = start + i;
-            return iterationRow(index, `REGION-${index}`);
-        });
+            const results = Array.from({length: Math.max(0, limit - start)}, (_, i) => {
+                const index = start + i;
+                return iterationRow(index, `REGION-${index}`);
+            });
 
-        return {results, total: mockState.total}
-    },
-    execution: async () => ({
-        id: "iteration-EMEA",
-        namespace: "company.team",
-        flowId: "nested_loop_demo",
-        taskRunList: [
-            {
-                id: "tr-log",
-                taskId: "quarter_log",
-                state: {current: "SUCCESS"},
-                attempts: [{state: {current: "SUCCESS", startDate: "2026-09-30T01:45:58Z", endDate: "2026-09-30T01:45:58Z", duration: 10}}],
-            },
-        ],
-    }),
-}))
-
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import LoopIterationTree from "./LoopIterationTree.vue";
+            return {results, total}
+        },
+        "GET /executions/:executionId": {
+            id: "iteration-EMEA",
+            namespace: "company.team",
+            flowId: "nested_loop_demo",
+            taskRunList: [
+                {
+                    id: "tr-log",
+                    taskId: "quarter_log",
+                    state: {current: "SUCCESS"},
+                    attempts: [{state: {current: "SUCCESS", startDate: "2026-09-30T01:45:58Z", endDate: "2026-09-30T01:45:58Z", duration: 10}}],
+                },
+            ],
+        },
+    })
+}
 
 const meta: Meta<typeof LoopIterationTree> = {
     title: "Components/Executions/LoopIterationTree",
@@ -76,7 +74,7 @@ export default meta;
 export const Default: StoryObj<{total: number}> = {
     render: (args) => ({
         setup() {
-            mockState.total = args.total
+            mockIterationRoutes(args.total)
             return () =>
                 <LoopIterationTree
                     executionId="root-execution"
@@ -89,8 +87,7 @@ export const Default: StoryObj<{total: number}> = {
     args: {
         total: 3,
     },
-    play: async ({canvasElement, args}) => {
-        mockState.total = args.total
+    play: async ({canvasElement}) => {
         const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
         await userEvent.click(toggle)
 
@@ -105,7 +102,7 @@ export const Default: StoryObj<{total: number}> = {
 export const OverThePreviewLimit: StoryObj<{total: number}> = {
     render: (args) => ({
         setup() {
-            mockState.total = args.total
+            mockIterationRoutes(args.total)
             return () =>
                 <LoopIterationTree
                     executionId="root-execution"
@@ -118,8 +115,7 @@ export const OverThePreviewLimit: StoryObj<{total: number}> = {
     args: {
         total: 12,
     },
-    play: async ({canvasElement, args}) => {
-        mockState.total = args.total
+    play: async ({canvasElement}) => {
         const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
         await userEvent.click(toggle)
 

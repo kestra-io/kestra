@@ -296,6 +296,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-pausing-listen.yaml", "flows/valids/flow-trigger-pausing-flow.yaml" })
+    void flowTriggerOnPausing() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPausing();
+    }
+
+    @Test
     @LoadFlows(
         { "flows/valids/flow-trigger-depends-on-flow-listen.yaml",
             "flows/valids/flow-trigger-depends-on-flow-a.yaml",

@@ -90,6 +90,21 @@ public class StorageKVBackend implements KVBackend {
     }
 
     @Override
+    public Optional<KVMetadata> getMetadata(String tenant, String namespace, String key) throws IOException {
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(tenant, namespace, key);
+        if (maybeMetadata.map(PersistedKvMetadata::isDeleted).orElse(false)) {
+            return Optional.empty();
+        }
+
+        int revision = maybeMetadata.map(PersistedKvMetadata::getRevision).orElse(1);
+        try {
+            return Optional.of(new KVMetadata(this.storage.getAttributes(tenant, namespace, KVStore.storageUri(key, namespace, revision)).getMetadata()));
+        } catch (FileNotFoundException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<KVEntry> get(String tenant, String namespace, String key) throws IOException {
         Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(tenant, namespace, key);
         if (maybeMetadata.isEmpty() || maybeMetadata.get().isDeleted()) {

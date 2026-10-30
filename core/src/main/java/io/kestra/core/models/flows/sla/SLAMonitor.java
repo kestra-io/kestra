@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.sla;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import io.kestra.core.models.HasUID;
@@ -14,6 +15,7 @@ public class SLAMonitor implements HasUID {
     String executionId;
     String slaId;
     Instant deadline;
+    Duration duration;
 
     @Override
     public String uid() {

@@ -22,7 +22,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions")
                         return VALUES.EXECUTION_STATES
                     },
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -55,9 +54,11 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {
@@ -103,6 +104,19 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
+                    key: "outputs",
+                    label: t("filter.outputs.label"),
+                    description: t("filter.outputs.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
                     key: "triggerExecutionId",
                     label: t("filter.triggerExecutionId.label"),
                     description: t("filter.triggerExecutionId.description"),
@@ -114,7 +128,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -128,7 +141,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -139,7 +151,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -150,7 +161,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
             ],
         }

@@ -198,12 +198,15 @@
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
     // schema.properties.properties, with the required array at schema.properties.required.
-    const triggerProperties = computed(() => {
+    // JSONProperty and the no-code Schema are two hand-written views of the same backend JSON
+    // Schema node, so the cast below is the same type-punning TaskObject's own Schema already
+    // relies on for every other caller (e.g. ImplementationCard.vue's branch.definition).
+    const triggerProperties = computed<Record<string, Schema>>(() => {
         const fields = triggerPlugin.value?.schema?.properties?.properties
         if (!fields) return {}
         return Object.fromEntries(
             Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
-        )
+        ) as unknown as Record<string, Schema>
     })
 
     const triggerSchema = computed<{required?: string[]}>(() => {

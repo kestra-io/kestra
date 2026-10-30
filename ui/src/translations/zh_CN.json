@@ -30,7 +30,7 @@
         "email_sub": "发送电子邮件通知",
         "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "自定义",
-        "custom_note": "已添加一个占位符 task — 在编辑器中将其替换为任何通知插件。",
+        "custom_note": "已添加一个占位符 task。在编辑器中将其替换为任何通知插件。",
         "custom_sub": "添加您自己的通知 task",
         "plugin_unavailable": "插件未安装",
         "slack_channel_placeholder": "# 警报",
@@ -145,6 +145,7 @@
     "update": "更新",
     "confirmation": "确认",
     "toast confirm": "您确定吗？",
+    "toast_message_column": "消息",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
+    "reused_task_run": {
+      "label": "已复用",
+      "tooltip": "此 execution 不会再次运行。它已于 {date} 运行，其 logs 和 outputs 来自该次运行。"
+    },
     "replay the execution": "重放 flow {flowId} 的执行 {executionId}",
     "prefill inputs": "预填",
     "current": "当前",
@@ -509,9 +514,68 @@
       "invalid": "图形错误",
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "load_error": "无法加载拓扑图。请重试。",
+      "expand_subflow_error": "无法展开 subflow",
       "add-task": "添加 task",
       "add-trigger": "添加 trigger",
-      "child-count": "{count} 个 task | {count} 个 task"
+      "child-count": "{count} 个 task | {count} 个 task",
+      "loop": {
+        "not-run": "未运行",
+        "pick-first": "请先选择 {loop}",
+        "picker-label": "{loop} 的迭代",
+        "search-by-index": "按索引搜索",
+        "all-iterations": "所有迭代",
+        "iteration-index": "索引 {index}",
+        "iteration-value-index": "{value} · 索引 {index}",
+        "previous-iteration": "上一个迭代",
+        "next-iteration": "下一个迭代",
+        "previous-page": "上一页",
+        "next-page": "下一页",
+        "failed-group": "失败 · {count}",
+        "other-group": "其他迭代",
+        "matching": "匹配",
+        "failure-forbidden": "您无权访问此迭代。",
+        "failure-not-found": "此迭代已不存在。",
+        "failure-ambiguous": "此循环在本次执行中运行了多次，因此无法区分其迭代。",
+        "failure-not-located": "无法定位失败的迭代。",
+        "failure-unknown": "无法加载迭代。",
+        "scope": "范围",
+        "whole-execution": "整个执行",
+        "clear-scopes": "清除范围",
+        "jump-to-first-failure": "跳转到第一个失败",
+        "loops-with-failures": "存在失败的循环",
+        "task-runs": "{runs} 次运行 | {runs} 次运行",
+        "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败",
+        "retry": "重试",
+        "load-more": "加载更多",
+        "retry-loading": "重试加载迭代"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 个中 {failed} 个失败",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 个失败 · {total} 个中 {notStarted} 个未开始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 个中 {done} 个已完成",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 个中 {done} 个已完成 · {failed} 个失败",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 个迭代 | {total} 个迭代",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "修订版 {revision}",
       "attempts": "{count} 次尝试 | {count} 次尝试",
-      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task",
+      "searchable_values": "可搜索的值",
+      "more_searchable_values": "+{count} 个更多可搜索值"
     },
     "execution_mobile": {
       "failed_task": "失败的 task",
@@ -547,7 +613,13 @@
     "namespaces": "命名空间",
     "tasks": "任务",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
-    "last 48 hours": "最近48小时",
+    "task runs": "Task 运行",
+    "task runs duration (in minutes)": "总 Task 运行持续时间（分钟）",
+    "last 24 hours": "过去 24 小时",
+    "last 7 days": "过去 7 天",
+    "last 30 days": "过去 30 天",
+    "since {date}": "自 {date} 起",
+    "usage period": "使用期限",
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
@@ -576,6 +648,7 @@
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "表达式",
+      "searchable": "可搜索的",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
@@ -945,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "返回仪表板",
-    "copy all logs": "复制所有日志",
     "copy logs": "复制日志",
     "fix_with_ai": "使用 AI 修复",
     "download logs": "下载日志",
@@ -1029,7 +1101,7 @@
     "flow must not be empty": "flow不能为空",
     "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "readonly property": "只读属性",
-    "namespace and id readonly": "属性 `namespace` 和 `id` 无法更改 — 它们现在已设置为初始值。如果您想重命名 flow 或更改其 namespace，可以创建一个新的 flow 并删除旧的。",
+    "namespace and id readonly": "属性 `namespace` 和 `id` 无法更改：它们现在已设置为初始值。如果您想重命名 flow 或更改其 namespace，可以创建一个新的 flow 并删除旧的。",
     "flow metadata locked": "`id` 和 `namespace` 在 flow 创建后无法更改。",
     "avg": "平均",
     "sum": "总计",
@@ -1104,7 +1176,7 @@
     "hostname": "主机名",
     "file preview truncated": "显示的内容已被截断",
     "file unavailable": "文件不可用",
-    "file unavailable description": "该文件不再可用——可能已被清除或过期。",
+    "file unavailable description": "该文件不再可用。可能已被清除或过期。",
     "row count": "行数",
     "encoding": "编码",
     "show": "显示",
@@ -1479,7 +1551,7 @@
       "policies": {
         "header": "治理策略",
         "label": "策略",
-        "message": "策略允许平台团队集中管理和执行所有 flow 的规则——注入共享默认值、阻止插件、绑定属性值以及要求合规性 label。规则在 tenant 或 namespace 级别应用，并分阶段推出，每个注入或替换的值对 flow 作者都可见。",
+        "message": "策略允许平台团队集中管理和执行所有 flow 的规则：注入共享默认值、阻止插件、绑定属性值以及要求合规性 label。规则在 tenant 或 namespace 级别应用，并分阶段推出，每个注入或替换的值对 flow 作者都可见。",
         "title": "通过策略治理每个 flow"
       },
       "namespace": {
@@ -1505,7 +1577,7 @@
         },
         "policies": {
           "title": "在此 namespace 中强制执行治理规则",
-          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
+          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则：注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
         },
         "reusable-inputs": {
           "label": "可复用输入",
@@ -1768,7 +1840,18 @@
       "compact": "默认视图",
       "compact_details": "按任务分组显示任务日志",
       "fullscreen": "全屏日志",
-      "exit_fullscreen": "退出全屏"
+      "exit_fullscreen": "退出全屏",
+      "loop": {
+        "this-execution": "此执行",
+        "with-iterations": "包含循环迭代",
+        "batch-range": "失败的迭代 {from}–{to}（共 {total} 次）",
+        "empty-title": "没有匹配的日志",
+        "empty-description": "在此执行或其失败的循环迭代中，没有日志匹配所选级别。降低级别以查看更多。",
+        "scope-to": "将图形和日志限定到 {scope}",
+        "show-in-overview": "在概览中显示",
+        "show-in-overview-for": "在概览中显示 {scope}",
+        "mode-label": "日志来源"
+      }
     },
     "execution_deletion": {
       "logs": "删除日志",
@@ -2127,6 +2210,7 @@
         "plural": "仪表板"
       },
       "default": "默认仪表板",
+      "set_default": "设为默认",
       "empty": "没有结果显示。",
       "edition": {
         "label": "编辑仪表板",
@@ -2139,11 +2223,8 @@
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
-      "export": "导出",
-      "exportEmpty": "此图表没有可导出的数据。",
       "exportTo": {
-        "csv": "导出为 CSV",
-        "ion": "导出到 ION"
+        "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",
@@ -2275,7 +2356,7 @@
         },
         "cancelled": "轮次已取消",
         "error": {
-          "turnCap": "此对话已达上限 — 开启新对话。",
+          "turnCap": "此对话已达上限：开启新对话。",
           "turnInProgress": "一个周期已在进行中。",
           "request": "请求失败。请重试。",
           "generic": "出错了。请重试。"
@@ -2336,9 +2417,9 @@
           "dismiss": "忽略",
           "dismissed": "已忽略",
           "applied": "已应用",
-          "previewBanner": "正在查看 AI 建议的更改——在您应用或忽略之前，编辑器为只读状态。",
+          "previewBanner": "正在查看 AI 建议的更改。在您应用或忽略之前，编辑器为只读状态。",
           "applyTitle": "应用 flow",
-          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版 — 草稿在发布之前不会被 trigger 或 subflow 处理。",
+          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版。草稿在发布之前不会被 trigger 或 subflow 处理。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
           "applyError": "无法应用该 flow。请重试。",
           "applyErrorDashboard": "未能应用仪表盘。请重试。",
@@ -2417,7 +2498,7 @@
         "hidden_consumer": "隐藏 Flow",
         "ungrouped": "未分组",
         "hub": {
-          "notice": "此节点有 {count} 个关联 — 仅显示最新的关联以保持图表可读。",
+          "notice": "此节点有 {count} 个关联。仅显示最新的关联以保持图表可读。",
           "expand": "加载更多关联",
           "expand_failed": "无法加载更多关联。请重试。"
         },
@@ -2577,7 +2658,7 @@
     },
     "invalid_source_code": "源代码无效",
     "source_search": {
-      "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
+      "cannot_select_read_only": "无法选择：您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",
       "confirm_bar_excluded": "还有 {count} 个匹配项不会被更改。 | 还有 {count} 个匹配项不会被更改。",
       "confirm_bar_message": "替换 {flows} 个可编辑 flow 中的 {matches} 匹配项。将跳过 {skipped} 个只读 flow。",
@@ -2593,11 +2674,11 @@
       "empty_title": "在 flow、文件和键中查找值",
       "error_title": "无效的正则表达式",
       "examples_aria": "示例查询",
-      "exclusion_flows_readonly": "flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。 | flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。",
-      "exclusion_search_only": "{type} — {count} 个匹配：仅可搜索，无法替换。 | {type} — {count} 个匹配：仅可搜索，无法替换。",
+      "exclusion_flows_readonly": "flow · {count} 个只读匹配：需要 FLOW · UPDATE 权限。 | flow · {count} 个只读匹配：需要 FLOW · UPDATE 权限。",
+      "exclusion_search_only": "{type} · {count} 个匹配：仅可搜索，无法替换。 | {type} · {count} 个匹配：仅可搜索，无法替换。",
       "exclusion_title": "{count} 个匹配项已从“全部替换”中排除 | {count} 个匹配项已从“全部替换”中排除",
       "expand_all": "全部展开",
-      "file_match_notice": "文件路径已匹配。文件内容不会被搜索 — 打开文件以在其中搜索。",
+      "file_match_notice": "文件路径已匹配。文件内容不会被搜索。打开文件以在其中搜索。",
       "files_progress_banner_failed": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个，{failed} 个失败。总数仍会变化。",
       "files_progress_banner_ok": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个。总数仍会变化。",
       "flow_only_toggle_hint": "区分大小写、全字匹配和正则表达式仅适用于 flow。文件路径和键始终按纯文本匹配。",
@@ -2674,10 +2755,10 @@
       "show_replace": "显示替换",
       "summary": "在 {flows} 个 flow 中有 {matches} 个匹配项",
       "summary_cross": "在 {types} 的 {resources} 中共 {matches}",
-      "tag_keys_only_never": "仅键 — 值从不显示或搜索",
-      "tag_keys_only_values": "仅键 — 不搜索值",
-      "tag_paths_only": "仅路径 — 不搜索文件内容",
-      "tag_search_only": "仅搜索 — 不会被替换",
+      "tag_keys_only_never": "仅键：值从不显示或搜索",
+      "tag_keys_only_values": "仅键：不搜索值",
+      "tag_paths_only": "仅路径：不搜索文件内容",
+      "tag_search_only": "仅搜索：不会被替换",
       "tag_source_code": "源码",
       "truncated_flows": "显示 {total} 个匹配项中的前 {shown} 个。全部替换仅作用于已显示的匹配项，请先缩小查询范围。",
       "truncated_type": "{total} 个中的前 {shown} 个",

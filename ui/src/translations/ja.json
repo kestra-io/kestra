@@ -30,7 +30,7 @@
         "email_sub": "メール通知を送信",
         "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "カスタム",
-        "custom_note": "プレースホルダーのtaskが追加されました — エディターで任意の通知プラグインと交換してください。",
+        "custom_note": "プレースホルダーのtaskが追加されました。エディターで任意の通知プラグインと交換してください。",
         "custom_sub": "独自の通知タスクを追加",
         "plugin_unavailable": "Pluginがインストールされていません",
         "slack_channel_placeholder": "#alerts",
@@ -145,6 +145,7 @@
     "update": "更新",
     "confirmation": "確認",
     "toast confirm": "よろしいですか？",
+    "toast_message_column": "メッセージ",
     "common": {
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
+    "reused_task_run": {
+      "label": "再利用",
+      "tooltip": "このExecutionでは再度実行されません。{date}に実行され、そのlogとoutputはその実行からのものです。"
+    },
     "replay the execution": "フロー{flowId}の実行{executionId}を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",
@@ -509,9 +514,68 @@
       "invalid": "グラフエラー",
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
+      "expand_subflow_error": "サブFlowを展開できませんでした",
       "add-task": "Taskを追加",
       "add-trigger": "Triggerを追加",
-      "child-count": "task {count}個 | task {count}個"
+      "child-count": "task {count}個 | task {count}個",
+      "loop": {
+        "not-run": "未実行",
+        "pick-first": "先に {loop} を選択してください",
+        "picker-label": "{loop} のイテレーション",
+        "search-by-index": "インデックスで検索",
+        "all-iterations": "すべてのイテレーション",
+        "iteration-index": "インデックス {index}",
+        "iteration-value-index": "{value} · インデックス {index}",
+        "previous-iteration": "前のイテレーション",
+        "next-iteration": "次のイテレーション",
+        "previous-page": "前のページ",
+        "next-page": "次のページ",
+        "failed-group": "失敗 · {count}",
+        "other-group": "その他のイテレーション",
+        "matching": "一致",
+        "failure-forbidden": "このイテレーションにアクセスする権限がありません。",
+        "failure-not-found": "このイテレーションは存在しません。",
+        "failure-ambiguous": "このループはこの実行内で複数回実行されたため、イテレーションを区別できません。",
+        "failure-not-located": "失敗したイテレーションを特定できませんでした。",
+        "failure-unknown": "イテレーションを読み込めませんでした。",
+        "scope": "スコープ",
+        "whole-execution": "実行全体",
+        "clear-scopes": "スコープをクリア",
+        "jump-to-first-failure": "最初の失敗へ移動",
+        "loops-with-failures": "失敗のあるループ",
+        "task-runs": "{runs} 回の実行 | {runs} 回の実行",
+        "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗",
+        "retry": "再試行",
+        "load-more": "さらに読み込む",
+        "retry-loading": "イテレーションの読み込みを再試行"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 件中 {failed} 件が失敗",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 件失敗 · {total} 件中 {notStarted} 件未開始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 件中 {done} 件完了",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 件中 {done} 件完了 · {failed} 件失敗",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 件のイテレーション | {total} 件のイテレーション",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "リビジョン {revision}",
       "attempts": "{count} 回の試行 | {count} 回の試行",
-      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個",
+      "searchable_values": "検索可能な値",
+      "more_searchable_values": "+{count} 件の検索可能な値"
     },
     "execution_mobile": {
       "failed_task": "失敗した task",
@@ -547,7 +613,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "総実行時間（分単位）",
-    "last 48 hours": "過去48時間",
+    "task runs": "Task実行",
+    "task runs duration (in minutes)": "合計Task実行時間 (分)",
+    "last 24 hours": "過去24時間",
+    "last 7 days": "過去7日間",
+    "last 30 days": "過去30日間",
+    "since {date}": "{date}以降",
+    "usage period": "使用期間",
     "email": "メール",
     "password": "パスワード",
     "confirm password": "パスワードを確認",
@@ -576,6 +648,7 @@
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
       "expression": "式",
+      "searchable": "検索可能",
       "tree": "ツリー",
       "raw_json": "生JSON",
       "select_prompt": "value を確認する変数を選択してください。",
@@ -945,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "ダッシュボードに戻る",
-    "copy all logs": "すべてのLogをコピー",
     "copy logs": "Logsをコピー",
     "fix_with_ai": "AIで修正",
     "download logs": "Logsをダウンロード",
@@ -1104,7 +1176,7 @@
     "hostname": "ホスト名",
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
     "file unavailable": "ファイルが利用できません",
-    "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
+    "file unavailable description": "このファイルは利用できなくなりました。削除されたか、有効期限が切れた可能性があります。",
     "row count": "行数",
     "encoding": "エンコーディング",
     "show": "表示",
@@ -1768,7 +1840,18 @@
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
       "fullscreen": "Logsを全画面表示",
-      "exit_fullscreen": "フルスクリーンを終了"
+      "exit_fullscreen": "フルスクリーンを終了",
+      "loop": {
+        "this-execution": "この実行",
+        "with-iterations": "ループのイテレーションを含む",
+        "batch-range": "失敗したイテレーション {total} の {from}～{to}",
+        "empty-title": "一致するログがありません",
+        "empty-description": "この実行および失敗したループのイテレーションに、選択したレベルに一致するログはありません。より多く表示するにはレベルを下げてください。",
+        "scope-to": "グラフとログを{scope}に絞り込む",
+        "show-in-overview": "概要で表示",
+        "show-in-overview-for": "{scope}を概要で表示",
+        "mode-label": "ログのソース"
+      }
     },
     "execution_deletion": {
       "logs": "ログを削除",
@@ -2127,6 +2210,7 @@
         "plural": "ダッシュボード"
       },
       "default": "デフォルトダッシュボード",
+      "set_default": "デフォルトに設定",
       "empty": "表示する結果がありません。",
       "edition": {
         "label": "ダッシュボードを編集",
@@ -2139,11 +2223,8 @@
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "export": "エクスポート",
-      "exportEmpty": "このチャートにエクスポートするデータはありません。",
       "exportTo": {
-        "csv": "CSVにエクスポート",
-        "ion": "ION にエクスポート"
+        "csv": "CSVにエクスポート"
       },
       "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
       "show_all_statuses": "すべてのステータスを表示",
@@ -2275,7 +2356,7 @@
         },
         "cancelled": "ターンがキャンセルされました",
         "error": {
-          "turnCap": "この会話は上限に達しました — 新しいチャットを開始してください。",
+          "turnCap": "この会話は上限に達しました：新しいチャットを開始してください。",
           "turnInProgress": "ターンはすでに進行中です。",
           "request": "リクエストが失敗しました。もう一度お試しください。",
           "generic": "問題が発生しました。もう一度お試しください。"
@@ -2336,7 +2417,7 @@
           "dismiss": "却下",
           "dismissed": "却下済み",
           "applied": "適用済み",
-          "previewBanner": "AI による変更案を確認中です — 適用または却下するまでエディターは読み取り専用になります。",
+          "previewBanner": "AI による変更案を確認中です。適用または却下するまでエディターは読み取り専用になります。",
           "applyTitle": "flow を適用",
           "applyConfirm": "{namespace}.{id} をレビュー用のドラフトリビジョンとして保存しますか？作成されるか、既に存在する場合は新しいドラフトリビジョンが追加されます。ドラフトは公開されるまで trigger や subflow から参照されません。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
@@ -2577,7 +2658,7 @@
     },
     "invalid_source_code": "無効なソースコード",
     "source_search": {
-      "cannot_select_read_only": "選択できません — {namespace} / {id} の編集権限がありません",
+      "cannot_select_read_only": "選択できません：{namespace} / {id} の編集権限がありません",
       "collapse_all": "すべて折りたたむ",
       "confirm_bar_excluded": "他に{count}件の一致は変更されません。 | 他に{count}件の一致は変更されません。",
       "confirm_bar_message": "{flows}個の編集可能なflowで{matches}個を置換します。{skipped}個の読み取り専用flowはスキップされます。",
@@ -2593,11 +2674,11 @@
       "empty_title": "Flows・ファイル・キーの中から値を探す",
       "error_title": "無効な正規表現",
       "examples_aria": "クエリ例",
-      "exclusion_flows_readonly": "Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。 | Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。",
-      "exclusion_search_only": "{type} — {count} 件: 検索専用のため置換できません。 | {type} — {count} 件: 検索専用のため置換できません。",
+      "exclusion_flows_readonly": "Flows・読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。 | Flows・読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。",
+      "exclusion_search_only": "{type}・{count} 件: 検索専用のため置換できません。 | {type}・{count} 件: 検索専用のため置換できません。",
       "exclusion_title": "{count} 件の一致が「すべて置換」から除外されています | {count} 件の一致が「すべて置換」から除外されています",
       "expand_all": "すべて展開",
-      "file_match_notice": "ファイルパスが一致しました。ファイルの内容は検索されません — 中を検索するにはファイルを開いてください。",
+      "file_match_notice": "ファイルパスが一致しました。ファイルの内容は検索されません。中を検索するにはファイルを開いてください。",
       "files_progress_banner_failed": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了、{failed} 件失敗しました。合計はまだ変わります。",
       "files_progress_banner_ok": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了しました。合計はまだ変わります。",
       "flow_only_toggle_hint": "大文字/小文字の区別、単語単位、正規表現はFlowsにのみ適用されます。ファイルパスとキーは常にプレーンテキストとして一致します。",
@@ -2674,10 +2755,10 @@
       "show_replace": "置換を表示",
       "summary": "{flows} flow中{matches}件の一致",
       "summary_cross": "{types}、{resources}で{matches}",
-      "tag_keys_only_never": "キーのみ — 値は表示も検索もされません",
-      "tag_keys_only_values": "キーのみ — 値は検索されません",
-      "tag_paths_only": "パスのみ — ファイルの内容は検索されません",
-      "tag_search_only": "検索専用 — 置換されません",
+      "tag_keys_only_never": "キーのみ：値は表示も検索もされません",
+      "tag_keys_only_values": "キーのみ：値は検索されません",
+      "tag_paths_only": "パスのみ：ファイルの内容は検索されません",
+      "tag_search_only": "検索専用：置換されません",
       "tag_source_code": "ソースコード",
       "truncated_flows": "{total} 件中 {shown} 件の一致を表示しています。すべて置換は表示中の一致にのみ適用されます。先に検索条件を絞り込んでください。",
       "truncated_type": "{total} 件中 {shown} 件",

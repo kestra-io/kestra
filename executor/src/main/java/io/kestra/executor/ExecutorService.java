@@ -487,7 +487,7 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
                 outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
-                executionOutputService.saveOutputs(newExecution, outputs);
+                executionOutputService.saveOutputs(runContext.logger(), flow, newExecution, outputs);
             } catch (Exception e) {
                 Logs.logExecution(
                     executor.getExecution(),
@@ -1311,7 +1311,7 @@ public class ExecutorService {
         return executor.withExecution(newExecution, "handleKilling");
     }
 
-    private ExecutorContext handleWorkerTasks(final ExecutorContext executor) throws InternalException {
+    private ExecutorContext handleWorkerTasks(final ExecutorContext executor) throws InternalException, QueueException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
             return executor;
         }
@@ -1462,6 +1462,12 @@ public class ExecutorService {
                     Level.INFO,
                     "Flow is suspended at a breakpoint."
                 );
+
+                if (newExecution.getKind() == ExecutionKind.LOOP) {
+                    loopExecutionEventQueue.emit(
+                        new LoopExecutionEvent(newExecution.getLoopRun(), newExecution.getId(), State.Type.BREAKPOINT, null, null)
+                    );
+                }
             }
         }
 

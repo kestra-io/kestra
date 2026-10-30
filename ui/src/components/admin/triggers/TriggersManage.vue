@@ -73,7 +73,7 @@
                     />
                     <LogsWrapper
                         v-if="hasLogsContent(props.row as TriggerRow)"
-                        class="m-3"
+                        class="row-logs"
                         :filters="{
                             'filters[namespace][EQUALS]': props.row.namespace,
                             'filters[flowId][EQUALS]': props.row.flowId,
@@ -93,7 +93,7 @@
                 :label="$t('id')"
             >
                 <template #default="scope">
-                    <div class="text-nowrap">
+                    <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
                     </div>
                 </template>
@@ -116,7 +116,7 @@
                             effect="light"
                             popperClass="wide-tooltip"
                         >
-                            <InformationOutline class="header-tooltip-icon" />
+                            <Information class="header-tooltip-icon" />
                         </KsTooltip>
                     </span>
                 </template>
@@ -242,24 +242,23 @@
                         />
                         <template #dropdown>
                             <KsDropdownMenu>
-                                <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                    <TextSearch class="mr-1" />
+                                <KsDropdownItem :icon="TextSearch" @click="openDetails(scope.row as TriggerRow)">
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
+                                    :icon="Restart"
                                     @click="restart(scope.row as TriggerRow)"
                                 >
-                                    <Restart class="mr-1" />
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
+                                    :icon="LockOff"
                                     @click="unlock(scope.row as TriggerRow)"
                                 >
-                                    <LockOff class="mr-1" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsTooltip
@@ -267,8 +266,7 @@
                                     :content="$t('delete trigger still declared')"
                                     effect="light"
                                 >
-                                    <KsDropdownItem divided class="danger" disabled>
-                                        <Delete class="mr-1" />
+                                    <KsDropdownItem divided class="danger" disabled :icon="Delete">
                                         {{ $t("delete") }}
                                     </KsDropdownItem>
                                 </KsTooltip>
@@ -276,9 +274,9 @@
                                     v-else-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
+                                    :icon="Delete"
                                     @click="confirmDeleteTrigger(scope.row as TriggerDeleteOptions)"
                                 >
-                                    <Delete class="mr-1" />
                                     {{ $t("delete") }}
                                 </KsDropdownItem>
                             </KsDropdownMenu>
@@ -385,6 +383,7 @@
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../../utils/inputs"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
@@ -399,7 +398,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Information from "vue-material-design-icons/Information.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
@@ -999,20 +998,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input?.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))
@@ -1037,6 +1024,14 @@
         & :deep(.kel-table) a {
             color: var(--ks-text-link);
         }
+    }
+
+    .row-logs {
+        margin: var(--ks-spacing-4);
+    }
+
+    .trigger-id-cell {
+        white-space: nowrap;
     }
 
     .backfill-tag {

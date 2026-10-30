@@ -120,10 +120,15 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
+    // Publishing a draft, or demoting a flow to a draft, is a save even when the source is unchanged.
+    function hasPendingSave(draft: boolean) {
+        return isCreating.value || haveChange.value || draft !== (flow.value?.draft ?? false)
+    }
+
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
         const isDraft = draft ?? flow.value?.draft ?? false
 
-        if (!haveChange.value && !isCreating.value) {
+        if (!hasPendingSave(isDraft)) {
             return "no_op"
         }
 
@@ -269,7 +274,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         if (inFlightSave) return inFlightSave
-        if (!isCreating.value && !haveChange.value) return "no_op"
+        if (!hasPendingSave(draft)) return "no_op"
         inFlightSave = performSave(draft)
         try {
             return await inFlightSave

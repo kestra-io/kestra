@@ -617,6 +617,14 @@ public final class ExecutorTestHarness {
         return emittedSince(from);
     }
 
+    /** Fires the SLA-monitor loop at {@code now}. */
+    public List<Trace.Emission> tickSLAMonitors(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        loops.get(1).run();
+        return emittedSince(from);
+    }
+
     public Trace run(Execution execution, ScriptedWorker worker) {
         return run(List.of(execution), worker);
     }
@@ -649,7 +657,10 @@ public final class ExecutorTestHarness {
     private void answerWorkerJobs(ScriptedWorker worker) {
         List<WorkerJobEvent> jobs = workerJobEventQueue.emittedMessages();
         for (; workerJobsAnswered < jobs.size(); workerJobsAnswered++) {
-            workerTaskResultQueue.emit(worker.run((WorkerTask) jobs.get(workerJobsAnswered).job()));
+            WorkerTaskResult result = worker.run((WorkerTask) jobs.get(workerJobsAnswered).job());
+            if (result != null) {
+                workerTaskResultQueue.emit(result);
+            }
         }
     }
 

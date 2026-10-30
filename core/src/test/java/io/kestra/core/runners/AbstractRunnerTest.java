@@ -66,6 +66,9 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
+    protected ApprovalTest.Suite approvalTest;
+
+    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -456,6 +459,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/pause-timeout.yaml" })
     public void pauseRunTimeout() throws Exception {
         pauseTest.runTimeout(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunApprove() throws Exception {
+        approvalTest.approve(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunDeny() throws Exception {
+        approvalTest.deny(runnerUtils);
     }
 
     @Test

@@ -75,10 +75,36 @@ export function loopIterationsRoute(
 
 type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
 
-export function findFirstFailedTaskRun(execution: Execution): ExecutionTaskRun | undefined {
-    const failed = (execution.taskRunList ?? []).filter((taskRun) => State.isFailed(taskRun.state?.current))
+const HIDDEN_TASK_TYPES = [
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
+]
+
+type FailureCandidate = {id: string; taskId: string; parentTaskRunId?: string | null; state?: {current?: string}}
+
+export function isHiddenTaskType(taskType: string | undefined): boolean {
+    return HIDDEN_TASK_TYPES.includes(taskType ?? "")
+}
+
+export function isFailedTaskRunState(state: string | undefined): boolean {
+    return state === State.FAILED
+}
+
+export function firstFailedLeaf<T extends FailureCandidate>(
+    taskRuns: T[],
+    taskType: (taskId: string) => string | undefined = () => undefined,
+): T | undefined {
+    const failed = taskRuns.filter((taskRun) => isFailedTaskRunState(taskRun.state?.current) && !isHiddenTaskType(taskType(taskRun.taskId)))
     const parentIds = new Set(failed.map((taskRun) => taskRun.parentTaskRunId))
     return failed.find((taskRun) => !parentIds.has(taskRun.id))
+}
+
+export function findFirstFailedTaskRun(execution: Execution, taskType?: (taskId: string) => string | undefined): ExecutionTaskRun | undefined {
+    return firstFailedLeaf(execution.taskRunList ?? [], taskType)
 }
 
 export function taskRunPath(execution: Execution, taskRun: ExecutionTaskRun): string[] {

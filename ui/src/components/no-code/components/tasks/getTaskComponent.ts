@@ -149,7 +149,7 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         // A discriminated union too large to page through in a plain TaskArray, but not
         // plugin-provided (e.g. flow Input's ~15 short-named types: string, int, json, ...) —
         // the implementation control doesn't apply, so it keeps the collapsible counted-header list.
-        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10) {
+        if (items?.anyOf && (items.anyOf.length === 0 || items.anyOf.length > 10)) {
             return "list"
         }
 

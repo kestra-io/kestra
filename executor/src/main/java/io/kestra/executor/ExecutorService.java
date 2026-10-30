@@ -17,6 +17,7 @@ import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetIdentifier;
@@ -72,6 +73,7 @@ public class ExecutorService {
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
 
     @Inject
     public ExecutorService(
@@ -89,7 +91,8 @@ public class ExecutorService {
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
-        PausedTaskNotifier pausedTaskNotifier) {
+        PausedTaskNotifier pausedTaskNotifier,
+        WorkerJobRunningStateStore workerJobRunningStateStore) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -105,6 +108,7 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
+        this.workerJobRunningStateStore = workerJobRunningStateStore;
     }
 
     public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
@@ -192,8 +196,6 @@ public class ExecutorService {
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
-            // if killing: kill the task runs no worker will ever answer for — created (not yet started)
-            // and retrying (waiting on the executor's own retry delay, which a kill must not fire)
             executor = this.handleNeverRunnedKilling(executor);
             //then set the execution to killed
             executor = this.handleKilling(executor);
@@ -1301,19 +1303,30 @@ public class ExecutorService {
         List<WorkerTaskResult> workerTaskResults = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() || taskRun.getState().getCurrent() == State.Type.RETRYING)
-            .map(
-                t -> childWorkerTaskTypeToWorkerTask(
-                    Optional.of(State.Type.KILLED),
-                    t
-                )
-            )
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .filter(Rethrow.throwPredicate(taskRun -> taskRun.getState().getCurrent().isCreated()
+                || taskRun.getState().getCurrent() == State.Type.RETRYING
+                || isOrphanedRunningTask(taskRun, executor)))
+            .map(taskRun -> new WorkerTaskResult(taskRun.getState().isRunning()
+                ? taskRun.withStateAndAttempt(State.Type.KILLED)
+                : taskRun.withState(State.Type.KILLED)))
             .toList();
 
         this.addWorkerTaskResults(executor, workerTaskResults);
         return executor;
+    }
+
+    private boolean isOrphanedRunningTask(TaskRun taskRun, ExecutorContext executor) throws InternalException {
+        if (taskRun.getState().getCurrent() != State.Type.RUNNING) {
+            return false;
+        }
+
+        Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
+        if (!(task instanceof RunnableTask<?>) && !(task instanceof WorkingDirectory)) {
+            return false;
+        }
+
+        TaskRun workerTaskRun = parentWorkingDirectory(taskRun, executor).orElse(taskRun);
+        return !workerJobRunningStateStore.existsByKey(workerTaskRun.getId());
     }
 
     private ExecutorContext handleAfterExecution(ExecutorContext executor) {

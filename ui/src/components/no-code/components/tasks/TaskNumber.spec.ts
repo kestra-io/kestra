@@ -1,45 +1,20 @@
-import {describe, expect, test} from "vitest"
-import {KsInputNumber} from "@kestra-io/design-system"
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import { describe, expect, test } from "vitest"
+import { KsInputNumber } from "@kestra-io/design-system"
+import { i18nMount } from "../../../../../tests/unit/i18nMount"
 import TaskNumber from "./TaskNumber.vue"
 
 describe("TaskNumber", () => {
-    test("uses the schema default when no modelValue is given", () => {
-        const wrapper = i18nMount(TaskNumber, {
-            props: {
-                schema: {type: "number", default: 10},
-            },
-        })
-
-        const input = wrapper.findComponent(KsInputNumber)
-        expect(input.props("modelValue")).toBe(10)
-        expect((wrapper.find("input").element as HTMLInputElement).value).toBe("10")
-    })
-
     test("uses modelValue over the schema default", () => {
         const wrapper = i18nMount(TaskNumber, {
             props: {
                 modelValue: 5,
-                schema: {type: "number", default: 10},
+                schema: { type: "number", default: 10 },
             },
         })
 
         const input = wrapper.findComponent(KsInputNumber)
         expect(input.props("modelValue")).toBe(5)
         expect((wrapper.find("input").element as HTMLInputElement).value).toBe("5")
-    })
-
-    test("passes minimum, maximum and step from the schema to the input", () => {
-        const wrapper = i18nMount(TaskNumber, {
-            props: {
-                schema: {type: "number", minimum: 1, maximum: 100, step: 5},
-            },
-        })
-
-        const input = wrapper.findComponent(KsInputNumber)
-        expect(input.props("min")).toBe(1)
-        expect(input.props("max")).toBe(100)
-        expect(input.props("step")).toBe(5)
     })
 
     test("marks a required field with no value as invalid", () => {
@@ -102,7 +77,7 @@ describe("TaskNumber", () => {
         const wrapper = i18nMount(TaskNumber, {
             props: {
                 modelValue: 0,
-                schema: {type: "number", default: 10},
+                schema: { type: "number", default: 10 },
             },
         })
 

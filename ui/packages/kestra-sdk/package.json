@@ -28,6 +28,7 @@
     "./notifications": "./dist/notifications.js",
     "./outputs": "./dist/outputs.js",
     "./plugins": "./dist/plugins.js",
+    "./searchable-data": "./dist/searchable-data.js",
     "./secrets": "./dist/secrets.js",
     "./services": "./dist/services.js",
     "./shared": "./dist/shared.js",

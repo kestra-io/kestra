@@ -161,9 +161,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
-                    key: "outputs",
-                    label: t("filter.outputs.label"),
-                    description: t("filter.outputs.description"),
+                    key: "searchableData",
+                    label: t("filter.searchableData.label"),
+                    description: t("filter.searchableData.description"),
                     comparators: [
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,

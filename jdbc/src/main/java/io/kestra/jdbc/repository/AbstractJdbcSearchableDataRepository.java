@@ -16,8 +16,8 @@ import org.jooq.impl.DSL;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.searchable.SearchableOutput;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.AbstractJdbcRepository;
 
@@ -25,32 +25,32 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 
 /**
- * The {@code searchable_outputs} table stores one plain column per attribute so that the value can be indexed, and is keyed by
- * tenant, execution, output id and item index. Writes are an upsert on that key which only updates the value.
+ * The {@code searchable_data} table stores one plain column per attribute so that the value can be indexed, and is keyed by
+ * tenant, execution, data id and item index. Writes are an upsert on that key which only updates the value.
  */
-public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.jdbc.repository.AbstractJdbcRepository implements SearchableOutputRepositoryInterface {
+public abstract class AbstractJdbcSearchableDataRepository extends io.kestra.jdbc.repository.AbstractJdbcRepository implements SearchableDataRepositoryInterface {
     public static final Field<String> EXECUTION_ID_FIELD = field("execution_id", String.class);
-    public static final Field<String> OUTPUT_ID_FIELD = field("output_id", String.class);
-    public static final Field<Integer> OUTPUT_INDEX_FIELD = field("output_index", Integer.class);
+    public static final Field<String> DATA_ID_FIELD = field("data_id", String.class);
+    public static final Field<Integer> DATA_INDEX_FIELD = field("data_index", Integer.class);
     public static final Field<String> VALUE_FIELD = field("value", String.class);
 
-    private final AbstractJdbcRepository<SearchableOutput> jdbcRepository;
+    private final AbstractJdbcRepository<SearchableData> jdbcRepository;
 
-    public AbstractJdbcSearchableOutputRepository(AbstractJdbcRepository<SearchableOutput> jdbcRepository) {
+    public AbstractJdbcSearchableDataRepository(AbstractJdbcRepository<SearchableData> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
     @Override
-    public SearchableOutput save(SearchableOutput searchableOutput) {
+    public SearchableData save(SearchableData searchableData) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> upsert(DSL.using(configuration), searchableOutput).execute());
-        return searchableOutput;
+            .transaction(configuration -> upsert(DSL.using(configuration), searchableData).execute());
+        return searchableData;
     }
 
     @Override
-    public int saveBatch(List<SearchableOutput> searchableOutputs) {
-        if (searchableOutputs.isEmpty()) {
+    public int saveBatch(List<SearchableData> searchableData) {
+        if (searchableData.isEmpty()) {
             return 0;
         }
 
@@ -58,13 +58,13 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 var context = DSL.using(configuration);
-                context.batch(searchableOutputs.stream().map(it -> upsert(context, it)).toList()).execute();
-                return searchableOutputs.size();
+                context.batch(searchableData.stream().map(it -> upsert(context, it)).toList()).execute();
+                return searchableData.size();
             });
     }
 
     @Override
-    public Optional<SearchableOutput> findById(String tenantId, String executionId, String outputId) {
+    public Optional<SearchableData> findById(String tenantId, String executionId, String dataId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
@@ -73,16 +73,16 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
                 .from(this.jdbcRepository.getTable())
                 .where(buildTenantCondition(tenantId))
                 .and(EXECUTION_ID_FIELD.eq(executionId))
-                .and(OUTPUT_ID_FIELD.eq(outputId))
-                .and(OUTPUT_INDEX_FIELD.eq(0))
+                .and(DATA_ID_FIELD.eq(dataId))
+                .and(DATA_INDEX_FIELD.eq(0))
                 .limit(1)
                 .fetchOptional()
-                .map(AbstractJdbcSearchableOutputRepository::toSearchableOutput));
+                .map(AbstractJdbcSearchableDataRepository::toSearchableData));
     }
 
     @Override
-    public ArrayListTotal<SearchableOutput> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
-        Pageable ordered = Pageable.from(pageable.getNumber(), pageable.getSize(), Sort.of(Sort.Order.asc("output_id"), Sort.Order.asc("output_index")));
+    public ArrayListTotal<SearchableData> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
+        Pageable ordered = pageable.withSort(Sort.of(Sort.Order.asc("data_id"), Sort.Order.asc("data_index")));
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -93,14 +93,14 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
                     .where(buildTenantCondition(tenantId))
                     .and(EXECUTION_ID_FIELD.eq(executionId));
 
-                return this.jdbcRepository.fetchPage(DSL.using(configuration), select, ordered, AbstractJdbcSearchableOutputRepository::toSearchableOutput);
+                return this.jdbcRepository.fetchPage(DSL.using(configuration), select, ordered, AbstractJdbcSearchableDataRepository::toSearchableData);
             });
     }
 
     @Override
-    public List<String> findExecutionIds(String tenantId, String outputId, QueryFilter.Op operation, Object value, int limit) {
+    public List<String> findExecutionIds(String tenantId, String dataId, QueryFilter.Op operation, Object value, int limit) {
         if (value == null) {
-            throw new IllegalArgumentException("Operation %s requires a non-null value on searchable outputs.".formatted(operation));
+            throw new IllegalArgumentException("Operation %s requires a non-null value on searchable data.".formatted(operation));
         }
 
         Condition valueCondition = switch (operation) {
@@ -108,7 +108,7 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
             case NOT_EQUALS -> VALUE_FIELD.ne(value.toString());
             case IN -> VALUE_FIELD.in(ListUtils.convertToListString(value));
             case NOT_IN -> VALUE_FIELD.notIn(ListUtils.convertToListString(value));
-            default -> throw new IllegalArgumentException("Operation %s is not supported on searchable outputs.".formatted(operation));
+            default -> throw new IllegalArgumentException("Operation %s is not supported on searchable data.".formatted(operation));
         };
 
         return this.jdbcRepository
@@ -118,7 +118,7 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
                 .selectDistinct(EXECUTION_ID_FIELD)
                 .from(this.jdbcRepository.getTable())
                 .where(buildTenantCondition(tenantId))
-                .and(OUTPUT_ID_FIELD.eq(outputId))
+                .and(DATA_ID_FIELD.eq(dataId))
                 .and(valueCondition)
                 .limit(limit)
                 .fetch(EXECUTION_ID_FIELD));
@@ -142,25 +142,25 @@ public abstract class AbstractJdbcSearchableOutputRepository extends io.kestra.j
      */
     private List<Field<?>> keyFields(DSLContext context) {
         String table = this.jdbcRepository.getTable().getName();
-        return Stream.of("tenant_id", "execution_id", "output_id", "output_index")
+        return Stream.of("tenant_id", "execution_id", "data_id", "data_index")
             .<Field<?>>map(column -> SQLDialect.H2 == context.family() ? DSL.field(DSL.name(table.toUpperCase(Locale.ROOT), column)) : DSL.field(DSL.name(column)))
             .toList();
     }
 
-    private Query upsert(DSLContext context, SearchableOutput searchableOutput) {
+    private Query upsert(DSLContext context, SearchableData searchableData) {
         return context
             .insertInto(this.jdbcRepository.getTable())
-            .set(TENANT_ID_FIELD, searchableOutput.tenantId())
-            .set(EXECUTION_ID_FIELD, searchableOutput.executionId())
-            .set(OUTPUT_ID_FIELD, searchableOutput.outputId())
-            .set(OUTPUT_INDEX_FIELD, searchableOutput.index())
-            .set(VALUE_FIELD, searchableOutput.value())
+            .set(TENANT_ID_FIELD, searchableData.tenantId())
+            .set(EXECUTION_ID_FIELD, searchableData.executionId())
+            .set(DATA_ID_FIELD, searchableData.dataId())
+            .set(DATA_INDEX_FIELD, searchableData.index())
+            .set(VALUE_FIELD, searchableData.value())
             .onConflict(keyFields(context))
             .doUpdate()
             .set(VALUE_FIELD, DSL.excluded(VALUE_FIELD));
     }
 
-    private static SearchableOutput toSearchableOutput(Record record) {
-        return new SearchableOutput(record.get(TENANT_ID_FIELD), record.get(EXECUTION_ID_FIELD), record.get(OUTPUT_ID_FIELD), record.get(OUTPUT_INDEX_FIELD), record.get(VALUE_FIELD));
+    private static SearchableData toSearchableData(Record record) {
+        return new SearchableData(record.get(TENANT_ID_FIELD), record.get(EXECUTION_ID_FIELD), record.get(DATA_ID_FIELD), record.get(DATA_INDEX_FIELD), record.get(VALUE_FIELD));
     }
 }

@@ -20,8 +20,10 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.ArrayInput;
 import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
@@ -47,7 +49,10 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.io.buffer.ReadBufferFactory;
@@ -83,6 +88,9 @@ class FlowInputOutputTest {
 
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     KVMetadataStateStore kvMetadataStateStore;
@@ -475,6 +483,62 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst().value());
+    }
+
+    @Test
+    void shouldSaveOnlySearchableInputsWhenReadingExecutionInputs() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .flowId("test-flow")
+            .flowRevision(1)
+            .namespace("io.kestra.test")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                StringInput.builder().id("orderId").type(Type.STRING).searchable(true).build(),
+                ArrayInput.builder().id("orderIds").type(Type.ARRAY).itemType(Type.STRING).searchable(true).build(),
+                StringInput.builder().id("ignored").type(Type.STRING).build()
+            ))
+            .build();
+
+        // When
+        flowInputOutput.readExecutionInputs(flow, execution, Map.of("orderId", "ORD-1", "orderIds", List.of("ORD-2", "ORD-3"), "ignored", "x"));
+
+        // Then
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderId")).contains(new SearchableData(tenant, execution.getId(), "orderId", "ORD-1"));
+        assertThat(searchableDataRepository.findExecutionIds(tenant, "orderIds", QueryFilter.Op.IN, List.of("ORD-2", "ORD-3"), 10)).containsExactly(execution.getId());
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "ignored")).isEmpty();
+    }
+
+    @Test
+    void shouldNotSaveSearchableInputsWhenAnotherInputIsInvalid() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .flowId("test-flow")
+            .flowRevision(1)
+            .namespace("io.kestra.test")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                StringInput.builder().id("orderId").type(Type.STRING).searchable(true).build(),
+                IntInput.builder().id("count").type(Type.INT).required(true).build()
+            ))
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, execution, Map.of("orderId", "ORD-1")))
+            .isInstanceOf(InputOutputValidationException.class);
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderId")).isEmpty();
     }
 
     @Test

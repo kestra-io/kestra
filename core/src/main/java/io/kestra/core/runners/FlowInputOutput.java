@@ -15,6 +15,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
+import io.kestra.core.searchable.SearchableDataUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
@@ -77,6 +80,7 @@ public class FlowInputOutput {
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
     private final ReusableInputsExpander reusableInputsExpander;
     private final LocalPathFactory localPathFactory;
+    private final SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     public FlowInputOutput(
@@ -84,12 +88,14 @@ public class FlowInputOutput {
         Provider<RunContextFactory> runContextFactory,
         EncryptionConfig encryptionConfig,
         ReusableInputsExpander reusableInputsExpander,
-        LocalPathFactory localPathFactory) {
+        LocalPathFactory localPathFactory,
+        SearchableDataRepositoryInterface searchableDataRepository) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
         this.reusableInputsExpander = reusableInputsExpander;
         this.localPathFactory = localPathFactory;
+        this.searchableDataRepository = searchableDataRepository;
     }
 
     /**
@@ -296,23 +302,53 @@ public class FlowInputOutput {
         return readExecutionInputs(flow.getInputs(), flow, execution, data);
     }
 
+    /**
+     * Indexes the searchable inputs of an execution. A failure is logged and doesn't fail the execution, which is then not searchable.
+     */
+    private void saveSearchableData(final FlowInterface flow, final Execution execution, final List<SearchableData> searchableData) {
+        if (searchableData.isEmpty()) {
+            return;
+        }
+
+        try {
+            searchableDataRepository.saveBatch(searchableData);
+        } catch (Exception e) {
+            runContextFactory.get().of(flow, execution).logger()
+                .error("Failed to index the searchable inputs of the execution '{}', they will not be searchable: {}", execution.getId(), e.getMessage(), e);
+        }
+    }
+
     private Map<String, Object> readExecutionInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
+        List<SearchableData> searchableData = new ArrayList<>();
         Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
             .stream()
             .filter(InputAndValue::enabled)
-            .map(it ->
-            {
+            .peek(it -> {
                 //TODO check to return all exception at-once.
                 if (it.exceptions() != null && !it.exceptions().isEmpty()) {
                     throw InputOutputValidationException.merge(it.exceptions());
                 }
+            })
+            .map(it ->
+            {
+                if (Boolean.TRUE.equals(it.input().getSearchable())) {
+                    RunContext runContext = runContextFactory.get().of(flow, execution);
+                    try {
+                        searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), execution, it.input(), it.value()));
+                    } catch (Exception e) {
+                        runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), execution.getId(), e.getMessage(), e);
+                    }
+                }
+
                 return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        // saved only once every input is valid, so a rejected execution leaves no orphan rows
+        saveSearchableData(flow, execution, searchableData);
         if (resolved.size() < data.size()) {
             RunContext runContext = runContextFactory.get().of(flow, execution);
             for (var inputKey : data.keySet()) {

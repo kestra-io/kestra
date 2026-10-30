@@ -283,7 +283,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        List<InputAndValue> resolvedInputs = this.resolveInputs(inputs, flow, execution, data, true);
+        List<InputAndValue> resolvedInputs = this.resolveInputs(inputs, flow, execution, data, true, true);
 
         Map<String, List<InputOutputValidationException>> violationsByField = new LinkedHashMap<>();
         for (InputAndValue it : resolvedInputs) {

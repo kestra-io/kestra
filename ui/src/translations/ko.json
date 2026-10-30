@@ -467,6 +467,41 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 다시 시작하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resume from breakpoint title": "{id} 실행을 중단점에서 재개",
+    "approval": {
+      "review": "검토",
+      "title": "Execution {id}의 {task} 검토",
+      "approve": "승인",
+      "deny": "거부",
+      "comment": "설명",
+      "comment hint": {
+        "optional": "선택 사항.",
+        "always": "댓글이 필요합니다.",
+        "on approve": "승인하려면 댓글이 필요합니다.",
+        "on deny": "거부하려면 주석이 필요합니다."
+      },
+      "comment required": "이 결정에는 주석이 필요합니다.",
+      "inputs invalid": "일부 입력이 유효하지 않습니다: {errors}",
+      "review done": "귀하의 검토가 기록되었습니다.",
+      "reviewed": {
+        "title": "실행 {id}에 대한 승인 요청",
+        "explanation": "이 승인 요청은 더 이상 검토를 기다리지 않습니다.",
+        "decision": "결정",
+        "by": "결정 기준",
+        "on": "결정됨",
+        "decisions": {
+          "approved": "승인됨",
+          "denied": "거부됨",
+          "expired": "만료됨"
+        }
+      },
+      "cancel request": "요청 취소",
+      "cancel confirm": "execution {id}에 대한 승인 요청을 취소하시겠습니까? 결정 branch는 실행되지 않습니다.",
+      "cancel done": "승인 요청이 취소되었습니다.",
+      "banner": {
+        "pausing": "이 실행은 승인 요청을 준비 중이며 검토를 위해 일시 중지됩니다.",
+        "paused": "이 Execution은 검토를 기다리고 있습니다. 계속하려면 승인하거나 거부하세요."
+      }
+    },
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
@@ -1285,6 +1320,7 @@
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
     "relative start date": "상대적 시작 날짜",
+    "now": "지금",
     "absolute": "절대적",
     "backfill": "Backfill",
     "Set labels": "라벨 설정",
@@ -2954,6 +2990,56 @@
     "iteration": "반복",
     "iteration_number": "반복 {number}",
     "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
-    "not started": "시작되지 않음"
+    "not started": "시작되지 않음",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "전체",
+        "total": "실행 {count}개 | 실행 {count}개",
+        "failed": "{count}개 실패"
+      },
+      "toolbar": {
+        "panBack": "뒤로 이동",
+        "panForward": "앞으로 이동",
+        "zoomIn": "확대",
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "이 페이지 열기",
+        "runsCount": "실행 {count}개 | 실행 {count}개",
+        "failedCount": "{count}개 실패"
+      },
+      "bucket": {
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "실행 열기",
+        "showOnlyFlow": "이 flow만 표시"
+      },
+      "empty": {
+        "description": "선택한 기간과 필터에 해당하는 실행이 없습니다.",
+        "resetFilters": "필터 재설정",
+        "widenRange": "7일로 확장"
+      },
+      "error": {
+        "title": "타임라인을 불러오지 못했습니다",
+        "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다. 모두 보려면 기간이나 필터를 좁혀 보세요."
+      },
+      "scrubber": {
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요.",
+        "ignoredFilters": "밀도 막대에는 다음 필터가 적용되지 않습니다: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "카운트",
+      "timeline": "타임라인"
+    }
   }
 }

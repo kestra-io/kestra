@@ -467,6 +467,41 @@
     "resumed confirm": "Вы уверены, что хотите возобновить выполнение <code>{id}</code>?",
     "resumed done": "Выполнение возобновлено",
     "resume from breakpoint title": "Возобновить выполнение {id} с точки останова",
+    "approval": {
+      "review": "Обзор",
+      "title": "Просмотр {task} выполнения {id}",
+      "approve": "Одобрить",
+      "deny": "Отклонить",
+      "comment": "Комментарий",
+      "comment hint": {
+        "optional": "Необязательно.",
+        "always": "Комментарий обязателен.",
+        "on approve": "Для утверждения требуется комментарий.",
+        "on deny": "Для отказа требуется комментарий."
+      },
+      "comment required": "Для этого решения требуется комментарий.",
+      "inputs invalid": "Некоторые input'ы недействительны: {errors}",
+      "review done": "Ваш отзыв был записан",
+      "reviewed": {
+        "title": "Запрос на утверждение execution {id}",
+        "explanation": "Этот запрос на утверждение больше не ожидает рассмотрения.",
+        "decision": "Решение",
+        "by": "Решено",
+        "on": "Принято решение",
+        "decisions": {
+          "approved": "Одобрено",
+          "denied": "Отказано",
+          "expired": "Истекший"
+        }
+      },
+      "cancel request": "Отменить запрос",
+      "cancel confirm": "Вы уверены, что хотите отменить запрос на одобрение execution {id}? Ни одна ветка решения не будет запущена.",
+      "cancel done": "Запрос на утверждение отменен",
+      "banner": {
+        "pausing": "Эта egzekucja готовит запрос на утверждение и будет приостановлена для проверки.",
+        "paused": "Эта egzekucja ожидает проверки. Одобрите или отклоните ее, чтобы продолжить."
+      }
+    },
     "resume from breakpoint done": "Выполнение возобновлено с точки останова",
     "breakpoints": "Точки останова",
     "pause": "Пауза",
@@ -1285,6 +1320,7 @@
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
     "relative start date": "Относительная дата начала",
+    "now": "Сейчас",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
     "Set labels": "Установить метки",
@@ -2954,6 +2990,56 @@
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
     "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
-    "not started": "Не начато"
+    "not started": "Не начато",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Все",
+        "total": "{count} запуск | {count} запуска | {count} запусков",
+        "failed": "{count} неудачных"
+      },
+      "toolbar": {
+        "panBack": "Прокрутить назад",
+        "panForward": "Прокрутить вперёд",
+        "zoomIn": "Увеличить",
+        "zoomOut": "Уменьшить",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Открыть эту страницу",
+        "runsCount": "{count} запуск | {count} запуска | {count} запусков",
+        "failedCount": "{count} неудачных"
+      },
+      "bucket": {
+        "hint": "Агрегировано: увеличьте масштаб для просмотра деталей выполнения",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Открыть выполнение",
+        "showOnlyFlow": "Показать только этот flow"
+      },
+      "empty": {
+        "description": "Нет выполнений в выбранном диапазоне и фильтрах.",
+        "resetFilters": "Сбросить фильтры",
+        "widenRange": "Расширить до 7 дней"
+      },
+      "error": {
+        "title": "Не удалось загрузить временную шкалу",
+        "description": "Произошла ошибка при загрузке выполнений за этот период."
+      },
+      "truncated": {
+        "description": "Отображаются последние {shown} из {total} выполнений. Сузьте период времени или фильтры, чтобы увидеть все."
+      },
+      "scrubber": {
+        "label": "Плотность Execution с течением времени, перетащите, чтобы выбрать диапазон",
+        "ignoredFilters": "Полоса плотности не применяет эти фильтры: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Счётчики",
+      "timeline": "Временная шкала"
+    }
   }
 }

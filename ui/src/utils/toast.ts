@@ -1,5 +1,5 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
-import {App, h} from "vue"
+import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
 
 // Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
@@ -42,7 +42,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     }
     
     return {
-        confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message: string | Component, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
             return KsMessageBox
                 .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
                 .then(() => callback())

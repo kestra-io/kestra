@@ -467,6 +467,41 @@
     "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
     "resumed done": "Egzekucja została wznowiona",
     "resume from breakpoint title": "Wznów egzekucję {id} od Breakpointa",
+    "approval": {
+      "review": "Przegląd",
+      "title": "Przejrzyj {task} egzekucji {id}",
+      "approve": "Zatwierdź",
+      "deny": "Odmów",
+      "comment": "Komentarz",
+      "comment hint": {
+        "optional": "Opcjonalnie.",
+        "always": "Komentarz jest wymagany.",
+        "on approve": "Komentarz jest wymagany do zatwierdzenia.",
+        "on deny": "Komentarz jest wymagany, aby odrzucić."
+      },
+      "comment required": "Komentarz jest wymagany dla tej decyzji.",
+      "inputs invalid": "Niektóre Inputy są nieprawidłowe: {errors}",
+      "review done": "Twoja recenzja została zapisana",
+      "reviewed": {
+        "title": "Żądanie zatwierdzenia egzekucji {id}",
+        "explanation": "To żądanie zatwierdzenia nie czeka już na recenzję.",
+        "decision": "Decyzja",
+        "by": "Zdecydowano przez",
+        "on": "Zdecydowano na",
+        "decisions": {
+          "approved": "Zatwierdzono",
+          "denied": "Odmówiono",
+          "expired": "Wygasłe"
+        }
+      },
+      "cancel request": "Anuluj żądanie",
+      "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji {id}? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
+      "cancel done": "Żądanie zatwierdzenia zostało anulowane",
+      "banner": {
+        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
+      }
+    },
     "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",
     "pause": "Wstrzymaj",
@@ -1285,6 +1320,7 @@
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
     "relative start date": "Względna data rozpoczęcia",
+    "now": "Teraz",
     "absolute": "Absolutny",
     "backfill": "Backfill",
     "Set labels": "Ustaw etykiety",
@@ -2954,6 +2990,56 @@
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
     "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
-    "not started": "Nierozpoczęte"
+    "not started": "Nierozpoczęte",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Wszystkie",
+        "total": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failed": "{count} nieudanych"
+      },
+      "toolbar": {
+        "panBack": "Przewiń wstecz",
+        "panForward": "Przewiń do przodu",
+        "zoomIn": "Przybliż",
+        "zoomOut": "Oddal",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Otwórz tę stronę",
+        "runsCount": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failedCount": "{count} nieudanych"
+      },
+      "bucket": {
+        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Otwórz wykonanie",
+        "showOnlyFlow": "Pokaż tylko ten flow"
+      },
+      "empty": {
+        "description": "Brak wykonań w wybranym zakresie i filtrach.",
+        "resetFilters": "Zresetuj filtry",
+        "widenRange": "Rozszerz do 7 dni"
+      },
+      "error": {
+        "title": "Nie udało się załadować osi czasu",
+        "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
+      },
+      "truncated": {
+        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań. Zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
+      },
+      "scrubber": {
+        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres",
+        "ignoredFilters": "Pasek gęstości nie stosuje tych filtrów: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Liczniki",
+      "timeline": "Oś czasu"
+    }
   }
 }

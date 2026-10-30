@@ -467,6 +467,41 @@
     "resumed confirm": "Voulez-vous vraiment reprendre l'exécution <code>{id}</code> ?",
     "resumed done": "L'exécution est reprise",
     "resume from breakpoint title": "Reprendre l'exécution {id} depuis le point d'arrêt",
+    "approval": {
+      "review": "Révision",
+      "title": "Vérifier le {task} de l'Execution {id}",
+      "approve": "Approuver",
+      "deny": "Refuser",
+      "comment": "Commentaire",
+      "comment hint": {
+        "optional": "Facultatif.",
+        "always": "Un commentaire est requis.",
+        "on approve": "Un commentaire est requis pour approuver.",
+        "on deny": "Un commentaire est requis pour refuser."
+      },
+      "comment required": "Un commentaire est requis pour cette décision.",
+      "inputs invalid": "Certains inputs sont invalides : {errors}",
+      "review done": "Votre avis a été enregistré",
+      "reviewed": {
+        "title": "Demande d'approbation de l'exécution {id}",
+        "explanation": "Cette demande d'approbation n'attend plus de révision.",
+        "decision": "Décision",
+        "by": "Décidé par",
+        "on": "Décidé le",
+        "decisions": {
+          "approved": "Approuvé",
+          "denied": "Refusé",
+          "expired": "Expiré"
+        }
+      },
+      "cancel request": "Annuler la demande",
+      "cancel confirm": "Voulez-vous vraiment annuler la demande d'approbation de l'exécution {id} ? Aucune branche de décision ne sera exécutée.",
+      "cancel done": "La demande d'approbation a été annulée",
+      "banner": {
+        "pausing": "Cette exécution prépare une demande d'approbation et se mettra en pause pour une révision.",
+        "paused": "Cette exécution est en attente d'une révision. Approuvez-la ou refusez-la pour continuer."
+      }
+    },
     "resume from breakpoint done": "L'exécution est reprise depuis le point d'arrêt",
     "breakpoints": "Points d'arrêt",
     "pause": "Pause",
@@ -1285,6 +1320,7 @@
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
     "relative start date": "Date de début relative",
+    "now": "Maintenant",
     "absolute": "Absolu",
     "backfill": "Backfill",
     "Set labels": "Ajouter des labels",
@@ -2954,6 +2990,56 @@
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
     "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
-    "not started": "Non démarré"
+    "not started": "Non démarré",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow} : {state}"
+      },
+      "breadcrumb": {
+        "all": "Tous",
+        "total": "{count} exécution | {count} exécutions",
+        "failed": "{count} en échec"
+      },
+      "toolbar": {
+        "panBack": "Reculer",
+        "panForward": "Avancer",
+        "zoomIn": "Zoomer",
+        "zoomOut": "Dézoomer",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Ouvrir cette page",
+        "runsCount": "{count} exécution | {count} exécutions",
+        "failedCount": "{count} en échec"
+      },
+      "bucket": {
+        "hint": "Agrégé : zoomez pour le détail au niveau de l'exécution",
+        "stateCount": "{state} : {count}"
+      },
+      "popover": {
+        "openExecution": "Ouvrir l'exécution",
+        "showOnlyFlow": "Afficher uniquement ce flow"
+      },
+      "empty": {
+        "description": "Aucune exécution dans la période et les filtres sélectionnés.",
+        "resetFilters": "Réinitialiser les filtres",
+        "widenRange": "Élargir à 7 jours"
+      },
+      "error": {
+        "title": "Impossible de charger la chronologie",
+        "description": "Une erreur s'est produite lors du chargement des exécutions pour cette période."
+      },
+      "truncated": {
+        "description": "Affichage des {shown} dernières exécutions sur {total}. Réduisez la période ou les filtres pour toutes les voir."
+      },
+      "scrubber": {
+        "label": "Densité d'Execution au fil du temps, faites glisser pour sélectionner une plage",
+        "ignoredFilters": "La barre de densité n'applique pas ces filtres : {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Décompte",
+      "timeline": "Chronologie"
+    }
   }
 }

@@ -467,6 +467,41 @@
     "resumed confirm": "Execution <code>{id}</code> wirklich fortsetzen?",
     "resumed done": "Die Execution wurde fortgesetzt",
     "resume from breakpoint title": "Execution {id} ab Breakpoint fortsetzen",
+    "approval": {
+      "review": "Überprüfen",
+      "title": "Überprüfe {task} der Execution {id}",
+      "approve": "Genehmigen",
+      "deny": "Verweigern",
+      "comment": "Kommentar",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "Ein Kommentar ist erforderlich.",
+        "on approve": "Ein Kommentar ist zur Genehmigung erforderlich.",
+        "on deny": "Ein Kommentar ist erforderlich, um abzulehnen."
+      },
+      "comment required": "Ein Kommentar ist für diese Entscheidung erforderlich.",
+      "inputs invalid": "Einige Inputs sind ungültig: {errors}",
+      "review done": "Deine Bewertung wurde aufgezeichnet",
+      "reviewed": {
+        "title": "Genehmigungsanfrage für Execution {id}",
+        "explanation": "Diese Genehmigungsanfrage wartet nicht mehr auf eine Überprüfung.",
+        "decision": "Entscheidung",
+        "by": "Entschieden durch",
+        "on": "Entschieden am",
+        "decisions": {
+          "approved": "Genehmigt",
+          "denied": "Verweigert",
+          "expired": "Abgelaufen"
+        }
+      },
+      "cancel request": "Anfrage abbrechen",
+      "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution {id} wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
+      "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
+      "banner": {
+        "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",
+        "paused": "Diese Execution wartet auf eine Überprüfung. Genehmige oder lehne sie ab, um fortzufahren."
+      }
+    },
     "resume from breakpoint done": "Die Execution wird ab dem Breakpoint fortgesetzt",
     "breakpoints": "Breakpoints",
     "pause": "Pause",
@@ -1285,6 +1320,7 @@
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
     "relative start date": "Relatives Startdatum",
+    "now": "Jetzt",
     "absolute": "Absolut",
     "backfill": "Backfill",
     "Set labels": "Labels festlegen",
@@ -2954,6 +2990,56 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
-    "not started": "Nicht gestartet"
+    "not started": "Nicht gestartet",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen. Schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      },
+      "scrubber": {
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen",
+        "ignoredFilters": "Die Dichteleiste wendet diese Filter nicht an: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
+    }
   }
 }

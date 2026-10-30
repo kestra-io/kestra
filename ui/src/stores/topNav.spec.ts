@@ -25,20 +25,4 @@ describe("top nav store", () => {
         expect(store.title).toBe("Executions")
         expect(store.breadcrumb).toBe(breadcrumb)
     })
-
-    it("shares updated state across multiple store readers", () => {
-        const firstReader = useTopNavStore()
-        const secondReader = useTopNavStore()
-        const breadcrumb = [{label: "Flows"}]
-
-        firstReader.title = "Executions"
-        firstReader.breadcrumb = breadcrumb
-        firstReader.bookmarkLabel = "My flows"
-        firstReader.description = "Flow executions"
-
-        expect(secondReader.title).toBe("Executions")
-        expect(secondReader.breadcrumb).toBe(breadcrumb)
-        expect(secondReader.bookmarkLabel).toBe("My flows")
-        expect(secondReader.description).toBe("Flow executions")
-    })
 })

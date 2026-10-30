@@ -1,0 +1,10 @@
+id: notify-users-read
+namespace: io.kestra.tests
+
+tasks:
+  - id: notify
+    type: io.kestra.plugin.core.notification.Notify
+    users:
+      - alice
+    title: "Done quietly: {{ execution.id }}"
+    read: true

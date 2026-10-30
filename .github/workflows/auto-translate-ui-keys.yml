@@ -59,11 +59,23 @@ jobs:
       matrix:
         branch: ${{ fromJSON(needs.plan.outputs.branches) }}
     steps:
+        # The branch is pushed and the PR opened as the Kestra GitHub App: done with `GITHUB_TOKEN`,
+        # neither starts a workflow run, so the PR had no checks until someone re-ran them.
+        - name: Generate GitHub App token
+          id: app-token
+          uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+          with:
+            client-id: ${{ secrets.GH_BOT_APP_ID }}
+            private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+            owner: kestra-io
+            repositories: kestra
+
         - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           name: Checkout
           with:
             ref: ${{ matrix.branch }}
             fetch-depth: 0
+            token: ${{ steps.app-token.outputs.token }}
 
         - name: Set up Node
           uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -87,12 +99,12 @@ jobs:
 
         - name: Set up Git
           run: |
-            git config --global user.name "GitHub Action"
-            git config --global user.email "actions@github.com"
+            git config --global user.name "kestra-io"
+            git config --global user.email "hello@kestra.io"
 
         - name: Commit and create PR
           env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
           run: |
             BRANCH_NAME="chore/update-translations-$(echo "${{ matrix.branch }}" | tr "/" "-")-$(date +%s)"
             git checkout -b $BRANCH_NAME

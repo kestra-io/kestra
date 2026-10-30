@@ -151,8 +151,8 @@ jobs:
   # The scheduled `auto-translate-ui-keys.yml` still runs independently and remains the way to
   # translate `develop` or to force a full re-translation from a branch.
   #
-  # Branches in this repository only: a fork PR is withheld the GCP credentials and its branch
-  # cannot be pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
+  # Branches in this repository only: a fork PR is withheld the GCP credentials and the app token
+  # cannot push to a fork. Those PRs still get the check below, they just have to run the
   # generator themselves.
   translations-generate:
     name: 'Translations - Generate'
@@ -164,19 +164,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: write
+      contents: read
     # Gemini is reached through Vertex AI with the `GCP_SERVICE_ACCOUNT` key. The secret itself is never
     # put in the job env, where `npm ci` would see it: only whether it is set is mirrored, so the steps
     # can be gated on it and a repository without it skips generation instead of failing.
     env:
       HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
     steps:
+      # The commit is pushed as the Kestra GitHub App: a push made with `GITHUB_TOKEN` starts no workflow
+      # run, so the pull request was left without a check on the generated commit until someone re-ran it.
+      - name: Generate GitHub App token
+        id: app-token
+        if: env.HAS_GCP_CREDENTIALS == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
         if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: env.HAS_GCP_CREDENTIALS == 'true'
@@ -211,8 +224,8 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "actions@github.com"
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
           git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
           git add ':(glob)ui/packages/design-system/**/*.locale.ts'
           if git diff --cached --quiet; then

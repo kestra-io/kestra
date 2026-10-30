@@ -1288,6 +1288,11 @@ public class ExecutionController {
             return null;
         }
 
+        String filePath = StorageContext.logicalPath(path);
+        if (FileUtils.isParentTraversal(filePath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+
         if (StorageContext.isInExecutionStorage(execution, path)) {
             return null;
         }
@@ -1303,12 +1308,12 @@ public class ExecutionController {
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
         String prefix = context.getStateStorePrefix(null, false, null);
-        if (path.getPath().startsWith(prefix)) {
+        if (filePath.startsWith(prefix)) {
             return null;
         }
 
         prefix = context.getStateStorePrefix(null, true, null);
-        if (path.getPath().startsWith(prefix)) {
+        if (filePath.startsWith(prefix)) {
             return null;
         }
 

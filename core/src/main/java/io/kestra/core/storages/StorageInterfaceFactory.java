@@ -28,7 +28,8 @@ public class StorageInterfaceFactory extends AbstractPluginInterfaceFactory<Stor
      *
      * @param identifier The ID of the storage. cannot be {@code null}.
      * @param pluginConfiguration The configuration of the storage. cannot be {@code null}.
-     * @return a new {@link StorageInterface}.
+     * @return a new {@link StorageInterface}, wrapped so plugins still see {@code kestra:///} while callers see {@code kestra://}.
+     * A bean that replaces {@link StorageInterface} never calls this method, so it is not wrapped and must accept both forms.
      * @throws KestraRuntimeException if no storage can be found.
      */
     public StorageInterface make(final StorageConfiguration storageConfiguration,
@@ -46,7 +47,7 @@ public class StorageInterfaceFactory extends AbstractPluginInterfaceFactory<Stor
                 ), e
             );
         }
-        return plugin;
+        return new KestraStorageUriAdapter(plugin);
     }
 
     protected StorageInterface init(final StorageConfiguration storageConfiguration,

@@ -293,6 +293,11 @@
     }
 
     function onObjectInput(propertyName: string, value: any) {
+        if (propertyName === "type" && dataTypesMap.value[props.root ?? ""]) {
+            onInput({type: value})
+            return
+        }
+
         const currentValue = (typeof props.modelValue === "object" && props.modelValue !== null ? {...(props.modelValue as Record<string, any>)} : {})
         currentValue[propertyName] = value
         onInput(currentValue)

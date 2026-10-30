@@ -1,0 +1,10 @@
+id: parallel-broken-concurrent
+namespace: io.kestra.tests
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    concurrent: "{{ inputs.missing }}"
+    tasks:
+      - id: a
+        type: io.kestra.plugin.core.log.Log
+        message: hello

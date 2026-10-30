@@ -47,6 +47,15 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    // https://github.com/kestra-io/kestra/issues/20533: an unresolvable concurrent expression used to be
+    // swallowed by the executor and the execution stayed RUNNING forever.
+    @Test
+    @ExecuteFlow("flows/valids/parallel-broken-concurrent.yaml")
+    void parallelWithBrokenConcurrentShouldFailExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     @Test
     @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void errors() throws QueueException, TimeoutException {

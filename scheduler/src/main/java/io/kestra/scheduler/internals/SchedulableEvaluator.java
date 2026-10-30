@@ -1,5 +1,7 @@
 package io.kestra.scheduler.internals;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -7,13 +9,18 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.services.LabelService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 
 import jakarta.inject.Singleton;
@@ -82,8 +89,29 @@ public class SchedulableEvaluator {
                         e.getMessage(),
                         e
                     );
-                    return Optional.empty();
+                    return Optional.of(failedEvaluation(schedulable, conditionContext));
                 }
             });
+    }
+
+    /**
+     * Builds a FAILED evaluation so the failure surfaces as an execution that alerting Flow triggers can react to.
+     */
+    private static TriggerEvaluationResult failedEvaluation(Schedulable schedulable, ConditionContext conditionContext) {
+        String executionId = IdUtils.create();
+        List<Label> labels = LabelService.withCorrelationId(
+            List.of(new Label(Label.FROM, Label.FromLabel.TRIGGER.value)),
+            executionId
+        );
+
+        return new TriggerEvaluationResult(
+            executionId,
+            State.Type.FAILED,
+            ExecutionTrigger.of((AbstractTrigger) schedulable, Map.of()),
+            labels,
+            conditionContext.getFlow().getRevision(),
+            null,
+            null
+        );
     }
 }

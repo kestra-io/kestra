@@ -712,6 +712,7 @@
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
+      "queued": "Queued",
       "save_error": "Failed to update the concurrency limit, the previous value is kept."
     },
     "flowConcurrency": {

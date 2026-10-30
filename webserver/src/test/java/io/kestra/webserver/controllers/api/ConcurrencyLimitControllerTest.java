@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -55,17 +57,18 @@ class ConcurrencyLimitControllerTest {
         assertThat(execution).isNotNull();
 
         // we should have at least one concurrency limit inside the database
-        PagedResults<ConcurrencyLimit> retrieved = client.toBlocking().retrieve(
-            GET("/api/v1/main/concurrency-limit/search"), Argument.of(PagedResults.class, ConcurrencyLimit.class)
+        PagedResults<ConcurrencyLimitController.ConcurrencyLimitSearchResult> retrieved = client.toBlocking().retrieve(
+            GET("/api/v1/main/concurrency-limit/search"), Argument.of(PagedResults.class, ConcurrencyLimitController.ConcurrencyLimitSearchResult.class)
         );
         assertThat(retrieved.getResults()).hasSize(1);
-        ConcurrencyLimit concurrencyLimit = retrieved.getResults().getFirst();
-        assertThat(concurrencyLimit.getNamespace()).isEqualTo(execution.getNamespace());
-        assertThat(concurrencyLimit.getFlowId()).isEqualTo(execution.getFlowId());
+        ConcurrencyLimitController.ConcurrencyLimitSearchResult concurrencyLimit = retrieved.getResults().getFirst();
+        assertThat(concurrencyLimit.queued()).isZero();
+        assertThat(concurrencyLimit.namespace()).isEqualTo(execution.getNamespace());
+        assertThat(concurrencyLimit.flowId()).isEqualTo(execution.getFlowId());
 
         // update the concurrency limit
         ConcurrencyLimit updated = client.toBlocking().retrieve(
-            PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest(concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId(), 99)),
+            PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest(concurrencyLimit.namespace(), concurrencyLimit.flowId(), 99)),
             ConcurrencyLimit.class
         );
         assertThat(updated).isNotNull();
@@ -73,11 +76,11 @@ class ConcurrencyLimitControllerTest {
 
         // the flow-scoped GET returns the same record
         ConcurrencyLimit scoped = client.toBlocking().retrieve(
-            GET("/api/v1/main/concurrency-limit/" + concurrencyLimit.getNamespace() + "/" + concurrencyLimit.getFlowId()),
+            GET("/api/v1/main/concurrency-limit/" + concurrencyLimit.namespace() + "/" + concurrencyLimit.flowId()),
             ConcurrencyLimit.class
         );
-        assertThat(scoped.getNamespace()).isEqualTo(concurrencyLimit.getNamespace());
-        assertThat(scoped.getFlowId()).isEqualTo(concurrencyLimit.getFlowId());
+        assertThat(scoped.getNamespace()).isEqualTo(concurrencyLimit.namespace());
+        assertThat(scoped.getFlowId()).isEqualTo(concurrencyLimit.flowId());
     }
 
     @Test
@@ -101,18 +104,50 @@ class ConcurrencyLimitControllerTest {
     @Test
     void shouldUpdateNamespaceConcurrencyLimitWhenFlowIsEmpty() {
         // Given - a namespace-scoped counter, stored with an empty flow id
-        concurrencyLimitRepository.update(ConcurrencyLimit.builder().tenantId("main").namespace("scoped.namespace").flowId("").running(3).build());
+        ConcurrencyLimit seeded = ConcurrencyLimit.builder().tenantId("main").namespace("scoped.namespace").flowId("").running(3).build();
+        concurrencyLimitRepository.update(seeded);
 
-        // When
-        ConcurrencyLimit updated = client.toBlocking().retrieve(
-            PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest("scoped.namespace", null, 0)),
-            ConcurrencyLimit.class
+        try {
+            // When
+            ConcurrencyLimit updated = client.toBlocking().retrieve(
+                PUT("/api/v1/main/concurrency-limit", new ConcurrencyLimitController.ConcurrencyLimitUpdateRequest("scoped.namespace", null, 0)),
+                ConcurrencyLimit.class
+            );
+
+            // Then
+            assertThat(updated.getNamespace()).isEqualTo("scoped.namespace");
+            assertThat(updated.getFlowId()).isEmpty();
+            assertThat(updated.getRunning()).isZero();
+        } finally {
+            concurrencyLimitRepository.delete(seeded);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldPageConcurrencyLimitsSortedByNamespaceAndFlow() {
+        // Given - a tenant limit and two namespace limits, none of them attached to a flow
+        List<ConcurrencyLimit> seeded = List.of(
+            ConcurrencyLimit.builder().tenantId("main").namespace("").flowId("").running(1).build(),
+            ConcurrencyLimit.builder().tenantId("main").namespace("b.paged").flowId("").running(2).build(),
+            ConcurrencyLimit.builder().tenantId("main").namespace("a.paged").flowId("").running(3).build()
         );
+        seeded.forEach(concurrencyLimitRepository::update);
 
-        // Then
-        assertThat(updated.getNamespace()).isEqualTo("scoped.namespace");
-        assertThat(updated.getFlowId()).isEmpty();
-        assertThat(updated.getRunning()).isZero();
+        try {
+            // When - the tenant row sorts first, then the namespaces alphabetically
+            PagedResults<ConcurrencyLimitController.ConcurrencyLimitSearchResult> third = client.toBlocking().retrieve(
+                GET("/api/v1/main/concurrency-limit/search?page=3&size=1"), Argument.of(PagedResults.class, ConcurrencyLimitController.ConcurrencyLimitSearchResult.class)
+            );
+
+            // Then
+            assertThat(third.getTotal()).isGreaterThanOrEqualTo(3);
+            assertThat(third.getResults()).hasSize(1);
+            assertThat(third.getResults().getFirst().namespace()).isEqualTo("b.paged");
+            assertThat(third.getResults().getFirst().queued()).isZero();
+        } finally {
+            seeded.forEach(concurrencyLimitRepository::delete);
+        }
     }
 
     @Test

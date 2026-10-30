@@ -834,14 +834,14 @@ public class ExecutionService {
     }
 
     /** Ends an Approval request without a decision: neither a branch nor {@code finally} runs, and the task run is cancelled. */
-    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed) throws Exception {
+    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed, boolean bulk) throws Exception {
         Approval approval = this.findPausedApproval(execution, flow, taskRunId);
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : PausableTask.Resumed.now(State.Type.CANCELLED));
         TaskRun cancelledTaskRun = cancelled.findTaskRunByTaskRunId(taskRunId);
         this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
-        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED);
+        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED, resumed, bulk);
         this.notifyLoopParent(cancelled, State.Type.RESTARTED);
         this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
         return cancelled;
@@ -1432,7 +1432,7 @@ public class ExecutionService {
             try {
                 final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
                 if (flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval && this.isAwaitingDecision(taskRun)) {
-                    approvalRequestHandler.closed(execution, taskRun, approval, resolution);
+                    approvalRequestHandler.closed(execution, taskRun, approval, resolution, null, false);
                 }
             } catch (Exception e) {
                 log.warn("Unable to close the approval request of task run '{}'", taskRun.getId(), e);

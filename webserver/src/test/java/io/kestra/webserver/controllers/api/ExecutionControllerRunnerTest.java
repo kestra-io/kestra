@@ -121,6 +121,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -2960,7 +2961,8 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/executions/" + paused.getId()));
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test
@@ -2975,7 +2977,8 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(response.getCount()).isEqualTo(1);
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test

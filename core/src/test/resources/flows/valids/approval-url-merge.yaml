@@ -1,0 +1,14 @@
+id: approval-url-merge
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs.approval.url }}"
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"

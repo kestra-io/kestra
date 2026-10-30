@@ -1,22 +1,15 @@
-import {vi} from "vitest";
-
-// namespacesStore.readDirectory() calls FilesAPI.listNamespaceDirectoryFiles() directly, which
-// goes through the SDK's own internal client rather than the axios instance setMockClient()
-// swaps - so it has to be intercepted at the submodule level.
-vi.mock("@kestra-io/kestra-sdk/files", () => ({
-    listNamespaceDirectoryFiles: async () => ([
-        {fileName: "directory 1", type: "Directory"},
-        {fileName: "directory 2", type: "Directory"},
-        {fileName: "animals.txt", type: "File"},
-    ]),
-}))
-
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {provide} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import FileExplorer, {FILES_OPEN_TAB_INJECTION_KEY, FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
 import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
-import {mockResponse} from "../../../.storybook/apiMock"
+import {mockResponse, mockStoryApiRoutes} from "../../../.storybook/apiMock"
+
+const FILES = [
+    {fileName: "directory 1", type: "Directory"},
+    {fileName: "directory 2", type: "Directory"},
+    {fileName: "animals.txt", type: "File"},
+]
 
 const meta: Meta<typeof FileExplorer> = {
     title: "inputs/FileExplorer",
@@ -42,13 +35,10 @@ export const Default: StoryObj<typeof FileExplorer> = {
             provide(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
 
-            axios.get = async <T,>() => mockResponse<T>([
-                {fileName: "directory 1", type: "Directory"},
-                {fileName: "directory 2", type: "Directory"},
-                {fileName: "animals.txt", type: "File"},
-            ])
+            axios.get = async <T,>() => mockResponse<T>(FILES)
 
             setMockClient(axios);
+            mockStoryApiRoutes({"GET /namespaces/:namespace/files/directory": FILES});
 
 
             return () => <div style="margin: 1rem;">

@@ -1,11 +1,3 @@
-import {vi} from "vitest";
-
-// playground store imports @kestra-io/topology (dagre + @vue-flow/core) at module level,
-// which crashes the Chromium browser runner — mock it to avoid the import chain entirely.
-vi.mock("../../../../stores/playground", () => ({
-    usePlaygroundStore: () => ({enabled: false, runUntilTask: vi.fn()}),
-}));
-
 import {computed, provide, ref} from "vue";
 import TaskList from "./TaskList.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";

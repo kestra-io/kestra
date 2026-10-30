@@ -44,6 +44,24 @@ describe("useFirstFailure", () => {
         expect(message.value).toBe("boom x")
     })
 
+    it.each(["NORMAL", "PLAYGROUND"])("does not restrict %s execution errors by log kind", async (kind) => {
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([{taskRunId: "tr-1", message: "boom"}] as never)
+        const scope = effectScope()
+        const result = scope.run(() => useFirstFailure({...failedExecution("e1"), kind} as Execution))!
+        await flush()
+
+        expect(loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "e1",
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                {field: "taskRunId", operation: "EQUALS", value: "tr-1"},
+            ],
+        })
+        expect(result.message.value).toBe("boom")
+        expect(result.logsRoute.value.query).toEqual({"filters[taskRunId][EQUALS]": "tr-1"})
+        scope.stop()
+    })
     it("shows a sub-execution link as its execution id instead of raw link markup", async () => {
         // Given
         const store = useExecutionsStore()

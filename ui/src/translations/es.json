@@ -488,17 +488,21 @@
         "decision": "Decisión",
         "by": "Decidido por",
         "on": "Decidido en",
+        "cancelled by": "Cancelado por",
+        "cancelled on": "Cancelado el",
         "decisions": {
           "approved": "Aprobado",
           "denied": "Denegado",
-          "expired": "Caducado"
+          "expired": "Caducado",
+          "cancelled": "Cancelado",
+          "killed": "Terminado"
         }
       },
       "cancel request": "Cancelar solicitud",
       "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución {id}? No se ejecutará ninguna rama de decisión.",
       "cancel done": "La solicitud de aprobación ha sido cancelada",
       "banner": {
-        "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",
+        "pausing": "Esta ejecución se está pausando. La solicitud de aprobación se puede revisar tan pronto como todas las tareas onWait finalicen.",
         "paused": "Esta ejecución está esperando una revisión. Apruébala o deniégala para continuar."
       }
     },

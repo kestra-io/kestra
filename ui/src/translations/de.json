@@ -488,17 +488,21 @@
         "decision": "Entscheidung",
         "by": "Entschieden durch",
         "on": "Entschieden am",
+        "cancelled by": "Abgebrochen von",
+        "cancelled on": "Abgebrochen am",
         "decisions": {
           "approved": "Genehmigt",
           "denied": "Verweigert",
-          "expired": "Abgelaufen"
+          "expired": "Abgelaufen",
+          "cancelled": "Abgebrochen",
+          "killed": "Gekillt"
         }
       },
       "cancel request": "Anfrage abbrechen",
       "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution {id} wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
       "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
       "banner": {
-        "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",
+        "pausing": "Diese Execution wird pausiert. Die Genehmigungsanfrage kann überprüft werden, sobald alle onWait-Tasks abgeschlossen sind.",
         "paused": "Diese Execution wartet auf eine Überprüfung. Genehmige oder lehne sie ab, um fortzufahren."
       }
     },

@@ -2362,6 +2362,22 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-kill-onwait.yaml" })
+    void shouldRefuseToBulkResumeButBulkKillAPausingExecution() throws QueueException {
+        Execution pausing = runnerUtils.runOneUntil(TENANT_ID, TESTS_FLOW_NS, "approval-kill-onwait", e -> e.getState().getCurrent() == State.Type.PAUSING);
+
+        HttpClientResponseException resume = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(pausing.getId())))
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        HttpResponse<ApiAsyncOperationResponse> kill = client.toBlocking().exchange(DELETE("/api/v1/main/executions/kill/by-ids", List.of(pausing.getId())), ApiAsyncOperationResponse.class);
+        assertThat(kill.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        awaitExecution(pausing.getId(), execution -> execution.getState().getCurrent() == State.Type.KILLED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldReturn202WithOperationIdAndTotalItemsWhenResumeExecutionsByIdsCalled() throws QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");

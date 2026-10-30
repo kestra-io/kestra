@@ -3,9 +3,12 @@ package io.kestra.core.runners.pebble.filters;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -72,9 +75,29 @@ class DistinctFilterTest {
         //Edge case: an empty list
         render = variableRenderer.render("{{ [] | distinct }}", Map.of());
         assertThat(render).isEqualTo("[]");
+    }
 
-        render = variableRenderer.render("{{ null | distinct }}", Map.of());
-        assertThat(render).isEqualTo("null");
+    @Test
+    void shouldPreserveNullWhenInputIsNull() throws IllegalVariableEvaluationException {
+        assertThat(new DistinctFilter().apply(null, Map.of(), null, null, 0)).isNull();
+        assertThat(variableRenderer.render("{{ null | distinct }}", Map.of())).isEmpty();
+        assertThat(variableRenderer.renderTyped("{{ null | distinct }}", Map.of())).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        value = {
+            "{{ inputs.tags | distinct ? true : false }}; false",
+            "{{ (inputs.tags | distinct) is null }}; true",
+            "{{ (inputs.tags | distinct) != null }}; false",
+            "{{ (inputs.tags | distinct) ?? 'fallback_tag' }}; fallback_tag",
+            "{{ inputs.tags | distinct | length }}; 0"
+        }, delimiter = ';'
+    )
+    void shouldEvaluateNullExpressionsWhenInputIsNull(String expression, String expected) throws IllegalVariableEvaluationException {
+        Map<String, Object> variables = Map.of("inputs", Collections.singletonMap("tags", null));
+
+        assertThat(variableRenderer.render(expression, variables)).isEqualTo(expected);
     }
 
     @Test

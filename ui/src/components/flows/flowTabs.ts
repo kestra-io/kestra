@@ -3,7 +3,6 @@ import type {Me} from "override/stores/auth"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
-import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 import {extraFlowTabRoutes} from "override/components/flows/flowTabsExtension"
 import {storageKeys} from "../../utils/constants"
 
@@ -61,32 +60,32 @@ const OSS_FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         path: "executions",
         component: () => import("./FlowExecutions.vue"),
         props: {embed: true},
-        meta: {tab: "executions", title: "executions"},
+        meta: {tab: "executions", title: "executions", fullContainer: true, docId: "executions"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/edit`,
         path: "edit",
         component: () => import("./MultiPanelFlowEditorView.vue"),
-        meta: {tab: "edit", title: "edit", maximized: true},
+        meta: {tab: "edit", title: "edit", maximized: true, docId: "flowEditor"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/promote`,
         path: "promote",
         component: () => import("../demo/Promote.vue"),
         props: {embed: true},
-        meta: {tab: "promote", title: "promote.label", locked: true},
+        meta: {tab: "promote", title: "promote.label", locked: true, docId: "promote"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/revisions`,
         path: "revisions",
         component: () => import("./FlowRevisions.vue"),
-        meta: {tab: "revisions", title: "revisions"},
+        meta: {tab: "revisions", title: "revisions", docId: "revisions"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/triggers`,
         path: "triggers",
         component: () => import("./FlowTriggers.vue"),
-        meta: {tab: "triggers", title: "triggers"},
+        meta: {tab: "triggers", title: "triggers", docId: "triggers"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/logs`,
@@ -112,14 +111,14 @@ const OSS_FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${FLOW_PARENT_ROUTE}/concurrency`,
         path: "concurrency",
         component: () => import("./FlowConcurrency.vue"),
-        meta: {tab: "concurrency", title: "concurrency"},
+        meta: {tab: "concurrency", title: "concurrency", docId: "concurrency-limits"},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/audit-logs`,
         path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
         props: {embed: true},
-        meta: {tab: "audit-logs", title: "auditlogs", locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", locked: true, docId: "auditlogs"},
     },
 ]
 
@@ -139,7 +138,7 @@ export const FLOW_ENTITY_META: RouteMeta = {
             id: String(to.params.id),
             revision: to.query.revision ? String(to.query.revision) : undefined,
             allowDeleted: true,
-        }, ENTITY_REQUEST_OPTIONS)
+        })
     },
 }
 

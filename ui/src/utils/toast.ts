@@ -1,5 +1,5 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
-import {App, h} from "vue"
+import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
 
 // Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
@@ -23,13 +23,13 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     tableLayout: "auto",
                     fixed: true,
                     data: message,
-                    class: ["mt-2"],
+                    style: {marginTop: "var(--ks-spacing-2)"},
                     size: "small",
                 },
                 [
                     // Through KsMarkdown like every other toast body: the messages come from the API and can echo
                     // user-provided ids, so they get the same sanitizing instead of a raw innerHTML.
-                    h(KsTableColumn, {label: "Message", formatter: (row: {message: string}) => h(KsMarkdown, {content: row.message})}),
+                    h(KsTableColumn, {label: t("toast_message_column"), formatter: (row: {message: string}) => h(KsMarkdown, {content: row.message})}),
                 ],
             )
         } else {
@@ -42,7 +42,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     }
     
     return {
-        confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message: string | Component, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
             return KsMessageBox
                 .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
                 .then(() => callback())

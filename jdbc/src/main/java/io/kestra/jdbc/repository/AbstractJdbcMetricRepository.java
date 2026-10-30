@@ -194,8 +194,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         @Nullable String executionId,
         @Nullable ZonedDateTime startDate,
         ZonedDateTime endDate,
-        @Nullable Integer batchSize
-    ) {
+        @Nullable Integer batchSize) {
         Condition condition = this.defaultFilter(tenantId)
             .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
 
@@ -205,9 +204,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
 
         if (namespace != null) {
             if (flowId != null) {
-                condition = condition.and(field("namespace").eq(namespace));
+                condition = condition.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
             } else {
-                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+                condition = condition
+                    .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace).or(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
             }
         }
 
@@ -220,7 +220,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         }
 
         Condition finalCondition = condition;
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
                 int total = 0;
                 int deleted;

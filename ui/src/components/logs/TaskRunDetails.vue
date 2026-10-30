@@ -26,10 +26,7 @@
                     :key="item.index"
                     class="line"
                     :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
-                    :class="{
-                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
-                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
-                    }"
+                    :dimmed="!!levelToHighlight && levelToHighlight !== item.level"
                     :level="level"
                     :log="item"
                     :excludeMetas="excludeMetas"
@@ -124,10 +121,7 @@
                                         :key="member.index"
                                         class="line"
                                         :cursor="logCursor === `${currentTaskRunIndex}/${member.index}`"
-                                        :class="{
-                                            ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === member.level,
-                                            'opacity-40': levelToHighlight && levelToHighlight !== member.level,
-                                        }"
+                                        :dimmed="!!levelToHighlight && levelToHighlight !== member.level"
                                         :level="level"
                                         :log="member"
                                         :excludeMetas="excludeMetas"
@@ -184,14 +178,7 @@
                                             logCursor ===
                                                 `${currentTaskRunIndex}/${item.index}`
                                         "
-                                        :class="{
-                                            ['log-bg-' +
-                                                levelToHighlight?.toLowerCase()]:
-                                                    levelToHighlight === item.level,
-                                            'opacity-40':
-                                                levelToHighlight &&
-                                                levelToHighlight !== item.level,
-                                        }"
+                                        :dimmed="!!levelToHighlight && levelToHighlight !== item.level"
                                         :key="item.index"
                                         :level="level"
                                         :log="item"
@@ -210,8 +197,7 @@
                                                 shouldDisplaySubflow(
                                                     item.index,
                                                     currentTaskRun,
-                                                ) &&
-                                                asTaskRun(currentTaskRun).outputs?.executionId
+                                                )
                                         "
                                         :ref="
                                             (el) =>
@@ -255,7 +241,7 @@
                                         :filter="filter"
                                         :allowAutoExpandSubflows="false"
                                         :targetExecutionId="
-                                            asTaskRun(currentTaskRun).outputs?.executionId
+                                            subflowExecutionId(currentTaskRun)
                                         "
                                         :class="
                                             $el.classList.contains('even')
@@ -276,14 +262,7 @@
                 >
                     <KsButton
                         :tag="RouterLink"
-                        :to="{
-                            name: 'executions/list',
-                            query: {
-                                'filters[parentId][EQUALS]': followedExecution.id,
-                                'filters[kind][EQUALS]': 'LOOP',
-                                'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
-                            }
-                        }"
+                        :to="loopIterationsRoute(followedExecution, asTaskRun(currentTaskRun).taskId)"
                         size="small"
                     >
                         {{ $t("iterations") }}
@@ -291,7 +270,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="followedExecution.id"
+                        :execution="followedExecution"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                         :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
@@ -321,20 +300,23 @@
     import TaskRunLine from "../executions/TaskRunLine.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
-    import {apiUrl} from "override/utils/route"
     import {executionFileUrl} from "../../utils/executionUtils"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {isSubflowTaskType} from "../../services/subflowReferences"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
+    import {handledIf} from "../../utils/kestraHttp"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const {t} = useI18n()
-
-    const $http = useClient()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
 
@@ -454,6 +436,8 @@
     const throttledExecutionUpdate = ref<Scheduled<[Execution]> | undefined>(undefined)
     const targetExecution = ref<Execution | undefined>(undefined)
     const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
+    const subflowExecutionIdByTaskRunId = ref<Record<string, string>>({})
+    const requestedSubflowOutputs = new Set<string>()
 
     // Template ref
     const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller & Pick<DynamicScrollerExposed, "scrollToPosition">>("taskRunScroller")
@@ -688,7 +672,7 @@
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log) =>
+        [...executionsStore.reusedLogsOf(followedExecution.value?.id, props.levelFilter), ...rawLogs.value].filter((log) =>
             log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )
@@ -738,6 +722,22 @@
         (flowSource) => {
             if (flowSource) {
                 flow.value = flowSource
+            }
+        },
+        {immediate: true},
+    )
+
+    watch(
+        [currentTaskRuns, flow],
+        ([taskRuns]) => {
+            const executionId = followedExecution.value?.id
+            if (!executionId) return
+            for (const taskRun of taskRuns) {
+                if (subflowExecutionId(taskRun) !== undefined || !isSubflowTaskType(taskType(taskRun))) continue
+                const requestKey = `${taskRun.id}-${taskRun.state.current}`
+                if (requestedSubflowOutputs.has(requestKey)) continue
+                requestedSubflowOutputs.add(requestKey)
+                resolveSubflowExecutionId(executionId, taskRun.id)
             }
         },
         {immediate: true},
@@ -878,6 +878,17 @@
         }
     }
 
+    async function resolveSubflowExecutionId(executionId: string, taskRunId: string) {
+        try {
+            const outputs = await loadTaskRunOutputs(executionId, taskRunId)
+            if (typeof outputs.executionId === "string") {
+                subflowExecutionIdByTaskRunId.value[taskRunId] = outputs.executionId
+            }
+        } catch {
+            // ignore fetch errors
+        }
+    }
+
     function fileUrl(path: string): string {
         return executionFileUrl(followedExecution.value?.id, path)
     }
@@ -887,16 +898,15 @@
             return
         }
 
-        const axiosResponse = await $http.get(
-            `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
-            {
-                validateStatus: (status: number) =>
-                    status === 200 || status === 404 || status === 422,
-            },
-        )
-        logFileSizeByPath.value[path] = Utils.humanFileSize(
-            axiosResponse.data.size,
-        )
+        const fileMetadatas = await ExecutionsSDK.fileMetadatasFromExecution({executionId: followedExecution.value?.id ?? "", path}).catch((e) => {
+            if (!handledIf(e, [404, 422])) throw e
+            return undefined
+        })
+        if(fileMetadatas){
+            logFileSizeByPath.value[path] = Utils.humanFileSize(
+                fileMetadatas.size,
+            )
+        }
     }
 
     function cancelLogsSSEClose() {
@@ -933,7 +943,7 @@
             return
         }
         currentTaskRuns.value.forEach((taskRun) => {
-            if (isSubflow(taskRun) && !props.allowAutoExpandSubflows) {
+            if (!props.allowAutoExpandSubflows && (isSubflow(taskRun) || isSubflowTaskType(taskType(taskRun)))) {
                 return
             }
 
@@ -1029,21 +1039,26 @@
         })
     }
 
+    function subflowExecutionId(taskRun: TaskRunWithDepth | undefined): string | undefined {
+        if (!taskRun) return undefined
+        return taskRun.outputs?.executionId || subflowExecutionIdByTaskRunId.value[taskRun.id]
+    }
+
     function isSubflow(taskRun: TaskRunWithDepth | undefined): boolean {
-        return !!taskRun?.outputs?.executionId
+        return subflowExecutionId(taskRun) !== undefined
     }
 
     function shouldDisplaySubflow(taskRunIndex: number, taskRun: TaskRunWithDepth): boolean {
-        const subflowExecutionId = taskRun.outputs?.executionId
-        if (!subflowExecutionId) {
+        const childExecutionId = subflowExecutionId(taskRun)
+        if (!childExecutionId) {
             return false
         }
         const index = shownSubflowsIds.value.findIndex(
-            (item) => item.subflowExecutionId === subflowExecutionId,
+            (item) => item.subflowExecutionId === childExecutionId,
         )
         if (index === -1) {
             shownSubflowsIds.value.push({
-                subflowExecutionId: subflowExecutionId,
+                subflowExecutionId: childExecutionId,
                 taskRunIndex: taskRunIndex,
             })
             return true
@@ -1160,7 +1175,7 @@
         executionsStore
             .loadLogs({
                 executionId: id,
-                params: p,
+                filters: routeQueryToQueryFilters(p),
             })
             .then((logs) => {
                 // A response for an execution the view has since left would overwrite the current one's logs.
@@ -1305,7 +1320,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .log-group-more {
     display: flex;
@@ -1326,7 +1341,7 @@
         background: var(--ks-bg-hover);
     }
 
-    :deep(.material-design-icon) {
+    & :deep(.material-design-icon) {
         display: inline-flex;
         align-items: center;
         line-height: 0;
@@ -1356,7 +1371,7 @@
 }
 
 .log-wrapper {
-  :deep(
+  & :deep(
     > .vue-recycle-scroller__item-wrapper
       > .vue-recycle-scroller__item-view
       > div
@@ -1364,13 +1379,12 @@
     padding-bottom: 1rem;
   }
 
-  :deep(.line) {
+  & :deep(.line) {
     padding-left: 0;
   }
 
   .loop-progress {
     display: flex;
-    align-items: top;
     gap: var(--ks-spacing-3);
     margin-block: var(--ks-spacing-3);
   }
@@ -1390,7 +1404,7 @@
       }
     }
 
-    :deep(.kel-card__body) {
+    & :deep(.kel-card__body) {
       padding: 0;
     }
 
@@ -1424,15 +1438,16 @@
     transition: max-height 0.2s ease-out;
     max-height: 300px;
 
-    :deep(.vue-recycle-scroller__item-view > div) {
+    & :deep(.vue-recycle-scroller__item-view > div) {
       min-height: 2rem;
     }
 
     &.single-line {
       max-height: calc(100vh - 250px);
+      max-height: calc(100dvh - 250px);
     }
 
-    :deep(.line) {
+    & :deep(.line) {
       padding: var(--ks-spacing-1) var(--ks-spacing-3);
 
       &.cursor {

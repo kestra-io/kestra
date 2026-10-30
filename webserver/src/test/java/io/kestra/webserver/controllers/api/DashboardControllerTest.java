@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -21,9 +22,9 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
@@ -123,6 +124,34 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldReportTheDashboardFiltersALogsChartCannotApply() {
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_namespace:
+                  field: NAMESPACE
+            """;
+        var previewRequest = new DashboardController.PreviewRequest(
+            chartYaml, ChartFiltersOverrides.builder().filters(
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value("company").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build()
+                )
+            ).build()
+        );
+
+        DashboardController.ChartData chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            DashboardController.ChartData.class
+        );
+
+        assertThat(chartData.ignoredFilters()).containsExactly(QueryFilter.Field.STATE);
+    }
+
+    @Test
     void shouldExportChartFromDefaultDashboardSentinel() {
         // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
         DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
@@ -139,6 +168,21 @@ class DashboardControllerTest {
         );
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).contains("date").contains("level").contains("total");
+    }
+
+    @Test
+    void shouldServeEveryChartOfDefaultDashboardAfterValidation() {
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+
+        for (var chart : defaultDashboard.getCharts()) {
+            var response = client.toBlocking().exchange(
+                POST(DASHBOARD_PATH + "/_default/charts/" + chart.getId() + "/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build())
+            );
+            assertThat(response.getStatus().getCode()).as(chart.getId()).isEqualTo(200);
+        }
     }
 
     @Test
@@ -217,7 +261,7 @@ class DashboardControllerTest {
                 )
             ).build()
         );
-        
+
         PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
             PagedResults.class
@@ -287,6 +331,66 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldSortRecentExecutionsOfDefaultDashboardByMostRecentStartDate() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndAge : List.of(Map.entry("middle", 2L), Map.entry("newest", 1L), Map.entry("oldest", 3L))) {
+            Instant startDate = now.minus(Duration.ofHours(flowAndAge.getValue()));
+            executionRepository.save(
+                Execution.builder()
+                    .tenantId(MAIN_TENANT)
+                    .id(IdUtils.create())
+                    .namespace(namespace)
+                    .flowId(flowAndAge.getKey())
+                    .state(State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, startDate), new State.History(State.Type.SUCCESS, startDate.plusSeconds(1)))))
+                    .build()
+            );
+        }
+
+        String csv = exportDefaultChart("recent_executions", namespace);
+
+        assertThat(csv.indexOf("newest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("oldest"));
+    }
+
+    @Test
+    void shouldSortNextExecutionsOfDefaultDashboardByUpcomingFirst() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndOffset : List.of(Map.entry("middle", 2L), Map.entry("last", 3L), Map.entry("soonest", 1L))) {
+            triggerStateStore.save(
+                TriggerState.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .flowId(flowAndOffset.getKey())
+                    .triggerId(IdUtils.create())
+                    .workerId("worker")
+                    .nextEvaluationDate(now.plus(Duration.ofHours(flowAndOffset.getValue())))
+                    .disabled(false)
+                    .build()
+            );
+        }
+
+        String csv = exportDefaultChart("next_executions", namespace);
+
+        assertThat(csv.indexOf("soonest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("last"));
+    }
+
+    private String exportDefaultChart(String chartId, String namespace) {
+        var filters = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/" + chartId + "/export", filters),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
+    }
+
+    @Test
     void previewShouldRejectCatastrophicRegexInWhereClause() {
         // A REGEX filter embedded directly in an ad-hoc (non-persisted) chart definition must be
         // rejected before it ever reaches a repository backend — this endpoint bypasses the normal
@@ -315,6 +419,45 @@ class DashboardControllerTest {
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldRejectCatastrophicRegexInGlobalFilters() {
+        var catastrophic = ChartFiltersOverrides.builder().filters(
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.REGEX)
+                    .value("(a+)+$")
+                    .build()
+            )
+        ).build();
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+            """;
+
+        HttpClientResponseException preview = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", new DashboardController.PreviewRequest(chartYaml, catastrophic)),
+                PagedResults.class
+            )
+        );
+        HttpClientResponseException export = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", catastrophic),
+                Argument.of(byte[].class)
+            )
+        );
+
+        assertThat(preview.getStatus().getCode()).isEqualTo(400);
+        assertThat(preview.getMessage()).contains("catastrophic backtracking");
+        assertThat(export.getStatus().getCode()).isEqualTo(400);
     }
 
     @Test

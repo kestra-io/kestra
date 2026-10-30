@@ -5,6 +5,12 @@
       "cta": "Voir les modifications"
     },
     "loading": "Chargement...",
+    "namespace_files_tip": {
+      "title": "Gérez vos scripts comme fichiers du namespace",
+      "description": "Au lieu d'écrire votre script en ligne, ouvrez le panneau Fichiers, ajoutez-le comme fichier (par ex. main.py) et exécutez-le depuis votre flow :",
+      "open_files": "Ouvrir les fichiers",
+      "dont_show_again": "Ne plus afficher"
+    },
     "more actions": "Plus d'actions",
     "recipe": {
       "create_flow": "Créer un flow",
@@ -24,7 +30,7 @@
         "email_sub": "Envoyer une notification par e-mail",
         "email_to_placeholder": "destinataire{'@'}votre-domaine.com",
         "custom_label": "Personnalisé",
-        "custom_note": "Une tâche d'espace réservé est ajoutée — remplacez-la par n'importe quel plugin de notification dans l'éditeur.",
+        "custom_note": "Une tâche d'espace réservé est ajoutée. Remplacez-la par n'importe quel plugin de notification dans l'éditeur.",
         "custom_sub": "Ajoutez votre propre tâche de notification",
         "plugin_unavailable": "Plugin non installé",
         "slack_channel_placeholder": "#alertes",
@@ -139,6 +145,7 @@
     "update": "Mettre à jour",
     "confirmation": "Confirmation",
     "toast confirm": "Êtes-vous sûr ?",
+    "toast_message_column": "Message",
     "common": {
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
@@ -236,6 +243,7 @@
       "last7days": "7 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
+      "allTime": "Tout le temps",
       "next5minutes": "Les 5 prochaines minutes",
       "next15minutes": "Prochaines 15 minutes",
       "next1hour": "Prochaine 1 heure",
@@ -291,7 +299,46 @@
       "help": "Aide",
       "issue": "Problème",
       "demo": "Démo",
-      "star": "Ajoutez-nous aux favoris"
+      "star": "Ajoutez-nous aux favoris",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "En cours",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
+          "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
+          "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
+          "EXECUTION_RESTART": "Relance de {count} exécution | Relance de {count} exécutions",
+          "EXECUTION_REPLAY": "Rejeu de {count} exécution | Rejeu de {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Démarrage forcé de {count} exécution | Démarrage forcé de {count} exécutions",
+          "EXECUTION_UNQUEUE": "Retrait de {count} exécution de la file d'attente | Retrait de {count} exécutions de la file d'attente",
+          "EXECUTION_CHANGE_STATUS": "Changement du statut de {count} exécution | Changement du statut de {count} exécutions",
+          "EXECUTION_SET_LABELS": "Ajout de labels à {count} exécution | Ajout de labels à {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage de {count} trigger | Déverrouillage de {count} triggers",
+          "TRIGGER_DELETE": "Suppression de {count} trigger | Suppression de {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation de {count} trigger | Désactivation de {count} triggers",
+          "TRIGGER_ENABLE": "Activation de {count} trigger | Activation de {count} triggers",
+          "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
+          "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
+          "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "processed": "{count} traitées",
+        "rejected": "{count} rejetées",
+        "elapsed": "en cours depuis {duration}"
+      },
+      "markAllRead": "Tout marquer comme lu",
+      "markUnread": "Marquer comme non lu",
+      "markRead": "Marquer comme lu",
+      "empty": "Aucune notification pour l'instant",
+      "emptyUnread": "Aucune notification non lue",
+      "tabs": {
+        "all": "Tout",
+        "unread": "Non lu"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, opérations en cours"
     },
     "source": "Source",
     "home": "Accueil",
@@ -330,7 +377,7 @@
     "restart": "Relancer",
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est redémarrée",
-    "restart confirm": "Voulez-vous vraiment redémarrer l'exécution <code>{id}</code> ?",
+    "restart confirm": "Voulez-vous vraiment redémarrer l'exécution {id} ?",
     "restart subflow warning": "Cette exécution a été créée par une exécution parente et doit être redémarrée à partir de celle-ci. La redémarrer seule laisse l'exécution parente FAILED et ses prochaines tasks ne s'exécuteront pas. Accédez au {parent} pour la redémarrer.",
     "restart subflow warning link": "exécution parente",
     "replay": "Rejouer",
@@ -338,7 +385,11 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "L'exécution est rejouée",
-    "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
+    "reused_task_run": {
+      "label": "Réutilisé",
+      "tooltip": "Non exécuté à nouveau dans cette execution. Il a été exécuté le {date}, et ses logs et outputs proviennent de cette exécution."
+    },
+    "replay the execution": "Rejouer l'exécution {executionId} pour le flow {flowId}",
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
     "change state": "Changer l'état",
@@ -348,9 +399,11 @@
     "yes": "Oui",
     "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
-    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
+    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche {task} dans l'exécution {id} ?",
+    "change state confirm restart": "Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "interrupt": "Interrompre",
-    "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task <code>{task}</code> dans l'Execution <code>{id}</code> ?<br/>Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
+    "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task {task} dans l'Execution {id} ?",
+    "interrupt note": "Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
     "interrupt done": "L'exécution de la Task a été interrompue",
     "interrupt target state": "État cible",
     "change state current state": "Statut actuel :",
@@ -387,31 +440,83 @@
     "modify inputs": "Modifier les inputs",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay select taskrun": "Sélectionnez le task run à rejouer à partir de :",
+    "replayCheck": {
+      "checking": "Vérification si la révision {revision} peut être rejouée à partir du Task {taskId}.",
+      "valid_title": "La version {revision} peut être rejouée à partir de la Task {taskId}.",
+      "valid_description": "Les tâches précédentes sont inchangées, leurs outputs sont donc réutilisés. Rejouer sur une autre révision n'est jamais entièrement déterministe : les secrets, les inputs de fichiers et les expressions appelant des systèmes externes peuvent renvoyer quelque chose de différent de l'exécution originale.",
+      "refused_title": "La révision {revision} ne peut pas être rejouée à partir de la tâche {taskId}.",
+      "refused_description": "Une tâche, une entrée ou une variable dont le résultat serait réutilisé est définie différemment dans cette révision.",
+      "error_title": "Impossible de vérifier si la révision {revision} peut être rejouée à partir de la Task {taskId}.",
+      "error_description": "Vous pouvez toujours rejouer. Le serveur applique les mêmes règles au démarrage du Replay et le refuse si la révision est incompatible.",
+      "whole_action": "Rejouer toute l'exécution à la place",
+      "whole_title": "La version {revision} peut être rejouée comme une exécution complète.",
+      "whole_description": "Aucun résultat antérieur n'est réutilisé, donc chaque Task s'exécute à nouveau sur la révision {revision}. L'exécution originale est conservée et liée.",
+      "confirm_from_task": "Replay à partir de la tâche",
+      "confirm_whole": "Rejouer l'exécution entière"
+    },
     "change execution state done": "État d'exécution mis à jour",
-    "mark as": "Marqué comme <code>{status}</code>",
-    "unqueue as": "Se désenfile en tant que <code>{status}</code>",
+    "mark as": "Marquer comme {status}",
+    "unqueue as": "Se désenfile en tant que {status}",
     "kill": "Arrêter",
     "kill parents and subflow": "Tuer le flow actuel et les subflows",
     "kill only parents": "Tuer uniquement le courant",
     "killed confirm": "Voulez-vous vraiment tuer l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "resume": "Reprendre",
-    "resumed title": "Reprendre l'exécution <code>{id}</code>",
+    "resumed title": "Reprendre l'exécution {id}",
     "resumed confirm": "Voulez-vous vraiment reprendre l'exécution <code>{id}</code> ?",
     "resumed done": "L'exécution est reprise",
-    "resume from breakpoint title": "Reprendre l'exécution <code>{id}</code> depuis le point d'arrêt",
+    "resume from breakpoint title": "Reprendre l'exécution {id} depuis le point d'arrêt",
+    "approval": {
+      "review": "Révision",
+      "title": "Vérifier le {task} de l'Execution {id}",
+      "approve": "Approuver",
+      "deny": "Refuser",
+      "comment": "Commentaire",
+      "comment hint": {
+        "optional": "Facultatif.",
+        "always": "Un commentaire est requis.",
+        "on approve": "Un commentaire est requis pour approuver.",
+        "on deny": "Un commentaire est requis pour refuser."
+      },
+      "comment required": "Un commentaire est requis pour cette décision.",
+      "inputs invalid": "Certains inputs sont invalides : {errors}",
+      "review done": "Votre avis a été enregistré",
+      "reviewed": {
+        "title": "Demande d'approbation de l'exécution {id}",
+        "explanation": "Cette demande d'approbation n'attend plus de révision.",
+        "decision": "Décision",
+        "by": "Décidé par",
+        "on": "Décidé le",
+        "decisions": {
+          "approved": "Approuvé",
+          "denied": "Refusé",
+          "expired": "Expiré"
+        }
+      },
+      "cancel request": "Annuler la demande",
+      "cancel confirm": "Voulez-vous vraiment annuler la demande d'approbation de l'exécution {id} ? Aucune branche de décision ne sera exécutée.",
+      "cancel done": "La demande d'approbation a été annulée",
+      "banner": {
+        "pausing": "Cette exécution prépare une demande d'approbation et se mettra en pause pour une révision.",
+        "paused": "Cette exécution est en attente d'une révision. Approuvez-la ou refusez-la pour continuer."
+      }
+    },
     "resume from breakpoint done": "L'exécution est reprise depuis le point d'arrêt",
     "breakpoints": "Points d'arrêt",
     "pause": "Pause",
-    "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tâches en cours d'exécution seront toujours traitées et que l'exécution devra être reprise manuellement.",
+    "pause title": "Mettre en pause l'exécution {id}.",
+    "pause note": "Notez que les tâches en cours d'exécution seront toujours traitées et que l'exécution devra être reprise manuellement.",
     "pause confirm": "Voulez-vous vraiment mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "unqueue": "Défilement",
-    "unqueue title": "Voulez-vous vraiment défiler l'exécution <code>{id}</code> ?<br/><br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, ce qui pourrait entraîner un nombre d'exécutions supérieur à la limite autorisée.",
-    "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler <code>{count}</code> exécutions ?<br/><br/>Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue title": "Voulez-vous vraiment défiler l'exécution {id} ?",
+    "unqueue note": "Notez qu'elle ne respectera pas la limite de concurrence du flow, ce qui pourrait entraîner un nombre d'exécutions supérieur à la limite autorisée.",
+    "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler {count} exécutions ?",
+    "unqueue multiple note": "Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "force run": "Forcer l'exécution",
-    "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
+    "force run title": "Forcer l'exécution de l'exécution {id}.",
     "force run confirm": "Voulez-vous vraiment forcer l'exécution `{id}` ?\n\nAVERTISSEMENT : le forçage d'une exécution n'est pas garanti et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
     "force run done": "L'exécution est forcée",
     "metrics": "Mesures",
@@ -444,9 +549,68 @@
       "invalid": "Erreur de graphe",
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
+      "expand_subflow_error": "Impossible d'étendre le subflow",
       "add-task": "Ajouter une task",
       "add-trigger": "Ajouter un trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Non exécuté",
+        "pick-first": "Choisissez d'abord {loop}",
+        "picker-label": "Itération de {loop}",
+        "search-by-index": "Rechercher par index",
+        "all-iterations": "Toutes les itérations",
+        "iteration-index": "index {index}",
+        "iteration-value-index": "{value} · index {index}",
+        "previous-iteration": "Itération précédente",
+        "next-iteration": "Itération suivante",
+        "previous-page": "Page précédente",
+        "next-page": "Page suivante",
+        "failed-group": "Échouées · {count}",
+        "other-group": "Autres itérations",
+        "matching": "Correspondance",
+        "failure-forbidden": "Vous n'avez pas accès à cette itération.",
+        "failure-not-found": "Cette itération n'existe plus.",
+        "failure-ambiguous": "Cette boucle s'est exécutée plusieurs fois dans cette exécution, ses itérations ne peuvent donc pas être distinguées.",
+        "failure-not-located": "L'itération en échec est introuvable.",
+        "failure-unknown": "Impossible de charger les itérations.",
+        "scope": "Périmètre",
+        "whole-execution": "Exécution entière",
+        "clear-scopes": "Effacer les périmètres",
+        "jump-to-first-failure": "Aller au premier échec",
+        "loops-with-failures": "Boucles en échec",
+        "task-runs": "{runs} exécution | {runs} exécutions",
+        "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec",
+        "retry": "Réessayer",
+        "load-more": "Charger plus",
+        "retry-loading": "Réessayer de charger les itérations"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} sur {total} en échec",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} en échec · {notStarted} non démarrées sur {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} sur {total} terminées",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} sur {total} terminées · {failed} en échec",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} itération | {total} itérations",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",
@@ -457,15 +621,40 @@
     "execution_banner": {
       "revision": "Révision {revision}",
       "attempts": "{count} tentative | {count} tentatives",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valeurs recherchables",
+      "more_searchable_values": "+{count} valeurs supplémentaires consultables"
+    },
+    "execution_mobile": {
+      "failed_task": "Task en échec",
+      "view_task_logs": "Voir les logs de la task",
+      "revision_short": "rév. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Afficher moins de labels",
+      "jump_to_first_failure": "Aller au premier échec",
+      "open_logs": "Ouvrir les logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Après la connexion",
+      "execution_tab": "Exécution {id} · onglet {tab}",
+      "execution": "Exécution {id}",
+      "tab": "Onglet {tab}"
     },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",
+    "workspace": "Espace de travail",
+    "resources": "Ressources",
     "usage": "Utilisation",
     "namespaces": "Espaces de nom",
     "tasks": "Tâches",
     "executions duration (in minutes)": "Durée totale d'exécutions (en minutes)",
-    "last 48 hours": "dernières 48 heures",
+    "task runs": "Exécutions de Task",
+    "task runs duration (in minutes)": "Durée totale des exécutions de Task (en minutes)",
+    "last 24 hours": "dernières 24 heures",
+    "last 7 days": "7 derniers jours",
+    "last 30 days": "les 30 derniers jours",
+    "since {date}": "depuis le {date}",
+    "usage period": "Période d'utilisation",
     "email": "E-mail",
     "password": "Mot de passe",
     "confirm password": "Confirmer le mot de passe",
@@ -480,11 +669,21 @@
     "inputs": "Entrées",
     "input": "Entré",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Aucune task de ce flow ne fournit d'artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
+      "tasks": "aucune task | {count} task | {count} tasks",
+      "fullscreen": "Plein écran",
+      "exit_fullscreen": "Quitter le mode plein écran"
+    },
     "variable_explorer": {
       "title": "Entrée/Sortie",
       "search_placeholder": "Rechercher une Key ou une value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Expression",
+      "searchable": "Recherchable",
       "tree": "Arborescence",
       "raw_json": "JSON brut",
       "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
@@ -629,6 +828,7 @@
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
       "format": "Format",
+      "internal_storage_uri_hint": "Expression Pebble faisant référence à un URI de stockage interne, par exemple {example}.",
       "max_items": "Nombre max. d'éléments",
       "max_length": "Longueur max",
       "maximum": "Maximum",
@@ -706,7 +906,7 @@
     "execute flow behaviour": "Exécuter le flow",
     "open in same tab": "Dans le même onglet",
     "open in new tab": "Dans un nouvel onglet",
-    "execute the flow": "Exécuter le flow <code>{id}</code>",
+    "execute the flow": "Exécuter le flow {id}",
     "discard execution confirmation": "Vous avez des inputs non enregistrés. Êtes-vous sûr de vouloir abandonner cette exécution ?",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "session expired": "Votre session a expiré",
@@ -853,7 +1053,6 @@
       }
     },
     "back_to_dashboard": "Retour au tableau de bord",
-    "copy all logs": "Copier tous les logs",
     "copy logs": "Copier les logs",
     "fix_with_ai": "Corriger avec l'IA",
     "download logs": "Télécharger les logs",
@@ -878,12 +1077,12 @@
     "restore": "Restaurer",
     "restore confirm": "Voulez-vous vraiment restaurer la révision <code>{revision}</code> ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
-    "bulk replay": "Êtes-vous sur de vouloir rejouer <code>{executionCount}</code> exécution(s)?",
-    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
+    "bulk replay": "Êtes-vous sur de vouloir rejouer {executionCount} exécution(s)?",
+    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de {executionCount} exécution(s) ?",
     "bulk resume": "Êtes-vous sur de vouloir reprendre <code>{executionCount}</code> exécution(s)?",
     "bulk pause": "Êtes-vous sûr de vouloir mettre en pause l'exécution de <code>{executionCount}</code> ?",
     "bulk force run": "Voulez-vous vraiment forcer l'exécution de `{executionCount}` exécution(s) ?\n\nAVERTISSEMENT : l'exécution forcée d'une exécution n'est pas garantie et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
-    "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
+    "bulk restart": "Êtes-vous sur de vouloir redémarrer {executionCount} exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
     "errorLogs": "Logs d'erreurs",
@@ -937,7 +1136,7 @@
     "flow must not be empty": "Le flow ne doit pas être vide",
     "flow creation denied in namespace": "Vous n'avez pas la permission de créer des flows dans le namespace `{namespace}`.",
     "readonly property": "Propriété non modifiable",
-    "namespace and id readonly": "Les propriétés `namespace` et `id` ne peuvent pas être modifiées — elles sont maintenant définies sur leurs valeurs initiales. Si vous souhaitez renommer un flow ou modifier son namespace, vous pouvez créer un nouveau flow et supprimer l'ancien.",
+    "namespace and id readonly": "Les propriétés `namespace` et `id` ne peuvent pas être modifiées : elles sont maintenant définies sur leurs valeurs initiales. Si vous souhaitez renommer un flow ou modifier son namespace, vous pouvez créer un nouveau flow et supprimer l'ancien.",
     "flow metadata locked": "`id` et `namespace` ne peuvent pas être modifiés après la création d'un flow.",
     "avg": "Moyenne",
     "sum": "Somme",
@@ -984,7 +1183,6 @@
     "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
-    "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
     "admin": "Administrateur",
     "main_configuration": "Configuration Principale",
     "commit_id": "ID de commit",
@@ -1013,7 +1211,7 @@
     "hostname": "Nom d'hôte",
     "file preview truncated": "Displayed content has been truncated",
     "file unavailable": "Fichier indisponible",
-    "file unavailable description": "Ce fichier n'est plus disponible — il a peut-être été supprimé ou expiré.",
+    "file unavailable description": "Ce fichier n'est plus disponible. Il a peut-être été supprimé ou expiré.",
     "row count": "Nombre de lignes",
     "encoding": "Encodage",
     "show": "Afficher",
@@ -1093,11 +1291,11 @@
         "deletion": {
           "confirm": "Confirmer",
           "title": "Confirmer la suppression du contenu",
-          "files": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> fichier(s) ?",
-          "folders": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> dossier(s) et tout son contenu ?",
-          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) <code>{folders}</code> et le(s) fichier(s) <code>{files}</code> ?",
-          "file_single": "Êtes-vous sûr de vouloir supprimer le fichier <code>{name}</code> ?",
-          "folder_single": "Êtes-vous sûr de vouloir supprimer le dossier <code>{name}</code> et tout son contenu ?"
+          "files": "Êtes-vous sûr de vouloir supprimer {count} fichier(s) ?",
+          "folders": "Êtes-vous sûr de vouloir supprimer {count} dossier(s) et tout son contenu ?",
+          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) {folders} et le(s) fichier(s) {files} ?",
+          "file_single": "Êtes-vous sûr de vouloir supprimer le fichier {name} ?",
+          "folder_single": "Êtes-vous sûr de vouloir supprimer le dossier {name} et tout son contenu ?"
         }
       },
       "revisions": {
@@ -1122,11 +1320,12 @@
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
     "relative start date": "Date de début relative",
+    "now": "Maintenant",
     "absolute": "Absolu",
     "backfill": "Backfill",
     "Set labels": "Ajouter des labels",
     "manage labels": "Gérer les labels",
-    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
+    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution {id}",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
     "bulk set labels": "Voulez-vous vraiment définir des labels pour <code>{executionCount}</code> exécution(s) ?",
     "true": "Vrai",
@@ -1316,6 +1515,12 @@
           "third": "Redémarrez votre instance Kestra pour que le secret soit chargé."
         }
       },
+      "credentials": {
+        "label": "Identifiants",
+        "header": "Identifiants",
+        "title": "Authentifiez-vous une fois, réutilisez-la dans chaque task",
+        "message": "Dans Kestra Enterprise Edition, l'authentification de serveur à serveur peut être configurée une fois comme une credential, de sorte que les jetons d'accès sont demandés et actualisés au moment de l'exécution au lieu d'être codés en dur dans vos flows. Les credentials peuvent être créées au niveau du tenant ou du namespace et référencées depuis n'importe quelle task."
+      },
       "apps": {
         "title": "Créez des applications personnalisées avec Kestra",
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
@@ -1344,7 +1549,7 @@
       },
       "promote": {
         "title": "Promouvoir les flows entre les environnements",
-        "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre — comme du développement à la pré-production, puis à la production — directement depuis l'interface utilisateur, sans nécessiter de Git ou de pipelines CI/CD. Examinez un diff de ce qui va changer avant de promouvoir, protégez les cibles sensibles avec une porte de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
+        "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre, comme du développement à la pré-production, puis à la production, directement depuis l'interface utilisateur, sans nécessiter de Git ou de pipelines CI/CD. Examinez un diff de ce qui va changer avant de promouvoir, protégez les cibles sensibles avec une porte de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
       },
       "dashboards": {
         "header": "Tableaux de bord personnalisés",
@@ -1382,7 +1587,7 @@
       "policies": {
         "header": "Politiques de gouvernance",
         "label": "Politiques",
-        "message": "Les politiques permettent aux équipes de plateforme de gérer et d'appliquer de manière centralisée des règles à tous les flows — injecter des valeurs par défaut partagées, bloquer des plugins, limiter les valeurs de propriétés et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
+        "message": "Les politiques permettent aux équipes de plateforme de gérer et d'appliquer de manière centralisée des règles à tous les flows : injecter des valeurs par défaut partagées, bloquer des plugins, limiter les valeurs de propriétés et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
         "title": "Gérer tous les flows avec des politiques"
       },
       "namespace": {
@@ -1394,6 +1599,10 @@
           "title": "Gérer les secrets de manière sécurisée",
           "message": "Dans Kestra Enterprise Edition, vous pouvez stocker et contrôler les secrets au niveau du namespace, minimisant les risques et garantissant que les identifiants de chaque équipe restent isolés. Grâce à la hiérarchie imbriquée, vous pouvez également configurer les identifiants dans un namespace parent, et ils seront hérités par tous les namespaces enfants. La prise en charge de gestionnaires de secrets dédiés et de paramètres d'autorisation granulaires au niveau du namespace renforce davantage la sécurité et la conformité."
         },
+        "credentials": {
+          "title": "Limitez les credentials à ce namespace",
+          "message": "Dans Kestra Enterprise Edition, vous pouvez configurer des credentials au niveau du namespace, afin que les tasks de ce namespace et de ses enfants demandent et actualisent les jetons d'accès au moment de l'exécution au lieu de les stocker dans les flows. Une credential définie dans un namespace parent est héritée par tous les namespaces enfants."
+        },
         "assets": {
           "title": "Centraliser la gestion des actifs",
           "message": "Dans Kestra Enterprise Edition, Assets maintient un inventaire en temps réel des ressources avec lesquelles vos workflows interagissent. Ces ressources peuvent être des tables de base de données, des machines virtuelles, des fichiers ou tout système externe avec lequel vous travaillez."
@@ -1404,7 +1613,12 @@
         },
         "policies": {
           "title": "Appliquer les règles de gouvernance dans ce namespace",
-          "message": "Dans Kestra Enterprise Edition, les politiques vous permettent de définir des règles qui s'appliquent à chaque flow dans ce namespace et ses enfants — injecter des valeurs par défaut partagées, restreindre les valeurs de propriété, bloquer les plugins et exiger des labels de conformité, avec chaque modification entièrement visible pour les auteurs de flow."
+          "message": "Dans Kestra Enterprise Edition, les politiques vous permettent de définir des règles qui s'appliquent à chaque flow dans ce namespace et ses enfants : injecter des valeurs par défaut partagées, restreindre les valeurs de propriété, bloquer les plugins et exiger des labels de conformité, avec chaque modification entièrement visible pour les auteurs de flow."
+        },
+        "reusable-inputs": {
+          "label": "Inputs réutilisables",
+          "title": "Définissez vos inputs une fois, réutilisez-les partout",
+          "message": "Dans Kestra Enterprise Edition, les inputs réutilisables vous permettent de définir une seule fois un groupe nommé d'inputs typés au niveau du namespace et de le référencer dans n'importe quel flow. Un ensemble défini dans un namespace parent est disponible pour les namespaces enfants, ce qui permet aux équipes de partager les mêmes définitions d'inputs au lieu de les répéter dans chaque flow."
         },
         "history": {
           "title": "Gérer l'historique des révisions en un seul endroit",
@@ -1662,7 +1876,18 @@
       "compact": "Vue par défaut",
       "compact_details": "Affiche les logs dans un format compacte regroupé par tâche",
       "fullscreen": "Logs en plein écran",
-      "exit_fullscreen": "Quitter le mode plein écran"
+      "exit_fullscreen": "Quitter le mode plein écran",
+      "loop": {
+        "this-execution": "Cette exécution",
+        "with-iterations": "Avec les itérations du loop",
+        "batch-range": "Itérations échouées {from}–{to} sur {total}",
+        "empty-title": "Aucun log correspondant",
+        "empty-description": "Aucun log ne correspond au niveau sélectionné dans cette exécution ni dans ses itérations de loop en échec. Abaissez le niveau pour en voir plus.",
+        "scope-to": "Limiter le graphe et les logs à {scope}",
+        "show-in-overview": "Afficher dans la vue générale",
+        "show-in-overview-for": "Afficher {scope} dans la vue générale",
+        "mode-label": "Source des logs"
+      }
     },
     "execution_deletion": {
       "logs": "Supprimer les journaux",
@@ -1722,10 +1947,26 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "load_10_more": "Charger 10 de plus",
+    "show_all_executions": "Afficher toutes les exécutions",
+    "failed_iterations_only": "Itérations échouées uniquement",
+    "loop_iterations_shown": "{shown} sur {total} affichés",
+    "loop_iterations_load_error": "Échec du chargement des itérations",
+    "retry": "Réessayer",
+    "no_iterations": "Pas encore d'itérations",
+    "no_failed_iterations": "Aucune itération échouée",
+    "loop_iterations_notice": {
+      "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
+      "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
+      "metrics": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs métriques ne sont donc pas affichées ici.",
+      "view_iterations": "Afficher les itérations"
+    },
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
     "last error was": "La dernière erreur était",
+    "execution_paused": "Exécution mise en pause",
+    "execution_paused_description": "Cette exécution est en attente de validation et de reprise.",
     "active": "Actif",
     "flows imported": "Flux importés",
     "flows not imported": "Flows non importés",
@@ -2005,6 +2246,7 @@
         "plural": "Tableaux de bord"
       },
       "default": "Tableau de bord par défaut",
+      "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
       "edition": {
         "label": "Modifier le tableau de bord",
@@ -2017,12 +2259,10 @@
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
       "viewAll": "Tout voir",
-      "export": "Exporter",
-      "exportEmpty": "Ce graphique n'a aucune donnée à exporter.",
       "exportTo": {
-        "csv": "Exporter vers CSV",
-        "ion": "Exporter vers ION"
+        "csv": "Exporter vers CSV"
       },
+      "ignoredFilters": "Le filtre {filters} ne s'applique pas à ce graphique. | Les filtres {filters} ne s'appliquent pas à ce graphique.",
       "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",
@@ -2152,7 +2392,7 @@
         },
         "cancelled": "Tour annulé",
         "error": {
-          "turnCap": "Cette conversation a atteint sa limite — démarrez une nouvelle discussion.",
+          "turnCap": "Cette conversation a atteint sa limite : démarrez une nouvelle discussion.",
           "turnInProgress": "Un tour est déjà en cours.",
           "request": "La requête a échoué. Veuillez réessayer.",
           "generic": "Une erreur est survenue. Veuillez réessayer."
@@ -2215,7 +2455,7 @@
           "applied": "Appliqué",
           "previewBanner": "Examen d'une modification suggérée par l'IA : l'éditeur est en lecture seule jusqu'à ce que vous l'appliquiez ou l'ignoriez.",
           "applyTitle": "Appliquer le flow",
-          "applyConfirm": "Enregistrer le flow {namespace}.{id} comme révision brouillon pour relecture ? Il sera créé, ou une nouvelle révision brouillon sera ajoutée s'il existe déjà — les brouillons ne sont pas pris en compte par les triggers ni les subflows tant qu'ils ne sont pas publiés.",
+          "applyConfirm": "Enregistrer le flow {namespace}.{id} comme révision brouillon pour relecture ? Il sera créé, ou une nouvelle révision brouillon sera ajoutée s'il existe déjà. Les brouillons ne sont pas pris en compte par les triggers ni les subflows tant qu'ils ne sont pas publiés.",
           "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
           "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
           "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",
@@ -2224,7 +2464,8 @@
           "title": {
             "flow": "flow proposé",
             "dashboard": "Tableau de bord proposé",
-            "app": "Application proposée"
+            "app": "Application proposée",
+            "test_suite": "Test unitaire proposé"
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"
@@ -2269,6 +2510,13 @@
           "failed": "Échec",
           "unknown": "Non suivi"
         },
+        "kind": {
+          "produces": "Produit",
+          "consumed_by": "Consommé par",
+          "upstream_of": "En amont de",
+          "part_of": "Fait partie de",
+          "related": "Associé"
+        },
         "summary": {
           "fresh": "Tous les {n} assets sont à jour",
           "issues": "{n} obsolète | {n} obsolètes",
@@ -2278,10 +2526,19 @@
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",
-        "groups": "Groupes ({n})",
+        "groups": "Groupes",
         "group_none": "Pas de regroupement",
         "group_dataset": "Jeu de données",
-        "ungrouped": "Non groupé"
+        "group_consumer": "Consommateur",
+        "no_consumer": "Aucun consommateur",
+        "hidden_consumer": "Flow masqué",
+        "ungrouped": "Non groupé",
+        "hub": {
+          "notice": "Ce nœud a {count} relations. Seules les plus récentes sont affichées pour que le graphe reste lisible.",
+          "expand": "Charger plus de relations",
+          "expand_failed": "Impossible de charger plus de relations. Veuillez réessayer."
+        },
+        "truncated": "Ce graphique était trop grand pour être affiché en entier ; certaines relations ont été omises."
       },
       "search": {
         "placeholders": {
@@ -2437,7 +2694,7 @@
     },
     "invalid_source_code": "Code source invalide",
     "source_search": {
-      "cannot_select_read_only": "Impossible de sélectionner — vous n'avez pas la permission de modifier {namespace} / {id}",
+      "cannot_select_read_only": "Impossible de sélectionner : vous n'avez pas la permission de modifier {namespace} / {id}",
       "collapse_all": "Tout réduire",
       "confirm_bar_excluded": "{count} autre correspondance ne sera pas modifiée. | {count} autres correspondances ne seront pas modifiées.",
       "confirm_bar_message": "Remplacer {matches} dans {flows} flows éditables. {skipped} flows en lecture seule seront ignorés.",
@@ -2453,11 +2710,11 @@
       "empty_title": "Trouvez une valeur dans les flows, fichiers et clés",
       "error_title": "Expression régulière invalide",
       "examples_aria": "Exemples de requêtes",
-      "exclusion_flows_readonly": "Flows — {count} correspondance en lecture seule : vous avez besoin de la permission FLOW · UPDATE. | Flows — {count} correspondances en lecture seule : vous avez besoin de la permission FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} correspondance : recherche uniquement, ne peut pas être remplacée. | {type} — {count} correspondances : recherche uniquement, ne peuvent pas être remplacées.",
+      "exclusion_flows_readonly": "Flows · {count} correspondance en lecture seule : vous avez besoin de la permission FLOW · UPDATE. | Flows · {count} correspondances en lecture seule : vous avez besoin de la permission FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} correspondance : recherche uniquement, ne peut pas être remplacée. | {type} · {count} correspondances : recherche uniquement, ne peuvent pas être remplacées.",
       "exclusion_title": "{count} correspondance est exclue de Tout remplacer | {count} correspondances sont exclues de Tout remplacer",
       "expand_all": "Tout développer",
-      "file_match_notice": "Le chemin du fichier correspond. Le contenu du fichier n'est pas recherché — ouvrez le fichier pour y effectuer une recherche.",
+      "file_match_notice": "Le chemin du fichier correspond. Le contenu du fichier n'est pas recherché. Ouvrez le fichier pour y effectuer une recherche.",
       "files_progress_banner_failed": "Les fichiers d'espace de nom sont recherchés un espace de nom à la fois. {done} sur {total} terminés, {failed} échoué(s). Le total va encore changer.",
       "files_progress_banner_ok": "Les fichiers d'espace de nom sont recherchés un espace de nom à la fois. {done} sur {total} terminés. Le total va encore changer.",
       "flow_only_toggle_hint": "La casse, le mot entier et l'expression régulière ne s'appliquent qu'aux flows. Les chemins de fichiers et les clés correspondent toujours à du texte brut.",
@@ -2534,10 +2791,10 @@
       "show_replace": "Afficher le remplacement",
       "summary": "{matches} correspondances dans {flows} flows",
       "summary_cross": "{matches} dans {resources} sur {types}",
-      "tag_keys_only_never": "Clés uniquement — les valeurs ne sont jamais affichées ni recherchées",
-      "tag_keys_only_values": "Clés uniquement — les valeurs ne sont pas recherchées",
-      "tag_paths_only": "Chemins uniquement — le contenu du fichier n'est pas recherché",
-      "tag_search_only": "Recherche uniquement — non remplacé",
+      "tag_keys_only_never": "Clés uniquement : les valeurs ne sont jamais affichées ni recherchées",
+      "tag_keys_only_values": "Clés uniquement : les valeurs ne sont pas recherchées",
+      "tag_paths_only": "Chemins uniquement : le contenu du fichier n'est pas recherché",
+      "tag_search_only": "Recherche uniquement : non remplacé",
       "tag_source_code": "Code source",
       "truncated_flows": "Affichage des {shown} premières correspondances sur {total}. Remplacer tout ne s'applique qu'aux correspondances affichées, affinez d'abord la requête.",
       "truncated_type": "{shown} premières sur {total}",
@@ -2733,6 +2990,56 @@
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
     "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
-    "not started": "Non démarré"
+    "not started": "Non démarré",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow} : {state}"
+      },
+      "breadcrumb": {
+        "all": "Tous",
+        "total": "{count} exécution | {count} exécutions",
+        "failed": "{count} en échec"
+      },
+      "toolbar": {
+        "panBack": "Reculer",
+        "panForward": "Avancer",
+        "zoomIn": "Zoomer",
+        "zoomOut": "Dézoomer",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Ouvrir cette page",
+        "runsCount": "{count} exécution | {count} exécutions",
+        "failedCount": "{count} en échec"
+      },
+      "bucket": {
+        "hint": "Agrégé : zoomez pour le détail au niveau de l'exécution",
+        "stateCount": "{state} : {count}"
+      },
+      "popover": {
+        "openExecution": "Ouvrir l'exécution",
+        "showOnlyFlow": "Afficher uniquement ce flow"
+      },
+      "empty": {
+        "description": "Aucune exécution dans la période et les filtres sélectionnés.",
+        "resetFilters": "Réinitialiser les filtres",
+        "widenRange": "Élargir à 7 jours"
+      },
+      "error": {
+        "title": "Impossible de charger la chronologie",
+        "description": "Une erreur s'est produite lors du chargement des exécutions pour cette période."
+      },
+      "truncated": {
+        "description": "Affichage des {shown} dernières exécutions sur {total}. Réduisez la période ou les filtres pour toutes les voir."
+      },
+      "scrubber": {
+        "label": "Densité d'Execution au fil du temps, faites glisser pour sélectionner une plage",
+        "ignoredFilters": "La barre de densité n'applique pas ces filtres : {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Décompte",
+      "timeline": "Chronologie"
+    }
   }
 }

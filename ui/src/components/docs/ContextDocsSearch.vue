@@ -131,7 +131,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .search-container {
         position: relative;
         flex: 1;

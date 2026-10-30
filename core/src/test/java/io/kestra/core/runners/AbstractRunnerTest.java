@@ -66,6 +66,9 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
+    protected ApprovalTest.Suite approvalTest;
+
+    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -459,6 +462,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunApprove() throws Exception {
+        approvalTest.approve(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunDeny() throws Exception {
+        approvalTest.deny(runnerUtils);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -484,6 +499,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = { "flows/valids/waitfor-max-iterations.yaml" }, tenantId = "waitformaxiterations")
     void waitforMaxIterations() throws Exception {
         loopUntilTestCaseTest.waitforMaxIterations("waitformaxiterations");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
     }
 
     @Test
@@ -668,9 +689,22 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-with-pause.yaml")
     public void loopWithPause(Execution execution) {
         loopCaseTest.loopWithPause(execution);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-breakpoint.yaml" }, tenantId = "loop-breakpoint")
+    void loopBreakpointOnChildTask() throws Exception {
+        loopCaseTest.loopBreakpointOnChildTask("loop-breakpoint");
     }
 
     @Test

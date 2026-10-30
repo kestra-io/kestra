@@ -1,5 +1,6 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div data-component="FILENAME_PLACEHOLDER" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <div ref="inlineLogsTarget" />
         <KsDialog
             v-model="fullscreenModalOpen"
@@ -14,19 +15,28 @@
         </KsDialog>
 
         <Teleport v-if="logsTarget" :to="logsTarget">
+            <LoopIterationsNotice v-if="!merged" kind="logs" />
             <KSFilter
                 :configuration="logExecutionsFilter"
                 :tableOptions="{
                     chart: {shown: false},
                     columns: {shown: false},
-                    refresh: {shown: true, callback: loadLogs}
+                    refresh: {shown: true, callback: refreshLogs}
                 }"
                 @search="filter = $event"
-                @filter="syncFromAppliedFilters"
+                @filter="applyLevelFilter"
             />
             <div class="logs-toolbar" data-test="logs-toolbar">
                 <div class="logs-toolbar__left">
-                    <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                    <KsSegmented
+                        v-if="hasLoopIterations"
+                        v-model="selectedMode"
+                        :options="modeOptions"
+                        size="small"
+                        :aria-label="$t('logs_view.loop.mode-label')"
+                        data-test="logs-mode-switch"
+                    />
+                    <template v-for="logLevel in (merged ? [] : currentLevelOrLower)" :key="logLevel">
                         <LogLevelNavigator
                             v-if="countByLogLevel[logLevel] > 0"
                             :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
@@ -37,17 +47,17 @@
                             @close="logCursor = undefined"
                         />
                     </template>
-                    <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+                    <KsButton v-if="!merged" class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                         {{ logDisplayButtonText }}
                     </KsButton>
-                    <KsTooltip :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
+                    <KsTooltip v-if="!merged" :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
                         <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
                             {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                         </KsButton>
                     </KsTooltip>
                 </div>
                 <div class="logs-toolbar__actions">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
+                    <Restart v-if="executionsStore.execution && !isMobile" :execution="executionsStore.execution" />
                     <LogDisplaySettings />
                     <KsButton
                         square
@@ -60,17 +70,26 @@
                         :tooltip="fullscreenModalOpen ? $t('logs_view.exit_fullscreen') : $t('logs_view.fullscreen')"
                         @click="toggleFullscreenModal"
                     />
-                    <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
-                    <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
+                    <KsButton square type="default" size="default" :disabled="merged" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
+                    <KsButton square type="default" size="default" :disabled="merged" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
                 </div>
             </div>
 
+            <LoopMergedLogs
+                v-if="merged"
+                ref="mergedLogs"
+                :levelParams="mergedLevelParams"
+                :running="isExecutionRunning"
+                :filter="filter"
+                :fullHeight="fullscreenModalOpen"
+            />
             <TaskRunDetails
-                v-if="!raw_view"
+                v-else-if="!raw_view"
                 ref="logs"
                 :levelFilter="effectiveLevelValue"
-                :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
+                :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as (keyof Log)[])"
                 :filter="filter"
+                :taskRunId="routeTaskRunId"
                 :levelToHighlight="cursorLogLevel"
                 @log-cursor="logCursor = $event"
                 :logCursor="logCursor"
@@ -104,7 +123,6 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
@@ -123,12 +141,12 @@
                             <LogLine
                                 @click="logCursor = asLog(item).index.toString()"
                                 class="line"
-                                :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === asLog(item).level, 'opacity-40': cursorLogLevel && cursorLogLevel !== asLog(item).level}"
+                                :dimmed="!!cursorLogLevel && cursorLogLevel !== asLog(item).level"
                                 :cursor="asLog(item).index.toString() === logCursor"
-                                :excludeMetas="(['namespace', 'flowId', 'executionId'] as any)"
-                                :level="effectiveLevelValue?.value as any"
+                                :excludeMetas="(['namespace', 'flowId', 'executionId'] as (keyof Log)[])"
+                                :level="effectiveLevelValue?.value as LogUtils.LevelKey"
                                 :filter="filter"
-                                :log="asLog(item) as any"
+                                :log="asLog(item)"
                             />
                         </DynamicScrollerItem>
                     </template>
@@ -141,9 +159,12 @@
 <script setup lang="ts">
     import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
+    import LoopMergedLogs from "./LoopMergedLogs.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -154,18 +175,22 @@
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
 
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
+    import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import * as LogUtils from "../../utils/logs"
     import {useExecutionsStore} from "../../stores/executions"
+    import type {Log} from "../../stores/logs"
     import type {LogEntry} from "@kestra-io/kestra-sdk"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
+    import {flowHasLoop} from "../../utils/loopLogScope"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {
         hasUnsupportedRouteLevelComparator,
         levelToRequestParams,
@@ -173,6 +198,7 @@
         readAppliedLevelFilter,
         readRouteLevelFilter,
         State,
+        type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
@@ -180,15 +206,9 @@
         return array.indexOf(value) === index
     }
 
-    interface TemporalLog {
-        message?: string
-        level: string
-        taskRunId?: string
-        attemptNumber?: number
-        timestamp: string
+    interface TemporalLog extends LogEntry {
         index: number
         uid: string
-        [key: string]: unknown
     }
 
     const FULLSCREEN_CARD_BODY_STYLE = {
@@ -204,16 +224,22 @@
     }
 
     const {t} = useI18n()
+    const isMobile = useIsMobile()
     const toast = useToast()
 
 
     const props = withDefaults(defineProps<{
         playground?: boolean
+        showBanner?: boolean
     }>(), {
         playground: false,
+        showBanner: false,
     })
 
     const executionsStore = useExecutionsStore()
+    const execution = computed(() => executionsStore.execution)
+
+    const bannerHeight = ref(0)
 
     // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
     const executionKind = computed<string | undefined>(() => {
@@ -233,17 +259,40 @@
         return params
     })
 
+    const route = useRoute()
+
+    type LogsMode = "execution" | "merged"
+
+    const hasLoopIterations = computed(() => !props.playground && flowHasLoop(executionsStore.flow))
+    const modeOverride = ref<LogsMode>()
+    const mode = computed<LogsMode>(() => modeOverride.value ?? (hasLoopIterations.value ? "merged" : "execution"))
+    const merged = computed(() => hasLoopIterations.value && mode.value === "merged")
+    const selectedMode = computed({
+        get: () => mode.value,
+        set: (value: string) => {
+            modeOverride.value = value as LogsMode
+        },
+    })
+    const modeOptions = computed(() => [
+        {label: t("logs_view.loop.this-execution"), value: "execution"},
+        {label: t("logs_view.loop.with-iterations"), value: "merged"},
+    ])
+    const logFilters = computed(() => routeQueryToQueryFilters({...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value}))
+
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
         () => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
     )
 
+    const levelInUrlAtMount = readRouteLevelFilter(route.query) !== undefined
+
     const {
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
+        setRouteValue: setRouteLevel,
     } = useRouteFilterPolicy({
-        defaultValue: () => ({value: defaultLogLevel.value, direction: "min" as const}),
+        defaultValue: () => ({value: merged.value ? "ERROR" : defaultLogLevel.value, direction: "min" as const}),
         applyDefaultIfMissing: () => true,
         fallbackValue: () => ({value: "TRACE", direction: "min" as const}),
         readFromRoute: readRouteLevelFilter,
@@ -256,11 +305,42 @@
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
 
+    const ERRORS_ONLY: LevelFilterValue = {value: "ERROR", direction: "min"}
+    const defaultLevelValue = (): LevelFilterValue => ({value: defaultLogLevel.value, direction: "min"})
+    const levelPicked = ref(levelInUrlAtMount)
+    let levelBeforeErrorsOnly: LevelFilterValue | undefined = !levelInUrlAtMount && merged.value ? defaultLevelValue() : undefined
+    const mergedUsesDefaultLevel = computed(() => merged.value && !levelPicked.value)
+    const mergedLevelParams = computed(() => levelToRequestParams(mergedUsesDefaultLevel.value ? ERRORS_ONLY : effectiveLevelValue.value))
+
+    watch(merged, (isMerged) => {
+        if (levelPicked.value) return
+        if (isMerged) {
+            levelBeforeErrorsOnly = routeLevelValue.value ?? defaultLevelValue()
+            if (routeLevelValue.value?.value !== ERRORS_ONLY.value) setRouteLevel(ERRORS_ONLY)
+        } else if (levelBeforeErrorsOnly) {
+            setRouteLevel(levelBeforeErrorsOnly)
+            levelBeforeErrorsOnly = undefined
+        }
+    })
+
+    function applyLevelFilter(filters: AppliedFilter[]) {
+        const applied = readAppliedLevelFilter(filters)
+        if (routeLevelValue.value !== undefined && JSON.stringify(applied) !== JSON.stringify(routeLevelValue.value)) {
+            levelPicked.value = true
+            levelBeforeErrorsOnly = undefined
+        }
+        syncFromAppliedFilters(filters)
+    }
+
     const filter = ref<string | undefined>(undefined)
+    const routeTaskRunId = computed(() => {
+        const value = route.query["filters[taskRunId][EQUALS]"]
+        return typeof value === "string" && value ? value : undefined
+    })
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")
     const emptyLogIndicesByLevel = () =>
-        Object.fromEntries(LogUtils.levelOrLower(undefined as any).map((level: string) => [level, [] as string[]]))
+        Object.fromEntries(LogUtils.levelOrLower(undefined).map((level) => [level, [] as string[]]))
     const logIndicesByLevel = ref<Record<string, string[]>>(emptyLogIndicesByLevel())
     const setLogIndicesByLevel = (indices: Record<string, string[]>) => {
         logIndicesByLevel.value = {...emptyLogIndicesByLevel(), ...indices}
@@ -273,7 +353,8 @@
     const fullscreenModalOpen = ref(false)
 
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
-    const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
+    const mergedLogs = useTemplateRef<InstanceType<typeof LoopMergedLogs>>("mergedLogs")
+    const logScroller = useTemplateRef<DynamicScrollerExposed>("logScroller")
     const inlineLogsTarget = useTemplateRef<HTMLElement>("inlineLogsTarget")
     const fullscreenLogsTarget = useTemplateRef<HTMLElement>("fullscreenLogsTarget")
     const preservedLogScrollPositions = new Map<string, number>()
@@ -300,8 +381,6 @@
         pendingLogScrollPositions.clear()
     })
 
-    // created hook equivalent
-    const route = useRoute()
     filter.value = (route.query.q as string) || undefined
 
     const logsSSE = ref<EventSource | undefined>(undefined)
@@ -378,8 +457,10 @@
         return !!current && State.isRunning(current)
     })
 
+    const streamsRawLogs = computed(() => raw_view.value && !merged.value)
+
     watch(
-        [executionId, isExecutionRunning, raw_view],
+        [executionId, isExecutionRunning, streamsRawLogs],
         ([id, , isRaw]) => {
             if (!id || !isRaw) {
                 closeLogsSSE()
@@ -391,7 +472,7 @@
     )
 
     watch(routeLevel, () => {
-        if (raw_view.value && executionId.value) {
+        if (streamsRawLogs.value && executionId.value) {
             refreshTemporalLogs()
         }
     })
@@ -405,7 +486,7 @@
         if (raw_view.value) {
             scrollToLog(newValue)
         } else {
-            (logs.value as any)?.scrollToLog?.(newValue)
+            logs.value?.scrollToLog?.(newValue)
         }
         nextTick(() => requestAnimationFrame(() => {
             const selected = [...document.querySelectorAll<HTMLElement>(".log-wrapper .line.selected")]
@@ -416,13 +497,14 @@
 
     // computed
     const temporalLogs = computed(() => {
-        const logResults = executionsStore.logs
+        const logResults = [...executionsStore.reusedLogsOf(executionId.value, effectiveLevelValue.value), ...executionsStore.logs]
 
         if (!logResults.length) {
             return []
         }
 
         const filtered = logResults.filter(log => {
+            if (routeTaskRunId.value && log.taskRunId !== routeTaskRunId.value) return false
             if (!filter.value) return true
             return log.message?.toLowerCase().includes(filter.value.toLowerCase())
         })
@@ -446,9 +528,7 @@
         raw_view.value ? ViewGrid : ViewList,
     )
 
-    const currentLevelOrLower = computed(() =>
-        LogUtils.levelOrLower(routeLevelValue.value as any),
-    )
+    const currentLevelOrLower = computed(() => LogUtils.levelOrLower(undefined))
 
     const countByLogLevel = computed(() =>
         Object.fromEntries(
@@ -467,14 +547,13 @@
     )
 
     const temporalViewLogIndicesByLevel = computed(() => {
-        const result: Record<string, string[]> = temporalLogs.value.reduce((acc: Record<string, string[]>, item: any) => {
-            if (!acc[item.level]) {
-                acc[item.level] = []
+        const result: Record<string, string[]> = temporalLogs.value.reduce((acc: Record<string, string[]>, item: TemporalLog) => {
+            if (item.level) {
+                ;(acc[item.level] ??= []).push(item.index.toString())
             }
-            acc[item.level].push(item.index.toString())
             return acc
         }, {})
-        LogUtils.levelOrLower(undefined as any).forEach((level: string) => {
+        LogUtils.levelOrLower(undefined).forEach((level) => {
             if (!result[level]) {
                 result[level] = []
             }
@@ -492,24 +571,29 @@
         logsLoading.value = true
         executionsStore.loadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).finally(() => {
             logsLoading.value = false
             logsLoaded.value = true
         })
     }
 
+    function refreshLogs() {
+        if (merged.value) mergedLogs.value?.refresh()
+        else loadLogs()
+    }
+
     function downloadContent() {
         executionsStore.downloadLogsFile({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         })
     }
 
     function copyAllLogs() {
         executionsStore.downloadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).then((response: unknown) => {
             Utils.copy(response as string)
             toast.success(t("logs_copied"))
@@ -517,8 +601,8 @@
     }
 
     function expandCollapseAll() {
-        if (logs.value && (logs.value as any).toggleExpandCollapseAll) {
-    ;(logs.value as any).toggleExpandCollapseAll()
+        if (logs.value?.toggleExpandCollapseAll) {
+            logs.value.toggleExpandCollapseAll()
         }
     }
 
@@ -568,7 +652,7 @@
     }
 
     function scrollToLog(index: string) {
-  ;(logScroller.value as any)?.scrollToItem(index)
+        logScroller.value?.scrollToItem(Number(index))
     }
 
     function rememberLogScroll(event: Event) {
@@ -622,11 +706,11 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .attempt-wrapper {
     background-color: var(--ks-bg-surface);
 
-    :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
+    & :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
       border-top: 1px solid var(--ks-border-default);
     }
 
@@ -640,12 +724,20 @@
       padding: .5rem;
     }
 
-    :deep(.vue-recycle-scroller__item-view > div) {
+    & :deep(.vue-recycle-scroller__item-view > div) {
       min-height: 2rem;
     }
   }
 
   .log-lines.temporal {
+    margin-top: 0.5rem;
+    max-height: max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)));
+    max-height: max(15rem, calc(100dvh - 335px - var(--execution-banner-height, 0px)));
+
+    &.fullscreen-logs {
+      max-height: none;
+    }
+
     .line {
       align-items: flex-start;
     }
@@ -662,28 +754,30 @@
     padding: var(--ks-spacing-2) 0;
     margin-bottom: var(--ks-spacing-2);
     background: var(--ks-bg-base);
+  }
 
-    &__left {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--ks-spacing-2);
-    }
+  .logs-toolbar__left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+  }
 
-    &__actions {
-      display: flex;
-      align-items: center;
-      gap: var(--ks-spacing-2);
-      margin-left: auto;
-    }
+  .logs-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    margin-left: auto;
+  }
 
-    &__text-btn {
-      font-size: var(--ks-font-size-xs);
-    }
-
-    :deep(.kel-button) {
+  .logs-toolbar {
+    & :deep(.kel-button) {
         margin: 0;
     }
+  }
+
+  .logs-toolbar__text-btn {
+    font-size: var(--ks-font-size-xs);
   }
 
   .fullscreen-logs-container {

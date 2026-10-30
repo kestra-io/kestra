@@ -41,6 +41,15 @@ describe("KsBadge", () => {
         expect(inline.find(".kel-badge--inline").exists()).toBe(true)
     })
 
+    test("applies the small class only when size is small", () => {
+        const regular = mount(KsBadge, {props: {value: 1}, global: globalConfig})
+        expect(regular.find(".kel-badge--small").exists()).toBe(false)
+
+        const small = mount(KsBadge, {props: {value: 1, size: "small"}, global: globalConfig})
+        expect(small.find(".kel-badge--small").exists()).toBe(true)
+        expect(small.find(".kel-badge").attributes("size")).toBeUndefined()
+    })
+
     test("does not forward inline to the underlying element", () => {
         const wrapper = mount(KsBadge, {
             props: {value: 1, inline: true},
@@ -58,5 +67,12 @@ describe("KsBadge", () => {
         const root = wrapper.find(".kel-badge")
         expect(root.classes()).toContain("count")
         expect(root.classes()).toContain("kel-badge--inline")
+    })
+
+    test("renders neutral with its own class instead of passing the type to Element Plus", () => {
+        const wrapper = mount(KsBadge, {props: {value: "12", type: "neutral", inline: true}, global: globalConfig})
+
+        expect(wrapper.find(".kel-badge").classes()).toContain("ks-badge--neutral")
+        expect(wrapper.find(".kel-badge__content--neutral").exists()).toBe(false)
     })
 })

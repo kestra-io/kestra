@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -26,8 +28,6 @@ import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
-
-import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -123,6 +123,24 @@ import lombok.extern.slf4j.Slf4j;
                   - id: schedule
                     cron: "0 11 * * 1"
                     when: "{{ isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST') }}"
+                """,
+            full = true
+        ),
+        @Example(
+            title = "Schedule a flow on the last calendar day of the month at 11:00 AM, including weekends and leap days.",
+            code = """
+                id: monthly_last_calendar_day
+                namespace: company.team
+
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: Running on the last calendar day of the month!
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 L * *"
                 """,
             full = true
         ),

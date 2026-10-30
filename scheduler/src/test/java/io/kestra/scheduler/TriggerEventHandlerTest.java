@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -39,6 +41,7 @@ import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -775,10 +778,105 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldUnlockTriggerWhenLockingExecutionTerminationHasOlderEventId() {
+        // GIVEN
+        EventId lastAppliedEventId = new EventId(new UUID(2L, 0L));
+        triggerStateStore.save(
+            triggerState
+                .locked(CLOCK, true)
+                .executionId(CLOCK, "exec-123")
+                .lastEventId(CLOCK, lastAppliedEventId)
+        );
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(
+            triggerId, "exec-123", State.Type.SUCCESS, 0L, Instant.now(), new EventId(new UUID(1L, 0L))
+        );
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getExecutionId()).isNull();
+        assertThat(updated.get().getLastEventId()).isEqualTo(lastAppliedEventId);
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenTerminatedExecutionIsNotTheLockingOne() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true).executionId(CLOCK, "exec-new"));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-old", State.Type.SUCCESS);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getExecutionId()).isEqualTo("exec-new");
+    }
+
+    @Test
+    void shouldUnlockTriggerWithoutEnablingItWhenLockingExecutionIsDeleted() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true).executionId(CLOCK, "exec-123").disabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-123");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getExecutionId()).isNull();
+        assertThat(updated.get().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenDeletedExecutionIsNotTheLockingOne() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true).executionId(CLOCK, "exec-new"));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-old");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getExecutionId()).isEqualTo("exec-new");
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenDeletedExecutionAlreadyTerminated() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-123");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+    }
+
+    @Test
     void shouldKillRunningRealtimeTriggerWhenUpdated() throws QueueException {
         // GIVEN — a realtime trigger running on a worker (locked) whose definition changed
         TriggerState realtimeState = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
+            .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         FlowWithSource flow = Fixtures.flowWithTrigger(
@@ -798,6 +896,8 @@ class TriggerEventHandlerTest {
         Mockito.verify(executionKilledQueue).emit(killed.capture());
         assertThat(killed.getValue()).isInstanceOf(ExecutionKilledTrigger.class);
         assertThat(((ExecutionKilledTrigger) killed.getValue()).getTriggerId()).isEqualTo(triggerId.getTriggerId());
+        // fenced to the running dispatch, so a worker that has not registered it yet can still apply it
+        assertThat(((ExecutionKilledTrigger) killed.getValue()).getDispatchEpoch()).isEqualTo(realtimeState.getDispatchEpoch());
         // EXECUTED is the only state forwarded to the workers
         assertThat(killed.getValue().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
     }
@@ -970,17 +1070,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger on its second dispatch, running on worker-2
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a FAILED termination left over from the first dispatch (epoch 1)
-        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+        // a FAILED termination left over from the first dispatch
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -994,17 +1095,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger re-dispatched to the same worker
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+        // a worker-loss notice from the first dispatch on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -1310,10 +1412,11 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the backfill has progressed, so the next evaluation date now points inside the backfill window
-        triggerStateStore.save(triggerState
-            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-            .backfill(CLOCK, backfill)
-            .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+                .backfill(CLOCK, backfill)
+                .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of());
 
@@ -1339,10 +1442,11 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the running backfill has progressed, so the next evaluation date now points inside its window
-        triggerStateStore.save(triggerState
-            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-            .backfill(CLOCK, running)
-            .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+                .backfill(CLOCK, running)
+                .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         CreateBackfillTrigger event = new CreateBackfillTrigger(

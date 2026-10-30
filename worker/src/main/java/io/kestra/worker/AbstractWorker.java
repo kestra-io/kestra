@@ -84,6 +84,7 @@ public abstract class AbstractWorker extends AbstractService {
     private RateMeter rateMeter;
 
     protected AbstractWorker(
+        final String id,
         final ServiceType serviceType,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         final WorkerJobExecutor workerJobExecutor,
@@ -93,7 +94,7 @@ public abstract class AbstractWorker extends AbstractService {
         final MetricRegistry metricRegistry,
         final ServerConfig serverConfig,
         final String ioThreadNamePrefix) {
-        super(serviceType, eventPublisher);
+        super(id, serviceType, eventPublisher);
         this.workerJobExecutor = workerJobExecutor;
         this.jobFetcher = jobFetcher;
         this.workerIOSenders = List.copyOf(workerIOSenders);

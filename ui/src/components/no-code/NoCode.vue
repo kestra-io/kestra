@@ -1,6 +1,6 @@
 <template>
     <div class="no-code" ref="scrollContainer">
-        <div class="p-4">
+        <div class="no-code-content">
             <Task
                 v-if="creatingTask || editingTask"
             />
@@ -15,7 +15,7 @@
                     </template>
                 </Wrapper>
 
-                <hr class="my-4">
+                <hr class="separator">
 
                 <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
                     <template #tasks>
@@ -48,6 +48,7 @@
         DEFAULT_NAMESPACE_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
@@ -69,6 +70,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
+    import {blockPath, FLOW_ROOT_PATH, useFieldValidationErrors} from "./utils/useFieldValidationErrors"
     const props = defineProps<NoCodeProps>()
 
     function shouldMerge(schema?: JsonSchemaDef): boolean {
@@ -168,6 +170,12 @@
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
 
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
+        if (props.creatingTask) return undefined
+        if (!props.editingTask) return FLOW_ROOT_PATH
+        return blockPath(props.parentPath, props.refPath)
+    }))
+
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
         (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): boolean | void;
@@ -216,10 +224,18 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .no-code {
         height: 100%;
         overflow-y: auto;
+
+        .no-code-content {
+            padding: var(--ks-spacing-5);
+        }
+
+        .separator {
+            margin: var(--ks-spacing-5) 0;
+        }
 
         hr {
             margin: 0;

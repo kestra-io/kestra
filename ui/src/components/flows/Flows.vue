@@ -363,6 +363,7 @@
     import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
 
     const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
@@ -676,7 +677,7 @@
     }
 
     function chartFilters(): QueryFilter[] {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,

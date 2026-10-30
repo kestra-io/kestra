@@ -11722,6 +11722,16 @@ export type SetKeyValueData = {
      * The value of the key
      */
     body: string;
+    headers?: {
+        /**
+         * The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)
+         */
+        ttl?: string | null;
+        /**
+         * The description of the key
+         */
+        description?: string | null;
+    };
     path: {
         /**
          * The namespace id

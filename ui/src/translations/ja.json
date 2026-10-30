@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "エラーが検出されました。",
     "warning detected": "警告が検出されました。",
+    "schema warning": "行 {line}: {message}",
     "informative notice": "注記",
     "open": "開く",
     "admin": "管理者",

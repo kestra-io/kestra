@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "检测到错误。",
     "warning detected": "检测到警告。",
+    "schema warning": "行 {line}: {message}",
     "informative notice": "注意事项",
     "open": "打开",
     "admin": "管理员",

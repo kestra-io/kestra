@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Обнаружена ошибка(и).",
     "warning detected": "Обнаружены предупреждения.",
+    "schema warning": "Строка {line}: {message}",
     "informative notice": "Примечание(я)",
     "open": "Открыть",
     "admin": "Администратор",

@@ -7,7 +7,7 @@ vi.mock("@kestra-io/design-system", () => ({
     KsMessageBox: {confirm: vi.fn(() => Promise.resolve())},
 }))
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (k: string) => k})}))
-for (const icon of ["DeleteOutline", "PencilOutline", "CheckCircle"]) {
+for (const icon of ["Delete", "Pencil", "CheckCircle"]) {
     vi.doMock(`vue-material-design-icons/${icon}.vue`, () => ({
         default: defineComponent({name: icon, setup: () => () => h("span")}),
     }))

@@ -3,7 +3,7 @@ import {mount} from "@vue/test-utils"
 import {nextTick, ref} from "vue"
 import PluginCount from "./PluginCount.vue"
 
-const totalPlugins = ref(5)
+const totalPlugins = ref<number>()
 
 vi.mock("../../composables/usePluginsCount", () => ({
     usePluginsCount: () => ({
@@ -20,6 +20,14 @@ describe("PluginCount", () => {
         const wrapper = mount(PluginCount)
 
         expect(wrapper.text()).toBe("5+")
+    })
+
+    test("renders nothing while the count is unknown", () => {
+        totalPlugins.value = undefined
+
+        const wrapper = mount(PluginCount)
+
+        expect(wrapper.text()).toBe("")
     })
 
     test("updates when the total plugin count changes", async () => {

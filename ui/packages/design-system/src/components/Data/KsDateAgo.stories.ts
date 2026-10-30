@@ -29,7 +29,7 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-date-ago v-bind=\"args\" /></div>",
     }),
-    args: {date: ONE_HOUR_AGO, showTooltip: true},
+    args: {date: ONE_HOUR_AGO, inverted: false, format: "llll", className: "", showTooltip: true},
 }
 
 export const Inverted: Story = {
@@ -42,6 +42,7 @@ export const Inverted: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const NoTooltip: Story = {
@@ -54,6 +55,7 @@ export const NoTooltip: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const CustomFormat: Story = {
@@ -65,6 +67,7 @@ export const CustomFormat: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const NoDate: Story = {
@@ -72,4 +75,5 @@ export const NoDate: Story = {
         components: {KsDateAgo},
         template: "<div style=\"padding:24px\"><ks-date-ago /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }

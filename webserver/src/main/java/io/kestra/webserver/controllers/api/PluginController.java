@@ -69,7 +69,6 @@ import jakarta.validation.constraints.Max;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
 import static io.kestra.core.models.Plugin.isInternal;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/plugins/")
 public class PluginController {
@@ -272,11 +271,11 @@ public class PluginController {
         tags = { "Plugins" },
         summary = "Get all types for an inputs"
     )
-    public List<InputType> getAllInputTypes() throws ClassNotFoundException {
+    public List<InputType> getAllInputTypes() {
         return Stream.of(Type.values())
             // exclude edition-restricted (@EeOnly) input types (e.g. REUSABLE_INPUTS) from the open-source listing
             .filter(type -> !type.cls().isAnnotationPresent(EeOnly.class))
-            .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
+            .map(type -> new InputType(type.name(), type.cls().getName()))
             .toList();
     }
 

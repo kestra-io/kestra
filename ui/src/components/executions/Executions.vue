@@ -37,7 +37,7 @@
     <BottomActionBar v-if="displayButtons && $route.name === 'executions/list' && hasAnyExecute">
         <TriggerFlow>
             <template #button="{execute, disabled}">
-                <KsButton type="primary" size="large" block :icon="PlayOutline" :disabled="disabled" @click="execute">
+                <KsButton type="primary" size="large" block :icon="Play" :disabled="disabled" @click="execute">
                     {{ $t("execute") }}
                 </KsButton>
             </template>
@@ -75,7 +75,7 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
+                        chart: {shown: !hideChart && canViewCharts, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
@@ -125,10 +125,10 @@
                             <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
                                 {{ $t("Set labels") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canResume" :icon="PlayBox" @click="resumeExecutions()">
+                            <KsDropdownItem v-if="canResume" :icon="Play" @click="resumeExecutions()">
                                 {{ $t("resume") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canPause" :icon="PauseBox" @click="pauseExecutions()">
+                            <KsDropdownItem v-if="canPause" :icon="Pause" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
                             <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
@@ -446,7 +446,7 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {isPlainRowActivation} from "../../utils/rowNavigation"
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+    import Play from "vue-material-design-icons/Play.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
@@ -457,8 +457,7 @@
     import Import from "vue-material-design-icons/Import.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
-    import PlayBox from "vue-material-design-icons/PlayBox.vue"
-    import PauseBox from "vue-material-design-icons/PauseBox.vue"
+    import Pause from "vue-material-design-icons/Pause.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
@@ -507,6 +506,7 @@
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {type Execution, type Label, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
@@ -933,8 +933,10 @@
         localStorage.setItem(storageKeys.SHOW_CHART, value.toString())
     }
 
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
+
     const showStatChart = () => {
-        return !props.hideChart && isDisplayedTop.value && showChart.value
+        return !props.hideChart && canViewCharts.value && isDisplayedTop.value && showChart.value
     }
 
     const refresh = () => {

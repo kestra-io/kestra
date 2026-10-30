@@ -61,8 +61,8 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return explicitValue.value
         }
 
-        if (!normalizedOnce.value && shouldApplyDefaultIfMissing()) {
-            return options.defaultValue?.()
+        if (normalizationPending.value && shouldApplyDefaultIfMissing()) {
+            return options.defaultValue?.() ?? options.fallbackValue?.()
         }
 
         return options.fallbackValue?.()
@@ -124,9 +124,15 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return
         }
 
-        if (isSameValue(value, routeValue.value) && !hasUnsupportedRouteValue.value) {
+        if (
+            !normalizationPending.value &&
+            isSameValue(value, routeValue.value) &&
+            !hasUnsupportedRouteValue.value
+        ) {
             return
         }
+
+        settleNow()
 
         router.replace({
             query: options.writeToRoute(route.query, value),

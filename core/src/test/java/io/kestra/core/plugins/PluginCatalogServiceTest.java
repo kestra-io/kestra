@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import io.kestra.core.contexts.KestraContext;
@@ -285,6 +287,66 @@ class PluginCatalogServiceTest {
         ArgumentCaptor<HttpRequest<?>> request = ArgumentCaptor.forClass(HttpRequest.class);
         verify(blockingClient).exchange(request.capture(), any(Argument.class));
         assertThat(request.getValue().getParameters().get("license")).isEqualTo("OPEN_SOURCE");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "2.1.0-SNAPSHOT", "2.1.0-rc1" })
+    void shouldRequestSnapshotVersionsWhenRunningAPreRelease(String runningVersion) {
+        // Given
+        when(KestraContext.getContext().getVersion()).thenReturn(runningVersion);
+        when(blockingClient.exchange(any(), any(Argument.class))).thenReturn(HttpResponse.ok(List.of()));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
+        PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
+
+        // When
+        service.resolveVersions(List.of(artifact));
+
+        // Then
+        ArgumentCaptor<HttpRequest<?>> request = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(blockingClient).exchange(request.capture(), any(Argument.class));
+        assertThat(request.getValue().getPath()).isEqualTo("/v1/plugins/artifacts/core-compatibility/2.1.0");
+        assertThat(request.getValue().getParameters().get("snapshot")).isEqualTo("true");
+    }
+
+    @Test
+    void shouldNotRequestSnapshotVersionsWhenRunningARelease() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class))).thenReturn(HttpResponse.ok(List.of()));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
+        PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
+
+        // When
+        service.resolveVersions(List.of(artifact));
+
+        // Then
+        ArgumentCaptor<HttpRequest<?>> request = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(blockingClient).exchange(request.capture(), any(Argument.class));
+        assertThat(request.getValue().getParameters().contains("snapshot")).isFalse();
+    }
+
+    @Test
+    void shouldResolveLatestToReleaseWhenSnapshotVersionsAreListedFirst() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        new PluginCatalogService.ApiPluginArtifact("io.kestra.plugin", "plugin-kestra", "OPENSOURCE", List.of("2.1.0-next-SNAPSHOT", "2.3.3-SNAPSHOT", "2.3.2", "2.3.1"))
+                    )
+                )
+            );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
+        PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-kestra", "jar", null, "LATEST", null);
+
+        // When
+        List<PluginResolutionResult> results = service.resolveVersions(List.of(artifact));
+
+        // Then
+        assertThat(results.getFirst().version()).isEqualTo("2.3.2");
+        assertThat(results.getFirst().versions()).containsExactly("2.1.0-next-SNAPSHOT", "2.3.3-SNAPSHOT", "2.3.2", "2.3.1");
     }
 
     @Test

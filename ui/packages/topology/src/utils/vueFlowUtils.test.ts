@@ -1752,7 +1752,7 @@ describe("getNodePosition", () => {
 
     test("subtract parent position", () => {
         const n = {x: 10, y: 20, width: 4, height: 6}
-        const p = {x: 2, y: 3, width: 4, height: 6}
-        expect(VueFlowUtils.getNodePosition(n, p)).toEqual({x: 8, y: 17})
+        const p = {x: 12, y: 13, width: 4, height: 6}
+        expect(VueFlowUtils.getNodePosition(n, p)).toEqual({x: -2, y: 7})
     })
 })

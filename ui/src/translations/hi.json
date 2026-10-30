@@ -1181,6 +1181,7 @@
     "kestra": "केस्ट्रा",
     "error detected": "त्रुटि(त्रुटियाँ) पाई गईं।",
     "warning detected": "चेतावनी(याँ) मिलीं।",
+    "schema warning": "लाइन {line}: {message}",
     "informative notice": "नोट(s)",
     "open": "खोलें",
     "admin": "प्रशासनिक",

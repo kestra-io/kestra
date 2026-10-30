@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -173,7 +174,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
     private DailyExecutionStatistics statisticsFor(String tenant, String flowId, Instant bucket) {
         List<DailyExecutionStatistics> stats = executionStatisticsRepository.statistics(
-            tenant, "namespace", flowId, bucket, bucket, DateUtils.GroupType.MINUTE
+            tenant, "namespace", flowId, Collections.emptyList(), bucket, bucket, DateUtils.GroupType.MINUTE
         );
         assertThat(stats).hasSize(1);
         return stats.getFirst();

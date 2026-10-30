@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "오류가 감지되었습니다.",
     "warning detected": "경고가 감지되었습니다.",
+    "schema warning": "라인 {line}: {message}",
     "informative notice": "노트(s)",
     "open": "열기",
     "admin": "관리자",

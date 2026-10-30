@@ -1,9 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.event.Level;
 
@@ -31,7 +32,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -125,21 +125,17 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
-    public HttpResponse<StreamedFile> downloadLogsFromExecution(
+    public HttpResponse<Flux<byte[]>> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
-        List<LogEntry> logs = logRepository
+        AtomicBoolean first = new AtomicBoolean(true);
+        Flux<byte[]> body = logRepository
             .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
-            .collectList()
-            .block();
-        InputStream inputStream = new java.io.ByteArrayInputStream(
-            (logs == null ? List.<LogEntry> of() : logs).stream()
-                .map(LogEntry::toPrettyString)
-                .collect(java.util.stream.Collectors.joining("\n"))
-                .getBytes()
-        );
+            .map(log -> ((first.getAndSet(false) ? "" : "\n") + LogEntry.toPrettyString(log)).getBytes(StandardCharsets.UTF_8));
 
-        MutableHttpResponse<StreamedFile> response = HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"));
+        MutableHttpResponse<Flux<byte[]>> response = HttpResponse.ok(body)
+            .contentType(MediaType.TEXT_PLAIN_TYPE)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + executionId + ".log\"");
         if (!executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()) {
             return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }

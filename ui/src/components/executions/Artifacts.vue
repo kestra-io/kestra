@@ -42,50 +42,14 @@
             <div ref="fullscreenViewerTarget" class="artifacts-viewer-slot" />
         </KsDialog>
         <Teleport v-if="viewerTarget && selected" :to="viewerTarget">
-            <section class="artifacts-viewer" data-test="execution-artifact-viewer">
-                <header class="artifacts-viewer-header">
-                    <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
-                    <div>
-                        <KsText tag="strong">{{ selected.title }}</KsText>
-                        <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
-                    </div>
-                    <KsSegmented
-                        v-if="siblings.length > 1"
-                        :modelValue="selected.key"
-                        class="artifacts-switch"
-                        variant="neutral"
-                        @update:modelValue="selectedKey = String($event)"
-                        :options="siblingOptions"
-                    />
-                    <KsIconButton
-                        :tooltip="fullscreenLabel"
-                        :aria-label="fullscreenLabel"
-                        :aria-pressed="fullscreenOpen"
-                        filled
-                        data-test="execution-artifact-fullscreen"
-                        @click="fullscreenOpen = !fullscreenOpen"
-                    >
-                        <component :is="fullscreenOpen ? FullscreenExit : Fullscreen" />
-                    </KsIconButton>
-                </header>
-                <div class="artifacts-viewer-body">
-                    <RemoteComponent
-                        v-if="hasResolvedComponent(selected.taskType)"
-                        :key="selected.key"
-                        :taskType="selected.taskType"
-                        :task="selectedTask"
-                        :execution="execution"
-                        :namespace="execution?.namespace"
-                        :flowId="execution?.flowId"
-                        :tenant="tenant"
-                        v-bind="selectedFetchers"
-                    />
-                    <KsAlert v-else-if="hasFailedComponent(selected.taskType)" type="error" :closable="false" data-test="execution-artifact-error">
-                        {{ $t("plugins.ui_load_error") }}
-                    </KsAlert>
-                    <KsSkeleton v-else animated :rows="4" data-test="execution-artifact-loading" />
-                </div>
-            </section>
+            <ExecutionArtifactViewer
+                :artifact="selected"
+                :siblings="siblings"
+                :execution="execution"
+                :fullscreen="fullscreenOpen"
+                @select="selectedKey = $event"
+                @toggleFullscreen="fullscreenOpen = !fullscreenOpen"
+            />
         </Teleport>
     </div>
 </template>
@@ -94,17 +58,14 @@
     import {computed, inject, ref, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import type {PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
-    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsDialog, KsEmpty, KsIcon, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
-    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
-    import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
-    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
+    import {useArtifactFetchers} from "./composables/useArtifactFetchers"
+    import ExecutionArtifactViewer from "./ExecutionArtifactViewer.vue"
 
     const {afterLastDot} = stringUtils
 
@@ -115,10 +76,9 @@
     pluginsStore.fetchIcons()
     const executionsStore = useExecutionsStore()
 
-    const {RemoteComponent, artifacts, tasks, subtitleResolvers, manifestReady, hasResolvedComponent, hasFailedComponent} = inject(EXECUTION_ARTIFACTS_KEY)!
+    const {artifacts, tasks, subtitleResolvers, manifestReady} = inject(EXECUTION_ARTIFACTS_KEY)!
 
     const execution = computed<Execution | undefined>(() => executionsStore.execution ?? undefined)
-    const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 
     const groups = computed(() => {
         const byTask = new Map<string, {taskId: string, cls: string, artifacts: ExecutionArtifact[]}>()
@@ -141,7 +101,6 @@
     const viewerTarget = computed(() => fullscreenOpen.value
         ? fullscreenViewerTarget.value ?? inlineViewerTarget.value
         : inlineViewerTarget.value)
-    const fullscreenLabel = computed(() => t(fullscreenOpen.value ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
 
     const selectedKey = computed({
         get: () => typeof route.query.artifact === "string" ? route.query.artifact : undefined,
@@ -149,49 +108,14 @@
     })
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
     const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
-    const siblingOptions = computed(() => siblings.value.map((a) => ({label: a.title, value: a.key})))
-    const selectedTask = computed(() => tasks.value.find((task) => task.id === selected.value?.taskId))
 
-    const runsOf = (taskId: string) => execution.value?.taskRunList?.filter((run) => run.taskId === taskId) ?? []
+    const {runsOf, fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => execution.value)
 
     // A task inside a loop runs once per iteration: the header shows the total, the viewer reads the latest run.
     const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
         const seconds = runsOf(taskId).reduce((sum, run) => sum + (run.state?.duration ? durationUtils.duration(run.state.duration) : 0), 0)
         return seconds ? [[taskId, durationUtils.humanDuration(seconds)]] : []
     })))
-
-    // Resolved when called, so an artifact opened on a still-running execution reads the latest run.
-    const fetchOutputs = (taskId: string) => ({taskRunId}: {taskRunId?: string} = {}) => {
-        const runId = taskRunId ?? runsOf(taskId).at(-1)?.id
-        return execution.value?.id && runId ? loadTaskRunOutputs(execution.value.id, runId) : Promise.resolve({})
-    }
-
-    const fetchMetrics = (taskId: string) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
-        const executionId = execution.value?.id
-        if (!executionId) return Promise.resolve({results: [], total: 0})
-        return MetricsAPI.searchByExecution({
-            executionId,
-            taskId,
-            taskRunId,
-            page,
-            size,
-            sort: sort ? [sort] : undefined,
-        })
-    }
-
-    const fetchEndpoint = (task: {id: string, type: string}) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
-        const executionId = execution.value?.id
-        const runId = taskRunId ?? runsOf(task.id).at(-1)?.id
-        if (!executionId || !runId) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
-        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
-    }
-
-    // Built once per selection: a plugin watching these props must not reload on every execution update.
-    const selectedFetchers = computed(() => selected.value && {
-        fetchOutputs: fetchOutputs(selected.value.taskId),
-        fetchMetrics: fetchMetrics(selected.value.taskId),
-        fetchEndpoint: fetchEndpoint({id: selected.value.taskId, type: selected.value.cls}),
-    })
 
     const subtitles = ref<Record<string, string | undefined>>({})
     const subtitleSequences = new Map<string, number>()
@@ -250,16 +174,7 @@
         height: 1.5rem;
     }
 
-    .artifacts-task-icon-large {
-        width: 1.75rem;
-        height: 1.75rem;
-    }
-
     .artifacts-duration {
-        margin-left: auto;
-    }
-
-    .artifacts-switch {
         margin-left: auto;
     }
 
@@ -289,35 +204,5 @@
         flex: 1;
         min-width: 0;
         min-height: 0;
-    }
-
-    .artifacts-viewer {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-    }
-
-    .artifacts-viewer-header {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-3) var(--ks-spacing-4);
-        border-bottom: 1px solid var(--ks-border-default);
-
-        & > div {
-            display: flex;
-            flex-direction: column;
-        }
-    }
-
-    .artifacts-viewer-body {
-        flex: 1;
-        min-height: 0;
-        overflow: auto;
     }
 </style>

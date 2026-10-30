@@ -541,6 +541,8 @@
     "refresh": "刷新",
     "filter by status": "按{status}状态筛选执行",
     "topology-graph": {
+      "retried": "此 task 已重试",
+      "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
       "graph-orientation": "图表方向",
       "zoom-in": "放大",
       "zoom-out": "缩小",
@@ -669,6 +671,16 @@
     "inputs": "输入",
     "input": "输入",
     "variables": "变量",
+    "task_run_popup": {
+      "open": "Task 详情",
+      "count_error": "无法加载计数",
+      "load_error": "无法加载此视图。",
+      "retry": "重试",
+      "child_runs_capped": "仅显示前 {count} 个子 Task 运行的 log。",
+      "no_artifacts": "此 task 不提供 artifact。",
+      "task_source": "Task 来源",
+      "worker_info": "Worker 信息"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "此 Flow 没有 Task 提供 artifact。",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "退出全屏"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",

@@ -222,12 +222,26 @@
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
+    const props = withDefaults(defineProps<{
+        scope?: {
+            execution: Execution;
+            taskId: string;
+            outputs: Record<string, unknown>;
+        };
+        sidebarWidth?: string;
+        debugWidth?: string;
+    }>(), {
+        scope: undefined,
+        sidebarWidth: "25%",
+        debugWidth: "30%",
+    })
+
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
-    const execution = computed(() => executionsStore.execution)
+    const execution = computed(() => props.scope?.execution ?? executionsStore.execution)
 
     /* ----------------------------- Pebble paths ----------------------------- */
 
@@ -315,6 +329,7 @@
     watch(
         () => [execution.value?.id, execution.value?.state?.current] as const,
         async ([id], previous) => {
+            if (props.scope) return
             if (id !== previous?.[0]) {
                 tasksWithOutputs.value = undefined
                 taskOutputMetaByRunId.value = {}
@@ -431,6 +446,13 @@
 
     const sections = computed<ExplorerSection[]>(() => {
         const exec = execution.value
+        if (props.scope) {
+            return [{
+                key: "taskOutputs",
+                label: t("variable_explorer.task_outputs"),
+                items: itemsFromRecord(props.scope.outputs, `outputs${formatStep(props.scope.taskId)}`),
+            }]
+        }
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
@@ -444,6 +466,7 @@
 
     /** `?expression=trigger.body` seeds the debugger with that expression. */
     function seededExpression() {
+        if (props.scope) return ""
         const seed = route.query.expression?.toString()
         return seed ? `{{ ${seed} }}` : ""
     }
@@ -453,7 +476,7 @@
 
     function applySeededSelection(available: ExplorerSection[]) {
         const target = route.query.select?.toString()
-        if (selectionApplied || !target) {
+        if (props.scope || selectionApplied || !target) {
             return
         }
         const item = available.flatMap((section) => section.items)
@@ -623,8 +646,8 @@
 
     /* --------------------------------- Layout -------------------------------- */
 
-    const leftWidth = ref("25%")
-    const rightWidth = ref("30%")
+    const leftWidth = ref(props.sidebarWidth)
+    const rightWidth = ref(props.debugWidth)
     const isMobile = useIsMobile()
 
     const [DefineViewer, ReuseViewer] = createReusableTemplate()
@@ -634,6 +657,17 @@
     function closeDetail() {
         detailOpen.value = false
     }
+
+    watch(
+        () => props.scope?.outputs,
+        () => {
+            if (!props.scope || isMobile.value) return
+            const items = sections.value.flatMap((section) => section.items)
+            const target = items.find((item) => item.expression === selectedBase.value) ?? items[0]
+            if (target) void selectItem(target)
+        },
+        {immediate: true},
+    )
 </script>
 
 <style scoped>

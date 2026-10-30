@@ -541,6 +541,8 @@
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
     "topology-graph": {
+      "retried": "このTaskはリトライされました",
+      "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
       "zoom-out": "ズームアウト",
@@ -669,6 +671,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "変数",
+    "task_run_popup": {
+      "open": "Task詳細",
+      "count_error": "カウントを読み込めませんでした",
+      "load_error": "このビューを読み込めませんでした。",
+      "retry": "再試行",
+      "child_runs_capped": "最初の {count} 個の子 Task Run の log のみを表示しています。",
+      "no_artifacts": "このTaskはArtifactを提供しません。",
+      "task_source": "Taskソース",
+      "worker_info": "Worker情報"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "このFlowのTaskはartifactを提供していません。",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "フルスクリーンを終了"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",

@@ -1282,10 +1282,13 @@ describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
         expect(dimensions).toEqual({width: NODE_SIZES.TASK_WIDTH, height: 56})
     })
 
-    test("reserves the duration bar row for every task node once an execution is loaded", () => {
+    test("reserves the duration bar and the status chip rows for every task node once an execution is loaded", () => {
         const withExecution = VueFlowUtils.buildEffectiveGetNodeDimensions(true)(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
 
-        expect(withExecution).toEqual({width: 273, height: 80})
+        expect(withExecution).toEqual({
+            width: NODE_SIZES.TASK_WIDTH_EXECUTION,
+            height: NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT,
+        })
     })
 
     test("gives a collapsed lane the same footprint as a task node in an execution", () => {
@@ -1308,6 +1311,45 @@ describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
         const results = Array.from({length: 5}, () => getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight))
 
         expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1)
+    })
+})
+
+describe("generateGraph spacing around the status chip row", () => {
+    const hierarchy = "io.kestra.core.models.hierarchies."
+    const task = (uid: string) => ({uid, type: hierarchy + "GraphTask", task: {id: uid.split(".").pop(), type: "io.kestra.plugin.core.log.Log"}})
+    const flowGraph = {
+        nodes: [task("root.a"), task("root.b")],
+        edges: [{source: "root.a", target: "root.b", relation: {}}],
+        clusters: [],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    const generateInExecution = (isHorizontal: boolean) => asElements(VueFlowUtils.generateGraph(
+        "vfid", "flow", "ns", flowGraph, undefined, [], isHorizontal, {}, new Set(), [], true, false, false,
+        VueFlowUtils.buildEffectiveGetNodeDimensions(true),
+    ) ?? [])
+
+    const taskBoxes = (elements: GeneratedElement[]) => ["root.a", "root.b"].map((id) => {
+        const element = elements.find((e) => e.id === id)!
+        return {
+            x: element.position!.x,
+            y: element.position!.y,
+            width: parseFloat(String(element.style!.width)),
+            height: parseFloat(String(element.style!.height)),
+        }
+    })
+
+    test("keeps a full rank separation below the chip row of a task in a vertical layout", () => {
+        const [a, b] = taskBoxes(generateInExecution(false))
+
+        expect(a.height).toBe(NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT)
+        expect(b.y - (a.y + a.height)).toBe(DAGRE_RANK_SEP)
+    })
+
+    test("keeps a full rank separation beside a task in a horizontal layout and centres both boxes", () => {
+        const [a, b] = taskBoxes(generateInExecution(true))
+
+        expect(b.x - (a.x + a.width)).toBe(DAGRE_RANK_SEP)
+        expect(a.y + a.height / 2).toBe(b.y + b.height / 2)
     })
 })
 

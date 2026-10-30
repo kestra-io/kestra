@@ -457,10 +457,122 @@ DurationBarComparison.play = async ({canvasElement}) => {
     for (const taskId of ["quick_query", "transform_data", "notify_team"]) {
         const box = nodeOf(taskId)!.getBoundingClientRect()
         const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
-        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`)
-        expect(Math.round(card.height)).toBe(Math.round(box.height))
+        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`)
+        expect(Math.round(card.height)).toBe(Math.round(box.height - NODE_SIZES.TASK_STATUS_ROW_HEIGHT))
         expect(Math.round(card.top)).toBe(Math.round(box.top))
     }
+}
+
+const taskRunWithAttempts = (taskId: string, current: string, attempts: number) => ({
+    ...taskRunWithHistory(taskId, [
+        {date: "2026-01-01T00:00:00.000Z", state: "RUNNING"},
+        {date: "2026-01-01T00:00:01.790Z", state: current},
+    ]),
+    attempts: Array.from({length: attempts}, () => ({state: {current}})),
+})
+
+const NODE_STATES_EXECUTION = {
+    id: "story-execution-node-states",
+    state: {current: "FAILED"},
+    taskRunList: [
+        taskRunWithAttempts("quick_query", "SUCCESS", 1),
+        taskRunWithAttempts("transform_data", "FAILED", 3),
+        taskRunWithAttempts("load_warehouse", "KILLING", 1),
+        taskRunWithAttempts("notify_team", "RUNNING", 1),
+    ],
+}
+
+export const NodeStatusChips: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: DURATION_BAR_SOURCE,
+                flowGraph: withExecutionId(DURATION_BAR_GRAPH, NODE_STATES_EXECUTION.id) as unknown as FlowGraph,
+                execution: NODE_STATES_EXECUTION,
+                artifactCounts: {quick_query: 1, transform_data: 3},
+            }
+        },
+        template: `
+            <div style="height: 560px; width: 420px;">
+                <Topology id="story-node-states" :source="source" :flowGraph="flowGraph" :execution="execution" :artifactCounts="artifactCounts" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
+
+        await waitFor(() => expect(nodeOf("quick_query")).not.toBeNull())
+
+        const chipState = (taskId: string) => nodeOf(taskId)!.querySelector("[data-test='node-status-chip']")?.getAttribute("data-state")
+        expect(chipState("quick_query")).toBe("SUCCESS")
+        expect(chipState("transform_data")).toBe("FAILED")
+        expect(chipState("load_warehouse")).toBe("KILLING")
+        expect(chipState("notify_team")).toBe("RUNNING")
+
+        expect(nodeOf("quick_query")!.querySelector("[data-test='node-artifact-badge']")?.textContent?.trim()).toBe("1 artifact")
+        expect(nodeOf("transform_data")!.querySelector("[data-test='node-artifact-badge']")?.textContent?.trim()).toBe("3 artifacts")
+        expect(nodeOf("load_warehouse")!.querySelector("[data-test='node-artifact-badge']")).toBeNull()
+
+        expect(nodeOf("transform_data")!.querySelector("[data-test='node-retry-marker']")).not.toBeNull()
+        expect(nodeOf("quick_query")!.querySelector("[data-test='node-retry-marker']")).toBeNull()
+
+        for (const taskId of ["quick_query", "transform_data", "load_warehouse", "notify_team"]) {
+            const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
+            const row = nodeOf(taskId)!.querySelector("[data-test='node-status-row']")!.getBoundingClientRect()
+            expect(Math.round(row.top)).toBeGreaterThanOrEqual(Math.round(card.bottom))
+        }
+    },
+}
+
+const RUNNER_TASK = {id: "run_script", type: "io.kestra.plugin.scripts.python.Script", taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}}
+
+const RUNNER_GRAPH = {
+    nodes: [
+        {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+        {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+        {uid: "root.run_script", type: "io.kestra.core.models.hierarchies.GraphTask", task: RUNNER_TASK},
+    ],
+    edges: [
+        {source: "root.root-1", target: "root.run_script", relation: {}},
+        {source: "root.run_script", target: "root.end-1", relation: {}},
+    ],
+    clusters: [],
+}
+
+const RUNNER_EXECUTION = {
+    id: "story-execution-runner",
+    state: {current: "SUCCESS"},
+    taskRunList: [taskRunWithAttempts("run_script", "SUCCESS", 1)],
+}
+
+export const TaskRunnerAboveTheTaskId: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: "id: runner\nnamespace: company.team\ntasks:\n  - id: run_script\n    type: io.kestra.plugin.scripts.python.Script\n",
+                flowGraph: withExecutionId(RUNNER_GRAPH, RUNNER_EXECUTION.id) as unknown as FlowGraph,
+                execution: RUNNER_EXECUTION,
+            }
+        },
+        template: `
+            <div style="height: 320px; width: 420px;">
+                <Topology id="story-runner" :source="source" :flowGraph="flowGraph" :execution="execution" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const node = () => canvasElement.querySelector("[data-id=\"root.run_script\"]") as HTMLElement | null
+
+        await waitFor(() => expect(node()!.querySelector("[data-test='node-runner-badge']")).not.toBeNull())
+
+        const badge = node()!.querySelector("[data-test='node-runner-badge']")!.getBoundingClientRect()
+        const title = node()!.querySelector(".task-title")!.getBoundingClientRect()
+        const card = node()!.querySelector(".node-core")!.getBoundingClientRect()
+        expect(badge.bottom).toBeLessThanOrEqual(title.top + 1)
+        expect(badge.top).toBeGreaterThanOrEqual(card.top)
+    },
 }
 
 // A running task's bar keeps updating every tick — the node's laid-out box must not move as a
@@ -502,7 +614,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         await new Promise((resolve) => setTimeout(resolve, 350))
 
         expect(dimensionsOf(node()!)).toEqual(before)
-        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`})
+        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`})
     },
 }
 

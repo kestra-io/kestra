@@ -541,6 +541,8 @@
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
     "topology-graph": {
+      "retried": "This task was retried",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
@@ -669,6 +671,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Task details",
+      "count_error": "Could not load the count",
+      "load_error": "Could not load this view.",
+      "retry": "Retry",
+      "child_runs_capped": "Showing the logs of the first {count} child task runs only.",
+      "no_artifacts": "This task does not provide an artifact.",
+      "task_source": "Task source",
+      "worker_info": "Worker info"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "No task of this flow provides an artifact.",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "Exit fullscreen"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",

@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition" :style="sourceHandleStyle" />
     <BasicNode
         :id="id"
         :data="dataWithLink"
@@ -16,9 +16,16 @@
         :dragging="props.dragging"
         @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
+        <template v-if="runnerLabel" #runner>
+            <span class="runner-badge" :title="runnerLabel" data-test="node-runner-badge">{{ runnerLabel }}</span>
+        </template>
         <template #subtitle>
             <span class="type-label">{{ typeLabel }}</span>
-            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
+        </template>
+        <template v-if="hasRetried" #icon-badge>
+            <span class="retry-marker" role="img" :title="$t('topology-graph.retried')" :aria-label="$t('topology-graph.retried')" data-test="node-retry-marker">
+                <AlertCircle />
+            </span>
         </template>
         <template #details>
             <slot name="details" />
@@ -40,22 +47,40 @@
             </button>
         </template>
         <template #title-status>
-            <span v-if="statusStyle" class="status-tag" :style="{color: `var(${statusStyle.textVar})`}">
-                <component :is="statusStyle.icon" class="status-tag__icon" />
-                <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
-                <span v-else class="status-tag__text">
+            <ValidationBadge :issues="validationIssues" />
+        </template>
+        <template v-if="execution" #status-row>
+            <button
+                v-if="artifactCount > 0"
+                type="button"
+                class="artifact-badge"
+                data-test="node-artifact-badge"
+                @click.stop="emit(EVENTS.SHOW_ARTIFACTS, artifactsPayload)"
+            >
+                <DiamondStone class="artifact-badge__icon" />
+                <span>{{ $t("topology-graph.artifacts", {count: artifactCount}, artifactCount) }}</span>
+            </button>
+            <span
+                v-if="statusStyle"
+                class="status-chip"
+                data-test="node-status-chip"
+                :data-state="state"
+                :style="{'--chip-color': `var(${statusStyle.chipVar ?? statusStyle.textVar})`}"
+            >
+                <component :is="statusStyle.icon" class="status-chip__icon" />
+                <span v-if="statusStyle.label" class="status-chip__text">{{ $t(statusStyle.label) }}</span>
+                <span v-else class="status-chip__text">
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
-            <ValidationBadge :issues="validationIssues" />
         </template>
         <template #title-actions>
-            <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+            <slot name="taskActions" variant="task" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
                 <NodeMenu :actions="actions" />
             </slot>
         </template>
     </BasicNode>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition" :style="targetHandleStyle" />
 </template>
 
 <script setup lang="ts">
@@ -70,6 +95,7 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
+    import {statusRowHandleStyle} from "../utils/nodeHandles"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, pickWorstState} from "../utils/status"
@@ -88,11 +114,14 @@
         LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
         LOOP_LANES_INJECTION_KEY,
         SCOPED_LONGEST_DURATIONS_INJECTION_KEY,
+        ARTIFACT_COUNTS_INJECTION_KEY,
     } from "../injectionKeys"
     import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {loopTaskContext} from "../utils/loopOutcome"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+    import DiamondStone from "vue-material-design-icons/DiamondStone.vue"
 
     export interface TaskType {
         id: string;
@@ -141,6 +170,11 @@
         taskRuns: GraphTaskRun[];
     }
 
+    interface ArtifactsPayload extends TaskRunsPayload {
+        task: TaskType;
+        actions: NodeAction[];
+    }
+
     const props = withDefaults(defineProps<{
         data: NodeData;
         sourcePosition?: Position;
@@ -177,6 +211,7 @@
         (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
         (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
         (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_ARTIFACTS, data: ArtifactsPayload): void;
         (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
         (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
@@ -200,6 +235,7 @@
     const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
     const loopLanes = inject(LOOP_LANES_INJECTION_KEY, undefined)
     const scopedLongestDurations = inject(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, undefined)
+    const artifactCounts = inject(ARTIFACT_COUNTS_INJECTION_KEY, undefined)
 
     function onCardClick() {
         const task = props.data.node.task
@@ -267,6 +303,18 @@
         return [...taskRuns.value, ...children]
     })
 
+    const hasRetried = computed(() => taskRuns.value.some((run) => (run.attempts?.length ?? 0) > 1))
+
+    const isRootExecutionTask = computed(() => !props.data.executionId || props.data.executionId === execution?.value?.id)
+
+    const artifactCount = computed(() =>
+        isRootExecutionTask.value ? artifactCounts?.value[taskId.value ?? ""] ?? 0 : 0,
+    )
+
+    const rendersStatusRow = computed(() => Boolean(execution?.value) && lod.value !== "pill")
+    const sourceHandleStyle = computed(() => statusRowHandleStyle(props.sourcePosition, rendersStatusRow.value))
+    const targetHandleStyle = computed(() => statusRowHandleStyle(props.targetPosition, rendersStatusRow.value))
+
     const state = computed(() => {
         if (!taskRuns.value?.length) {
             return undefined
@@ -297,6 +345,14 @@
             ? t("topology-graph.loop.task-runs-failed", {runs: summary.runs, failed: summary.failed}, summary.runs)
             : t("topology-graph.loop.task-runs", {runs: summary.runs}, summary.runs)
     })
+
+    const artifactsPayload = computed<ArtifactsPayload>(() => ({
+        id: taskId.value,
+        task: props.data.node.task,
+        execution: taskExecution.value,
+        taskRuns: taskRuns.value,
+        actions: actions.value,
+    }))
 
     const classes = computed(() => ({
         "execution-no-taskrun":
@@ -400,19 +456,60 @@ button.playground-button {
     background-color: var(--ks-toggle-playground);
 }
 
-.status-tag {
+.status-chip,
+.artifact-badge {
+    background-color: var(--ks-bg-surface);
+    background-image: linear-gradient(var(--chip-tint), var(--chip-tint));
+}
+
+.status-chip {
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-    padding: 0.4rem;
-    border-radius: var(--ks-radius-xs);
-    background-color: var(--ks-bg-tag);
+    box-sizing: border-box;
+    padding: 0 var(--ks-spacing-2);
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--chip-color) 10%, transparent);
+    color: var(--chip-color);
     line-height: 1;
 }
 
-.status-tag__text {
+.status-chip__text {
     font-size: var(--ks-font-size-2xs);
+    font-weight: var(--ks-font-weight-semibold);
     white-space: nowrap;
+}
+
+.artifact-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    box-sizing: border-box;
+    padding: 0 var(--ks-spacing-2);
+    border: none;
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--ks-status-running) 10%, transparent);
+    color: var(--ks-status-running);
+    font-size: var(--ks-font-size-2xs);
+    font-weight: var(--ks-font-weight-semibold);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.artifact-badge__icon {
+    font-size: var(--ks-font-size-lg);
+}
+
+.retry-marker {
+    position: absolute;
+    right: calc(var(--ks-spacing-1) * -1);
+    bottom: calc(var(--ks-spacing-1) * -1);
+    display: flex;
+    border-radius: 50%;
+    background-color: var(--ks-bg-surface);
+    color: var(--ks-status-warning);
+    font-size: var(--ks-font-size-lg);
 }
 
 .loop-runs {

@@ -27,6 +27,7 @@ export const EVENTS = {
     EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
+    SHOW_ARTIFACTS: "showArtifacts",
     REPLAY_TASK: "replayTask",
     MOUSE_OVER: "mouseover",
     MOUSE_LEAVE: "mouseleave",
@@ -58,9 +59,10 @@ export interface ShowDetailsConfig {
 
 export const NODE_SIZES = {
     TASK_WIDTH: 218,
-    TASK_WIDTH_EXECUTION: 273,
+    TASK_WIDTH_EXECUTION: 251,
     TASK_HEIGHT: 56,
-    TASK_HEIGHT_EXECUTION: 80,
+    TASK_HEIGHT_EXECUTION: 64,
+    TASK_STATUS_ROW_HEIGHT: 21,
     TRIGGER_WIDTH: 218,
     TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,

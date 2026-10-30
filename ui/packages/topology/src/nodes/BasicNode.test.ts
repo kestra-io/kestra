@@ -99,6 +99,38 @@ describe("BasicNode layout", () => {
     })
 })
 
+describe("BasicNode status row", () => {
+    const slots = {"status-row": "<span class='row-marker'>chip</span>", footer: "<div class='footer-marker'>bar</div>"}
+
+    it("should render the status row below the card, outside of it", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect(wrapper.find(".node-wrapper > .node-core + .node-status-row > .row-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-core .row-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill"}, slots)
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).not.toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row when no status row is given", () => {
+        const wrapper = mountBasicNode({}, {footer: slots.footer})
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+    })
+
+    it("should place the retry badge on the task icon and the runner above the title", () => {
+        const wrapper = mountBasicNode({}, {"icon-badge": "<i class='badge-marker' />", runner: "<b class='runner-marker' />"})
+
+        expect(wrapper.find(".icon > .badge-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-content > .node-runner + .node-title").exists()).toBe(true)
+    })
+})
+
 describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
     const slots = {
         subtitle: "<span class='subtitle-marker'>Log</span>",

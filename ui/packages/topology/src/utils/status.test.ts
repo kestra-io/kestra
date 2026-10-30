@@ -18,6 +18,15 @@ describe("getStatusStyle", () => {
         expect(style?.border).toBe(border)
     })
 
+    test.each([
+        ["success", "--ks-status-success"],
+        ["failed", "--ks-status-error"],
+        ["killed", "--ks-status-error"],
+        ["running", undefined],
+    ])("gives the %s chip its own colour without recolouring the lane state text", (state, chipVar) => {
+        expect(getStatusStyle(state)?.chipVar).toBe(chipVar)
+    })
+
     test("matches states case-insensitively", () => {
         expect(getStatusStyle("SUCCESS")).toBe(getStatusStyle("success"))
         expect(getStatusStyle("Skipped")).toBe(getStatusStyle("skipped"))

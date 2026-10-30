@@ -2,6 +2,9 @@ package io.kestra.core.metrics;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -272,6 +275,8 @@ public class MetricRegistry {
 
     private final MeterRegistry meterRegistry;
 
+    private final Map<Meter.Id, AtomicReference<Double>> latestGaugeValues = new ConcurrentHashMap<>();
+
     private final MetricConfig metricConfig;
 
     public MetricRegistry(MeterRegistry meterRegistry, MetricConfig metricConfig) {
@@ -326,6 +331,26 @@ public class MetricRegistry {
             .description(description)
             .tags(tags)
             .register(this.meterRegistry);
+    }
+
+    /**
+     * Register a gauge, or update the existing one with the same name and tags, so that it always reports the
+     * latest value passed in.
+     * <p>
+     * {@link #gauge(String, String, Number, String...)} keeps the first value it was given because the meter is
+     * only registered once. Use this method for a gauge whose value is set from the outside.
+     *
+     * @param name Name of the gauge being registered.
+     * @param description The metric description
+     * @param value The value the gauge reports from now on.
+     * @param tags Sequence of dimensions for breaking down the name.
+     */
+    public void latestValueGauge(String name, String description, double value, String... tags) {
+        var id = new Meter.Id(metricName(name), Tags.of(tags), null, null, Meter.Type.GAUGE);
+        var latest = latestGaugeValues.computeIfAbsent(id, key -> new AtomicReference<>());
+        latest.set(value);
+
+        gauge(name, description, (Supplier<Double>) latest::get, tags);
     }
 
     /**

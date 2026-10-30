@@ -847,6 +847,70 @@ class FlowControllerTest {
     }
 
     @Test
+    void bulkUpdateShouldNotDeleteOrModifyFlowsWhenOneFlowIsInvalid() {
+        String namespace = "io.kestra.bulk.atomic";
+
+        // Initial setup: create flow1 and flow_to_delete
+        String initialFlows = String.join(
+            "\n---\n",
+            generateFlow("flow1", namespace, "v1").sourceOrGenerateIfNull(),
+            generateFlow("flow_to_delete", namespace, "v1").sourceOrGenerateIfNull()
+        );
+
+        List<FlowWithSource> created = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/" + namespace, initialFlows)
+                .contentType(MediaType.APPLICATION_YAML),
+            Argument.listOf(FlowWithSource.class)
+        );
+        assertThat(created).hasSize(2);
+
+        // Attempt a bulk update with:
+        // 1) updated flow1 (v2)
+        // 2) an invalid flow (missing required tasks property)
+        // flow_to_delete is omitted, so if deletions took place, it would be deleted.
+        String invalidFlow = """
+            id: invalid_flow
+            namespace: %s
+            """.formatted(namespace);
+
+        String bulkPayload = String.join(
+            "\n---\n",
+            generateFlow("flow1", namespace, "v2").sourceOrGenerateIfNull(),
+            invalidFlow
+        );
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/flows/" + namespace + "?delete=true", bulkPayload)
+                    .contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        // Verify atomicity: flow_to_delete must NOT have been deleted
+        Flow retainedFlow = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow_to_delete"),
+            Flow.class
+        );
+        assertThat(retainedFlow).isNotNull();
+        assertThat(retainedFlow.getId()).isEqualTo("flow_to_delete");
+
+        // Verify atomicity: flow1 must NOT have been updated to v2
+        Flow unchangedFlow = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/flows/" + namespace + "/flow1"),
+            Flow.class
+        );
+        assertThat(unchangedFlow).isNotNull();
+        assertThat(unchangedFlow.getRevision()).isEqualTo(1);
+        assertThat(unchangedFlow.getInputs().getFirst().getId()).isEqualTo("v1");
+
+        // Clean up
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + namespace + "/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + namespace + "/flow_to_delete"));
+    }
+
+    @Test
     void shouldCreateBothFlowsGivenSameIdInDifferentNamespacesWhenBulkUpdate() {
         String id = "samebulkid";
         String flows = String.join(

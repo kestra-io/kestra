@@ -387,6 +387,22 @@ class KVControllerTest {
         assertThat(kvStore().getValue("my-key").get().value()).isEqualTo(value);
     }
 
+    @Test
+    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate() throws IOException {
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .header("ttl", "PT9223372036854775807S")
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(exception)).contains("too large");
+        assertThat(kvStore().exists("my-key")).isFalse();
+    }
+
     private InternalKVStore kvStore() {
         return this.kvStore(NAMESPACE);
     }

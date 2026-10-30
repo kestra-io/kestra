@@ -3,7 +3,7 @@
         ref="elInputRef"
         v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
-        :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
+        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless}"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.prepend" #prepend>
@@ -50,6 +50,8 @@
         id?: string
         required?: boolean
         rows?: number
+        /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
+        borderless?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -63,7 +65,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["borderless"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
@@ -122,6 +124,17 @@
 
         & .kel-input-group__append, & .kel-input-group__prepend {
             color: var(--ks-text-dim);
+        }
+
+        &.ks-input--borderless {
+            --kel-input-bg-color: transparent;
+            --kel-input-border-color: transparent;
+            --kel-input-hover-border-color: transparent;
+            --kel-input-focus-border-color: transparent;
+
+            & .kel-input__wrapper {
+                padding-inline: 0;
+            }
         }
 
         &.ks-input--reserve-clear {

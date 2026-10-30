@@ -14,7 +14,19 @@ const meta: Meta<typeof KsPasswordRequirements> = {
 export default meta
 type Story = StoryObj<typeof KsPasswordRequirements>
 
+export const Playground: Story = {
+    render: (args) => ({
+        components: {KsPasswordRequirements},
+        setup() {
+            return {args}
+        },
+        template: "<div style=\"max-width:320px\"><ks-password-requirements v-bind=\"args\" /></div>",
+    }),
+    args: {password: "Passw0rd"},
+}
+
 export const Default: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPasswordRequirements, KsPassword},
         setup() {
@@ -31,6 +43,7 @@ export const Default: Story = {
 }
 
 export const AllMet: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPasswordRequirements},
         template: "<ks-password-requirements password=\"StrongPass1\" />",
@@ -38,6 +51,7 @@ export const AllMet: Story = {
 }
 
 export const CustomRules: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPasswordRequirements},
         setup() {

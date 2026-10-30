@@ -1,0 +1,43 @@
+id: loop_conditional
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Branch per iteration using an inner `If`. Each item runs different downstream tasks based on its
+  value. The loop-level `outputs:` block surfaces the per-item value plus the branch decision, so
+  the downstream `read_outputs` task sees a typed list of `{value, decision}` records.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - value 1
+      - value 2
+      - value 3
+    fetchType: AUTO
+    outputs:
+      - id: value
+        type: STRING
+        value: "{{ item.value }}"
+      - id: decision
+        type: STRING
+        value: "{{ item.value == 'value 2' ? 'matched' : 'skipped' }}"
+    tasks:
+      - id: before_if
+        type: io.kestra.plugin.core.debug.Return
+        format: "Before if {{ item.value }}"
+      - id: branch
+        type: io.kestra.plugin.core.flow.If
+        condition: '{{ item.value == "value 2" }}'
+        then:
+          - id: matched
+            type: io.kestra.plugin.core.debug.Return
+            format: "Matched {{ item.value }}"
+        else:
+          - id: skipped
+            type: io.kestra.plugin.core.debug.Return
+            format: "Skipped {{ item.value }}"
+
+  - id: read_outputs
+    type: io.kestra.plugin.core.log.Log
+    message: "Per-item decisions: {{ outputs.loop.outputs }}"

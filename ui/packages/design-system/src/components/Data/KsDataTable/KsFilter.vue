@@ -130,6 +130,7 @@
         removeGroup,
         replaceTree,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,
@@ -205,8 +206,9 @@
     }
 
     const refreshData = () => {
-        tableRefreshData()
+        const result = tableRefreshData()
         emits("refresh")
+        return result
     }
 
     usePeriodicRefresh(refreshData)
@@ -253,6 +255,7 @@
         updateChart,
         refreshData,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,

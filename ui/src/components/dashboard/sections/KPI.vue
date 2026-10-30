@@ -69,7 +69,7 @@
 
     defineExpose({refresh})
 
-    watch(() => route.params.filters, refresh, {deep: true})
+    watch(() => route.fullPath, refresh)
 </script>
 
 <style scoped>

@@ -53,6 +53,19 @@ class ExecutionTest {
     }
 
     @Test
+    void shouldSetTheTaskRunStateWhenItsParentTaskRunIsNotInTheExecution() {
+        Execution execution = Execution.builder()
+            .id("executionId")
+            .taskRunList(List.of(TaskRun.builder().id("child").parentTaskRunId("inParentExecution").state(new State()).build()))
+            .state(new State())
+            .build();
+
+        Execution cascaded = execution.withTaskRunStateCascaded(execution.getTaskRunList().getFirst(), State.Type.CANCELLED);
+
+        assertThat(cascaded.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
     void hasTaskRunJoinableTrue() {
         Execution execution = Execution.builder()
             .taskRunList(

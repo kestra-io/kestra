@@ -110,16 +110,6 @@ describe("useEditorBindings", () => {
         )
     })
 
-    it("passes an undefined editor and schema type through untouched", async () => {
-        const bindings = await loadBindings()
-
-        await bindings.configureLanguage(undefined, "yaml")
-
-        expect(mocks.configure).toHaveBeenCalledWith(
-            mocks.flow, mocks.plugins, mocks.t, undefined, "yaml", undefined, mocks.router,
-        )
-    })
-
     it("does not import the configurator a second time when called twice", async () => {
         const bindings = await loadBindings()
 

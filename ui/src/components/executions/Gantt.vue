@@ -389,16 +389,32 @@
         ),
     )
 
+    let previousNodes = new Map<string, TaskRunNode>()
+
+    function reusableNode(previous: TaskRunNode | undefined, candidate: TaskRunNode): TaskRunNode {
+        const unchanged = previous
+            && previous.taskRun === candidate.taskRun
+            && previous.executionId === candidate.executionId
+            && previous.taskType === candidate.taskType
+            && previous.ancestors.map(ancestor => ancestor.key).join() === candidate.ancestors.map(ancestor => ancestor.key).join()
+        return unchanged ? previous : candidate
+    }
+
     const nodeByTaskRunId = computed<Map<string, TaskRunNode>>(() => {
         const currentExecution = execution.value
         if (!currentExecution) {
             return new Map()
         }
         const taskRunsById = indexTaskRuns(series.value.map(serie => serie.task))
-        return new Map(series.value.map(serie => [
+        const nodes = new Map(series.value.map(serie => [
             serie.id,
-            createTaskRunNode(currentExecution, serie.task, taskTypeByTaskRunId.value[serie.id], taskRunAncestors(taskRunsById, serie.task, [])),
+            reusableNode(
+                previousNodes.get(serie.id),
+                createTaskRunNode(currentExecution, serie.task, taskTypeByTaskRunId.value[serie.id], taskRunAncestors(taskRunsById, serie.task, [])),
+            ),
         ]))
+        previousNodes = nodes
+        return nodes
     })
 
     const nodeOf = (serie: SeriesItem): TaskRunNode => nodeByTaskRunId.value.get(serie.id)!
@@ -492,6 +508,7 @@
         try {
             await executionsStore.loadExecution({id: executionId})
             compute()
+            tree.refresh()
         } catch (error) {
             const httpError = error as KestraHttpError
             if (httpError.response && httpError.status !== 401 && !isReportedCentrally(httpError)) {

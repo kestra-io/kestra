@@ -43,7 +43,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
     import {KsButton, KsIcon} from "@kestra-io/design-system"
-    import {iterationLabel, owningIteration, useGanttTree, type GanttNode} from "./ganttTree"
+    import {iterationLabel, loadedNeighbour, owningIteration, useGanttTree, type GanttNode} from "./ganttTree"
 
     const props = defineProps<{
         node: GanttNode;
@@ -54,19 +54,13 @@
 
     const iteration = computed(() => owningIteration(props.node)!)
     const handle = computed(() => tree.loopHandle(iteration.value.loop))
-    const rows = computed(() => handle.value.iterations.value)
     const totalCount = computed(() => handle.value.totalCount.value ?? handle.value.total.value)
-    const failedOnly = computed(() => handle.value.failedOnly.value)
-    const previous = computed(() => failedOnly.value
-        ? [...rows.value].reverse().find(row => row.index < iteration.value.row.index)
-        : rows.value.find(row => row.index === iteration.value.row.index - 1))
-    const next = computed(() => failedOnly.value
-        ? rows.value.find(row => row.index > iteration.value.row.index)
-        : rows.value.find(row => row.index === iteration.value.row.index + 1))
-    const canStepPrevious = computed(() => failedOnly.value ? previous.value !== undefined : iteration.value.row.index > 0)
-    const canStepNext = computed(() => failedOnly.value
-        ? next.value !== undefined || handle.value.hasMore.value
-        : next.value !== undefined || handle.value.hasMore.value || iteration.value.row.index + 1 < totalCount.value)
+    const before = computed(() => loadedNeighbour(handle.value, iteration.value.row, -1))
+    const after = computed(() => loadedNeighbour(handle.value, iteration.value.row, 1))
+    const previous = computed(() => before.value.row)
+    const next = computed(() => after.value.row)
+    const canStepPrevious = computed(() => iteration.value.row.index > 0 && (!before.value.known || previous.value !== undefined))
+    const canStepNext = computed(() => !after.value.known || next.value !== undefined)
 
     const iterationRoute = computed(() => ({
         name: "executions/update/gantt",

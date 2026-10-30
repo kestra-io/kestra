@@ -2,7 +2,7 @@
     <div class="panel-iteration">
         <section v-if="failure" class="failure-callout" data-test="gantt-first-failure">
             <span class="failure-path">{{ $t("gantt_panel.first_failure") }} · {{ failurePath }}</span>
-            <code v-if="failure.kind !== 'loop' && errorLog.message.value" class="failure-message">{{ errorLog.message.value }}</code>
+            <code v-if="failure.kind !== 'loop' && firstFailure.message.value" class="failure-message">{{ firstFailure.message.value }}</code>
             <KsButton size="small" :icon="TextBoxOutline" data-test="gantt-show-failure-logs" @click="tree.revealFirstFailure(failure)">
                 {{ $t("gantt_panel.go_to_failure") }}
             </KsButton>
@@ -49,17 +49,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, toRef} from "vue"
+    import {computed} from "vue"
     import TextBoxOutline from "vue-material-design-icons/TextBoxOutline.vue"
     import {KsAlert, KsButton, KsId, KsSkeleton} from "@kestra-io/design-system"
     import type {ExecutionTaskRun} from "../executionTaskRun"
     import GanttTaskIcon from "./GanttTaskIcon.vue"
     import GanttPanelListRow from "./GanttPanelListRow.vue"
-    import {useFirstErrorLog} from "./useFirstErrorLog"
+    import {useFirstFailure} from "../../../composables/useFirstFailure"
     import {useGanttTimeline} from "../ganttTimeline"
     import {
         createTaskRunNode,
-        firstFailedLeaf,
         indexTaskRuns,
         iterationAncestors,
         orderTaskRuns,
@@ -91,14 +90,13 @@
         ))
     })
 
-    const failedLeafId = computed(() => firstFailedLeaf(taskRuns.value, tree.taskType)?.id)
-    const failure = computed(() => runs.value.find(run => run.taskRun.id === failedLeafId.value))
+    const firstFailure = useFirstFailure(execution)
+    const failure = computed(() => runs.value.find(run => run.taskRun.id === firstFailure.failedTaskRun.value?.id))
     const failurePath = computed(() => failure.value
         ? [...failure.value.ancestors.slice(ancestors.value.length), {label: failure.value.taskRun.taskId}].map(part => part.label).join(" › ")
         : "")
     const totalCount = computed(() => tree.loopHandle(props.node.loop).totalCount.value ?? props.node.row.index + 1)
 
-    const errorLog = useFirstErrorLog(toRef(() => props.node.row.id), toRef(() => failure.value?.taskRun.id))
 
     tree.loadExecution(props.node.row.id)
 </script>

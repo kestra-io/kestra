@@ -261,6 +261,73 @@ describe("ganttTree hidden task runs", () => {
     })
 })
 
+describe("ganttTree stepping past gaps and loaded pages", () => {
+    const TOTAL = 12480
+
+    function loopOf(indexes: number[], failed: (index: number) => boolean = () => false) {
+        return vi.spyOn(useExecutionsStore(), "findExecutions").mockImplementation((async (options: Record<string, unknown>) => {
+            const rows = options["filters[state][IN]"] ? indexes.filter(failed) : indexes
+            if (options.onlyTotal) return rows.length
+            const size = options.size as number
+            const start = ((options.page as number) - 1) * size
+            const results = rows.slice(start, start + size).map(index => {
+                const state = failed(index) ? "FAILED" : "SUCCESS"
+                return {id: `it-${index}`, state: {current: state, histories: histories(state)}, loopRun: {index, value: `v${index}`}}
+            })
+            return {results, total: rows.length}
+        }) as never)
+    }
+
+    const allIndexes = Array.from({length: TOTAL}, (_, index) => index)
+
+    it("shouldStepOverADeletedIterationInBothDirections", async () => {
+        const findExecutions = loopOf(allIndexes.filter(index => index !== 3000))
+        const after = createIterationNode(loopRef, iterationRow("it-3001", 3001, "v3001"), [])
+        tree.select(after)
+
+        await tree.stepIteration(after, -1)
+        expect(tree.selected.value?.key).toBe("it:it-2999")
+        await tree.stepIteration(tree.selected.value!, 1)
+        expect(tree.selected.value?.key).toBe("it:it-3001")
+
+        expect(findExecutions.mock.calls.length).toBeLessThan(40)
+    })
+
+    it("shouldStepToTheNeighbouringFailuresOfAnIterationBeyondTheLoadedPages", async () => {
+        loopOf(allIndexes, index => index % 7 === 0)
+        const handle = tree.loopHandle(loopRef)
+        await handle.setFailedOnly(true)
+        await handle.ensureLoaded()
+        const current = createIterationNode(loopRef, iterationRow("it-7000", 7000, "v7000", "FAILED"), [])
+        tree.select(current)
+
+        await tree.stepIteration(current, -1)
+        expect(tree.selected.value?.key).toBe("it:it-6993")
+        await tree.stepIteration(tree.selected.value!, 1)
+        await tree.stepIteration(tree.selected.value!, 1)
+        expect(tree.selected.value?.key).toBe("it:it-7007")
+    })
+})
+
+describe("ganttTree refresh", () => {
+    it("shouldReloadCachedIterationExecutionsAndLoopRows", async () => {
+        let state = "RUNNING"
+        vi.spyOn(useExecutionsStore(), "findExecutions").mockImplementation((async (options: Record<string, unknown>) => options.onlyTotal
+            ? 1
+            : {results: [{id: "it-1", state: {current: state, histories: histories(state)}, loopRun: {index: 0, value: "EMEA"}}], total: 1}) as never)
+        mockExecution.mockImplementation(async () => ({id: "it-1", state: {current: state}, taskRunList: [taskRun("it-1-extract", "extract", state)]}))
+        const handle = tree.loopHandle(loopRef)
+        await handle.ensureLoaded()
+        await tree.loadExecution("it-1")
+        state = "SUCCESS"
+
+        await tree.refresh()
+
+        expect(handle.iterations.value[0].state.current).toBe("SUCCESS")
+        expect(tree.executionEntry("it-1").execution?.state.current).toBe("SUCCESS")
+    })
+})
+
 describe("ganttTree large loops", () => {
     const TOTAL = 12480
 

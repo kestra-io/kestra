@@ -50,6 +50,26 @@ function mountStepperOn(index: number) {
 }
 
 describe("GanttIterationStepper", () => {
+    it("shouldNameTheLoadedNeighbourWhenTheIterationBeforeWasDeleted", async () => {
+        const indexes = Array.from({length: TOTAL}, (_, index) => index).filter(index => index !== 3)
+        vi.spyOn(useExecutionsStore(), "findExecutions").mockImplementation((async (options: Record<string, unknown>) => {
+            if (options.onlyTotal) return options["filters[state][IN]"] ? 0 : indexes.length
+            const size = options.size as number
+            const start = ((options.page as number) - 1) * size
+            const results = indexes.slice(start, start + size).map(index => {
+                const row = iterationRow(index)
+                return {id: row.id, state: row.state, loopRun: {index: row.index, value: row.value}}
+            })
+            return {results, total: indexes.length}
+        }) as never)
+        tree = createGanttTree({compact: ref(false), levelFilter: ref(undefined)})
+        await tree.loopHandle(loopRef).ensureLoaded()
+
+        const wrapper = mountStepperOn(4)
+
+        expect(wrapper.get("[data-test='gantt-step-previous']").text()).toContain("#3 REGION-2")
+    })
+
     it("shouldNotNameAnIterationItWillNotOpenWhenThePreviousOneIsNotLoaded", async () => {
         const wrapper = mountStepperOn(11)
         const previous = wrapper.get("[data-test='gantt-step-previous']")

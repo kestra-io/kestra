@@ -1,22 +1,16 @@
 import {computed, inject, nextTick, provide, reactive, ref, watch, type ComputedRef, type InjectionKey, type Ref} from "vue"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
-import {State, type LevelFilterValue} from "@kestra-io/design-system"
+import type {LevelFilterValue} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import * as FlowUtils from "../../../utils/flowUtils"
 import {buildTaskRunHierarchy} from "../../../utils/taskRunHierarchy"
+import {firstFailedLeaf, isFailedTaskRunState as isFailed, isHiddenTaskType} from "../../../utils/executionUtils"
 import {useLoopIterations, type LoopIterationRow} from "../../../composables/useLoopIterations"
 import type {ExecutionTaskRun} from "../executionTaskRun"
 
 export const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
 
-const HIDDEN_TASK_TYPES = [
-    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
-    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
-    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
-    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
-    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
-    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
-]
+export {firstFailedLeaf, isFailed, isHiddenTaskType}
 
 export type TaskTypeResolver = (taskId: string) => string | undefined
 
@@ -79,6 +73,7 @@ export interface GanttTree {
     select: (node: GanttNode, options?: {reveal?: boolean}) => void;
     closePanel: () => void;
     reset: () => void;
+    refresh: () => Promise<void>;
     isExpanded: (key: string) => boolean;
     setExpanded: (key: string, value: boolean) => void;
     toggleExpanded: (key: string) => void;
@@ -102,7 +97,6 @@ export function useGanttTree(): GanttTree {
     return tree
 }
 
-const MAX_FAILED_STEP_PAGES = 5
 const MAX_REVEAL_FRAMES = 30
 const SETTLE_FRAMES = 6
 
@@ -115,14 +109,6 @@ export const taskRunKey = (taskRunId: string): string => `tr:${taskRunId}`
 export const iterationKey = (executionId: string): string => `it:${executionId}`
 export const iterationLabel = (row: LoopIterationRow): string => `#${row.index + 1} ${row.value}`
 
-export function isFailed(state: string | undefined): boolean {
-    return state === State.FAILED
-}
-
-export function isHiddenTaskType(taskType: string | undefined): boolean {
-    return HIDDEN_TASK_TYPES.includes(taskType ?? "")
-}
-
 export function orderTaskRuns(taskRuns: ExecutionTaskRun[], taskType: TaskTypeResolver): Array<{task: ExecutionTaskRun; depth: number}> {
     return buildTaskRunHierarchy(
         taskRuns.filter(taskRun => (taskRun.state?.histories?.length ?? 0) > 0),
@@ -130,10 +116,23 @@ export function orderTaskRuns(taskRuns: ExecutionTaskRun[], taskType: TaskTypeRe
     ).filter(({task}) => !isHiddenTaskType(taskType(task.taskId)))
 }
 
-export function firstFailedLeaf(taskRuns: ExecutionTaskRun[], taskType: TaskTypeResolver): ExecutionTaskRun | undefined {
-    const failed = orderTaskRuns(taskRuns, taskType).map(({task}) => task).filter(task => isFailed(task.state.current))
-    const failedParents = new Set(failed.map(task => task.parentTaskRunId))
-    return failed.find(task => !failedParents.has(task.id))
+export function loadedNeighbour(
+    handle: Pick<LoopHandle, "iterations" | "loaded" | "hasMore">,
+    current: LoopIterationRow,
+    delta: -1 | 1,
+): {known: boolean; row?: LoopIterationRow; position?: number} {
+    if (!handle.loaded.value) return {known: false}
+    const rows = handle.iterations.value
+    const position = rows.findIndex(row => row.id === current.id)
+    if (position >= 0) {
+        const row = rows[position + delta]
+        return row || delta === -1 || !handle.hasMore.value ? {known: true, row} : {known: false, position}
+    }
+    const after = rows.find(row => row.index > current.index)
+    if (delta === 1) return after || !handle.hasMore.value ? {known: true, row: after} : {known: false}
+    return after || !handle.hasMore.value
+        ? {known: true, row: [...rows].reverse().find(row => row.index < current.index)}
+        : {known: false}
 }
 
 export function loopRefOf(node: TaskRunNode): LoopRef {
@@ -265,6 +264,14 @@ export function createGanttTree(options: {
         inFlight.clear()
     }
 
+    function refresh(): Promise<void> {
+        const executionReloads = [...executions.entries()]
+            .filter(([, entry]) => entry.execution)
+            .map(([executionId]) => loadExecution(executionId, true))
+        const loopReloads = [...loops.values()].map(handle => handle.reload())
+        return Promise.all([...executionReloads, ...loopReloads]).then(() => undefined)
+    }
+
     function loopHandle(loop: LoopRef): LoopHandle {
         const id = `${loop.parentExecutionId}:${loop.taskId}`
         let handle = loops.get(id)
@@ -330,27 +337,9 @@ export function createGanttTree(options: {
 
     async function siblingRow(node: IterationNode, delta: -1 | 1): Promise<LoopIterationRow | undefined> {
         const handle = loopHandle(node.loop)
-
-        if (!handle.failedOnly.value) {
-            const wanted = node.row.index + delta
-            const loaded = handle.iterations.value.find(row => row.index === wanted)
-            if (loaded) return loaded
-            const fetched = await handle.fetchAt(wanted).catch(() => undefined)
-            return fetched && (delta === 1 ? fetched.index > node.row.index : fetched.index < node.row.index) ? fetched : undefined
-        }
-
-        const find = () => delta === 1
-            ? handle.iterations.value.find(row => row.index > node.row.index)
-            : [...handle.iterations.value].reverse().find(row => row.index < node.row.index)
-
-        let row = find()
-        if (delta === 1) {
-            for (let pages = 0; !row && handle.hasMore.value && !handle.error.value && pages < MAX_FAILED_STEP_PAGES; pages++) {
-                await handle.loadMore()
-                row = find()
-            }
-        }
-        return row
+        const loaded = loadedNeighbour(handle, node.row, delta)
+        if (loaded.known) return loaded.row
+        return handle.fetchNeighbour(node.row.index, delta, loaded.position).catch(() => undefined)
     }
 
     async function stepIteration(node: GanttNode, delta: -1 | 1) {
@@ -426,6 +415,7 @@ export function createGanttTree(options: {
         select,
         closePanel,
         reset,
+        refresh,
         isExpanded: (key) => expanded.has(key),
         setExpanded: (key, value) => {
             if (value) expanded.add(key)

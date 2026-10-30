@@ -532,6 +532,35 @@ describe("Gantt refresh", () => {
         }
     })
 
+    it("shouldReloadExpandedLoopIterationsWhenRefreshing", async () => {
+        let iterationState = "RUNNING"
+        const {wrapper, store} = await mountGantt(
+            [{id: "per_region", type: "io.kestra.plugin.core.flow.Loop", tasks: []}],
+            [{id: "tr-1", taskId: "per_region", state: {current: "SUCCESS", histories}}],
+            false,
+            async (params) => params.onlyTotal
+                ? 1
+                : {results: [{id: "it-0", state: {current: iterationState, histories}, loopRun: {index: 0, value: "EMEA"}}], total: 1},
+            {},
+            {stubs: {KSFilter: KsFilterStub, KsFilter: KsFilterStub}},
+        )
+        vi.spyOn(store, "loadExecution").mockResolvedValue(store.execution as never)
+        const iterationRowState = () => wrapper.findAllComponents({name: "GanttRow"}).find(row => row.props("nodeKey") === "it:it-0")?.props("state")
+        try {
+            await wrapper.get("[data-test='gantt-row-chevron']").trigger("click")
+            await flushPromises()
+            expect(iterationRowState()).toBe("RUNNING")
+
+            iterationState = "SUCCESS"
+            await refreshCallback(wrapper)()
+            await flushPromises()
+
+            expect(iterationRowState()).toBe("SUCCESS")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
     it("shouldPreserveTheChartAndReportARefreshFailure", async () => {
         const {wrapper, store} = await mountRefreshGantt(createExecution("FAILED", 1))
         const failure = Object.assign(new Error("Refresh failed"), {
@@ -636,6 +665,39 @@ describe("Gantt panel keyboard shortcuts", () => {
 
             expect(requests.filter(request => request.size === 1)).toHaveLength(1)
             expect(panelTitle(wrapper)).toBe("v10")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    it("shouldKeepTheLoopNodeWhenTheExecutionIsRecomputedWithTheSameTaskRuns", async () => {
+        const {wrapper, store} = await mountLoopWithIterations()
+        try {
+            const before = wrapper.getComponent({name: "LoopIterationTree"}).props("node")
+
+            store.execution = {...store.execution!}
+            await flushPromises()
+
+            expect(wrapper.getComponent({name: "LoopIterationTree"}).props("node")).toBe(before)
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    it("shouldShowTheCleanedErrorOfAFailedIterationInItsPanel", async () => {
+        const {wrapper, store} = await mountLoopWithIterations()
+        mockExecution.mockImplementation(async ({executionId}: {executionId: string}) => ({
+            id: executionId,
+            state: {current: "FAILED", histories},
+            taskRunList: [{id: `${executionId}-reconcile`, taskId: "reconcile", state: {current: "FAILED", histories}}],
+        }))
+        vi.spyOn(store, "loadLogs").mockImplementation((async ({executionId}: {executionId: string}) =>
+            [{taskRunId: `${executionId}-reconcile`, message: "Reconcile failed for `APAC`"}]) as never)
+        try {
+            await wrapper.findAll("[data-test='loop-iteration-row']")[2].trigger("click")
+            await flushPromises()
+
+            expect(wrapper.get(".failure-message").text()).toBe("Reconcile failed for APAC")
         } finally {
             wrapper.unmount()
         }

@@ -3,6 +3,7 @@ package io.kestra.core.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -971,7 +972,7 @@ public record QueryFilter(
             List<Operation> operations = field.supportedOp().stream()
                 .map(Resource::toOperation)
                 .toList();
-            return new FieldOp(field.name().toLowerCase(), field.value(), operations);
+            return new FieldOp(field.name().toLowerCase(Locale.ROOT), field.value(), operations);
         }
 
         private static Operation toOperation(Op op) {

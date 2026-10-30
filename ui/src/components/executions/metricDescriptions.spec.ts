@@ -1,9 +1,7 @@
 import {nextTick, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
-import {setActivePinia} from "pinia"
 import {beforeEach, describe, expect, it, vi} from "vitest"
 
-import {routedPinia} from "../../../tests/unit/memoryRouter"
 import type {Execution} from "../../stores/executions"
 import type {Flow} from "../../stores/flow"
 import {collectTaskTypes, useMetricDescriptions} from "./metricDescriptions"
@@ -62,7 +60,6 @@ describe("collectTaskTypes", () => {
 describe("useMetricDescriptions", () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        setActivePinia(routedPinia())
     })
 
     it("describes a metric from the documentation of the plugin that emitted it", async () => {
@@ -90,6 +87,20 @@ describe("useMetricDescriptions", () => {
         await flushPromises()
 
         expect(loadPlugin).toHaveBeenCalledTimes(1)
+    })
+
+    it("keeps the flow it loaded while the execution keeps updating", async () => {
+        loadFlow.mockResolvedValue({tasks: [{id: "query", type: QUERY}]})
+        loadPlugin.mockResolvedValue(pluginWithMetrics([{name: "fetch.size", description: "Number of rows fetched."}]))
+        const current = ref<Execution>({...execution, state: {current: "RUNNING"}} as Execution)
+
+        const descriptionOf = useMetricDescriptions(() => current.value, ref([{taskId: "query", name: "fetch.size"}]))
+        await flushPromises()
+        current.value = {...execution, state: {current: "SUCCESS"}} as Execution
+        await nextTick()
+
+        expect(descriptionOf({taskId: "query", name: "fetch.size"})).toBe("Number of rows fetched.")
+        expect(loadFlow).toHaveBeenCalledTimes(1)
     })
 
     it("leaves metrics undescribed when the flow cannot be read", async () => {

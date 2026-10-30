@@ -29,7 +29,7 @@ export function useMetricDescriptions(execution: () => Execution | undefined, me
     const pluginTypeOf = (taskId: string | null | undefined) => taskId ? taskTypes.value.get(taskId) : undefined
 
     watch(
-        () => [execution()?.namespace, execution()?.flowId, execution()?.flowRevision] as const,
+        [() => execution()?.namespace, () => execution()?.flowId, () => execution()?.flowRevision],
         async ([namespace, id, revision], _previous, onCleanup) => {
             let superseded = false
             onCleanup(() => superseded = true)

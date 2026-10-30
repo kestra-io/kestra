@@ -35,7 +35,7 @@ import io.kestra.core.services.ChartDataService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
-import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
+import io.kestra.plugin.core.dashboard.chart.markdown.sources.FlowDescription;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.CSVUtils;

@@ -244,6 +244,7 @@
         firstFailedLeaf,
         indexTaskRuns,
         isFailed,
+        isHiddenTaskType,
         loopRefOf,
         owningIteration,
         provideGanttTree,
@@ -298,14 +299,6 @@
     const TASKRUN_THRESHOLD = 50
     const PANEL_CARD_BODY_STYLE = {flex: "1", minHeight: "0", padding: "0"}
     const COLORS = State.color()
-    const TASK_TYPES_TO_EXCLUDE = [
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
-    ]
     const ts = (date: string | Date): number => new Date(date).getTime()
     const now = ref(Date.now())
 
@@ -341,7 +334,7 @@
     )
 
     function goToFirstFailure(): void {
-        const failed = firstFailedLeaf((execution.value?.taskRunList ?? []) as TaskRun[])
+        const failed = firstFailedLeaf((execution.value?.taskRunList ?? []) as TaskRun[], tree.taskType)
         const node = failed ? nodeByTaskRunId.value.get(failed.id) : undefined
         if (node) tree.revealFirstFailure(node)
     }
@@ -399,7 +392,7 @@
     const filteredSeries = computed<SeriesItem[]>(() => {
         const normalizedSearch = search.value?.trim()?.toLowerCase()
         return series.value
-            .filter(serie => !TASK_TYPES_TO_EXCLUDE.includes(taskTypeByTaskRunId.value[serie.task.id] ?? ""))
+            .filter(serie => !isHiddenTaskType(taskTypeByTaskRunId.value[serie.task.id]))
             .filter(serie => !tree.failedOnly.value || tree.hasFailure(nodeOf(serie)))
             .filter((serie) => {
                 if (normalizedSearch) {

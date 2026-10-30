@@ -9,6 +9,17 @@ import type {ExecutionTaskRun} from "../executionTaskRun"
 
 export const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
 
+const HIDDEN_TASK_TYPES = [
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
+]
+
+export type TaskTypeResolver = (taskId: string) => string | undefined
+
 export interface LoopRef {
     parentExecutionId: string;
     taskId: string;
@@ -102,15 +113,19 @@ export function isFailed(state: string | undefined): boolean {
     return state === State.FAILED
 }
 
-export function orderTaskRuns(taskRuns: ExecutionTaskRun[]): Array<{task: ExecutionTaskRun; depth: number}> {
+export function isHiddenTaskType(taskType: string | undefined): boolean {
+    return HIDDEN_TASK_TYPES.includes(taskType ?? "")
+}
+
+export function orderTaskRuns(taskRuns: ExecutionTaskRun[], taskType: TaskTypeResolver): Array<{task: ExecutionTaskRun; depth: number}> {
     return buildTaskRunHierarchy(
         taskRuns.filter(taskRun => (taskRun.state?.histories?.length ?? 0) > 0),
         (a, b) => ts(a.state.histories[0].date) - ts(b.state.histories[0].date),
-    )
+    ).filter(({task}) => !isHiddenTaskType(taskType(task.taskId)))
 }
 
-export function firstFailedLeaf(taskRuns: ExecutionTaskRun[]): ExecutionTaskRun | undefined {
-    const failed = orderTaskRuns(taskRuns).map(({task}) => task).filter(task => isFailed(task.state.current))
+export function firstFailedLeaf(taskRuns: ExecutionTaskRun[], taskType: TaskTypeResolver): ExecutionTaskRun | undefined {
+    const failed = orderTaskRuns(taskRuns, taskType).map(({task}) => task).filter(task => isFailed(task.state.current))
     const failedParents = new Set(failed.map(task => task.parentTaskRunId))
     return failed.find(task => !failedParents.has(task.id))
 }
@@ -362,7 +377,7 @@ export function createGanttTree(options: {
             const iteration = createIterationNode(loop, row, loopAncestors(node))
             expanded.add(iteration.key)
             const execution = await loadExecution(row.id)
-            const failed = firstFailedLeaf((execution?.taskRunList ?? []) as ExecutionTaskRun[])
+            const failed = firstFailedLeaf((execution?.taskRunList ?? []) as ExecutionTaskRun[], taskType)
             if (!failed) {
                 select(iteration, {reveal: true})
                 return

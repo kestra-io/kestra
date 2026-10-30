@@ -9,7 +9,9 @@ import {
     createGanttTree,
     createIterationNode,
     createTaskRunNode,
+    firstFailedLeaf,
     iterationAncestors,
+    orderTaskRuns,
     type GanttTree,
     type LoopRef,
     type TaskRunNode,
@@ -230,6 +232,32 @@ describe("ganttTree first failure", () => {
         await tree.revealFirstFailure(start)
 
         expect(tree.selected.value?.key).toBe(start.key)
+    })
+})
+
+describe("ganttTree hidden task runs", () => {
+    const FOR_EACH_ITEM = "io.kestra.plugin.core.flow.ForEachItem"
+    const typeOf = (taskId: string) => ({
+        per_file: FOR_EACH_ITEM,
+        per_file_split: `${FOR_EACH_ITEM}$ForEachItemSplit`,
+        per_file_items: `${FOR_EACH_ITEM}$ForEachItemExecutable`,
+        per_file_merge: `${FOR_EACH_ITEM}$ForEachItemMergeOutputs`,
+        notify: "io.kestra.plugin.core.log.Log",
+    })[taskId]
+    const runs = [
+        taskRun("tr-files", "per_file", "FAILED"),
+        taskRun("tr-split", "per_file_split", "SUCCESS", "tr-files"),
+        taskRun("tr-items", "per_file_items", "FAILED", "tr-files"),
+        taskRun("tr-merge", "per_file_merge", "SUCCESS", "tr-files"),
+        taskRun("tr-notify", "notify"),
+    ]
+
+    it("shouldDropForEachItemInternalsWhenOrderingTaskRuns", () => {
+        expect(orderTaskRuns(runs, typeOf).map(({task}) => task.taskId)).toEqual(["per_file", "notify"])
+    })
+
+    it("shouldPickTheForEachItemRowWhenItsHiddenExecutableIsTheFailedLeaf", () => {
+        expect(firstFailedLeaf(runs, typeOf)?.id).toBe("tr-files")
     })
 })
 

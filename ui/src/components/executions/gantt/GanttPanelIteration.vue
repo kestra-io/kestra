@@ -83,7 +83,7 @@
     const runs = computed(() => {
         const byId = indexTaskRuns(taskRuns.value)
         const owner = {id: props.node.row.id, namespace: props.node.loop.namespace, flowId: props.node.loop.flowId}
-        return orderTaskRuns(taskRuns.value).map(({task}) => createTaskRunNode(
+        return orderTaskRuns(taskRuns.value, tree.taskType).map(({task}) => createTaskRunNode(
             owner,
             task,
             tree.taskType(task.taskId),
@@ -91,7 +91,7 @@
         ))
     })
 
-    const failedLeafId = computed(() => firstFailedLeaf(taskRuns.value)?.id)
+    const failedLeafId = computed(() => firstFailedLeaf(taskRuns.value, tree.taskType)?.id)
     const failure = computed(() => runs.value.find(run => run.taskRun.id === failedLeafId.value))
     const failurePath = computed(() => failure.value
         ? [...failure.value.ancestors.slice(ancestors.value.length), {label: failure.value.taskRun.taskId}].map(part => part.label).join(" › ")

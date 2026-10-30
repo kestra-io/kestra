@@ -109,7 +109,7 @@
         const taskRuns = (execution.value?.taskRunList ?? []) as ExecutionTaskRun[]
         const base = ancestors.value
         const byId = indexTaskRuns(taskRuns)
-        return orderTaskRuns(taskRuns)
+        return orderTaskRuns(taskRuns, tree.taskType)
             .map(({task}) => task)
             .map(task => createTaskRunNode(
                 {id: props.iteration.row.id, namespace: props.iteration.loop.namespace, flowId: props.iteration.loop.flowId},

@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -10,6 +12,9 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.DateUtils;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -21,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SLATestCase {
     @Inject
     private TestRunnerUtils runnerUtils;
+
+    @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
 
     public void maxDurationSLAShouldFail() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-max-duration-fail");
@@ -93,5 +101,47 @@ public class SLATestCase {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-parent-flow");
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    public void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-flow-trigger-source");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Execution listener = runnerUtils.awaitFlowExecution(
+            e -> e.getState().isTerminated(), MAIN_TENANT, "io.kestra.tests", "sla-flow-trigger-listener"
+        );
+        assertThat(listener.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(listener.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void avgDurationSLAShouldFail() throws QueueException, TimeoutException {
+        String flowId = "sla-avg-duration-fail";
+        for (int i = 0; i < 3; i++) {
+            Execution history = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", flowId);
+            assertThat(history.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+        awaitExecutionStatistics(flowId, 3);
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", flowId, null, (f, e) -> Map.of("sleep", "PT3S"));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    public void avgDurationSLAShouldNotMonitorWithoutEnoughHistory() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-avg-duration-not-enough-history");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    private void awaitExecutionStatistics(String flowId, long expected) throws TimeoutException {
+        Await.until(
+            () -> executionStatisticsRepository
+                .statistics(MAIN_TENANT, "io.kestra.tests", flowId, List.of(State.Type.SUCCESS), Instant.now().minus(Duration.ofDays(1)), Instant.now(), DateUtils.GroupType.MONTH)
+                .stream()
+                .mapToLong(it -> it.getDuration().getCount())
+                .sum() >= expected,
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
     }
 }

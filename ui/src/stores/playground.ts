@@ -11,6 +11,8 @@ import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
 import type {KestraHttpError} from "../utils/kestraHttp"
 
+import {storageKeys} from "../utils/constants"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
 const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
@@ -28,6 +30,31 @@ const forExecution = (flow: Flow): FlowForExecution => ({
     tasks: flow.tasks ?? [],
 })
 
+type TaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+function taskRunsByPosition(execution: Execution): Map<string, TaskRun> {
+    const taskRuns = execution.taskRunList ?? []
+    const byId = new Map(taskRuns.map(taskRun => [taskRun.id, taskRun]))
+    const position = (taskRun: TaskRun): string => {
+        const parent = taskRun.parentTaskRunId ? byId.get(taskRun.parentTaskRunId) : undefined
+        return `${parent ? `${position(parent)}/` : ""}${taskRun.taskId}[${taskRun.value ?? ""}#${taskRun.iteration ?? ""}]`
+    }
+    return new Map(taskRuns.map(taskRun => [position(taskRun), taskRun]))
+}
+
+/** Maps each source task run id to its copy in the replay; a copy keeps its source's state, a restarted run does not. */
+function reusedTaskRunIds(previous: Execution, replay: Execution): Map<string, string> {
+    const previousByPosition = taskRunsByPosition(previous)
+    const pairs = new Map<string, string>()
+    for (const [position, taskRun] of taskRunsByPosition(replay)) {
+        const source = previousByPosition.get(position)
+        if (source && source.state.current === taskRun.state.current) {
+            pairs.set(source.id, taskRun.id)
+        }
+    }
+    return pairs
+}
+
 export const usePlaygroundStore = defineStore("playground", () => {
 
     const flowStore = useFlowStore()
@@ -35,7 +62,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         removeFalsyValues: true,
     })
 
-    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem("editorPlayground") !== "false")
+    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false")
     watch(enabled, (newValue) => {
         if (newValue) {
             params.playground = "on"
@@ -73,6 +100,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function clearExecutions() {
         executions.value = []
         executionsStore.execution = undefined
+        executionsStore.clearReusedTaskRuns()
     }
 
     const executionsStore = useExecutionsStore()
@@ -318,6 +346,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             }
         }
 
+        const previousExecution = latestExecution.value
         let execution: Execution | undefined = undefined
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
@@ -342,6 +371,25 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         if(execution)
             addExecution(execution, graph)
+
+        if (willReplay && previousExecution && execution) {
+            await carryOverReusedTaskRuns(previousExecution, execution)
+        }
+    }
+
+    /** A replay copies the task runs before the replayed one under new ids, but their logs stay with the run that recorded them. */
+    async function carryOverReusedTaskRuns(previous: Execution, replay: Execution) {
+        const sourceToReused = reusedTaskRunIds(previous, replay)
+        if (!sourceToReused.size) return
+
+        const kind = previous.kind && previous.kind !== "NORMAL" ? {"filters[kind][IN]": previous.kind} : {}
+        // The replay is already running, so a failed fetch only costs the carried-over logs, not the run.
+        const ownLogs = await executionsStore.loadLogs({executionId: previous.id, filters: routeQueryToQueryFilters(kind), store: false})
+            .catch(() => [])
+        executionsStore.setReusedTaskRuns(replay.id, [...sourceToReused.values()], [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
+            const taskRunId = log.taskRunId ? sourceToReused.get(log.taskRunId) : undefined
+            return taskRunId ? [{...log, executionId: replay.id, taskRunId}] : []
+        }))
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

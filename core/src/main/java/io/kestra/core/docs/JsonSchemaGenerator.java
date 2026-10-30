@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -34,6 +35,8 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.ServerOwned;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.assets.Custom;
@@ -56,6 +59,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TimezoneId;
 
 import io.micronaut.core.annotation.Nullable;
@@ -91,8 +95,10 @@ public class JsonSchemaGenerator {
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
     private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
-    // A value holding a Pebble expression, accepted next to the literal format of an output asset property.
-    private static final String PEBBLE_EXPRESSION_PATTERN = ".*\\{\\{.*\\}\\}.*";
+    // A value holding a Pebble block, written for ECMA-262 since editors evaluate schema patterns in JavaScript.
+    private static final String PEBBLE_EXPRESSION_PATTERN = IntStream.range(0, PebbleUtil.openingBlockDelimiters().size())
+        .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
+        .collect(Collectors.joining("|", ".*(", ").*"));
 
     private final PluginRegistry pluginRegistry;
 
@@ -101,10 +107,26 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
+    Map<Class<?>, Optional<Object>> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
+    }
+
+    // Same shape as @TimezoneId, untyped branches the no-code editor renders as one select; the plugin schema keeps its top-level enum for the docs.
+    private void acceptExpressionOnDynamicEnums(ObjectNode objectNode) {
+        objectNode.findParents("enum").forEach(jsonNode ->
+        {
+            if (jsonNode instanceof ObjectNode oNode && oNode.path("$dynamic").asBoolean(false) && !oNode.has("anyOf")) {
+                ArrayNode anyOf = oNode.putArray("anyOf");
+                anyOf.addObject().set("enum", oNode.remove("enum"));
+                anyOf.addObject().put("pattern", PEBBLE_EXPRESSION_PATTERN);
+            }
+        });
+    }
+
+    private static String escapeRegex(String literal) {
+        return literal.replaceAll("[\\\\^$.*+?()\\[\\]{}|/]", "\\\\$0");
     }
 
     private void replaceOneOfWithAnyOf(ObjectNode objectNode) {
@@ -143,6 +165,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            acceptExpressionOnDynamicEnums(objectNode);
 
             // Strip edition-restricted input types before collapsing discriminator wrappers: the
             // strip logic removes a whole allOf branch (the one carrying the `type` const), which
@@ -466,6 +489,9 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -569,7 +595,12 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                     JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
-                )
+                ) {
+                    @Override
+                    protected boolean isRequired(MemberScope<?, ?> member) {
+                        return super.isRequired(member) && !(member instanceof FieldScope field && builderDefault(field) != null);
+                    }
+                }
             )
             .with(new Swagger2Module() {
                 @Override
@@ -620,7 +651,7 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null)
+            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null || fieldScope.getAnnotation(ServerOwned.class) != null)
             .withDefaultResolver(this::defaults);
 
         // def name
@@ -732,6 +763,26 @@ public class JsonSchemaGenerator {
                 }
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
+                }
+            }
+
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
                 }
             }
 
@@ -1303,6 +1354,10 @@ public class JsonSchemaGenerator {
             return null;
         }
 
+        return builderDefault(target);
+    }
+
+    private Object builderDefault(FieldScope target) {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
@@ -1318,9 +1373,11 @@ public class JsonSchemaGenerator {
             }
         }
 
-        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
+        Class<?> instanceCls = baseCls;
 
-        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+        return defaultInstances.computeIfAbsent(baseCls, clazz -> Optional.ofNullable(buildDefaultInstance(clazz)))
+            .map(instance -> defaultValue(instance, instanceCls, target.getName()))
+            .orElse(null);
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {

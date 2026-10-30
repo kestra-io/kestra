@@ -22,7 +22,17 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
+                    <Sections
+                        ref="dashboard"
+                        :charts
+                        :dashboard="DEFAULT_DASHBOARD"
+                        showDefault
+                        class="logs-chart"
+                        selectableChartId="logs_timeseries"
+                        :brushStart="brushRange?.startDate"
+                        :brushEnd="brushRange?.endDate"
+                        @chart-select="onChartSelect"
+                    />
                 </template>
 
                 <template #table>
@@ -118,7 +128,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
+    import {getActivePinia} from "pinia"
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -126,7 +137,7 @@
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {dateUtils, dayjs, KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -152,8 +163,9 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
-    import {useLogsStore} from "../../stores/logs"
+    import {useLogsStore, useScopedLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import Download from "vue-material-design-icons/Download.vue"
@@ -162,6 +174,7 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, withoutTimeFilters, type BrushRange} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -172,6 +185,7 @@
         namespace?: string | null;
         restoreurl?: boolean;
         withCharts?: boolean;
+        logsStoreScope?: string;
     }>(), {
         embed: false,
         showFilters: false,
@@ -181,6 +195,7 @@
         namespace: undefined,
         restoreurl: undefined,
         withCharts: true,
+        logsStoreScope: undefined,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -188,7 +203,14 @@
     const router = useRouter()
     const {t} = useI18n()
     const toast = useToast()
-    const logsStore = useLogsStore()
+    const logsStore = props.logsStoreScope ? useScopedLogsStore(props.logsStoreScope) : useLogsStore()
+    if (props.logsStoreScope) {
+        const pinia = getActivePinia()
+        onBeforeUnmount(() => {
+            logsStore.$dispose()
+            if (pinia) delete pinia.state.value[logsStore.$id]
+        })
+    }
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
     const quickIntervals = computed(() => [
@@ -216,7 +238,7 @@
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
-            ? localStorage.getItem("defaultLogLevel") || "INFO"
+            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
             : "INFO",
     )
     const {
@@ -268,6 +290,16 @@
 
         return rawValue as string | undefined
     })
+    const brushRange = computed(() => readBrushRange(route.query))
+
+    function onChartSelect(range: BrushRange | null) {
+        router.push({
+            query: range
+                ? buildBrushTimeRangeQuery(route.query, range, pageKey)
+                : buildBrushClearQuery(route.query, pageKey),
+        })
+    }
+
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => {
@@ -341,7 +373,12 @@
         downloadLevel.value = level?.direction === "min" || level?.direction === "max"
             ? level.value
             : undefined
-        downloadTimeRange.value = selectedTimeRange.value ?? undefined
+        // An embedded wrapper (e.g. the dashboard drill-down) gets its own filters, so the dialog has to
+        // start from their range and not from the host page's URL, or an untouched dialog would swap it.
+        const embeddedRange = props.filters?.["filters[timeRange][EQUALS]"]
+        downloadTimeRange.value = props.filters
+            ? (typeof embeddedRange === "string" ? embeddedRange : undefined)
+            : selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }
 
@@ -350,7 +387,7 @@
             page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
             level: _l, startDate: _sd, endDate: _ed, ...routeFilters
         } = route.query
-        const params: Record<string, unknown> = props.filters ? {...props.filters} : {...routeFilters}
+        const params: LocationQueryRaw = props.filters ? {...props.filters} : {...routeFilters}
 
         if (isFlowEdit.value) {
             params["filters[namespace][EQUALS]"] = routeNamespace.value
@@ -366,19 +403,13 @@
             params["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = downloadLevel.value
         }
 
-        if (downloadTimeRange.value) {
-            params.startDate = dateUtils.toIsoKeepOffset(
-                dayjs().subtract(dayjs.duration(downloadTimeRange.value).as("milliseconds")),
-            )
-            params.endDate = dateUtils.toIsoKeepOffset(dayjs())
-        } else {
-            if (_sd) params.startDate = _sd
-            if (_ed) params.endDate = _ed
-        }
-        params.sort = "timestamp:desc"
+        // Only `filters[...]` keys reach the backend, so the dialog's range has to replace the
+        // page's time filters there, the same way the level is swapped above.
+        const query = downloadTimeRange.value ? withoutTimeFilters(params, downloadTimeRange.value) : params
+        query.sort = "timestamp:desc"
 
         downloading.value = true
-        logsStore.downloadLogs(params)
+        logsStore.downloadLogs(query)
             .then((result) => {
                 downloadOpen.value = false
 
@@ -492,7 +523,9 @@
         })
     })
 
-    const showStatChart = () => props.withCharts && showChart.value && !logsStore.isCursorMode
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
+
+    const showStatChart = () => props.withCharts && canViewCharts.value && showChart.value && !logsStore.isCursorMode
 
     const onShowChartChange = (value: boolean) => {
         showChart.value = value
@@ -513,7 +546,7 @@
     // The chart toggle is hidden (not just inert) in cursor mode: cursor stores don't aggregate, so
     // the timeseries chart it controls can't be built — see `showStatChart` above.
     const logTableOptions = computed(() => ({
-        chart: {shown: !logsStore.isCursorMode, value: showChart.value, callback: onShowChartChange},
+        chart: {shown: !logsStore.isCursorMode && canViewCharts.value, value: showChart.value, callback: onShowChartChange},
         refresh: {shown: true, callback: refresh},
         columns: {shown: false},
     }))
@@ -522,7 +555,11 @@
         if (newValue) refresh()
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
+
+    .logs-chart {
+        margin-bottom: var(--ks-spacing-5);
+    }
 
     .download-hint {
         margin: 0 0 var(--ks-spacing-3);
@@ -552,28 +589,30 @@
         margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
+    }
 
-        &__left {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__left {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        gap: var(--ks-spacing-2);
+    }
 
-        :deep(.kel-button) {
+    .logs-toolbar {
+        & :deep(.kel-button) {
             margin: 0;
         }
     }
 
     .log-panel {
-        > div.log-content {
+        & > div.log-content {
             margin-bottom: 1rem;
             .navbar {
                 border: 1px solid var(--ks-border-default);
@@ -598,7 +637,7 @@
                 background-color: var(--ks-bg-sidebar);
             }
 
-            > * + * {
+            & > * + * {
                 border-top: 1px solid var(--ks-border-default);
             }
         }

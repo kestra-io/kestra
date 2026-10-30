@@ -20,10 +20,12 @@ import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
+import {baseUrl} from "override/utils/route"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
 import {registerServiceWorker} from "./utils/serviceWorker"
 import {initPwaInstallCapture} from "./utils/pwaInstallState"
+import {storageKeys} from "./utils/constants"
 
 void registerServiceWorker()
 initPwaInstallCapture()
@@ -60,7 +62,7 @@ function setupAxios(router: Router) {
     }
 
 
-    httpClient = setupKestraHttp({}, {
+    httpClient = setupKestraHttp({baseUrl}, {
         coreStore,
         router,
         beforeLogout,
@@ -151,7 +153,7 @@ async function beforeResolve(router: Router, to: RouteLocationNormalized, from: 
         }
 
         // Check if basic auth setup is still in progress
-        const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
+        const isSetupInProgress = localStorage.getItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
         if (isSetupInProgress === "true") {
             return {name: "setup"}
         }

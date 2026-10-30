@@ -4,7 +4,7 @@
         :disabled="!enabled"
         trigger="click"
         placement="bottom-start"
-        :width="400"
+        width="min(400px, 92vw)"
         :showArrow="false"
         :popperStyle="{padding: '0', overflow: 'hidden', borderRadius: '0.875rem', background: 'var(--ks-bg-elevated)', boxShadow: '0px 8px 24px 0px var(--ks-shadow-elevated)'}"
     >
@@ -33,7 +33,9 @@
             </div>
 
             <div class="set-labels__footer">
-                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escapeHtml(execution.id)})" />
+                <i18n-t keypath="Set labels to execution" tag="p" scope="global" class="set-labels__description">
+                    <template #id><code>{{ execution.id }}</code></template>
+                </i18n-t>
                 <div class="set-labels__actions">
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
@@ -52,7 +54,7 @@
     import {useI18n} from "vue-i18n"
     import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"
@@ -153,23 +155,24 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .set-labels-tag {
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
-        background: var(--ks-bg-tag);
-        padding: 0.125rem 0.375rem;
+        background: var(--ks-btn-secondary-bg-default);
+        padding: var(--ks-spacing-1) var(--ks-spacing-3);
         border-radius: var(--ks-radius-sm);
-        color: var(--ks-text-primary);
+        color: var(--ks-text-link);
         font-size: var(--ks-font-size-sm);
-        border: 1px solid transparent;
+        border: 1px solid var(--ks-btn-secondary-border-default);
         cursor: pointer;
         white-space: nowrap;
         font-family: inherit;
+        flex-shrink: 0;
 
         &:hover:not(:disabled) {
-            background: var(--ks-bg-hover);
+            background: var(--ks-btn-secondary-bg-hover);
         }
 
         &.is-active {
@@ -192,35 +195,35 @@
     .set-labels {
         display: flex;
         flex-direction: column;
+    }
 
-        &__body {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
-        }
+    .set-labels__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
+    }
 
-        &__description {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-            margin: 0;
-            min-width: 0;
-        }
+    .set-labels__description {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        margin: 0;
+        min-width: 0;
+    }
 
-        &__footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-3) var(--ks-spacing-4);
-            border-top: 1px solid var(--ks-border-default);
-            background: var(--ks-bg-base);
-        }
+    .set-labels__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-base);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-        }
+    .set-labels__actions {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
     }
 </style>

@@ -47,7 +47,7 @@
 
     const flowIds = ref<string[]>([])
 
-    const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
+    const values = computed(() => props.modelValue ?? (props.schema?.default as ModelValue | undefined))
 
     const namespace = computed(() => {
         return (props.task?.namespace as string | undefined) ?? flowStore.flow?.namespace
@@ -63,7 +63,7 @@
         }
     }, {immediate: true})
 
-    function onInput(value: ModelValue) {
+    function onInput(value: ModelValue | undefined) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

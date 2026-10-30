@@ -76,11 +76,12 @@ export interface KsEditorEmit {
     (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
     (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
     (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
+    (e: "editor-warnings", warnings: {line: number, message: string}[]): void
 }
 
 export interface KsEditorTemplateRefs {
     editorRef: import("vue").Ref<HTMLDivElement | null>
     container: import("vue").Ref<HTMLDivElement | undefined>
     datePickerWrapper: import("vue").Ref<HTMLElement | undefined>
-    datePicker: import("vue").Ref<DatePickerInstance>
+    datePicker: import("vue").Ref<DatePickerInstance | undefined>
 }

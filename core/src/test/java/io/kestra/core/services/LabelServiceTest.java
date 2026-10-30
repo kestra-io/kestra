@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -33,7 +35,7 @@ class LabelServiceTest {
     @Test
     void shouldFilterSystemLabels() {
         Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
+            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue"), new Label(Label.SYSTEM, "systemValue")))
             .build();
 
         List<Label> labels = LabelService.labelsExcludingSystem(flow.getLabels());
@@ -231,6 +233,27 @@ class LabelServiceTest {
         assertThatThrownBy(() -> task.update(execution, runContext))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Label values cannot be empty");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "system.label", "system" })
+    void shouldThrowExceptionOnSystemLabelInLabelsTask(String key) throws Exception {
+        Labels task = Labels.builder()
+            .id("test")
+            .type(Labels.class.getName())
+            .labels(Map.of(key, "value"))
+            .build();
+
+        RunContext runContext = runContextFactory.of();
+
+        Execution execution = Execution.builder()
+            .id("execId")
+            .namespace("test.ns")
+            .build();
+
+        assertThatThrownBy(() -> task.update(execution, runContext))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("System labels can only be set by Kestra itself, offending label: " + key + "=value");
     }
 
 }

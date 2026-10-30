@@ -1,5 +1,5 @@
 <template>
-    <span v-if="required" class="me-1 text-danger">*</span>
+    <span v-if="required" class="required-mark">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
         <KsInput
@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
     import {useId, computed, useTemplateRef} from "vue"
+    import {KsInput} from "@kestra-io/design-system"
     import Lock from "vue-material-design-icons/Lock.vue"
 
     const SuffixIcon = computed(() => {
@@ -33,7 +34,7 @@
     defineOptions({inheritAttrs: false})
 
     const uid = useId()
-    const elInputRef = useTemplateRef("elInputRef")
+    const elInputRef = useTemplateRef<InstanceType<typeof KsInput>>("elInputRef")
 
     const emits = defineEmits(["update:modelValue"])
     const props = defineProps({
@@ -43,7 +44,7 @@
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
         readonly: {type: Boolean, default: false},
-        margin: {type: String, default: "mt-1 mb-2"},
+        margin: {type: String, default: ""},
         class: {type: String, default: undefined},
         haveError: {type: Boolean, default: false},
         inputStyle: {type: Object, default: () => ({})},
@@ -58,13 +59,22 @@
 
     defineExpose({
         focus: () => {
-            (elInputRef.value as any)?.focus?.()
+            elInputRef.value?.focus()
         },
     })
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
+<style scoped src="../../styles/code.css" />
+<style scoped>
+.required-mark {
+    margin-right: var(--ks-spacing-1);
+    color: var(--ks-text-error);
+}
+
+.wrapper {
+    margin-top: var(--ks-spacing-1);
+    margin-bottom: var(--ks-spacing-2);
+}
 
 :deep(.kel-input__icon) {
     .lock-icon {

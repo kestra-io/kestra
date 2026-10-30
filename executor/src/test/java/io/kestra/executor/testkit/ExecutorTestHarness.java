@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
@@ -31,9 +32,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -41,6 +39,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -62,6 +61,7 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -73,6 +73,7 @@ import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.NamespaceFileBackend;
+import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -168,6 +169,7 @@ public final class ExecutorTestHarness {
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
     private final KitRunContextFactory runContextFactory;
+    private final Storage storage;
     private final MutableClock clock;
 
     public static ExecutorTestHarness create() {
@@ -214,6 +216,7 @@ public final class ExecutorTestHarness {
         );
         this.executionOutputService = new ExecutionOutputService(
             executionOutputRepository,
+            Mockito.mock(SearchableOutputRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new ExecutionOutputConfiguration(-1)
@@ -263,7 +266,8 @@ public final class ExecutorTestHarness {
             }
             return Mockito.RETURNS_DEFAULTS.answer(invocation);
         });
-        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        this.storage = Mockito.mock(Storage.class);
+        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator, storage);
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
@@ -279,12 +283,17 @@ public final class ExecutorTestHarness {
                 Mockito.mock(ConcurrencyLimitService.class),
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
+                runContextFactory,
+                Mockito.mock(ApprovalRequestHandler.class),
                 executionOutputService,
+                Mockito.mock(SearchableOutputRepositoryInterface.class),
+                Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,
                 loopExecutionEventQueue,
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
+                Mockito.mock(TriggerEventQueue.class),
                 Optional.empty()
             )
         );
@@ -321,7 +330,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             workerQueueService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             Optional.empty(),
             killQueue,
             loopExecutionEventQueue,
@@ -350,6 +359,7 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             killSwitchService,
             killSwitchActionService,
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             metricRegistry,
             tracerFactory,
             clock
@@ -357,7 +367,9 @@ public final class ExecutorTestHarness {
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
+            flowService,
             taskOutputService,
             executionOutputService,
             asyncOperationService,
@@ -439,7 +451,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             runContextFactory,
             metricRegistry
         );
@@ -858,5 +870,9 @@ public final class ExecutorTestHarness {
 
     public KitRunContextFactory runContextFactory() {
         return runContextFactory;
+    }
+
+    public Storage storage() {
+        return storage;
     }
 }

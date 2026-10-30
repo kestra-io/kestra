@@ -71,15 +71,15 @@ import lombok.experimental.SuperBuilder;
                     values: ["value 1", "value 2", "value 3"]
                     tasks:
                       - id: before_if
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "Before if {{ item.value }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "Before if {{ item.value }}"
                       - id: if
                         type: io.kestra.plugin.core.flow.If
                         condition: '{{ item.value == "value 2" }}'
                         then:
                           - id: after_if
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "After if {{ item.value }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "After if {{ item.value }}"
                 """
         ),
         @Example(
@@ -105,8 +105,8 @@ import lombok.experimental.SuperBuilder;
                     concurrencyLimit: 2
                     tasks:
                       - id: return
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} with value {{ item.value }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} with value {{ item.value }}"
                 """
         ),
         @Example(
@@ -193,6 +193,37 @@ import lombok.experimental.SuperBuilder;
                                   Further up (table types): {{item.parents[1].value}}
                 """
         ),
+        @Example(
+            full = true,
+            title = """
+                Collect outputs across iterations. By default, outputs produced inside a loop are not visible to tasks \
+                that run after it. Declare an `outputs:` block on the Loop task to surface values explicitly. \
+                After the loop, `outputs.loop.outputs` is a list of per-iteration results. Use `loopOutputs()` to extract \
+                one field across all iterations as a flat list.""",
+            code = """
+                id: loop_outputs
+                namespace: company.team
+
+                tasks:
+                  - id: loop
+                    type: io.kestra.plugin.core.flow.Loop
+                    values: ["alpha", "beta", "gamma"]
+                    fetchType: AUTO
+                    outputs:
+                      - id: label
+                        type: STRING
+                        value: "{{ outputs.process.values.result }}"
+                    tasks:
+                      - id: process
+                        type: io.kestra.plugin.core.output.OutputValues
+                        values:
+                          result: "processed {{ item.value }}"
+
+                  - id: read_outputs
+                    type: io.kestra.plugin.core.log.Log
+                    message: "All results: {{ loopOutputs(outputs.loop.outputs, 'label') }}"
+                """
+        ),
     }
 )
 public class Loop extends AbstractBranch<Loop.Output> {
@@ -218,6 +249,17 @@ public class Loop extends AbstractBranch<Loop.Output> {
         oneOf = { String.class, Object[].class }
     )
     private Object values;
+
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "Whether to parse the values as maps / objects",
+        description = """
+            If set to true, Kestra will parse the values as JSON or ION maps / objects when creating the `item.value` attribute.
+            If set to false, Kestra will treat the values as strings.
+            """
+    )
+    private Boolean parseValues = false;
 
     @PositiveOrZero
     @NotNull

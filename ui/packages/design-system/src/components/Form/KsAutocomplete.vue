@@ -1,11 +1,11 @@
 <template>
     <ElAutocomplete
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @select="emit('select', $event)"
+        v-bind="({...filteredProps(), ...$attrs} as AutocompleteProps)"
+        @select="emit('select', $event as T)"
     >
         <template v-if="$slots.default" #default="p">
-            <slot v-bind="p" />
+            <slot :item="p.item as T" />
         </template>
         <template v-if="$slots.prepend" #prepend>
             <slot name="prepend" />
@@ -16,20 +16,20 @@
     </ElAutocomplete>
 </template>
 
-<script setup lang="ts">
-    import {ElAutocomplete} from "element-plus"
+<script setup lang="ts" generic="T">
+    import {ElAutocomplete, type AutocompleteProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<string>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-        fetchSuggestions?: (query: string, callback: (results: any[]) => void) => void
+        fetchSuggestions?: (query: string, callback: (results: T[]) => void) => void
         triggerOnFocus?: boolean
         valueKey?: string
     }>(), {
@@ -40,11 +40,11 @@
     })
 
     const emit = defineEmits<{
-        select: [item: any]
+        select: [item: T]
     }>()
 
     defineSlots<{
-        default?: (scope: {item: any}) => unknown
+        default?: (scope: {item: T}) => unknown
         prepend?(): unknown
         suffix?(): unknown
     }>()
@@ -55,29 +55,42 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/autocomplete';
+</style>
 
+<style>
     .kel-autocomplete {
-        .kel-input {
+        & .kel-input {
             height: 100%;
             --kel-input-bg-color: var(--ks-bg-base);
         }
 
-        .kel-input__suffix-inner {
+        & .kel-input__suffix-inner {
             gap: .5rem;
 
-            > span:not(.material-design-icon) {
+            & > span:not(.material-design-icon) {
                 font-size: var(--ks-font-size-xs);
                 line-height: 1.25rem;
             }
         }
     }
+
+    @media (pointer: coarse) {
+        .kel-autocomplete .kel-input {
+            --kel-input-height: 2.75rem;
+        }
+
+        .kel-autocomplete .kel-input__inner {
+            font-size: 1rem;
+        }
+    }
+
     .kel-autocomplete-suggestion {
-        .kel-autocomplete-suggestion__wrap {
+        & .kel-autocomplete-suggestion__wrap {
             max-height: 40vh;
             padding: 10px 12px 10px 10px;
         }
 
-        li {
+        & li {
             --kel-fill-color-light: var(--ks-bg-hover-elevated);
             padding: 0 1rem;
             border-radius: 5px;
@@ -86,7 +99,7 @@
                 margin-bottom: 3px;
             }
 
-            a {
+            & a {
                 color: var(--ks-text-primary);
                 justify-content: space-between;
             }

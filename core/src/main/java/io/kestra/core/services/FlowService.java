@@ -69,7 +69,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.SecretUtils;
-import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -685,7 +685,7 @@ public class FlowService {
         flow.allTasksWithChilds().forEach(task ->
         {
             if (!(task instanceof RunnableTask<?>)) {
-                if (task.getTimeout() != null && !(task instanceof Pause)) {
+                if (task.getTimeout() != null && !(task instanceof PausableTask)) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
                 }
                 if (task.getTaskCache() != null) {

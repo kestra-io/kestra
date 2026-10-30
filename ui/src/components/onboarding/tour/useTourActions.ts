@@ -2,6 +2,7 @@ import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import type {Flow} from "@kestra-io/kestra-sdk"
 import {State} from "@kestra-io/design-system"
+import {handledIf} from "../../../utils/kestraHttp"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -10,6 +11,7 @@ import {useProductTourStore} from "../../../stores/productTour"
 import {FLOW_PARENT_ROUTE} from "../../flows/flowTabs"
 import {EXECUTION_PARENT_ROUTE} from "../../executions/executionTabs"
 import {sendWebhookTestEvent} from "../../flows/testEvent"
+import {STORED_PANELS_RELOAD_EVENT} from "../../../composables/useStoredPanels"
 import {TourSceneError} from "./tourScenes"
 import {
     TOUR_FLOW_ID,
@@ -125,12 +127,7 @@ export function useTourActions() {
         )
 
         localStorage.setItem(editorPanelsKey(), layout)
-        // Synthetic event so an already-open editor (this same tab raises none) picks up the change.
-        window.dispatchEvent(new StorageEvent("storage", {
-            key: editorPanelsKey(),
-            newValue: layout,
-            storageArea: localStorage,
-        }))
+        window.dispatchEvent(new CustomEvent(STORED_PANELS_RELOAD_EVENT, {detail: editorPanelsKey()}))
     }
 
     const restoreEditorPanels = () => {
@@ -219,8 +216,10 @@ export function useTourActions() {
         } else {
             await FlowsAPI.createFlow({
                 body: source,
-                showMessageOnError: false,
-            } as Parameters<typeof FlowsAPI.createFlow>[0])
+            } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
+                handledIf(e, [409])
+                throw e
+            })
             await flowStore.loadFlow({namespace: TOUR_NAMESPACE, id: TOUR_FLOW_ID})
         }
         await flowStore.initYamlSource()
@@ -392,8 +391,10 @@ export function useTourActions() {
         } else {
             await FlowsAPI.createFlow({
                 body: TOUR_REPORT_FLOW,
-                showMessageOnError: false,
-            } as Parameters<typeof FlowsAPI.createFlow>[0])
+            } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
+                handledIf(e, [409])
+                throw e
+            })
         }
         tourStore.setTourState({reportFlowCreated: true})
         await openFlowEditor(TOUR_REPORT_FLOW_ID)

@@ -1,5 +1,6 @@
 package io.kestra.executor.testkit;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,25 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     }
 
     @Override
+    public synchronized List<Execution> decrementAndPopAll(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer) {
+        decrement(flow);
+        List<Execution> popped = new ArrayList<>();
+        int previousSize;
+        do {
+            previousSize = popped.size();
+            executionQueuedStateStore.pop(
+                NoopTransactionContext.INSTANCE,
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                (txContext, queued) -> popped.add(consumer.apply(txContext, queued))
+            );
+        } while (popped.size() > previousSize);
+        return popped;
+    }
+
+    @Override
     public synchronized ExecutionRunning countThenProcess(FlowInterface flow, List<ScopedConcurrencyLimit> scopes,
         BiFunction<TransactionContext, List<Integer>, Pair<ExecutionRunning, Boolean>> consumer) {
         List<Integer> counts = scopes.stream()
@@ -93,25 +113,26 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     }
 
     @Override
-    public synchronized Optional<Execution> releaseThenPop(
+    public synchronized List<Execution> releaseThenPop(
         FlowInterface flow,
         List<ScopedConcurrencyLimit> scopes,
         ExecutionQueuedStateStore executionQueuedStateStore,
         Function<Execution, List<ScopedConcurrencyLimit>> candidateLimits,
         BiFunction<TransactionContext, Execution, Execution> consumer) {
+        if (scopes.size() == 1 && scopes.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW) {
+            return ConcurrencyLimitStateStore.super.releaseThenPop(flow, scopes, executionQueuedStateStore, candidateLimits, consumer);
+        }
+
         scopes.forEach(this::decrement);
 
         // Scan the queued candidates FIFO within the widest freed scope: candidates outside it
-        // share no counter with the released execution, so their fit cannot have changed. The
-        // fake needs the whole queued list, hence the kit queued store (a production
-        // implementation would add a scan operation to its own queued storage instead).
-        InMemoryExecutionQueuedStateStore queuedStore = (InMemoryExecutionQueuedStateStore) executionQueuedStateStore;
+        // share no counter with the released execution, so their fit cannot have changed.
         ScopedConcurrencyLimit widest = widestScope(scopes);
-        List<ExecutionQueued> candidates = queuedStore.queued().stream()
+        List<ExecutionQueued> candidates = executionQueuedStateStore.getAllForAllTenants().stream()
             .filter(queued -> covers(widest, queued.getTenantId(), queued.getNamespace(), queued.getFlowId()))
-            .sorted(Comparator.comparing(ExecutionQueued::getDate))
             .toList();
 
+        List<Execution> popped = new ArrayList<>();
         int attempts = 0;
         for (ExecutionQueued candidate : candidates) {
             if (attempts++ >= MAX_POP_CANDIDATES) {
@@ -121,14 +142,21 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             boolean fits = candidateScopes.stream().allMatch(scope -> running(scope) < scope.concurrency().getLimit());
             if (fits) {
                 candidateScopes.forEach(this::increment);
-                queuedStore.remove(candidate.getExecution());
-                return Optional.of(consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution()));
+                executionQueuedStateStore.remove(candidate.getExecution());
+                popped.add(consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution()));
+                if (!hasRoom(widest)) {
+                    break;
+                }
             }
             // a blocked candidate is skipped, not head-of-line blocking: it is reconsidered
             // whenever one of its own scopes frees a slot
         }
 
-        return Optional.empty();
+        return popped;
+    }
+
+    private boolean hasRoom(ScopedConcurrencyLimit scope) {
+        return scope.concurrency() == null || running(scope) < scope.concurrency().getLimit();
     }
 
     /**

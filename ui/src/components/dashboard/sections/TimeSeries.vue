@@ -14,16 +14,60 @@
             @toggle="onLegendToggle"
         />
 
-        <KsEchart
-            ref="ksEchartRef"
-            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
-            class="canvas"
-            :options="echartsOption"
-            :loading="false"
-            :tooltipType="TooltipType.EXTERNAL"
-            :stickyTooltip="props.short"
-            @echarts-click="onChartClick"
-        />
+        <div
+            ref="chartWrapper"
+            class="canvas-wrapper"
+            data-test="time-series-canvas"
+            :class="{'canvas-wrapper--selectable': isSelectable}"
+            :tabindex="isSelectable ? -1 : undefined"
+            @keydown.esc="onEscape"
+        >
+            <KsEchart
+                ref="ksEchartRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
+                class="canvas"
+                :options="echartsOption"
+                :loading="false"
+                :tooltipType="TooltipType.EXTERNAL"
+                :stickyTooltip="props.short"
+                @echarts-click="onChartClick"
+            />
+
+            <template v-if="isSelectable && brushState.active">
+                <div class="brush-scrim" :style="scrimLeftStyle" />
+                <div class="brush-scrim" :style="scrimRightStyle" />
+
+                <Motion
+                    as="div"
+                    class="brush-band"
+                    :style="bandStyle"
+                    :initial="{opacity: 0}"
+                    :animate="{opacity: 1}"
+                    :transition="{duration: 0.15, ease: 'easeOut'}"
+                >
+                    <div
+                        class="brush-edge"
+                        @mousedown.left.stop="startEdgeDrag('left', $event)"
+                    />
+                    <div
+                        class="brush-label"
+                        @mousedown.left.stop="startBandDrag($event)"
+                    >
+                        <span v-if="brushLabel">{{ brushLabel }}</span>
+                    </div>
+                    <div
+                        class="brush-edge"
+                        @mousedown.left.stop="startEdgeDrag('right', $event)"
+                    />
+                </Motion>
+            </template>
+
+            <div
+                v-if="isDragging"
+                class="brush-drag-overlay"
+                :class="{'brush-drag-overlay--resize': dragMode !== 'create' && dragMode !== 'band', 'brush-drag-overlay--move': dragMode === 'band'}"
+            />
+        </div>
     </div>
     <KsNoData
         v-else-if="!props.short || (props.execution && generated?.total === 0)"
@@ -32,20 +76,29 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, ref, watch, onBeforeUnmount} from "vue"
     import {useRoute} from "vue-router"
 
-    import {use, graphic} from "echarts/core"
+    import {use, graphic, type ElementEvent} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {KsEchart, KsSkeleton, TooltipType, cssVar, dateUtils, dayjs, durationUtils} from "@kestra-io/design-system"
+    import {Motion} from "motion-v"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {getDateGrouping, useTheme} from "../../../utils/utils"
+    import {getDateGrouping} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
+    import {
+        bucketLabelToDateRange,
+        isBrushableUnit,
+        pixelSelectionToBucketIndices,
+        type BrushRange,
+        type DateRange,
+    } from "../../../utils/logsBrushMappers"
 
     use([BarChart, LineChart])
 
@@ -87,6 +140,9 @@
         execution?: boolean;
         flow?: string;
         namespace?: string;
+        selectable?: boolean;
+        brushStart?: string;
+        brushEnd?: string;
     }>(), {
         dashboardId: undefined,
         filters: () => [],
@@ -95,7 +151,14 @@
         execution: false,
         flow: undefined,
         namespace: undefined,
+        selectable: false,
+        brushStart: undefined,
+        brushEnd: undefined,
     })
+
+    const emit = defineEmits<{
+        select: [BrushRange | null]
+    }>()
 
     const route = useRoute()
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
@@ -400,6 +463,7 @@
     )
 
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
+    const chartWrapper = ref<HTMLElement | null>(null)
 
     const dimensionColumn = computed(() => {
         const key = chartOptions?.colorByColumn
@@ -427,7 +491,7 @@
 
     function onChartClick(rawParams: unknown) {
         const params = rawParams as EchartsParams
-        if (params.seriesType !== "bar" || props.execution) return
+        if (params.seriesType !== "bar" || props.execution || isSelectable.value) return
 
         drillDown(
             [
@@ -448,10 +512,258 @@
         total: computed(() => generated.value?.total ?? 0),
     })
 
-    watch(() => route.params.filters, () => refresh(), {deep: true})
+    watch(() => route.fullPath, () => refresh())
+
+    const labelTimezone = dayjs.tz.guess()
+
+    const isSelectable = computed(() =>
+        props.selectable &&
+        !props.short &&
+        !props.execution &&
+        isBrushableUnit(grouping.value.unit),
+    )
+
+    const bucketRanges = computed(() =>
+        parsedData.value.labels.map((label) => bucketLabelToDateRange(label, grouping.value.unit, labelTimezone)),
+    )
+
+    type BrushState = {
+        active: boolean;
+        startIdx: number;
+        endIdx: number;
+    }
+
+    const INACTIVE_BRUSH: BrushState = {active: false, startIdx: 0, endIdx: 0}
+
+    const brushState = ref<BrushState>({...INACTIVE_BRUSH})
+
+    const bucketPixels = ref<number[]>([])
+    const chartWidth = ref(0)
+
+    function computeBucketPixels() {
+        const chart = ksEchartRef.value?.getEchartsInstance()
+        if (!chart) return
+        const pixels = parsedData.value.labels.map((_, i) =>
+            (chart.convertToPixel({xAxisIndex: 0}, i) as unknown) as number,
+        )
+        if (pixels.join() !== bucketPixels.value.join()) bucketPixels.value = pixels
+        chartWidth.value = chart.getWidth()
+    }
+
+    function idxToPixelCenter(idx: number): number {
+        return bucketPixels.value[idx] ?? 0
+    }
+
+    function halfBucketWidth(): number {
+        const px = bucketPixels.value
+        if (px.length > 1) return Math.abs(px[1] - px[0]) / 2
+        return px.length === 1 ? Math.max(0, chartWidth.value - px[0]) : 0
+    }
+
+    function idxToPixelLeft(idx: number): number {
+        return idxToPixelCenter(idx) - halfBucketWidth()
+    }
+
+    function idxToPixelRight(idx: number): number {
+        return idxToPixelCenter(idx) + halfBucketWidth()
+    }
+
+    const bandStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        const left = idxToPixelLeft(brushState.value.startIdx)
+        const right = idxToPixelRight(brushState.value.endIdx)
+        return {
+            left: `${left}px`,
+            width: `${right - left}px`,
+        }
+    })
+
+    const scrimLeftStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        return {
+            left: "0px",
+            width: `${idxToPixelLeft(brushState.value.startIdx)}px`,
+        }
+    })
+
+    const scrimRightStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        return {
+            left: `${idxToPixelRight(brushState.value.endIdx)}px`,
+            right: "0px",
+        }
+    })
+
+    function selectedRange(): DateRange | undefined {
+        const start = bucketRanges.value[brushState.value.startIdx]
+        const end = bucketRanges.value[brushState.value.endIdx]
+        return start && end ? {startMs: start.startMs, endMs: end.endMs} : undefined
+    }
+
+    const brushLabel = computed(() => {
+        const range = brushState.value.active ? selectedRange() : undefined
+        if (!range) return ""
+        const start = dateUtils.dateFilter(range.startMs)
+        const end = dateUtils.dateFilter(range.endMs)
+        return `${start} → ${end} (${durationUtils.humanDuration((range.endMs - range.startMs) / 1000)})`
+    })
+
+    type DragMode = "create" | "band" | "left-edge" | "right-edge"
+
+    const isDragging = ref(false)
+    const dragMode = ref<DragMode>("create")
+    const dragStartX = ref(0)
+    const dragOriginalStart = ref(0)
+    const dragOriginalEnd = ref(0)
+
+    function getChartLocalX(e: MouseEvent): number {
+        const rect = chartWrapper.value?.getBoundingClientRect()
+        if (!rect) return 0
+        return e.clientX - rect.left
+    }
+
+    function snapToIndices(xStart: number, xEnd: number): {start: number; end: number} {
+        return pixelSelectionToBucketIndices(xStart, xEnd, bucketPixels.value) ?? {start: 0, end: 0}
+    }
+
+    function commitBrush() {
+        const range = brushState.value.active ? selectedRange() : undefined
+        if (!range) return
+        const startDate = new Date(range.startMs).toISOString()
+        const endDate = new Date(range.endMs - 1).toISOString()
+        if (startDate === props.brushStart && endDate === props.brushEnd) return
+        emit("select", {startDate, endDate})
+    }
+
+    function stopDragging() {
+        isDragging.value = false
+        window.removeEventListener("mousemove", onDragMove)
+        window.removeEventListener("mouseup", onDragEnd)
+    }
+
+    function clearBrush() {
+        stopDragging()
+        brushState.value = {...INACTIVE_BRUSH}
+        if (props.brushStart || props.brushEnd) emit("select", null)
+    }
+
+    function cancelDrag() {
+        stopDragging()
+        restoreBrushFromProps()
+    }
+
+    function onEscape() {
+        if (isDragging.value) cancelDrag()
+        else if (brushState.value.active) clearBrush()
+    }
+
+    function startDrag(mode: DragMode, e: MouseEvent): boolean {
+        if (e.detail > 1) {
+            clearBrush()
+            return false
+        }
+        computeBucketPixels()
+        chartWrapper.value?.focus({preventScroll: true})
+        dragMode.value = mode
+        dragStartX.value = getChartLocalX(e)
+        dragOriginalStart.value = brushState.value.startIdx
+        dragOriginalEnd.value = brushState.value.endIdx
+        isDragging.value = true
+        window.addEventListener("mousemove", onDragMove)
+        window.addEventListener("mouseup", onDragEnd)
+        return true
+    }
+
+    function startCreateDrag(e: MouseEvent) {
+        if (!startDrag("create", e)) return
+        const idx = snapToIndices(dragStartX.value, dragStartX.value)
+        brushState.value = {active: true, startIdx: idx.start, endIdx: idx.end}
+    }
+
+    function startEdgeDrag(edge: "left" | "right", e: MouseEvent) {
+        startDrag(edge === "left" ? "left-edge" : "right-edge", e)
+    }
+
+    function startBandDrag(e: MouseEvent) {
+        startDrag("band", e)
+    }
+
+    function nearestIdx(px: number): number {
+        return snapToIndices(px, px).start
+    }
+
+    function onDragMove(e: MouseEvent) {
+        if (!isDragging.value) return
+        const localX = getChartLocalX(e)
+        const lastIdx = bucketPixels.value.length - 1
+        if (lastIdx < 0) return
+
+        const deltaX = localX - dragStartX.value
+
+        if (dragMode.value === "create") {
+            const snap = snapToIndices(dragStartX.value, localX)
+            brushState.value = {active: true, startIdx: snap.start, endIdx: snap.end}
+        } else if (dragMode.value === "left-edge" || dragMode.value === "right-edge") {
+            const isLeft = dragMode.value === "left-edge"
+            const moved = nearestIdx(idxToPixelCenter(isLeft ? dragOriginalStart.value : dragOriginalEnd.value) + deltaX)
+            const pinned = isLeft ? dragOriginalEnd.value : dragOriginalStart.value
+            brushState.value = {active: true, startIdx: Math.min(moved, pinned), endIdx: Math.max(moved, pinned)}
+        } else {
+            const span = dragOriginalEnd.value - dragOriginalStart.value
+            const movedStart = nearestIdx(idxToPixelCenter(dragOriginalStart.value) + deltaX)
+            const startIdx = Math.max(0, Math.min(movedStart, lastIdx - span))
+            brushState.value = {active: true, startIdx, endIdx: startIdx + span}
+        }
+    }
+
+    function onDragEnd() {
+        if (!isDragging.value) return
+        stopDragging()
+        commitBrush()
+    }
+
+    function onZrMousedown(e: ElementEvent) {
+        const event = e.event as MouseEvent
+        if (!isSelectable.value || event.button !== 0) return
+        startCreateDrag(event)
+    }
+
+    watch(() => ksEchartRef.value?.getEchartsInstance() ?? null, (chart, previous) => {
+        previous?.getZr().off("mousedown", onZrMousedown)
+        previous?.off("finished", computeBucketPixels)
+        chart?.getZr().on("mousedown", onZrMousedown)
+        chart?.on("finished", computeBucketPixels)
+    }, {immediate: true})
+
+    function restoreBrushFromProps() {
+        if (!props.brushStart || !props.brushEnd || !isSelectable.value) {
+            brushState.value = {...INACTIVE_BRUSH}
+            return
+        }
+        const brushStartMs = Date.parse(props.brushStart)
+        const brushEndMs = Date.parse(props.brushEnd)
+        const overlapping = bucketRanges.value.flatMap((range, i) =>
+            range && range.endMs > brushStartMs && range.startMs <= brushEndMs ? [i] : [],
+        )
+
+        brushState.value = overlapping.length
+            ? {active: true, startIdx: overlapping[0], endIdx: overlapping[overlapping.length - 1]}
+            : {...INACTIVE_BRUSH}
+    }
+
+    watch([() => props.brushStart, () => props.brushEnd, bucketRanges, isSelectable], () => {
+        if (!isDragging.value) restoreBrushFromProps()
+    }, {immediate: true})
+
+    onBeforeUnmount(() => {
+        stopDragging()
+        const chart = ksEchartRef.value?.getEchartsInstance()
+        chart?.getZr().off("mousedown", onZrMousedown)
+        chart?.off("finished", computeBucketPixels)
+    })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .chart {
         display: flex;
         flex-direction: column;
@@ -468,13 +780,113 @@
             min-height: 0;
         }
 
-        .canvas {
+        .canvas-wrapper {
             flex: 1;
             min-height: 0;
+            position: relative;
+
+            &:focus {
+                outline: none;
+            }
+
+            .canvas {
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        & .canvas-wrapper--selectable {
+            cursor: crosshair;
         }
     }
 
     .empty {
         min-height: 200px;
+    }
+
+    .brush-scrim {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: var(--ks-bg-scrim);
+        z-index: 2;
+    }
+
+    .brush-band {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 12%, transparent);
+        border: var(--ks-border-width-thin) solid color-mix(in srgb, var(--ks-btn-primary-bg-default) 40%, transparent);
+        border-radius: var(--ks-radius-sm);
+        z-index: 3;
+        display: flex;
+        align-items: stretch;
+        overflow: visible;
+        cursor: move;
+
+        html.dark & {
+            background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 20%, transparent);
+            border-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 50%, transparent);
+        }
+    }
+
+    .brush-edge {
+        width: var(--ks-spacing-2);
+        flex-shrink: 0;
+        cursor: ew-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &::after {
+            content: "";
+            display: block;
+            width: var(--ks-border-width-base);
+            height: 40%;
+            border-radius: var(--ks-radius-xs);
+            background: var(--ks-btn-primary-bg-default);
+            opacity: 0.7;
+        }
+
+        &:hover::after {
+            opacity: 1;
+        }
+    }
+
+    .brush-label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+        cursor: move;
+
+        span {
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 var(--ks-spacing-1);
+            pointer-events: none;
+        }
+    }
+
+    .brush-drag-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        cursor: crosshair;
+    }
+
+    .brush-drag-overlay--resize {
+        cursor: ew-resize;
+    }
+
+    .brush-drag-overlay--move {
+        cursor: move;
     }
 </style>

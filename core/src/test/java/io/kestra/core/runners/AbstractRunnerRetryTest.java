@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.plugin.core.flow.RetryCaseTest;
@@ -77,6 +78,21 @@ public abstract class AbstractRunnerRetryTest {
     @LoadFlows(value = { "flows/valids/retry-new-execution-flow-attempts.yml" }, tenantId = "retrynewexecutionflowattemptstenant")
     void retryNewExecutionFlowAttempts() throws TimeoutException, QueueException {
         retryCaseTest.retryNewExecutionFlowAttempts("retrynewexecutionflowattemptstenant");
+    }
+
+    @Test
+    @LoadFlows(
+        value = { "flows/valids/subflow-retry-new-execution-parent.yaml", "flows/valids/subflow-retry-new-execution-child.yaml" },
+        tenantId = "retrynewexecutionsubflowtenant"
+    )
+    void retryNewExecutionSubflowOutputs() throws TimeoutException, QueueException {
+        retryCaseTest.retryNewExecutionSubflowOutputs("retrynewexecutionsubflowtenant");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-retry-new-execution.yaml" }, tenantId = "retrynewexecutionlooptenant")
+    void retryNewExecutionInLoop() throws TimeoutException, QueueException, InternalException {
+        retryCaseTest.retryNewExecutionInLoop("retrynewexecutionlooptenant");
     }
 
     @Test

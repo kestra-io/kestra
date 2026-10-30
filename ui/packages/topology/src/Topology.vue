@@ -41,7 +41,16 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                    @loop-step="emit(EVENTS.LOOP_STEP, $event)"
+                    @loop-scope-failed="emit(EVENTS.LOOP_SCOPE_FAILED, $event)"
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...clusterProps, ...taskActionProps}" />
+                    </template>
+                    <template #loopScope="loopScopeProps">
+                        <slot name="loopScope" v-bind="loopScopeProps" />
+                    </template>
+                </ClusterNode>
             </template>
 
             <template #node-dot="dotProps">
@@ -126,7 +135,16 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                    @loop-step="emit(EVENTS.LOOP_STEP, $event)"
+                    @loop-scope-failed="emit(EVENTS.LOOP_SCOPE_FAILED, $event)"
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...CollapsedProps, ...taskActionProps}" />
+                    </template>
+                    <template #loopScope="loopScopeProps">
+                        <slot name="loopScope" v-bind="loopScopeProps" />
+                    </template>
+                </CollapsedClusterNode>
             </template>
 
             <template #edge-edge="EdgeProps">
@@ -140,6 +158,10 @@
                     :isAllowedEdit="isAllowedEdit"
                 />
             </template>
+
+            <Panel v-if="$slots.scopeBar" position="top-left">
+                <slot name="scopeBar" :setLanesCollapsed="setLanesCollapsed" :collapsedLanes="collapsed" />
+            </Panel>
 
             <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
                 <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
@@ -165,6 +187,11 @@
                 <KsTooltip :content="$t('download')" placement="right">
                     <ControlButton @click.stop="toggleDropdown">
                         <Download />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip v-if="collapsibleLaneUids.length > 0" :content="$t('collapse all')" placement="right">
+                    <ControlButton data-test="topology-collapse-all" @click.stop="collapseAll()">
+                        <ArrowCollapseAll />
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
@@ -205,7 +232,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
-    import {getRectOfNodes, useVueFlow, VueFlow, type GraphEdge, type GraphNode} from "@vue-flow/core"
+    import {getRectOfNodes, Panel, useVueFlow, VueFlow, type GraphEdge, type GraphNode} from "@vue-flow/core"
     import type {ViewportTransform} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -223,21 +250,17 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {
-        cssVar as cssVariable,
-        State,
-        KsTooltip,
-        useTaskIcon,
-        type PluginIconData,
-        type PluginIconMap,
-    } from "@kestra-io/design-system"
+    import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY} from "./injectionKeys"
-    import {computeLongestTaskRunDuration} from "./misc/durationBreakdown"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, SCOPED_LONGEST_DURATIONS_INJECTION_KEY} from "./injectionKeys"
+    import type {LoopLaneData} from "./utils/loopOutcome"
+    import {useLongestTaskRunDuration} from "./composables/useLongestTaskRunDuration"
+    import {useScopedLongestDurations} from "./composables/useScopedLongestDurations"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -272,6 +295,7 @@
         taskDetailsVersion?: number;
         validationIssuesByTask?: Map<string, string[]>;
         focusedTaskId?: string;
+        loopLanes?: Record<string, LoopLaneData>;
         // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
         defaultViewport?: Partial<ViewportTransform>;
     }>(), {
@@ -298,6 +322,7 @@
         taskDetailsVersion: undefined,
         validationIssuesByTask: undefined,
         focusedTaskId: undefined,
+        loopLanes: undefined,
         defaultViewport: undefined,
     })
 
@@ -332,9 +357,11 @@
     provide(LOD_INJECTION_KEY, lod)
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+    provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
     // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
     // every TaskNode reducing over it independently would be N× the same work.
-    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => computeLongestTaskRunDuration(props.execution?.taskRunList ?? [])))
+    provide(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, useScopedLongestDurations(() => Object.values(props.subflowsExecutions)))
+    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, useLongestTaskRunDuration(computed(() => props.execution?.taskRunList ?? [])))
 
     const initialFitDone = ref(false)
 
@@ -414,6 +441,8 @@
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
             EVENTS.MOVE_TASK,
+            EVENTS.LOOP_STEP,
+            EVENTS.LOOP_SCOPE_FAILED,
         ],
     )
 
@@ -421,12 +450,16 @@
         generateGraph()
     })
 
+    let expandedSubflowsAtLastGraph = props.expandedSubflows
+
     watch(() => props.flowGraph, () => {
-        generateGraph()
+        const subflowExpanded = props.expandedSubflows !== expandedSubflowsAtLastGraph
+        expandedSubflowsAtLastGraph = props.expandedSubflows
+        generateGraph(subflowExpanded)
     })
 
     watch(() => props.isHorizontal, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(isRunning, () => {
@@ -452,7 +485,7 @@
         generateGraph()
     })
 
-    const generateGraph = () => {
+    const generateGraph = (shouldFit = false) => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
         removeSelectedElements(getElements.value)
@@ -487,7 +520,7 @@
 
             if (elements) {
                 setElements(elements)
-                refitOnNodesInitialized.value = true
+                if (shouldFit) refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })
@@ -566,7 +599,7 @@
         }
 
         if (regenerate) {
-            generateGraph()
+            generateGraph(true)
         }
     }
 
@@ -586,7 +619,7 @@
 
         collapsed.value.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
-        generateGraph()
+        generateGraph(true)
     }
 
 
@@ -595,8 +628,28 @@
         hiddenNodes.value = []
         edgeReplacer.value = {}
         clusterToNode.value = []
+        generateGraph(true)
+    }
+
+    const outermostLaneUids = (uids: string[]) =>
+        uids.filter((uid) => !uids.some((other) => other !== uid && uid.startsWith(`${other}.`)))
+
+    const collapsibleLaneUids = computed(() =>
+        outermostLaneUids(
+            props.flowGraph.clusters
+                .filter((entry) => VueFlowUtils.isTrueFlowableCluster(entry.cluster))
+                .map((entry) => entry.cluster.uid.replace(CLUSTER_PREFIX, "")),
+        ),
+    )
+
+    const setLanesCollapsed = (uids: string[], shouldCollapse: boolean) => {
+        const next = new Set(collapsed.value)
+        uids.forEach((uid) => (shouldCollapse ? next.add(uid) : next.delete(uid)))
+        collapsed.value = new Set(outermostLaneUids([...next]))
         generateGraph()
     }
+
+    const collapseAll = () => setLanesCollapsed(collapsibleLaneUids.value, true)
 
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
@@ -619,7 +672,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* The graph fills what is left: the flow bar takes its own row rather than floating over the
        canvas, where it clipped the first cluster's badge at every open. */
     .topology-shell {

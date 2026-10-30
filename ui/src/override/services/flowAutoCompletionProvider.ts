@@ -1,4 +1,5 @@
 import {ComputedRef} from "vue"
+import type {Range} from "yaml"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
 import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -29,8 +30,23 @@ interface ParsedFlow {
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
-// Root keys holding tasks; `triggers` types are registered plugins too, so they are filtered by key.
-const TASK_ROOT_KEYS = new Set(["tasks", "errors", "finally", "afterExecution"])
+// Root keys holding tasks, in execution order; `triggers` types are registered plugins too, so they are filtered by key.
+const TASK_ROOT_KEYS = ["tasks", "errors", "finally", "afterExecution"]
+
+interface FlowTask {
+    id: string;
+    type: string;
+    section: number;
+    range: Range;
+}
+
+// Pebble renders with strict variables, so an output that is not there yet fails the task.
+function runsBefore(candidate: FlowTask, current: FlowTask): boolean {
+    if (candidate.section !== current.section) {
+        return candidate.section < current.section
+    }
+    return candidate.range[2] <= current.range[0]
+}
 
 /**
  * Only the namespaces-store members the completion reads. Typing the dependency this way keeps the
@@ -128,11 +144,13 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
-    private tasks(source: string): {id: string; type: string}[] {
+    private tasks(source: string): FlowTask[] {
         const pluginTypes = new Set(this.pluginsStore.allTypes)
         return YAML_UTILS.extractTypedBlocks(source)
-            .flatMap(({path, type, value: {id}}) =>
-                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" && pluginTypes.has(type) ? [{id, type}] : [])
+            .flatMap(({path, type, value: {id}, range}) => {
+                const section = TASK_ROOT_KEYS.indexOf(path.split(".")[0])
+                return section !== -1 && typeof id === "string" && pluginTypes.has(type) ? [{id, type, section, range}] : []
+            })
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -227,9 +245,11 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "inputs":
                 return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
+                const tasks = this.tasks(this.completionSource?.value ?? source)
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
-                return distinct(this.tasks(this.completionSource?.value ?? source).map(task => task.id))
-                    .filter(taskId => taskId !== currentTaskId)
+                const currentTask = tasks.find(task => task.id === currentTaskId)
+                const reachable = currentTask === undefined ? tasks : tasks.filter(task => runsBefore(task, currentTask))
+                return distinct(reachable.map(task => task.id)).filter(taskId => taskId !== currentTaskId)
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}))

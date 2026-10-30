@@ -4,6 +4,11 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * How the field is compared to the value.
+ */
+export type AbstractFilterFilterType = 'CONTAINS' | 'ENDS_WITH' | 'EQUAL_TO' | 'GREATER_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'IN' | 'IS_FALSE' | 'IS_NOT_NULL' | 'IS_NULL' | 'IS_TRUE' | 'LESS_THAN' | 'LESS_THAN_OR_EQUAL_TO' | 'NOT_CONTAINS' | 'NOT_EQUAL_TO' | 'NOT_IN' | 'OR' | 'REGEX' | 'STARTS_WITH' | 'PREFIX';
+
 export type AbstractFlow = {
     id: string;
     namespace: string;
@@ -14,12 +19,6 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
      *
@@ -243,7 +242,7 @@ export type ApiExecution = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecution = {
@@ -259,7 +258,25 @@ export type ApiLightExecution = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
+};
+
+/**
+ * Slim projection of LoopRun, without the parent `Execution` it carries for internal use. Used wherever a loop iteration's identity needs to reach the API or the UI, so a list of iterations doesn't each embed a copy of the execution that contains the loop.
+ */
+export type ApiLoopRun = {
+    taskId: string;
+    taskRunId: string;
+    index?: number;
+    key?: string | null;
+    value: string;
+    parents?: Array<ApiLoopRunParent>;
+};
+
+export type ApiLoopRunParent = {
+    index?: number;
+    key?: string | null;
+    value: string;
 };
 
 /**
@@ -412,6 +429,13 @@ export type ApiTriggerState = {
     kind?: TriggerType;
 };
 
+export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
+
+export type ApprovalDecisions = {
+    approve?: PropertyString;
+    deny?: PropertyString;
+};
+
 export type ArtefactDraft = {
     draftId?: string;
     kind?: ArtefactKind;
@@ -420,12 +444,22 @@ export type ArtefactDraft = {
     constraints?: string | null;
 };
 
-export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP' | 'TEST_SUITE';
 
 export type Asset = {
     status?: string;
     ttl?: string;
     owner?: string;
+    /**
+     * At most one parent. Parent depth is limited by the service layer, not by this model.
+     */
+    partOf?: AssetRelationRef | null;
+    /**
+     * Assets related to this one.
+     *
+     * Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.
+     */
+    related?: Array<AssetRelationRef> | null;
     namespace?: string;
     id: string;
     type: string;
@@ -438,6 +472,8 @@ export type Asset = {
     };
     /**
      * The day-2 actions offered on this asset, each backing onto a flow.
+     *
+     * Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. When it is omitted, the stored actions are kept. It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API.
      */
     assetActions?: Array<FlowAction>;
 };
@@ -447,6 +483,24 @@ export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
 export type AssetIdentifier = {
     id: string;
     type?: string;
+};
+
+/**
+ * A reference to another asset of the same tenant.
+ */
+export type AssetRelationRef = {
+    /**
+     * The id of the referenced asset.
+     */
+    id: string;
+    /**
+     * The namespace of the referenced asset, informational: asset ids are unique per tenant.
+     */
+    namespace?: string | null;
+    /**
+     * The role this asset plays in the relation, for example primary or backup.
+     */
+    role?: string | null;
 };
 
 export type AssetsDeclaration = {
@@ -474,6 +528,8 @@ export type AssetsInOut = {
     inputs?: Array<AssetIdentifier>;
     outputs?: Array<Asset>;
 };
+
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
 
 /**
  * A backfill configuration.
@@ -597,6 +653,7 @@ export type CheckStyle = 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO';
 export type Concurrency = {
     limit: number;
     behavior: ConcurrencyBehavior;
+    queueLimit?: number;
 };
 
 export type ConcurrencyBehavior = 'QUEUE' | 'CANCEL' | 'FAIL';
@@ -635,6 +692,7 @@ export type DailyExecutionStatistics = {
         CREATED?: number;
         SUBMITTED?: number;
         RUNNING?: number;
+        PAUSING?: number;
         PAUSED?: number;
         RESTARTED?: number;
         KILLING?: number;
@@ -661,6 +719,22 @@ export type DailyExecutionStatisticsDuration = {
     count: number;
 };
 
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
@@ -684,6 +758,8 @@ export type DependsOn = {
     inputs?: Array<string> | null;
     condition?: string | null;
 };
+
+export type DescriptionDisplayMode = 'TEXT' | 'TOOLTIP';
 
 export type DocumentationWithSchema = {
     markdown?: string;
@@ -710,6 +786,14 @@ export type EventExecution = {
 
 export type EventFollowLogEvent = {
     data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
+};
+
+export type EventNotification = {
+    data: Notification;
     id?: string | null;
     name?: string | null;
     comment?: string | null;
@@ -753,6 +837,13 @@ export type Execution = {
     loopRun?: LoopRun | null;
 };
 
+export type ExecutionControllerApiReviewAllowed = {
+    /**
+     * Whether the current user may review or cancel the Approval task run
+     */
+    allowed?: boolean;
+};
+
 export type ExecutionControllerApiValidateExecutionInputsResponse = {
     id: string;
     namespace: string;
@@ -779,6 +870,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputAndValu
 export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError = {
     message: string;
     renderError?: boolean;
+    path?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -812,6 +904,8 @@ export type ExecutionControllerLastExecutionResponse = {
     startDate: string;
     status: StateType;
 };
+
+export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
@@ -910,6 +1004,26 @@ export type ExpressionControllerRenderedExpressions = {
     };
 };
 
+/**
+ * A condition on one field of a resource.
+ */
+export type FieldCondition = {
+    /**
+     * The field this condition reads.
+     */
+    field: string;
+    /**
+     * How the field is compared to the value.
+     */
+    operator: AbstractFilterFilterType;
+    /**
+     * The value the field is compared to.
+     *
+     * A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`.
+     */
+    value?: string | number | boolean | Array<unknown> | null;
+};
+
 export type FileAttributes = {
     fileName?: string;
     lastModifiedTime?: number;
@@ -939,12 +1053,6 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -961,6 +1069,12 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1017,6 +1131,12 @@ export type FlowAction = {
      * The label displayed on this action.
      */
     label?: string | null;
+    /**
+     * The conditions under which this action is offered.
+     *
+     * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.
+     */
+    when?: Array<FieldCondition> | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {
@@ -1032,12 +1152,6 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
      *
@@ -1060,6 +1174,12 @@ export type FlowForExecution = AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1212,12 +1332,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1233,6 +1347,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1293,6 +1413,12 @@ export type InputObject = {
      * The description of the input.
      */
     description?: string;
+    /**
+     * How the description of the input is displayed.
+     *
+     * `TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`.
+     */
+    descriptionDisplayMode?: DescriptionDisplayMode;
     /**
      * The dependencies of the input.
      */
@@ -1386,12 +1512,14 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 export type LoopRunParent = {
     index?: number;
     key?: string | null;
     value?: string;
+    parseValues?: boolean;
 };
 
 export type MapObjectObject = {
@@ -1563,6 +1691,42 @@ export type NamespaceLight = {
     id: string;
 };
 
+export type Notification = {
+    outcome?: NotificationOutcome | null;
+    ongoing?: boolean;
+    id?: string;
+    userId?: string | null;
+    tenantId?: string | null;
+    type: string;
+    asyncOperationType?: string | null;
+    resourceType?: AsyncOperationTypeResourceType | null;
+    title: string;
+    referenceId?: string | null;
+    succeededItems?: number | null;
+    failedItems?: number | null;
+    totalItems?: number | null;
+    read?: boolean;
+    createdDate: string;
+    updatedDate: string;
+};
+
+export type NotificationControllerApiMarkAllRead = {
+    updated?: number;
+};
+
+export type NotificationControllerApiNotificationHistory = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+    nextCursor?: string | null;
+};
+
+export type NotificationControllerApiNotificationsSince = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+};
+
+export type NotificationOutcome = 'SUCCEEDED' | 'PARTIAL' | 'FAILED';
+
 export type Output = {
     id: string;
     description?: string;
@@ -1572,6 +1736,12 @@ export type Output = {
     type: Type;
     displayName?: string;
     required?: boolean;
+    searchable?: boolean;
+};
+
+export type OutputControllerSearchableOutputInformation = {
+    outputId?: string;
+    value?: string;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1580,6 +1750,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**
@@ -1657,18 +1836,6 @@ export type PagedResultsKvEntry = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
 export type PagedResultsMetricEntry = {
     results: Array<MetricEntry>;
     total: number;
@@ -1679,6 +1846,14 @@ export type PagedResultsMetricEntry = {
  */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsOutputControllerSearchableOutputInformation = {
+    results: Array<OutputControllerSearchableOutputInformation>;
     total: number;
 };
 
@@ -1969,6 +2144,13 @@ export type ProblemError = {
     type?: string;
 };
 
+export type PropertyApprovalCommentRequired = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: ApprovalCommentRequired;
+};
+
 export type PropertyAssetFailureBehavior = ({
     [key: string]: unknown;
 } | string) & {
@@ -2028,7 +2210,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2058,7 +2240,7 @@ export type Sla = {
 
 export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 
-export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
+export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
 
@@ -2080,11 +2262,10 @@ export type ServerInstanceType = 'SERVER' | 'STANDALONE';
 export type ServiceServiceState = 'CREATED' | 'RUNNING' | 'ERROR' | 'DISCONNECTED' | 'TERMINATING' | 'TERMINATED_GRACEFULLY' | 'TERMINATED_FORCED' | 'NOT_RUNNING' | 'INACTIVE' | 'MAINTENANCE';
 
 export type ServiceInstance = {
-    server?: ServerInstance;
-    metrics?: Array<Metric>;
-    state?: ServiceServiceState;
     id?: string;
     type?: ServiceType;
+    state?: ServiceServiceState;
+    server?: ServerInstance;
     createdAt?: string;
     updatedAt?: string;
     events?: Array<ServiceInstanceTimestampedEvent>;
@@ -2093,6 +2274,7 @@ export type ServiceInstance = {
             [key: string]: unknown;
         };
     };
+    metrics?: Array<Metric>;
     seqId?: number;
 };
 
@@ -2208,9 +2390,6 @@ export type State = {
     readonly endDate?: string | null;
     current: StateType;
     histories: Array<StateHistory>;
-    readonly getDuration: string;
-    readonly getStartDate: string;
-    readonly getEndDate: string;
 };
 
 export type StateHistory = {
@@ -2218,7 +2397,7 @@ export type StateHistory = {
     date: string;
 };
 
-export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
+export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
 
 export type Task = {
     id: string;
@@ -2305,6 +2484,8 @@ export type TaskForExecution = {
     tasks?: Array<TaskForExecution>;
     inputs?: Array<InputObject>;
     subflowId?: ExecutableTaskSubflowId;
+    decisions?: ApprovalDecisions;
+    commentRequired?: PropertyApprovalCommentRequired;
 };
 
 export type TaskRun = {
@@ -2408,7 +2589,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -2505,7 +2686,7 @@ export type ApiExecutionWritable = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecutionWritable = {
@@ -2521,7 +2702,7 @@ export type ApiLightExecutionWritable = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 /**
@@ -2638,6 +2819,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 /**
@@ -2936,6 +3118,251 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type ListenUserNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/follow';
+};
+
+export type ListenUserNotificationsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListenUserNotificationsError = ListenUserNotificationsErrors[keyof ListenUserNotificationsErrors];
+
+export type ListenUserNotificationsResponses = {
+    /**
+     * listenUserNotifications 200 response
+     */
+    200: EventNotification;
+};
+
+export type ListenUserNotificationsResponse = ListenUserNotificationsResponses[keyof ListenUserNotificationsResponses];
+
+export type HistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Cursor of the previous page, as `<createdDate>,<id>`. Omit for the first page.
+         */
+        before?: string | null;
+        /**
+         * Maximum number of notifications to return
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notifications/history';
+};
+
+export type HistoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * history 200 response
+     */
+    200: NotificationControllerApiNotificationHistory;
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type MarkAllReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type MarkAllReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkAllReadError = MarkAllReadErrors[keyof MarkAllReadErrors];
+
+export type MarkAllReadResponses = {
+    /**
+     * markAllRead 200 response
+     */
+    200: NotificationControllerApiMarkAllRead;
+};
+
+export type MarkAllReadResponse = MarkAllReadResponses[keyof MarkAllReadResponses];
+
+export type PollSinceData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The server timestamp returned by a previous call to this endpoint (or to /history)
+         */
+        since: string;
+    };
+    url: '/api/v1/notifications/since';
+};
+
+export type PollSinceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PollSinceError = PollSinceErrors[keyof PollSinceErrors];
+
+export type PollSinceResponses = {
+    /**
+     * pollSince 200 response
+     */
+    200: NotificationControllerApiNotificationsSince;
+};
+
+export type PollSinceResponse = PollSinceResponses[keyof PollSinceResponses];
+
+export type UnreadCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/unread-count';
+};
+
+export type UnreadCountErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnreadCountError = UnreadCountErrors[keyof UnreadCountErrors];
+
+export type UnreadCountResponses = {
+    /**
+     * unreadCount 200 response
+     */
+    200: number;
+};
+
+export type UnreadCountResponse = UnreadCountResponses[keyof UnreadCountResponses];
+
+export type MarkReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkReadError = MarkReadErrors[keyof MarkReadErrors];
+
+export type MarkReadResponses = {
+    /**
+     * markRead 200 response
+     */
+    200: unknown;
+};
+
+export type MarkUnreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/unread';
+};
+
+export type MarkUnreadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkUnreadError = MarkUnreadErrors[keyof MarkUnreadErrors];
+
+export type MarkUnreadResponses = {
+    /**
+     * markUnread 200 response
+     */
+    200: unknown;
+};
 
 export type GetExpressionFiltersData = {
     body?: never;
@@ -4495,7 +4922,7 @@ export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
@@ -6356,6 +6783,62 @@ export type GetExecutionResponses = {
 
 export type GetExecutionResponse = GetExecutionResponses[keyof GetExecutionResponses];
 
+export type CancelApprovalData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/cancel-approval';
+};
+
+export type CancelApprovalErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CancelApprovalError = CancelApprovalErrors[keyof CancelApprovalErrors];
+
+export type CancelApprovalResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type CancelApprovalResponse = CancelApprovalResponses[keyof CancelApprovalResponses];
+
 export type UpdateExecutionStatusData = {
     body?: never;
     path: {
@@ -6535,6 +7018,54 @@ export type ForceRunExecutionResponses = {
 
 export type ForceRunExecutionResponse = ForceRunExecutionResponses[keyof ForceRunExecutionResponses];
 
+export type InterruptTaskRunData = {
+    /**
+     * the taskRun id and the state to apply to it
+     */
+    body: ExecutionControllerStateRequest;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/interrupt';
+};
+
+export type InterruptTaskRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run cannot be interrupted
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InterruptTaskRunError = InterruptTaskRunErrors[keyof InterruptTaskRunErrors];
+
+export type InterruptTaskRunResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type KillExecutionData = {
     body?: never;
     path: {
@@ -6567,7 +7098,7 @@ export type KillExecutionErrors = {
      */
     404: ProblemDetail;
     /**
-     * if the executions is already finished
+     * if the execution is already finished and has no running task or sub-execution left to kill
      */
     409: ProblemDetail;
     /**
@@ -6849,6 +7380,58 @@ export type ValidateReplayExecutionResponses = {
     200: unknown;
 };
 
+export type RescheduleExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The new scheduled start date
+         */
+        scheduleDate: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/reschedule';
+};
+
+export type RescheduleExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution is not scheduled, has already started, or its scheduled start is being processed
+     */
+    409: ProblemDetail;
+    /**
+     * if the scheduleDate is not in the future
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type RescheduleExecutionError = RescheduleExecutionErrors[keyof RescheduleExecutionErrors];
+
+export type RescheduleExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type RescheduleExecutionResponse = RescheduleExecutionResponses[keyof RescheduleExecutionResponses];
+
 export type RestartExecutionData = {
     body?: never;
     path: {
@@ -7038,6 +7621,180 @@ export type ValidateResumeExecutionInputsResponses = {
 };
 
 export type ValidateResumeExecutionInputsResponse = ValidateResumeExecutionInputsResponses[keyof ValidateResumeExecutionInputsResponses];
+
+export type ReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review';
+};
+
+export type ReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReviewExecutionError = ReviewExecutionErrors[keyof ReviewExecutionErrors];
+
+export type ReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReviewExecutionResponse = ReviewExecutionResponses[keyof ReviewExecutionResponses];
+
+export type IsReviewAllowedData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/allowed';
+};
+
+export type IsReviewAllowedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution does not exist
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type IsReviewAllowedError = IsReviewAllowedErrors[keyof IsReviewAllowedErrors];
+
+export type IsReviewAllowedResponses = {
+    /**
+     * On success
+     */
+    200: ExecutionControllerApiReviewAllowed;
+};
+
+export type IsReviewAllowedResponse = IsReviewAllowedResponses[keyof IsReviewAllowedResponses];
+
+export type ValidateReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/validate';
+};
+
+export type ValidateReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReviewExecutionError = ValidateReviewExecutionErrors[keyof ValidateReviewExecutionErrors];
+
+export type ValidateReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Array<ExecutionControllerApiValidateExecutionInputsResponse>;
+};
+
+export type ValidateReviewExecutionResponse = ValidateReviewExecutionResponses[keyof ValidateReviewExecutionResponses];
 
 export type UpdateTaskRunStateData = {
     /**
@@ -9297,6 +10054,18 @@ export type ListLogsFromExecutionData = {
     };
     query?: {
         /**
+         * The current page, enables pagination when set
+         */
+        page?: number | null;
+        /**
+         * The current page size, enables pagination when set (defaults to 10)
+         */
+        size?: number | null;
+        /**
+         * The sort of the page, defaults to `timestamp:asc`
+         */
+        sort?: Array<string> | null;
+        /**
          * Filters
          */
         filters?: Array<QueryFilter> | null;
@@ -10953,6 +11722,16 @@ export type SetKeyValueData = {
      * The value of the key
      */
     body: string;
+    headers?: {
+        /**
+         * The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)
+         */
+        ttl?: string | null;
+        /**
+         * The description of the key
+         */
+        description?: string | null;
+    };
     path: {
         /**
          * The namespace id
@@ -11032,6 +11811,54 @@ export type GetExecutionOutputsResponses = {
 };
 
 export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
+export type ListSearchableOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
+};
+
+export type ListSearchableOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
+
+export type ListSearchableOutputsResponses = {
+    /**
+     * listSearchableOutputs 200 response
+     */
+    200: PagedResultsOutputControllerSearchableOutputInformation;
+};
+
+export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
 
 export type GetTaskOutputsInformationData = {
     body?: never;
@@ -12222,7 +13049,12 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
 

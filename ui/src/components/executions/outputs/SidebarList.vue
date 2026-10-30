@@ -26,11 +26,20 @@
                             v-for="item in section.items"
                             :key="item.expression"
                             class="item"
+                            data-test="explorer-item"
                             :class="{'active': item.expression === selectedExpression}"
                             @click="$emit('select', item)"
                         >
                             <span class="key">{{ item.label }}</span>
-                            <KsTag class="card-tag" size="small">{{ item.type }}</KsTag>
+                            <span class="card-tags">
+                                <KsTag v-if="item.searchable" type="warning" size="small" data-test="searchable-tag">
+                                    {{ $t("variable_explorer.searchable") }}
+                                </KsTag>
+                                <KsTag size="small">{{ item.type }}</KsTag>
+                                <KsTag v-if="item.isExpression" size="small">
+                                    {{ $t("variable_explorer.expression") }}
+                                </KsTag>
+                            </span>
                             
                             <code class="preview">{{ item.preview }}</code>
                         </div>
@@ -62,6 +71,8 @@
         type: string;
         preview: string;
         expression: string;
+        isExpression?: boolean;
+        searchable?: boolean;
         taskRunId?: string;
         searchText?: string;
     }
@@ -109,7 +120,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -142,7 +153,7 @@
 
 .item {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) fit-content(60%);
     grid-template-areas:
             "key tag"
             "preview tag";
@@ -170,7 +181,12 @@
         text-overflow: ellipsis;
     }
 
-    .card-tag{
+    .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        gap: var(--ks-spacing-2);
         grid-area: tag;
         align-self: center;
     }
@@ -182,6 +198,19 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 767px) {
+    .item {
+        grid-template-columns: minmax(0, 1fr) fit-content(60%);
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .item .key {
+        min-width: 0;
+        white-space: nowrap;
     }
 }
 </style>

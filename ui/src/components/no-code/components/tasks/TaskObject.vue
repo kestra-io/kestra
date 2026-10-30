@@ -1,5 +1,5 @@
 <template>
-    <KsForm labelPosition="top" class="w-100">
+    <KsForm labelPosition="top" class="task-object-form">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
@@ -8,6 +8,17 @@
                     </template>
                 </Wrapper>
             </template>
+
+            <Wrapper v-for="[unknownKey, unknownValue] in unknownProperties" :key="`unknown-${unknownKey}`">
+                <template #tasks>
+                    <TaskUnknownField
+                        :fieldKey="unknownKey"
+                        :value="unknownValue"
+                        :errors="errorsAt(unknownKey)"
+                        @remove="onObjectInput(unknownKey, undefined)"
+                    />
+                </template>
+            </Wrapper>
 
             <div v-if="mainProperties.length && hasGroupedProperties" class="form-groups">
                 <div
@@ -82,14 +93,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue"
+    import {computed, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import TaskDict from "./TaskDict.vue"
     import Wrapper from "./Wrapper.vue"
     import TaskObjectField from "./TaskObjectField.vue"
+    import TaskUnknownField from "./TaskUnknownField.vue"
+    import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
-    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys"
+    import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
+    import {hasErrorUnder} from "../../../../utils/validationErrors"
+    import type {Schema} from "./getTaskComponent"
 
     defineOptions({
         inheritAttrs: false,
@@ -97,14 +112,13 @@
 
     const {t, te} = useI18n()
 
-    type Model = Record<string, any> | undefined;
-    type Schema = { required?: string[]; [k: string]: any } | undefined;
+    type Model = Record<string, unknown> | undefined;
 
     const props = defineProps<{
         merge?: boolean;
-        properties?: any;
+        properties?: Record<string, Schema>;
         metadataInputs?: boolean;
-        modelValue?: Model;
+        modelValue?: Model | null;
         required?: boolean;
         schema?: Schema;
         root?: string;
@@ -137,7 +151,7 @@
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"]
 
-    type Entry = [string, any];
+    type Entry = [string, Schema];
 
     function sortProperties(properties: Entry[], required?: string[]): Entry[] {
         if (!properties?.length) return []
@@ -167,25 +181,25 @@
         })
     }
 
-    function isDeprecated(value: any) {
+    function isDeprecated(value: Schema): boolean {
         if(value?.allOf){
             return value.allOf.some(isDeprecated)
         }
-        return value?.$deprecated
+        return Boolean(value?.$deprecated)
     }
 
-    function isPartOfGroup(value: any, groups: string[]) {
+    function isPartOfGroup(value: Schema, groups: string[]): boolean {
         if (value?.$group) return groups.includes(value.$group)
         if (value?.allOf) {
-            return value.allOf.some((item: any) => isPartOfGroup(item, groups))
+            return value.allOf.some((item) => isPartOfGroup(item, groups))
         }
         if (value?.anyOf) {
-            return value.anyOf.some((item: any) => isPartOfGroup(item, groups))
+            return value.anyOf.some((item) => isPartOfGroup(item, groups))
         }
         return false
     }
 
-    function getGroup(value: any): string | null {
+    function getGroup(value: Schema): string | null {
         if (value?.allOf) {
             for (const item of value.allOf) {
                 const g = getGroup(item)
@@ -201,7 +215,7 @@
         return value?.$group ?? null
     }
 
-    function getIndex(value: any): number {
+    function getIndex(value: Schema): number {
         if (value?.allOf) {
             for (const item of value.allOf) {
                 const i = getIndex(item)
@@ -225,7 +239,7 @@
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties)
         return propertiesProc
-            ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
+            ? Object.entries(propertiesProc).filter(([key, value]) => {
                 return value && !(props.filterType && key === "type") && !Array.isArray(value)
             })
             : []
@@ -286,7 +300,7 @@
     })
 
     const deprecatedProperties = computed<Entry[]>(() => {
-        const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {}
+        const obj: Record<string, unknown> = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue : {}
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined)
     })
 
@@ -294,33 +308,66 @@
         return groupSections.value.length > 0 || deprecatedProperties.value.length > 0
     })
 
-    function onInput(value: any) {
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+
+    const errorsAt = (key: string): string[] =>
+        validationErrors?.value.get(props.root ? `${props.root}.${key}` : key) ?? []
+
+    const unknownProperties = computed<[string, unknown][]>(() => unknownPropertiesOf(
+        props.modelValue,
+        props.properties ?? props.schema?.properties,
+        Boolean(props.schema?.additionalProperties),
+    ))
+
+    const erroredGroups = computed<string[]>(() => {
+        const errors = validationErrors?.value
+        if (!errors?.size) return []
+        const holdsAnError = (properties: Entry[]) => properties.some(([key]) =>
+            hasErrorUnder(errors, props.root ? `${props.root}.${key}` : key))
+        return [
+            ...groupSections.value.filter(section => holdsAnError(section.properties)).map(section => section.key),
+            ...(holdsAnError(deprecatedProperties.value) ? ["deprecated"] : []),
+        ]
+    })
+
+    let openedForErrors: string[] = []
+
+    watch(() => erroredGroups.value.join("|"), () => {
+        for (const group of erroredGroups.value) {
+            if (!openedForErrors.includes(group) && !activeNames.value.includes(group)) {
+                activeNames.value.push(group)
+            }
+        }
+        openedForErrors = erroredGroups.value
+    }, {immediate: true})
+
+    function onInput(value: Model) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 
-    function onObjectInput(propertyName: string, value: any) {
-        const currentValue = (typeof props.modelValue === "object" && props.modelValue !== null ? {...(props.modelValue as Record<string, any>)} : {})
+    function onObjectInput(propertyName: string, value: unknown) {
+        const currentValue: Record<string, unknown> = typeof props.modelValue === "object" && props.modelValue !== null ? {...props.modelValue} : {}
         currentValue[propertyName] = value
         onInput(currentValue)
     }
 
-    function fieldProps(key: string, schema: any) {
-        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>)[key] : undefined
+    function fieldProps(key: string, schema: Schema) {
+        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] : undefined
         return {
             modelValue: mv,
-            "onUpdate:modelValue": (value: any) => onObjectInput(key, value),
+            "onUpdate:modelValue": (value: unknown) => onObjectInput(key, value),
             root: props.root,
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            required: props.schema?.required,
+            required: props.modelValue == null ? undefined : props.schema?.required,
             siblingKeys: Object.keys(props.properties ?? props.schema?.properties ?? {}),
         } as const
     }
 </script>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
-<style lang="scss">
+<style>
     .kel-form-item__content {
         display: block !important;
         .kel-form-item {
@@ -328,19 +375,23 @@
         }
     }
 
-    .kel-popper.singleton-tooltip {
+    .kel-popper.ks-tooltip.singleton-tooltip.is-light,
+    .kel-popper.ks-tooltip.singleton-tooltip.is-dark {
         max-width: 300px !important;
         background: var(--ks-bg-overlay);
     }
 </style>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
+<style scoped src="../../styles/code.css" />
+<style scoped>
+.task-object-form {
+    width: 100%;
+}
 
 .kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    > :deep(.kel-form-item__label) {
+    & > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

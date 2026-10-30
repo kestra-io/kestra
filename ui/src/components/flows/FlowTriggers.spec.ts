@@ -1,0 +1,330 @@
+import {describe, it, expect, vi, afterEach, beforeEach} from "vitest"
+import {defineComponent, h} from "vue"
+import {flushPromises, type VueWrapper} from "@vue/test-utils"
+import {createPinia} from "pinia"
+
+const searchLogs = vi.hoisted(() => vi.fn())
+
+vi.mock("@kestra-io/kestra-sdk/logs", () => ({
+    searchLogs,
+    deleteLogsFromFlow: vi.fn(),
+}))
+
+// The component watches the route, so the stub has to be reactive - a plain object
+// makes Vue warn about an invalid watch source on every mount.
+vi.mock("vue-router", async () => {
+    const {reactive} = await import("vue")
+    const route = reactive({
+        name: "flows/update/triggers",
+        params: {namespace: "company.team", id: "my-flow"},
+        query: {},
+    })
+    return {
+        useRoute: () => route,
+        useRouter: () => ({push: vi.fn()}),
+    }
+})
+
+const flowStore = vi.hoisted(() => ({
+    flow: {
+        namespace: "company.team",
+        id: "my-flow",
+        triggers: [
+            {id: "trigger-a", type: "io.kestra.plugin.core.trigger.Schedule"},
+            {id: "trigger-b", type: "io.kestra.plugin.core.trigger.Schedule"},
+        ],
+    },
+}))
+
+vi.mock("../../stores/flow", () => ({
+    useFlowStore: () => flowStore,
+}))
+
+// Shared so a test can revoke a permission; the executions link is gated on EXECUTION:VIEW,
+// which is all this suite grants - the trigger actions stay hidden, as with no user at all.
+const permissions = vi.hoisted(() => ({
+    isAllowed: (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW",
+}))
+
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({user: {isAllowed: (...args: [string, string]) => permissions.isAllowed(...args)}}),
+}))
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {edition: "OSS"}}),
+}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({saved: vi.fn(), success: vi.fn(), error: vi.fn(), confirm: vi.fn()}),
+}))
+
+// trigger-b already ran once (hence the current execution), trigger-a never did
+// (hence no state row and no current execution).
+vi.mock("../../utils/triggers", () => ({
+    searchTriggersForFlow: vi.fn().mockResolvedValue({
+        results: [
+            {
+                triggerId: "trigger-b",
+                namespace: "company.team",
+                flowId: "my-flow",
+                executionId: "execution-for-b",
+            },
+        ],
+    }),
+}))
+
+vi.mock("../../stores/productTour", () => ({
+    useProductTourStore: () => ({isGuidedActive: false}),
+}))
+
+import FlowTriggers from "./FlowTriggers.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+
+const RouterLinkStub = defineComponent({
+    name: "RouterLink",
+    props: {to: {type: Object, default: undefined}},
+    setup: (_, {slots}) => () => h("a", {href: "#"}, slots.default?.()),
+})
+
+function mountTriggersTab() {
+    const wrapper = i18nMount(FlowTriggers, {
+        props: {embed: true},
+        // TestEventDialog pulls editor bindings (real Pinia stores) even while
+        // closed; it is irrelevant to the executions link.
+        global: {plugins: [createPinia()], stubs: {RouterLink: RouterLinkStub, TestEventDialog: true}},
+    })
+    mounted.push(wrapper)
+    return wrapper
+}
+
+// The real data table schedules DOM reads after render; unmount before teardown
+// so they never fire into a detached jsdom document.
+const mounted: VueWrapper[] = []
+beforeEach(() => {
+    vi.useFakeTimers()
+    localStorage.clear()
+    sessionStorage.clear()
+    searchLogs.mockReset().mockResolvedValue({results: [], total: 0})
+    permissions.isAllowed = (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW"
+})
+afterEach(() => {
+    while (mounted.length) mounted.pop()?.unmount()
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.useRealTimers()
+})
+
+// Issue #12784: each trigger row links to the flow executions tab pre-filtered
+// on that trigger, so the list shows every execution the trigger created.
+describe("FlowTriggers - executions link", () => {
+    const executionsLinks = (wrapper: VueWrapper) =>
+        wrapper.findAllComponents(RouterLinkStub)
+            .filter(link => link.attributes("data-test") === "trigger-executions-link")
+
+    it("links to the flow executions tab filtered on the row's trigger", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        const links = executionsLinks(wrapper)
+        expect(links).toHaveLength(2)
+
+        expect(links[1].props("to")).toEqual({
+            name: "flows/update/executions",
+            params: {tenant: undefined, namespace: "company.team", id: "my-flow"},
+            query: {"filters[triggerId][EQUALS]": "trigger-b"},
+        })
+    })
+
+    it("falls back to the trigger definition id when the trigger has no state row yet", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(executionsLinks(wrapper)[0].props("to")).toEqual({
+            name: "flows/update/executions",
+            params: {tenant: undefined, namespace: "company.team", id: "my-flow"},
+            query: {"filters[triggerId][EQUALS]": "trigger-a"},
+        })
+    })
+
+    it("keeps linking the current execution to its execution page", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        const currentExecution = wrapper.findAllComponents(RouterLinkStub)
+            .find(link => (link.props("to") as {name?: string} | undefined)?.name === "executions/update")
+
+        expect(currentExecution?.props("to")).toMatchObject({
+            params: {namespace: "company.team", flowId: "my-flow", id: "execution-for-b"},
+        })
+    })
+
+    it("renders a labelled anchor, so the executions list opens in a new tab like any link", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        const link = executionsLinks(wrapper)[0]
+        expect(link.element.tagName).toBe("A")
+        expect(link.attributes("aria-label")).toBe("executions")
+    })
+
+    it("hides the link from a user who cannot read the flow's executions", async () => {
+        permissions.isAllowed = () => false
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(executionsLinks(wrapper)).toHaveLength(0)
+    })
+})
+
+it("filters expanded logs by trigger even before a scheduler state exists", async () => {
+    const wrapper = mountTriggersTab()
+    await flushPromises()
+
+    const expanders = wrapper.findAll(".kel-table__expand-icon")
+    expect(expanders).toHaveLength(2)
+    await expanders[0].trigger("click")
+    await expanders[1].trigger("click")
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    const requests = searchLogs.mock.calls.map(([params]) => params)
+        .filter(params => params.size !== 1)
+    expect(requests).toHaveLength(2)
+    for (const [index, request] of requests.entries()) {
+        expect(request.filters).toEqual(expect.arrayContaining([
+            {field: "namespace", operation: "EQUALS", value: "company.team"},
+            {field: "flowId", operation: "EQUALS", value: "my-flow"},
+            {field: "triggerId", operation: "EQUALS", value: index === 0 ? "trigger-a" : "trigger-b"},
+        ]))
+    }
+})
+
+it("keeps each expanded trigger's logs in its own panel when responses arrive out of order", async () => {
+    const releaseFirst: (() => void)[] = []
+    searchLogs.mockImplementation((params: {size?: number; filters?: {field: string; value?: unknown}[]}) => {
+        if (params.size === 1) return Promise.resolve({results: [], total: 0})
+        const triggerId = params.filters?.find(filter => filter.field === "triggerId")?.value as string
+        const response = {
+            total: 1,
+            results: [{
+                namespace: "company.team",
+                flowId: "my-flow",
+                triggerId,
+                level: "INFO",
+                timestamp: "2026-06-02T08:00:00Z",
+                thread: "thread",
+                message: `${triggerId} evaluated`,
+            }],
+        }
+        // The first trigger answers last, which used to let it overwrite the other panel's rows.
+        return triggerId === "trigger-a"
+            ? new Promise(resolve => releaseFirst.push(() => resolve(response)))
+            : Promise.resolve(response)
+    })
+    const wrapper = mountTriggersTab()
+    await flushPromises()
+
+    const expanders = wrapper.findAll(".kel-table__expand-icon")
+    await expanders[0].trigger("click")
+    await expanders[1].trigger("click")
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    releaseFirst.forEach(release => release())
+    await flushPromises()
+
+    const panels = wrapper.findAll(".log-panel")
+    expect(panels).toHaveLength(2)
+    expect(panels[0].text()).toContain("trigger-a evaluated")
+    expect(panels[0].text()).not.toContain("trigger-b evaluated")
+    expect(panels[1].text()).toContain("trigger-b evaluated")
+    expect(panels[1].text()).not.toContain("trigger-a evaluated")
+})
+
+// https://github.com/kestra-io/kestra/issues/21483: the backfill button stayed disabled whenever an optional input had a value
+describe("FlowTriggers - execute backfill button", () => {
+    const flowInputs = [
+        {id: "region", type: "STRING"},
+        {id: "batchSize", type: "INT", required: false, defaults: 100},
+    ]
+
+    const FlowRunStub = defineComponent({
+        name: "FlowRun",
+        emits: ["update-inputs", "update-inputs-no-default", "update-labels"],
+        setup: () => () => h("div"),
+    })
+
+    const DatePickerStub = defineComponent({
+        name: "KsDatePicker",
+        props: {modelValue: {type: Date, default: null}},
+        emits: ["update:modelValue"],
+        setup: (_, {emit}) => () => h("button", {"data-test": "date-picker", onClick: () => emit("update:modelValue", new Date("2026-01-01T00:00:00Z"))}),
+    })
+
+    afterEach(() => {
+        delete (flowStore.flow as {inputs?: unknown}).inputs
+        // the open dialog locks the body scroll; unmount first so the lock is released, then drop what is left
+        while (mounted.length) mounted.pop()?.unmount()
+        document.body.className = ""
+        document.body.innerHTML = ""
+    })
+
+    async function openBackfill() {
+        permissions.isAllowed = (resource: string, action: string) => resource === "TRIGGER" && action === "BACKFILL"
+        Object.assign(flowStore.flow, {inputs: flowInputs})
+
+        const wrapper = i18nMount(FlowTriggers, {
+            props: {embed: true},
+            attachTo: document.body,
+            global: {
+                plugins: [createPinia()],
+                stubs: {RouterLink: RouterLinkStub, TestEventDialog: true, FlowRun: FlowRunStub, KsDatePicker: DatePickerStub},
+            },
+        })
+        mounted.push(wrapper)
+        await flushPromises()
+
+        const open = wrapper.findAll("button").find(button => button.text() === "backfill executions")
+        await open?.trigger("click")
+        await flushPromises()
+
+        document.querySelector<HTMLButtonElement>("[data-test='date-picker']")?.click()
+        await flushPromises()
+
+        return wrapper
+    }
+
+    const executeButton = () =>
+        [...document.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent?.trim() === "execute backfill")
+
+    const fillInputs = async (wrapper: VueWrapper, inputs: Record<string, unknown>) => {
+        wrapper.findComponent(FlowRunStub).vm.$emit("update-inputs", inputs)
+        await flushPromises()
+    }
+
+    it("stays disabled until the required input has a value", async () => {
+        const wrapper = await openBackfill()
+
+        expect(executeButton()?.disabled).toBe(true)
+
+        await fillInputs(wrapper, {batchSize: 100})
+        expect(executeButton()?.disabled).toBe(true)
+    })
+
+    it("is enabled once the required input is set, with the optional default filled in", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU", batchSize: 100})
+
+        expect(executeButton()?.disabled).toBe(false)
+    })
+
+    it("is enabled once the required input is set, with the optional input left out", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU"})
+
+        expect(executeButton()?.disabled).toBe(false)
+    })
+})

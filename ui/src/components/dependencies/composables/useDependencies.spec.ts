@@ -1,0 +1,737 @@
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
+import {ref, nextTick} from "vue"
+import {useDependencies} from "./useDependencies"
+import {transformResponse} from "../utils/transform"
+import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../utils/types"
+import {setActivePinia, createPinia} from "pinia"
+import {mount} from "@vue/test-utils"
+import {useNamespacesStore} from "override/stores/namespaces"
+import type {AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+import type {EChartsType} from "echarts/core"
+import {useFlowStore} from "../../../stores/flow"
+import {RouteParams} from "vue-router"
+import {getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies"
+
+type NodeStyleState = {
+    itemStyle?: {
+        color?: string
+        borderColor?: string
+        borderWidth?: number
+        opacity?: number
+    }
+}
+
+type EdgeStyleState = {
+    lineStyle?: {
+        color?: string
+        opacity?: number
+    }
+}
+
+type ChartCameraOption = {
+    series?: Array<{
+        zoom?: number
+        center?: [number, number]
+    }>
+}
+
+// ─── CSS var sentinels ────────────────────────────────────────────────────────
+// Set recognisable values so we can assert which colour path each node took,
+// since getComputedStyle always returns "" for custom properties in jsdom.
+const CSS_VARS: Record<string, string> = {
+    "--ks-dependencies-node-background-default":  "default-bg",
+    "--ks-dependencies-node-border-default":      "default-border",
+    "--ks-dependencies-node-background-hovered":  "hovered-bg",
+    "--ks-dependencies-node-border-hovered":      "hovered-border",
+    "--ks-dependencies-node-background-selected": "selected-bg",
+    "--ks-dependencies-node-border-selected":     "selected-border",
+    "--ks-dependencies-node-background-faded":    "faded-bg",
+    "--ks-dependencies-node-border-faded":        "faded-border",
+    "--ks-dependencies-node-background-assets":   "assets-bg",
+    "--ks-dependencies-node-border-assets":       "assets-border",
+    "--ks-dependencies-edge-default":             "default-edge",
+    "--ks-dependencies-edge-hovered":             "hovered-edge",
+    "--ks-dependencies-edge-selected":            "selected-edge",
+    "--ks-dependencies-edge-faded":               "faded-edge",
+}
+
+function setCSSVars() {
+    Object.entries(CSS_VARS).forEach(([k, v]) =>
+        document.documentElement.style.setProperty(k, v),
+    )
+}
+
+// ─── Controlled graph fixture ─────────────────────────────────────────────────
+// A --e1--> B --e2--> C    D (isolated, no edges)
+// A is the preselected initial node.
+function makeControlledElements() {
+    return [
+        {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "D", type: "NODE", flow: "flow-d", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "e1", type: "EDGE", source: "A", target: "B"}},
+        {data: {id: "e2", type: "EDGE", source: "B", target: "C"}},
+    ]
+}
+
+function mountControlled(initialNodeID = "A") {
+    const graphRef = makeGraphRef()
+    const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data:  makeControlledElements(),
+        count: 4,
+    })
+    const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+            const composable = useDependencies(
+                graphRef, FLOW, initialNodeID, {}, fetchAssetDependencies,
+            )
+            return {composable}
+        },
+    })
+    return {wrapper, graphRef, ...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+}
+
+vi.mock("vue-router", () => ({
+  useRouter: () => ({push: vi.fn(), replace: vi.fn(), currentRoute: {value: {path: "/"}}, beforeEach: vi.fn(), afterEach: vi.fn()}),
+  useRoute: () => ({params: {}, query: {}, path: "/"}),
+  routerKey: Symbol("router"),
+}))
+
+vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
+
+const toastError = vi.fn()
+vi.mock("../../../../src/utils/toast", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../../src/utils/toast")>(),
+  useToast: () => ({error: toastError}),
+}))
+
+// Minimal KsGraph ref mock that satisfies the KsGraphRef interface.
+function makeGraphRef() {
+  return ref({
+    zoomIn:             vi.fn(),
+    zoomOut:            vi.fn(),
+    fit:                vi.fn(),
+    exportAsImage:      vi.fn(),
+    getEchartsInstance: vi.fn(),
+  })
+}
+
+// ECharts instance mock that exposes known node positions via getData().
+function makeChartMock(nodePositions: Record<string, {x: number; y: number}>, W = 600, H = 400) {
+    const ids = Object.keys(nodePositions)
+    const layouts = Object.values(nodePositions)
+    const dataMock = {
+        count:         vi.fn(() => ids.length),
+        getId:         vi.fn((i: number) => ids[i]),
+        getName:       vi.fn((i: number) => ids[i]),
+        getItemLayout: vi.fn((i: number) => layouts[i]),
+    }
+    return {
+        setOption:      vi.fn(),
+        dispatchAction: vi.fn(),
+        getWidth:       vi.fn(() => W),
+        getHeight:      vi.fn(() => H),
+        // Immediately invoke "finished" so capturePositions runs synchronously in tests
+        on:             vi.fn((event: string, handler: () => void) => { if (event === "finished") handler() }),
+        off:            vi.fn(),
+        getModel:   vi.fn(() => ({
+            getSeriesByIndex: vi.fn(() => ({
+                getData:          vi.fn(() => dataMock),
+                coordinateSystem: null,
+            })),
+        })),
+    }
+}
+
+const mountComponentWithUseDependencies = (
+    subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW,
+    initialNodeID: string = "test-id",
+    params: RouteParams = {},
+    isTesting: boolean = true,
+  ) => {
+    const graphRef = makeGraphRef()
+    const wrapper = mount({
+      template: "<div></div>",
+      setup() {
+        const composable = useDependencies(graphRef, subtype, initialNodeID, params, isTesting ? async () => {
+            return {
+                data: getDependencies({
+                    subtype,
+                }),
+                count: 42,
+            }
+        } : undefined)
+        return {composable}
+      },
+    })
+    const composable = wrapper.vm.composable as ReturnType<typeof useDependencies>
+    return {wrapper, graphRef, ...composable}
+  }
+
+describe("useDependencies composable", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterAll(() => {
+    vi.unstubAllGlobals()
+  })
+
+  describe("onMounted", () => {
+    it("should load elements in testing mode", async () => {
+      const {isLoading, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true)
+
+      await nextTick()
+
+      expect(isLoading.value).toBe(false)
+      expect(getElements().length).toBeGreaterThan(0)
+    })
+
+    it("should load elements from namespace store for subtype NAMESPACE", async () => {
+      const nameSpacesStore = useNamespacesStore()
+      const mockData = {
+        nodes: [{uid: "n1", id: "f1", namespace: "ns"}],
+        edges: [{source: "n1", target: "n2"}],
+      }
+
+      vi.spyOn(nameSpacesStore, "loadDependencies").mockResolvedValue({
+        data: mockData,
+      } as AxiosLikeResponse)
+
+      const {isLoading, getElements} = mountComponentWithUseDependencies("NAMESPACE", "test-id", {}, false)
+
+      await nextTick()
+
+      expect(isLoading.value).toBe(false)
+      expect(getElements().length).toBeGreaterThan(0)
+    })
+
+    it("should load elements from flow store for subtype FLOW", async () => {
+      const flowStore = useFlowStore()
+      const mockData = {
+        nodes: [{uid: "n1", id: "f1", namespace: "ns"}],
+        edges: [{source: "n1", target: "n2"}],
+      }
+
+      vi.spyOn(flowStore, "loadDependencies").mockResolvedValue({
+        data: transformResponse(mockData, FLOW),
+        count: 2,
+      })
+
+      const {isLoading, getElements} = mountComponentWithUseDependencies("FLOW", "test-id", {}, false)
+
+      await nextTick()
+
+      expect(isLoading.value).toBe(false)
+      expect(getElements().length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("node selection", () => {
+    it("should select an existing node and update selectedNodeID", async () => {
+      const {selectNode, selectedNodeID, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true)
+      await nextTick()
+
+      // Pick a real node from the generated fixture data.
+      const firstNode = getElements().find((el) => el.data.type === "NODE")
+      expect(firstNode).toBeDefined()
+
+      selectNode(firstNode!.data.id as string)
+      expect(selectedNodeID.value).toBe(firstNode!.data.id)
+    })
+
+    it("should not change selection when node does not exist", async () => {
+      const {selectNode, selectedNodeID} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true)
+      await nextTick()
+
+      // Testing mode auto-selects the first node; capture that initial selection.
+      const initialSelection = selectedNodeID.value
+
+      selectNode("non-existent-id")
+
+      // Selection must remain unchanged.
+      expect(selectedNodeID.value).toBe(initialSelection)
+    })
+  })
+
+  const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  describe("SSE", () => {
+    it("should close SSE on unmount when subtype is EXECUTION", async () => {
+      const close = vi.fn()
+      let instantiated = false
+      vi.stubGlobal("EventSource", class AnonEventSource {
+        close: () => void = close
+        constructor() {
+          instantiated = true
+        }
+      })
+
+      const {wrapper} = await mountComponentWithUseDependencies(EXECUTION)
+
+      // when mount is finished, MockEventSource should have been instantiated to listen to execution updates
+      for(let i = 0; i < 5 && !instantiated; i++) {
+        await wait(100)
+      }
+
+      wrapper.unmount()
+
+      expect(close).toHaveBeenCalled()
+    })
+  })
+
+  // ── node hover ────────────────────────────────────────────────────────────────
+  // Hover is handled entirely by ECharts' built-in emphasis.focus="adjacency".
+  // We verify that every node carries:
+  //   • emphasis.itemStyle  → hover colour (applied by ECharts on mouseover)
+  //   • blur.itemStyle      → same as base itemStyle (so selection colours survive)
+  describe("node hover", () => {
+    beforeEach(() => setCSSVars())
+
+    it("every node carries emphasis.itemStyle with the hover colour", async () => {
+      const {graphNodes} = mountControlled("A")
+      await nextTick()
+
+      graphNodes.value.forEach(n => {
+        const emphasis = n.emphasis as NodeStyleState | undefined
+        expect(emphasis?.itemStyle?.color).toBe("hovered-bg")
+        expect(emphasis?.itemStyle?.borderColor).toBe("hovered-border")
+      })
+    })
+
+    it("keeps flow nodes outside the asset DAG view on the default symbol so hover colours apply", async () => {
+      const {graphNodes} = mountControlled("A")
+      await nextTick()
+
+      graphNodes.value.forEach(n => expect(n.symbol).toBeUndefined())
+    })
+
+    it("draws flow nodes of the asset DAG view as image symbols", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: makeControlledElements(), count: 4})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, undefined, true)}
+        },
+      })
+      await nextTick()
+
+      const {graphNodes} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+      graphNodes.value.forEach(n => expect(String(n.symbol)).toMatch(/^image:\/\//))
+    })
+
+    it("isolating a multi-valued group keeps an asset that belongs to several of them", async () => {
+      const graphRef = makeGraphRef()
+      const node = (id: string) => ({data: {id, type: "NODE", flow: id, metadata: {subtype: "ASSET"}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [node("shared"), node("only-a"), node("only-b")], count: 3})
+      const consumersOf: Record<string, string[]> = {shared: ["a", "b"], "only-a": ["a"], "only-b": ["b"]}
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const membersOf = ref((n: Node) => consumersOf[n.id])
+          return {composable: useDependencies(graphRef, FLOW, "shared", {}, fetchAssetDependencies, undefined, true, undefined, membersOf)}
+        },
+      })
+      await nextTick()
+      const {isolateGroup, shownNodeIDs} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      isolateGroup("a")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-a", "shared"])
+
+      isolateGroup("b")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-b", "shared"])
+    })
+
+    it("every edge carries emphasis.lineStyle with the hover edge colour", async () => {
+      const {graphEdges} = mountControlled("A")
+      await nextTick()
+
+      graphEdges.value.forEach(e => {
+        const emphasis = e.emphasis as EdgeStyleState | undefined
+        expect(emphasis?.lineStyle?.color).toBe("hovered-edge")
+      })
+    })
+
+    it("blur.itemStyle matches base itemStyle so selection colours survive hover", async () => {
+      const {graphNodes, selectNode} = mountControlled("A")
+      await nextTick()
+
+      // Select node A — it gets selected-bg.
+      selectNode("A")
+      await nextTick()
+
+      const nodeA = graphNodes.value.find(n => n.id === "A")!
+      expect(nodeA.itemStyle?.color).toBe("selected-bg")
+      // blur must mirror base so ECharts doesn't override the selection colour
+      // when another node is hovered.
+      const blur = nodeA.blur as NodeStyleState | undefined
+      expect(blur?.itemStyle?.color).toBe("selected-bg")
+    })
+
+    it("unselected nodes have blur.itemStyle matching their default base colour", async () => {
+      const {graphNodes} = mountControlled("nonexistent")
+      await nextTick()
+
+      graphNodes.value.forEach(n => {
+        const blur = n.blur as NodeStyleState | undefined
+        expect(blur?.itemStyle?.color).toBe(n.itemStyle?.color)
+        expect(blur?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1)
+      })
+    })
+  })
+
+  describe("edge arrow symbol", () => {
+    function mountWithEdgeKinds() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "e1", type: "EDGE", source: "A", target: "B", kind: "UPSTREAM_OF", directed: true}},
+          {data: {id: "e2", type: "EDGE", source: "A", target: "C", kind: "RELATED", directed: false}},
+        ],
+        count: 3,
+      })
+      return mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+    }
+
+    it("suppresses the arrowhead only for the undirected (RELATED) edge", async () => {
+      const wrapper = mountWithEdgeKinds()
+      await nextTick()
+      const {graphEdges} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      const toDirected = graphEdges.value.find((e) => e.target === "B")
+      const toUndirected = graphEdges.value.find((e) => e.target === "C")
+
+      expect((toDirected?.symbol as string[] | undefined)?.[1]).toBe("arrow")
+      expect((toUndirected?.symbol as string[] | undefined)?.[1]).toBe("none")
+    })
+  })
+
+  describe("focusNode", () => {
+    // Known layout:
+    //   A(100,200)  B(300,400)  C(200,100)
+    //   canvas W=600 H=400
+    //
+    // ECharts graph `center` is in data coordinates.
+    // focusNode sets center=[pos.x, pos.y] to place the node at canvas centre.
+    const NODE_POSITIONS = {A: {x: 100, y: 200}, B: {x: 300, y: 400}, C: {x: 200, y: 100}}
+    const CANVAS_W = 600
+    const CANVAS_H = 400
+
+    /** Calls that move the camera, i.e. the ones carrying a zoom on the series. */
+    const cameraCalls = (calls: unknown[][]) =>
+        calls.filter((args) => (args[0] as ChartCameraOption | undefined)?.series?.[0]?.zoom !== undefined)
+
+    async function mountWithChart(initialNodeID = "X", dagView = false) {
+        const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
+        const graphRef: Parameters<typeof useDependencies>[0] = ref({
+            fit:                vi.fn(),
+            zoomIn:             vi.fn(),
+            zoomOut:            vi.fn(),
+            exportAsImage:      vi.fn(),
+            getEchartsInstance: vi.fn(() => chartMock as unknown as EChartsType),
+            $el:                document.createElement("div"),
+        })
+        const fetchAssetDependencies = vi.fn().mockResolvedValue({
+            data: [
+                {data: {id: "A", type: "NODE", flow: "fa", namespace: "ns", metadata: {subtype: "FLOW"}}},
+                {data: {id: "B", type: "NODE", flow: "fb", namespace: "ns", metadata: {subtype: "FLOW"}}},
+                {data: {id: "C", type: "NODE", flow: "fc", namespace: "ns", metadata: {subtype: "FLOW"}}},
+            ],
+            count: 3,
+        })
+        vi.useFakeTimers()
+        const wrapper = mount({
+            template: "<div></div>",
+            setup() {
+                // Defaults to initialNodeID="X" (nonexistent) so no node is preselected,
+                // leaving selectedNodeID undefined and letting tests control selection.
+                const composable = useDependencies(graphRef, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
+                return {composable}
+            },
+        })
+        // Flush microtasks (promise resolution + Vue reactivity) so onMounted's
+        // async fetch resolves, then advance fake timers past jsdom's rAF polyfill
+        // (setTimeout 16 ms) so capturePositions() runs and storedPositions is populated.
+        await nextTick()
+        await nextTick()
+        await vi.runAllTimersAsync()
+        await nextTick()
+        vi.useRealTimers()
+        const mountCalls = [...chartMock.setOption.mock.calls]
+        chartMock.setOption.mockClear()
+        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+        return {selectNode, selectedNodeID, chartMock, mountCalls}
+    }
+
+    it("centres on the initially selected node at zoom=1.8 on mount", async () => {
+        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.
+        // The initial auto-selection is the only path that still moves the viewport.
+        const {mountCalls} = await mountWithChart("A")
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("fits the graph on mount instead of centring when the view is the asset view", async () => {
+        // center=[200, 250] is the extent midpoint of A/B/C, not the focus path's zoom=1.8 on A.
+        // zoom=0.7 pads the constraining dimension: (H - 2*60) / H with the 300-unit y spread
+        // contain-fitted to the 400px canvas.
+        const {mountCalls} = await mountWithChart("A", true)
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: expect.closeTo(0.7, 5), center: [200, 250]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("does not move the viewport when the selection changes", async () => {
+        // Selecting never re-centres: the canvas jumping under the cursor costs the user
+        // their bearings. Only the initial auto-selection centres the graph.
+        const {selectNode, selectedNodeID, chartMock} = await mountWithChart()
+
+        selectNode("A")
+        await nextTick()
+        await nextTick()
+        selectNode("B")
+        await nextTick()
+        await nextTick()
+
+        // Assert the selection landed, so this cannot pass by selection being broken outright.
+        expect(selectedNodeID.value).toBe("B")
+        expect(chartMock.setOption).toHaveBeenCalled()
+        expect(cameraCalls(chartMock.setOption.mock.calls)).toEqual([])
+    })
+
+    it("does not call setOption for centering when node has no stored position", async () => {
+        const {selectNode, chartMock} = await mountWithChart()
+
+        selectNode("nonexistent")
+        await nextTick()
+        await nextTick()
+
+        const focusCalls = cameraCalls(chartMock.setOption.mock.calls)
+        expect(focusCalls).toHaveLength(0)
+    })
+  })
+
+  describe("expandNode", () => {
+    function mountWithExpand() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 2,
+      })
+      const expandAssetNode = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-2", type: "NODE", flow: "peer-2", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 3,
+      })
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(
+            graphRef, FLOW, "hub", {}, fetchAssetDependencies, undefined, true, expandAssetNode,
+          )
+          return {composable}
+        },
+      })
+      return {wrapper, expandAssetNode, ...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    it("merges a hub's expanded relations without duplicating nodes already on screen", async () => {
+      const {getElements, expandNode, expandAssetNode} = mountWithExpand()
+      await nextTick()
+      await nextTick()
+
+      expect(getElements()).toHaveLength(2)
+
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(getElements().filter((el) => el.data.id === "peer-2")).toHaveLength(1)
+
+      // A second expand (e.g. clicking "Load more" again) must not duplicate what's already shown.
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(expandAssetNode).toHaveBeenCalledTimes(2)
+    })
+
+    function mountWithHubs(expandResult: unknown) {
+      const graphRef = makeGraphRef()
+      const hub = (id: string, metadata = {}) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: true, ...metadata}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [hub("hub-a"), hub("hub-b")], count: 2})
+      const expandAssetNode = vi.fn().mockImplementation(() => expandResult instanceof Error ? Promise.reject(expandResult) : Promise.resolve(expandResult))
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub-a", {}, fetchAssetDependencies, undefined, true, expandAssetNode)
+          return {composable}
+        },
+      })
+      return {...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    const nodeMeta = (getElements: () => {data: {id: string; metadata?: unknown}}[], id: string) =>
+      getElements().find((el) => el.data.id === id)?.data.metadata
+
+    it("refreshes only the expanded hub and leaves other collapsed hubs untouched", async () => {
+      const plain = (id: string) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET"}}})
+      const {getElements, expandNode} = mountWithHubs({
+        data: [plain("hub-a"), plain("hub-b"), plain("peer")],
+        count: 3,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).not.toHaveProperty("collapsed")
+      expect(nodeMeta(getElements, "hub-b")).toMatchObject({collapsed: true, expandable: true})
+      expect(getElements().map((el) => el.data.id)).toContain("peer")
+    })
+
+    it("updates the expanded hub's own metadata even when no new peer is added", async () => {
+      const {getElements, expandNode} = mountWithHubs({
+        data: [{data: {id: "hub-a", type: "NODE", flow: "hub-a", namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: false, exhausted: true}}}],
+        count: 1,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).toMatchObject({expandable: false, exhausted: true})
+      expect(getElements()).toHaveLength(2)
+    })
+
+    it("shows an error toast and keeps the graph when the expand request fails", async () => {
+      toastError.mockClear()
+      const {getElements, expandNode, expandingNodeID} = mountWithHubs(new Error("boom"))
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(toastError).toHaveBeenCalledTimes(1)
+      expect(getElements()).toHaveLength(2)
+      expect(expandingNodeID.value).toBeUndefined()
+    })
+
+    it("is a no-op when no expandAssetNode was supplied", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {expandNode, getElements} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      await expandNode("hub")
+
+      expect(getElements()).toHaveLength(0)
+    })
+  })
+
+  describe("graphTruncated", () => {
+    it("reflects the truncated flag from fetchAssetDependencies", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0, truncated: true})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "x", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {graphTruncated} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      expect(graphTruncated.value).toBe(true)
+    })
+  })
+
+  describe("handlers", () => {
+    it("should reset selection when clearSelection is invoked", async () => {
+      const {handlers, selectNode, selectedNodeID, getElements} = mountComponentWithUseDependencies()
+      await nextTick()
+
+      const firstNode = getElements().find((el) => el.data.type === "NODE")
+      if (firstNode) selectNode(firstNode.data.id as string)
+
+      handlers.clearSelection()
+
+      expect(selectedNodeID.value).toBeUndefined()
+    })
+
+    it("should call graphRef.fit when fit handler is invoked", async () => {
+      const {handlers, graphRef} = mountComponentWithUseDependencies()
+      await nextTick()
+
+      handlers.fit()
+
+      expect(graphRef.value.fit).toHaveBeenCalled()
+    })
+
+    it("should dim nodes not in highlightShown list", async () => {
+      const {handlers, graphNodes, getElements} = mountComponentWithUseDependencies()
+      await nextTick()
+
+      const allNodes = getElements().filter((el) => el.data.type === "NODE")
+      if (allNodes.length < 2) return // skip if not enough nodes
+
+      const firstId = allNodes[0].data.id as string
+      handlers.highlightShown([firstId])
+
+      // All nodes except the highlighted one should have reduced opacity.
+      const dimmedNode = graphNodes.value.find((n) => n.id !== firstId)
+      expect(dimmedNode?.itemStyle?.opacity).toBeLessThan(1)
+    })
+  })
+})
+
+it("should transform API response to dependency elements", () => {
+  const response = {
+    nodes: [{uid: "n1", id: "f1", namespace: "ns"}],
+    edges: [{source: "n1", target: "n2"}],
+  }
+
+  const elements = transformResponse(response, FLOW)
+  const node = elements[0].data as Node
+  const edge = elements[1].data as Edge
+
+  expect(elements).toHaveLength(2)
+  expect(node.id).toBe("n1")
+  expect(edge.source).toBe("n1")
+  expect(edge.target).toBe("n2")
+})

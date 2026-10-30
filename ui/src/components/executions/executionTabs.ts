@@ -1,13 +1,10 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
-import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 import {extraExecutionTabRoutes} from "override/components/executions/executionTabsExtension"
+import {storageKeys} from "../../utils/constants"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
-
-/** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
-export const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
 
 /** Where an execution opens with no preference set. Shared by the redirect, `submitTask` and Settings. */
 export const DEFAULT_EXECUTION_TAB = "gantt"
@@ -38,12 +35,14 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,
         path: "gantt",
         component: () => import("./Gantt.vue"),
+        props: {showBanner: true},
         meta: {tab: "gantt", title: "gantt"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/logs`,
         path: "logs",
         component: () => import("./Logs.vue"),
+        props: {showBanner: true},
         meta: {tab: "logs", title: "logs"},
     },
     {
@@ -56,7 +55,13 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/metrics`,
         path: "metrics",
         component: () => import("./ExecutionMetric.vue"),
-        meta: {tab: "metrics", title: "metrics"},
+        meta: {tab: "metrics", title: "metrics", fullContainer: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/artifacts`,
+        path: "artifacts",
+        component: () => import("./Artifacts.vue"),
+        meta: {tab: "artifacts", title: "execution_artifacts.title", maximized: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/dependencies`,
@@ -69,14 +74,14 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/audit-logs`,
         path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
-        meta: {tab: "audit-logs", title: "auditlogs", maximized: true, locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", maximized: true, locked: true, docId: "auditlogs"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/assets`,
         path: "assets",
         component: () => import("../demo/Assets.vue"),
         props: {topbar: false},
-        meta: {tab: "assets", title: "assets.title", maximized: true, locked: true},
+        meta: {tab: "assets", title: "assets.title", maximized: true, locked: true, docId: "asset"},
     },
 ]
 
@@ -91,7 +96,7 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = mergeTabRoutes(OSS_EXECUTI
 export const EXECUTION_ENTITY_META: RouteMeta = {
     entity: async (to) => {
         const {useExecutionsStore} = await import("../../stores/executions")
-        return useExecutionsStore().loadExecution({id: String(to.params.id)}, ENTITY_REQUEST_OPTIONS)
+        return useExecutionsStore().loadExecution({id: String(to.params.id)})
     },
 }
 
@@ -107,7 +112,7 @@ export const EXECUTION_ROUTE: RouteRecordRaw = {
     // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const requested = (to.params.tab as string) || localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB)
         const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, requested, DEFAULT_EXECUTION_TAB)
         return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },

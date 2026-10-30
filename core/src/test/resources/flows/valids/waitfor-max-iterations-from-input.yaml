@@ -1,0 +1,18 @@
+id: waitfor-max-iterations-from-input
+namespace: io.kestra.tests
+
+inputs:
+  - id: maxIterations
+    type: INT
+
+tasks:
+  - id: waitfor
+    type: io.kestra.plugin.core.flow.WaitFor
+    condition: "{{ false }}"
+    checkFrequency:
+      maxIterations: "{{ inputs.maxIterations }}"
+      interval: PT0.1S
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: iteration

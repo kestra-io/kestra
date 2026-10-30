@@ -13,11 +13,14 @@
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
         "jsx": "preserve",
-        "jsxImportSource": "vue"
+        "jsxImportSource": "vue",
+        "allowImportingTsExtensions": true,
+        "noEmit": true
     },
     "include": [
         "tests/storybook",
         ".storybook",
         "src"
-    ]
+    ],
+    "exclude": ["src/**/*.test.ts"]
 }

@@ -24,7 +24,7 @@
             }"
         />
 
-        <KsCol v-if="namespaces.length === 0" class="p-3 namespaces">
+        <KsCol v-if="namespaces.length === 0" class="namespaces empty-state">
             <span>{{ $t("no_namespaces") }}</span>
         </KsCol>
 
@@ -37,7 +37,7 @@
             <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                class="h-auto p-2 rounded-full"
+                class="rounded-full namespace-tree"
             >
                 <template #default="{data}">
                     <router-link
@@ -49,9 +49,9 @@
                         }"
                         class="node"
                     >
-                        <div class="d-flex">
-                            <FolderOpenOutline class="me-2 icon" />
-                            <span class="pe-3">
+                        <div class="namespace-row">
+                            <FolderOpenOutline class="icon" />
+                            <span class="namespace-label">
                                 {{ namespaceLabel(data.label) }}
                             </span>
                             <slot name="description" :namespace="data" />
@@ -197,7 +197,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .row-padding {
     padding: var(--ks-spacing-6);
@@ -208,6 +208,23 @@
     border-radius: var(--kel-border-radius-round);
     border: 1px solid var(--ks-border-default);
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+
+    &.empty-state {
+        padding: var(--ks-spacing-4);
+    }
+
+    .namespace-tree {
+        height: auto;
+        padding: var(--ks-spacing-2);
+    }
+
+    .namespace-row {
+        display: flex;
+    }
+
+    .namespace-label {
+        padding-inline-end: var(--ks-spacing-4);
+    }
 
     &.system {
         border-color: var(--ks-border-focus);
@@ -221,10 +238,10 @@
 
     .rounded-full {
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-bg-surface)
+        background-color: var(--ks-bg-surface);
     }
 
-    :deep(.kel-tree-node__content) {
+    & :deep(.kel-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
@@ -235,6 +252,7 @@
         }
 
         .icon {
+            margin-inline-end: var(--ks-spacing-2);
             color: var(--ks-text-link);
         }
     }

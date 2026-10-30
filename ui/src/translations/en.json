@@ -349,19 +349,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-      "title": "State history",
-      "open": "State history",
-      "aria_open": "Show the state history",
-      "aria_open_for": "Show the state history for {subject}",
-      "started_at": "Started {time}",
-      "failed_at": "Failed at {time}",
-      "skipped_at": "Skipped at {time}",
-      "created_at": "Created {time}",
-      "did_not_run": "This task did not run",
-      "waiting_to_start": "Waiting to start",
-      "attempt_n": "Attempt {index}",
-      "attempt_count": "{count} attempts",
-      "copy": "Copy state history"
+        "title": "State history",
+        "open": "State history",
+        "aria_open": "Show the state history",
+        "aria_open_for": "Show the state history for {subject}",
+        "started_at": "Started {time}",
+        "failed_at": "Failed at {time}",
+        "skipped_at": "Skipped at {time}",
+        "created_at": "Created {time}",
+        "did_not_run": "This task did not run",
+        "waiting_to_start": "Waiting to start",
+        "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
+        "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",
@@ -467,6 +467,41 @@
     "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
     "resume from breakpoint title": "Resume execution {id} from breakpoint",
+    "approval": {
+      "review": "Review",
+      "title": "Review {task} of execution {id}",
+      "approve": "Approve",
+      "deny": "Deny",
+      "comment": "Comment",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "A comment is required.",
+        "on approve": "A comment is required to approve.",
+        "on deny": "A comment is required to deny."
+      },
+      "comment required": "A comment is required for this decision.",
+      "inputs invalid": "Some inputs are invalid: {errors}",
+      "review done": "Your review has been recorded",
+      "reviewed": {
+        "title": "Approval request of execution {id}",
+        "explanation": "This approval request is no longer waiting for a review.",
+        "decision": "Decision",
+        "by": "Decided by",
+        "on": "Decided on",
+        "decisions": {
+          "approved": "Approved",
+          "denied": "Denied",
+          "expired": "Expired"
+        }
+      },
+      "cancel request": "Cancel request",
+      "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
+      "cancel done": "The approval request has been cancelled",
+      "banner": {
+        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "paused": "This execution is waiting for a review. Approve or deny it to continue."
+      }
+    },
     "resume from breakpoint done": "Execution is resumed from breakpoint",
     "breakpoints": "Breakpoints",
     "pause": "Pause",
@@ -1146,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Error(s) detected.",
     "warning detected": "Warning(s) detected.",
+    "schema warning": "Line {line}: {message}",
     "informative notice": "Note(s)",
     "open": "Open",
     "admin": "Admin",
@@ -1285,6 +1321,7 @@
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
     "relative start date": "Relative start date",
+    "now": "Now",
     "absolute": "Absolute",
     "backfill": "Backfill",
     "Set labels": "Set labels",
@@ -1913,12 +1950,45 @@
     "iterations": "Iterations",
     "load_10_more": "Load 10 more",
     "show_all_executions": "Show all executions",
-    "failed_iterations_only": "Failed iterations only",
     "loop_iterations_shown": "{shown} of {total} shown",
     "loop_iterations_load_error": "Failed to load iterations",
     "retry": "Retry",
     "no_iterations": "No iterations yet",
     "no_failed_iterations": "No failed iterations",
+    "gantt_tree_label": "Execution timeline",
+    "gantt_row_expand": "Expand {name}",
+    "gantt_row_collapse": "Collapse {name}",
+    "gantt_failed_only": "Failed only",
+    "gantt_go_to_first_failure": "Go to first failure",
+    "gantt_loop_iterations_count": "{count} iteration | {count} iterations",
+    "gantt_loop_failed_count": "{count} failed",
+    "gantt_loop_show_failed": "Show failed iterations only",
+    "gantt_loop_show_all": "Show all iterations",
+    "gantt_loop_show_all_iterations": "Show all {count} iterations",
+    "gantt_loop_loading": "Loading iterations…",
+    "gantt_iteration_no_tasks": "No task runs in this iteration yet",
+    "gantt_iteration_no_failed_tasks": "No failed task runs in this iteration",
+    "gantt_panel": {
+        "label": "Task run details",
+        "lineage": "Location in the flow",
+        "previous_iteration": "Previous iteration",
+        "next_iteration": "Next iteration",
+        "open_iteration": "Open iteration",
+        "iteration_position": "{position} of {total} in {loop}",
+        "first_failure": "First failure",
+        "go_to_failure": "Go to failure",
+        "task_runs": "Task runs",
+        "iteration": "Iteration",
+        "value": "Value",
+        "index": "Index",
+        "index_of": "#{index} of {total}",
+        "execution": "Execution",
+        "filter_all": "All {count}",
+        "filter_failed": "Failed {count}",
+        "filter_success": "Success {count}",
+        "search_value": "Search by exact value",
+        "range": "{from}–{to} of {total}"
+    },
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
         "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
@@ -2954,6 +3024,56 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
-    "not started": "Not started"
+    "not started": "Not started",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "All",
+        "total": "{count} run | {count} runs",
+        "failed": "{count} failed"
+      },
+      "toolbar": {
+        "panBack": "Pan back",
+        "panForward": "Pan forward",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Open this page",
+        "runsCount": "{count} run | {count} runs",
+        "failedCount": "{count} failed"
+      },
+      "bucket": {
+        "hint": "Aggregated: zoom in for execution-level detail",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Open execution",
+        "showOnlyFlow": "Show only this flow"
+      },
+      "empty": {
+        "description": "No executions in the selected range and filters.",
+        "resetFilters": "Reset filters",
+        "widenRange": "Widen to 7 days"
+      },
+      "error": {
+        "title": "Couldn't load the timeline",
+        "description": "Something went wrong while loading executions for this range."
+      },
+      "truncated": {
+        "description": "Showing the latest {shown} of {total} executions. Narrow the time range or filters to see all."
+      },
+      "scrubber": {
+        "label": "Execution density over time, drag to select a range",
+        "ignoredFilters": "The density bar does not apply these filters: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Counts",
+      "timeline": "Timeline"
+    }
   }
 }

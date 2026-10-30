@@ -3,6 +3,7 @@ package io.kestra.indexer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ class DefaultIndexerTest {
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
         {
             List<DailyExecutionStatistics> stats = executionStatisticsRepository.statistics(
-                tenant, "namespace", "flow", bucket, bucket, DateUtils.GroupType.MINUTE
+                tenant, "namespace", "flow", Collections.emptyList(), bucket, bucket, DateUtils.GroupType.MINUTE
             );
             assertThat(stats).hasSize(1);
             assertThat(stats.getFirst().getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);

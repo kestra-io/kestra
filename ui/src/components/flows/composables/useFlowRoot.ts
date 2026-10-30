@@ -73,6 +73,7 @@ export function useFlowRoot() {
                     name,
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
                     // Dependencies surfaces a live count and is disabled when there are none.
                     ...(name === "dependencies"
                         ? {

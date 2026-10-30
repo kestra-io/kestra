@@ -6,11 +6,14 @@ import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
+import {useAuthStore} from "override/stores/auth"
 import * as Utils from "../utils/utils"
 import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
+import resource from "../models/resource"
+import action from "../models/action"
+import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
@@ -64,7 +67,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: DashboardListOptions, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
+        const canList = useAuthStore().user?.hasAnyAction(resource.DASHBOARD, action.LIST) ?? true
+        const res = canList ? await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined}) : {results: []}
         await loadDefaults()
         let isThereADefault = false
         dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {

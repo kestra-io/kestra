@@ -183,9 +183,7 @@ public class Extension extends AbstractExtension {
         functions.put(NanoIDFunction.NAME, new NanoIDFunction());
         functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
         functions.put(HttpFunction.NAME, httpFunction);
-        if (subflowFunction != null) {
-            functions.put(SubflowFunction.NAME, subflowFunction);
-        }
+        functions.put(SubflowFunction.NAME, subflowFunction != null ? subflowFunction : SubflowFunction.unavailable());
         functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
         functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
         functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());

@@ -29,7 +29,7 @@ public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<Exe
 
         List<String> violations = new ArrayList<>();
 
-        if (executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS && executionsDataFilter.getColumns().getLabelKey() == null) {
+        if (executionsDataFilter.getColumns() != null && executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS && executionsDataFilter.getColumns().getLabelKey() == null) {
             violations.add("Column must have a `labelKey`.");
         }
 

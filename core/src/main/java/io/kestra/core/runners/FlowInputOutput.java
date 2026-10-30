@@ -277,7 +277,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true)
+        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, true)
             .stream()
             .filter(InputAndValue::enabled)
             .map(it ->
@@ -327,6 +327,16 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data,
         final boolean decryptSecrets) {
+        return resolveInputs(inputs, flow, execution, data, decryptSecrets, false);
+    }
+
+    private List<InputAndValue> resolveInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data,
+        final boolean decryptSecrets,
+        final boolean forExecution) {
         if (inputs == null) {
             return Collections.emptyList();
         }
@@ -341,7 +351,7 @@ public class FlowInputOutput {
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets, forExecution));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
     }
@@ -352,7 +362,8 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final @NotNull Execution execution,
         final @NotNull Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets,
+        final boolean forExecution) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved())
@@ -362,7 +373,7 @@ public class FlowInputOutput {
 
         try {
             // Resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets);
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets, forExecution);
             // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
             final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
@@ -389,15 +400,22 @@ public class FlowInputOutput {
 
             // render input (e.g. a SELECT's dynamic `expression` values). A failure here means the field
             // itself can't be rendered, so flag it as a render error so the UI can surface it eagerly.
+            // When creating an execution with a custom value allowed, the list is not needed: the value is accepted as is.
+            boolean skipRendering = forExecution
+                && input instanceof RenderableInput renderable
+                && Boolean.TRUE.equals(renderable.getAllowCustomValue())
+                && resolvable.get().value() != null;
             try {
-                input = RenderableInput.mayRenderInput(input, expression ->
-                {
-                    try {
-                        return runContext.renderTyped(expression);
-                    } catch (IllegalVariableEvaluationException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                });
+                if (!skipRendering) {
+                    input = RenderableInput.mayRenderInput(input, expression ->
+                    {
+                        try {
+                            return runContext.renderTyped(expression);
+                        } catch (IllegalVariableEvaluationException e) {
+                            throw new RuntimeException(e.getMessage(), e);
+                        }
+                    });
+                }
             } catch (Exception e) {
                 resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                 return resolvable.get();
@@ -521,7 +539,8 @@ public class FlowInputOutput {
     }
 
     private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets,
+        final boolean forExecution) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -529,7 +548,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets, forExecution))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 

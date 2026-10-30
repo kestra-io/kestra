@@ -32,17 +32,20 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
 
         List<String> violations = new ArrayList<>();
 
-        if (dataChart.getData().getColumns() != null) {
-            if (dataChart.getData().getColumns().getAgg() == null) {
+        var column = dataChart.getData().getColumns();
+        if (column == null) {
+            violations.add("`data.columns` is required.");
+        } else {
+            if (column.getAgg() == null) {
                 violations.add("Agg on column is required.");
             }
-        }
 
-        if (
-            dataChart.getData().getColumns().getField() != null && dataChart.getData().getColumns().getField().equals(Executions.Fields.LABELS)
-                && !("elasticsearch".equals(repositoryConfiguration.type()))
-        ) {
-            violations.add("LABELS column is only supported with an ElasticSearch database.");
+            if (
+                column.getField() != null && column.getField().equals(Executions.Fields.LABELS)
+                    && !("elasticsearch".equals(repositoryConfiguration.type()))
+            ) {
+                violations.add("LABELS column is only supported with an ElasticSearch database.");
+            }
         }
 
         if (!violations.isEmpty()) {

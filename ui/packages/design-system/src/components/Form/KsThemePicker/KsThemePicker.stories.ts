@@ -21,22 +21,24 @@ export default meta
 type Story = StoryObj<typeof KsThemePicker>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsThemePicker},
         setup() {
             const value = ref("light")
-            return {value, options: OPTIONS}
+            return {args, value}
         },
         template: `
             <div style="padding:24px;max-width:640px">
-                <ks-theme-picker v-model="value" :options="options" />
+                <ks-theme-picker v-bind="args" v-model="value" />
                 <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Selected: {{ value }}</span>
             </div>
         `,
     }),
+    args: {options: OPTIONS, ariaLabel: "Theme", columns: 0},
 }
 
 export const DarkSelected: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsThemePicker},
         setup() {
@@ -52,6 +54,7 @@ export const DarkSelected: Story = {
 }
 
 export const TwoOptions: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsThemePicker},
         setup() {
@@ -68,6 +71,7 @@ export const TwoOptions: Story = {
 }
 
 export const LongLabels: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsThemePicker},
         setup() {
@@ -84,6 +88,7 @@ export const LongLabels: Story = {
 }
 
 export const CustomPreview: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsThemePicker},
         setup() {

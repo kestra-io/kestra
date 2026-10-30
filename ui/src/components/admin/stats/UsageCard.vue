@@ -1,7 +1,7 @@
 <template>
-    <component :is="to ? 'router-link' : 'div'" :to="to" class="card">
-        <span class="label">{{ label }}</span>
-        <span class="value">{{ value }}</span>
+    <component :is="to ? 'router-link' : 'div'" :to="to" class="card" data-test="usage-card">
+        <span class="label" data-test="usage-card-label">{{ label }}</span>
+        <span class="value" data-test="usage-card-value">{{ value }}</span>
         <span v-if="subtitle" class="subtitle">{{ subtitle }}</span>
     </component>
 </template>

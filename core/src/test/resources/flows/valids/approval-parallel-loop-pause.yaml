@@ -1,0 +1,25 @@
+id: approval-parallel-loop-pause
+namespace: io.kestra.tests
+
+tasks:
+  - id: each_task
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["a"]'
+    tasks:
+      - id: parallel
+        type: io.kestra.plugin.core.flow.Parallel
+        tasks:
+          - id: approvalA
+            type: io.kestra.plugin.core.flow.Approval
+            onWait:
+              - id: waitA
+                type: io.kestra.plugin.core.log.Log
+                message: "waiting A"
+          - id: approvalB
+            type: io.kestra.plugin.core.flow.Approval
+            onWait:
+              - id: sleepB
+                type: io.kestra.plugin.core.flow.Sleep
+                duration: PT2S
+              - id: failB
+                type: io.kestra.plugin.core.execution.Fail

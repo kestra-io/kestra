@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsTable from "./KsTable.vue"
 import KsTableColumn from "./KsTableColumn.vue"
 import KsTag from "../KsTag/KsTag.vue"
@@ -15,7 +15,8 @@ const SAMPLE_DATA = [
 
 const meta: Meta<typeof KsTable> = {
     title: "Components/Data/KsTable",
-    component: KsTable,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsTable as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         size: {control: "select", options: ["large", "default", "small"]},
@@ -30,6 +31,10 @@ type Story = StoryObj<typeof KsTable>
 export const Default: Story = {
     args: {
         showHeader: true,
+        size: "default",
+        tableLayout: "fixed",
+        fit: true,
+        emptyText: "No flows found",
     },
 
     render: (args) => ({
@@ -68,6 +73,7 @@ export const Sortable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Striped rows */
@@ -86,6 +92,7 @@ export const Striped: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** With border */
@@ -104,6 +111,7 @@ export const Border: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Fixed header – scrollable body */
@@ -130,6 +138,7 @@ export const FixedHeader: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Multiple selection with checkboxes */
@@ -154,6 +163,7 @@ export const MultipleSelect: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom column template via slot */
@@ -183,6 +193,7 @@ export const CustomColumn: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Expandable row */
@@ -210,6 +221,7 @@ export const ExpandableRow: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Links and button-styled anchors inside cells: a plain link takes the primary text color, while an anchor rendered by KsButton (tag="a") keeps its button styling. */
@@ -238,6 +250,7 @@ export const LinksAndButtonAnchors: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Empty: Story = {
@@ -252,4 +265,5 @@ export const Empty: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

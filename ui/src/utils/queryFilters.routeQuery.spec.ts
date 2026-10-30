@@ -19,6 +19,18 @@ const serializeQuery = (query: Record<string, unknown>) => {
 const serializeQueryFilters = (filters: QueryFilter[]) => serializeQuery({filters})
 
 describe("routeQueryToQueryFilters", () => {
+    it("keeps the output id of a searchable outputs filter", () => {
+        expect(routeQueryToQueryFilters({"filters[outputs][EQUALS][orderIds]": "ORD-8841"})).toEqual([
+            {field: "outputs", operation: "EQUALS", value: {orderIds: "ORD-8841"}},
+        ])
+    })
+
+    it("joins the values of a repeated searchable outputs filter", () => {
+        expect(routeQueryToQueryFilters({"filters[outputs][IN][orderIds]": ["ORD-1", "ORD-2"]})).toEqual([
+            {field: "outputs", operation: "IN", value: {orderIds: "ORD-1,ORD-2"}},
+        ])
+    })
+
     it("builds a simple leaf filter", () => {
         expect(routeQueryToQueryFilters({"filters[namespace][EQUALS]": "io.kestra"})).toEqual([
             {field: "namespace", operation: "EQUALS", value: "io.kestra"},

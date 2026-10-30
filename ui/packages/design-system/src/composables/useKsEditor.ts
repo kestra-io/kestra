@@ -29,6 +29,7 @@ import {useFlowYamlEditor} from "./useFlowYamlEditor"
 import {useSuggestWidgetIcons} from "./useSuggestWidgetIcons"
 import {registerEditorActions} from "./useEditorActions"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
+import {editorFontFamily} from "../utils/editorFont"
 type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
@@ -52,6 +53,7 @@ export function useKsEditor(
     emit: KsEditorEmit,
     refs: KsEditorTemplateRefs,
 ) {
+    let markerListenerDisposable: monaco.IDisposable | undefined
     const {editorRef, container, datePickerWrapper, datePicker} = refs
     const {t} = useI18n()
 
@@ -251,7 +253,7 @@ export function useKsEditor(
             // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
             // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
             editContext: false,
-            fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
+            fontFamily: editorFontFamily(),
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
@@ -310,6 +312,20 @@ export function useKsEditor(
     function reload() {
         destroy()
         initMonaco()
+    }
+
+    function editorValidationListener() {
+        markerListenerDisposable?.dispose()
+        markerListenerDisposable = monaco.editor.onDidChangeMarkers((uris) => {
+            const model = localEditor.value?.getModel()
+            if (!model) return
+            if (!uris.some(uri => uri.toString() === model.uri.toString())) return
+            const markers = monaco.editor.getModelMarkers({resource: model.uri})
+            const warnings = markers
+                .filter(m => m.severity === monaco.MarkerSeverity.Warning && m.owner !== "backend-validation")
+                .map(m => ({line: m.startLineNumber, message: m.message}))
+            emit("editor-warnings", warnings)
+        })
     }
 
     async function initMonaco() {
@@ -583,6 +599,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
         resizeObserver.value?.disconnect()
@@ -666,6 +683,7 @@ export function useKsEditor(
     onMounted(async () => {
         await document.fonts.ready
         await initMonaco()
+        editorValidationListener()
 
         if (props.lang !== undefined && props.configureLanguage) {
             await props.configureLanguage(

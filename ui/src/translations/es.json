@@ -145,6 +145,7 @@
     "update": "Actualizar",
     "confirmation": "Confirmación",
     "toast confirm": "¿Estás seguro?",
+    "toast_message_column": "Mensaje",
     "common": {
       "back": "Atrás",
       "openInNewTab": "Abrir en nueva pestaña"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay latest revision": "Repetir usando la última revisión",
     "replayed": "La ejecución se está reproduciendo",
+    "reused_task_run": {
+      "label": "Reutilizado",
+      "tooltip": "No se volverá a ejecutar en esta egzekucja. Se ejecutó el {date}, y sus logs y outputs provienen de esa ejecución."
+    },
     "replay the execution": "Repetir la ejecución {executionId} para el flow {flowId}",
     "prefill inputs": "Prefill",
     "current": "actual",
@@ -462,6 +467,41 @@
     "resumed confirm": "¿Estás seguro de que quieres reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resume from breakpoint title": "Reanudar ejecución {id} desde el punto de interrupción",
+    "approval": {
+      "review": "Revisar",
+      "title": "Revisa el {task} de la ejecución {id}",
+      "approve": "Aprobar",
+      "deny": "Denegar",
+      "comment": "Comentario",
+      "comment hint": {
+        "optional": "Opcional.",
+        "always": "Se requiere un comentario.",
+        "on approve": "Se requiere un comentario para aprobar.",
+        "on deny": "Se requiere un comentario para denegar."
+      },
+      "comment required": "Se requiere un comentario para esta decisión.",
+      "inputs invalid": "Algunas entradas no son válidas: {errors}",
+      "review done": "Tu revisión ha sido registrada",
+      "reviewed": {
+        "title": "Solicitud de aprobación de la ejecución {id}",
+        "explanation": "Esta solicitud de aprobación ya no está esperando una revisión.",
+        "decision": "Decisión",
+        "by": "Decidido por",
+        "on": "Decidido en",
+        "decisions": {
+          "approved": "Aprobado",
+          "denied": "Denegado",
+          "expired": "Caducado"
+        }
+      },
+      "cancel request": "Cancelar solicitud",
+      "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución {id}? No se ejecutará ninguna rama de decisión.",
+      "cancel done": "La solicitud de aprobación ha sido cancelada",
+      "banner": {
+        "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",
+        "paused": "Esta ejecución está esperando una revisión. Apruébala o deniégala para continuar."
+      }
+    },
     "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
     "breakpoints": "Puntos de interrupción",
     "pause": "Pausar",
@@ -509,9 +549,68 @@
       "invalid": "Error de gráfico",
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
+      "expand_subflow_error": "No se pudo expandir el subflow",
       "add-task": "Añadir task",
       "add-trigger": "Añadir trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "No ejecutado",
+        "pick-first": "Elige primero {loop}",
+        "picker-label": "Iteración de {loop}",
+        "search-by-index": "Buscar por índice",
+        "all-iterations": "Todas las iteraciones",
+        "iteration-index": "índice {index}",
+        "iteration-value-index": "{value} · índice {index}",
+        "previous-iteration": "Iteración anterior",
+        "next-iteration": "Iteración siguiente",
+        "previous-page": "Página anterior",
+        "next-page": "Página siguiente",
+        "failed-group": "Fallidas · {count}",
+        "other-group": "Otras iteraciones",
+        "matching": "Coincidencia",
+        "failure-forbidden": "No tienes acceso a esta iteración.",
+        "failure-not-found": "Esta iteración ya no existe.",
+        "failure-ambiguous": "Este bucle se ejecutó varias veces en esta ejecución, por lo que no se pueden distinguir sus iteraciones.",
+        "failure-not-located": "No se pudo localizar la iteración fallida.",
+        "failure-unknown": "No se pudieron cargar las iteraciones.",
+        "scope": "Ámbito",
+        "whole-execution": "Ejecución completa",
+        "clear-scopes": "Borrar ámbitos",
+        "jump-to-first-failure": "Ir al primer fallo",
+        "loops-with-failures": "Bucles con fallos",
+        "task-runs": "{runs} ejecución | {runs} ejecuciones",
+        "task-runs-failed": "{runs} ejecución · {failed} fallidas | {runs} ejecuciones · {failed} fallidas",
+        "retry": "Reintentar",
+        "load-more": "Cargar más",
+        "retry-loading": "Reintentar la carga de iteraciones"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} de {total} fallidas",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fallidas · {notStarted} sin iniciar de {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} de {total} completadas",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} de {total} completadas · {failed} fallidas",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteración | {total} iteraciones",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",
@@ -522,7 +621,9 @@
     "execution_banner": {
       "revision": "Revisión {revision}",
       "attempts": "{count} intento | {count} intentos",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valores buscables",
+      "more_searchable_values": "+{count} valores más buscables"
     },
     "execution_mobile": {
       "failed_task": "Task fallida",
@@ -547,7 +648,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tareas",
     "executions duration (in minutes)": "Duración total de ejecuciones (en minutos)",
-    "last 48 hours": "últimas 48 horas",
+    "task runs": "Task runs",
+    "task runs duration (in minutes)": "Duración total de las ejecuciones de Task (en minutos)",
+    "last 24 hours": "últimas 24 horas",
+    "last 7 days": "últimos 7 días",
+    "last 30 days": "últimos 30 días",
+    "since {date}": "desde {date}",
+    "usage period": "Período de uso",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "confirm password": "Confirmar contraseña",
@@ -576,6 +683,7 @@
       "search_placeholder": "Buscar Key o value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Expresión",
+      "searchable": "Buscable",
       "tree": "Árbol",
       "raw_json": "JSON sin procesar",
       "select_prompt": "Selecciona una variable para inspeccionar su value.",
@@ -945,7 +1053,6 @@
       }
     },
     "back_to_dashboard": "Volver al panel de control",
-    "copy all logs": "Copiar todos los Logs",
     "copy logs": "Copiar logs",
     "fix_with_ai": "Solucionar con IA",
     "download logs": "Descargar logs",
@@ -1074,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Se detectaron errores.",
     "warning detected": "Advertencia(s) detectada(s).",
+    "schema warning": "Línea {line}: {message}",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "admin": "Administrador",
@@ -1213,6 +1321,7 @@
     "backfill executions": "Ejecuciones de backfill",
     "execute backfill": "Ejecutar backfill",
     "relative start date": "Fecha de inicio relativa",
+    "now": "Ahora",
     "absolute": "Absoluto",
     "backfill": "Backfill",
     "Set labels": "Establecer etiquetas",
@@ -1441,7 +1550,7 @@
       },
       "promote": {
         "title": "Promover Flows entre Entornos",
-        "message": "Kestra Enterprise Edition te permite promover flows de un entorno a otro —como de desarrollo a staging y a producción— directamente desde la UI, sin necesidad de Git o pipelines de CI/CD. Revisa un diff de exactamente lo que cambiará antes de promover, protege objetivos sensibles con una puerta de confirmación, detecta desviaciones de un vistazo y mantén un historial completo de quién promovió qué, dónde y cuándo."
+        "message": "Kestra Enterprise Edition te permite promover flows de un entorno a otro, como de desarrollo a staging y a producción, directamente desde la UI, sin necesidad de Git o pipelines de CI/CD. Revisa un diff de exactamente lo que cambiará antes de promover, protege objetivos sensibles con una puerta de confirmación, detecta desviaciones de un vistazo y mantén un historial completo de quién promovió qué, dónde y cuándo."
       },
       "dashboards": {
         "header": "Dashboards Personalizados",
@@ -1505,7 +1614,7 @@
         },
         "policies": {
           "title": "Aplicar Reglas de Gobernanza en este namespace",
-          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos — inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
+          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos: inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
         },
         "reusable-inputs": {
           "label": "Inputs Reutilizables",
@@ -1768,7 +1877,18 @@
       "compact": "Vista predeterminada",
       "compact_details": "Mostrar task logs en una vista compacta agrupada por cada task",
       "fullscreen": "Logs a pantalla completa",
-      "exit_fullscreen": "Salir de pantalla completa"
+      "exit_fullscreen": "Salir de pantalla completa",
+      "loop": {
+        "this-execution": "Esta ejecución",
+        "with-iterations": "Con iteraciones del loop",
+        "batch-range": "Iteraciones fallidas {from}–{to} de {total}",
+        "empty-title": "No hay logs coincidentes",
+        "empty-description": "Ningún log coincide con el nivel seleccionado en esta ejecución ni en sus iteraciones fallidas del loop. Baja el nivel para ver más.",
+        "scope-to": "Limitar el gráfico y los logs a {scope}",
+        "show-in-overview": "Mostrar en Resumen",
+        "show-in-overview-for": "Mostrar {scope} en Resumen",
+        "mode-label": "Origen de los logs"
+      }
     },
     "execution_deletion": {
       "logs": "Eliminar logs",
@@ -1830,12 +1950,45 @@
     "iterations": "Iteraciones",
     "load_10_more": "Cargar 10 más",
     "show_all_executions": "Mostrar todas las ejecuciones",
-    "failed_iterations_only": "Solo iteraciones fallidas",
     "loop_iterations_shown": "{shown} de {total} mostrados",
     "loop_iterations_load_error": "No se pudieron cargar las iteraciones",
     "retry": "Reintentar",
     "no_iterations": "Aún no hay iteraciones",
     "no_failed_iterations": "No hay iteraciones fallidas",
+    "gantt_tree_label": "Línea de tiempo de la ejecución",
+    "gantt_row_expand": "Expandir {name}",
+    "gantt_row_collapse": "Contraer {name}",
+    "gantt_failed_only": "Solo fallidas",
+    "gantt_go_to_first_failure": "Ir al primer fallo",
+    "gantt_loop_iterations_count": "{count} iteración | {count} iteraciones",
+    "gantt_loop_failed_count": "{count} fallidas",
+    "gantt_loop_show_failed": "Mostrar solo las iteraciones fallidas",
+    "gantt_loop_show_all": "Mostrar todas las iteraciones",
+    "gantt_loop_show_all_iterations": "Mostrar las {count} iteraciones",
+    "gantt_loop_loading": "Cargando iteraciones…",
+    "gantt_iteration_no_tasks": "Aún no hay ejecuciones de Task en esta iteración",
+    "gantt_iteration_no_failed_tasks": "No hay ejecuciones de Task fallidas en esta iteración",
+    "gantt_panel": {
+      "label": "Detalles de la ejecución de la Task",
+      "lineage": "Ubicación en el flow",
+      "previous_iteration": "Iteración anterior",
+      "next_iteration": "Iteración siguiente",
+      "open_iteration": "Abrir iteración",
+      "iteration_position": "{position} de {total} en {loop}",
+      "first_failure": "Primer fallo",
+      "go_to_failure": "Ir al fallo",
+      "task_runs": "Ejecuciones de Task",
+      "iteration": "Iteración",
+      "value": "Value",
+      "index": "Índice",
+      "index_of": "#{index} de {total}",
+      "execution": "Ejecución",
+      "filter_all": "Todas {count}",
+      "filter_failed": "Fallidas {count}",
+      "filter_success": "Exitosas {count}",
+      "search_value": "Buscar por value exacto",
+      "range": "{from}–{to} de {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Las iteraciones de bucle se ejecutan como subejecuciones separadas, por lo que sus logs no se muestran aquí.",
       "outputs": "Las iteraciones de bucle se ejecutan como sub-executions separadas, por lo que sus outputs no se muestran aquí.",
@@ -2127,6 +2280,7 @@
         "plural": "Dashboards"
       },
       "default": "Dashboard predeterminado",
+      "set_default": "Establecer como predeterminado",
       "empty": "No hay resultados para mostrar.",
       "edition": {
         "label": "Editar Dashboard",
@@ -2139,11 +2293,8 @@
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "others": "Otros",
       "viewAll": "Ver todo",
-      "export": "Exportar",
-      "exportEmpty": "Este gráfico no tiene datos para exportar.",
       "exportTo": {
-        "csv": "Exportar a CSV",
-        "ion": "Exportar a ION"
+        "csv": "Exportar a CSV"
       },
       "ignoredFilters": "El filtro {filters} no se aplica a este gráfico. | Los filtros {filters} no se aplican a este gráfico.",
       "show_all_statuses": "Mostrar todos los estados",
@@ -2275,7 +2426,7 @@
         },
         "cancelled": "Turno cancelado",
         "error": {
-          "turnCap": "Esta conversación alcanzó su límite — inicia un nuevo chat.",
+          "turnCap": "Esta conversación alcanzó su límite: inicia un nuevo chat.",
           "turnInProgress": "Un turno ya está en curso.",
           "request": "La solicitud falló. Inténtelo de nuevo, por favor.",
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
@@ -2338,7 +2489,7 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando un cambio sugerido por la IA: el editor es de solo lectura hasta que lo apliques o lo descartes.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe — los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
+          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe. Los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",
@@ -2577,7 +2728,7 @@
     },
     "invalid_source_code": "Código fuente no válido",
     "source_search": {
-      "cannot_select_read_only": "No se puede seleccionar — no tienes permiso de edición en {namespace} / {id}",
+      "cannot_select_read_only": "No se puede seleccionar: no tienes permiso de edición en {namespace} / {id}",
       "collapse_all": "Contraer todo",
       "confirm_bar_excluded": "{count} coincidencia más no se modificará. | {count} coincidencias más no se modificarán.",
       "confirm_bar_message": "Reemplazar {matches} en {flows} flows editables. Se omitirán {skipped} flows de solo lectura.",
@@ -2593,11 +2744,11 @@
       "empty_title": "Encuentra un valor en flows, archivos y keys",
       "error_title": "Expresión regular inválida",
       "examples_aria": "Consultas de ejemplo",
-      "exclusion_flows_readonly": "Flows — {count} coincidencia de solo lectura: necesitas el permiso FLOW · UPDATE. | Flows — {count} coincidencias de solo lectura: necesitas el permiso FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} coincidencia: solo búsqueda, no se puede reemplazar. | {type} — {count} coincidencias: solo búsqueda, no se pueden reemplazar.",
+      "exclusion_flows_readonly": "Flows · {count} coincidencia de solo lectura: necesitas el permiso FLOW · UPDATE. | Flows · {count} coincidencias de solo lectura: necesitas el permiso FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} coincidencia: solo búsqueda, no se puede reemplazar. | {type} · {count} coincidencias: solo búsqueda, no se pueden reemplazar.",
       "exclusion_title": "{count} coincidencia está excluida de Reemplazar todo | {count} coincidencias están excluidas de Reemplazar todo",
       "expand_all": "Expandir todo",
-      "file_match_notice": "La ruta del archivo coincidió. El contenido del archivo no se busca — abre el archivo para buscar dentro de él.",
+      "file_match_notice": "La ruta del archivo coincidió. El contenido del archivo no se busca. Abre el archivo para buscar dentro de él.",
       "files_progress_banner_failed": "Los archivos del namespace se buscan uno por uno. {done} de {total} completados, {failed} con error. El total todavía cambiará.",
       "files_progress_banner_ok": "Los archivos del namespace se buscan uno por uno. {done} de {total} completados. El total todavía cambiará.",
       "flow_only_toggle_hint": "Coincidir mayúsculas, palabra completa y expresión regular solo se aplican a flows. Las rutas de archivos y las keys siempre coinciden como texto plano.",
@@ -2674,10 +2825,10 @@
       "show_replace": "Mostrar reemplazar",
       "summary": "{matches} coincidencias en {flows} flows",
       "summary_cross": "{matches} en {resources} de {types}",
-      "tag_keys_only_never": "Solo keys — los valores nunca se muestran ni se buscan",
-      "tag_keys_only_values": "Solo keys — los valores no se buscan",
-      "tag_paths_only": "Solo rutas — el contenido del archivo no se busca",
-      "tag_search_only": "Solo búsqueda — no se reemplaza",
+      "tag_keys_only_never": "Solo keys: los valores nunca se muestran ni se buscan",
+      "tag_keys_only_values": "Solo keys: los valores no se buscan",
+      "tag_paths_only": "Solo rutas: el contenido del archivo no se busca",
+      "tag_search_only": "Solo búsqueda: no se reemplaza",
       "tag_source_code": "Código fuente",
       "truncated_flows": "Se muestran las primeras {shown} de {total} coincidencias. Reemplazar todo solo se aplica a las coincidencias mostradas: acota primero la consulta.",
       "truncated_type": "primeras {shown} de {total}",
@@ -2873,6 +3024,56 @@
     "iteration": "Iteración",
     "iteration_number": "Iteración {number}",
     "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?",
-    "not started": "No iniciado"
+    "not started": "No iniciado",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} ejecución | {count} ejecuciones",
+        "failed": "{count} fallidas"
+      },
+      "toolbar": {
+        "panBack": "Desplazar hacia atrás",
+        "panForward": "Desplazar hacia adelante",
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} ejecución | {count} ejecuciones",
+        "failedCount": "{count} fallidas"
+      },
+      "bucket": {
+        "hint": "Agregado: acerca el zoom para ver el detalle de cada ejecución",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Abrir ejecución",
+        "showOnlyFlow": "Mostrar solo este flow"
+      },
+      "empty": {
+        "description": "No hay ejecuciones en el rango y los filtros seleccionados.",
+        "resetFilters": "Restablecer filtros",
+        "widenRange": "Ampliar a 7 días"
+      },
+      "error": {
+        "title": "No se pudo cargar la cronología",
+        "description": "Se produjo un error al cargar las ejecuciones de este rango."
+      },
+      "truncated": {
+        "description": "Mostrando las últimas {shown} de {total} ejecuciones. Reduce el rango de tiempo o los filtros para ver todas."
+      },
+      "scrubber": {
+        "label": "Densidad de Execution a lo largo del tiempo, arrastra para seleccionar un rango",
+        "ignoredFilters": "La barra de densidad no aplica estos filtros: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Recuentos",
+      "timeline": "Cronología"
+    }
   }
 }

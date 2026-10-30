@@ -19,6 +19,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class PluginDeserializerTest {
@@ -30,7 +31,7 @@ class PluginDeserializerTest {
     void shouldSucceededDeserializePluginGivenValidType() throws JsonProcessingException {
         // Given
         ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
+            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry, Plugin.class)));
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.PluginDeserializerTest.TestPlugin"} }
             """;
@@ -52,7 +53,7 @@ class PluginDeserializerTest {
     void shouldFailedDeserializePluginGivenInvalidType() {
         // Given
         ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
+            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry, Plugin.class)));
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.Unknown"} }
             """;
@@ -65,6 +66,22 @@ class PluginDeserializerTest {
 
         // Then
         assertThat("io.kestra.core.plugins.serdes.Unknown").isEqualTo(exception.getTypeId());
+    }
+
+    @Test
+    void shouldFailDeserializePluginGivenTypeNotAssignableToBaseType() {
+        ObjectMapper om = new ObjectMapper()
+            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry, OtherPlugin.class)));
+        String identifier = TestPlugin.class.getCanonicalName();
+        Mockito
+            .when(registry.findClassByIdentifier(identifier))
+            .thenAnswer((Answer<Class<? extends Plugin>>) invocation -> TestPlugin.class);
+
+        assertThatThrownBy(() -> om.readValue("""
+            { "plugin": { "type": "%s"} }
+            """.formatted(identifier), TestPluginHolder.class))
+            .isInstanceOf(InvalidTypeIdException.class)
+            .hasMessageContaining("is not a OtherPlugin");
     }
 
     @Test
@@ -94,6 +111,9 @@ class PluginDeserializerTest {
     }
 
     public record TestPluginHolder(Plugin plugin) {
+    }
+
+    public interface OtherPlugin extends Plugin {
     }
 
     public record TestPlugin(String type) implements Plugin {

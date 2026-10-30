@@ -30,6 +30,7 @@ export const storageKeys = {
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
     SHOW_CHART: "showChart",
+    EXECUTIONS_CHART_MODE: "executionsChartMode",
     SHOW_FLOWS_CHART: "showFlowsChart",
     SHOW_LOGS_CHART: "showLogsChart",
     DEFAULT_NAMESPACE: "defaultNamespace",

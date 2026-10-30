@@ -173,6 +173,68 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
     }
 
     @Test
+    void shouldLoadAsFlowWithExceptionWhenATaskTypeIsNotATask() {
+        String flowId = "runner-as-task-" + IdUtils.create();
+        String namespace = "io.kestra.unittest";
+        String sourceCode = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: runner
+                type: io.kestra.plugin.core.runner.Process
+            """.formatted(flowId, namespace);
+
+        dslContextWrapper.transaction(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            context.insertInto(flowRepository.jdbcRepository.getTable())
+                .set(field("key"), namespace + "_" + flowId)
+                .set(field("source_code"), sourceCode)
+                .set(
+                    field("value"), (Object) JSONB.valueOf(JacksonMapper.ofJson().writeValueAsString(
+                        Map.of(
+                            "id", flowId,
+                            "namespace", namespace,
+                            "tenantId", MAIN_TENANT,
+                            "revision", 1,
+                            "deleted", false,
+                            "disabled", false,
+                            "tasks", List.of(
+                                Map.of(
+                                    "id", "runner",
+                                    "type", "io.kestra.plugin.core.runner.Process"
+                                )
+                            ),
+                            "source", sourceCode
+                        )
+                    ))
+                )
+                .execute();
+        });
+
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(MAIN_TENANT, namespace, flowId);
+
+        try {
+            assertThat(flow).isPresent();
+            assertThat(flow.get()).isInstanceOf(FlowWithException.class);
+
+            ArrayListTotal<Flow> found = flowRepository.find(
+                Pageable.UNPAGED, MAIN_TENANT, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.FLOW_ID)
+                        .value(flowId)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .build()
+                )
+            );
+            assertThat(found).extracting(Flow::getId).containsExactly(flowId);
+        } finally {
+            flow.ifPresent(value -> flowRepository.delete(value));
+        }
+    }
+
+    @Test
     void shouldRejectUnknownSortField() {
         Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc("nonexistent")));
 

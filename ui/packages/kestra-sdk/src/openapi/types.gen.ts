@@ -2240,7 +2240,7 @@ export type Sla = {
 
 export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 
-export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
+export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
 

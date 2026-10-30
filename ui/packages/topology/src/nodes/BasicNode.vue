@@ -45,7 +45,7 @@
                     <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>
-                <div v-if="$slots.footer" class="node-footer">
+                <div v-if="$slots.footer" class="node-footer" data-test="node-footer">
                     <slot name="footer" />
                 </div>
             </div>
@@ -368,6 +368,7 @@
     }
 
     .node-footer {
+        position: relative;
         flex: 1;
         display: flex;
         align-items: flex-end;

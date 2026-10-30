@@ -61,7 +61,7 @@
                         :disabled
                     />
                 </KsCol>
-                <KsCol :span="2" class="col align-self-center delete">
+                <KsCol :span="2" class="delete">
                     <Delete @click="removeItem(index)" />
                 </KsCol>
             </KsRow>

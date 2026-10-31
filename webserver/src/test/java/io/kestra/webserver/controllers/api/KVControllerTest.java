@@ -403,6 +403,21 @@ class KVControllerTest {
         assertThat(kvStore().exists("my-key")).isFalse();
     }
 
+    @Test
+    void shouldRejectSetKeyValueWhenTtlIsNotAnIsoDuration() throws IOException {
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .header("ttl", "not-a-duration")
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(kvStore().exists("my-key")).isFalse();
+    }
+
     private InternalKVStore kvStore() {
         return this.kvStore(NAMESPACE);
     }

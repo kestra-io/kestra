@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS ${table} (
         COALESCE(JQ_STRING("value", '.message'), '') ||
         COALESCE(JQ_STRING("value", '.thread'), '')
     ),
-    "tenant_id" VARCHAR(250) GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
+    "tenant_id" VARCHAR(250) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
     "execution_kind" VARCHAR(32) GENERATED ALWAYS AS (JQ_STRING("value", '.executionKind'))
 );
 

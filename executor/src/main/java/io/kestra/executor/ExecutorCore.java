@@ -10,8 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -29,10 +27,13 @@ import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -45,6 +46,7 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.NoTransactionContext;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.SubflowExecutionEnd;
@@ -72,7 +74,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 /**
@@ -513,6 +514,27 @@ public class ExecutorCore {
             }
         }
         return false;
+    }
+
+    public void drainQueuedExecutions(FlowInterface flow) {
+        Flow resolvedFlow = flow instanceof Flow f ? f
+            : flowMetaStore.findByIdForRuntime(
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                Optional.ofNullable(flow.getRevision())
+            ).map(ProcessedFlow::flow).orElse(null);
+
+        for (Execution popped : concurrencySlotReleaseProcessor.drain(flow)) {
+            try {
+                executionQueue.emit(popped);
+                if (resolvedFlow != null) {
+                    processFlowTriggers(resolvedFlow, popped);
+                }
+            } catch (QueueException e) {
+                log.error("Failed to emit dequeued execution '{}' for flow '{}.{}'", popped.getId(), flow.getNamespace(), flow.getId(), e);
+            }
+        }
     }
 
     private void processFlowTriggers(Flow flow, Execution execution) throws QueueException {

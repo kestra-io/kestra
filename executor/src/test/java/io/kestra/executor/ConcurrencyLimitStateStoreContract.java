@@ -261,6 +261,76 @@ public abstract class ConcurrencyLimitStateStoreContract {
         assertThat(currentCount(limited)).isZero();
     }
 
+    @Test
+    void shouldDrainAndPopUpToLimitWhenSlotsAvailable() {
+        Flow flow = flow(3);
+        Execution first = Execution.newExecution(flow, List.of());
+        Execution second = Execution.newExecution(flow, List.of());
+        Execution third = Execution.newExecution(flow, List.of());
+        Instant now = Instant.now();
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, first, now.minusSeconds(60)));
+            queuedStore().save(txContext, queued(flow, second, now.minusSeconds(30)));
+            queuedStore().save(txContext, queued(flow, third, now));
+            return Pair.of(null, limit.withRunning(1));
+        });
+
+        List<Execution> popped = store().drainAndPop(
+            flow,
+            3,
+            queuedStore(),
+            (txContext, execution) -> execution
+        );
+
+        assertThat(popped).extracting(Execution::getId).containsExactly(first.getId(), second.getId());
+        assertThat(currentCount(flow)).isEqualTo(3);
+    }
+
+    @Test
+    void shouldDrainAndPopAllWhenConcurrencyRemoved() {
+        Flow flow = flow(1);
+        Execution first = Execution.newExecution(flow, List.of());
+        Execution second = Execution.newExecution(flow, List.of());
+        Instant now = Instant.now();
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, first, now.minusSeconds(60)));
+            queuedStore().save(txContext, queued(flow, second, now));
+            return Pair.of(null, limit.withRunning(1));
+        });
+
+        List<Execution> popped = store().drainAndPop(
+            flow,
+            -1,
+            queuedStore(),
+            (txContext, execution) -> execution
+        );
+
+        assertThat(popped).extracting(Execution::getId).containsExactly(first.getId(), second.getId());
+    }
+
+    @Test
+    void shouldNotDrainWhenAtOrAboveLimit() {
+        Flow flow = flow(2);
+        Execution waiting = Execution.newExecution(flow, List.of());
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, waiting, Instant.now()));
+            return Pair.of(null, limit.withRunning(2));
+        });
+
+        List<Execution> popped = store().drainAndPop(
+            flow,
+            2,
+            queuedStore(),
+            (txContext, execution) -> execution
+        );
+
+        assertThat(popped).isEmpty();
+        assertThat(currentCount(flow)).isEqualTo(2);
+    }
+
     private int currentCount(Flow flow) {
         AtomicInteger count = new AtomicInteger();
         store().countThenProcess(flow, (txContext, limit) ->

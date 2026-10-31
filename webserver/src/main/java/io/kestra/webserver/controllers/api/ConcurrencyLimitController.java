@@ -1,7 +1,15 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
@@ -19,11 +27,22 @@ import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
-    @Inject
-    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    private final ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    private final FlowRepositoryInterface flowRepository;
+    private final BroadcastQueueInterface<FlowInterface> flowQueue;
+    private final TenantService tenantService;
 
     @Inject
-    private TenantService tenantService;
+    public ConcurrencyLimitController(
+        ConcurrencyLimitRepositoryInterface concurrencyLimitRepository,
+        FlowRepositoryInterface flowRepository,
+        BroadcastQueueInterface<FlowInterface> flowQueue,
+        TenantService tenantService) {
+        this.concurrencyLimitRepository = Objects.requireNonNull(concurrencyLimitRepository);
+        this.flowRepository = Objects.requireNonNull(flowRepository);
+        this.flowQueue = Objects.requireNonNull(flowQueue);
+        this.tenantService = Objects.requireNonNull(tenantService);
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -45,7 +64,7 @@ public class ConcurrencyLimitController {
     @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) {
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) throws QueueException {
         String tenantId = tenantService.resolveTenant();
         var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
@@ -59,6 +78,11 @@ public class ConcurrencyLimitController {
             .flowId(flowId)
             .running(concurrencyLimit.getRunning())
             .build();
-        return HttpResponse.ok(concurrencyLimitRepository.update(toUpdate));
+        ConcurrencyLimit updated = concurrencyLimitRepository.update(toUpdate);
+        Optional<Flow> flow = flowRepository.findById(tenantId, namespace, flowId, Optional.empty());
+        if (flow.isPresent()) {
+            flowQueue.emit(flow.get());
+        }
+        return HttpResponse.ok(updated);
     }
 }

@@ -10,16 +10,21 @@ import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 
 import jakarta.inject.Inject;
@@ -38,6 +43,12 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private FlowService flowService;
+
+    @Inject
+    private BroadcastQueueInterface<FlowInterface> flowQueue;
 
     @Inject
     private ExecutionService executionService;
@@ -136,6 +147,90 @@ public class FlowConcurrencyCaseTest {
                     assertThat(log.getMessage()).isEqualTo("Execution is CANCELLED due to concurrency queue limit reached (1/1).");
                 })
         );
+    }
+
+    public void flowConcurrencyQueueRaiseLimit(String tenantId) throws Exception {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-raise-limit", Optional.empty())
+            .orElseThrow();
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-raise-limit", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().isQueued()).isTrue();
+        assertThat(execution3.getState().isQueued()).isTrue();
+
+        Flow updatedFlow = flow.toBuilder()
+            .concurrency(Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(3).build())
+            .build();
+        flowService.update(GenericFlow.of(updatedFlow), GenericFlow.of(flow));
+
+        Execution running2 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution2, Duration.ofSeconds(30));
+        Execution running3 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution3, Duration.ofSeconds(30));
+        assertThat(running2.getState().isRunning()).isTrue();
+        assertThat(running3.getState().isRunning()).isTrue();
+
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution1, Duration.ofSeconds(30));
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution2, Duration.ofSeconds(30));
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution3, Duration.ofSeconds(30));
+
+        assertRunningCounterBackToZero(tenantId, "flow-concurrency-queue-raise-limit");
+    }
+
+    public void flowConcurrencyQueueRemoveConcurrency(String tenantId) throws Exception {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-remove", Optional.empty())
+            .orElseThrow();
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-remove", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().isQueued()).isTrue();
+
+        Flow updatedFlow = flow.toBuilder()
+            .concurrency(null)
+            .build();
+        flowService.update(GenericFlow.of(updatedFlow), GenericFlow.of(flow));
+
+        Execution running2 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution2, Duration.ofSeconds(30));
+        assertThat(running2.getState().isRunning()).isTrue();
+
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution1, Duration.ofSeconds(30));
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution2, Duration.ofSeconds(30));
+
+        assertThat(concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue-remove")).isEmpty();
+    }
+
+    public void flowConcurrencyQueueResetCounter(String tenantId) throws Exception {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-reset", Optional.empty())
+            .orElseThrow();
+
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue-reset")
+            .orElseGet(
+                () -> ConcurrencyLimit.builder()
+                    .tenantId(tenantId)
+                    .namespace(NAMESPACE)
+                    .flowId("flow-concurrency-queue-reset")
+                    .running(0)
+                    .build()
+            );
+        concurrencyLimitRepository.update(concurrencyLimit.withRunning(1));
+
+        Execution execution1 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        assertThat(execution1.getState().isQueued()).isTrue();
+
+        concurrencyLimitRepository.update(concurrencyLimit.withRunning(0));
+        flowQueue.emit(flow);
+
+        Execution running1 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution1, Duration.ofSeconds(30));
+        assertThat(running1.getState().isRunning()).isTrue();
+
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent() == State.Type.SUCCESS, execution1, Duration.ofSeconds(30));
+        assertRunningCounterBackToZero(tenantId, "flow-concurrency-queue-reset");
     }
 
     public void flowConcurrencyQueuePause(String tenantId) throws QueueException {

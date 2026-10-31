@@ -97,6 +97,20 @@ public interface ConcurrencyLimitStateStore {
         BiFunction<TransactionContext, Execution, Execution> consumer);
 
     /**
+     * Drains queued executions up to the limit, or every queued execution if limit is negative.
+     *
+     * @param flow the flow whose queued executions to drain
+     * @param limit the concurrency limit, or -1 if concurrency was removed
+     * @param executionQueuedStateStore the store queued candidates are popped from
+     * @param consumer maps each popped execution to the execution to run (e.g. marks it RUNNING)
+     * @return the mapped popped executions, oldest first
+     */
+    default List<Execution> drainAndPop(FlowInterface flow, int limit, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer) {
+        return List.of();
+    }
+
+    /**
      * Atomically release the slots a terminated execution holds — decrement the counter of
      * every given scope — then pop the oldest queued executions that fit <b>all</b> of their own
      * scopes, skipping candidates that do not fit yet. Popping continues while the widest

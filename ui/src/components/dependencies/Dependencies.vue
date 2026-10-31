@@ -34,6 +34,7 @@
                                 class="graph-canvas"
                                 :nodes="chartNodes"
                                 :edges="chartEdges"
+                                :layout="chartLayout"
                                 :loading="isRendering"
                                 :options="graphOptions"
                                 @node-click="handleNodeClick"
@@ -218,6 +219,7 @@
         getElements,
         chartNodes,
         chartEdges,
+        chartLayout,
         isLoading,
         isRendering,
         selectedNodeID,

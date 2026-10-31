@@ -1190,6 +1190,9 @@
     "unlock trigger": {
       "success": "Trigger is unlocked"
     },
+    "trigger blocked": "Blocked",
+    "trigger blocked policy check failed": "Governance policies could not be checked.",
+    "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
     "trigger enable dialog": {
       "title": "Enable trigger",

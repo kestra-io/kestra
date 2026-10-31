@@ -1190,6 +1190,9 @@
     "unlock trigger": {
       "success": "triggerのロックが解除されました"
     },
+    "trigger blocked": "ブロック済み",
+    "trigger blocked policy check failed": "ガバナンスポリシーを確認できませんでした。",
+    "trigger blocked unknown": "不明な理由によりブロックされました。",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger enable dialog": {
       "title": "trigger を有効化",

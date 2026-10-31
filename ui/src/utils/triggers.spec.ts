@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, onTestFinished} from "vitest"
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-import {searchTriggers, searchTriggersForFlow, exportTriggersAsCSV} from "./triggers"
+import {blockerMessage, searchTriggers, searchTriggersForFlow, exportTriggersAsCSV} from "./triggers"
 
 vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
     searchTriggers: vi.fn(),
@@ -49,5 +49,19 @@ describe("exportTriggersAsCSV", () => {
         expect(link.getAttribute("download")).toBe("triggers.csv")
         expect(link.getAttribute("href")).toBe("blob:triggers")
         expect(revokeObjectURL).toHaveBeenCalledWith("blob:triggers")
+    })
+})
+
+describe("blockerMessage", () => {
+    const t = (key: string) => `t:${key}`
+
+    it.each([
+        {case: "a policy shows the server message", blocker: {reason: "POLICY", message: "Log plugin is not allowed by policy"}, expected: "Log plugin is not allowed by policy"},
+        {case: "a failed policy check hides its internal cause", blocker: {reason: "POLICY_CHECK_FAILED", message: "Governance policy resolution failed: connection reset"}, expected: "t:trigger blocked policy check failed"},
+        {case: "a policy without a message falls back to a generic text", blocker: {reason: "POLICY", message: ""}, expected: "t:trigger blocked unknown"},
+        {case: "an unknown reason shows a generic text, even with a message", blocker: {reason: "UNKNOWN", message: "Blocked for a new reason"}, expected: "t:trigger blocked unknown"},
+        {case: "an unknown reason without a message falls back to a generic text", blocker: {reason: "UNKNOWN"}, expected: "t:trigger blocked unknown"},
+    ])("$case", ({blocker, expected}) => {
+        expect(blockerMessage(blocker, t)).toBe(expected)
     })
 })

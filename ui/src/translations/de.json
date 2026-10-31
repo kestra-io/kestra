@@ -1190,6 +1190,9 @@
     "unlock trigger": {
       "success": "Der Trigger wurde entsperrt"
     },
+    "trigger blocked": "Blockiert",
+    "trigger blocked policy check failed": "Governance-Policies konnten nicht geprüft werden.",
+    "trigger blocked unknown": "Aus unbekanntem Grund blockiert.",
     "trigger disabled": "Der Trigger ist in der Flow-Quelle deaktiviert",
     "trigger enable dialog": {
       "title": "Trigger aktivieren",

@@ -773,7 +773,7 @@ class ExecutionServiceTest {
             .withState(State.Type.CREATED);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution is not suspended");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test
@@ -792,7 +792,7 @@ class ExecutionServiceTest {
             .withState(State.Type.BREAKPOINT);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution has no breakpoint");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test

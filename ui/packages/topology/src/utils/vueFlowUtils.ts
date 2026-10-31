@@ -510,6 +510,40 @@ export function getFlowableGateAliases(
     return aliases
 }
 
+/** Maps the flow's own root dot onto the Triggers lane's end dot the backend wires it straight out
+ *  of, so the gap between the trigger box and the first task stops rendering two joints in a row
+ *  (kestra-io/kestra#21047). The lane's end is the one that stays, because it is a member of the
+ *  lane: keeping it leaves the box's own layout untouched — its height, its padding, and the point
+ *  several triggers fan into all stay where they were — and only the joint outside the box goes.
+ *  The flow root is kept whenever anything else meets there, since `errors:` and `finally:` fan out
+ *  of it and it is then a junction rather than a redundant joint. A collapsed or absorbed lane is
+ *  excluded, since there the placeholder already stands for both. */
+export function getTriggersJoinAlias(
+    clusters: FlowGraph["clusters"],
+    nodes: MinimalNode[],
+    edges: FlowGraphEdge[],
+    collapsed: Set<string> = new Set(),
+    edgeReplacer: EdgeReplacer = {},
+): Record<string, string> {
+    const triggers = clusters.find((entry) => entry.cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID)
+    if (!triggers?.end || collapsed.has(TRIGGERS_NODE_UID)) return {}
+    if (edgeReplacer[triggers.cluster.uid] || edgeReplacer[triggers.end]) return {}
+
+    const flowRoot = edges.find(
+        (edge) =>
+            edge.source === triggers.end &&
+            nodes.find((node) => node.uid === edge.target)?.type.endsWith("GraphClusterRoot"),
+    )?.target
+    if (!flowRoot) return {}
+
+    // The lane's end feeds it and the first task leaves it; a third edge means something branches
+    // there, so the dot carries meaning and stays.
+    const touching = edges.filter((edge) => edge.source === flowRoot || edge.target === flowRoot)
+    if (touching.length > 2) return {}
+
+    return {[flowRoot]: triggers.end}
+}
+
 /** The task ids of a lane's direct children — real tasks and nested lanes alike, each counted
  *  once — for the lane header's child count and aggregate state. Excludes the lane's own gate
  *  node and the structural root/end/finally/afterExecution markers. */
@@ -550,10 +584,11 @@ export function haveAdd(
         return undefined
     }
     if (clustersRootTaskUids.includes(edge.target)) return undefined
-    if (
-        edge.source.startsWith(TRIGGERS_NODE_UID) ||
-        edge.target.startsWith(TRIGGERS_NODE_UID)
-    ) {
+    // A trigger is not a task, so nothing can be inserted on the lane's own wiring. The run that
+    // leaves the lane for a real task is the exception: once the flow root is folded onto the lane
+    // end, that run is where a task is inserted before the first one (kestra-io/kestra#21047).
+    if (edge.target.startsWith(TRIGGERS_NODE_UID)) return undefined
+    if (edge.source.startsWith(TRIGGERS_NODE_UID) && isClusterRootOrEnd(nodeByUid[edge.target])) {
         return undefined
     }
 
@@ -590,7 +625,10 @@ export function haveAdd(
     if (targetNode.type.endsWith("GraphClusterRoot")) {
         return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
+    // The Triggers lane owns no task, so "after the lane's task" means nothing for it and the
+    // insertion is placed from the edge's target instead.
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
+        && !edge.source.startsWith(TRIGGERS_NODE_UID)
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
         const refId = Utils.afterLastDot(edge.source)
         return refId ? withDag({refId, position: "after"}) : undefined
@@ -829,15 +867,18 @@ export function generateGraph(
     }
 
     const clusters = withSyntheticErrorsLane(flowGraph)
-    const gateAliases = getFlowableGateAliases(clusters, collapsed, edgeReplacer)
-    const hiddenOrAliased = Object.keys(gateAliases).length
-        ? hiddenNodes.concat(Object.keys(gateAliases))
+    const nodeAliases = {
+        ...getFlowableGateAliases(clusters, collapsed, edgeReplacer),
+        ...getTriggersJoinAlias(clusters, flowGraph.nodes, flowGraph.edges ?? [], collapsed, edgeReplacer),
+    }
+    const hiddenOrAliased = Object.keys(nodeAliases).length
+        ? hiddenNodes.concat(Object.keys(nodeAliases))
         : hiddenNodes
     const edges = (flowGraph.edges ?? [])
         .map((edge) => ({
             ...edge,
-            source: gateAliases[edge.source] ?? edge.source,
-            target: gateAliases[edge.target] ?? edge.target,
+            source: nodeAliases[edge.source] ?? edge.source,
+            target: nodeAliases[edge.target] ?? edge.target,
         }))
         .filter((edge) => edge.source !== edge.target)
 

@@ -498,6 +498,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
 
     @SuperBuilder
+    @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
     public static class Signature {

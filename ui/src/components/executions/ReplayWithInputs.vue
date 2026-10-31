@@ -17,6 +17,7 @@
     import {useToast} from "../../utils/toast"
     import {useRouter, useRoute} from "vue-router"
     import {inputsToFormData} from "../../utils/submitTask"
+    import {flattenInputs} from "../../utils/inputs"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import * as ExecutionUtils from "../../utils/executionUtils"
@@ -45,7 +46,7 @@
 
     const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
 
-        const formData = inputsToFormData(flow.value?.inputs, inputs)
+        const formData = inputsToFormData(flattenInputs(flow.value?.inputs), inputs)
         const replayed = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

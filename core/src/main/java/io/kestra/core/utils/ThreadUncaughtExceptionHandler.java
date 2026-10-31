@@ -61,10 +61,16 @@ public final class ThreadUncaughtExceptionHandler implements UncaughtExceptionHa
             System.err.println(e.getMessage());
             System.err.println(errorInLogging.getMessage());
         } finally {
-            context.shutdown();
-
-            if (!isTest) {
-                Runtime.getRuntime().exit(1);
+            try {
+                context.shutdown();
+            } catch (Throwable shutdownError) {
+                // A failed shutdown must not prevent process termination.
+                System.err.println("Failed to shut down the Kestra context");
+                shutdownError.printStackTrace();
+            } finally {
+                if (!isTest) {
+                    Runtime.getRuntime().exit(1);
+                }
             }
         }
     }

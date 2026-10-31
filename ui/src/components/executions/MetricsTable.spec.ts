@@ -18,6 +18,10 @@ vi.mock("@kestra-io/design-system", async () => {
     }
 })
 
+vi.mock("./metricDescriptions", () => ({
+    useMetricDescriptions: () => () => undefined,
+}))
+
 vi.mock("@kestra-io/kestra-sdk/metrics", () => ({
     searchByExecution: vi.fn().mockResolvedValue({results: [], total: 0}),
 }))

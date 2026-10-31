@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.preview;
 
+import java.util.Locale;
 import java.util.Set;
 
 import io.kestra.core.models.annotations.Plugin;
@@ -27,7 +28,7 @@ public class ImageFileRenderer extends AbstractBase64FileRenderer {
 
     @Override
     public boolean supports(String extension) {
-        return SUPPORTED_EXTENSIONS.contains(extension.toLowerCase());
+        return extension != null && SUPPORTED_EXTENSIONS.contains(extension.toLowerCase(Locale.ROOT));
     }
 
     @Override

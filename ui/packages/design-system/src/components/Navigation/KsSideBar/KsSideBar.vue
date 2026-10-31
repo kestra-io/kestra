@@ -33,7 +33,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
     background-color: var(--ks-bg-sidebar);
     border-right: 1px solid var(--ks-border-default);
     padding: var(--ks-spacing-6) 0 var(--ks-spacing-4);

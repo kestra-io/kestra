@@ -311,12 +311,13 @@
     width: 215px;
     flex-shrink: 0;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
     transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-right-width 0.32s ease;
 
     &.is-collapsed {
         width: 0;
         border-right-width: 0;
+        overflow: hidden;
     }
 
     &.is-overlay {

@@ -1,0 +1,11 @@
+id: log-to-file-cache
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.debug.Return
+    format: Hello World!
+    logToFile: true
+    taskCache:
+      enabled: true
+      ttl: PT1H

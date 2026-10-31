@@ -1,4 +1,5 @@
 import {afterEach, describe, expect, it} from "vitest"
+import * as BasicAuth from "./basicAuth"
 import {isLoggedIn} from "./basicAuth"
 
 function setCookieJar(cookie: string) {
@@ -51,5 +52,28 @@ describe("isLoggedIn", () => {
         setCookieJar("kestraBasicAuthenticated= true")
 
         expect(isLoggedIn()).toBe(false)
+    })
+})
+
+describe("stored username", () => {
+    afterEach(() => {
+        localStorage.clear()
+    })
+
+    it("stores, retrieves, and removes the username", () => {
+        expect(BasicAuth.getStoredUsername()).toBeNull()
+
+        BasicAuth.setStoredUsername("user@example.com")
+        expect(BasicAuth.getStoredUsername()).toBe("user@example.com")
+
+        BasicAuth.removeStoredUsername()
+        expect(BasicAuth.getStoredUsername()).toBeNull()
+    })
+
+    it("clears the stored username on logout", async () => {
+        BasicAuth.setStoredUsername("user@example.com")
+        await BasicAuth.logout()
+
+        expect(BasicAuth.getStoredUsername()).toBeNull()
     })
 })

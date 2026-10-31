@@ -295,6 +295,82 @@ LevelOfDetailPill.args = {
     defaultViewport: {x: 0, y: 0, zoom: 0.3},
 }
 
+// The pill is the whole node at this zoom, so a task's state has to survive on it: a 13-task
+// execution already opens below the threshold, and the state is what tells you which task failed
+// (kestra-io/kestra#21619).
+// Roughly where a 13-task execution lands at fit-to-view, which is the zoom the report was filed at.
+const PILL_ZOOM = 0.3
+
+const PILL_STATUS_EXECUTION = {
+    ...MIXED_LANE_EXECUTION,
+    taskRunList: [...MIXED_LANE_EXECUTION.taskRunList, taskRun("hard_fail_after_parallel", "FAILED")],
+}
+
+export const LevelOfDetailPillStatuses: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, states stay readable",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args" />
+        </div>`,
+    }),
+    args: {
+        ...LevelOfDetailPill.args,
+        id: "story-lod-pill-statuses",
+        execution: PILL_STATUS_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: PILL_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const statuses = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill-status\"]"))
+
+        await waitFor(() => expect(statuses().length).toBeGreaterThan(0))
+
+        const labels = statuses().map((status) => status.getAttribute("aria-label"))
+        expect(labels).toContain("FAILED")
+        expect(labels).toContain("SUCCESS")
+        // WARNING falls through to the neutral style, which carries no background tint of its own,
+        // so its glyph is the only thing left to tell it apart from a success.
+        expect(labels).toContain("WARNING")
+
+        // The ring is the scannable signal, and what reaches the screen is its graph-space width
+        // times the zoom — so assert the product, not the width. Uncompensated it would be 0.3px.
+        const pill = canvasElement.querySelector<HTMLElement>("[data-test=\"topology-task-pill\"]")!
+        const ring = parseFloat(getComputedStyle(pill).borderTopWidth)
+        expect(ring * PILL_ZOOM).toBeGreaterThan(0.8)
+        expect(ring * PILL_ZOOM).toBeLessThan(1.25)
+
+        // Likewise the glyph: 14px of graph space reaches the screen as 4px at this zoom.
+        expect(statuses()[0].getBoundingClientRect().height).toBeGreaterThan(8)
+    },
+}
+
+// Deep enough that both compensations are pinned to their caps, which is what stops a 200-task
+// graph growing a ring thicker than the pill it rings.
+const DEEP_ZOOM = 0.1
+
+export const LevelOfDetailPillDeepZoom: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, compensation stays bounded",
+    render: LevelOfDetailPillStatuses.render,
+    args: {
+        ...LevelOfDetailPillStatuses.args,
+        id: "story-lod-pill-deep-zoom",
+        defaultViewport: {x: 0, y: 0, zoom: DEEP_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const pills = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill\"]"))
+
+        await waitFor(() => expect(pills().length).toBeGreaterThan(0))
+
+        // `box-sizing: border-box` holds the pill's 2.5rem box fixed, so the ring thickens inwards
+        // and the bounding box is identical at every zoom: the cap can only be read off the border
+        // width itself. 4px is PILL_COMPENSATION.RING_MAX, which 0.1 zoom is far enough out to hit.
+        expect(getComputedStyle(pills()[0]).borderTopWidth).toBe("4px")
+    },
+}
+
 export const LevelOfDetailDefault = LodTemplate.bind({})
 LevelOfDetailDefault.storyName = "Level of Detail — Default"
 LevelOfDetailDefault.args = {

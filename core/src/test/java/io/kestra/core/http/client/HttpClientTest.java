@@ -10,8 +10,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Locale;
@@ -102,6 +106,7 @@ class HttpClientTest {
         embeddedServer.start();
         embeddedServerUri = embeddedServer.getURI();
         ClientTestController.retryAttempts.set(0);
+        ClientTestController.retryAfterAttempts.clear();
     }
 
     HttpClient client() throws IllegalVariableEvaluationException {
@@ -761,6 +766,46 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldWaitForRetryAfterWhenGivenInSeconds() throws Exception {
+        assertThat(retryGapAfter("1", Duration.ofSeconds(5))).isBetween(Duration.ofMillis(950), Duration.ofSeconds(4));
+    }
+
+    @Test
+    void shouldWaitForRetryAfterWhenGivenAsHttpDate() throws Exception {
+        // An HTTP date has a one-second precision, so a date 3 seconds ahead is at least 2 seconds away.
+        var date = DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(3));
+
+        assertThat(retryGapAfter(date, Duration.ofSeconds(10))).isBetween(Duration.ofMillis(1950), Duration.ofSeconds(5));
+    }
+
+    @Test
+    void shouldUsePolicyDelayWhenRetryAfterIsMissing() throws Exception {
+        assertThat(retryGapAfter(null, Duration.ofSeconds(5))).isLessThan(Duration.ofMillis(500));
+    }
+
+    @Test
+    void shouldCapRetryAfterAtMaxIntervalWhenLonger() throws Exception {
+        assertThat(retryGapAfter("30", Duration.ofSeconds(1))).isBetween(Duration.ofMillis(950), Duration.ofSeconds(4));
+    }
+
+    private Duration retryGapAfter(String retryAfter, Duration maxInterval) throws Exception {
+        var configuration = HttpConfiguration.builder()
+            .retryOnStatusCodes(Property.ofValue(List.of(502)))
+            .retry(Exponential.builder().interval(Duration.ofMillis(10)).maxInterval(maxInterval).maxAttempts(3).build())
+            .build();
+        var query = retryAfter == null ? "" : "?retryAfter=" + URLEncoder.encode(retryAfter, StandardCharsets.UTF_8);
+
+        try (HttpClient client = client(b -> b.configuration(configuration))) {
+            HttpResponse<String> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/retry-after" + query)), String.class);
+
+            assertThat(response.getBody()).isEqualTo("recovered");
+        }
+        var attempts = ClientTestController.retryAfterAttempts;
+        assertThat(attempts).hasSize(2);
+        return Duration.ofNanos(attempts.get(1) - attempts.get(0));
+    }
+
+    @Test
     void shouldRetryGetOnConnectionReset() throws Exception {
         // The server resets more times than Apache's own built-in retry could absorb on its own.
         try (
@@ -914,6 +959,8 @@ class HttpClientTest {
     public static class ClientTestController {
         // Counts attempts against /http/retry; reset in @BeforeEach.
         static final AtomicInteger retryAttempts = new AtomicInteger();
+        // Times (System.nanoTime) of the calls to /http/retry-after; reset in @BeforeEach.
+        static final List<Long> retryAfterAttempts = new CopyOnWriteArrayList<>();
 
         @SuppressWarnings("JsonStandardCompliance")
         @Get("text")
@@ -979,6 +1026,18 @@ class HttpClientTest {
         @Produces(MediaType.TEXT_PLAIN)
         public io.micronaut.http.HttpResponse<String> retryGet(@QueryValue int failureStatus, @QueryValue int succeedAfterAttempts) {
             return retryResponse(failureStatus, succeedAfterAttempts);
+        }
+
+        // 502 rather than 429 or 503, which Apache's own retry would also handle and so blur the measured gap.
+        @Get("retry-after")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> retryAfter(@QueryValue(defaultValue = "") String retryAfter) {
+            retryAfterAttempts.add(System.nanoTime());
+            if (retryAfterAttempts.size() > 1) {
+                return io.micronaut.http.HttpResponse.ok("recovered");
+            }
+            var response = io.micronaut.http.HttpResponse.status(HttpStatus.BAD_GATEWAY).body("failing");
+            return retryAfter.isEmpty() ? response : response.header(HttpHeaders.RETRY_AFTER, retryAfter);
         }
 
         @Post(uri = "retry", consumes = MediaType.ALL)

@@ -13,11 +13,6 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import Empty from "../layout/empty/Empty.vue"
-    import {useDocStore} from "../../stores/doc"
-
-    const docStore = useDocStore()
-
-    docStore.docId = "namespace.management"
 
     const props = defineProps<{
         tab: string;

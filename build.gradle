@@ -153,7 +153,6 @@ allprojects {
             implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra
-            implementation "com.devskiller.friendly-id:friendly-id"
             implementation ("net.thisptr:jackson-jq") {
                 exclude group: 'com.fasterxml.jackson.core'
             }

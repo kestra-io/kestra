@@ -10,7 +10,7 @@ export const QUICK_FILTER_TABS = [
     {
         key: "running",
         token: "--ks-status-running",
-        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING"],
+        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "PAUSING", "RETRYING", "KILLING"],
     },
     {
         key: "paused",

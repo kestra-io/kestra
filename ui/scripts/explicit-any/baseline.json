@@ -9,7 +9,6 @@
   "src/components/no-code/components/tasks/TaskArray.vue": 6,
   "src/components/no-code/components/tasks/TaskDict.vue": 5,
   "src/components/no-code/components/tasks/TaskObjectField.vue": 7,
-  "src/components/no-code/components/tasks/fieldNesting.ts": 16,
   "src/stores/executions.bulkRestart.spec.ts": 1,
   "src/stores/logs.cursor.spec.ts": 1,
   "src/stores/logs.searchRace.spec.ts": 5,

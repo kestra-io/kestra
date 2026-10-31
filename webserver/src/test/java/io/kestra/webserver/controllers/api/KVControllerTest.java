@@ -414,7 +414,7 @@ class KVControllerTest {
             )
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(kvStore().exists("my-key")).isFalse();
     }
 

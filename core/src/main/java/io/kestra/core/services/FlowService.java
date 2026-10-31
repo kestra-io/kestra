@@ -1005,13 +1005,14 @@ public class FlowService {
                         }
 
                         String fieldName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
+                        String currentPath = prefix.isEmpty() ? fieldName : prefix + "." + fieldName;
                         Stream<String> additionalDeprecationPaths = Stream.empty();
                         if (fieldValue instanceof Object[] arrayValue) {
-                            additionalDeprecationPaths = IntStream.range(0, arrayValue.length).boxed().flatMap(i -> deprecationTraversal(fieldName + "[%d]".formatted(i), arrayValue[i]));
+                            additionalDeprecationPaths = IntStream.range(0, arrayValue.length).boxed().flatMap(i -> deprecationTraversal(currentPath + "[%d]".formatted(i), arrayValue[i]));
                         }
 
                         return Stream.concat(
-                            method.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(prefix.isEmpty() ? fieldName : prefix + "." + fieldName) : Stream.empty(),
+                            method.isAnnotationPresent(Deprecated.class) && fieldValue != null ? Stream.of(currentPath) : Stream.empty(),
                             additionalDeprecationPaths
                         );
                     } catch (IllegalAccessException | InvocationTargetException e) {

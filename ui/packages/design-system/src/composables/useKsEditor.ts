@@ -173,6 +173,7 @@ export function useKsEditor(
         duplicateTaskIdMarkers: () => mergedOptions.value.duplicateTaskIdMarkers,
         value: () => props.modelValue,
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
+        duplicateTaskIdMessage: (ids) => t("ks_editor.duplicate_task_id", {ids}),
     })
 
     const containerClass = computed(() => [

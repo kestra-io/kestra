@@ -2,11 +2,14 @@ package io.kestra.executor.handler;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
@@ -18,6 +21,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.flows.sla.types.AvgDurationSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -33,6 +37,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -258,6 +263,33 @@ class ExecutionEventMessageHandlerTest {
 
         // Then
         verify(slaMonitorStateStore).save(any());
+    }
+
+    @Test
+    void shouldStartTheSlaMonitorDeadlineAtTheRestartWhenAFailedExecutionIsRestarted() {
+        // Given: an execution that failed two hours ago and is restarted now, with a one-hour MAX_DURATION SLA
+        SLA sla = MaxDurationSLA.builder().id("max-duration").type(SLA.Type.MAX_DURATION).behavior(SLA.Behavior.FAIL).duration(Duration.ofHours(1)).build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithSla(sla)));
+        Instant createdAt = Instant.now().minus(Duration.ofHours(2));
+        Instant restartedAt = Instant.now();
+        State restartedState = new State(
+            State.Type.RESTARTED, List.of(
+                new State.History(State.Type.CREATED, createdAt),
+                new State.History(State.Type.RUNNING, createdAt),
+                new State.History(State.Type.FAILED, createdAt.plusSeconds(1)),
+                new State.History(State.Type.RESTARTED, restartedAt)
+            )
+        );
+        var execution = Execution.newExecution(flow, Collections.emptyList()).toBuilder().state(restartedState).build();
+        executionRepository.save(execution);
+
+        // When
+        executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.UPDATED));
+
+        // Then: the restarted run gets the whole SLA duration, counted from the restart
+        ArgumentCaptor<SLAMonitor> monitor = ArgumentCaptor.forClass(SLAMonitor.class);
+        verify(slaMonitorStateStore).save(monitor.capture());
+        assertThat(monitor.getValue().getDeadline()).isCloseTo(restartedAt.plus(Duration.ofHours(1)), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

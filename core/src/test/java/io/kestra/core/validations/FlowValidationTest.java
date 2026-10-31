@@ -406,6 +406,157 @@ class FlowValidationTest {
     }
 
     @Test
+    void tableInputDefaultsNotMatchingColumns_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: components
+                type: TABLE
+                maxRows: 3
+                columns:
+                  - id: name
+                    type: STRING
+                  - id: cpus
+                    type: INT
+                    min: 1
+                  - id: os
+                    type: SELECT
+                    values: [linux, windows]
+                    required: false
+                defaults:
+                  - name: web
+                    cpus: 2
+                    os: linux
+                  - name: db
+                    cpus: 0
+                  - name: cache
+                    cpus: many
+                    os: macos
+                  - cpus: 1
+                    disk: 20
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage())
+            .contains("Invalid default for input 'components'")
+            .contains("it must have at most `3` rows")
+            .contains("row 2, column `cpus`: it must be more than `1`")
+            .contains("row 3, column `cpus`: `many` is not a valid INT value")
+            .contains("row 3, column `os`: it must match the values")
+            .contains("row 4, column `disk`: it is not declared")
+            .contains("row 4, column `name`: missing required value")
+            .doesNotContain("row 1")
+            .doesNotContain("row 2, column `os`");
+    }
+
+    @Test
+    void filteredTableDefaults_rowBoundsLeftToTheRowsAnExecutionGets() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: types
+                type: MULTISELECT
+                values: [linux, windows]
+              - id: components
+                type: TABLE
+                maxRows: 2
+                dependsOn:
+                  inputs: [types]
+                filters:
+                  - column: type
+                    operation: IN
+                    value: "{{ inputs.types }}"
+                columns:
+                  - id: type
+                    type: STRING
+                  - id: cpus
+                    type: INT
+                    min: 1
+                defaults:
+                  - {type: linux, cpus: 2}
+                  - {type: windows, cpus: 0}
+                  - {type: linux, cpus: 4}
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage())
+            .contains("row 2, column `cpus`: it must be more than `1`")
+            .doesNotContain("rows");
+    }
+
+    @Test
+    void tableColumnsWithPrefillAndExpression_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: components
+                type: TABLE
+                columns:
+                  - id: cpus
+                    type: INT
+                    prefill: 2
+                  - id: type
+                    type: SELECT
+                    expression: "{{ ['linux', 'windows'] }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.map(ConstraintViolationException::getMessage).orElse(""))
+            .doesNotContain("cannot declare")
+            .contains("Input 'components' of type TABLE is only available in Enterprise Edition.");
+    }
+
+    @Test
+    void tableInputDefaultsWithExpressions_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: components
+                type: TABLE
+                columns:
+                  - id: cpus
+                    type: INT
+                defaults:
+                  - cpus: "{{ 1 + 1 }}"
+              - id: computed
+                type: TABLE
+                columns:
+                  - id: cpus
+                    type: INT
+                defaults: "{{ kv('components') }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.map(ConstraintViolationException::getMessage).orElse("")).doesNotContain("Invalid default");
+    }
+
+    @Test
     void inputDefaultAsExpression_valid() {
         Flow flow = YamlParser.parse("""
             id: test
@@ -904,6 +1055,31 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage()).contains("depends on a non-existent input 'data_center'");
+    }
+
+    @Test
+    void inputsDependingOnEachOther_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: a
+                type: STRING
+                dependsOn:
+                  inputs: [b]
+              - id: b
+                type: STRING
+                dependsOn:
+                  inputs: [a]
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Cycle dependency detected for input with id 'a': [a, b]");
     }
 
     @Test

@@ -463,6 +463,14 @@ public class FlowInputOutput {
                     // Descriptions can contain literal Pebble examples with unavailable variables.
                 }
             }
+            if (input instanceof TableInput table && !ListUtils.isEmpty(table.getFilters()) && table.getDefaults() != null) {
+                try {
+                    input = table.withMatchingDefaults(resolveDefaultValue(table, nonDecryptingContext.get()) instanceof List<?> rows ? rows : List.of());
+                } catch (Exception e) {
+                    resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                    return resolvable.get();
+                }
+            }
             resolvable.setInput(input);
 
             // Reject a file upload bound to an input that doesn't accept one.
@@ -487,6 +495,9 @@ public class FlowInputOutput {
                 RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
+                    if (input instanceof TableInput table && value instanceof List<?> rows) {
+                        value = table.matchingRows(rows);
+                    }
                 } catch (Exception e) {
                     resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                     return resolvable.get();
@@ -505,6 +516,9 @@ public class FlowInputOutput {
                 try {
                     var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
+                    if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
+                        table.validateSubmittedRows(rows);
+                    }
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
@@ -565,7 +579,7 @@ public class FlowInputOutput {
      * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
      * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
      */
-    private static boolean isTextType(Type type) {
+    public static boolean isTextType(Type type) {
         return type == Type.STRING || type == Type.SELECT
             || type == Type.EMAIL || type == Type.SECRET;
     }
@@ -785,10 +799,10 @@ public class FlowInputOutput {
         for (int i = 0; i < rows.size(); i++) {
             Object value = rows.get(i);
             if (!(value instanceof Map<?, ?> map)) {
-                violations.add(violation("row " + (i + 1) + ": expected an object", table, table.getId() + "[" + i + "]", value));
+                violations.add(violation("expected an object", table, table.getId() + "[" + i + "]", value));
                 continue;
             }
-            parsed.add(parseRecord(execution, table.getColumns(), map, "row " + (i + 1) + ", column ", table.getId() + "[" + i + "]", violations));
+            parsed.add(parseRecord(execution, table.getColumns(), map, table.getId() + "[" + i + "]", violations));
         }
         if (!violations.isEmpty()) {
             throw ManualConstraintViolation.toConstraintViolationException(violations);
@@ -798,20 +812,19 @@ public class FlowInputOutput {
 
     /**
      * Coerces and validates one record against its typed fields, a {@code TABLE} row against the table columns.
-     * Every failing field is reported into {@code violations} with {@code prefix} + the field id in front of the
-     * cause, so a caller can surface all of them at once, and with {@code path} + the field id as its property path
-     * ({@code disks[1].size_gb}), which is where the value sits inside the input.
+     * Every failing field is reported into {@code violations}, so a caller can surface all of them at once, with
+     * {@code path} + the field id as its property path ({@code disks[1].size_gb}), which is where the value sits inside
+     * the input.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String prefix, String path, Set<ConstraintViolation<?>> violations) {
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String path, Set<ConstraintViolation<?>> violations) {
         Map<String, Object> record = new LinkedHashMap<>();
         Set<String> declared = fields.stream().map(Input::getId).collect(Collectors.toSet());
         row.keySet().stream()
             .map(String::valueOf)
             .filter(key -> !declared.contains(key))
-            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
+            .forEach(key -> violations.add(violation("it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
         for (Input<?> field : fields) {
-            String label = prefix + "`" + field.getId() + "`";
             String propertyPath = path + "." + field.getId();
             Object value = row.get(field.getId());
             if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
@@ -819,7 +832,7 @@ public class FlowInputOutput {
             }
             if (value == null) {
                 if (Boolean.TRUE.equals(field.getRequired())) {
-                    violations.add(violation(label + ": missing required value", field, propertyPath, null));
+                    violations.add(violation("missing required value", field, propertyPath, null));
                 } else {
                     record.put(field.getId(), null);
                 }
@@ -832,9 +845,9 @@ public class FlowInputOutput {
                 record.put(field.getId(), parsed);
             } catch (ConstraintViolationException e) {
                 Object invalid = value;
-                e.getConstraintViolations().forEach(c -> violations.add(violation(label + ": " + c.getMessage(), field, propertyPath, invalid)));
+                e.getConstraintViolations().forEach(c -> violations.add(violation(c.getMessage(), field, propertyPath, invalid)));
             } catch (Exception e) {
-                violations.add(violation(label + ": " + e.getMessage(), field, propertyPath, value));
+                violations.add(violation(e.getMessage(), field, propertyPath, value));
             }
         }
         return record;

@@ -35,7 +35,9 @@ import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.TableFilter;
 import io.kestra.core.models.flows.input.TableInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.URIInput;
 import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
@@ -64,6 +66,7 @@ import reactor.core.publisher.Mono;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -1566,6 +1569,9 @@ class FlowInputOutputTest {
                 "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3: expected an object"
             );
+        assertThat(values.getFirst().exceptions())
+            .extracting(InputOutputValidationException::getPath, InputOutputValidationException::getDetail)
+            .contains(tuple("disks[1].size_gb", "it must be less than `2048`"), tuple("disks[2]", "expected an object"));
     }
 
     @Test
@@ -1652,6 +1658,117 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
         assertThat(values.getFirst().isDefault()).isTrue();
         assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("size_gb", 10, "mountpoint", "/")));
+    }
+
+    private static TableInput componentsFilteredBy(TableFilter.Operation operation, Object value) {
+        return componentsFilteredByBuilder(operation, value).build();
+    }
+
+    private static TableInput.TableInputBuilder<?, ?> componentsFilteredByBuilder(TableFilter.Operation operation, Object value) {
+        return TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .columns(List.of(
+                StringInput.builder().id("type").type(Type.STRING).build(),
+                StringInput.builder().id("name").type(Type.STRING).build()
+            ))
+            .defaults(Property.ofValue(List.of(
+                Map.of("type", "linux", "name", "web"),
+                Map.of("type", "windows", "name", "ad"),
+                Map.of("type", "linux", "name", "db")
+            )))
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .filters(List.of(new TableFilter("type", operation, value)));
+    }
+
+    @Test
+    void shouldKeepOnlyTheDefaultRowsMatchingFiltersRenderedFromTheInputsTheyDependOn() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(List.<Input<?>>of(types, components), null, DEFAULT_TEST_EXECUTION, Map.of("component_types", List.of("linux")));
+
+        InputAndValue table = values.get(1);
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web"), Map.of("type", "linux", "name", "db")));
+        assertThat(((TableInput) table.input()).getFilters().getFirst().value()).isEqualTo(List.of("linux"));
+        assertThat(((TableInput) table.input()).getMatchingDefaults()).containsExactly(0, 2);
+    }
+
+    private List<InputAndValue> submitComponents(TableInput components, String rows) {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        return flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", rows)
+        );
+    }
+
+    @Test
+    void shouldAcceptSubmittedRowsMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "db")));
+    }
+
+    @Test
+    void shouldRefuseASubmittedRowNotMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"windows\", \"name\": \"ad\"}]").get(1);
+
+        assertThat(table.exceptions()).singleElement().satisfies(exception -> {
+            assertThat(exception.getMessage()).contains("row 2, column `type`: it doesn't match the filter `IN [linux]`");
+            assertThat(exception.getPath()).isEqualTo("components[1].type");
+            assertThat(exception.getDetail()).isEqualTo("it doesn't match the filter `IN [linux]`");
+        });
+    }
+
+    @Test
+    void shouldRefuseMoreSubmittedRowsThanTheMatchingDefaultsWithoutRowDuplication() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("it must have at most `2` rows");
+    }
+
+    @Test
+    void shouldAcceptADuplicatedRowWhenRowDuplicationIsAllowed() {
+        TableInput components = componentsFilteredByBuilder(TableFilter.Operation.IN, "{{ inputs.component_types }}").allowRowDuplication(true).build();
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat((List<?>) table.value()).hasSize(3);
+    }
+
+    @Test
+    void shouldCheckASelectColumnAgainstTheValuesOfItsExpression() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .columns(List.of(SelectInput.builder().id("type").type(Type.SELECT).expression("{{ inputs.component_types }}").build()))
+            .build();
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", "[{\"type\": \"linux\"}, {\"type\": \"windows\"}]")
+        );
+
+        InputAndValue table = values.get(1);
+        assertThat(((SelectInput) ((TableInput) table.input()).getColumns().getFirst()).getValues()).extracting(ValueOption::value).containsExactly("linux");
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("row 2, column `type`");
     }
 
     @Test

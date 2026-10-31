@@ -2,14 +2,14 @@ function isNullOrUndefined(value: unknown): value is null | undefined {
     return value === null || value === undefined
 }
 
-export function removeNullAndUndefined(obj: unknown): unknown {
+export function removeNullAndUndefined(obj: unknown, keepAsIs?: (key: string, parent: Record<string, unknown>) => boolean): unknown {
     if (isNullOrUndefined(obj)) {
         return undefined
     }
 
     if (Array.isArray(obj)) {
         const ar = obj
-            .map(item => removeNullAndUndefined(item))
+            .map(item => removeNullAndUndefined(item, keepAsIs))
             .filter((item): item is Exclude<typeof item, null | undefined> => isNullOrUndefined(item) === false)
 
         return ar.length > 0 ? ar : undefined
@@ -23,7 +23,12 @@ export function removeNullAndUndefined(obj: unknown): unknown {
             if (isNullOrUndefined(rawValue)) {
                 continue
             }
-            const newVal = removeNullAndUndefined(rawValue)
+            if (keepAsIs?.(key, record)) {
+                hasValue = true
+                newObj[key] = rawValue
+                continue
+            }
+            const newVal = removeNullAndUndefined(rawValue, keepAsIs)
             if (isNullOrUndefined(newVal)) {
                 continue
             }

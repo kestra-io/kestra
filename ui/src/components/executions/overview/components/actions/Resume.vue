@@ -18,7 +18,7 @@
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </KsForm>
         <template #footer>
-            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
+            <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
                 {{ $t('resume') }}
             </KsButton>
         </template>
@@ -26,11 +26,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
     import {State, type FormInstance} from "@kestra-io/design-system"
@@ -78,12 +77,6 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
-    onMounted(() => {
-        if (enabled.value) {
-            loadDefinition()
-        }
-    })
-
     function click() {
         if (needInputs.value) {
             isDrawerOpen.value = true
@@ -118,13 +111,5 @@
                 isDrawerOpen.value = false
                 toast.success(t("resumed done"))
             })
-    }
-
-    function loadDefinition() {
-        executionsStore.loadFlowForExecution({
-            flowId: props.execution.flowId,
-            namespace: props.execution.namespace,
-            store: true,
-        })
     }
 </script>

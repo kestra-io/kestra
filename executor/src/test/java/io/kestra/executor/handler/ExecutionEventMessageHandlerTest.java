@@ -22,6 +22,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.flows.sla.types.AvgDurationSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -301,5 +302,21 @@ class ExecutionEventMessageHandlerTest {
         ArgumentCaptor<SLAMonitor> monitor = ArgumentCaptor.forClass(SLAMonitor.class);
         verify(slaMonitorStateStore).save(monitor.capture());
         assertThat(monitor.getValue().getDeadline()).isCloseTo(scheduleDate.plus(Duration.ofHours(1)), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    void shouldNotCreateSlaMonitorForAvgDurationSlaWithoutEnoughHistory() {
+        // Given
+        SLA sla = AvgDurationSLA.builder().id("avg-duration").type(SLA.Type.AVG_DURATION).behavior(SLA.Behavior.FAIL).lookbackPeriod(Duration.ofDays(7)).build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithSla(sla)));
+        var execution = Execution.newExecution(flow, null, Collections.emptyList(), Optional.empty(), ExecutionKind.NORMAL);
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+
+        // When
+        executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        verify(slaMonitorStateStore, never()).save(any());
     }
 }

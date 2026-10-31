@@ -17,4 +17,5 @@ export const Default: Story = {
         components: {KsLogoBadge},
         template: "<ks-logo-badge />",
     }),
+    parameters: {controls: {disable: true}},
 }

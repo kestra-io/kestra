@@ -29,7 +29,7 @@
                     :root="`${root}[${index}]`"
                     @update:modelValue="(value) => updateItem(index, value)"
                     @remove="removeItem(index)"
-                    @change="openPicker(index, typeOf(item))"
+                    @change="openPicker(index, item)"
                 />
             </div>
             <BlockEmptyDrop
@@ -51,7 +51,7 @@
                 :root="root"
                 @update:modelValue="onSingleUpdate"
                 @remove="onRemove"
-                @change="openPicker(undefined, typeOf(modelValue as Record<string, unknown>))"
+                @change="openPicker(undefined, modelValue as Implementation)"
             />
         </template>
         <template v-else>
@@ -75,7 +75,7 @@
             v-model="pickerVisible"
             :title="pickerTitle"
             :branches="branches"
-            :current="pickerCurrentType"
+            :current="pickerCurrentRef"
             @select="onPickerSelect"
         />
     </div>
@@ -91,11 +91,11 @@
     import type {Schema} from "./getTaskComponent"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {
+        branchDisplayName,
         findBranchByType,
         getImplementationBranches,
-        humanizeClassName,
+        newImplementation,
         resolveImplementationLabel,
-        simpleClassName,
         type ImplementationBranch,
     } from "./discriminatedUnion"
 
@@ -139,20 +139,22 @@
         return typeof type === "string" ? type : undefined
     }
 
-    function branchName(type: string | undefined): string {
-        const branch = type ? findBranchByType(branches.value, type) : undefined
-        return branch ? humanizeClassName(simpleClassName(branch.ref)) : (type ?? "")
+    function branchName(item: Implementation): string {
+        const type = typeOf(item)
+        const branch = type ? findBranchByType(branches.value, type, item) : undefined
+        return branch ? branchDisplayName(branch, branches.value) : (type ?? "")
     }
 
     const singleRemoveLabel = computed(() => t("block_editor.plugin_implementation.remove", {label: label.value}))
 
     function itemRemoveLabel(item: Implementation): string {
-        return t("block_editor.plugin_implementation.remove_from", {name: branchName(typeOf(item)), field: label.value})
+        return t("block_editor.plugin_implementation.remove_from", {name: branchName(item), field: label.value})
     }
 
     const pickerVisible = ref(false)
     const pickerTargetIndex = ref<number | undefined>(undefined)
-    const pickerCurrentType = ref<string | undefined>(undefined)
+    const pickerCurrentRef = ref<string | undefined>(undefined)
+    const pickerCurrentValue = ref<Implementation | undefined>(undefined)
 
     const pickerTitle = computed(() => t("block_editor.plugin_implementation.choose_title", {label: label.value}))
 
@@ -172,20 +174,21 @@
         modelValue.value = value
     }
 
-    function openPicker(index: number | undefined, currentType: string | undefined) {
+    function openPicker(index: number | undefined, current: Implementation | undefined) {
         if (branches.value.length <= 1) {
             if (branches.value.length === 1) {
-                commit({type: branches.value[0].ref}, index)
+                commit(newImplementation(branches.value[0], branches.value), index)
             }
             return
         }
         pickerTargetIndex.value = index
-        pickerCurrentType.value = currentType
+        pickerCurrentRef.value = findBranchByType(branches.value, typeOf(current), current)?.ref
+        pickerCurrentValue.value = current
         pickerVisible.value = true
     }
 
     function onPickerSelect(branch: ImplementationBranch) {
-        commit({type: branch.ref}, pickerTargetIndex.value)
+        commit(newImplementation(branch, branches.value, pickerCurrentValue.value), pickerTargetIndex.value)
         pickerVisible.value = false
     }
 

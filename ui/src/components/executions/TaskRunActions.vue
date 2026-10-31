@@ -297,7 +297,7 @@
     function downloadContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
             Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
         })
@@ -306,7 +306,7 @@
     function copyContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
             Utils.copy(response as string).then(() => {
                 coreStore.message = {
@@ -346,7 +346,11 @@
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
+                filters: [
+                    {field: "taskRunId", operation: "EQUALS", value: currentTaskRun.value.id},
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                ],
+                size: 100,
             }).catch((e: unknown) => {
                 handledIf(e, [403, 404])
                 return []

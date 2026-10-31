@@ -399,7 +399,14 @@ public class JsonSchemaGenerator {
 
             if (key.equals("properties") && merged.get("properties") instanceof ObjectNode baseProps && extraValue instanceof ObjectNode extraProps) {
                 ObjectNode mergedProps = baseProps.deepCopy();
-                extraProps.properties().forEach(p -> mergedProps.set(p.getKey(), p.getValue()));
+                extraProps.properties().forEach(p ->
+                {
+                    if (mergedProps.get(p.getKey()) instanceof ObjectNode existing && p.getValue() instanceof ObjectNode extraNode) {
+                        existing.setAll(extraNode);
+                    } else {
+                        mergedProps.set(p.getKey(), p.getValue());
+                    }
+                });
                 merged.set("properties", mergedProps);
             } else if (key.equals("required") && merged.get("required") instanceof ArrayNode baseRequired && extraValue instanceof ArrayNode extraRequired) {
                 ArrayNode mergedRequired = baseRequired.deepCopy();
@@ -1139,11 +1146,41 @@ public class JsonSchemaGenerator {
                 return;
             }
 
-            properties.set(
-                property, context.getGeneratorConfig().createObjectNode()
-                    .put("const", defaultValue)
-            );
+            JsonNode original = properties.get(property);
+            ObjectNode constNode = context.getGeneratorConfig().createObjectNode()
+                .put("type", "string")
+                .put("const", defaultValue);
+
+            for (String key : List.of("title", "description", "markdownDescription")) {
+                JsonNode value = findPropertyAttribute(original, key);
+                if (value != null) {
+                    constNode.set(key, value);
+                }
+            }
+
+            properties.set(property, constNode);
         });
+    }
+
+    /** Finds an attribute on the property node or within its allOf branches, preferring the top-level value. */
+    private static JsonNode findPropertyAttribute(JsonNode node, String fieldName) {
+        if (node == null) {
+            return null;
+        }
+
+        if (node.has(fieldName)) {
+            return node.get(fieldName);
+        }
+
+        if (node.get("allOf") instanceof ArrayNode allOf) {
+            for (JsonNode branch : allOf) {
+                if (branch.has(fieldName)) {
+                    return branch.get(fieldName);
+                }
+            }
+        }
+
+        return null;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {

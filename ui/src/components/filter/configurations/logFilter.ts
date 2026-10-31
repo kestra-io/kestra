@@ -29,7 +29,6 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: namespaceValueProvider(),
-                        searchable: true,
                     },
                 ] : []) as FilterConfiguration["keys"],
                 {

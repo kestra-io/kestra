@@ -130,6 +130,7 @@
         removeGroup,
         replaceTree,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,
@@ -205,8 +206,9 @@
     }
 
     const refreshData = () => {
-        tableRefreshData()
+        const result = tableRefreshData()
         emits("refresh")
+        return result
     }
 
     usePeriodicRefresh(refreshData)
@@ -253,6 +255,7 @@
         updateChart,
         refreshData,
         resetToDefaults,
+        getDefaultValue,
         clearFilters,
         hasPreApplied,
         getPreApplied,
@@ -288,7 +291,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter {
     display: flex;
     flex-direction: column;
@@ -296,14 +299,14 @@
     width: 100%;
     border-radius: 0.5rem;
 
-    .top {
+    & .top {
         display: flex;
         align-items: flex-start;
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);
     }
 
-    .main-filters {
+    & .main-filters {
         display: flex;
         align-items: flex-start;
         flex-wrap: wrap;
@@ -315,13 +318,13 @@
         min-width: 14rem;
     }
 
-    .code-toggle {
+    & .code-toggle {
         margin: 0 !important;
         flex-shrink: 0;
         background-color: var(--ks-btn-secondary-bg-default);
         box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim) !important;
             font-size: var(--ks-font-size-md);
         }
@@ -329,14 +332,14 @@
         &:hover {
             background-color: var(--ks-btn-secondary-bg-hover);
         }
+    }
 
-        &--active {
-            background-color: var(--ks-btn-secondary-bg-active);
-            border-color: var(--ks-btn-secondary-border-active);
+    & .code-toggle--active {
+        background-color: var(--ks-btn-secondary-bg-active);
+        border-color: var(--ks-btn-secondary-border-active);
 
-            :deep(svg) {
-                color: var(--ks-text-link) !important;
-            }
+        & :deep(svg) {
+            color: var(--ks-text-link) !important;
         }
     }
 }

@@ -2,42 +2,38 @@
     <TopNavBar
         :title="routeInfo.title"
         :description="props.dashboard?.description"
-        :hideMainIcon="showSelector"
+        :breadcrumb="breadcrumb"
+        :titleSiblings="titleSiblings"
     >
-        <template
-            v-if="showSelector"
-            #title
-        >
+        <template v-if="showSelector || isAllowedFlow" #actions>
             <Dashboards
-                placement="bottom-start"
+                v-if="showSelector && !canManageDashboards"
                 @dashboard="(value: string) => props.load?.(value)"
-            >
-                <button type="button" class="dashboard-trigger">
-                    <KsIcon size="sm" class="leading">
-                        <ChartLineVariant />
-                    </KsIcon>
-                    <span class="text-truncate">{{ routeInfo.title }}</span>
-                    <KsIcon size="sm" class="chevron">
-                        <ChevronDown />
-                    </KsIcon>
-                </button>
-            </Dashboards>
-        </template>
-
-        <template v-if="canManageDashboards || isAllowedFlow" #actions>
-            <!-- NavBarActionsDropdown directly, not NavBarActions: its MAX_INLINE_ACTIONS=1 would
-                 render the default-dashboard case (a single Create item) as an inline button, dropping the kebab. -->
+            />
             <NavBarActionsDropdown v-if="canManageDashboards">
-                <NavBarAction
-                    v-if="isNonDefaultDashboard"
-                    :icon="Pencil"
-                    :label="$t('dashboards.edition.label')"
-                    :to="{name: 'dashboards/update', params: {dashboard: props.dashboard?.id}}"
-                />
+                <template v-if="isNonDefaultDashboard">
+                    <NavBarAction
+                        :icon="Pencil"
+                        :label="$t('dashboards.edition.label')"
+                        :to="{name: 'dashboards/update', params: {dashboard: props.dashboard?.id}}"
+                    />
+                    <NavBarAction
+                        :icon="isTenantDefault ? Bookmark : BookmarkOutline"
+                        :label="$t('dashboards.set_default')"
+                        @click="setAsDefault"
+                    />
+                    <NavBarAction
+                        :icon="Delete"
+                        :label="$t('delete')"
+                        danger
+                        @click="remove"
+                    />
+                </template>
                 <NavBarAction
                     :icon="Plus"
                     :label="$t('dashboards.creation.label')"
                     :to="{name: 'dashboards/create'}"
+                    :divided="isNonDefaultDashboard"
                 />
             </NavBarActionsDropdown>
             <NavBarAction
@@ -52,16 +48,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "@kestra-io/design-system"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
+    import {useDashboardStore} from "../../../stores/dashboard"
+    import {useToast} from "../../../utils/toast"
 
     const {t} = useI18n()
     const route = useRoute()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
+    const dashboardStore = useDashboardStore()
+    const toast = useToast()
 
     import TopNavBar from "../../layout/TopNavBar.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
@@ -69,8 +70,10 @@
     import NavBarActionsDropdown from "../../layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../layout/NavBarAction.vue"
 
+    import Bookmark from "vue-material-design-icons/Bookmark.vue"
+    import BookmarkOutline from "vue-material-design-icons/BookmarkOutline.vue"
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -94,9 +97,6 @@
 
     const isOSS = computed(() => miscStore.configs?.edition === "OSS")
 
-    // Custom dashboard create/edit is EE-only: in OSS those routes are Enterprise upsell stubs,
-    // so the actions must not appear there. isCustomDashboardsEnabled is a backend-capability flag
-    // (hardcoded true), not an edition signal, so it cannot gate this.
     const canManageDashboards = computed(() => isAllowedDashboard.value && !isOSS.value)
 
     const isNonDefaultDashboard = computed(() =>
@@ -107,46 +107,48 @@
         ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)) && (isAllowedDashboard.value || isCustomDashboardsDisabled.value),
     )
 
-    const routeInfo = computed(() => ({title: props.dashboard?.title || t("overview")}))
+    const dashboards = ref<{id: string; title: string; isDefault: boolean}[]>([])
+
+    const isTenantDefault = computed(() => dashboards.value.find((d) => d.id === props.dashboard?.id)?.isDefault ?? false)
+
+    const fetchDashboards = async () => {
+        dashboards.value = await dashboardStore.list({}, route)
+    }
+
+    // A new loader per open dashboard, so the breadcrumb menu reloads and moves its current entry on a switch.
+    const titleSiblings = computed<KsBreadcrumbLoader | undefined>(() => {
+        if (!canManageDashboards.value) return undefined
+        const current = props.dashboard?.id
+        return async () => {
+            await fetchDashboards()
+            if (dashboards.value.length < 2) return []
+            return dashboards.value.map((d) => ({
+                label: d.id === "default" ? t("dashboards.default") : d.title,
+                icon: ChartLineVariant,
+                current: d.id === current,
+                onClick: () => props.load?.(d.id),
+            }))
+        }
+    })
+
+    const breadcrumb = computed<KsBreadcrumbItem[]>(() => titleSiblings.value ? [{label: t("dashboards.labels.plural")}] : [])
+
+    const setAsDefault = async () => {
+        await dashboardStore.saveDefaults({defaultHomeDashboard: props.dashboard?.id})
+        await fetchDashboards()
+    }
+
+    const remove = () => {
+        const {id, title} = props.dashboard ?? {}
+        return toast.confirm(t("delete confirm", {name: title ?? id}), async () => {
+            await dashboardStore.delete(id)
+            toast.deleted(title ?? id)
+            await props.load?.("default")
+        })
+    }
+
+    const routeInfo = computed(() => ({title: props.dashboard?.title || t("dashboards.default")}))
 
     import useRouteContext from "../../../composables/useRouteContext"
     useRouteContext(routeInfo)
 </script>
-
-<style scoped lang="scss">
-    .dashboard-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-2);
-        background: none;
-        border: none;
-        border-radius: var(--ks-radius-sm);
-        font: inherit;
-        color: inherit;
-        cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease;
-
-        .leading {
-            flex-shrink: 0;
-        }
-
-        .chevron {
-            flex-shrink: 0;
-            color: var(--ks-text-secondary);
-            transition: transform 0.1s ease;
-        }
-
-        &:hover {
-            background-color: var(--ks-bg-hover);
-
-            .leading {
-                color: var(--ks-icon-active);
-            }
-        }
-
-        &[aria-expanded="true"] .chevron {
-            transform: rotate(180deg);
-        }
-    }
-</style>

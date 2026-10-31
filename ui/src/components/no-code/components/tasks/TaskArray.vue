@@ -41,7 +41,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                             :tooltip="$t('block_editor.delete')"
                             @click.stop="removeItem(index)"
                         >
-                            <DeleteOutline />
+                            <Delete />
                         </KsIconButton>
                     </div>
                 </div>
@@ -99,13 +99,13 @@
         </template>
 
         <template v-else>
-        <KsRow
-            v-for="(element, index) in items"
-            :key="'array-' + index"
-            :gutter="10"
-            align="top"
-            class="custom-row"
-        >
+            <KsRow
+                v-for="(element, index) in items"
+                :key="'array-' + index"
+                :gutter="10"
+                align="top"
+                class="custom-row"
+            >
                 <KsCol :span="2" class="custom-col reorder" v-if="items.length > 1">
                     <KsIconButton
                         :disabled="index === 0"
@@ -142,7 +142,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </KsCol>
             </KsRow>
@@ -155,7 +155,7 @@
 <script setup lang="ts">
     import {computed, inject, provide, ref, watch} from "vue"
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons"
+    import {Delete, ChevronUp, ChevronDown} from "../../utils/icons"
 
     import {useI18n} from "vue-i18n"
     import Add from "../Add.vue"
@@ -285,9 +285,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .disabled {
     opacity: 0.5;
     pointer-events: none;
@@ -361,6 +360,8 @@
 }
 
 .array-value-col {
-    padding-right: var(--ks-spacing-2);
+    flex: 1;
+    max-width: none;
+    padding-right: var(--ks-spacing-2) !important;
 }
 </style>

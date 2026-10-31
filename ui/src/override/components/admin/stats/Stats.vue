@@ -26,7 +26,7 @@
     useRouteContext(routeInfo)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .container {
         margin-block: var(--ks-spacing-10);
     }

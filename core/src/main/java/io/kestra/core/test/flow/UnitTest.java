@@ -33,8 +33,7 @@ public class UnitTest {
     private Fixtures fixtures;
 
     @NotNull
-    @Valid
-    private List<Assertion> assertions;
+    private List<@Valid Assertion> assertions;
 
     @Builder.Default
     private State.Type expectedState = State.Type.SUCCESS;

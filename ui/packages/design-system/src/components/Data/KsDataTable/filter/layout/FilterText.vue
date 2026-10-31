@@ -1,5 +1,5 @@
 <template>
-    <div class="p-3">
+    <div class="filter-text">
         <KsInput
             :modelValue="textValue"
             :placeholder="`Enter ${label.toLowerCase()}`"
@@ -18,3 +18,9 @@
         "update:textValue": [value: string];
     }>()
 </script>
+
+<style scoped>
+    .filter-text {
+        padding: var(--ks-spacing-4);
+    }
+</style>

@@ -3,8 +3,8 @@
 // WHY THIS EXISTS
 // ---------------
 // There is no backend behind Storybook, yet almost every component tree issues HTTP calls. Before
-// this module the only stub was `axios.defaults.adapter` (see preview.ts), which covers just the 4
-// files in src/ that still import axios. Everything else is fetch-based:
+// this module the only stub was an axios adapter, which covered just the few files in src/ that
+// imported axios. Everything is fetch-based now:
 //
 //   * the generated SDK (packages/kestra-sdk/src/openapi/*) resolves
 //     `options.fetch ?? _config.fetch ?? globalThis.fetch` per request (openapi/client/client.gen.ts),
@@ -35,8 +35,10 @@ declare global {
     }
 }
 
+export type ApiRouteContext = {body?: unknown; query: URLSearchParams}
+
 /** A payload, or a function of the request context returning one. */
-type ApiRouteHandler = ((context: {body?: unknown}) => unknown) | unknown
+type ApiRouteHandler = ((context: ApiRouteContext) => unknown) | unknown
 
 type ApiRouteHandlers = Record<string, ApiRouteHandler>
 
@@ -45,6 +47,7 @@ type RoutePattern = {key: string; segments: string[]}
 type MockedFetch = typeof fetch & {__kestraApiMock?: boolean}
 
 const API_MARKER = "/api/v1"
+const PUBLIC_API_ORIGIN = "https://api.kestra.io"
 
 /**
  * Payloads for the API routes stories actually reach, keyed by `METHOD <path from /api/v1 onward>`.
@@ -114,8 +117,8 @@ let storyPatterns: RoutePattern[] = []
  * Register handlers for the current story only, taking precedence over the global map — same
  * key/payload contract as {@link HANDLERS}. Call it from a story file's `beforeEach` (which runs
  * after the preview-level `beforeEach` has reset the previous story's registration). This is the
- * story-side mock the warning below refers to: `vi.mock()` cannot intercept the pre-bundled SDK in
- * a story file, so per-story data has to come in at the fetch layer, here.
+ * story-side mock the warning below refers to: story files share one iframe (`isolate: false`), so a
+ * `vi.mock()` in one of them would leak into the files after it, and per-story data comes in here.
  */
 export function mockStoryApiRoutes(handlers: ApiRouteHandlers): void {
     Object.assign(storyHandlers, handlers)
@@ -211,7 +214,8 @@ export function resolveApiRequest(method: string, rawUrl: string, context: {body
             : patterns.find(({segments}) => matchesPattern(segments, requestSegments))?.key
         if (matched !== undefined) {
             const handler = handlers[matched]
-            return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
+            const query = new URL(rawUrl, window.location.href).searchParams
+            return {status: 200, data: typeof handler === "function" ? handler({...context, query}) : handler}
         }
     }
 
@@ -273,7 +277,11 @@ function installFetchMock(): void {
 
         // Anything that is not an API call — Vite's module graph, monaco assets, the storybook and
         // vitest channels — goes to the untouched native fetch.
-        if (path === undefined) return native(input, init)
+        if (path === undefined) {
+            // kestra.io's public API (feeds, docs, plugin catalog): no story depends on it, so it answers empty.
+            if (rawUrl.startsWith(PUBLIC_API_ORIGIN)) return Promise.resolve(jsonResponse({status: 200, data: []}))
+            return native(input, init)
+        }
 
         const signal = init?.signal ?? (isRequest ? (input as Request).signal : undefined)
         if (signal?.aborted) {

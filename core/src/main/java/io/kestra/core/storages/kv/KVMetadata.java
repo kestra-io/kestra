@@ -13,6 +13,7 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public class KVMetadata {
+    private static final Instant MAX_EXPIRATION_DATE = Instant.parse("9999-12-31T23:59:59.999999Z");
     private String description;
     private Instant expirationDate;
 
@@ -25,6 +26,11 @@ public class KVMetadata {
         if (ttl != null) {
             try {
                 this.expirationDate = Instant.now().plus(ttl);
+                if (this.expirationDate.isAfter(MAX_EXPIRATION_DATE)) {
+                    throw new IllegalArgumentException(
+                        String.format("ttl '%s' is too large: the expiration date must not exceed %s", ttl, MAX_EXPIRATION_DATE)
+                    );
+                }
             } catch (ArithmeticException | DateTimeException e) {
                 throw new IllegalArgumentException(
                     String.format("ttl '%s' is too large: the expiration date would be beyond the latest supported date", ttl),

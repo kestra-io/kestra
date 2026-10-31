@@ -164,6 +164,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
+    const ksEditorWarnings = ref<string[]>([])
 
     const t = (key: string, values?: Record<string, unknown>) => {
         if (!globalI18n.value) {
@@ -1130,5 +1131,6 @@ function deleteFlowAndDependencies() {
         loadTasksWithMetrics,
         getNamespace,
         deleteRevision,
+        ksEditorWarnings,
     }
 })

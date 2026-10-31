@@ -29,7 +29,7 @@ class ExecutionAssertionSLATest {
             .build();
         RunContext runContext = runContextFactory.of(Map.of("condition", "false"));
 
-        Optional<Violation> evaluate = sla.evaluate(runContext, null);
+        Optional<Violation> evaluate = sla.evaluate(runContext, null, Map.of());
         assertTrue(evaluate.isPresent());
         assertThat(evaluate.get().reason()).isEqualTo("assertion is false: {{ condition == 'true'}}.");
     }
@@ -41,7 +41,7 @@ class ExecutionAssertionSLATest {
             .build();
         RunContext runContext = runContextFactory.of(Map.of("condition", "true"));
 
-        Optional<Violation> evaluate = sla.evaluate(runContext, null);
+        Optional<Violation> evaluate = sla.evaluate(runContext, null, Map.of());
         assertTrue(evaluate.isEmpty());
     }
 
@@ -52,6 +52,6 @@ class ExecutionAssertionSLATest {
             .build();
         RunContext runContext = runContextFactory.of();
 
-        assertThrows(InternalException.class, () -> sla.evaluate(runContext, null));
+        assertThrows(InternalException.class, () -> sla.evaluate(runContext, null, Map.of()));
     }
 }

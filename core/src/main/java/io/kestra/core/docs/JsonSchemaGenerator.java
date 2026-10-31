@@ -399,7 +399,14 @@ public class JsonSchemaGenerator {
 
             if (key.equals("properties") && merged.get("properties") instanceof ObjectNode baseProps && extraValue instanceof ObjectNode extraProps) {
                 ObjectNode mergedProps = baseProps.deepCopy();
-                extraProps.properties().forEach(p -> mergedProps.set(p.getKey(), p.getValue()));
+                extraProps.properties().forEach(p ->
+                {
+                    if (mergedProps.get(p.getKey()) instanceof ObjectNode existing && p.getValue() instanceof ObjectNode extraNode) {
+                        existing.setAll(extraNode);
+                    } else {
+                        mergedProps.set(p.getKey(), p.getValue());
+                    }
+                });
                 merged.set("properties", mergedProps);
             } else if (key.equals("required") && merged.get("required") instanceof ArrayNode baseRequired && extraValue instanceof ArrayNode extraRequired) {
                 ArrayNode mergedRequired = baseRequired.deepCopy();
@@ -1119,29 +1126,35 @@ public class JsonSchemaGenerator {
                         return defaultOpt;
                     }
 
-                    return findAllOfNodeWithField(p, "default")
-                        .map(node -> node.get("default").asText());
+                    return p.optional("allOf").flatMap(node ->
+                    {
+                        if (node.isArray()) {
+                            Iterable<JsonNode> iterable = node::values;
+                            return StreamSupport.stream(
+                                iterable.spliterator(),
+                                false
+                            ).filter(subNode -> subNode.has("default"))
+                                .findFirst()
+                                .map(subNode -> subNode.get("default").asText());
+                        }
+
+                        return Optional.empty();
+                    });
                 })
                 .orElse(null);
             if (defaultValue == null) {
                 return;
             }
 
+            JsonNode original = properties.get(property);
             ObjectNode constNode = context.getGeneratorConfig().createObjectNode()
+                .put("type", "string")
                 .put("const", defaultValue);
 
-            Schema schemaAnnotation = Arrays.stream(targetType.getDeclaredFields())
-                .filter(f -> f.getName().equals(property))
-                .findFirst()
-                .map(f -> f.getAnnotation(Schema.class))
-                .orElse(null);
-
-            if (schemaAnnotation != null) {
-                if (!schemaAnnotation.title().isEmpty()) {
-                    constNode.put("title", schemaAnnotation.title());
-                }
-                if (!schemaAnnotation.description().isEmpty()) {
-                    constNode.put("description", schemaAnnotation.description());
+            for (String key : List.of("title", "description", "markdownDescription")) {
+                JsonNode value = findPropertyAttribute(original, key);
+                if (value != null) {
+                    constNode.set(key, value);
                 }
             }
 
@@ -1149,17 +1162,25 @@ public class JsonSchemaGenerator {
         });
     }
 
-    private static Optional<JsonNode> findAllOfNodeWithField(JsonNode parent, String fieldName) {
-        JsonNode allOf = parent.get("allOf");
-        if (allOf == null || !allOf.isArray()) {
-            return Optional.empty();
+    /** Finds an attribute on the property node or within its allOf branches, preferring the top-level value. */
+    private static JsonNode findPropertyAttribute(JsonNode node, String fieldName) {
+        if (node == null) {
+            return null;
         }
-        for (JsonNode child : allOf) {
-            if (child.has(fieldName)) {
-                return Optional.of(child);
+
+        if (node.has(fieldName)) {
+            return node.get(fieldName);
+        }
+
+        if (node.get("allOf") instanceof ArrayNode allOf) {
+            for (JsonNode branch : allOf) {
+                if (branch.has(fieldName)) {
+                    return branch.get(fieldName);
+                }
             }
         }
-        return Optional.empty();
+
+        return null;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {

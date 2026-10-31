@@ -1607,3 +1607,152 @@ describe("getEdgeColor", () => {
         expect(getEdgeColor(edge, nodes, clusters)).toBe("danger")
     })
 })
+
+describe("withSyntheticErrorsLane", () => {
+    test("returns clusters unchanged when no root error tasks", () => {
+        const fg = {nodes: [{uid: "root.a", type: "task"}], clusters: []}
+        expect(VueFlowUtils.withSyntheticErrorsLane(fg)).toEqual([])
+    })
+
+    test("wraps unclustered error-branch tasks in a synthetic lane", () => {
+        const fg = {
+            nodes: [
+                {uid: "root.a", type: "task"},
+                {uid: "root.err", type: "task", branchType: VueFlowUtils.BranchType.ERROR},
+            ],
+            clusters: [],
+        }
+        const result = VueFlowUtils.withSyntheticErrorsLane(fg)
+        expect(result).toHaveLength(1)
+        expect(result[0].cluster.uid).toBe("cluster_root.Errors")
+        expect(result[0].nodes).toEqual(["root.err"])
+    })
+
+    test("does not wrap already clustered error tasks", () => {
+        const fg = {
+            nodes: [{uid: "root.err", type: "task", branchType: VueFlowUtils.BranchType.ERROR}],
+            clusters: [{cluster: {uid: "cluster_x", type: "c", taskNode: null}, nodes: ["root.err"], parents: [], start: "root.err", end: "root.err"}],
+        }
+        const result = VueFlowUtils.withSyntheticErrorsLane(fg)
+        expect(result).toHaveLength(1)
+        expect(result[0].cluster.uid).toBe("cluster_x")
+    })
+})
+
+describe("getClusterChildTaskIds", () => {
+    test("excludes gate node and root/end markers", () => {
+        const clusterEntry = {
+            cluster: {uid: "cluster_root.p", type: "c", taskNode: {uid: "root.p", task: {type: "Parallel"}}},
+            nodes: ["root.p", "root.root-1", "root.end-1", "root.p.child"],
+        }
+        const nodeByUid: Record<string, MinimalNode> = {
+            "root.root-1": {uid: "root.root-1", type: "GraphClusterRoot"},
+            "root.end-1": {uid: "root.end-1", type: "GraphClusterEnd"},
+            "root.p.child": {uid: "root.p.child", type: "GraphTask"},
+        }
+        expect(VueFlowUtils.getClusterChildTaskIds(clusterEntry, nodeByUid)).toEqual(["child"])
+    })
+
+    test("counts nested lane uid as a child", () => {
+        const clusterEntry = {
+            cluster: {uid: "cluster_root.p", type: "c", taskNode: {uid: "root.p", task: {type: "Parallel"}}},
+            nodes: ["cluster_root.inner"],
+        }
+        const nodeByUid = {}
+        expect(VueFlowUtils.getClusterChildTaskIds(clusterEntry, nodeByUid)).toEqual(["inner"])
+    })
+})
+
+describe("getFlowableGateAliases", () => {
+    test("maps gate uid to lane start for true flowable cluster", () => {
+        const clusters = [{
+            cluster: {
+                uid: "cluster_root.p",
+                type: "GraphCluster",
+                taskNode: {uid: "root.p", task: {type: "io.kestra.plugin.core.flow.Parallel"}},
+            },
+            nodes: [],
+            parents: [],
+            start: "root.start",
+            end: "root.end",
+        }]
+        const aliases = VueFlowUtils.getFlowableGateAliases(clusters)
+        expect(aliases).toEqual({"root.p": "root.start"})
+    })
+
+    test("skips collapsed gate", () => {
+        const clusters = [{
+            cluster: {
+                uid: "cluster_root.p",
+                type: "GraphCluster",
+                taskNode: {uid: "root.p", task: {type: "io.kestra.plugin.core.flow.Parallel"}},
+            },
+            nodes: [],
+            parents: [],
+            start: "root.start",
+            end: "root.end",
+        }]
+        const aliases = VueFlowUtils.getFlowableGateAliases(clusters, new Set(["root.p"]))
+        expect(aliases).toEqual({})
+    })
+})
+
+describe("haveAdd", () => {
+    test("returns undefined for read-only prefixed edges", () => {
+        const edge = {source: "sub.a", target: "sub.b"}
+        const nodeByUid = {}
+        const result = VueFlowUtils.haveAdd(edge, nodeByUid, [], ["sub"])
+        expect(result).toBeUndefined()
+    })
+
+    test("returns undefined when target is a cluster root task", () => {
+        const edge = {source: "a", target: "b"}
+        const result = VueFlowUtils.haveAdd(edge, {}, ["b"], [])
+        expect(result).toBeUndefined()
+    })
+
+    test("returns before for cluster root target", () => {
+        const edge = {source: "a", target: "cluster.x.root"}
+        const nodeByUid = {"cluster.x.root": {uid: "cluster.x.root", type: "GraphClusterRoot"}}
+        const result = VueFlowUtils.haveAdd(edge, nodeByUid, [], [])
+        expect(result).toEqual({refId: "x", position: "before"})
+    })
+
+    test("offers an add action for an ordinary edge", () => {
+        const edge = {source: "root.first", target: "root.second"}
+        const nodeByUid = {
+            "root.first": {uid: "root.first", type: "GraphTask"},
+            "root.second": {uid: "root.second", type: "GraphTask"},
+        }
+        expect(VueFlowUtils.haveAdd(edge, nodeByUid, [], [])).toEqual({refId: "second", position: "before"})
+    })
+})
+
+describe("replaceIfCollapsed", () => {
+    test("returns null when source equals target after replace", () => {
+        const r = VueFlowUtils.replaceIfCollapsed("a", "b", {"a": "x", "b": "x"}, [], new Set())
+        expect(r).toBeNull()
+    })
+
+    test("returns null when hidden (not collapsed)", () => {
+        const r = VueFlowUtils.replaceIfCollapsed("a", "b", {}, ["a"], new Set())
+        expect(r).toBeNull()
+    })
+
+    test("returns replaced edge", () => {
+        const r = VueFlowUtils.replaceIfCollapsed("a", "b", {"a": "x"}, [], new Set())
+        expect(r).toEqual({source: "x", target: "b"})
+    })
+})
+
+describe("getNodePosition", () => {
+    test("centers node", () => {
+        expect(VueFlowUtils.getNodePosition({x: 10, y: 20, width: 4, height: 6})).toEqual({x: 8, y: 17})
+    })
+
+    test("subtract parent position", () => {
+        const n = {x: 10, y: 20, width: 4, height: 6}
+        const p = {x: 12, y: 13, width: 4, height: 6}
+        expect(VueFlowUtils.getNodePosition(n, p)).toEqual({x: -2, y: 7})
+    })
+})

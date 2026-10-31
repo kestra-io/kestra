@@ -399,25 +399,25 @@ function taskRunWithHistory(taskId: string, histories: {date: string; state: str
 // load_warehouse's inter-attempt backoff is billed as queued, not running, matching bucketOf().
 const DURATION_BAR_EXECUTION = {
     id: "story-execution-duration-bar",
-    state: {current: "SUCCESS"},
+    state: {current: "SUCCESS", histories: [{date: "2026-01-01T00:00:00.000Z", state: "CREATED"}]},
     taskRunList: [
         taskRunWithHistory("quick_query", [
             {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
             {date: "2026-01-01T00:00:00.050Z", state: "RUNNING"},
-            {date: "2026-01-01T00:00:01.250Z", state: "SUCCESS"},
+            {date: "2026-01-01T00:00:00.055Z", state: "SUCCESS"},
         ]),
         taskRunWithHistory("transform_data", [
-            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
-            {date: "2026-01-01T00:00:00.080Z", state: "RUNNING"},
-            {date: "2026-01-01T00:00:04.500Z", state: "SUCCESS"},
+            {date: "2026-01-01T00:00:01.250Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:01.330Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:05.750Z", state: "SUCCESS"},
         ]),
         taskRunWithHistory("load_warehouse", [
-            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
-            {date: "2026-01-01T00:00:00.040Z", state: "RUNNING"},
-            {date: "2026-01-01T00:00:01.440Z", state: "FAILED"},
-            {date: "2026-01-01T00:00:01.440Z", state: "RETRYING"},
-            {date: "2026-01-01T00:00:02.140Z", state: "RUNNING"},
-            {date: "2026-01-01T00:00:03.440Z", state: "SUCCESS"},
+            {date: "2026-01-01T00:00:05.750Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:05.790Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:07.190Z", state: "FAILED"},
+            {date: "2026-01-01T00:00:07.190Z", state: "RETRYING"},
+            {date: "2026-01-01T00:00:07.890Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:09.190Z", state: "FAILED"},
         ]),
         taskRunWithHistory("notify_team", [
             {date: "2026-01-01T00:00:00.000Z", state: "SKIPPED"},
@@ -441,7 +441,7 @@ DurationBarComparison.play = async ({canvasElement}) => {
     const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
     const barOf = (taskId: string) => nodeOf(taskId)?.querySelector("[data-test=\"duration-compact-bar\"]") as HTMLElement | null
     const filledWidthOf = (taskId: string) =>
-        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>("[data-test^='duration-segment-']"))
+        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>("[data-test='duration-task-bar']"))
             .reduce((sum, segment) => sum + segment.getBoundingClientRect().width, 0)
 
     await waitFor(() => expect(barOf("transform_data")).not.toBeNull())
@@ -461,6 +461,27 @@ DurationBarComparison.play = async ({canvasElement}) => {
         expect(Math.round(card.height)).toBe(Math.round(box.height))
         expect(Math.round(card.top)).toBe(Math.round(box.top))
     }
+
+    const root = canvasElement.ownerDocument.documentElement
+    const originalTheme = root.className
+    const taskBars = ["quick_query", "load_warehouse"].map(taskId =>
+        barOf(taskId)!.querySelector<HTMLElement>("[data-test='duration-task-bar']")!,
+    )
+    try {
+        root.classList.remove("dark", "dark-2")
+        root.classList.add("light")
+        const lightColors = taskBars.map(bar => getComputedStyle(bar).backgroundColor)
+
+        root.classList.remove("light")
+        root.classList.add("dark")
+        await waitFor(() => {
+            taskBars.forEach((bar, index) => {
+                expect(getComputedStyle(bar).backgroundColor).not.toBe(lightColors[index])
+            })
+        })
+    } finally {
+        root.className = originalTheme
+    }
 }
 
 // A running task's bar keeps updating every tick — the node's laid-out box must not move as a
@@ -471,7 +492,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         setup() {
             const runningExecution = {
                 id: "story-execution-duration-bar-running",
-                state: {current: "RUNNING"},
+                state: {current: "RUNNING", histories: [{date: new Date(Date.now() - 10_000).toISOString(), state: "CREATED"}]},
                 taskRunList: [
                     taskRunWithHistory("quick_query", [
                         {date: new Date(Date.now() - 5_000).toISOString(), state: "CREATED"},
@@ -487,7 +508,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         },
         template: `
             <div style="height: 300px; width: 300px;">
-                <Topology id="story-duration-bar-running" :source="source" :flowGraph="flowGraph" :execution="execution" isReadOnly :isHorizontal="false" />
+                <Topology id="story-duration-bar-running" :source="source" :flowGraph="flowGraph" :execution="execution" :defaultViewport="{x: 0, y: 0, zoom: 1}" isReadOnly :isHorizontal="false" />
             </div>
         `,
     }),
@@ -495,12 +516,13 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         const node = () => canvasElement.querySelector("[data-id=\"root.quick_query\"]") as HTMLElement | null
 
         await expect(node()).not.toBeNull()
-        await waitFor(() => expect(node()!.querySelector(".node-footer [data-test=\"duration-compact-bar\"] .split-bar-running-live")).not.toBeNull())
+        await waitFor(() => expect(node()!.querySelector(".node-footer [data-test=\"duration-compact-bar\"] [data-test=\"duration-task-bar\"]")).not.toBeNull())
         const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
         const before = dimensionsOf(node()!)
+        const barWidth = () => parseFloat(node()!.querySelector<HTMLElement>("[data-test='duration-task-bar']")!.style.width)
+        const widthBefore = barWidth()
 
-        await new Promise((resolve) => setTimeout(resolve, 350))
-
+        await waitFor(() => expect(barWidth()).toBeGreaterThan(widthBefore), {timeout: 3_000})
         expect(dimensionsOf(node()!)).toEqual(before)
         expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`})
     },

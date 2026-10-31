@@ -2,18 +2,16 @@ import {describe, expect, it} from "vitest"
 import {computed} from "vue"
 import TaskNode from "./TaskNode.vue"
 import NodeMenu from "./NodeMenu.vue"
-import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
 import {
     EXECUTION_INJECTION_KEY,
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
-    LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     VALIDATION_ISSUES_INJECTION_KEY,
     LOOP_LANES_INJECTION_KEY,
 } from "../injectionKeys"
 
 import type {LoopLaneData} from "../utils/loopOutcome"
 import en from "../../../../src/translations/en.json"
-import type {GraphTaskRun} from "../utils/vueFlowUtils"
+import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const TASK = {
@@ -42,15 +40,17 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
         taskId,
         state: {
             current: histories[histories.length - 1].state,
-            histories,
+            histories: histories.map(h => ({...h, date: new Date(h.date).toISOString()})),
         },
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task"}: {
+function mountTaskNode({execution, subflows = {}, executionId = EXECUTION_ID, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task"}: {
     loopLanes?: Record<string, LoopLaneData>,
     uid?: string,
-    execution?: Record<string, unknown>,
+    execution?: GraphExecution,
+    subflows?: Record<string, GraphExecution>,
+    executionId?: string,
     validationIssues?: Map<string, string[]>,
     taskRuns?: GraphTaskRun[],
     replayEnabled?: boolean,
@@ -70,7 +70,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     task,
                     taskRun: taskRuns[0],
                 },
-                executionId: execution ? EXECUTION_ID : undefined,
+                executionId: execution ? executionId : undefined,
                 isReadOnly,
                 isFlowable,
             },
@@ -92,10 +92,9 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
             },
             provide: {
                 [EXECUTION_INJECTION_KEY as symbol]: computed(() =>
-                    execution ? {id: EXECUTION_ID, taskRunList: taskRuns, ...execution} : undefined,
+                    execution ? {id: EXECUTION_ID, taskRunList: taskRuns, ...execution, state: {histories: [{date: new Date(0).toISOString(), state: "CREATED"}], ...execution.state}} : undefined,
                 ),
-                [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
-                [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
+                [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => subflows),
                 [VALIDATION_ISSUES_INJECTION_KEY as symbol]: computed(() => validationIssues),
                 [LOOP_LANES_INJECTION_KEY as symbol]: computed(() => loopLanes ?? {}),
             },
@@ -312,7 +311,7 @@ describe("TaskNode anatomy", () => {
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
-    it("should fill its own duration bar when it is the execution's longest task run", () => {
+    it("should fill the timeline when the task spans the execution", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},
             taskRuns: [
@@ -320,22 +319,42 @@ describe("TaskNode anatomy", () => {
             ],
         })
 
-        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        const running = wrapper.find("[data-test=\"duration-task-bar\"]")
         expect(running.exists()).toBe(true)
         expect((running.element as HTMLElement).style.width).toBe("100%")
     })
 
-    it("should scale its bar against the longest task run of the execution, not its own duration", () => {
+    it("should scale its bar against the execution timeline", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},
             taskRuns: [
-                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 1_000, state: "SUCCESS"}]),
-                taskRunWithHistory("other-task", [{date: 0, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]),
+                taskRunWithHistory("my-task", [{date: 1_000, state: "RUNNING"}, {date: 2_000, state: "SUCCESS"}]),
+                taskRunWithHistory("other-task", [{date: 3_000, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]),
             ],
         })
 
-        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        const running = wrapper.find("[data-test=\"duration-task-bar\"]")
         expect((running.element as HTMLElement).style.width).toBe("25%")
+        expect((running.element as HTMLElement).style.marginLeft).toBe("25%")
+    })
+
+    it("should use the child execution timeline for an expanded subflow task", () => {
+        const runs = [taskRunWithHistory("my-task", [{date: 2_000, state: "RUNNING"}, {date: 3_000, state: "SUCCESS"}])]
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            executionId: "child",
+            subflows: {
+                child: {
+                    id: "child",
+                    state: {current: "SUCCESS", histories: [{date: new Date(1_000).toISOString(), state: "CREATED"}]},
+                    taskRunList: runs,
+                },
+            },
+        })
+
+        const bar = wrapper.get("[data-test='duration-task-bar']").element as HTMLElement
+        expect(bar.style.marginLeft).toBe("50%")
+        expect(bar.style.width).toBe("50%")
     })
 
     it("should render the duration bar in the card footer", () => {
@@ -350,7 +369,7 @@ describe("TaskNode anatomy", () => {
 
         const bar = wrapper.find(".node-core > .node-footer [data-test=\"duration-compact-bar\"]")
         expect(bar.exists()).toBe(true)
-        expect((bar.find("[data-test=\"duration-segment-running\"]").element as HTMLElement).style.width).toBe("25%")
+        expect((bar.find("[data-test=\"duration-task-bar\"]").element as HTMLElement).style.width).toBe("25%")
     })
 })
 

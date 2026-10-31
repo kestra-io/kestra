@@ -368,6 +368,9 @@ jobs:
         run: npm run check:types
 
       - working-directory: e2e
+        run: npm run test:flakiness-reporter
+
+      - working-directory: e2e
         run: npm run test:lint
 
   backend:

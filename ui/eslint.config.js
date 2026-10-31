@@ -88,7 +88,7 @@ export default defineConfig([
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
-            "vue/attribute-hyphenation": ["error", "never"],
+            "vue/attribute-hyphenation": ["error", "never", {ignoreTags: ["rapi-doc"]}],
             "kestra-i18n/i18n-t-scope": "error",
         },
     },
@@ -109,6 +109,15 @@ export default defineConfig([
                 name: "axios",
                 message: "Call the Kestra API through the SDK or useClient(), and api.kestra.io through src/utils/publicApi.",
             }]}],
+        },
+    },
+    {
+        files: ["**/*.stories.{ts,tsx}"],
+        rules: {
+            "no-restricted-syntax": ["error", {
+                selector: "CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/]",
+                message: "Story files share one iframe (isolate: false), so a module mock leaks into the files after it: register API data with mockStoryApiRoutes() from .storybook/apiMock.ts.",
+            }],
         },
     },
     ...storybook.configs["flat/recommended"],

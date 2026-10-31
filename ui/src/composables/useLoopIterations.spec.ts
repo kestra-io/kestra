@@ -248,4 +248,92 @@ describe("useLoopIterations", () => {
         expect(args["filters[taskId][EQUALS]"]).toBe("myLoopTask")
         expect(args.commit).toBe(false)
     })
+
+    it("counts all and failed iterations with size-1 total queries", async () => {
+        const store = useExecutionsStore()
+        const findExecutions = vi.spyOn(store, "findExecutions").mockImplementation(((options: Record<string, unknown>) =>
+            Promise.resolve(options["filters[state][IN]"] ? 1 : 150)) as never)
+
+        const {totalCount, failedCount, loadCounts} = useLoopIterations("parent-1", "loopTask")
+        await loadCounts()
+
+        expect(totalCount.value).toBe(150)
+        expect(failedCount.value).toBe(1)
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({size: 1, onlyTotal: true, commit: false}))
+    })
+
+    it("leaves the counts unknown when a count query fails", async () => {
+        const store = useExecutionsStore()
+        vi.spyOn(store, "findExecutions").mockRejectedValue(new Error("boom"))
+
+        const {totalCount, failedCount, loadCounts} = useLoopIterations("parent-1", "loopTask")
+        await loadCounts()
+
+        expect(totalCount.value).toBeUndefined()
+        expect(failedCount.value).toBeUndefined()
+    })
+
+    it("defers the failed-only fetch to the first load when nothing was loaded yet", async () => {
+        const store = useExecutionsStore()
+        const findExecutions = vi.spyOn(store, "findExecutions").mockResolvedValue({results: [], total: 0} as never)
+
+        const {failedOnly, setFailedOnly, ensureLoaded} = useLoopIterations("parent-1", "loopTask")
+        await setFailedOnly(true)
+        expect(findExecutions).not.toHaveBeenCalled()
+
+        await ensureLoaded()
+
+        expect(failedOnly.value).toBe(true)
+        expect(findExecutions.mock.calls[0][0]).toMatchObject({"filters[state][IN]": ["FAILED"]})
+    })
+
+    it("lets a concurrent caller wait for the load already in flight", async () => {
+        const store = useExecutionsStore()
+        vi.spyOn(store, "findExecutions").mockResolvedValue({results: [makeExecution("it-1", "EMEA", 0)], total: 1} as never)
+
+        const {iterations, ensureLoaded} = useLoopIterations("parent-1", "loopTask")
+        void ensureLoaded()
+        await ensureLoaded()
+
+        expect(iterations.value).toHaveLength(1)
+    })
+
+    it("skips the count queries once counts are known unless forced", async () => {
+        const store = useExecutionsStore()
+        const findExecutions = vi.spyOn(store, "findExecutions").mockResolvedValue(3 as never)
+
+        const {loadCounts} = useLoopIterations("parent-1", "loopTask")
+        await loadCounts()
+        await loadCounts()
+        expect(findExecutions).toHaveBeenCalledTimes(2)
+
+        await loadCounts({force: true})
+        expect(findExecutions).toHaveBeenCalledTimes(4)
+    })
+
+    it("shares one pair of count queries between concurrent callers", async () => {
+        const store = useExecutionsStore()
+        const findExecutions = vi.spyOn(store, "findExecutions").mockResolvedValue(3 as never)
+
+        const {loadCounts} = useLoopIterations("parent-1", "loopTask")
+        await Promise.all([loadCounts(), loadCounts()])
+
+        expect(findExecutions).toHaveBeenCalledTimes(2)
+    })
+
+    it("fetches a single iteration by its sorted position", async () => {
+        const store = useExecutionsStore()
+        const findExecutions = vi.spyOn(store, "findExecutions").mockResolvedValue({
+            results: [makeExecution("it-41", "V41", 41)],
+            total: 100,
+        } as never)
+
+        const {fetchAt} = useLoopIterations("parent-1", "loopTask")
+        const row = await fetchAt(41)
+
+        expect(row?.id).toBe("it-41")
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({page: 42, size: 1, sort: "loopRunIndex:asc", commit: false}))
+        expect(await fetchAt(-1)).toBeUndefined()
+        expect(findExecutions).toHaveBeenCalledTimes(1)
+    })
 })

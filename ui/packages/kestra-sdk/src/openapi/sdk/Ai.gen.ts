@@ -5,7 +5,7 @@ import { _02135D614, _0509A5F04, _18F56, _2E9358, _38B0E6C0, _6667C843 } from '.
 import type { AiControllerFlowGenerationPrompt, ApiChatTurnRequest, ApiConfirmActionRequest, ApiCreateThreadRequest } from '../types.gen';
 
 /**
- * Generate or regenerate a flow based on a prompt
+ * Generate or regenerate a flow based on a prompt (deprecated)
  */
 export const generateFlow = (parameters: AiControllerFlowGenerationPrompt, options?: Omit<Parameters<typeof _6667C843>[1], 'throwOnError'>) => getDataOrThrow(_6667C843({ aiControllerFlowGenerationPrompt: parameters }, {
     ...options,

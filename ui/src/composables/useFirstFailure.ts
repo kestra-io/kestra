@@ -4,6 +4,7 @@ import {useExecutionsStore, type Execution} from "../stores/executions"
 import type {Log} from "../stores/logs"
 import {handledIf} from "../utils/kestraHttp"
 import {findFirstFailedTaskRun, taskRunPath} from "../utils/executionUtils"
+import * as FlowUtils from "../utils/flowUtils"
 import {stripBackticks} from "../utils/logs"
 import {linkTagsAsText} from "../components/logs/linkify"
 
@@ -14,7 +15,9 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
 
     const failedTaskRun = computed(() => {
         const current = toValue(execution)
-        return current?.state.current === State.FAILED ? findFirstFailedTaskRun(current) : undefined
+        return current?.state?.current === State.FAILED
+            ? findFirstFailedTaskRun(current, taskId => FlowUtils.findTaskById(store.flow, taskId)?.type)
+            : undefined
     })
 
     const path = computed(() => {
@@ -39,7 +42,6 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
             },
             query: {
                 "filters[taskRunId][EQUALS]": failedTaskRun.value?.id,
-                "filters[kind][IN]": current?.kind,
             },
         }
     })
@@ -53,7 +55,6 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
                 filters: [
                     {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
                     {field: "taskRunId", operation: "EQUALS", value: taskRunId},
-                    {field: "kind", operation: "IN", value: current.kind},
                 ],
             })
             if (toValue(execution)?.id === current.id && failedTaskRun.value?.id === taskRunId) errorLogs.value = response

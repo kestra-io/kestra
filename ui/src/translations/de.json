@@ -475,6 +475,41 @@
     "resumed confirm": "Execution <code>{id}</code> wirklich fortsetzen?",
     "resumed done": "Die Execution wurde fortgesetzt",
     "resume from breakpoint title": "Execution {id} ab Breakpoint fortsetzen",
+    "approval": {
+      "review": "Überprüfen",
+      "title": "Überprüfe {task} der Execution {id}",
+      "approve": "Genehmigen",
+      "deny": "Verweigern",
+      "comment": "Kommentar",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "Ein Kommentar ist erforderlich.",
+        "on approve": "Ein Kommentar ist zur Genehmigung erforderlich.",
+        "on deny": "Ein Kommentar ist erforderlich, um abzulehnen."
+      },
+      "comment required": "Ein Kommentar ist für diese Entscheidung erforderlich.",
+      "inputs invalid": "Einige Inputs sind ungültig: {errors}",
+      "review done": "Deine Bewertung wurde aufgezeichnet",
+      "reviewed": {
+        "title": "Genehmigungsanfrage für Execution {id}",
+        "explanation": "Diese Genehmigungsanfrage wartet nicht mehr auf eine Überprüfung.",
+        "decision": "Entscheidung",
+        "by": "Entschieden durch",
+        "on": "Entschieden am",
+        "decisions": {
+          "approved": "Genehmigt",
+          "denied": "Verweigert",
+          "expired": "Abgelaufen"
+        }
+      },
+      "cancel request": "Anfrage abbrechen",
+      "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution {id} wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
+      "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
+      "banner": {
+        "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",
+        "paused": "Diese Execution wartet auf eine Überprüfung. Genehmige oder lehne sie ab, um fortzufahren."
+      }
+    },
     "resume from breakpoint done": "Die Execution wird ab dem Breakpoint fortgesetzt",
     "breakpoints": "Breakpoints",
     "pause": "Pause",
@@ -1026,7 +1061,6 @@
       }
     },
     "back_to_dashboard": "Zurück zum Dashboard",
-    "copy all logs": "Alle Logs kopieren",
     "copy logs": "Logs kopieren",
     "fix_with_ai": "Mit AI beheben",
     "download logs": "Logs herunterladen",
@@ -1155,6 +1189,7 @@
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
     "warning detected": "Warnung(en) erkannt.",
+    "schema warning": "Zeile {line}: {message}",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "admin": "Admin",
@@ -1294,6 +1329,7 @@
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
     "relative start date": "Relatives Startdatum",
+    "now": "Jetzt",
     "absolute": "Absolut",
     "backfill": "Backfill",
     "Set labels": "Labels festlegen",
@@ -1922,12 +1958,45 @@
     "iterations": "Iterationen",
     "load_10_more": "10 weitere laden",
     "show_all_executions": "Alle Ausführungen anzeigen",
-    "failed_iterations_only": "Nur fehlgeschlagene Iterationen",
     "loop_iterations_shown": "{shown} von {total} angezeigt",
     "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
     "retry": "Versuche es erneut",
     "no_iterations": "Noch keine Iterationen",
     "no_failed_iterations": "Keine fehlgeschlagenen Iterationen",
+    "gantt_tree_label": "Execution-Timeline",
+    "gantt_row_expand": "{name} ausklappen",
+    "gantt_row_collapse": "{name} einklappen",
+    "gantt_failed_only": "Nur fehlgeschlagene",
+    "gantt_go_to_first_failure": "Zum ersten Fehler springen",
+    "gantt_loop_iterations_count": "{count} Iteration | {count} Iterationen",
+    "gantt_loop_failed_count": "{count} fehlgeschlagen",
+    "gantt_loop_show_failed": "Nur fehlgeschlagene Iterationen anzeigen",
+    "gantt_loop_show_all": "Alle Iterationen anzeigen",
+    "gantt_loop_show_all_iterations": "Alle {count} Iterationen anzeigen",
+    "gantt_loop_loading": "Iterationen werden geladen…",
+    "gantt_iteration_no_tasks": "Noch keine Task-Runs in dieser Iteration",
+    "gantt_iteration_no_failed_tasks": "Keine fehlgeschlagenen Task-Runs in dieser Iteration",
+    "gantt_panel": {
+      "label": "Task-Run-Details",
+      "lineage": "Position im Flow",
+      "previous_iteration": "Vorherige Iteration",
+      "next_iteration": "Nächste Iteration",
+      "open_iteration": "Iteration öffnen",
+      "iteration_position": "{position} von {total} in {loop}",
+      "first_failure": "Erster Fehler",
+      "go_to_failure": "Zum Fehler springen",
+      "task_runs": "Task-Runs",
+      "iteration": "Iteration",
+      "value": "Value",
+      "index": "Index",
+      "index_of": "#{index} von {total}",
+      "execution": "Execution",
+      "filter_all": "Alle {count}",
+      "filter_failed": "Fehlgeschlagen {count}",
+      "filter_success": "Erfolgreich {count}",
+      "search_value": "Nach exaktem Value suchen",
+      "range": "{from}–{to} von {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
       "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",
@@ -2219,6 +2288,7 @@
         "plural": "Dashboards"
       },
       "default": "Standard-Dashboard",
+      "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
       "edition": {
         "label": "Dashboard bearbeiten",
@@ -2682,11 +2752,11 @@
       "empty_title": "Finde einen Wert in Flows, Dateien und Keys",
       "error_title": "Ungültiger regulärer Ausdruck",
       "examples_aria": "Beispielabfragen",
-      "exclusion_flows_readonly": "Flows — {count} schreibgeschützter Treffer: du benötigst die Berechtigung FLOW · UPDATE. | Flows — {count} schreibgeschützte Treffer: du benötigst die Berechtigung FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} Treffer: nur Suche, kann nicht ersetzt werden. | {type} — {count} Treffer: nur Suche, kann nicht ersetzt werden.",
+      "exclusion_flows_readonly": "Flows · {count} schreibgeschützter Treffer: du benötigst die Berechtigung FLOW · UPDATE. | Flows · {count} schreibgeschützte Treffer: du benötigst die Berechtigung FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} Treffer: nur Suche, kann nicht ersetzt werden. | {type} · {count} Treffer: nur Suche, kann nicht ersetzt werden.",
       "exclusion_title": "{count} Treffer ist von „Alle ersetzen“ ausgeschlossen | {count} Treffer sind von „Alle ersetzen“ ausgeschlossen",
       "expand_all": "Alle ausklappen",
-      "file_match_notice": "Der Dateipfad hat übereingestimmt. Der Dateiinhalt wird nicht durchsucht — öffne die Datei, um darin zu suchen.",
+      "file_match_notice": "Der Dateipfad hat übereingestimmt. Der Dateiinhalt wird nicht durchsucht. Öffne die Datei, um darin zu suchen.",
       "files_progress_banner_failed": "Namespace-Dateien werden nacheinander pro Namespace durchsucht. {done} von {total} fertig, {failed} fehlgeschlagen. Die Gesamtzahl ändert sich noch.",
       "files_progress_banner_ok": "Namespace-Dateien werden nacheinander pro Namespace durchsucht. {done} von {total} fertig. Die Gesamtzahl ändert sich noch.",
       "flow_only_toggle_hint": "Groß-/Kleinschreibung, ganzes Wort und regulärer Ausdruck gelten nur für Flows. Dateipfade und Keys werden immer als reiner Text abgeglichen.",
@@ -2763,10 +2833,10 @@
       "show_replace": "Ersetzen anzeigen",
       "summary": "{matches} Treffer in {flows} Flows",
       "summary_cross": "{matches} in {resources} in {types}",
-      "tag_keys_only_never": "Nur Keys — Werte werden nie angezeigt oder durchsucht",
-      "tag_keys_only_values": "Nur Keys — Werte werden nicht durchsucht",
-      "tag_paths_only": "Nur Pfade — Dateiinhalt wird nicht durchsucht",
-      "tag_search_only": "Nur Suche — wird nicht ersetzt",
+      "tag_keys_only_never": "Nur Keys: Werte werden nie angezeigt oder durchsucht",
+      "tag_keys_only_values": "Nur Keys: Werte werden nicht durchsucht",
+      "tag_paths_only": "Nur Pfade: Dateiinhalt wird nicht durchsucht",
+      "tag_search_only": "Nur Suche: wird nicht ersetzt",
       "tag_source_code": "Quellcode",
       "truncated_flows": "Es werden die ersten {shown} von {total} Treffern angezeigt. „Alle ersetzen“ gilt nur für die angezeigten Treffer, grenze die Suche zuerst ein.",
       "truncated_type": "erste {shown} von {total}",
@@ -2962,6 +3032,56 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
-    "not started": "Nicht gestartet"
+    "not started": "Nicht gestartet",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen. Schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      },
+      "scrubber": {
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen",
+        "ignoredFilters": "Die Dichteleiste wendet diese Filter nicht an: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
+    }
   }
 }

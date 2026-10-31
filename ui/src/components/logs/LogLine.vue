@@ -5,9 +5,6 @@
         :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
-        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
-            <MenuRight />
-        </KsIcon>
         <span
             class="log-level"
             :class="{'log-level--clickable': clickableLevel}"
@@ -18,7 +15,12 @@
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
-        >{{ levelLabel }}</span>
+        >
+            <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
+                <MenuRight />
+            </KsIcon>
+            {{ levelLabel }}
+        </span>
         <div class="log-content">
             <div class="log-header">
                 <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
@@ -93,14 +95,12 @@
     const levelLower = computed(() => (props.log?.level ?? "info").toLowerCase())
 
     const rowStyle = computed(() => {
-        const tinted = levelLower.value === "error" || levelLower.value === "warn"
         const pad = DENSITY_PADDING[logsDensity.value]
         return {
             fontSize: `${logsFontSize.value}px`,
             paddingTop: pad,
             paddingBottom: pad,
             borderLeftColor: `var(--ks-log-border-${levelLower.value})`,
-            ...(tinted ? {background: `color-mix(in srgb, var(--ks-log-${levelLower.value}) 6%, transparent)`} : {}),
         }
     })
 
@@ -228,6 +228,15 @@ div.line {
         background: var(--ks-bg-hover);
     }
 
+    // Selected rows are excluded so the severity tint does not cover the selection background.
+    &.log-row-error:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-error) 6%, transparent);
+    }
+
+    &.log-row-warn:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-warn) 6%, transparent);
+    }
+
     &.selected {
         background: var(--ks-bg-tag-hover);
     }
@@ -240,14 +249,8 @@ div.line {
         border-top: 0;
     }
 
-    .icon_container {
-        position: absolute;
-        left: -0.6rem;
-        top: 0.5rem;
-        z-index: 1;
-    }
-
     .log-level {
+        position: relative;
         flex: none;
         width: 3.5rem;
         padding-top: 1px;
@@ -266,6 +269,14 @@ div.line {
         &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .icon_container {
+        position: absolute;
+        top: 50%;
+        left: -0.6rem;
+        transform: translateY(-50%);
+        z-index: 1;
     }
 
     .log-time {

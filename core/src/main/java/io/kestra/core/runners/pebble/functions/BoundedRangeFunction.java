@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,11 @@ public final class BoundedRangeFunction implements Function {
         if (start instanceof Number startNumber && end instanceof Number endNumber) {
             long incrementValue = increment instanceof Number number ? number.longValue() : 1L;
             if (incrementValue != 0) {
-                long requestedSize = Math.abs(endNumber.longValue() - startNumber.longValue()) / Math.abs(incrementValue) + 1;
+                BigInteger requestedSize = BigInteger.valueOf(endNumber.longValue())
+                    .subtract(BigInteger.valueOf(startNumber.longValue()))
+                    .abs()
+                    .divide(BigInteger.valueOf(incrementValue).abs())
+                    .add(BigInteger.ONE);
                 RenderLimits.ensureAtMost(
                     requestedSize,
                     MAX_RANGE_SIZE,

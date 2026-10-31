@@ -301,18 +301,23 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
+        List<InputAndValue> resolvedInputs = this.resolveInputs(inputs, flow, execution, data, true, true);
+
+        Map<String, List<InputOutputValidationException>> violationsByField = new LinkedHashMap<>();
+        for (InputAndValue it : resolvedInputs) {
+            if (it.enabled() && it.exceptions() != null && !it.exceptions().isEmpty()) {
+                violationsByField.put(it.input().getId(), new ArrayList<>(it.exceptions()));
+            }
+        }
+
+        if (!violationsByField.isEmpty()) {
+            throw InputOutputValidationException.ofViolations(violationsByField);
+        }
+
+        Map<String, Object> resolved = resolvedInputs
             .stream()
             .filter(InputAndValue::enabled)
-            .map(it ->
-            {
-                //TODO check to return all exception at-once.
-                if (it.exceptions() != null && !it.exceptions().isEmpty()) {
-                    throw InputOutputValidationException.merge(it.exceptions());
-                }
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
-            })
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+            .collect(HashMap::new, (m, v) -> m.put(v.input().getId(), v.value()), HashMap::putAll);
         if (resolved.size() < data.size()) {
             RunContext runContext = runContextFactory.get().of(flow, execution);
             for (var inputKey : data.keySet()) {

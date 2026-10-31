@@ -68,7 +68,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN, null)).isEqualTo(
                 DSL.field(columnName).notIn(List.of(assertValue))
             );
-            Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
+            org.jooq.Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(
                 searchColumn.startsWith(assertValue)
             );
@@ -148,7 +148,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         String wildcardValue = "%";
         String underscoreValue = "_";
         Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
-        Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
+        org.jooq.Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
 
         // When / Then — CONTAINS: metacharacter must be escaped, not treated as a wildcard
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS, null))

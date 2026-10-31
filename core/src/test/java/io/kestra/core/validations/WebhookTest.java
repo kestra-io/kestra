@@ -6,6 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -19,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WebhookTest {
     @Inject
     private ModelValidator modelValidator;
+
+    @Inject
+    private RunContextFactory runContextFactory;
 
     @Test
     void webhookResponseContentTypeValidation() {
@@ -130,7 +135,7 @@ public class WebhookTest {
     }
 
     @Test
-    void shouldDefaultSignatureAlgorithmWhenOmittedFromYaml() throws JsonProcessingException {
+    void shouldDefaultSignatureAlgorithmWhenOmittedFromYaml() throws Exception {
         Webhook webhook = JacksonMapper.ofYaml().readValue(
             """
                 id: webhook
@@ -142,7 +147,9 @@ public class WebhookTest {
                 """,
             Webhook.class
         );
-        assertThat(webhook.getSignature().getAlgorithm()).isEqualTo(Webhook.SignatureAlgorithm.HMAC_SHA256);
+        assertThat(runContextFactory.of(Flow.builder().id("test").namespace("io.kestra.tests").build(), webhook)
+            .render(webhook.getSignature().getAlgorithm()).as(Webhook.SignatureAlgorithm.class))
+            .contains(Webhook.SignatureAlgorithm.HMAC_SHA256);
         assertThat(modelValidator.isValid(webhook)).isEmpty();
     }
 

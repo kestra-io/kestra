@@ -67,49 +67,32 @@ public class WebhookBodyService {
     }
 
     /**
-     * Read the body of a webhook request that is not {@code multipart/form-data}, as the trigger asks for it.
-     * <p>
-     * The body is read off the connection in every case, so that the caller always gets its response back; what
-     * the fetch type decides is where those bytes go - into the flow, into the internal storage, or nowhere.
-     *
-     * @param request     the incoming request
-     * @param flow        the flow the webhook trigger belongs to
-     * @param executionId the identifier the execution created from the request will be given
-     * @param fetchType   what the trigger does with the body
-     * @return the body of the request
-     * @throws IOException if the body cannot be read, or cannot be stored
-     */
-    public Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId, FetchType fetchType) throws IOException {
-        ByteBody byteBody = request instanceof ServerHttpRequest<?> serverRequest ? serverRequest.byteBody() : null;
-
-        if (byteBody == null) {
-            // Not a request being served, so its body is only what was bound to it: reachable from a test, or from
-            // an edition calling in with a request of its own making.
-            return new Body(MicronautHttpService.from(request).getBody(), null);
-        }
-
-        try (InputStream content = byteBody.toInputStream()) {
-            return read(request, flow, executionId, fetchType, content);
-        }
-    }
-
-    /**
      * Verify configured signatures over the original bytes before returning a body for execution creation.
      * Stored content is deleted if verification or ingestion fails.
      */
     public Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId,
         AbstractWebhookTrigger trigger, RunContext runContext) throws IOException, IllegalVariableEvaluationException {
         if (!(trigger instanceof Webhook webhook) || webhook.getSignature() == null) {
-            return read(request, flow, executionId, trigger.getFetchType());
+            ByteBody byteBody = request instanceof ServerHttpRequest<?> serverRequest ? serverRequest.byteBody() : null;
+            if (byteBody == null) {
+                return new Body(MicronautHttpService.from(request).getBody(), null);
+            }
+            try (InputStream content = byteBody.toInputStream()) {
+                return read(request, flow, executionId, trigger.getFetchType(), content);
+            }
         }
 
         Webhook.Signature signature = webhook.getSignature();
-        var headers = request.getHeaders().getAll(signature.getHeader());
+        String header = runContext.render(signature.getHeader()).as(String.class).orElse(null);
+        if (header == null || header.isBlank()) {
+            throw invalidSignature();
+        }
+        var headers = request.getHeaders().getAll(header);
         if (headers.size() != 1 || !(request instanceof ServerHttpRequest<?> serverRequest)) {
             throw invalidSignature();
         }
         String value = headers.getFirst();
-        String prefix = signature.getPrefix();
+        String prefix = runContext.render(signature.getPrefix()).as(String.class).orElse(null);
         if (prefix != null) {
             if (!value.startsWith(prefix)) {
                 throw invalidSignature();
@@ -119,7 +102,8 @@ public class WebhookBodyService {
 
         Mac mac;
         try {
-            mac = Mac.getInstance(signature.getAlgorithm().getJcaName());
+            Webhook.SignatureAlgorithm algorithm = runContext.render(signature.getAlgorithm()).as(Webhook.SignatureAlgorithm.class).orElseThrow();
+            mac = Mac.getInstance(algorithm.getJcaName());
             String secret = runContext.render(signature.getSecret()).as(String.class).orElseThrow();
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), mac.getAlgorithm()));
         } catch (GeneralSecurityException e) {
@@ -135,25 +119,7 @@ public class WebhookBodyService {
             throw invalidSignature();
         }
 
-        try (InputStream content = new FilterInputStream(serverRequest.byteBody().toInputStream()) {
-            @Override
-            public int read() throws IOException {
-                int value = in.read();
-                if (value != -1) {
-                    mac.update((byte) value);
-                }
-                return value;
-            }
-
-            @Override
-            public int read(byte[] bytes, int offset, int length) throws IOException {
-                int count = in.read(bytes, offset, length);
-                if (count > 0) {
-                    mac.update(bytes, offset, count);
-                }
-                return count;
-            }
-        }) {
+        try (InputStream content = new MacInputStream(serverRequest.byteBody().toInputStream(), mac)) {
             Body body = read(request, flow, executionId, trigger.getFetchType(), content);
             if (!MessageDigest.isEqual(mac.doFinal(), expected)) {
                 throw invalidSignature();
@@ -314,6 +280,33 @@ public class WebhookBodyService {
         return StorageContext
             .forExecution(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId)
             .getContextStorageURI();
+    }
+
+    private static final class MacInputStream extends FilterInputStream {
+        private final Mac mac;
+
+        private MacInputStream(InputStream input, Mac mac) {
+            super(input);
+            this.mac = mac;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int value = in.read();
+            if (value != -1) {
+                mac.update((byte) value);
+            }
+            return value;
+        }
+
+        @Override
+        public int read(byte[] bytes, int offset, int length) throws IOException {
+            int count = in.read(bytes, offset, length);
+            if (count > 0) {
+                mac.update(bytes, offset, count);
+            }
+            return count;
+        }
     }
 
     /**

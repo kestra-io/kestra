@@ -32,7 +32,6 @@ import io.kestra.core.validations.WebhookValidation;
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -496,31 +495,27 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
     }
 
-    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {
-    }
+    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
 
     @SuperBuilder
     @Getter
     @NoArgsConstructor
     public static class Signature {
-        @NotBlank
-        @PluginProperty
+        @NotNull
         @Schema(title = "The request header containing the hexadecimal signature.")
-        private String header;
+        private Property<String> header;
 
         @NotNull
         @Builder.Default
-        @PluginProperty
-        @Schema(title = "The HMAC algorithm used by the sender.", description = "Defaults to `HMAC_SHA256`.")
-        private SignatureAlgorithm algorithm = SignatureAlgorithm.HMAC_SHA256;
+        @Schema(title = "The HMAC algorithm used by the sender.")
+        private Property<SignatureAlgorithm> algorithm = Property.ofValue(SignatureAlgorithm.HMAC_SHA256);
 
         @NotNull
         @Schema(title = "The shared signing secret.", description = "Use a secret expression such as `{{ secret('GITHUB_WEBHOOK_SECRET') }}`.")
         private Property<String> secret;
 
-        @PluginProperty
         @Schema(title = "The optional required prefix before the hexadecimal signature.", description = "For GitHub SHA256 signatures, use `sha256=`.")
-        private String prefix;
+        private Property<String> prefix;
     }
 
     @Getter

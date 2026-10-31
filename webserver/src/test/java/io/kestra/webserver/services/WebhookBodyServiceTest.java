@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -153,7 +154,7 @@ class WebhookBodyServiceTest {
     }
 
     @Test
-    void shouldStoreBodyUnderTheExecutionWhenFetchTypeIsStore() throws IOException {
+    void shouldStoreBodyUnderTheExecutionWhenFetchTypeIsStore() throws Exception {
         // Given
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
         WebhookBodyService service = new WebhookBodyService(storage(captured));
@@ -164,7 +165,7 @@ class WebhookBodyServiceTest {
             request(MediaType.APPLICATION_OCTET_STREAM, content),
             FLOW,
             EXECUTION_ID,
-            FetchType.STORE
+            Webhook.builder().fetchType(FetchType.STORE).build(), null
         );
 
         // Then - the body is stored rather than carried, so the trigger only gets its URI
@@ -175,13 +176,13 @@ class WebhookBodyServiceTest {
     }
 
     @Test
-    void shouldNotStoreAnythingWhenFetchTypeIsStoreAndRequestHasNoBody() throws IOException {
+    void shouldNotStoreAnythingWhenFetchTypeIsStoreAndRequestHasNoBody() throws Exception {
         // Given
         StorageInterface storage = storage();
         WebhookBodyService service = new WebhookBodyService(storage);
 
         // When
-        WebhookBodyService.Body body = service.read(request(null, new byte[0]), FLOW, EXECUTION_ID, FetchType.STORE);
+        WebhookBodyService.Body body = service.read(request(null, new byte[0]), FLOW, EXECUTION_ID, Webhook.builder().fetchType(FetchType.STORE).build(), null);
 
         // Then - an empty file under the execution would be a URI pointing at nothing
         assertThat(body.storedUri()).isNull();
@@ -190,7 +191,7 @@ class WebhookBodyServiceTest {
     }
 
     @Test
-    void shouldReadBodyOffTheConnectionAndDropItWhenFetchTypeIsNone() throws IOException {
+    void shouldReadBodyOffTheConnectionAndDropItWhenFetchTypeIsNone() throws Exception {
         // Given — a streaming body, so that it being read off the connection is observable
         StorageInterface storage = mock(StorageInterface.class);
         WebhookBodyService service = new WebhookBodyService(storage);
@@ -202,7 +203,7 @@ class WebhookBodyServiceTest {
             );
 
         // When
-        WebhookBodyService.Body body = service.read(request(MediaType.APPLICATION_JSON, byteBody), FLOW, EXECUTION_ID, FetchType.NONE);
+        WebhookBodyService.Body body = service.read(request(MediaType.APPLICATION_JSON, byteBody), FLOW, EXECUTION_ID, Webhook.builder().fetchType(FetchType.NONE).build(), null);
 
         // Then - nothing of the body reaches the flow, but it was read so the caller is not cut short
         assertThat(body.requestBody()).isNull();
@@ -212,7 +213,7 @@ class WebhookBodyServiceTest {
     }
 
     @Test
-    void shouldKeepBinaryBodyIntactWhenFetchTypeIsFetch() throws IOException {
+    void shouldKeepBinaryBodyIntactWhenFetchTypeIsFetch() throws Exception {
         // Given
         StorageInterface storage = mock(StorageInterface.class);
         WebhookBodyService service = new WebhookBodyService(storage);
@@ -223,7 +224,7 @@ class WebhookBodyServiceTest {
             request(MediaType.APPLICATION_OCTET_STREAM, content),
             FLOW,
             EXECUTION_ID,
-            FetchType.FETCH
+            Webhook.builder().fetchType(FetchType.FETCH).build(), null
         );
 
         // Then
@@ -333,6 +334,22 @@ class WebhookBodyServiceTest {
         verifyNoInteractions(storage);
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = " ")
+    void shouldRejectBlankRenderedHeaderWithoutReadingOrStoringTheBody(String header) throws Exception {
+        Webhook webhook = signedWebhook(FetchType.STORE, Webhook.SignatureAlgorithm.HMAC_SHA256, null);
+        RunContext context = runContext(webhook);
+        when(context.render(webhook.getSignature().getHeader()).as(String.class)).thenReturn(Optional.ofNullable(header));
+        StorageInterface storage = storage();
+        var request = signedRequest(SIGNED_JSON.getBytes(StandardCharsets.UTF_8), SHA256);
+
+        assertThatThrownBy(() -> new WebhookBodyService(storage).read(request, FLOW, EXECUTION_ID, webhook, context))
+            .isInstanceOfSatisfying(HttpStatusException.class, e -> assertThat((Object) e.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED));
+        verify(request, never()).byteBody();
+        verifyNoInteractions(storage);
+    }
+
     @Test
     void shouldRejectDuplicateSignatureHeaders() throws Exception {
         var request = signedRequest(SIGNED_JSON.getBytes(StandardCharsets.UTF_8), SHA256);
@@ -430,12 +447,20 @@ class WebhookBodyServiceTest {
     private static Webhook signedWebhook(FetchType fetchType, Webhook.SignatureAlgorithm algorithm, String prefix) {
         return Webhook.builder().fetchType(fetchType).signature(
             Webhook.Signature.builder()
-                .header("X-Signature").algorithm(algorithm).prefix(prefix).secret(Property.ofValue("test-secret")).build()
+                .header(Property.ofValue("X-Signature"))
+                .algorithm(Property.ofValue(algorithm))
+                .prefix(prefix == null ? null : Property.ofValue(prefix))
+                .secret(Property.ofValue("test-secret")).build()
         ).build();
     }
 
     private static RunContext runContext(Webhook webhook) throws Exception {
         RunContext context = mock(RunContext.class, RETURNS_DEEP_STUBS);
+        when(context.render(webhook.getSignature().getHeader()).as(String.class)).thenReturn(Optional.of("X-Signature"));
+        when(context.render(webhook.getSignature().getAlgorithm()).as(Webhook.SignatureAlgorithm.class))
+            .thenReturn(Optional.of(Property.as(webhook.getSignature().getAlgorithm(), null, Webhook.SignatureAlgorithm.class)));
+        when(context.render(webhook.getSignature().getPrefix()).as(String.class))
+            .thenReturn(Optional.ofNullable(webhook.getSignature().getPrefix() == null ? null : Property.as(webhook.getSignature().getPrefix(), null, String.class)));
         when(context.render(webhook.getSignature().getSecret()).as(String.class)).thenReturn(Optional.of("test-secret"));
         return context;
     }

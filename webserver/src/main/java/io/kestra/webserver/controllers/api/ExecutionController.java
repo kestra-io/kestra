@@ -33,7 +33,6 @@ import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
-import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -49,10 +48,6 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
-import io.kestra.webserver.errors.ProblemDetail;
-import io.kestra.webserver.errors.ProblemError;
-import io.kestra.webserver.errors.ProblemType;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -96,6 +91,11 @@ import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
 import io.kestra.webserver.models.api.ApiLightExecution;
@@ -158,7 +158,6 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
-import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.ObjectMapper;
@@ -975,7 +974,8 @@ public class ExecutionController {
                 }
             })
             .findFirst()
-            .orElseThrow(() -> {
+            .orElseThrow(() ->
+            {
                 log.debug("Rejected a webhook call: no trigger on flow '{}.{}' matches the given key.", flow.getNamespace(), flow.getId());
                 return webhookNotFound();
             });
@@ -1053,7 +1053,8 @@ public class ExecutionController {
             if (revision.isEmpty()) {
                 flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty())
                     .filter(f -> !f.isDeleted() && f.isDraft())
-                    .ifPresent(draftFlow -> {
+                    .ifPresent(draftFlow ->
+                    {
                         throw new IllegalArgumentException(
                             "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
                         );
@@ -1511,12 +1512,14 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
         for (Execution execution : executions) {
             if (!execution.getState().canBeRestarted()) {
-                invalids.add(executionProblem(
-                    execution.getId(),
-                    "Execution '%s' must be terminated to be restarted, current state is '%s' !"
-                        .formatted(execution.getId(), execution.getState().getCurrent()),
-                    ProblemTypes.CONFLICT
-                ));
+                invalids.add(
+                    executionProblem(
+                        execution.getId(),
+                        "Execution '%s' must be terminated to be restarted, current state is '%s' !"
+                            .formatted(execution.getId(), execution.getState().getCurrent()),
+                        ProblemTypes.CONFLICT
+                    )
+                );
             }
         }
         if (!invalids.isEmpty()) {
@@ -2879,7 +2882,6 @@ public class ExecutionController {
             (execution, opId, actor) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId).withActor(actor))
         );
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/unqueue")

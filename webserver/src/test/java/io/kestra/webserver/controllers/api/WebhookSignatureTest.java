@@ -59,7 +59,7 @@ class WebhookSignatureTest {
 
     @Test
     @LoadFlows("flows/valids/webhook-signature.yaml")
-    void shouldVerifyRawBytesBeforeDeserializingJson() {
+    void shouldRenderSignatureSettingsAndVerifyRawBytesBeforeDeserializingJson() {
         var response = client.toBlocking().exchange(POST(URL, BODY).header("x-hub-signature-256", SIGNATURE), String.class);
         assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.NO_CONTENT);
         ArgumentCaptor<Webhook.Output> output = ArgumentCaptor.forClass(Webhook.Output.class);

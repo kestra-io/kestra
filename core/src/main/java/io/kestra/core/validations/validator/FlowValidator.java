@@ -28,6 +28,7 @@ import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.FlowValidation;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.core.plugins.PluginRegistry;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
@@ -49,6 +50,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     @Inject
     private Validator validator;
+
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     @Override
     public boolean isValid(

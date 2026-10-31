@@ -7,6 +7,7 @@ import TaskArray from "./tasks/TaskArray.vue"
 import TaskDict from "./tasks/TaskDict.vue"
 import TaskObjectField from "./tasks/TaskObjectField.vue"
 import {taskComponentsReady} from "./tasks/useBlockComponent"
+import type {Schema} from "./tasks/getTaskComponent"
 
 const messages = {
     no_code: {
@@ -103,7 +104,7 @@ describe("TaskDict add label", () => {
 describe("TaskObjectField anyOf containment", () => {
     // The field type resolver loads asynchronously on mount — flush it before
     // asserting which presentation branch rendered.
-    async function mountField({schema, fieldKey = "retry"}: {schema: unknown, fieldKey?: string}) {
+    async function mountField({schema, fieldKey = "retry"}: {schema: Schema, fieldKey?: string}) {
         const wrapper = i18nMount(TaskObjectField, {
             messages,
             props: {schema, fieldKey, task: {}, required: []},

@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import type {RouteLocation, Router} from "vue-router"
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
-import installUnsavedChange from "./unsavedChange"
+import installUnsavedChange, {type TranslatableApp} from "./unsavedChange"
 
 type BeforeUnloadHandler = (e: {returnValue?: unknown}) => unknown
 type BeforeEachGuard = (to: RouteLocation, from: RouteLocation) => Promise<boolean | undefined>
@@ -23,7 +23,7 @@ function install(t: (key: string) => string = (key) => `translated:${key}`) {
             guard = callback
         },
     } as unknown as Router
-    const app = {config: {globalProperties: {} as Record<string, unknown>}}
+    const app: TranslatableApp = {config: {globalProperties: {$t: t}}}
 
     installUnsavedChange(app, router)
     app.config.globalProperties.$t = t

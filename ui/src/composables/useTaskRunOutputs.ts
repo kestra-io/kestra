@@ -1,5 +1,7 @@
 import {ref, watch, type ComputedRef, type Ref} from "vue"
+import {useClient} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import {apiUrl} from "override/utils/route"
 import {handledIf} from "../utils/kestraHttp"
 
 // Since Kestra 2.0, task run outputs are no longer embedded on the Execution
@@ -19,7 +21,7 @@ function fetchTaskRunIdsWithOutputs(executionId: string, forceRefresh: boolean):
 
     const pending = OutputsAPI.taskOutputsInformation({executionId})
         .catch((e: unknown) => {
-            if (handledIf(e, [404])) return []
+            if (handledIf(e, [403, 404])) return []
             throw e
         })
         .then((data) =>
@@ -86,4 +88,17 @@ export async function loadExecutionOutputs(executionId: string): Promise<Record<
         if (handledIf(e, [404])) return {}
         throw e
     }
+}
+
+// Encoding keeps `/` out, but `.` and `..` survive it and the URL parser resolves them as path navigation.
+const DOT_SEGMENTS = new Set([".", ".."])
+
+// `cls` only selects the plugin, so any of its classes works.
+export async function callTaskRunEndpoint(cls: string, name: string, executionId: string, taskRunId: string, params: Record<string, string> = {}): Promise<unknown> {
+    if ([name, executionId, taskRunId].some((segment) => DOT_SEGMENTS.has(segment))) {
+        throw new Error("Invalid plugin endpoint path segment.")
+    }
+    const url = `${apiUrl()}/plugins/${encodeURIComponent(cls)}/endpoints/${encodeURIComponent(name)}/${encodeURIComponent(executionId)}/${encodeURIComponent(taskRunId)}`
+    const response = await useClient().get(url, {params})
+    return response.data
 }

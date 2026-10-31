@@ -9,6 +9,7 @@
             />
         </template>
         <template #actions>
+            <ReviewLink v-if="execution" :execution="execution" />
             <template v-if="execution && isMobile">
                 <NavBarActionsDropdown>
                     <component
@@ -25,7 +26,7 @@
                         :namespace="execution.namespace"
                     >
                         <template #button="{execute, disabled}">
-                            <NavBarAction :icon="PlayOutline" :label="$t('execute')" :disabled="disabled" @click="execute" />
+                            <NavBarAction :icon="Play" :label="$t('execute')" :disabled="disabled" @click="execute" />
                         </template>
                     </TriggerFlow>
 
@@ -103,7 +104,7 @@
     import NavBarActions from "../layout/NavBarActions.vue"
     import NavBarActionsDropdown from "../layout/NavBarActionsDropdown.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+    import Play from "vue-material-design-icons/Play.vue"
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import Api from "./overview/components/actions/Api.vue"
     import Delete from "./overview/components/actions/Delete.vue"
@@ -113,6 +114,11 @@
     import Pause from "./overview/components/actions/Pause.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import Resume from "./overview/components/actions/Resume.vue"
+    import Review from "./overview/components/actions/Review.vue"
+    import ReviewLink from "./ReviewLink.vue"
+    import CancelApproval from "./overview/components/actions/CancelApproval.vue"
+    import {findApprovalTask, findApprovalTaskRun} from "../../utils/approval"
+    import * as ExecutionUtils from "../../utils/executionUtils"
     import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
     import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
@@ -145,6 +151,8 @@
         | "kill"
         | "pause"
         | "resume"
+        | "review"
+        | "cancelApproval"
         | "resumeFromBreakpoint"
         | "unqueue"
         | "forceRun"
@@ -158,6 +166,8 @@
         kill: {component: Kill},
         pause: {component: Pause},
         resume: {component: Resume},
+        review: {component: Review},
+        cancelApproval: {component: CancelApproval},
         resumeFromBreakpoint: {component: ResumeFromBreakpoint},
         unqueue: {component: Unqueue},
         forceRun: {component: ForceRun},
@@ -165,6 +175,21 @@
         editFlow: {component: EditFlow},
         delete: {component: Delete},
     }
+
+    const executionFlowLoaded = computed(() => {
+        const flow = executionsStore.flow
+        return execution.value !== undefined && flow !== undefined
+            && flow.id === execution.value.flowId && flow.namespace === execution.value.namespace && flow.revision === execution.value.flowRevision
+    })
+
+    const pausedOnApproval = computed(() =>
+        execution.value !== undefined && findApprovalTaskRun(execution.value, executionsStore.flow, "PAUSED") !== undefined,
+    )
+
+    const pausedBesideApproval = computed(() =>
+        execution.value !== undefined && executionsStore.flow !== undefined
+        && ExecutionUtils.findTaskRunsByState(execution.value, "PAUSED").some(taskRun => findApprovalTask(executionsStore.flow, taskRun.taskId) === undefined),
+    )
 
     /**
      * The single visible secondary action: the one action that only makes sense for the
@@ -183,7 +208,14 @@
         }
 
         if (State.isPaused(current)) {
-            return "resume"
+            if (!executionFlowLoaded.value) {
+                return "editFlow"
+            }
+            return pausedOnApproval.value ? "review" : "resume"
+        }
+
+        if ((current as string) === State.PAUSING) {
+            return "editFlow"
         }
 
         if (State.isRunning(current)) {
@@ -201,13 +233,29 @@
         return "editFlow"
     })
 
+    function pauseKeys(): ActionKey[] {
+        const current = execution.value?.state?.current
+        if ((current as string) === State.PAUSING) {
+            return []
+        }
+        if (current !== "PAUSED") {
+            return ["pause"]
+        }
+        if (!executionFlowLoaded.value) {
+            return []
+        }
+        if (!pausedOnApproval.value) {
+            return ["resume"]
+        }
+        return ["review", "cancelApproval", ...(pausedBesideApproval.value ? ["resume" as const] : [])]
+    }
+
     const overflowKeys = computed<ActionKey[]>(() => {
-        const isPaused = execution.value?.state?.current === "PAUSED"
         const keys: ActionKey[] = [
             "restart",
             "replay",
             "kill",
-            isPaused ? "resume" : "pause",
+            ...pauseKeys(),
             "resumeFromBreakpoint",
             "unqueue",
             "forceRun",

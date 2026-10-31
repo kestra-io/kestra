@@ -59,6 +59,7 @@
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../../injectionKeys"
     import {getValueAtJsonPath} from "../../../../utils/utils"
+    import type {Schema} from "./getTaskComponent"
     import {usePluginsStore} from "../../../../stores/plugins"
     import {useDragAndDrop} from "../../../../composables/useDragAndDrop"
     import {usePlaygroundRun} from "../../../../composables/playground/usePlaygroundRun"
@@ -72,7 +73,7 @@
 
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
-    const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
+    const schemaAtBlockPathInjected = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
 
     const blockSchemaPath = computed(() => {
         const allParts = props.root ? props.root.split(".") : []
@@ -203,7 +204,7 @@
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, unknown>>({}))
 
-    const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
+    const blockSchema = computed<Schema & { on?: unknown }>(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>

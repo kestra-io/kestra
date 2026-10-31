@@ -20,13 +20,6 @@ export default defineProject({
         // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
         // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.
         isolate: false,
-        reporters: [
-            ["default"],
-            ["junit"],
-        ],
-        outputFile: {
-            junit: "./test-report.junit.xml",
-        },
         exclude: [
             // Match node_modules at ANY depth. A bare "node_modules/**" only excludes
             // the top-level one, so bundled test files inside nested package

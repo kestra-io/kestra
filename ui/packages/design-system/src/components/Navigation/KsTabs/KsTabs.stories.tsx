@@ -18,12 +18,12 @@ export default meta
 type Story = StoryObj<typeof KsTabs>
 
 export const Default: Story = {
-    render: () => ({
-        setup(args) {
-            const active = ref("overview")
+    render: (args) => ({
+        setup() {
+            const active = ref(args.modelValue ?? "overview")
             return () => (
                 <div style="padding:24px">
-                    <KsTabs v-model={active.value} type="box" {...args}>
+                    <KsTabs {...args} v-model={active.value}>
                         <KsTabPane label="Overview" name="overview">Overview content</KsTabPane>
                         <KsTabPane label="Logs" name="logs">Logs content</KsTabPane>
                         <KsTabPane label="Metrics" name="metrics">Metrics content</KsTabPane>
@@ -33,9 +33,15 @@ export const Default: Story = {
             )
         },
     }),
+    args: {
+        modelValue: "overview",
+        type: "box",
+        paneScroll: false,
+    },
 }
 
 export const Box: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() { 
             const active = ref("tab1")
@@ -59,6 +65,7 @@ export const Box: Story = {
 
 /** `paneScroll` confines overflow to the active pane so the tab strip stays put while long content scrolls inside a fixed-height container. */
 export const PaneScroll: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const active = ref("long")
@@ -79,6 +86,7 @@ export const PaneScroll: Story = {
 
 /** Self-contained segmented control — a contained pill group for inline use in forms and modals. */
 export const Segmented: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const active = ref("bug")
@@ -97,6 +105,7 @@ export const Segmented: Story = {
 
 /** Tab position – top, right, bottom, left */
 export const TabPosition: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() { 
             const active = ref("a")
@@ -141,6 +150,7 @@ export const TabPosition: Story = {
 
 /** Custom tab label via slot */
 export const CustomLabel: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() { 
             const active = ref("flows")

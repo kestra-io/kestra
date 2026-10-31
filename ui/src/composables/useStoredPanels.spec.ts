@@ -5,7 +5,7 @@ import {useStoredPanels, PreSerializedPanel, STORED_PANELS_RELOAD_EVENT} from ".
 import {EditorElement, Tab} from "../utils/multiPanelTypes"
 
 function makeTab(uid: string): Tab {
-    return {uid, button: {icon: null, label: uid}, component: null}
+    return {uid, button: {icon: {}, label: uid}, component: {}}
 }
 
 // An editor element that only deserializes the uids it knows about, mirroring a real one

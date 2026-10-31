@@ -39,6 +39,8 @@ const HTML_EXAMPLE = `
 <div class="video-container">
   <iframe src="https://www.youtube.com/embed/BeQNI2XRddA?si=nvoIqA1SIrMaKyYs" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
+
+<div style="position: relative; padding-bottom: calc(48.9583% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/ts2ZMkTWIBQTH0MyQ8V9?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="AI Copilot | Kestra" allowfullscreen></iframe></div>
 `
 const KITCHEN_SINK = `
 ---
@@ -265,6 +267,8 @@ export const Default: Story = {
     }),
     args: {
         content: "Hello **Kestra**! This is `KsMarkdown` in action.\n\n> Try editing the `content` control above.",
+        html: true,
+        xssProtection: true,
     },
 }
 
@@ -275,6 +279,7 @@ export const KitchenSink: Story = {
         setup() { return {content: KITCHEN_SINK} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Fenced code blocks with language labels and the copy-to-clipboard button. */
@@ -284,6 +289,7 @@ export const CodeBlocks: Story = {
         setup() { return {content: CODE_BLOCKS} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** The `:::alert{type}` directive maps to `KsAlert` – all four variants. */
@@ -293,6 +299,7 @@ export const AlertDirectives: Story = {
         setup() { return {content: ALERT_DIRECTIVES} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** GFM extensions: aligned tables, strikethrough, autolinks. */
@@ -302,6 +309,7 @@ export const GFMFeatures: Story = {
         setup() { return {content: GFM_FEATURES} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Mermaid diagrams rendered from fenced ` ```mermaid ` blocks. */
@@ -311,6 +319,7 @@ export const MermaidDiagrams: Story = {
         setup() { return {content: MERMAID_EXAMPLE} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Html blocks. */
@@ -326,6 +335,7 @@ export const Html: Story = {
             <div style="padding:24px;max-width:800px"><ks-markdown :content="content" :html="false" /></div>
         </div>`,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 
@@ -349,4 +359,5 @@ export const HeadingLinks: Story = {
         },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }

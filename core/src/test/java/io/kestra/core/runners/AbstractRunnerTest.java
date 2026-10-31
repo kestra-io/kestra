@@ -768,6 +768,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sla-execution-assertion-after-execution.yaml" })
+    void shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails() throws Exception {
+        slaTestCase.shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
     void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
         slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();

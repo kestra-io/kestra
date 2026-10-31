@@ -505,6 +505,14 @@ public class LoopCaseTest {
         }
     }
 
+    public void loopNestedOutputs(Execution execution) throws InternalException, JsonProcessingException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var endOutputs = taskOutputService.getOutputs(execution.getTaskRunList().getLast());
+        var batches = JacksonMapper.ofJson().readValue((String) endOutputs.get("value"), new TypeReference<List<List<String>>>() {});
+        assertThat(batches).containsExactly(List.of("c1", "c2"), List.of("c3"));
+    }
+
     public void loopOutputsFailedRender(Execution execution) {
         // Then — the loop output expression references a non-existent task, causing render to fail.
         // The LoopExecutionEvent carries FAILED state and, with transmitFailed=true (default),

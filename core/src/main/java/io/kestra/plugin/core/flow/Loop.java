@@ -24,7 +24,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
@@ -376,13 +375,15 @@ public class Loop extends AbstractBranch<Loop.Output> {
 
     /**
      * Used by the Executor to compute a loop iteration's output.
+     *
+     * @param valuesFromUri whether the loop iterates over a storage URI, which {@link FetchType#AUTO} resolves to {@link FetchType#STORE}
      */
-    public Map<String, Object> computeIterationOutput(RunContext runContext, Execution execution) throws IllegalVariableEvaluationException, IOException {
+    public Map<String, Object> computeIterationOutput(RunContext runContext, Execution execution, boolean valuesFromUri) throws IllegalVariableEvaluationException, IOException {
         var inputAndOutput = runContext.inputAndOutput();
         Map<String, Object> iterationOutputs = inputAndOutput.renderOutputs(this.getOutputs());
         iterationOutputs = inputAndOutput.typedOutputs(this.getOutputs(), execution, iterationOutputs);
 
-        var finalOutputMode = this.getFetchType() == FetchType.AUTO ? guessOutputMode(runContext) : this.getFetchType();
+        var finalOutputMode = this.getFetchType() == FetchType.AUTO ? (valuesFromUri ? FetchType.STORE : FetchType.FETCH) : this.getFetchType();
         if (finalOutputMode == FetchType.STORE) {
             // store the output and replace it by a URI
             byte[] content = ION_MAPPER.writeValueAsBytes(iterationOutputs);
@@ -392,14 +393,6 @@ public class Loop extends AbstractBranch<Loop.Output> {
         }
 
         return iterationOutputs;
-    }
-
-    private FetchType guessOutputMode(RunContext runContext) throws IllegalVariableEvaluationException {
-        if (values instanceof String str) {
-            var rendered = runContext.render(str);
-            return URIFetcher.supports(rendered) ? FetchType.STORE : FetchType.FETCH;
-        }
-        return FetchType.FETCH;
     }
 
     // NOTE: this is to document outputs, they are always computed by the executor itself

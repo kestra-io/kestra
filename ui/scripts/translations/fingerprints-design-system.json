@@ -305,6 +305,7 @@
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|days": "e08c0aa8f558",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|hours": "21e8492938ab",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|input_custom_duration": "2e4d772cce27",
+  "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|invalid_duration": "fb6274696018",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|minutes": "4f846a84e7fc",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|seconds": "381a8e969905",
   "../../packages/design-system/src/components/Form/KsPassword.locale.ts|ks_password|hide": "a60a56c584b3",

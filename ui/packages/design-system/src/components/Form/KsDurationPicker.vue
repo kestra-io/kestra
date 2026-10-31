@@ -61,8 +61,11 @@
 
 <script setup lang="ts">
     import {ref, watch, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
 
     defineOptions({inheritAttrs: false})
+
+    const {t} = useI18n({useScope: "global"})
 
     const props = defineProps<{
         modelValue?: string | null
@@ -115,7 +118,7 @@
         )
 
         if (!match) {
-            durationIssue.value = `Invalid ISO 8601 duration: ${durationString}`
+            durationIssue.value = t("invalid_duration", {value: durationString})
             return false
         }
 

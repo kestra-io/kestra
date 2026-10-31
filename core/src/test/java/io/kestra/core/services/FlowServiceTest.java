@@ -51,6 +51,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @KestraTest
@@ -761,6 +762,12 @@ class FlowServiceTest {
 
         flowService.delete(created);
 
+        assertThat(flowRepository.findRevisions(
+            flow.getTenantId(),
+            flow.getNamespace(),
+            flow.getId(),
+            true
+        )).isNotEmpty();
         // check that it has been deleted
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
         assertThat(fromDb).isEmpty();

@@ -292,5 +292,10 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions);
 
+    /**
+     * Physically deletes all revisions of a flow.
+     */
+    void hardDelete(String tenantId, String namespace, String id);
+
     Boolean existAnyNoAcl(String tenantId);
 }

@@ -1101,6 +1101,20 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
     }
 
+    @Override
+    public void hardDelete(String tenantId, String namespace, String id) {
+        List<FlowWithSource> revisions = findRevisions(
+            tenantId,
+            namespace,
+            id,
+            true
+        );
+
+        for (FlowWithSource revision : revisions) {
+            this.jdbcRepository.delete(revision.toFlow());
+        }
+    }
+
     private FlowWithSource deleteFlow(FlowInterface flow, FlowWithSource existingFlow)
         throws QueueException {
         FlowWithSource deleted = existingFlow.toDeleted();

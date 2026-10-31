@@ -125,6 +125,35 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    protected void shouldRemoveAllRevisionsOnHardDelete() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String flowId = IdUtils.create();
+
+        try {
+            FlowWithSource created = flowRepository.create(
+                createTestingLogFlow(tenant, flowId, "first")
+            );
+            FlowWithSource updated = flowRepository.update(
+                createTestingLogFlow(tenant, flowId, "second"),
+                created
+            );
+
+            flowRepository.delete(updated);
+            flowRepository.hardDelete(tenant, TEST_NAMESPACE, flowId);
+
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true)).isEmpty();
+            assertThat(flowRepository.lastRevision(tenant, TEST_NAMESPACE, flowId)).isNull();
+
+            FlowWithSource recreated = flowRepository.create(
+                createTestingLogFlow(tenant, flowId, "recreated")
+            );
+            assertThat(recreated.getRevision()).isEqualTo(1);
+        } finally {
+            flowRepository.hardDelete(tenant, TEST_NAMESPACE, flowId);
+        }
+    }
+
+    @Test
     void givenMultipleFlowWithTriggerIsDistinctNamespaceWithCommonPrefix_whenFindingFlowWithGivenTriggerClass_shouldFindFlowWithTriggerClassAndFullyMatchingNamespace() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

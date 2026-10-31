@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.contexts.configuration.FlowsConfiguration;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
@@ -49,6 +50,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
@@ -121,6 +123,12 @@ public class FlowService {
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
+    @Inject
+    private FlowsConfiguration flowsConfiguration;
+
+    @Inject
+    private LogDataStoreInterface logRepository;
 
     @Inject
     private PluginAutoInstallService pluginAutoInstallService;
@@ -230,12 +238,26 @@ public class FlowService {
     public FlowWithSource delete(FlowWithSource flow) {
         FlowWithSource deleted = flowRepository.delete(flow);
 
-        // impact downstream consumers: topology, scheduler and flow metastore
+        // Preserve downstream notifications for topology, scheduler and flow metastore.
         try {
             impactDownstreamConsumers(deleted);
         } catch (QueueException e) {
-            // TODO tmp fix for git-ee plugin, but we handle in some way this exception in the whole service
             throw new RuntimeException(e);
+        }
+
+        if (flowsConfiguration.hardDelete()) {
+            logRepository.deleteByQuery(
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                null
+            );
+
+            flowRepository.hardDelete(
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId()
+            );
         }
 
         return deleted;

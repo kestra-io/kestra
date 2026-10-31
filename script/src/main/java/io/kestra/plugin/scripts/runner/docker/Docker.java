@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
@@ -144,6 +145,26 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                       Kestra.outputs(data)""",
             full = true
         ),
+        @Example(
+            title = "Give a Shell command an in-memory scratch directory limited to 512 MB.",
+            code = """
+                id: tmpfs_scratch_directory
+                namespace: company.team
+
+                tasks:
+                  - id: shell
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    containerImage: ubuntu
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      memory:
+                        memory: "1GB"
+                      tmpfs:
+                        /scratch: "rw,size=512m"
+                    commands:
+                      - dd if=/dev/zero of=/scratch/data.bin bs=1M count=100""",
+            full = true
+        ),
     }
 )
 public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
@@ -155,6 +176,22 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         "docker.sock",
         "no such file or directory",
         "Cannot connect to the Docker daemon"
+    );
+
+    // Mirrors moby's MergeTmpfsOptions, which Docker only applies when the container starts, after the image pull and the file upload.
+    private static final Set<String> TMPFS_FLAG_OPTIONS = Set.of(
+        "defaults", "ro", "rw", "suid", "nosuid", "dev", "nodev", "exec", "noexec", "sync", "async", "dirsync", "remount",
+        "mand", "nomand", "atime", "noatime", "diratime", "nodiratime", "bind", "rbind", "unbindable", "runbindable",
+        "private", "rprivate", "shared", "rshared", "slave", "rslave", "relatime", "norelatime", "strictatime", "nostrictatime"
+    );
+    private static final Map<String, Pattern> TMPFS_VALUE_OPTIONS = Map.of(
+        "size", Pattern.compile("\\d+([kKmMgGtTpPeE]|%)?"),
+        "nr_blocks", Pattern.compile("\\d+[kKmMgG]?"),
+        "nr_inodes", Pattern.compile("\\d+[kKmMgG]?"),
+        "mode", Pattern.compile("[0-7]{1,4}"),
+        "uid", Pattern.compile("\\d+"),
+        "gid", Pattern.compile("\\d+"),
+        "mpol", Pattern.compile(".+")
     );
 
     @Schema(
@@ -247,6 +284,25 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     protected List<String> volumes;
 
     @Schema(
+        title = "In-memory (tmpfs) mounts.",
+        description = """
+            Map of an absolute container path to its mount options, the same as the `--tmpfs` option of the docker run CLI command,
+            for example `/scratch: "rw,size=512m"`. Supported options are `size` (bytes with an optional k, m or g suffix, or a percentage),
+            `mode` (octal), `uid`, `gid`, `nr_inodes` and `nr_blocks` (non-negative integers, the last two with an optional k, m or g suffix),
+            `mpol`, and the standard mount flags such as `ro`, `rw`, `noexec`, `nosuid` and `nodev`.
+
+            The content lives in memory and is discarded when the container stops. Its size counts toward the container memory limit
+            (`memory.memory`), so always set `size`: without it, the mount can grow up to half of the host memory.
+            tmpfs mounts are only available on Linux Docker engines, which includes Docker Desktop.
+
+            This does not keep `inputFiles` and `outputFiles` in memory with the default `VOLUME` file handling strategy,
+            since Docker cannot copy files into or out of a tmpfs mount. A tmpfs mount at or inside the working directory is rejected,
+            and so is one on a parent of the working directory with the `VOLUME` strategy.
+            To keep them in memory, see `fileHandlingStrategy`."""
+    )
+    private Property<Map<String, String>> tmpfs;
+
+    @Schema(
         title = "The pull policy for a container image.",
         description = """
             Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images.
@@ -298,7 +354,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         description = """
             How to handle local files (input files, output files, namespace files, ...).
             By default, we create a volume and copy the file into the volume bind path.
-            Configuring it to `MOUNT` will mount the working directory instead."""
+            Configuring it to `MOUNT` will mount the working directory instead.
+            When the worker runs in a container, bind-mount `kestra.tasks.tmp-dir.path` from the Docker host at the same path
+            (`/tmp/kestra-wd:/tmp/kestra-wd` in the Kestra docker-compose file). To keep task files in memory, make that host directory a tmpfs."""
     )
     @NotNull
     @Builder.Default
@@ -431,6 +489,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             try {
                 // pull image only if we will create a new container
                 if (containerId == null) {
+                    Map<String, String> renderedTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class);
+                    var filesCopiedIntoContainer = needVolume && FileHandlingStrategy.VOLUME.equals(strategy);
+                    var validatedTmpfs = renderedTmpfs.isEmpty() ? Map.<String, String> of() : tmpfsMounts(
+                        renderedTmpfs,
+                        windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),
+                        FileHandlingStrategy.MOUNT.equals(strategy) || filesCopiedIntoContainer,
+                        filesCopiedIntoContainer
+                    );
+
                     var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
                     if (!PullPolicy.NEVER.equals(renderedPolicy)) {
                         pullImage(dockerClient, image, renderedPolicy, logger);
@@ -440,7 +507,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     checkKilled("Execution was killed during image pull.");
 
                     // create container
-                    CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
+                    CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars, validatedTmpfs);
                     CreateContainerResponse exec = container.exec();
                     containerId = exec.getId();
                     containerIdRef.set(containerId);
@@ -867,8 +934,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return DockerService.client(dockerClientConfig);
     }
 
-    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars)
-        throws IllegalVariableEvaluationException, IOException {
+    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars,
+        Map<String, String> validatedTmpfs) throws IllegalVariableEvaluationException, IOException {
         boolean volumesEnabled = runContext.<Boolean> pluginConfiguration(VOLUME_ENABLED_CONFIG).orElse(false);
 
         Path workingDirectory = taskCommands.getWorkingDirectory();
@@ -938,6 +1005,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
         if (!binds.isEmpty()) {
             hostConfig.withBinds(binds);
+        }
+        if (!validatedTmpfs.isEmpty()) {
+            hostConfig.withTmpFs(validatedTmpfs);
         }
 
         if (this.getDeviceRequests() != null) {
@@ -1016,6 +1086,71 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .withCmd(runContext.render(taskCommands.getCommands()).asList(String.class))
             .withAttachStderr(true)
             .withAttachStdout(true);
+    }
+
+    /**
+     * Validates the rendered {@code tmpfs} property and returns it keyed by normalized container path.
+     *
+     * @param workingDirectoryShared whether the working directory is bound ({@code MOUNT}) or copied ({@code VOLUME}) into the container,
+     *                               so that a tmpfs at or inside it would hide those files or clash with the bind
+     * @param filesCopiedIntoContainer whether the working directory is copied in and out with the {@code VOLUME} strategy,
+     *                                 which Docker cannot do through a tmpfs mount on one of its parents
+     */
+    static Map<String, String> tmpfsMounts(Map<String, String> tmpfs, String workingDirectory, boolean workingDirectoryShared, boolean filesCopiedIntoContainer) {
+        Map<String, String> mounts = new LinkedHashMap<>(tmpfs.size());
+        for (Map.Entry<String, String> entry : tmpfs.entrySet()) {
+            String path = FilenameUtils.normalizeNoEndSeparator(entry.getKey(), true);
+            if (path == null || !path.startsWith("/") || "/".equals(path)) {
+                throw new IllegalArgumentException("The tmpfs mount path '%s' is invalid: it must be an absolute path other than the root directory.".formatted(entry.getKey()));
+            }
+            if (mounts.containsKey(path)) {
+                throw new IllegalArgumentException("The tmpfs mount path '%s' is declared more than once.".formatted(path));
+            }
+            if (workingDirectoryShared && (path.equals(workingDirectory) || path.startsWith(workingDirectory + "/"))) {
+                throw new IllegalArgumentException(
+                    "The tmpfs mount path '%s' is at or inside the task working directory '%s', which is already mounted or copied into the container. Mount it outside the working directory."
+                        .formatted(path, workingDirectory)
+                );
+            }
+            if (filesCopiedIntoContainer && workingDirectory.startsWith(path + "/")) {
+                throw new IllegalArgumentException(
+                    "The tmpfs mount path '%s' overlaps the task working directory '%s', so its files would be lost with the VOLUME file handling strategy. Mount it elsewhere, or use the MOUNT strategy."
+                        .formatted(path, workingDirectory)
+                );
+            }
+
+            String options = entry.getValue() == null ? "" : entry.getValue().strip();
+            if (!options.isEmpty()) {
+                for (String option : options.split(",", -1)) {
+                    validateTmpfsOption(path, option);
+                }
+            }
+            mounts.put(path, options);
+        }
+        return mounts;
+    }
+
+    private static void validateTmpfsOption(String path, String option) {
+        int separator = option.indexOf('=');
+        if (separator < 0) {
+            if (!TMPFS_FLAG_OPTIONS.contains(option)) {
+                throw new IllegalArgumentException("The tmpfs mount '%s' has an unsupported option '%s'.".formatted(path, option));
+            }
+            return;
+        }
+
+        var name = option.substring(0, separator);
+        var valuePattern = TMPFS_VALUE_OPTIONS.get(name);
+        if (valuePattern == null) {
+            throw new IllegalArgumentException("The tmpfs mount '%s' has an unsupported option '%s'.".formatted(path, name));
+        }
+        var value = option.substring(separator + 1);
+        if (!valuePattern.matcher(value).matches()) {
+            throw new IllegalArgumentException(
+                "The tmpfs mount '%s' has an invalid value '%s' for the option '%s'; the supported formats are listed in the tmpfs property description."
+                    .formatted(path, value, name)
+            );
+        }
     }
 
     private static Long convertBytes(String bytes) {

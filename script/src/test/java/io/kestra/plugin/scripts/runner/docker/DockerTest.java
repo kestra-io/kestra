@@ -119,6 +119,22 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
+    void shouldMountTmpfsInContainerWhenConfigured() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .tmpfs(Property.ofValue(Map.of("/scratch", "size=64m")))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(List.of("/bin/sh", "-c", "grep -q ' /scratch tmpfs .*size=65536k' /proc/mounts"))
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result.getExitCode()).isZero();
+    }
+
+    @Test
     void shouldNotReportOomForExitCode137WithoutDockerOomEvidence() {
         var runContext = runContext(this.runContextFactory);
         var docker = Docker.builder().image("rockylinux:9.3-minimal").build();

@@ -31,4 +31,20 @@ describe("PropertyDetail", () => {
 
         expect(wrapper.findAll(".rendered-markdown").map((node) => node.text())).toEqual(["The file to delete.", "Hint `{{ outputs.mytask.uri }}`"])
     })
+
+    test("renders enum values nested in anyOf schemas", () => {
+        const wrapper = i18nMount(PropertyDetail, {
+            props: {
+                property: {
+                    type: "string",
+                    anyOf: [
+                        {type: "string", enum: ["CANCEL", "CONTINUE", "FAIL"]},
+                        {type: "string", enum: ["KILL", "SUCCEED", "WARN"]},
+                    ],
+                },
+            },
+        })
+
+        expect(wrapper.find(".enum-values").text()).toBe("CANCELCONTINUEFAILKILLSUCCEEDWARN")
+    })
 })

@@ -119,4 +119,34 @@ class SubflowTest {
                 State.Type.SUCCESS
             );
     }
+
+    @Test
+    void shouldReturnCancelledStateWhenSubflowCancelledAndTransmitFailed() {
+        State cancelledState = State.of(State.Type.CANCELLED, List.of(new History(State.Type.CANCELLED, Instant.now())));
+        TaskRun taskRun = TaskRun.builder()
+            .state(DEFAULT_SUCCESS_STATE)
+            .namespace("io.kestra.test")
+            .flowId("flow")
+            .executionId("execution")
+            .taskId("task")
+            .id("id")
+            .build();
+
+        Subflow subflow = Subflow.builder()
+            .wait(true)
+            .transmitFailed(true)
+            .build();
+
+        Optional<SubflowExecutionResult> result = subflow.createSubflowExecutionResult(
+            runContext,
+            taskRun,
+            Flow.builder().build(),
+            Execution.builder().id(EXECUTION_ID).state(cancelledState).build(),
+            Collections.emptyMap()
+        );
+
+        assertTrue(result.isPresent());
+        assertThat(result.get().getState()).isEqualTo(State.Type.CANCELLED);
+        assertThat(result.get().getParentTaskRun().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
 }

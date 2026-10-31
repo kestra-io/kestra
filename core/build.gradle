@@ -1,3 +1,5 @@
+ext.leakTestIncludes = ['**/InputTest*', '**/InputsTest*', '**/FlowInputOutputTest*', '**/MultiselectInputTest*', '**/SelectInputTest*', '**/JsonInputSchemaFlowIntegrationTest*']
+
 configurations {
     tests
     implementation.extendsFrom(micronaut)
@@ -90,6 +92,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"
     testImplementation "io.micronaut:micronaut-management"
+    testRuntimeOnly "io.micronaut.test:micronaut-test-netty-leak"
 
     testImplementation "org.testcontainers:testcontainers:2.0.5"
     testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"

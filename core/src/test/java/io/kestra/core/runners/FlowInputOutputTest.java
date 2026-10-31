@@ -5,11 +5,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -89,6 +92,13 @@ class FlowInputOutputTest {
 
     @Value("${kestra.encryption.secret-key}")
     String secretKey;
+
+    private final List<CompletedPart> createdParts = new ArrayList<>();
+
+    @AfterEach
+    void closeCreatedParts() {
+        createdParts.forEach(IOUtils::closeQuietly);
+    }
 
     @MockBean(SecretService.class)
     SecretService testSecretService() {
@@ -1669,17 +1679,21 @@ class FlowInputOutputTest {
         assertThat(((Map<?, ?>) result.get("env")).get("disks")).isEqualTo(List.of(Map.of("size_gb", 20, "mountpoint", "/data")));
     }
 
-    private static CompletedPart memoryCompletedPart(String name, byte[] content) {
-        return CompletedAttribute.create(
+    private CompletedPart memoryCompletedPart(String name, byte[] content) {
+        CompletedPart part = CompletedAttribute.create(
             new FormFieldMetadata(name, null, null),
             ReadBufferFactory.getJdkFactory().adapt(content)
         );
+        createdParts.add(part);
+        return part;
     }
 
-    private static CompletedFileUpload memoryCompletedFileUpload(String name, String fileName, byte[] content) {
-        return CompletedFileUpload.ofMemory(
+    private CompletedFileUpload memoryCompletedFileUpload(String name, String fileName, byte[] content) {
+        CompletedFileUpload fileUpload = CompletedFileUpload.ofMemory(
             new FormFieldMetadata(name, fileName, null),
             ReadBufferFactory.getJdkFactory().adapt(content)
         );
+        createdParts.add(fileUpload);
+        return fileUpload;
     }
 }

@@ -62,7 +62,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         DispatchQueueInterface<Execution> executionQueue,
         BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
         KillSwitchService killSwitchService,
-        RunContextLoggerFactory runContextLoggerFactory, ExecutionDelayStateStore executionDelayStateStore) {
+        RunContextLoggerFactory runContextLoggerFactory,
+        ExecutionDelayStateStore executionDelayStateStore) {
         this.executorService = executorService;
         this.executionService = executionService;
         this.taskOutputService = taskOutputService;

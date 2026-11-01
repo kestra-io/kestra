@@ -85,7 +85,7 @@ export function extractEnumValues(property: JSONProperty): string[] | undefined 
     return property.enum
         ?? property.items?.enum
         ?? property.additionalProperties?.enum
-        ?? property.anyOf?.flatMap((schema) => schema.enum ?? [])
+        ?? (property.anyOf?.some((schema) => schema.enum) ? property.anyOf.flatMap((schema) => schema.enum ?? []) : undefined)
 }
 
 export function aggregateAllOf(property: JSONProperty): JSONProperty {

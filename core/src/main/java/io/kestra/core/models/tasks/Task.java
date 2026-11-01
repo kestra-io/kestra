@@ -18,6 +18,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
@@ -118,25 +119,20 @@ abstract public class Task implements TaskInterface {
             return Optional.of(this);
         }
 
-        if (this.isFlowable()) {
-            Optional<Task> childs = ((FlowableTask<?>) this).allChildTasks()
-                .stream()
-                .map(t -> t.findById(id))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
-
-            if (childs.isPresent()) {
-                return childs;
-            }
-        }
-
-        return Optional.empty();
+        return this.allChildTasks().stream()
+            .flatMap(task -> task.findById(id).stream())
+            .findFirst();
     }
 
     public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
         if (this.getId().equals(id)) {
             return Optional.of(this);
+        }
+
+        if (!this.isFlowable()) {
+            return this.allChildTasks().stream()
+                .flatMap(throwFunction(task -> task.findById(id, runContext, taskRun).stream()))
+                .findFirst();
         }
 
         if (this.isFlowable()) {
@@ -173,9 +169,14 @@ abstract public class Task implements TaskInterface {
         return this instanceof FlowableTask;
     }
 
+    /** Declared child tasks, including executor-dispatched hooks that do not make their owner a flowable. */
+    public List<Task> allChildTasks() {
+        return this instanceof PausableTask pausableTask ? pausableTask.onPauseTasks() : List.of();
+    }
+
     @JsonIgnore
     public boolean isSendToWorkerTask() {
-        return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
+        return (!(this instanceof FlowableTask) && !(this instanceof PausableTask)) || this instanceof WorkingDirectory;
     }
 
     // a flowable's own retry is spent on its failed children or, with RETRY_FLOWABLE, restarts it before it can stay FAILED

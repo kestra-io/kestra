@@ -453,11 +453,11 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
-    public State.Type resumedTaskRunState(State.Type newState) {
+    public Optional<State.Type> resumedTaskRunState(State.Type newState) {
         return switch (newState) {
-            case CANCELLED -> State.Type.CANCELLED;
-            case KILLING -> State.Type.KILLED;
-            default -> State.Type.RUNNING;
+            case CANCELLED -> Optional.of(State.Type.CANCELLED);
+            case KILLING -> Optional.of(State.Type.KILLED);
+            default -> Optional.empty();
         };
     }
 

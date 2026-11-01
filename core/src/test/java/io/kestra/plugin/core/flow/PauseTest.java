@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.google.common.io.CharStreams;
 
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -20,6 +21,11 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
@@ -27,6 +33,7 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.GraphUtils;
 
 import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.http.MediaType;
@@ -42,6 +49,7 @@ import reactor.core.publisher.Mono;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.MAP;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -86,6 +94,37 @@ public class PauseTest {
         assertThatThrownBy(() -> pause.resumeOutputs(Map.of(), PausableTask.Resumed.now(), decision))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("cannot be resumed with a decision");
+    }
+
+    @Test
+    void shouldExposePauseHooksAndInputsWithoutMakingPauseFlowable() throws Exception {
+        Flow flow = YamlParser.parse("""
+            id: pause-hook
+            namespace: io.kestra.tests
+            tasks:
+              - id: pause
+                type: io.kestra.plugin.core.flow.Pause
+                inputs:
+                  - id: reason
+                    type: STRING
+                onPause:
+                  id: notify
+                  type: io.kestra.plugin.core.log.Log
+                  message: Waiting for approval
+            """, Flow.class);
+        Task pause = flow.getTasks().getFirst();
+        TaskForExecution taskForExecution = TaskForExecution.of(pause);
+
+        assertThat(pause).isInstanceOf(PausableTask.class).isNotInstanceOf(FlowableTask.class);
+        assertThat(pause.isSendToWorkerTask()).isFalse();
+        assertThat(flow.allTasksWithChilds()).extracting(Task::getId).containsExactly("pause", "notify");
+        assertThat(flow.findTaskByTaskId("notify")).isSameAs(((Pause) pause).getOnPause());
+        assertThat(flow.findParentTasksByTaskId("notify")).isSameAs(pause);
+        assertThat(taskForExecution.getInputs()).extracting(Input::getId).containsExactly("reason");
+        assertThat(taskForExecution.getTasks()).extracting(TaskForExecution::getId).containsExactly("notify");
+        assertThat(GraphUtils.of(flow, null).getGraph().nodes()).noneMatch(GraphCluster.class::isInstance);
+        assertThat(new JsonSchemaGenerator(DefaultPluginRegistry.getOrCreate()).outputs(Task.class, Pause.class))
+            .extractingByKey("properties").asInstanceOf(MAP).containsKeys("inputs", "onResume", "resumed");
     }
 
     @Test

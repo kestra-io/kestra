@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.RunContext;
 
@@ -18,7 +19,7 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 
 /**
- * A flowable task whose task run is resumed from a PAUSED state, and that can collect inputs at resume time.
+ * A task whose task run is paused and resumed by the executor, and that can collect inputs at resume time.
  */
 public interface PausableTask {
     /**
@@ -37,10 +38,15 @@ public interface PausableTask {
 
     /**
      * The state this task run itself should take once the execution resumes to {@code newState}.
-     * Defaults to RUNNING, letting the flowable resolve its own state from its children.
+     * An empty result lets the caller default to RUNNING, for tasks that resolve their state from children.
      */
-    default State.Type resumedTaskRunState(State.Type newState) {
-        return State.Type.RUNNING;
+    default Optional<State.Type> resumedTaskRunState(State.Type newState) {
+        return Optional.empty();
+    }
+
+    /** Hooks dispatched by the executor when the task run pauses, without delaying the pause or its resume. */
+    default List<Task> onPauseTasks() {
+        return List.of();
     }
 
     /**

@@ -61,6 +61,7 @@ import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TimezoneId;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -572,9 +573,14 @@ public class JsonSchemaGenerator {
             .map(type -> (ParameterizedType) type)
             .flatMap(parameterizedType -> Arrays.stream(parameterizedType.getActualTypeArguments()))
             .filter(type -> type instanceof Class)
-            .map(type -> (Class<?>) type)
+            .<Class<?>>map(type -> (Class<?>) type)
             .filter(Output.class::isAssignableFrom)
             .findFirst()
+            .or(() -> superClass.stream()
+                .filter(PausableTask.class::isAssignableFrom)
+                .flatMap(c -> Arrays.stream(c.getDeclaredClasses()))
+                .filter(Output.class::isAssignableFrom)
+                .findFirst())
             .map(c -> this.generate(c, null))
             .orElse(ImmutableMap.of());
     }

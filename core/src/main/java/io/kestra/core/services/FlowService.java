@@ -70,6 +70,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.PausableTask;
+import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -694,6 +695,11 @@ public class FlowService {
                 if (task.getWorkerSelector() != null) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'workerSelector' property as it's only relevant for runnable tasks.");
                 }
+            }
+
+            if (task instanceof Pause pause && (!ListUtils.isEmpty(pause.getErrors()) || !ListUtils.isEmpty(pause.getFinally()))) {
+                warnings.add("The 'errors' and 'finally' properties on Pause task '%s' are deprecated. Use flow-level handlers or wrap the Pause in a Sequential task for scoped handling."
+                    .formatted(task.getId()));
             }
         });
 

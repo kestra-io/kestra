@@ -99,7 +99,7 @@ class WorkerTest {
     }
 
     @Test
-    void shouldFailWhenWorkerReceivesFlowableTask() throws QueueException {
+    void shouldFailWhenWorkerReceivesNonRunnableTask() throws QueueException {
         // Given
         Pause pause = Pause.builder()
             .type(Pause.class.getName())

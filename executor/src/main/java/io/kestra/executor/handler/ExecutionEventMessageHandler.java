@@ -40,6 +40,7 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.opentelemetry.api.trace.Span;
@@ -347,9 +348,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 }
                                             }
 
-                                            // flowable attempt state transition to running
+                                            // executor-managed attempt state transition to running
                                             // Skip if the task was already terminated by handleChildWorkerTaskResult (e.g., empty Loop)
-                                            if (workerTask.getTask().isFlowable() && !workerTask.getTaskRun().getState().isTerminated()) {
+                                            if ((workerTask.getTask().isFlowable() || workerTask.getTask() instanceof PausableTask) && !workerTask.getTaskRun().getState().isTerminated()) {
                                                 List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
                                                     .map(ArrayList::new)
                                                     .orElseGet(ArrayList::new);

@@ -51,8 +51,8 @@ public class TaskForExecution implements TaskInterface {
             taskForExecutionBuilder.subflowId(executableTask.subflowId());
         }
 
-        if (task instanceof FlowableTask<?> flowable) {
-            taskForExecutionBuilder.tasks(flowable.allChildTasks().stream().map(TaskForExecution::of).toList());
+        if (task instanceof Task taskWithChildren && (task instanceof FlowableTask<?> || task instanceof PausableTask)) {
+            taskForExecutionBuilder.tasks(taskWithChildren.allChildTasks().stream().map(TaskForExecution::of).toList());
         }
 
         return taskForExecutionBuilder.build();

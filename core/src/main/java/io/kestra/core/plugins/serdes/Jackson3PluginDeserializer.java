@@ -11,6 +11,8 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.core.flow.LegacyPause;
+import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +122,8 @@ public class Jackson3PluginDeserializer<T extends Plugin> extends ValueDeseriali
         //
         // Note that if the provided plugin is not annotated with `@JsonDeserialize()` then
         // the following will end up in a StackOverflowException as this deserializer will be re-invoked.
-        return (T) context.readTreeAsValue(node, pluginType);
+        T plugin = (T) context.readTreeAsValue(node, pluginType);
+        return plugin instanceof Pause pause ? (T) LegacyPause.of(pause) : plugin;
     }
 
     private static String extractPluginRawIdentifier(final JsonNode node, final boolean isVersioningSupported) {

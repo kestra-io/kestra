@@ -923,7 +923,7 @@ public class ExecutionService {
                     // keeps what the task recorded while paused (an Approval's 'url' and 'title'), which resumeOutputs() does not know about
                     taskOutputService.saveOutputs(originalTaskRun, MapUtils.merge(taskOutputService.getOutputs(originalTaskRun), outputs));
 
-                    targetState = pausableTask.resumedTaskRunState(newState);
+                    targetState = pausableTask.resumedTaskRunState(newState).orElse(State.Type.RUNNING);
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
 

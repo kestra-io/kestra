@@ -12,25 +12,15 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.AbstractGraph;
-import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.GraphTask;
-import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutionDelay;
-import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,7 +30,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @ToString
 @EqualsAndHashCode
 @Getter
@@ -50,7 +40,9 @@ import lombok.experimental.SuperBuilder;
     description = """
         Stops downstream task scheduling and moves the execution to PAUSED. Resume manually from the UI, via the `/executions/{id}/resume` API, or automatically after `pauseDuration` if set.
 
-        You can declare `inputs` to collect human/automation feedback before continuing."""
+        You can declare `inputs` to collect human/automation feedback before continuing.
+
+        `onPause` remains a non-blocking hook dispatched when the task pauses. Scoped `errors` and `finally` are deprecated but remain supported during migration. Move them to the flow, or wrap the Pause in a `Sequential` task when handlers must remain scoped."""
 )
 @Plugin(
     examples = {
@@ -159,7 +151,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Pause extends Task implements FlowableTask<Pause.Output>, PausableTask {
+public class Pause extends Task implements PausableTask {
     @Schema(
         title = "Duration of the pause - if not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
         description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
@@ -195,102 +187,40 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
     @PluginProperty
     private List<@Valid Input<?>> inputs;
 
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @Getter(AccessLevel.NONE)
+    @PluginProperty
+    @Schema(title = "Deprecated scoped error handlers.", description = "Use flow-level `errors`, or wrap the Pause in a Sequential task for scoped handling.")
     protected List<@Valid Task> errors;
 
+    @Deprecated(forRemoval = true, since = "2.1.0")
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
+    @PluginProperty
+    @Schema(title = "Deprecated scoped finalization tasks.", description = "Use flow-level `finally`, or wrap the Pause in a Sequential task for scoped handling.")
     protected List<@Valid Task> _finally;
 
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    public List<Task> getErrors() {
+        return this.errors;
+    }
+
+    @Deprecated(forRemoval = true, since = "2.1.0")
     public List<Task> getFinally() {
         return this._finally;
     }
 
     @Override
-    public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
-        if (ListUtils.isEmpty(errors) && ListUtils.isEmpty(_finally)) {
-            return new GraphTask(this, taskRun, parentValues, RelationType.SEQUENTIAL);
-        }
-
-        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
-
-        GraphUtils.sequential(
-            subGraph,
-            this.getOnPause() != null ? List.of(this.getOnPause()) : Collections.emptyList(),
-            this.errors,
-            this._finally,
-            taskRun,
-            execution
-        );
-
-        return subGraph;
+    public List<Task> onPauseTasks() {
+        return this.onPause == null ? List.of() : List.of(this.onPause);
     }
 
     @Override
     public List<Task> allChildTasks() {
         return ListUtils.concat(
-            this.getOnPause() != null ? List.of(this.getOnPause()) : null,
-            this.getErrors(),
-            this.getFinally()
-        );
-    }
-
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (onPause != null) {
-            return FlowableUtils.resolveTasks(List.of(onPause), parentTaskRun);
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.needPause(parentTaskRun) || (parentTaskRun.getState().getCurrent() == State.Type.PAUSED)) {
-            return Collections.emptyList();
-        }
-
-        // get back the original state of the Pause task
-        State.Type terminalState = findTerminalState(runContext);
-        return FlowableUtils.resolveSequentialNexts(
-            execution,
-            this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            FlowableUtils.resolveTasks(this._finally, parentTaskRun),
-            parentTaskRun,
-            terminalState
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    private static State.Type findTerminalState(RunContext runContext) {
-        Map<String, Object> outputs = runContext.currentOutput();
-        Map<String, Object> resumed = (Map<String, Object>) outputs.get("resumed");
-        return resumed.isEmpty() || !resumed.containsKey("to") ? State.Type.SUCCESS : State.Type.valueOf((String) resumed.get("to"));
-    }
-
-    private boolean needPause(TaskRun parentTaskRun) {
-        return parentTaskRun.getState().getCurrent() == State.Type.RUNNING &&
-            parentTaskRun.getState().getHistories().stream().noneMatch(history -> history.getState() == State.Type.PAUSED);
-    }
-
-    // This method is only called when there are subtasks
-    @Override
-    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.needPause(parentTaskRun)) {
-            return Optional.of(State.Type.PAUSED);
-        }
-
-        // get back the original state of the Pause task
-        State.Type terminalState = findTerminalState(runContext);
-        return FlowableUtils.resolveState(
-            execution,
-            this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
-            parentTaskRun,
-            runContext,
-            isAllowFailure(),
-            isAllowWarning(),
-            terminalState
+            this.onPauseTasks(),
+            this.errors,
+            this._finally
         );
     }
 
@@ -320,17 +250,12 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
     }
 
     @Override
-    public State.Type resumedTaskRunState(State.Type newState) {
-        if (ListUtils.isEmpty(this.getErrors()) && ListUtils.isEmpty(this.getFinally())) {
-            if (newState == State.Type.RUNNING) {
-                return State.Type.SUCCESS;
-            } else if (newState == State.Type.KILLING) {
-                return State.Type.KILLED;
-            }
-            return newState;
-        }
-
-        return State.Type.RUNNING;
+    public Optional<State.Type> resumedTaskRunState(State.Type newState) {
+        return Optional.of(switch (newState) {
+            case RUNNING -> State.Type.SUCCESS;
+            case KILLING -> State.Type.KILLED;
+            default -> newState;
+        });
     }
 
     @Override

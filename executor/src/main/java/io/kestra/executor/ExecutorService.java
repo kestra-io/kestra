@@ -220,6 +220,8 @@ public class ExecutorService {
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
 
+            executor = this.handlePausableTasks(executor);
+
             // send worker task to the Worker
             // this is important to do it after handleFlowableTasks so tasks created by flowable tasks are processed immediately.
             executor = this.handleWorkerTasks(executor);
@@ -583,7 +585,6 @@ public class ExecutorService {
         List<TaskRun> nextTaskRuns = new ArrayList<>();
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
-        List<TaskRun> onPauseTaskRuns = new ArrayList<>();
         Map<String, State.Type> executionLevelOutcomes = new LinkedHashMap<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
@@ -706,10 +707,6 @@ public class ExecutorService {
             // handle flowable tasks Executor custom logic
             if (task instanceof FlowableTask<?>) {
                 try {
-                    if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
-                        this.handlePausableCreated(executor, pausableTask, taskRun);
-                    }
-
                     switch (task) {
                         case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
@@ -734,10 +731,6 @@ public class ExecutorService {
                                     executor.withExecution(executor.getExecution().withTaskRun(taskRun), "handleWaitFor");
                                 }
                             }
-                        }
-                        case Pause pause when pause.getOnPause() != null -> {
-                            // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
-                            onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
@@ -795,17 +788,16 @@ public class ExecutorService {
                     .collect(Collectors.toCollection(ArrayList::new));
             }
 
-            // If the task is a flowable and is terminated, check that all children flowable tasks are terminated.
-            // This may not be the case for parallel flowable tasks like Parallel, Dag, ...
-            // After a failed task, some child flowable may not be correctly terminated.
-            // Restricted to flowable children on purpose (fixes #6780's original intent): a leaf task
-            // run that is still running is genuinely in progress on a worker and will report its own terminal state.
+            // Executor-managed children cannot report their own terminal state after their parent ends, unlike worker tasks.
             if (task instanceof FlowableTask<?> && taskRun.getState().isTerminated()) {
                 FlowWithSource flow = executor.getFlow();
                 List<TaskRun> updated = executor.getExecution().findChildren(taskRun).stream()
                     .filter(child -> !child.getState().isTerminated())
-                    .filter(child -> flow.findTaskByTaskIdOrNull(child.getTaskId()) instanceof FlowableTask<?>)
-                    .map(throwFunction(child -> child.withState(taskRun.getState().getCurrent())))
+                    .filter(child -> {
+                        Task childTask = flow.findTaskByTaskIdOrNull(child.getTaskId());
+                        return childTask instanceof FlowableTask<?> || childTask instanceof PausableTask;
+                    })
+                    .map(throwFunction(child -> child.withStateAndAttempt(taskRun.getState().getCurrent())))
                     .toList();
                 if (!updated.isEmpty()) {
                     Execution execution = executor.getExecution();
@@ -823,7 +815,7 @@ public class ExecutorService {
             // newly merged children, since it is invisible to the for-loop above (only merged after it completes),
             // otherwise it would sit CREATED in front of handleWorkerTasks' generic CREATED->RUNNING transition below.
             for (TaskRun nextTaskRun : nextTaskRuns) {
-                this.handleFlowableChildCreated(executor, nextTaskRun, onPauseTaskRuns);
+                this.handleFlowableChildCreated(executor, nextTaskRun);
             }
         }
 
@@ -838,10 +830,6 @@ public class ExecutorService {
 
         if (list.isEmpty()) {
             return executor;
-        }
-
-        if (!onPauseTaskRuns.isEmpty()) {
-            executor.withTaskRun(onPauseTaskRuns, "handlePauses");
         }
 
         executor = this.handlePausedDelay(executor, list);
@@ -879,7 +867,7 @@ public class ExecutorService {
                     executor.withExecution(cascaded, "handleExecutionLevelOutcomes");
                     executor.withTaskRun(this.skippedFlowTaskRuns(cascaded, executor.getFlow()), "handleExecutionLevelOutcomes");
                 } else {
-                    executor.withExecution(this.withUnfinishedFlowableTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
+                    executor.withExecution(this.withUnfinishedExecutorTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
                 }
             }
         }
@@ -894,12 +882,13 @@ public class ExecutorService {
             && ListUtils.emptyOnNull(cascaded.getTaskRunList()).stream().allMatch(t -> t.getState().isTerminated());
     }
 
-    // A terminated execution is no longer processed, so a flowable left running would never resolve; worker task runs still report their own end.
-    private Execution withUnfinishedFlowableTaskRuns(Execution execution, FlowWithSource flow, State.Type state) throws InternalException {
+    // A terminated execution is no longer processed, so executor-managed tasks cannot resolve; worker tasks still report their own end.
+    private Execution withUnfinishedExecutorTaskRuns(Execution execution, FlowWithSource flow, State.Type state) throws InternalException {
         Execution ended = execution;
         for (TaskRun taskRun : ListUtils.emptyOnNull(execution.getTaskRunList())) {
-            if (!taskRun.getState().isTerminated() && flow.findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof FlowableTask<?>) {
-                ended = ended.withTaskRun(taskRun.withState(state));
+            Task task = flow.findTaskByTaskIdOrNull(taskRun.getTaskId());
+            if (!taskRun.getState().isTerminated() && (task instanceof FlowableTask<?> || task instanceof PausableTask)) {
+                ended = ended.withTaskRun(taskRun.withStateAndAttempt(state));
             }
         }
         return ended;
@@ -910,6 +899,43 @@ public class ExecutorService {
             .filter(task -> execution.findTaskRunsByTaskId(task.getId()).isEmpty())
             .map(task -> TaskRun.of(execution, ResolvedTask.of(task)).withState(State.Type.SKIPPED))
             .toList();
+    }
+
+    private ExecutorContext handlePausableTasks(ExecutorContext executor) throws InternalException, QueueException {
+        if (executor.getExecution().getTaskRunList() == null) {
+            return executor;
+        }
+
+        List<WorkerTaskResult> results = new ArrayList<>();
+        for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
+            Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
+            if (!(task instanceof PausableTask pausableTask)) {
+                continue;
+            }
+
+            try {
+                if (!(task instanceof FlowableTask<?>) && !taskRun.getState().isTerminated()
+                    && (executor.getExecution().getState().getCurrent() == State.Type.KILLING || taskRun.getState().getCurrent() == State.Type.KILLING)) {
+                    results.add(new WorkerTaskResult(taskRun.withStateAndAttempt(State.Type.KILLED)));
+                } else if (taskRun.getState().getCurrent() == State.Type.CREATED) {
+                    this.handlePausableCreated(executor, pausableTask, taskRun);
+                } else if (!(task instanceof FlowableTask<?>) && taskRun.getState().getCurrent() == State.Type.RUNNING) {
+                    results.add(new WorkerTaskResult(taskRun.withState(State.Type.PAUSED)));
+                }
+            } catch (Exception e) {
+                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                runContext.logger().error("Failed to process pausable task {}: {}", taskRun.getId(), e.getMessage(), e);
+                results.add(new WorkerTaskResult(taskRun.fail()));
+            }
+        }
+
+        if (results.isEmpty()) {
+            return executor;
+        }
+
+        executor = this.handlePausedDelay(executor, results);
+        this.addWorkerTaskResults(executor, results);
+        return this.handlePauseState(executor, results.stream().anyMatch(result -> result.getTaskRun().getState().getCurrent() == State.Type.PAUSED));
     }
 
     private void handlePausableCreated(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) throws Exception {
@@ -957,23 +983,12 @@ public class ExecutorService {
         );
     }
 
-    /**
-     * Runs the CREATED-only part of a flowable's custom executor logic (Loop's sub-execution spawning, creating a
-     * Pause's onPause task run) for a flowable child {@link #handleFlowableTasks} just created this pass.
-     */
-    private void handleFlowableChildCreated(ExecutorContext executor, TaskRun taskRun, List<TaskRun> onPauseTaskRuns) throws InternalException {
+    /** Runs a flowable child's CREATED-only executor logic in the same pass that creates it. */
+    private void handleFlowableChildCreated(ExecutorContext executor, TaskRun taskRun) throws InternalException {
         Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
         try {
-            if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
-                this.handlePausableCreated(executor, pausableTask, taskRun);
-            }
-
             if (task instanceof Loop loop && !loop.isMySubExecution(executor.getExecution(), taskRun) && taskRun.getState().getCurrent() == State.Type.CREATED) {
                 this.handleLoopCreated(executor, loop, taskRun);
-            } else if (task instanceof Pause pause && pause.getOnPause() != null) {
-                // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
-                // dispatches it like any other CREATED task run, immediately since it runs right after.
-                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
             }
         } catch (Exception e) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -1100,14 +1115,13 @@ public class ExecutorService {
 
         State.Type targetState = config.toTaskRunState();
         List<String> leafTaskRunIds = new ArrayList<>();
-        List<WorkerTaskResult> resolvedFlowables = new ArrayList<>();
+        List<WorkerTaskResult> resolvedExecutorTasks = new ArrayList<>();
 
         for (TaskRun descendant : nonTerminated) {
             Task descendantTask = executor.getFlow().findTaskByTaskIdOrNull(descendant.getTaskId());
-            if (descendantTask instanceof FlowableTask<?>) {
-                // A flowable task has no worker job of its own to interrupt: resolve it directly to the configured state.
-                // Its own descendants are covered independently in this same loop, since nonTerminatedChildrenTaskRuns() is already fully recursive.
-                resolvedFlowables.add(new WorkerTaskResult(descendant.withStateAndAttempt(targetState)));
+            if (descendantTask instanceof FlowableTask<?> || descendantTask instanceof PausableTask) {
+                // Executor-managed tasks have no worker job to interrupt, and their descendants are covered by this recursive list.
+                resolvedExecutorTasks.add(new WorkerTaskResult(descendant.withStateAndAttempt(targetState)));
             } else {
                 leafTaskRunIds.add(descendant.getId());
             }
@@ -1120,8 +1134,8 @@ public class ExecutorService {
             childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
         }
 
-        if (!resolvedFlowables.isEmpty()) {
-            this.addWorkerTaskResults(executor, resolvedFlowables);
+        if (!resolvedExecutorTasks.isEmpty()) {
+            this.addWorkerTaskResults(executor, resolvedExecutorTasks);
         }
 
         if (!leafTaskRunIds.isEmpty()) {
@@ -1240,6 +1254,14 @@ public class ExecutorService {
                     if (!pausedOutputs.isEmpty()) {
                         Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
                         taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), MapUtils.merge(current, pausedOutputs));
+                    }
+
+                    List<TaskRun> hooks = executor.getExecution().removeDisabled(FlowableUtils.resolveTasks(pausableTask.onPauseTasks(), workerTaskResult.getTaskRun()))
+                        .stream()
+                        .map(hook -> TaskRun.of(executor.getExecution(), hook))
+                        .toList();
+                    if (!hooks.isEmpty()) {
+                        executor.withTaskRun(hooks, "handleOnPauseTasks");
                     }
 
                     return delay.orElse(null);

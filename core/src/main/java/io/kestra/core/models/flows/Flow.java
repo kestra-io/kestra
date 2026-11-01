@@ -162,18 +162,9 @@ public class Flow extends AbstractFlow implements HasUID {
     public Stream<Task> allTasksWithChilds(Task task) {
         if (task == null) {
             return Stream.empty();
-        } else if (task.isFlowable()) {
-            Stream<Task> taskStream = ((FlowableTask<?>) task).allChildTasks()
-                .stream()
-                .flatMap(this::allTasksWithChilds);
-
-            return Stream.concat(
-                Stream.of(task),
-                taskStream
-            );
-        } else {
-            return Stream.of(task);
         }
+
+        return Stream.concat(Stream.of(task), task.allChildTasks().stream().flatMap(this::allTasksWithChilds));
     }
 
     public List<String> allTriggerIds() {
@@ -221,8 +212,7 @@ public class Flow extends AbstractFlow implements HasUID {
     public Task findParentTasksByTaskId(String taskId) {
         return allTasksWithChilds()
             .stream()
-            .filter(Task::isFlowable)
-            .filter(task -> ((FlowableTask<?>) task).allChildTasks().stream().anyMatch(t -> t.getId().equals(taskId)))
+            .filter(task -> task.allChildTasks().stream().anyMatch(t -> t.getId().equals(taskId)))
             .findFirst()
             .orElse(null);
     }

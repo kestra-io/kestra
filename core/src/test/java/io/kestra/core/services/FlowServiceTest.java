@@ -117,6 +117,32 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldWarnAboutScopedPauseHandlersWithoutRejectingTheFlow() {
+        String source = """
+            id: legacy-pause
+            namespace: io.kestra.unittest
+            tasks:
+              - id: pause
+                type: io.kestra.plugin.core.flow.Pause
+                errors:
+                  - id: error
+                    type: io.kestra.plugin.core.log.Log
+                    message: Failed
+                finally:
+                  - id: cleanup
+                    type: io.kestra.plugin.core.log.Log
+                    message: Finished
+            """;
+
+        ValidateConstraintViolation result = flowService.validate("my-tenant", List.of(new FlowSource(null, source))).getFirst();
+
+        assertThat(result.getErrors()).isEmpty();
+        assertThat(result.getWarnings()).anySatisfy(warning -> assertThat(warning)
+            .contains("Pause task 'pause'", "deprecated", "flow-level handlers", "Sequential"));
+        assertThat(result.getDeprecationPaths()).contains("tasks[0].errors", "tasks[0].finally");
+    }
+
+    @Test
     void shouldReturnTrueWhenValidatingFlowWithFilename() {
         // Given
         String source = """

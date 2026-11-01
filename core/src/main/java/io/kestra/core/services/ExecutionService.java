@@ -1645,4 +1645,12 @@ public class ExecutionService {
         eventPublisher.publishEvent(CrudEvent.of(execution, unqueued));
         return unqueued;
     }
+
+    public Execution retryLoop(Execution execution, String loopTaskRunId) throws InternalException {
+        TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(loopTaskRunId);
+        // RESTARTED makes ExecutorService re-run only the last failing iteration
+        return execution
+            .withTaskRun(loopTaskRun.withState(State.Type.RESTARTED))
+            .withState(State.Type.RUNNING);
+    }
 }

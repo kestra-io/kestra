@@ -1060,4 +1060,28 @@ class FlowValidationTest {
 
         return YamlParser.parse(file, Flow.class);
     }
+
+    @Test
+    void retryFlowableOnNormalTask() {
+        Flow flow = this.parse("flows/invalids/retry-flowable-normal-task.yaml");
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(flow);
+        assertThat(violations.isPresent()).isTrue();
+        assertThat(violations.get().getMessage()).contains("RETRY_FLOWABLE is only supported on flowable tasks");
+    }
+
+    @Test
+    void retryFlowableOnNestedNormalTask() {
+        Flow flow = this.parse("flows/invalids/retry-flowable-nested-normal-task.yaml");
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(flow);
+        assertThat(violations.isPresent()).isTrue();
+        assertThat(violations.get().getMessage()).contains("RETRY_FLOWABLE is only supported on flowable tasks");
+    }
+
+    @Test
+    void retryFlowableOnFlow() {
+        Flow flow = this.parse("flows/invalids/retry-flowable-flow-level.yaml");
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(flow);
+        assertThat(violations.isPresent()).isTrue();
+        assertThat(violations.get().getMessage()).contains("RETRY_FLOWABLE cannot be used as a flow-level retry behavior");
+    }
 }

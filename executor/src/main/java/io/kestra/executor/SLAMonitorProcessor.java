@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,7 +113,10 @@ public class SLAMonitorProcessor {
             ExecutorContext executor = new ExecutorContext(execution, flow);
             try {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
+                Duration slaDuration = slaMonitor.getDuration() != null
+                    ? slaMonitor.getDuration()
+                    : Duration.between(executor.getExecution().getState().getStartDate(), slaMonitor.getDeadline());
+                Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get(), slaDuration);
                 if (violation.isPresent()) { // should always be true
                     log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
                     executor = executorService.processViolation(runContext, executor, violation.get());

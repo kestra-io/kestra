@@ -17,7 +17,7 @@
             :icons="pluginsStore.icons"
             :loadIcon="pluginsStore.loadIcon"
             :execution="executionsStore.execution"
-            :subflowsExecutions="executionsStore.subflowsExecutions"
+            :subflowsExecutions="executionsStore.graphExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :replayEnabled="replayEnabled"
@@ -26,6 +26,9 @@
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
+            :loopLanes="loopLanes"
+            @loop-step="({uid, delta}) => loopScoping.stepLane(uid, delta)"
+            @loop-scope-failed="({uid}) => loopScoping.scopeFirstFailure(uid)"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -64,6 +67,27 @@
                         :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
                     />
                 </slot>
+            </template>
+            <template #loopScope="{uid, lane}">
+                <LoopIterationPicker
+                    :lane="lane"
+                    :hostExecutionId="loopScoping.hostExecutionId(uid)"
+                    @select="loopScoping.scopeLane(uid, $event)"
+                    @clear="loopScoping.clearLane(uid)"
+                    @step="loopScoping.stepLane(uid, $event)"
+                />
+            </template>
+            <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed, collapsedLanes}">
+                <LoopScopeBar
+                    :entries="loopScoping.scopeTrail.value"
+                    :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
+                    :failuresOnly="isFailuresOnly(collapsedLanes)"
+                    :failure="loopScoping.scopeFailure.value"
+                    @clear="loopScoping.clearScope()"
+                    @retry="loopScoping.retryScope()"
+                    @jump-to-failure="jumpToFirstFailure"
+                    @toggle-failures-only="toggleFailuresOnly(setLanesCollapsed, collapsedLanes)"
+                />
             </template>
             <template #taskActions="taskProps">
                 <template v-for="context in [taskActionsContext(taskProps.execution?.id, taskProps.taskRun?.id, taskProps.taskRuns.map(run => run.id))]" :key="taskProps.taskRun?.id">
@@ -309,6 +333,9 @@
     import type {AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
+    import LoopIterationPicker from "../executions/LoopIterationPicker.vue"
+    import LoopScopeBar from "../executions/LoopScopeBar.vue"
+    import {useLoopScoping} from "../../composables/useLoopScoping"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {getAllTasks} from "../../utils/flowUtils"
@@ -420,7 +447,7 @@
     function taskActionsContext(executionId: string | undefined, taskRunId: string | undefined, taskRunIds: string[]) {
         const execution = executionId === executionsStore.execution?.id
             ? executionsStore.execution
-            : Object.values(executionsStore.subflowsExecutions).find(execution => execution.id === executionId)
+            : executionId ? executionsStore.graphExecutions[executionId] : undefined
         const taskRuns = taskRunIds.flatMap(id => {
             const run = execution?.taskRunList?.find(run => run.id === id)
             return run ? [run] : []
@@ -435,7 +462,7 @@
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
-        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+        playgroundStore.enabled ? (executionsStore.scopedFlowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
     const isTask = (value: unknown): value is FlowTask & Task =>
@@ -694,6 +721,27 @@
             toggleOrientationButton: true,
             expandedSubflows: () => [],
         })
+
+    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value), computed(() => props.isReadOnly && Boolean(exec.value?.id)))
+    const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
+    const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
+
+    const isCollapsedLane = (collapsedLanes: Set<string>, uid: string) =>
+        [...collapsedLanes].some((collapsedUid) => uid === collapsedUid || uid.startsWith(`${collapsedUid}.`))
+
+    function isFailuresOnly(collapsedLanes: Set<string>) {
+        const uids = loopScoping.lanesWithoutFailures.value
+        return uids.length > 0 && uids.every((uid) => isCollapsedLane(collapsedLanes, uid))
+    }
+
+    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void, collapsedLanes: Set<string>) {
+        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, !isFailuresOnly(collapsedLanes))
+    }
+
+    function jumpToFirstFailure() {
+        const uid = loopScoping.firstFailedLaneUid()
+        if (uid) loopScoping.scopeFirstFailure(uid)
+    }
 
     watch(
         () => props.flowGraph,

@@ -40,6 +40,8 @@ export const EVENTS = {
     MOVE_TASK: "moveTask",
     TASK_DRAG_START: "taskDragStart",
     TASK_DRAG_END: "taskDragEnd",
+    LOOP_STEP: "loopStep",
+    LOOP_SCOPE_FAILED: "loopScopeFailed",
 } as const
 
 export interface CustomActionConfig {

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+import {keepSupportedFilters, FILTER_FIELD_PATTERN, resetQueryToDefaults} from "./utils"
 
 const SUPPORTED = new Set([
     "namespace", "flowId", "kind", "state", "scope", "childFilter",
@@ -111,5 +111,27 @@ describe("FILTER_FIELD_PATTERN", () => {
     it("does not match non-filter keys", () => {
         expect("page".match(FILTER_FIELD_PATTERN)).toBeNull()
         expect("dateFilter".match(FILTER_FIELD_PATTERN)).toBeNull()
+    })
+})
+
+describe("resetQueryToDefaults", () => {
+    it("should put the page's default scope and time range back instead of dropping every filter", () => {
+        const query = resetQueryToDefaults(
+            {
+                "filters[state][IN]": "FAILED",
+                "filters[scope][EQUALS]": "SYSTEM",
+                "filters[timeRange][EQUALS]": "PT1H",
+                "q": "nightly",
+                "page": "3",
+                "size": "50",
+            },
+            {namespace: null, includeScope: true, includeTimeRange: true, defaultDuration: "PT24H"},
+        )
+
+        expect(query).toEqual({
+            "size": "50",
+            "filters[scope][EQUALS]": "USER",
+            "filters[timeRange][EQUALS]": "PT24H",
+        })
     })
 })

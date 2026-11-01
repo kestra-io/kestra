@@ -8,8 +8,11 @@ import {
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
     LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     VALIDATION_ISSUES_INJECTION_KEY,
+    LOOP_LANES_INJECTION_KEY,
 } from "../injectionKeys"
 
+import type {LoopLaneData} from "../utils/loopOutcome"
+import en from "../../../../src/translations/en.json"
 import type {GraphTaskRun} from "../utils/vueFlowUtils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
@@ -44,7 +47,9 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map()}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task"}: {
+    loopLanes?: Record<string, LoopLaneData>,
+    uid?: string,
     execution?: Record<string, unknown>,
     validationIssues?: Map<string, string[]>,
     taskRuns?: GraphTaskRun[],
@@ -55,11 +60,12 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
     realBasicNode?: boolean,
 }) {
     return i18nMount(TaskNode, {
+        locales: en,
         props: {
-            id: "root.my-task",
+            id: uid,
             data: {
                 node: {
-                    uid: "root.my-task",
+                    uid,
                     type: "io.kestra.core.models.hierarchies.GraphTask",
                     task,
                     taskRun: taskRuns[0],
@@ -91,6 +97,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
                 [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
                 [VALIDATION_ISSUES_INJECTION_KEY as symbol]: computed(() => validationIssues),
+                [LOOP_LANES_INJECTION_KEY as symbol]: computed(() => loopLanes ?? {}),
             },
         },
     })
@@ -358,5 +365,33 @@ describe("TaskNode validation", () => {
         const wrapper = mountTaskNode({validationIssues: new Map([["other-task", ["message: must not be null"]]])})
 
         expect(wrapper.find(".node-core--error").exists()).toBe(false)
+    })
+})
+
+describe("TaskNode inside a loop", () => {
+    const lane = (overrides: Partial<LoopLaneData>): LoopLaneData => ({taskId: "per_region", status: "ready", parentScoped: true, ...overrides})
+    const mountInLoop = (loop: LoopLaneData) => mountTaskNode({
+        uid: "per_region.my-task",
+        execution: {state: {current: "FAILED"}},
+        loopLanes: {per_region: loop},
+    })
+
+    it("should summarize its runs and failures in the footer while the loop is unscoped", () => {
+        const wrapper = mountInLoop(lane({taskRunStateCounts: {"my-task": {SUCCESS: 9, FAILED: 3}}}))
+
+        expect(wrapper.find("[data-test='loop-task-runs']").text()).toBe("12 runs · 3 failed")
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
+    })
+
+    it("should show no number when the counts are unavailable", () => {
+        const wrapper = mountInLoop(lane({}))
+
+        expect(wrapper.find("[data-test='loop-task-runs']").exists()).toBe(false)
+    })
+
+    it("should drop the summary once the loop is scoped to an iteration", () => {
+        const wrapper = mountInLoop(lane({scopedNumber: 2, taskRunStateCounts: {"my-task": {SUCCESS: 9}}}))
+
+        expect(wrapper.find("[data-test='loop-task-runs']").exists()).toBe(false)
     })
 })

@@ -1,4 +1,4 @@
-import {computed, type Component, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
+import {computed, type Component, ComputedRef, h, markRaw, Ref, Suspense, defineComponent} from "vue"
 import {useI18n} from "vue-i18n"
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -122,7 +122,7 @@ function getTabFromNoCodeTab(Comp: Component, tab: NoCodeTabWithAction, t: (key:
 
     return {
         ...getTabValues(tab),
-        component: markRaw({
+        component: markRaw(defineComponent({
             name: "NoCodeTab",
             props: ["panelIndex", "tabIndex"],
             setup: (props: Opener) => () => h(Suspense, {},
@@ -135,7 +135,7 @@ function getTabFromNoCodeTab(Comp: Component, tab: NoCodeTabWithAction, t: (key:
                     onCloseTask: onCloseTask?.bind({}, props),
                 })],
             ),
-        }),
+        })),
     }
 }
 

@@ -105,6 +105,7 @@
     import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
     import {hasErrorUnder} from "../../../../utils/validationErrors"
     import type {Schema} from "./getTaskComponent"
+    import type {FieldValue} from "../../utils/types"
 
     defineOptions({
         inheritAttrs: false,
@@ -352,13 +353,15 @@
     }
 
     function fieldProps(key: string, schema: Schema) {
-        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] : undefined
+        // A single property read off the generic task/trigger record is always a schema-driven
+        // leaf or branch value, never anything an index signature couldn't already describe.
+        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] as FieldValue | undefined : undefined
         return {
             modelValue: mv,
             "onUpdate:modelValue": (value: unknown) => onObjectInput(key, value),
             root: props.root,
             fieldKey: key,
-            task: props.modelValue,
+            task: props.modelValue ?? undefined,
             schema: schema,
             required: props.modelValue == null ? undefined : props.schema?.required,
             siblingKeys: Object.keys(props.properties ?? props.schema?.properties ?? {}),

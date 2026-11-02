@@ -17,14 +17,16 @@ import {ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {clearFilterQueryParams} from "../utils/helpers"
 import {TIME_RANGE_KEY} from "../utils/constants"
+import {normalizeRelativeDate} from "../utils/relativeDates"
 import {
     type AppliedFilter,
     type FilterConfiguration,
+    type FilterKeyConfig,
     type FilterGroup,
     type LogicalOperator,
     Comparators,
 } from "../utils/filterTypes"
-import {createAppliedFilter, createDefaultVisibleFilters} from "../utils/filterChipFactory"
+import {createAppliedFilter, createDefaultVisibleFilters, resolveDefaultVisibleValue} from "../utils/filterChipFactory"
 import {newGroupId, useFilterGroups} from "./useFilterGroups"
 import {useDismissedKeys} from "./useDismissedKeys"
 import {usePreAppliedFilters} from "./usePreAppliedFilters"
@@ -75,22 +77,31 @@ export function useFilters(
     }
     useDefaultFilter(defaultFilterOptions)
 
+    const resolveDefaultTimeRange = (): string | undefined => {
+        if (!defaultFilterOptions.includeTimeRange) return undefined
+        const {query} = applyDefaultFilters({}, defaultFilterOptions)
+        const raw = query[`filters[${TIME_RANGE_KEY}][EQUALS]`]
+        const value = Array.isArray(raw) ? raw[0] : raw
+        return typeof value === "string" && value.length > 0 ? value : undefined
+    }
+
+    const getDefaultValue = (key: FilterKeyConfig): AppliedFilter["value"] => {
+        const timeRange = key.key === TIME_RANGE_KEY ? resolveDefaultTimeRange() : undefined
+        return timeRange ? normalizeRelativeDate(timeRange) : resolveDefaultVisibleValue(key)
+    }
+
     const resetToDefaults = () => {
         dismissed.resetDismissedDefaultVisibleKeys()
         const {query: defaultQuery} = applyDefaultFilters({}, defaultFilterOptions)
         const resetFilters: AppliedFilter[] = []
 
-        if (defaultFilterOptions.includeTimeRange) {
-            const timeRangeConfig = configuration.keys?.find((k) => k.key === TIME_RANGE_KEY)
-            const defaultTimeRangeRaw = defaultQuery[`filters[${TIME_RANGE_KEY}][EQUALS]`]
-            const timeRangeValue = Array.isArray(defaultTimeRangeRaw) ? defaultTimeRangeRaw[0] : defaultTimeRangeRaw
-
-            if (timeRangeConfig && typeof timeRangeValue === "string" && timeRangeValue.length > 0) {
-                const comparator = timeRangeConfig.comparators[0] ?? Comparators.EQUALS
-                resetFilters.push(
-                    createAppliedFilter(TIME_RANGE_KEY, timeRangeConfig, comparator, timeRangeValue, timeRangeValue, "default"),
-                )
-            }
+        const timeRangeConfig = configuration.keys?.find((k) => k.key === TIME_RANGE_KEY)
+        const timeRangeValue = resolveDefaultTimeRange()
+        if (timeRangeConfig && timeRangeValue) {
+            const comparator = timeRangeConfig.comparators[0] ?? Comparators.EQUALS
+            resetFilters.push(
+                createAppliedFilter(TIME_RANGE_KEY, timeRangeConfig, comparator, timeRangeValue, timeRangeValue, "default"),
+            )
         }
 
         resetFilters.push(...createDefaultVisibleFilters(configuration.keys, new Set(), dismissed.dismissedKeys.value))
@@ -124,6 +135,7 @@ export function useFilters(
         ...actions,
         replaceTree,
         resetToDefaults,
+        getDefaultValue,
         // pre-applied filter tracking
         hasPreApplied: preApplied.hasPreApplied,
         getPreApplied: preApplied.getPreApplied,

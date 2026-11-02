@@ -1,12 +1,14 @@
+import type {Component} from "vue"
+
 export interface Tab {
     uid: string
     button: {
-        icon: any
+        icon: Component
         label: string
         disabled?: boolean
         disabledTooltip?: string
     },
-    component: any
+    component: Component
 }
 
 export interface TabLive extends Tab {

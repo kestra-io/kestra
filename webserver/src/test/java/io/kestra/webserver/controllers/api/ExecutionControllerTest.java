@@ -5,9 +5,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +64,8 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
+import io.netty.util.internal.PlatformDependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,6 +99,9 @@ class ExecutionControllerTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
+
+    @Inject
+    private EmbeddedServer embeddedServer;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
@@ -241,6 +249,71 @@ class ExecutionControllerTest {
         assertThat(exception.getMessage())
             .as("the 404 message must not distinguish a draft-only flow from a wrong webhook key (GHSA-6wcq-4vx6-rx53)")
             .contains("Webhook not found");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook.yaml" })
+    void shouldNotRetainRequestBodyWhenMultipartWebhookIsRejected() throws Exception {
+        assertRequestBodiesAreNotRetained(null, List.of(
+            "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/wrong-key",
+            "/api/v1/main/executions/webhook/not-found/not-found/wrong-key"
+        ));
+    }
+
+    @Test
+    void shouldNotRetainRequestBodyWhenExecutionInputsAreRejected() throws Exception {
+        String basicAuth = "Basic " + Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes(StandardCharsets.UTF_8));
+
+        assertRequestBodiesAreNotRetained(basicAuth, List.of(
+            "/api/v1/main/executions/not-found/not-found",
+            "/api/v1/main/executions/not-found/not-found/validate",
+            "/api/v1/main/executions/not-found/actions/resume",
+            "/api/v1/main/executions/not-found/actions/resume/validate",
+            "/api/v1/main/executions/not-found/actions/replay-with-inputs"
+        ));
+    }
+
+    private void assertRequestBodiesAreNotRetained(String authorization, List<String> paths) throws Exception {
+        String boundary = "request-body-leak-boundary";
+        byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"part.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] payload = new byte[head.length + 512 * 1024 + tail.length];
+        System.arraycopy(head, 0, payload, 0, head.length);
+        System.arraycopy(tail, 0, payload, payload.length - tail.length, tail.length);
+
+        int requests = 50;
+
+        // the first requests of a JVM grow the pool of direct buffers, which is not a leak
+        for (int i = 0; i < 40; i++) {
+            postMultipart(paths.getFirst(), authorization, boundary, payload);
+        }
+
+        for (String path : paths) {
+            long before = PlatformDependent.usedDirectMemory();
+
+            for (int i = 0; i < requests; i++) {
+                assertThat(postMultipart(path, authorization, boundary, payload)).as("status of %s", path).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+            }
+
+            long retained = PlatformDependent.usedDirectMemory() - before;
+            assertThat(retained)
+                .as("the bodies of %d rejected requests of 512 KiB sent to %s must not stay in direct memory (%d bytes retained)", requests, path, retained)
+                .isLessThan(5L * 1024 * 1024);
+        }
+    }
+
+    private int postMultipart(String path, String authorization, String boundary, byte[] payload) throws Exception {
+        // a new connection each time: a reused one would stall on the unread body of the previous request
+        try (HttpClient http = HttpClient.newHttpClient()) {
+            java.net.http.HttpRequest.Builder request = java.net.http.HttpRequest.newBuilder(URI.create(embeddedServer.getURL() + path))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(payload));
+            if (authorization != null) {
+                request.header("Authorization", authorization);
+            }
+            return http.send(request.build(), java.net.http.HttpResponse.BodyHandlers.discarding()).statusCode();
+        }
     }
 
     @Test

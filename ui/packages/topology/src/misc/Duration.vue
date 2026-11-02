@@ -551,7 +551,7 @@
 
     .compact-bar {
         width: 100%;
-        height: var(--ks-spacing-1);
+        height: calc(var(--ks-spacing-px) * 2);
     }
 
     .split-bar-queued {

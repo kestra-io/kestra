@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay ab Task",
       "confirm_whole": "Ganze Execution wiederholen"
     },
+    "replayOverrides": {
+      "title": "Ausdrücke überschreiben",
+      "description": "Was die Ausdrücke von Task {taskId} in dieser Execution gerendert haben. Setze einen, um den Task stattdessen mit diesem Wert auszuführen: seine Definition bleibt wie sie ist, die Tasks davor werden wiederverwendet und jeder andere Task rendert echte Daten.",
+      "load_error": "Die Ausdrücke des Tasks {taskId} konnten nicht geladen werden.",
+      "empty": "Task {taskId} rendert keinen Ausdruck in seinen eigenen Eigenschaften.",
+      "rendered": "Gerendert {value}",
+      "other_revision": "Expressions können nur in der ursprünglichen Flow-Revision überschrieben werden.",
+      "confirm": "Replay mit {count} Override | Replay mit {count} Overrides",
+      "locked": {
+        "BLOCK": "Innerhalb eines if- oder for-Blocks, der Teil der Task-Logik ist. Ändere ihn mit einer neuen Revision.",
+        "CONSTANT": "Liest nichts aus der Execution, daher ist es Teil der Definition. Ändere es mit einer neuen Revision.",
+        "SECRET": "Liest ein Secret oder den KV Store zur Laufzeit.",
+        "FILE": "Liest oder rendert eine Datei aus dem internen Storage."
+      },
+      "error": {
+        "number": "Gib eine Zahl ein.",
+        "boolean": "Gib true oder false ein.",
+        "json": "Gib gültiges JSON ein."
+      },
+      "recorded": "{count} überschriebener Ausdruck | {count} überschriebene Ausdrücke",
+      "recorded_title": "Ausdrücke, die beim Replay gesetzt wurden",
+      "recorded_original": "Gerendert",
+      "recorded_value": "Wiederholt mit",
+      "recorded_by": "Festgelegt von {user} am {date}",
+      "recorded_hidden": "Das Lesen der Werte erfordert die Berechtigung zum Lesen von Outputs."
+    },
     "change execution state done": "Execution-Status aktualisiert",
     "mark as": "Als {status} markieren",
     "unqueue as": "Als {status} aus der Warteschlange entfernen",

@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay da Task",
       "confirm_whole": "Reproduzir toda a execução"
     },
+    "replayOverrides": {
+      "title": "Substituir expressões",
+      "description": "O que as expressões da task {taskId} renderizaram nesta execução. Defina uma para executar a task com esse valor: sua definição permanece como está, as tasks anteriores são reutilizadas e todas as outras tasks renderizam dados reais.",
+      "load_error": "Não foi possível carregar as expressões da task {taskId}.",
+      "empty": "A Task {taskId} não renderiza nenhuma expressão em suas próprias propriedades.",
+      "rendered": "Renderizado {value}",
+      "other_revision": "Expressões só podem ser substituídas na revisão original do flow.",
+      "confirm": "Replay com {count} substituição | Replay com {count} substituições",
+      "locked": {
+        "BLOCK": "Dentro de um bloco if ou for, que faz parte da lógica da task. Altere-o com uma nova revisão.",
+        "CONSTANT": "Não lê nada da execução, então faz parte da definição. Altere-o com uma nova revisão.",
+        "SECRET": "Lê um secret ou o kv store em tempo de execução.",
+        "FILE": "Lê ou renderiza um arquivo do armazenamento interno."
+      },
+      "error": {
+        "number": "Insira um número.",
+        "boolean": "Insira verdadeiro ou falso.",
+        "json": "Insira um JSON válido."
+      },
+      "recorded": "{count} expressão substituída | {count} expressões substituídas",
+      "recorded_title": "Expressões definidas na repetição",
+      "recorded_original": "Renderizado",
+      "recorded_value": "Reproduzido com",
+      "recorded_by": "Definido por {user} em {date}",
+      "recorded_hidden": "A leitura dos valores requer permissão para ler os outputs."
+    },
     "change execution state done": "Estado de execução atualizado",
     "mark as": "Marcar como {status}",
     "unqueue as": "Desenfileirar como {status}",

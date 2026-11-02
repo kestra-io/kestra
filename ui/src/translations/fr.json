@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay à partir de la tâche",
       "confirm_whole": "Rejouer l'exécution entière"
     },
+    "replayOverrides": {
+      "title": "Expressions de remplacement",
+      "description": "Ce que les expressions de la task {taskId} ont rendu dans cette exécution. Définissez-en une pour exécuter la task avec cette valeur à la place : sa définition reste telle quelle, les tasks précédentes sont réutilisées, et toutes les autres tasks rendent des données réelles.",
+      "load_error": "Impossible de charger les expressions de la task {taskId}.",
+      "empty": "La Task {taskId} ne rend aucune expression dans ses propres propriétés.",
+      "rendered": "Rendu {value}",
+      "other_revision": "Les expressions ne peuvent être remplacées que sur la révision originale du flow.",
+      "confirm": "Rejouer avec {count} remplacement | Rejouer avec {count} remplacements",
+      "locked": {
+        "BLOCK": "À l'intérieur d'un bloc if ou for, qui fait partie de la logique de la task. Modifiez-le avec une nouvelle révision.",
+        "CONSTANT": "Ne lit rien de l'exécution, donc cela fait partie de la définition. Modifiez-le avec une nouvelle révision.",
+        "SECRET": "Lit un secret ou le kv store au moment de l'exécution.",
+        "FILE": "Lit ou rend un fichier depuis le stockage interne."
+      },
+      "error": {
+        "number": "Entrez un nombre.",
+        "boolean": "Entrez vrai ou faux.",
+        "json": "Entrez un JSON valide."
+      },
+      "recorded": "{count} expression surchargée | {count} expressions surchargées",
+      "recorded_title": "Expressions définies sur le replay",
+      "recorded_original": "Rendu",
+      "recorded_value": "Rejoué avec",
+      "recorded_by": "Défini par {user} le {date}",
+      "recorded_hidden": "La lecture des valeurs nécessite la permission de lire les outputs."
+    },
     "change execution state done": "État d'exécution mis à jour",
     "mark as": "Marquer comme {status}",
     "unqueue as": "Se désenfile en tant que {status}",

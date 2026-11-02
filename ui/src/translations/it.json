@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay dal Task",
       "confirm_whole": "Riproduci l'intera Execution"
     },
+    "replayOverrides": {
+      "title": "Sovrascrivi espressioni",
+      "description": "Cosa hanno reso le espressioni del task {taskId} in questa esecuzione. Impostane una per eseguire il task con quel valore: la sua definizione rimane invariata, i task precedenti vengono riutilizzati e ogni altro task rende dati reali.",
+      "load_error": "Impossibile caricare le espressioni del task {taskId}.",
+      "empty": "Il Task {taskId} non restituisce alcuna espressione nelle sue proprietà.",
+      "rendered": "Renderizzato {value}",
+      "other_revision": "Le espressioni possono essere sovrascritte solo sulla revisione originale del flow.",
+      "confirm": "Replay con {count} override | Replay con {count} override",
+      "locked": {
+        "BLOCK": "All'interno di un blocco if o for, che fa parte della logica del task. Modificalo con una nuova revisione.",
+        "CONSTANT": "Non legge nulla dall'execution, quindi fa parte della definizione. Modificalo con una nuova revisione.",
+        "SECRET": "Legge un Secret o il KV store in fase di esecuzione.",
+        "FILE": "Legge o renderizza un file dallo storage interno."
+      },
+      "error": {
+        "number": "Inserisci un numero.",
+        "boolean": "Inserisci vero o falso.",
+        "json": "Inserisci un JSON valido."
+      },
+      "recorded": "{count} espressione sovrascritta | {count} espressioni sovrascritte",
+      "recorded_title": "Espressioni impostate sul replay",
+      "recorded_original": "Renderizzato",
+      "recorded_value": "Ripetuto con",
+      "recorded_by": "Impostato da {user} il {date}",
+      "recorded_hidden": "La lettura dei valori richiede il permesso di leggere gli output."
+    },
     "change execution state done": "Stato di esecuzione aggiornato",
     "mark as": "Contrassegna come {status}",
     "unqueue as": "Dequeued come {status}",

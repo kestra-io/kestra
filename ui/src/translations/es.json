@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay desde la task",
       "confirm_whole": "Reproducir toda la ejecución"
     },
+    "replayOverrides": {
+      "title": "Anular expresiones",
+      "description": "Lo que las expresiones de la task {taskId} renderizaron en esta ejecución. Establece uno para ejecutar la task con ese valor en su lugar: su definición permanece como está, las tasks anteriores se reutilizan y todas las demás tasks renderizan datos reales.",
+      "load_error": "No se pudieron cargar las expresiones de la Task {taskId}.",
+      "empty": "El Task {taskId} no renderiza ninguna expresión en sus propias propiedades.",
+      "rendered": "Renderizado {value}",
+      "other_revision": "Las expresiones solo se pueden anular en la revisión original del Flow.",
+      "confirm": "Replay con {count} override | Replay con {count} overrides",
+      "locked": {
+        "BLOCK": "Dentro de un bloque if o for, que forma parte de la lógica del Task. Cámbialo con una nueva revisión.",
+        "CONSTANT": "No lee nada de la ejecución, por lo que forma parte de la definición. Cámbialo con una nueva revisión.",
+        "SECRET": "Lee un secret o el KV store en tiempo de ejecución.",
+        "FILE": "Lee o renderiza un archivo del almacenamiento interno."
+      },
+      "error": {
+        "number": "Introduce un número.",
+        "boolean": "Introduce verdadero o falso.",
+        "json": "Introduce un JSON válido."
+      },
+      "recorded": "{count} expresión anulada | {count} expresiones anuladas",
+      "recorded_title": "Expresiones establecidas en la reproducción",
+      "recorded_original": "Renderizado",
+      "recorded_value": "Reproducido con",
+      "recorded_by": "Establecido por {user} el {date}",
+      "recorded_hidden": "La lectura de los valores requiere permiso para leer los outputs."
+    },
     "change execution state done": "Estado de ejecución actualizado",
     "mark as": "Marcar como {status}",
     "unqueue as": "Desencolar como {status}",

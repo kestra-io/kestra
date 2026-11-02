@@ -454,6 +454,32 @@
       "confirm_from_task": "Replay z Taska",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
+    "replayOverrides": {
+      "title": "Nadpisz wyrażenia",
+      "description": "Co wyrażenia Taska {taskId} wyrenderowały w tej egzekucji. Ustaw jedno, aby uruchomić Taska z tą wartością: jego definicja pozostaje bez zmian, Taski przed nim są ponownie używane, a każdy inny Task renderuje rzeczywiste dane.",
+      "load_error": "Nie można załadować wyrażeń Taska {taskId}.",
+      "empty": "Task {taskId} nie renderuje żadnego wyrażenia we własnych właściwościach.",
+      "rendered": "Wyrenderowano {value}",
+      "other_revision": "Wyrażenia mogą być nadpisywane tylko w oryginalnej wersji Flow.",
+      "confirm": "Replay z {count} nadpisaniem | Replay z {count} nadpisaniami | Replay z {count} nadpisaniami",
+      "locked": {
+        "BLOCK": "Wewnątrz bloku if lub for, który jest częścią logiki Taska. Zmień go w nowej wersji.",
+        "CONSTANT": "Nie odczytuje niczego z egzekucji, więc jest częścią definicji. Zmień to, tworząc nową wersję.",
+        "SECRET": "Odczytuje sekret lub kv store w czasie wykonania.",
+        "FILE": "Odczytuje lub renderuje plik z wewnętrznej pamięci masowej."
+      },
+      "error": {
+        "number": "Wprowadź liczbę.",
+        "boolean": "Wpisz true lub false.",
+        "json": "Wprowadź prawidłowy JSON."
+      },
+      "recorded": "{count} nadpisane wyrażenie | {count} nadpisane wyrażenia | {count} nadpisanych wyrażeń",
+      "recorded_title": "Wyrażenia ustawione na Replay",
+      "recorded_original": "Renderowane",
+      "recorded_value": "Odtworzono z",
+      "recorded_by": "Ustawione przez {user} dnia {date}",
+      "recorded_hidden": "Odczytanie wartości wymaga uprawnień do odczytu outputów."
+    },
     "change execution state done": "Status egzekucji zaktualizowany",
     "mark as": "Oznacz jako {status}",
     "unqueue as": "Usuń z kolejki jako {status}",

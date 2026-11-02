@@ -454,6 +454,32 @@
       "confirm_from_task": "Task에서 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
+    "replayOverrides": {
+      "title": "표현식 재정의",
+      "description": "이 실행에서 task {taskId}의 표현식이 렌더링한 내용입니다. 해당 값으로 task를 실행하도록 설정하면 task 정의는 그대로 유지되고, 이전 task는 재사용되며, 다른 모든 task는 실제 데이터를 렌더링합니다.",
+      "load_error": "task {taskId}의 표현식을 로드할 수 없습니다.",
+      "empty": "Task {taskId}는 자체 속성에 표현식을 렌더링하지 않습니다.",
+      "rendered": "렌더링된 {value}",
+      "other_revision": "표현식은 원본 flow revision에서만 재정의할 수 있습니다.",
+      "confirm": "{count}개 재정의로 Replay | {count}개 재정의로 Replay",
+      "locked": {
+        "BLOCK": "if 또는 for 블록 내부에 있으며, Task 로직의 일부입니다. 새 revision으로 변경하세요.",
+        "CONSTANT": "Execution에서 아무것도 읽지 않으므로 정의의 일부입니다. 새 revision으로 변경하세요.",
+        "SECRET": "런타임에 Secret 또는 KV store를 읽습니다.",
+        "FILE": "내부 스토리지에서 파일을 읽거나 렌더링합니다."
+      },
+      "error": {
+        "number": "숫자를 입력하세요.",
+        "boolean": "true 또는 false를 입력하세요.",
+        "json": "유효한 JSON을 입력하세요."
+      },
+      "recorded": "{count} 재정의된 표현식 | {count} 재정의된 표현식",
+      "recorded_title": "재생 시 설정된 표현식",
+      "recorded_original": "렌더링됨",
+      "recorded_value": "다음으로 Replay됨",
+      "recorded_by": "{date}에 {user}가 설정함",
+      "recorded_hidden": "값을 읽으려면 output을 읽을 권한이 필요합니다."
+    },
     "change execution state done": "실행 상태가 업데이트되었습니다",
     "mark as": "{status}로 표시",
     "unqueue as": "{status}로 대기열에서 제거",

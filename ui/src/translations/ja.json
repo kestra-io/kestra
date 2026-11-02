@@ -454,6 +454,32 @@
       "confirm_from_task": "Taskからリプレイ",
       "confirm_whole": "Execution全体をリプレイ"
     },
+    "replayOverrides": {
+      "title": "式を上書き",
+      "description": "このExecutionでTask {taskId}の式がレンダリングしたもの。代わりにその値でTaskを実行するように設定します。その定義はそのまま残り、その前のTaskは再利用され、他のすべてのTaskは実際のデータをレンダリングします。",
+      "load_error": "Task {taskId} の式を読み込めませんでした。",
+      "empty": "Task {taskId} は、自身のプロパティに式をレンダリングしません。",
+      "rendered": "レンダリングされた {value}",
+      "other_revision": "式は元のFlowリビジョンでのみオーバーライドできます。",
+      "confirm": "{count} 件のオーバーライドでリプレイ | {count} 件のオーバーライドでリプレイ",
+      "locked": {
+        "BLOCK": "ifまたはforブロック内。これはTaskのロジックの一部です。新しいリビジョンで変更してください。",
+        "CONSTANT": "Executionからは何も読み取らないため、定義の一部です。新しいリビジョンで変更してください。",
+        "SECRET": "実行時にSecretまたはKV storeを読み取ります。",
+        "FILE": "内部ストレージからファイルを読み取るか、レンダリングします。"
+      },
+      "error": {
+        "number": "数値を入力してください。",
+        "boolean": "true または false を入力してください。",
+        "json": "有効なJSONを入力してください。"
+      },
+      "recorded": "{count} 上書きされた式 | {count} 上書きされた式",
+      "recorded_title": "リプレイで設定されたExpression",
+      "recorded_original": "レンダリング済み",
+      "recorded_value": "リプレイ済み",
+      "recorded_by": "{date}に{user}によって設定されました",
+      "recorded_hidden": "値の読み取りには、outputを読み取る権限が必要です。"
+    },
     "change execution state done": "実行状態が更新されました",
     "mark as": "{status}としてマーク",
     "unqueue as": "{status}としてキューから外す",

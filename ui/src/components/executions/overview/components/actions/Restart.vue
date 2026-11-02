@@ -203,7 +203,7 @@
                 :revision="execution.flowRevision"
                 :taskId="replayTaskRun.taskId"
             />
-            <KsText v-else-if="replayTaskRun" tag="p" size="small" type="info" class="mt-3" data-test="replay-task-editor-other-revision">
+            <KsText v-else-if="replayTaskRun" tag="p" size="small" type="info" class="other-revision" data-test="replay-task-editor-other-revision">
                 {{ $t("replayEditedTask.other_revision") }}
             </KsText>
 
@@ -598,6 +598,10 @@
 <style scoped>
 :global(.ks-restart-tooltip--no-pointer) {
     pointer-events: none;
+}
+
+.other-revision {
+    margin-top: var(--ks-spacing-3);
 }
 
 .restart {

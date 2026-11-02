@@ -2,6 +2,8 @@ package io.kestra.core.services;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.runners.pebble.OverridableExpression;
 import io.kestra.core.runners.pebble.PebbleExpressionPrinter;
 import io.kestra.core.runners.pebble.functions.FileExistsFunction;
 import io.kestra.core.runners.pebble.functions.FileSizeFunction;
@@ -39,7 +42,6 @@ import io.pebbletemplates.pebble.extension.AbstractNodeVisitor;
 import io.pebbletemplates.pebble.extension.ExtensionRegistry;
 import io.pebbletemplates.pebble.lexer.LexerImpl;
 import io.pebbletemplates.pebble.node.PrintNode;
-import io.pebbletemplates.pebble.node.RenderableNode;
 import io.pebbletemplates.pebble.node.RootNode;
 import io.pebbletemplates.pebble.node.expression.ContextVariableExpression;
 import io.pebbletemplates.pebble.node.expression.Expression;
@@ -125,18 +127,18 @@ public class ReplayOverrideService {
     }
 
     private void collect(RootNode root, Map<String, Kind> kinds) {
-        for (RenderableNode child : root.getBody().getChildren()) {
-            if (child instanceof PrintNode print) {
-                printer.print(print.getExpression()).ifPresent(expression -> kinds.put(expression, kindOf(print.getExpression())));
-            } else {
-                child.accept(new AbstractNodeVisitor(null) {
-                    @Override
-                    public void visit(PrintNode print) {
-                        printer.print(print.getExpression()).ifPresent(expression -> kinds.putIfAbsent(expression, Kind.BLOCK));
-                    }
-                });
+        List<PrintNode> prints = OverridableExpression.overridablePrints(root);
+        Set<PrintNode> overridable = Collections.newSetFromMap(new IdentityHashMap<>());
+        overridable.addAll(prints);
+        prints.forEach(print -> printer.print(print.getExpression()).ifPresent(expression -> kinds.put(expression, kindOf(print.getExpression()))));
+        root.accept(new AbstractNodeVisitor(null) {
+            @Override
+            public void visit(PrintNode print) {
+                if (!overridable.contains(print)) {
+                    printer.print(print.getExpression()).ifPresent(expression -> kinds.putIfAbsent(expression, Kind.BLOCK));
+                }
             }
-        }
+        });
     }
 
     private static Kind kindOf(Expression<?> expression) {
@@ -219,7 +221,7 @@ public class ReplayOverrideService {
 
     public enum Kind {
         EXPRESSION("it can be overridden"),
-        BLOCK("it is inside a {% %} block, which is part of the task's logic"),
+        BLOCK("it is inside a loop, a set or a macro, where it can read variables that only exist there"),
         CONSTANT("it reads nothing from the execution, so it is part of the task's definition"),
         SECRET("it reads a secret or the KV store"),
         FILE("it reads or renders a file");

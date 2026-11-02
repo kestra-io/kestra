@@ -18,14 +18,15 @@ class OverridableExpressionTest {
     VariableRenderer variableRenderer;
 
     @Test
-    void shouldRenderOverrideOnlyForTheSameTopLevelExpression() throws IllegalVariableEvaluationException {
+    void shouldRenderOverrideAtTopLevelAndInIfBranchesButNotInLoops() throws IllegalVariableEvaluationException {
         Map<String, Object> variables = Map.of(
             "code", "KR-0412 ",
             OverridableExpression.VARIABLE, Map.of("code", "KR-0413")
         );
 
-        assertThat(variableRenderer.render("[{{code}}][{{ code | trim }}]{% if true %}[{{ code }}]{% endif %}", variables))
-            .isEqualTo("[KR-0413][KR-0412][KR-0412 ]");
+        String template = "[{{code}}][{{ code | trim }}]{% if false %}{% else %}[{{ code }}]{% endif %}{% for i in [1] %}[{{ code }}]{% endfor %}";
+
+        assertThat(variableRenderer.render(template, variables)).isEqualTo("[KR-0413][KR-0412][KR-0413][KR-0412 ]");
     }
 
     @Test

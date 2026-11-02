@@ -1248,22 +1248,23 @@ class ExecutionControllerRunnerTest {
             new ReplayOverrideService.ReplayValue("outputs.fetch.values.code", ReplayOverrideService.Kind.EXPRESSION, "KR-0412 "),
             new ReplayOverrideService.ReplayValue("vars.schema", ReplayOverrideService.Kind.EXPRESSION, "erp"),
             new ReplayOverrideService.ReplayValue("inputs.day", ReplayOverrideService.Kind.EXPRESSION, "2026-10-12"),
-            new ReplayOverrideService.ReplayValue("outputs.fetch.values.delta", ReplayOverrideService.Kind.BLOCK, null)
+            new ReplayOverrideService.ReplayValue("outputs.fetch.values.delta", ReplayOverrideService.Kind.EXPRESSION, -12),
+            new ReplayOverrideService.ReplayValue("attempt", ReplayOverrideService.Kind.BLOCK, null)
         );
     }
 
     @Test
     @LoadFlows({ "flows/valids/replay-overrides.yaml" })
-    void shouldRejectOverrideOfExpressionTheTaskDoesNotRenderAtTopLevel() throws Exception {
+    void shouldRejectOverrideOfExpressionTheTaskDoesNotRenderOrRendersInLoop() throws Exception {
         Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
 
         var notRendered = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.delta < 0", false)));
-        var inBlock = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.delta", 5)));
+        var inLoop = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("attempt", 2)));
 
         assertThat(notRendered.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(notRendered.getResponse().getBody(String.class).orElse("")).contains("does not render it in its own properties");
-        assertThat(inBlock.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(inBlock.getResponse().getBody(String.class).orElse("")).contains("it is inside a {% %} block");
+        assertThat(inLoop.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(inLoop.getResponse().getBody(String.class).orElse("")).contains("it is inside a loop, a set or a macro");
     }
 
     private void replayWithOverrides(Execution execution, String taskId, Map<String, Object> overrides) {

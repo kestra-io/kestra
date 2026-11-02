@@ -3,9 +3,9 @@ package io.kestra.core.models.executions;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * A value set by hand on replay for a variable read by one task run, kept next to the value it replaced.
+ * A value set on replay for one expression of a task run, kept next to the value it rendered.
  *
- * @param key the variable path as written in the task, for example {@code outputs.fetch.row.code}
+ * @param key the expression as printed back from its Pebble tree, for example {@code outputs.fetch.row.code}
  */
 public record TaskRunOverride(@NotNull String key, Object value, Object originalValue) {
 }

@@ -137,6 +137,7 @@ import KsSelect from "./components/Form/KsSelect/KsSelect.vue"
 import KsSideBar from "./components/Navigation/KsSideBar/KsSideBar.vue"
 import KsSideBarItem from "./components/Navigation/KsSideBar/KsSideBarItem.vue"
 import KsSideBarSection from "./components/Navigation/KsSideBar/KsSideBarSection.vue"
+import KsSelectableListItem from "./components/Navigation/KsSelectableListItem.vue"
 import KsSkeleton from "./components/Data/KsSkeleton.vue"
 import KsSplitter from "./components/Basic/KsSplitter/KsSplitter.vue"
 import KsSplitterPanel from "./components/Basic/KsSplitter/KsSplitterPanel.vue"
@@ -204,6 +205,7 @@ export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
+export {editorFontFamily} from "./utils/editorFont"
 export {dayjs, type Dayjs} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
@@ -372,6 +374,7 @@ const components: Record<string, Component> = {
     KsSideBar,
     KsSideBarItem,
     KsSideBarSection,
+    KsSelectableListItem,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -484,6 +487,7 @@ export {
     KsSideBar,
     KsSideBarItem,
     KsSideBarSection,
+    KsSelectableListItem,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -630,6 +634,7 @@ declare module "vue" {
         KsSideBar: typeof KsSideBar
         KsSideBarItem: typeof KsSideBarItem
         KsSideBarSection: typeof KsSideBarSection
+        KsSelectableListItem: typeof KsSelectableListItem
         KsSkeleton: typeof KsSkeleton
         KsSplitter: typeof KsSplitter
         KsSplitterPanel: typeof KsSplitterPanel

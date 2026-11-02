@@ -77,7 +77,7 @@
         if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath) as SchemaNode | undefined
+        return getValueAtJsonPath(fullSchema.value as unknown as Record<string, unknown>, props.blockSchemaPath) as SchemaNode | undefined
     })
 
     onBeforeMount(() => {

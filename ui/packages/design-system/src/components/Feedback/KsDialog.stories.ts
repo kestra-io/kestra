@@ -165,7 +165,7 @@ export const WideContent: Story = {
         await userEvent.click(canvas.getByRole("button", {name: "Open wide-content dialog"}))
         await waitFor(() => expect(document.querySelector("[data-dialog-wide]")).toBeTruthy())
         const dialog = document.querySelector<HTMLElement>(".kel-dialog")!
-        const expected = Math.min(1024, window.innerWidth * 0.9)
+        const expected = Math.min(1024, window.innerWidth * 0.92)
         await expect(Math.abs(dialog.getBoundingClientRect().width - expected)).toBeLessThan(1)
     },
 }

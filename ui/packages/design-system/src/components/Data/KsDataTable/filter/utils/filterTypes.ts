@@ -69,6 +69,8 @@ export interface FilterKeyConfig {
      */
     valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
     valueType: "text" | "number" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    allLabel?: string;
+    allDescription?: string;
     /**
      * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
      * mode of the time-range picker on an arbitrary date field:
@@ -188,7 +190,7 @@ export interface TableOptions {
     };
     refresh?: {
         shown?: boolean;
-        callback?: () => void
+        callback?: () => void | Promise<unknown>
     };
 }
 

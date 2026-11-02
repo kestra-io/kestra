@@ -19,6 +19,12 @@ describe("useSurveySkip", () => {
         expect(isSurveySkipped.value).toBe(false)
     })
 
+    it("reports a stored false skip flag as not skipped", () => {
+        localStorage.setItem("basicAuthSurveySkipped", JSON.stringify({skipped: false}))
+
+        expect(useSurveySkip().isSurveySkipped.value).toBe(false)
+    })
+
     it("records a skip and reports the survey as skipped", () => {
         const {isSurveySkipped, storeSurveySkipData} = useSurveySkip()
 

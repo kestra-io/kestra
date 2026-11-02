@@ -143,6 +143,7 @@
             name: "metrics",
             title: t("metrics"),
             component: markRaw(ExecutionMetric),
+            props: {fitHeight: false},
         },
     ]))
 

@@ -7,8 +7,7 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 const {route, state, generate} = await vi.hoisted(async () => {
     const {reactive} = await import("vue")
     return {
-        // KPI deep-watches `route.params.filters`, so the mocked route has to stay reactive.
-        route: reactive<{params: Record<string, unknown>; query: Record<string, unknown>}>({params: {}, query: {}}),
+        route: reactive<{fullPath: string; params: Record<string, unknown>; query: Record<string, unknown>}>({fullPath: "/dashboards", params: {}, query: {}}),
         state: {
             data: undefined as {results?: Record<string, unknown>[]} | undefined,
             loading: false,
@@ -71,7 +70,7 @@ describe("dashboard KPI section", () => {
     })
 
     afterEach(() => {
-        delete route.params.filters
+        route.fullPath = "/dashboards"
     })
 
     it("renders a skeleton while loading with no data yet", () => {
@@ -126,13 +125,23 @@ describe("dashboard KPI section", () => {
         expect(generate).toHaveBeenCalledTimes(1)
     })
 
-    it("triggers a regenerate when the route filters change", async () => {
+    it("triggers a regenerate when the route changes", async () => {
         mountWithData(42)
         expect(generate).not.toHaveBeenCalled()
 
-        route.params.filters = [{field: "state", operation: "EQUALS", value: ["SUCCESS"]}]
+        route.fullPath = "/dashboards?filters[state][IN]=SUCCESS"
         await flushPromises()
 
         expect(generate).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not regenerate when the route object is replaced without a URL change", async () => {
+        mountWithData(42)
+
+        route.params = {}
+        route.query = {}
+        await flushPromises()
+
+        expect(generate).not.toHaveBeenCalled()
     })
 })

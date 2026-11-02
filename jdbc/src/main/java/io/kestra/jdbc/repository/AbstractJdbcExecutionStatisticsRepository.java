@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.kestra.core.utils.ListUtils;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -42,6 +43,7 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
     // Package-private: referenced by ExecutionStatisticsCompactor, which shares this table but isn't part of this class's hierarchy.
     static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     static final Field<String> FLOW_ID_FIELD = field("flow_id", String.class);
+    static final Field<String> STATE_FIELD = field("state", String.class);
     static final Field<Object> DATE_FIELD = field("date");
 
     public AbstractJdbcExecutionStatisticsRepository(io.kestra.jdbc.AbstractJdbcRepository<ExecutionStatistic> jdbcRepository) {
@@ -66,6 +68,7 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
         String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        List<State.Type> states,
         Instant startDate,
         Instant endDate,
         DateUtils.GroupType groupBy) {
@@ -90,6 +93,10 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
 
                 if (flowId != null) {
                     select = select.and(FLOW_ID_FIELD.eq(flowId));
+                }
+
+                if (!ListUtils.isEmpty(states)) {
+                    select = select.and(STATE_FIELD.in(states));
                 }
 
                 return this.jdbcRepository.fetch(select);

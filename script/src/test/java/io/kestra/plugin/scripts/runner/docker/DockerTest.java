@@ -186,6 +186,30 @@ class DockerTest extends AbstractTaskRunnerTest {
         }
     }
 
+    @Test
+    void shouldApplyRenderedDnsServersToContainer() throws Exception {
+        var runContext = runContext(this.runContextFactory, Map.of("dnsServer", "192.0.2.53"));
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .networkMode("bridge")
+            .dns(List.of(" {{ dnsServer }} ", "", " 198.51.100.53 "))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "grep -Fqx 'nameserver 192.0.2.53' /etc/resolv.conf && " +
+                        "grep -Fqx 'nameserver 198.51.100.53' /etc/resolv.conf"
+                )
+            )
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+    }
+
     public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {
         Method method = TaskRunner.class.getDeclaredMethod("onKill", Runnable.class);
         method.setAccessible(true);

@@ -74,7 +74,7 @@
 
     import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
-    import Delete from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
 
     import type {RouteLocationRaw} from "vue-router"
 

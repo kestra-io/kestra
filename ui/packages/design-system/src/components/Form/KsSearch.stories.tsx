@@ -22,18 +22,27 @@ type Story = StoryObj<typeof KsSearch>
 export const Default: Story = {
     render: (args) => ({
         setup() {
-            const value = ref("")
+            const value = ref(args.modelValue ?? "")
             return () => (
                 <div style="padding:24px;width:300px">
-                    <KsSearch v-model={value.value} {...args} />
+                    <KsSearch {...args} v-model={value.value} />
                 </div>
             )
         },
     }),
-    args: {placeholder: "Search..."},
+    args: {
+        modelValue: "",
+        placeholder: "Search...",
+        disabled: false,
+        clearable: false,
+        readonly: false,
+        name: "",
+        id: "",
+    },
 }
 
 export const Clearable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const value = ref("Clear me")
@@ -47,6 +56,7 @@ export const Clearable: Story = {
 }
 
 export const WithSuffix: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const value = ref("")
@@ -62,6 +72,7 @@ export const WithSuffix: Story = {
 }
 
 export const CustomPrefix: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const value = ref("")
@@ -77,6 +88,7 @@ export const CustomPrefix: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         setup() {
             const value = ref("Disabled value")

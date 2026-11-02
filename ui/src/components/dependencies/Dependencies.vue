@@ -18,7 +18,7 @@
         <div
             v-if="isLoading"
             v-ks-loading="true"
-            class="h-100"
+            class="loading-container"
         />
         <Empty
             v-else-if="!hasElements"
@@ -325,6 +325,10 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
+}
+
+.loading-container {
     height: 100%;
 }
 

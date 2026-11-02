@@ -4,7 +4,7 @@
             <slot name="button" :execute="runAction" :disabled="actionDisabled">
                 <KsButton
                     :id="actionId"
-                    :icon="PlayOutlineIcon"
+                    :icon="PlayIcon"
                     :type="type"
                     :disabled="actionDisabled"
                     :square="iconOnly"
@@ -107,7 +107,7 @@
     import FlowRunActions from "./FlowRunActions.vue"
     import {useIsMobile} from "../../composables/useIsMobile"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
-    import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
+    import PlayIcon from "vue-material-design-icons/Play.vue"
     import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{

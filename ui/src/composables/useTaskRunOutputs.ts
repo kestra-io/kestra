@@ -21,7 +21,7 @@ function fetchTaskRunIdsWithOutputs(executionId: string, forceRefresh: boolean):
 
     const pending = OutputsAPI.taskOutputsInformation({executionId})
         .catch((e: unknown) => {
-            if (handledIf(e, [404])) return []
+            if (handledIf(e, [403, 404])) return []
             throw e
         })
         .then((data) =>

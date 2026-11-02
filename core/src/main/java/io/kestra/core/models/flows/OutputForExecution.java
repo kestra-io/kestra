@@ -1,5 +1,7 @@
 package io.kestra.core.models.flows;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
@@ -18,5 +20,18 @@ public class OutputForExecution extends Output {
             .required(output.getRequired())
             .searchable(output.getSearchable())
             .build();
+    }
+
+    /**
+     * The OpenAPI shape of an {@link OutputForExecution}, declared apart because a subclass schema would inherit {@link Output}'s required value.
+     */
+    @Schema(name = "OutputForExecution")
+    public record Declaration(
+        @NotNull String id,
+        String description,
+        @NotNull Type type,
+        String displayName,
+        Boolean required,
+        Boolean searchable) {
     }
 }

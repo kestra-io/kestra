@@ -1,6 +1,10 @@
 package io.kestra.executor.handler;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.slf4j.event.Level;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
@@ -16,6 +20,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -23,8 +28,11 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
@@ -43,6 +51,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionStateStore executionStateStore;
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
+    private final FlowService flowService;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final AsyncOperationService asyncOperationService;
@@ -56,6 +65,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         ExecutionStateStore executionStateStore,
         ExecutionDelayStateStore executionDelayStateStore,
         FlowMetaStoreInterface flowMetaStore,
+        FlowService flowService,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
         AsyncOperationService asyncOperationService,
@@ -66,6 +76,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         this.executionStateStore = executionStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
         this.flowMetaStore = flowMetaStore;
+        this.flowService = flowService;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.asyncOperationService = asyncOperationService;
@@ -103,8 +114,14 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 var flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);
                 var newExecution = switch (message) {
-                    case Restart restartCommand ->
-                        executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
+                    case Restart restartCommand -> {
+                        // an existing execution cannot be created as failed, so any failing check refuses the restart
+                        List<Check> failed = failedChecks(flow, execution);
+                        if (!Check.Behavior.CREATE_EXECUTION.equals(Check.resolveBehavior(failed))) {
+                            throw checksFailure(failed);
+                        }
+                        yield executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
+                    }
                     case Pause ignored ->
                         executionService.pause(execution);
                     case Unqueue unqueueCommand ->
@@ -121,6 +138,10 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.changeState(execution, updateStatusCommand.state());
                     case ResumeFromBreakpoint resumeFromBreakpointCommand ->
                         executionService.resumeFromBreakpoint(execution, resumeFromBreakpointCommand.breakpoints());
+                    case Resume resumeCommand when resumeCommand.decision() != null ->
+                        executionService.decide(execution, flow, resumeCommand.taskRunId(), resumeCommand.decision(), resumeCommand.resumeInputs(), resumeCommand.resumed(), true);
+                    case Resume resumeCommand when resumeCommand.taskRunId() != null ->
+                        executionService.cancelApproval(execution, flow, resumeCommand.taskRunId(), resumeCommand.resumed());
                     case Resume resumeCommand ->
                         executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
                     case ExecutionCommand.Invalid ignored -> {
@@ -139,6 +160,17 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 asyncOperationService.emitProcessedIfAsync(message, message.tenantId(), message.executionId(), outcome, error);
             }
         });
+    }
+
+    private List<Check> failedChecks(Flow flow, Execution execution) {
+        return flowService.getFailedChecks(flow, MapUtils.emptyOnNull(execution.getInputs()));
+    }
+
+    private static IllegalStateException checksFailure(List<Check> failed) {
+        return new IllegalStateException(
+            "Flow execution blocked: one or more condition checks evaluated to false. Failed checks: %s."
+                .formatted(failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")))
+        );
     }
 
     private Execution reschedule(Execution execution, Reschedule command) {
@@ -220,6 +252,12 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             }
 
+            List<Check> failedChecks = failedChecks(flow, sourceExecution);
+            Check.Behavior checksBehavior = Check.resolveBehavior(failedChecks);
+            if (Check.Behavior.BLOCK_EXECUTION.equals(checksBehavior)) {
+                throw checksFailure(failedChecks);
+            }
+
             Execution newExecution;
             try (PropagatedContext.Scope _ = Actor.propagate(command.actor())) {
                 newExecution = executionService.replay(
@@ -231,6 +269,11 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     true,
                     command.executionId()
                 );
+            }
+
+            if (Check.Behavior.FAIL_EXECUTION.equals(checksBehavior)) {
+                Logs.logExecution(newExecution, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                newExecution = newExecution.withState(State.Type.FAILED);
             }
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);

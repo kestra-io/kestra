@@ -187,10 +187,6 @@
         /** What this duration belongs to (e.g. a task id), used to disambiguate the trigger's
          *  aria-label when several are rendered on the same page (e.g. the Logs tab). */
         subject?: string;
-        /** Scales each segment against this value (e.g. the longest task run of an execution)
-         *  instead of the breakdown's own total, so bars across several instances are comparable.
-         *  Absent or non-positive falls back to the unscaled, per-instance behavior. */
-        denominator?: number;
         execution?: GraphExecution;
         compact?: boolean;
     }>(), {
@@ -198,7 +194,6 @@
         interval: 100,
         attemptCount: undefined,
         subject: undefined,
-        denominator: undefined,
         compact: false,
         execution: undefined,
     })
@@ -285,7 +280,7 @@
         if (!refreshHandler) {
             refreshHandler = setInterval(() => {
                 now.value = Date.now()
-            }, props.interval)
+            }, props.compact ? 1000 : props.interval)
         }
     }
 
@@ -330,7 +325,7 @@
     })
 
     const segmentWidths = computed(() => {
-        const denominator = props.denominator && props.denominator > 0 ? props.denominator : breakdown.value.total
+        const denominator = breakdown.value.total
         let remaining = 100
         const take = (part: number) => {
             if (denominator <= 0) return 0

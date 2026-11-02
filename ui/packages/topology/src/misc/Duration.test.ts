@@ -369,13 +369,21 @@ describe("Duration", () => {
         expect(width(running)).toBe(50)
         expect(width(completed)).toBe(50)
 
-        await vi.advanceTimersByTimeAsync(10_000)
+        await vi.advanceTimersByTimeAsync(999)
+        expect(width(running)).toBe(50)
+        expect(width(completed)).toBe(50)
+
+        await vi.advanceTimersByTimeAsync(1)
+        expect(width(running)).toBeCloseTo(6000 / 11000 * 100)
+        expect(width(completed)).toBeCloseTo(5000 / 11000 * 100)
+
+        await vi.advanceTimersByTimeAsync(9_000)
 
         expect(width(running)).toBe(75)
         expect(width(completed)).toBe(25)
     })
 
-    it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {
+    it("should scale the tier-1 split bar against its own total", () => {
         const wrapper = mountDuration([
             {date: 0, state: "RUNNING"},
             {date: 1_000, state: "SUCCESS"},

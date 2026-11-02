@@ -73,7 +73,7 @@ export const NoCounts: Story = {
 
 const legendShown = () => {
     const legend = document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")
-    return legend !== null && getComputedStyle(legend.closest<HTMLElement>(".ks-tooltip") ?? legend).display !== "none"
+    return legend !== null && getComputedStyle(legend.closest<HTMLElement>("[role='tooltip']") ?? legend).display !== "none"
 }
 
 const SETTLE_MS = 400

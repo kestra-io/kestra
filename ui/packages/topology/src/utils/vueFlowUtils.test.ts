@@ -1044,6 +1044,52 @@ describe("generateGraph triggers lane join dot", () => {
         expect(edgePairs(elements)).toContain(`${FLOW_ROOT}|root.notify_team`)
     })
 
+    test("keeps the add button before a flowable first task", () => {
+        const flowGraph = triggeredFlowGraph({
+            nodes: [
+                {
+                    uid: "root.seq",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "seq", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                },
+                {uid: "root.seq.root-2", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {
+                    uid: "root.seq.child",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "child", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+                },
+                {uid: "root.seq.end-2", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            ],
+            edges: [
+                {source: "root.seq", target: "root.seq.root-2"},
+                {source: "root.seq.root-2", target: "root.seq.child"},
+                {source: "root.seq.child", target: "root.seq.end-2"},
+                {source: "root.seq.end-2", target: "root.notify_team"},
+            ],
+        })
+        flowGraph.edges = flowGraph.edges.map((edge) =>
+            edge.source === FLOW_ROOT && edge.target === "root.notify_team" ? {...edge, target: "root.seq"} : edge,
+        )
+        flowGraph.clusters.push({
+            cluster: {
+                uid: CLUSTER_PREFIX + "root.seq",
+                type: "io.kestra.core.models.hierarchies.GraphCluster",
+                taskNode: {uid: "root.seq", task: {id: "seq", type: "io.kestra.plugin.core.flow.Sequential"}},
+            },
+            nodes: ["root.seq", "root.seq.root-2", "root.seq.child", "root.seq.end-2"],
+            parents: [],
+            start: "root.seq.root-2",
+            end: "root.seq.end-2",
+        } as unknown as VueFlowUtils.FlowGraph["clusters"][number])
+
+        const edge = generateTriggered(flowGraph).find((element) =>
+            element.type === "edge" && element.source === TRIGGERS_END && element.target === "root.seq.root-2",
+        )
+
+        expect(edge).toBeDefined()
+        expect(edge?.data?.haveAdd).toEqual({refId: "seq", position: "before"})
+    })
+
     test("folds the flow root and a flowable's gate node in the same graph", () => {
         const withFlowable = triggeredFlowGraph({
             nodes: [

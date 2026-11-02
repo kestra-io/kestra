@@ -510,14 +510,6 @@ export function getFlowableGateAliases(
     return aliases
 }
 
-/** Maps the flow's own root dot onto the Triggers lane's end dot the backend wires it straight out
- *  of, so the gap between the trigger box and the first task stops rendering two joints in a row
- *  (kestra-io/kestra#21047). The lane's end is the one that stays, because it is a member of the
- *  lane: keeping it leaves the box's own layout untouched — its height, its padding, and the point
- *  several triggers fan into all stay where they were — and only the joint outside the box goes.
- *  The flow root is kept whenever anything else meets there, since `errors:` and `finally:` fan out
- *  of it and it is then a junction rather than a redundant joint. A collapsed or absorbed lane is
- *  excluded, since there the placeholder already stands for both. */
 export function getTriggersJoinAlias(
     clusters: FlowGraph["clusters"],
     nodes: MinimalNode[],
@@ -584,13 +576,7 @@ export function haveAdd(
         return undefined
     }
     if (clustersRootTaskUids.includes(edge.target)) return undefined
-    // A trigger is not a task, so nothing can be inserted on the lane's own wiring. The run that
-    // leaves the lane for a real task is the exception: once the flow root is folded onto the lane
-    // end, that run is where a task is inserted before the first one (kestra-io/kestra#21047).
     if (edge.target.startsWith(TRIGGERS_NODE_UID)) return undefined
-    if (edge.source.startsWith(TRIGGERS_NODE_UID) && isClusterRootOrEnd(nodeByUid[edge.target])) {
-        return undefined
-    }
 
     const dotSplitTarget = edge.target.split(".")
     dotSplitTarget.pop()
@@ -599,13 +585,18 @@ export function haveAdd(
     const targetNode = nodeByUid[edge.target]
 
     if (
+        edge.source.startsWith(TRIGGERS_NODE_UID) &&
+        targetNodeClusterUid === "root" &&
+        isClusterRootOrEnd(targetNode)
+    ) {
+        return undefined
+    }
+    if (
         targetNode.type.endsWith("GraphClusterEnd") &&
         nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith("Parallel")
     ) {
         return undefined
     }
-    // A Dag orders its tasks through `dependsOn`, so an insertion there has to know both ends of
-    // the edge it landed on, not just the neighbour it is placed next to.
     const isDagLane = nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith(".Dag") === true
     const dagTaskIdAt = (uid: string): string | undefined => {
         const node = nodeByUid[uid]
@@ -625,8 +616,6 @@ export function haveAdd(
     if (targetNode.type.endsWith("GraphClusterRoot")) {
         return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
-    // The Triggers lane owns no task, so "after the lane's task" means nothing for it and the
-    // insertion is placed from the edge's target instead.
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
         && !edge.source.startsWith(TRIGGERS_NODE_UID)
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {

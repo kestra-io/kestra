@@ -6,6 +6,8 @@ import type {Plugin} from "../../../utils/pluginUtils"
 export interface PluginCatalogExtension {
     /** Rendered in the top bar of the plugin catalog. */
     pageActions?: Component;
+    /** Rendered above the catalog toolbar. */
+    banner?: Component;
     /** Rendered in the catalog toolbar, next to the category filters. */
     toolbar?: Component;
     /** Narrows the catalog cards on top of search and categories. */

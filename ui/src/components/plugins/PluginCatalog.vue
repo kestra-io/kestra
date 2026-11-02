@@ -14,6 +14,8 @@
     </section>
 
     <template v-else>
+        <component :is="catalogExtension.banner" v-if="catalogExtension.banner" />
+
         <div class="filter-toolbar">
             <div class="filter-toolbar__search">
                 <KsSearch

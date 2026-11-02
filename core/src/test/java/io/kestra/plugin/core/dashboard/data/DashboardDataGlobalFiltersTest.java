@@ -154,6 +154,23 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldReportTheTextSearchAndChildFilterAsIgnoredForExecutions() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("company").build(),
+            QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("busy").build(),
+            QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.IN).value(List.of("FAILED")).build(),
+            QueryFilter.builder().field(QueryFilter.Field.CHILD_FILTER).operation(QueryFilter.Op.EQUALS).value("MAIN").build(),
+            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build()
+        );
+
+        IExecutions iExecutions = new IExecutions() {
+        };
+
+        assertThat(iExecutions.ignoredGlobalFilterFields(filters))
+            .containsExactly(QueryFilter.Field.QUERY, QueryFilter.Field.CHILD_FILTER);
+    }
+
+    @Test
     void shouldMapKindFilterForExecutions() {
         QueryFilter kindFilter = QueryFilter.builder()
             .field(QueryFilter.Field.KIND)

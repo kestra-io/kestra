@@ -29,6 +29,11 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         return DURATION_FIELDS;
     }
 
+    @Override
+    default Set<QueryFilter.Field> globalFilterFields() {
+        return Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.LABELS, QueryFilter.Field.FLOW_ID, QueryFilter.Field.KIND, QueryFilter.Field.STATE, QueryFilter.Field.SCOPE);
+    }
+
     default List<AbstractFilter<Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<Fields>> where) {
         List<AbstractFilter<Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 

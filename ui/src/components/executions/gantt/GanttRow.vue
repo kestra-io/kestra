@@ -121,14 +121,13 @@
 
         &:has(.row-label-footer:not(:empty)) {
             min-height: calc(2.75rem + var(--ks-spacing-3));
-            padding-bottom: var(--ks-spacing-3);
+
+            .row-label {
+                padding-bottom: var(--ks-spacing-3);
+            }
 
             .guides {
                 margin-bottom: calc(-1 * (var(--ks-border-width-thin) + var(--ks-spacing-3)));
-            }
-
-            .row-actions {
-                top: calc(50% - var(--ks-spacing-3) / 2);
             }
         }
 
@@ -162,7 +161,7 @@
 
     .row-label-footer {
         position: absolute;
-        top: calc(100% + var(--ks-spacing-1));
+        top: calc(100% - var(--ks-spacing-3) + var(--ks-spacing-1));
         right: var(--ks-spacing-4);
         left: calc(var(--gantt-indent) * (var(--gantt-depth) + 1) + var(--ks-spacing-3));
     }
@@ -293,10 +292,6 @@
         .row-label {
             grid-area: label;
             min-width: 0;
-        }
-
-        &:has(.row-label-footer:not(:empty)) .row-label {
-            padding-bottom: var(--ks-spacing-3);
         }
 
         .row-label-footer {

@@ -5,9 +5,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +32,8 @@ import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.searchable.SearchableOutput;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
 import io.kestra.core.models.executions.TaskRun;
@@ -61,6 +64,8 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
+import io.netty.util.internal.PlatformDependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -77,7 +82,7 @@ class ExecutionControllerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    private SearchableOutputRepositoryInterface searchableOutputRepository;
+    private SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     private BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -94,6 +99,9 @@ class ExecutionControllerTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
+
+    @Inject
+    private EmbeddedServer embeddedServer;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
@@ -241,6 +249,71 @@ class ExecutionControllerTest {
         assertThat(exception.getMessage())
             .as("the 404 message must not distinguish a draft-only flow from a wrong webhook key (GHSA-6wcq-4vx6-rx53)")
             .contains("Webhook not found");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook.yaml" })
+    void shouldNotRetainRequestBodyWhenMultipartWebhookIsRejected() throws Exception {
+        assertRequestBodiesAreNotRetained(null, List.of(
+            "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/wrong-key",
+            "/api/v1/main/executions/webhook/not-found/not-found/wrong-key"
+        ));
+    }
+
+    @Test
+    void shouldNotRetainRequestBodyWhenExecutionInputsAreRejected() throws Exception {
+        String basicAuth = "Basic " + Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes(StandardCharsets.UTF_8));
+
+        assertRequestBodiesAreNotRetained(basicAuth, List.of(
+            "/api/v1/main/executions/not-found/not-found",
+            "/api/v1/main/executions/not-found/not-found/validate",
+            "/api/v1/main/executions/not-found/actions/resume",
+            "/api/v1/main/executions/not-found/actions/resume/validate",
+            "/api/v1/main/executions/not-found/actions/replay-with-inputs"
+        ));
+    }
+
+    private void assertRequestBodiesAreNotRetained(String authorization, List<String> paths) throws Exception {
+        String boundary = "request-body-leak-boundary";
+        byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"part.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] payload = new byte[head.length + 512 * 1024 + tail.length];
+        System.arraycopy(head, 0, payload, 0, head.length);
+        System.arraycopy(tail, 0, payload, payload.length - tail.length, tail.length);
+
+        int requests = 50;
+
+        // the first requests of a JVM grow the pool of direct buffers, which is not a leak
+        for (int i = 0; i < 40; i++) {
+            postMultipart(paths.getFirst(), authorization, boundary, payload);
+        }
+
+        for (String path : paths) {
+            long before = PlatformDependent.usedDirectMemory();
+
+            for (int i = 0; i < requests; i++) {
+                assertThat(postMultipart(path, authorization, boundary, payload)).as("status of %s", path).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+            }
+
+            long retained = PlatformDependent.usedDirectMemory() - before;
+            assertThat(retained)
+                .as("the bodies of %d rejected requests of 512 KiB sent to %s must not stay in direct memory (%d bytes retained)", requests, path, retained)
+                .isLessThan(5L * 1024 * 1024);
+        }
+    }
+
+    private int postMultipart(String path, String authorization, String boundary, byte[] payload) throws Exception {
+        // a new connection each time: a reused one would stall on the unread body of the previous request
+        try (HttpClient http = HttpClient.newHttpClient()) {
+            java.net.http.HttpRequest.Builder request = java.net.http.HttpRequest.newBuilder(URI.create(embeddedServer.getURL() + path))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(payload));
+            if (authorization != null) {
+                request.header("Authorization", authorization);
+            }
+            return http.send(request.build(), java.net.http.HttpResponse.BodyHandlers.discarding()).statusCode();
+        }
     }
 
     @Test
@@ -417,17 +490,17 @@ class ExecutionControllerTest {
         seedExecutionWithFlowIdAndNamespace(tenant, "flow", namespace);
         seedExecutionWithFlowIdAndNamespace(tenant, "flow", namespace);
         var seeded = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()));
-        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(0).getId(), "orderIds", "ORD-8841"));
-        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(1).getId(), "orderIds", "ORD-9000"));
-        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(2).getId(), "other", "ORD-8841"));
+        searchableDataRepository.save(new SearchableData(tenant, seeded.get(0).getId(), "orderIds", "ORD-8841"));
+        searchableDataRepository.save(new SearchableData(tenant, seeded.get(1).getId(), "orderIds", "ORD-9000"));
+        searchableDataRepository.save(new SearchableData(tenant, seeded.get(2).getId(), "other", "ORD-8841"));
         String search = "/api/v1/main/executions/search?filters[namespace][EQUALS]=" + namespace;
 
-        PagedResults<?> equals = client.toBlocking().retrieve(GET(search + "&filters[outputs][EQUALS][orderIds]=ORD-8841"), PagedResults.class);
-        PagedResults<?> none = client.toBlocking().retrieve(GET(search + "&filters[outputs][EQUALS][orderIds]=unknown"), PagedResults.class);
+        PagedResults<?> equals = client.toBlocking().retrieve(GET(search + "&filters[searchableData][EQUALS][orderIds]=ORD-8841"), PagedResults.class);
+        PagedResults<?> none = client.toBlocking().retrieve(GET(search + "&filters[searchableData][EQUALS][orderIds]=unknown"), PagedResults.class);
 
-        PagedResults<?> notEquals = client.toBlocking().retrieve(GET(search + "&filters[outputs][NOT_EQUALS][orderIds]=ORD-8841"), PagedResults.class);
-        PagedResults<?> in = client.toBlocking().retrieve(GET(search + "&filters[outputs][IN][orderIds]=ORD-8841,ORD-9000"), PagedResults.class);
-        PagedResults<?> notIn = client.toBlocking().retrieve(GET(search + "&filters[outputs][NOT_IN][orderIds]=ORD-9000,ORD-1"), PagedResults.class);
+        PagedResults<?> notEquals = client.toBlocking().retrieve(GET(search + "&filters[searchableData][NOT_EQUALS][orderIds]=ORD-8841"), PagedResults.class);
+        PagedResults<?> in = client.toBlocking().retrieve(GET(search + "&filters[searchableData][IN][orderIds]=ORD-8841,ORD-9000"), PagedResults.class);
+        PagedResults<?> notIn = client.toBlocking().retrieve(GET(search + "&filters[searchableData][NOT_IN][orderIds]=ORD-9000,ORD-1"), PagedResults.class);
 
         assertThat(notEquals.getTotal()).isEqualTo(1);
         assertThat(in.getTotal()).isEqualTo(2);
@@ -440,7 +513,7 @@ class ExecutionControllerTest {
     void searchShouldRejectUnsupportedOutputsOperation() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET("/api/v1/main/executions/search?filters[outputs][STARTS_WITH][orderIds]=ORD-"), PagedResults.class
+                GET("/api/v1/main/executions/search?filters[searchableData][STARTS_WITH][orderIds]=ORD-"), PagedResults.class
             )
         );
 
@@ -451,7 +524,7 @@ class ExecutionControllerTest {
     void searchShouldRejectOutputsFilterWithoutOutputName() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET("/api/v1/main/executions/search?filters[outputs][EQUALS]=ORD-8841"), PagedResults.class
+                GET("/api/v1/main/executions/search?filters[searchableData][EQUALS]=ORD-8841"), PagedResults.class
             )
         );
 
@@ -469,7 +542,7 @@ class ExecutionControllerTest {
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE, OPERATION_ID, OPERATION_OUTCOME, ID, OUTPUTS"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE, OPERATION_ID, OPERATION_OUTCOME, ID, SEARCHABLE_DATA"
         );
 
         exception = assertThrows(

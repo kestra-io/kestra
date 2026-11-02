@@ -36,7 +36,9 @@
                     <template v-else>
                         <KsIcon><Counter /></KsIcon>
                     </template>
-                    &nbsp;<code>{{ scope.row.name }}</code>
+                    &nbsp;<KsTooltip :content="metricDescription(scope.row as MetricEntry)" :disabled="!metricDescription(scope.row as MetricEntry)">
+                        <code>{{ scope.row.name }}</code>
+                    </KsTooltip>
                 </template>
             </KsTableColumn>
 
@@ -101,6 +103,7 @@
 
     import type {Execution} from "../../stores/executions"
     import {date, humanizeDuration, humanizeNumber} from "../../utils/filters"
+    import {useMetricDescriptions} from "./metricDescriptions"
 
     import {useTableColumns} from "@kestra-io/design-system"
 
@@ -140,6 +143,8 @@
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
     const pageSize = ref(25)
+
+    const metricDescription = useMetricDescriptions(() => props.execution, metrics)
 
     const dataTable = useTemplateRef("dataTable")
 

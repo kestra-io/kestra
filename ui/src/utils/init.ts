@@ -2,7 +2,8 @@ import {createRouter, createWebHistory} from "vue-router"
 import type {App} from "vue"
 import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordRaw, Router} from "vue-router"
 import {configure} from "vue-gtag"
-import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
+import type {I18nOptions} from "vue-i18n"
+import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
@@ -27,7 +28,7 @@ export default async (
     routes: RouteRecordRaw[],
     _stores: unknown,
     translations: Record<string, unknown>,
-    additionalTranslations: Record<string, unknown> = {},
+    additionalTranslations: TranslationProvider = {},
     guards: {
         beforeEach?: RouterGuard,
         beforeResolve?: RouterGuard,
@@ -88,21 +89,20 @@ export default async (
     // l18n
     const locale = Utils.getLang()
 
-    // FIXME: any - setupI18n options type doesn't expose all options
     const i18n = setupI18n({
         locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    } as any) // FIXME: any
+    } as Parameters<typeof setupI18n>[0] & I18nOptions)
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations as any) // FIXME: additional translations provider lacks its module type
+        await loadLocaleMessages(i18n, locale, additionalTranslations)
         await setI18nLanguage(i18n, locale)
     }
     setDesignSystemLocale(locale)

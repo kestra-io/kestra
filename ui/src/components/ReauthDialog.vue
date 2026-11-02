@@ -115,7 +115,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .reauth-error {
         margin-bottom: var(--ks-spacing-3);
     }

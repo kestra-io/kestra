@@ -23,7 +23,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .setting-row {
         display: flex;
         align-items: center;
@@ -34,49 +34,49 @@
         &:not(:last-child) {
             border-bottom: 1px solid var(--ks-border-default);
         }
+    }
 
-        &__info {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--ks-spacing-1);
-            min-width: 0;
-        }
+    .setting-row__info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-1);
+        min-width: 0;
+    }
 
-        &__label {
-            align-self: flex-start;
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
+    .setting-row__label {
+        align-self: flex-start;
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
 
-        &__required {
-            margin-right: var(--ks-spacing-1);
-            color: var(--ks-text-error);
-        }
+    .setting-row__required {
+        margin-right: var(--ks-spacing-1);
+        color: var(--ks-text-error);
+    }
 
-        &__description {
-            align-self: flex-start;
-            color: var(--ks-text-secondary);
-        }
+    .setting-row__description {
+        align-self: flex-start;
+        color: var(--ks-text-secondary);
+    }
 
-        &__control {
-            flex-shrink: 0;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-        }
+    .setting-row__control {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
 
-        &--stacked {
-            flex-direction: column;
-            align-items: stretch;
+    .setting-row--stacked {
+        flex-direction: column;
+        align-items: stretch;
 
-            .setting-row__control {
-                width: 100%;
-                justify-content: flex-start;
-            }
+        .setting-row__control {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 </style>

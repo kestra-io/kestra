@@ -20,3 +20,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/container';
 </style>
+
+<style>
+</style>

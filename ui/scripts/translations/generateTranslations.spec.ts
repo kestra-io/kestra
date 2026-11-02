@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
@@ -13,7 +13,13 @@ const rejectingClient = () =>
     ({models: {generateContent: async () => { throw new Error("403 permission denied") }}}) as unknown as TranslationClient
 
 describe("generateTranslations", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "log").mockImplementation(() => {})
+        vi.spyOn(console, "error").mockImplementation(() => {})
+    })
+
     afterEach(() => {
+        vi.restoreAllMocks()
         process.exitCode = undefined
     })
 

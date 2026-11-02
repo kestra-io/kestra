@@ -197,7 +197,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .row-padding {
     padding: var(--ks-spacing-6);
@@ -238,10 +238,10 @@
 
     .rounded-full {
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-bg-surface)
+        background-color: var(--ks-bg-surface);
     }
 
-    :deep(.kel-tree-node__content) {
+    & :deep(.kel-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;

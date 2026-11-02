@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('change state') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -14,7 +14,7 @@
 
             <template #default>
                 <p>
-                    <i18n-t keypath="change state confirm" tag="span">
+                    <i18n-t keypath="change state confirm" tag="span" scope="global">
                         <template #task><code>{{ taskRun?.taskId ?? '' }}</code></template>
                         <template #id><code>{{ execution.id }}</code></template>
                     </i18n-t>
@@ -38,7 +38,7 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <i18n-t keypath="mark as" tag="span">
+                            <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
                         </template>
@@ -84,11 +84,13 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun?: TaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         taskRun: undefined,
         attemptIndex: undefined,
     })
@@ -164,7 +166,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .alert-status-change {
         ul {
             margin-bottom: 0;

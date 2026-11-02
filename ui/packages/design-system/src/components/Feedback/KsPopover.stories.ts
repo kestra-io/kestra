@@ -25,15 +25,15 @@ type Story = StoryObj<typeof KsPopover>
 
 /** Basic usage – click trigger */
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsButton, KsPopover},
         setup() {
-            const visible = ref(false)
-            return {visible}
+            const visible = ref(args.visible ?? true)
+            return {args, visible}
         },
         template: `
             <div style="padding:48px">
-                <ks-popover title="This is title" placement="bottom" :width="200" trigger="click" v-model:visible="visible">
+                <ks-popover v-bind="args" v-model:visible="visible">
                     <p>This is popover content.</p>
                     <ks-button size="small" @click="visible = false">Close</ks-button>
                     <template #reference>
@@ -43,10 +43,23 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {
+        visible: true,
+        title: "This is title",
+        content: "",
+        placement: "bottom",
+        trigger: "click",
+        width: 200,
+        effect: "light",
+        popperClass: "",
+        showArrow: true,
+        disabled: false,
+    },
 }
 
 /** Trigger methods – hover, click, focus */
 export const Triggers: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsPopover},
         setup() {
@@ -120,6 +133,7 @@ export const Triggers: Story = {
 
 /** Theme – dark and light */
 export const Theme: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsPopover},
         template: `
@@ -140,6 +154,7 @@ export const Theme: Story = {
 
 /** Placements – all directions */
 export const Placements: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsPopover},
         template: `
@@ -159,6 +174,7 @@ export const Placements: Story = {
 
 /** Rich content – nested elements */
 export const RichContent: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsPopover},
         setup() {

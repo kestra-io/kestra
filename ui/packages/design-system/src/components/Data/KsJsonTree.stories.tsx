@@ -32,7 +32,7 @@ type Story = StoryObj<typeof meta>
 
 export const Object_Story: Story = {
     name: "Object",
-    args: {value: NESTED_OBJECT, defaultExpanded: true},
+    args: {value: NESTED_OBJECT, defaultExpanded: true, basePath: "", selectedPath: ""},
     render: (args) => ({
         setup() {
             return () => (

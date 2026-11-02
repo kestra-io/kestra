@@ -1,13 +1,16 @@
-import {describe, test, expect, vi, afterAll, beforeAll} from "vitest"
-import {mount} from "@vue/test-utils"
-import {ref} from "vue"
+import {describe, test, expect, vi, afterAll, afterEach, beforeAll} from "vitest"
+import {enableAutoUnmount, mount} from "@vue/test-utils"
+import {nextTick, ref} from "vue"
 import KsEchart from "./KsEchart.vue"
-import {ChartFeature} from "../../utils/chart"
+import {ChartFeature, TooltipType} from "../../utils/chart"
+
+const mockPixelRatio = ref(1)
 
 // jsdom has no layout — force non-zero dimensions so KsEchart's canRender
 // latch flips and <VChart> mounts.
 vi.mock("@vueuse/core", () => ({
     useElementSize: () => ({width: ref(800), height: ref(400)}),
+    useDevicePixelRatio: () => ({pixelRatio: mockPixelRatio}),
 }))
 
 // ─── Mock vue-echarts ─────────────────────────────────────────────────────────
@@ -16,7 +19,27 @@ vi.mock("@vueuse/core", () => ({
 
 const mockGetDataURL = vi.fn().mockReturnValue("data:image/png;base64,abc123")
 
-const mockZr = {on: vi.fn(), off: vi.fn()}
+const mockLayer = {
+    dpr: 1,
+    ctx: {dpr: 1},
+    dom: {width: 800},
+    resize(width: number) {
+        this.dom.width = width * this.dpr
+    },
+}
+
+const mockZr = {
+    on: vi.fn(),
+    off: vi.fn(),
+    painter: {
+        type: "canvas",
+        dpr: 1,
+        getWidth: () => 800,
+        getHeight: () => 400,
+        eachLayer: (callback: (layer: typeof mockLayer) => void) => callback(mockLayer),
+        refresh: vi.fn(),
+    },
+}
 
 const mockEchartsInstance = {
     resize: vi.fn(),
@@ -89,6 +112,15 @@ function mountChart(props: Record<string, unknown> = {}) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe("KsEchart", () => {
+    enableAutoUnmount(afterEach)
+
+    afterEach(() => {
+        mockPixelRatio.value = 1
+        Object.assign(mockLayer, {dpr: 1, ctx: {dpr: 1}, dom: {width: 800}})
+        mockZr.painter.dpr = 1
+        mockZr.painter.refresh.mockClear()
+    })
+
     beforeAll(() => {
         // Provide a minimal MutationObserver so the dark-mode watcher doesn't throw.
         vi.stubGlobal(
@@ -144,7 +176,7 @@ describe("KsEchart", () => {
                 {name: "Duration", type: "line", data: [1.5, 2, 3], tooltip: {valueFormatter: (value: unknown) => `${value}s`}},
             ],
         }
-        const wrapper = mount(KsEchart, {props: {options, tooltipType: "external"}})
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: TooltipType.EXTERNAL}})
 
         const vChart = wrapper.findComponent({name: "VChart"})
         const opt = vChart.props("option") as {tooltip: {formatter: (params: unknown) => string}}
@@ -379,9 +411,9 @@ describe("KsEchart", () => {
         return vChart.props("initOptions") as {renderer: string; devicePixelRatio?: number}
     }
 
-    test("leaves devicePixelRatio to ECharts when maxPixelRatio is not set", () => {
+    test("passes the current device pixel ratio when maxPixelRatio is not set", () => {
         vi.stubGlobal("devicePixelRatio", 3)
-        expect(initOptionsOf({})).not.toHaveProperty("devicePixelRatio")
+        expect(initOptionsOf({}).devicePixelRatio).toBe(3)
     })
 
     test("caps devicePixelRatio at maxPixelRatio on a high-DPI screen", () => {
@@ -397,5 +429,16 @@ describe("KsEchart", () => {
     test("falls back to a ratio of 1 when the browser reports none", () => {
         vi.stubGlobal("devicePixelRatio", undefined)
         expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
+    })
+
+    // ── browser zoom ───────────────────────────────────────────────────────────
+
+    test("repaints the canvas at the new pixel ratio when the browser zoom changes it", async () => {
+        mountChart()
+        mockPixelRatio.value = 2
+        await nextTick()
+        expect(mockLayer.dom.width).toBe(1600)
+        expect(mockLayer.ctx.dpr).toBe(2)
+        expect(mockZr.painter.refresh).toHaveBeenCalledWith(true)
     })
 })

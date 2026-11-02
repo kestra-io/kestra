@@ -146,20 +146,41 @@ public class QueryFilterUtils {
      * </ul>
      */
     public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter) {
+        return replaceTimeRangeWithComputedDateFilter(filters, dateFilter, false);
+    }
+
+    /**
+     * Same as {@link #replaceTimeRangeWithComputedDateFilter(List, DateFilter)}, but with {@code allowAllTime} a
+     * {@code timeRange} of {@value TimeLineSearch#ALL_TIME} is dropped instead of bounded by the 8-day default.
+     */
+    public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter, boolean allowAllTime) {
         if (dateFilter == null) {
             dateFilter = DateFilter.START_DATE;
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters, allowAllTime);
         DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
+        List<QueryFilter> boundedFilters = allowAllTime ? removeAllTimeFilters(filters) : filters;
 
         List<QueryFilter> updatedFilters = switch (dateFilter) {
-            case END_DATE -> updateFiltersForEndDate(filters, resolvedDate);
-            default -> updateFilters(filters, resolvedDate);
+            case END_DATE -> updateFiltersForEndDate(boundedFilters, resolvedDate);
+            default -> updateFilters(boundedFilters, resolvedDate);
         };
 
         validateTimeline(updatedFilters);
         return updatedFilters;
+    }
+
+    private static List<QueryFilter> removeAllTimeFilters(List<QueryFilter> filters) {
+        return filters.stream()
+            .filter(filter -> filter.isNode() || !TimeLineSearch.isAllTime(filter))
+            .map(
+                filter -> filter.isNode()
+                    ? QueryFilter.builder().logical(filter.logical()).children(removeAllTimeFilters(filter.children())).build()
+                    : filter
+            )
+            .filter(filter -> !filter.isNode() || !filter.children().isEmpty())
+            .toList();
     }
 
     public static final List<QueryFilter.Field> TRIGGER_DATE_FIELDS = List.of(

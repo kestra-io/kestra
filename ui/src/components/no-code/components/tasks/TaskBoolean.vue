@@ -10,7 +10,7 @@
     import {computed} from "vue"
 
     const props = withDefaults(defineProps<{
-        modelValue?: boolean
+        modelValue?: unknown
         root?: string
         schema?: {default?: boolean}
     }>(), {
@@ -23,7 +23,10 @@
 
     const fieldName = computed(() => props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
-    const currentValue = computed(() => props.modelValue ?? props.schema?.default)
+    const currentValue = computed(() => {
+        if (props.modelValue === undefined) return props.schema?.default
+        return typeof props.modelValue === "boolean" ? props.modelValue : undefined
+    })
 
     const onInput = (value: string | number | boolean | undefined) => emit("update:modelValue", Boolean(value))
 </script>

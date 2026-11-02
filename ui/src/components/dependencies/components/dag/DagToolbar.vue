@@ -159,7 +159,7 @@
     }))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .toolbar {
         display: flex;
         align-items: center;

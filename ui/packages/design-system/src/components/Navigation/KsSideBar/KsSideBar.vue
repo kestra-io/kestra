@@ -28,7 +28,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .ks-sidebar {
     display: flex;
     flex-direction: column;

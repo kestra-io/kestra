@@ -77,7 +77,7 @@
     const openedDocs = ref<string>("")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kel-collapse {
         --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
@@ -87,19 +87,19 @@
         border-bottom: none;
         background-color: transparent;
 
-        > * {
+        & > * {
             font-size: var(--kel-collapse-header-font-size);
         }
 
-        :deep(> .kel-collapse-item) {
-            > .kel-collapse-item__header {
+        & :deep(> .kel-collapse-item) {
+            & > .kel-collapse-item__header {
                 padding: 0;
                 border-bottom: none;
                 min-height: 32px;
                 line-height: 1.2;
             }
 
-            > button {
+            & > button {
                 padding: 0;
             }
 
@@ -116,11 +116,11 @@
             }
         }
 
-        :deep(.kel-collapse-item__content) {
+        & :deep(.kel-collapse-item__content) {
             padding: 0;
         }
 
-        :deep(.kel-collapse-item__arrow) {
+        & :deep(.kel-collapse-item__arrow) {
             margin: 0 8px;
         }
     }

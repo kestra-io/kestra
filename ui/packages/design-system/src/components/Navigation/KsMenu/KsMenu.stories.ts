@@ -23,7 +23,7 @@ export const Vertical: Story = {
         setup() { return {args} },
         template: `
             <div style="padding:24px;width:200px">
-                <ks-menu default-active="flows" v-bind="args">
+                <ks-menu v-bind="args">
                     <ks-menu-item index="flows">Flows</ks-menu-item>
                     <ks-menu-item index="executions">Executions</ks-menu-item>
                     <ks-menu-item index="namespaces">Namespaces</ks-menu-item>
@@ -32,10 +32,12 @@ export const Vertical: Story = {
             </div>
         `,
     }),
+    args: {mode: "vertical", defaultActive: "flows", collapse: false},
 }
 
 /** Collapse – vertically collapsible sidebar */
 export const Collapse: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsMenu, KsMenuItem},
         setup() {
@@ -59,6 +61,7 @@ export const Collapse: Story = {
 }
 
 export const Horizontal: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsMenu, KsMenuItem},
         template: `

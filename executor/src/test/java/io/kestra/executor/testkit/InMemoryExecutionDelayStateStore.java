@@ -32,6 +32,13 @@ public class InMemoryExecutionDelayStateStore implements ExecutionDelayStateStor
         delays.add(executionDelay);
     }
 
+    @Override
+    public boolean saveUnlessProcessing(ExecutionDelay executionDelay) {
+        delays.removeIf(delay -> delay.uid().equals(executionDelay.uid()));
+        delays.add(executionDelay);
+        return true;
+    }
+
     /**
      * Every pending (not yet expired-and-consumed) delay.
      */

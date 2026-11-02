@@ -51,21 +51,21 @@
     }
 </script>
 
-<style lang="scss">
+<style>
     .ks-bulk-select {
         height: 100%;
         display: flex;
         align-items: center;
 
-        .kel-checkbox {
+        & .kel-checkbox {
             height: 100%;
         }
 
-        .kel-button-group {
+        & .kel-button-group {
             display: flex;
         }
 
-        > * {
+        & > * {
             padding: 0 8px;
         }
     }

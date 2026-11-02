@@ -75,6 +75,12 @@ public abstract class Input<T> implements Data {
     String description;
 
     @Schema(
+        title = "How the description of the input is displayed.",
+        description = "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+    )
+    DescriptionDisplayMode descriptionDisplayMode;
+
+    @Schema(
         title = "The dependencies of the input."
     )
     DependsOn dependsOn;
@@ -103,6 +109,11 @@ public abstract class Input<T> implements Data {
 
     public abstract void validate(T input) throws ConstraintViolationException;
 
+    /** Returns a copy with a different description, preserving the concrete input type. */
+    public Input<?> withDescription(String description) {
+        return copyWith(this, "description", description);
+    }
+
     /**
      * Expands every {@link io.kestra.core.models.flows.input.FormInput} into copies of its children whose id is
      * rewritten to the dotted path ({@code environment} + {@code .} + {@code region} -> {@code environment.region}).
@@ -125,7 +136,7 @@ public abstract class Input<T> implements Data {
             if (input instanceof io.kestra.core.models.flows.input.FormInput form) {
                 if (form.getInputs() != null) {
                     for (Input<?> child : form.getInputs()) {
-                        leaves.add(copyWithId(child, form.getId() + "." + child.getId()));
+                        leaves.add(copyWith(child, "id", form.getId() + "." + child.getId()));
                     }
                 }
             } else {
@@ -135,17 +146,10 @@ public abstract class Input<T> implements Data {
         return leaves;
     }
 
-    /**
-     * Copies {@code input} with its {@code id} replaced by {@code newId}, preserving the concrete subtype.
-     * <p>
-     * Done via a Jackson round-trip rather than a builder: {@code @SuperBuilder(toBuilder=...)} does not generate
-     * {@code toBuilder()} on this abstract class, and the resolution core casts leaves to their concrete subtype
-     * ({@code (ArrayInput) input}, {@code case StringInput i -> ...}). The round-trip re-resolves the subtype through
-     * {@link JsonTypeInfo} on the {@code type} property, so {@code copyWithId(stringInput, ...) instanceof StringInput}.
-     */
-    private static Input<?> copyWithId(Input<?> input, String newId) {
+    /** Copies a field through Jackson so the concrete input subtype is preserved without a base-class builder. */
+    private static Input<?> copyWith(Input<?> input, String field, Object value) {
         Map<String, Object> map = JacksonMapper.toMap(input);
-        map.put("id", newId);
+        map.put(field, value);
         return JacksonMapper.toMap(map, Input.class);
     }
 

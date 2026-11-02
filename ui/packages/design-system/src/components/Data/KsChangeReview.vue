@@ -5,21 +5,29 @@
             <KsText v-if="meta.length" size="small" class="ks-change-review__muted">{{ meta.join(" · ") }}</KsText>
         </div>
 
-        <div v-if="shownSegments.length" class="ks-change-review__bar" aria-hidden="true">
-            <span v-for="segment in shownSegments" :key="segment.label" :style="{flex: segment.value, background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />
+        <div v-if="shownSegments.length" class="ks-change-review__bar" aria-hidden="true" data-test="change-review-bar">
+            <span v-for="segment in shownSegments" :key="segment.name ?? segment.label" :style="{flex: segment.value, background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />
         </div>
 
-        <div v-if="filters.length" class="ks-change-review__filters" role="group" :aria-label="filterLabel">
-            <KsCheckTag :checked="filter === KS_CHANGE_REVIEW_ALL" @change="filter = KS_CHANGE_REVIEW_ALL">
-                {{ allLabel }} <span class="ks-change-review__filter-count">{{ allCount }}</span>
-            </KsCheckTag>
-            <KsCheckTag v-for="segment in filters" :key="segment.name" :checked="filter === segment.name" @change="filter = segment.name">
-                <template v-if="segment.glyph" #icon>
-                    <span class="ks-change-review__glyph" :style="{color: KS_CHANGE_REVIEW_TONES[segment.tone].color}">{{ segment.glyph }}</span>
-                </template>
-                {{ segment.label }} <span class="ks-change-review__filter-count">{{ segment.value }}</span>
-            </KsCheckTag>
-            <KsText v-for="segment in passive" :key="segment.label" size="small" class="ks-change-review__muted ks-change-review__passive">
+        <div v-if="filters.length || passive.length" class="ks-change-review__summary">
+            <div v-if="filters.length" class="ks-change-review__filters" role="group" :aria-label="filterLabel">
+                <KsCheckTag :checked="filter === KS_CHANGE_REVIEW_ALL" data-test="change-review-filter" @change="filter = KS_CHANGE_REVIEW_ALL">
+                    {{ allLabel }} <span class="ks-change-review__filter-count">{{ allCount }}</span>
+                </KsCheckTag>
+                <KsCheckTag
+                    v-for="segment in filters"
+                    :key="segment.name"
+                    :checked="filter === segment.name"
+                    data-test="change-review-filter"
+                    @change="filter = segment.name"
+                >
+                    <template v-if="segment.glyph" #icon>
+                        <span class="ks-change-review__glyph" :style="{color: KS_CHANGE_REVIEW_TONES[segment.tone].color}">{{ segment.glyph }}</span>
+                    </template>
+                    {{ segment.label }} <span class="ks-change-review__filter-count">{{ segment.value }}</span>
+                </KsCheckTag>
+            </div>
+            <KsText v-for="segment in passive" :key="segment.label" size="small" class="ks-change-review__muted ks-change-review__passive" data-test="change-review-passive">
                 <i :style="{background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />{{ segment.label }}
             </KsText>
         </div>
@@ -128,6 +136,7 @@
         overflow: hidden;
     }
 
+    .ks-change-review__summary,
     .ks-change-review__filters {
         display: flex;
         flex-wrap: wrap;

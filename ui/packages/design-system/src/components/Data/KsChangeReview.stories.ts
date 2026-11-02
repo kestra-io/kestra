@@ -129,3 +129,79 @@ export const AnsibleCheckRun: Story = {
         await expect(canvas.getByText("Template nginx.conf")).toBeInTheDocument()
     },
 }
+
+export const NoChanges: Story = {
+    render: () => ({
+        components: {KsChangeReview},
+        setup() {
+            return {
+                review: {
+                    heading: "No changes",
+                    meta: ["26 resources in the plan", "Terraform 1.5.7"],
+                    segments: [
+                        {name: "CREATE", glyph: "+", value: 0, label: "Create", tone: "success"},
+                        {name: "DELETE", glyph: "−", value: 0, label: "Destroy", tone: "danger"},
+                        {value: 26, label: "26 resources unchanged", tone: "neutral"},
+                    ],
+                    allLabel: "All changes",
+                    allCount: 0,
+                    filterLabel: "Filter the changes by action",
+                    tabs: [{name: "resources", label: "Resources", count: 0}],
+                },
+                tab: ref("resources"),
+            }
+        },
+        template: `
+            <div style="padding:24px;max-width:960px">
+                <ks-change-review v-model:tab="tab" v-bind="review">
+                    <template #resources><p>The infrastructure already matches the configuration.</p></template>
+                </ks-change-review>
+            </div>`,
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        await expect(canvas.getByText("26 resources unchanged")).toBeInTheDocument()
+        await expect(canvas.queryByText("All changes")).not.toBeInTheDocument()
+    },
+}
+
+export const LongTextInANarrowPanel: Story = {
+    render: () => ({
+        components: {KsChangeReview},
+        setup() {
+            return {
+                review: {
+                    heading: "1 284 changes to the production network of the orders platform",
+                    meta: ["3 912 resources in the plan", "Terraform 1.5.7", "infrastructure/environments/production/eu-central-1/orders-api"],
+                    segments: [
+                        {name: "CREATE", glyph: "+", value: 640, label: "Create", tone: "success"},
+                        {name: "REPLACE", glyph: "±", value: 12, label: "Replace", tone: "info"},
+                        {name: "UPDATE", glyph: "~", value: 600, label: "Update", tone: "warning"},
+                        {name: "DELETE", glyph: "−", value: 32, label: "Destroy", tone: "danger"},
+                        {value: 2628, label: "2 628 resources unchanged", tone: "neutral"},
+                    ],
+                    allLabel: "All changes",
+                    allCount: 1284,
+                    filterLabel: "Filter the changes by action",
+                    tabs: [
+                        {name: "resources", label: "Resources", count: 1284},
+                        {name: "outputs", label: "Outputs", count: 48},
+                        {name: "dataSources", label: "Data sources", count: 17},
+                        {name: "variables", label: "Variables", count: 132},
+                    ],
+                },
+                tab: ref("resources"),
+            }
+        },
+        template: `
+            <div style="padding:16px;max-width:360px">
+                <ks-change-review v-model:tab="tab" v-bind="review">
+                    <template #resources><p>module.network.aws_subnet.private["eu-central-1a"]</p></template>
+                </ks-change-review>
+            </div>`,
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        await expect(canvas.getByText("2 628 resources unchanged")).toBeInTheDocument()
+    },
+}

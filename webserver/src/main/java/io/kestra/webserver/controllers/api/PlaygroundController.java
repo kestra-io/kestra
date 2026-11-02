@@ -94,6 +94,7 @@ public class PlaygroundController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/runs/{executionId}/context/{taskRunId}")
     @Operation(tags = { "Playground" }, summary = "The variables a task of a Playground run sees when it renders an expression, secrets masked")
+    @ApiResponse(responseCode = "404", description = "If the run or the task run is not found")
     public ContextResponse getTaskRunContext(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,

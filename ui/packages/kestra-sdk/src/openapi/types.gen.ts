@@ -10052,6 +10052,10 @@ export type GetTaskRunContextErrors = {
      */
     403: ProblemDetail;
     /**
+     * If the run or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
      * Internal server error
      */
     500: ProblemDetail;

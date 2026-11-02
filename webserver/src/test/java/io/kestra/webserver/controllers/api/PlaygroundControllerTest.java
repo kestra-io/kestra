@@ -158,6 +158,8 @@ class PlaygroundControllerTest {
 
         assertThat(context.variables()).containsKeys("outputs", "taskrun", "flow").doesNotContainKeys("envs", "globals", "kestra");
         assertThat(context.variables().get("outputs")).asInstanceOf(InstanceOfAssertFactories.MAP).containsEntry("a", Map.of("value", "a"));
+        assertThatThrownBy(() -> client.toBlocking().retrieve(HttpRequest.GET(playground(tenantId, "playground-session") + "/runs/" + run.getId() + "/context/unknown")))
+            .isInstanceOfSatisfying(HttpClientResponseException.class, e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode()));
     }
 
     @Test

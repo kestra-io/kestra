@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
@@ -25,6 +24,7 @@ import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -216,11 +216,18 @@ public class PlaygroundService {
     }
 
     /** What the task of {@code taskRunId} sees when it renders an expression in {@code run}, secrets and KV values masked. */
-    public Map<String, Object> context(Execution run, String taskRunId) throws InternalException {
-        TaskRun taskRun = run.findTaskRunByTaskRunId(taskRunId);
+    public Map<String, Object> context(Execution run, String taskRunId) {
+        TaskRun taskRun = run.findTaskRunByTaskRunIdIfPresent(taskRunId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find the task run '%s' in the Playground run '%s'.".formatted(taskRunId, run.getId())));
         Flow flow = flowRepository.findByExecution(run);
+        Task task = Optional.ofNullable(flow.findTaskByTaskIdOrNull(taskRun.getTaskId()))
+            .orElseThrow(
+                () -> new NoSuchElementException(
+                    "Unable to find the task '%s' in revision %d of flow '%s.%s'.".formatted(taskRun.getTaskId(), run.getFlowRevision(), run.getNamespace(), run.getFlowId())
+                )
+            );
         Map<String, Object> variables = runContextFactory
-            .of(flow, flow.findTaskByTaskId(taskRun.getTaskId()), run, taskRun, false, secureVariableRendererFactory.createOrGet())
+            .of(flow, task, run, taskRun, false, secureVariableRendererFactory.createOrGet())
             .getVariables();
 
         Map<String, Object> context = new LinkedHashMap<>();

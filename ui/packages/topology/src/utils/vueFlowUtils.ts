@@ -597,6 +597,8 @@ export function haveAdd(
     ) {
         return undefined
     }
+    // A Dag orders its tasks through `dependsOn`, so an insertion there has to know both ends of
+    // the edge it landed on, not just the neighbour it is placed next to.
     const isDagLane = nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith(".Dag") === true
     const dagTaskIdAt = (uid: string): string | undefined => {
         const node = nodeByUid[uid]

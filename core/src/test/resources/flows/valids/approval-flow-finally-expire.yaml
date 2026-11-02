@@ -1,0 +1,15 @@
+id: approval-flow-finally-expire
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    timeout: PT1S
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "after"
+
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.log.Log
+    message: "cleanup"

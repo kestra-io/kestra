@@ -248,21 +248,21 @@ public final class ExecutableUtils {
                     kindSource = kindSource.getLoopRun().parent();
                 }
                 ExecutionKind subflowKind = kindSource.getKind();
+                ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
+                    .id(currentTask.getId())
+                    .type(currentTask.getType())
+                    .variables(variables.build())
+                    .build();
+                // the trigger must be on the execution when inputs are rendered, so subflow() is rejected instead of blocking the executor
                 Execution execution = Execution
                     .newExecution(
                         flow,
-                        (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
+                        (f, e) -> runContext.inputAndOutput().readInputs(f, e.withTrigger(executionTrigger), inputs),
                         newLabels,
                         runContext.render(scheduleDate).as(ZonedDateTime.class),
                         subflowKind
                     )
-                    .withTrigger(
-                        ExecutionTrigger.builder()
-                            .id(currentTask.getId())
-                            .type(currentTask.getType())
-                            .variables(variables.build())
-                            .build()
-                    );
+                    .withTrigger(executionTrigger);
                 execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(executionDepth));
                 final Execution executionWithDepth = execution;
 

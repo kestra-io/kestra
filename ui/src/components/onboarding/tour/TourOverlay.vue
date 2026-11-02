@@ -163,13 +163,16 @@
                         >
                             {{ $t(error.recovery.labelKey) }}
                         </KsButton>
-                        <a
+                        <KsLink
                             v-if="error.help"
                             :href="error.help.href"
                             target="_blank"
                             rel="noopener"
+                            type="primary"
                             data-test="tour-error-help"
-                        >{{ $t(error.help.labelKey) }}</a>
+                        >
+                            {{ $t(error.help.labelKey) }}
+                        </KsLink>
                     </div>
                 </KsAlert>
 
@@ -834,16 +837,24 @@
             isBusy.value = true
             error.value = null
             const {signal} = controller
+            const verifiedId = route.params.id
+            let isVerified = true
             try {
                 await current.verify({...sceneContext(), route})
             } catch (e) {
+                isVerified = false
                 if (!signal.aborted) {
                     showError(e)
                 }
-                return
             } finally {
                 isBusy.value = false
                 notice.value = null
+            }
+            if (!isVerified) {
+                if (!signal.aborted && route.params.id !== verifiedId) {
+                    await followUserStep()
+                }
+                return
             }
         }
         track("tour_continued", {done_by: "user"})
@@ -1073,10 +1084,6 @@
         align-items: center;
         gap: var(--ks-spacing-3);
         margin-top: var(--ks-spacing-2);
-
-        & a {
-            color: var(--ks-text-link);
-        }
     }
 
     .guide-callout {

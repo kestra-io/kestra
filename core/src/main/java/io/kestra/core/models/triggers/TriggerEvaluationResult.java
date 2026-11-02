@@ -89,13 +89,6 @@ public record TriggerEvaluationResult(
     }
 
     /**
-     * Returns a copy carrying the given W3C {@code traceparent}, so the created execution joins the upstream trace.
-     */
-    public TriggerEvaluationResult withTraceParent(@Nullable String traceParent) {
-        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
-    }
-
-    /**
      * Reconstructs a full {@link Execution} from this lightweight result.
      *
      * @param triggerId the trigger identifier providing namespace, flowId, and tenantId.

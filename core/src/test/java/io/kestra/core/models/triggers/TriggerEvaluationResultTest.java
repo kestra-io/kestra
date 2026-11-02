@@ -29,25 +29,4 @@ class TriggerEvaluationResultTest {
         Execution reconstructed = result.toExecution(triggerId);
         assertThat(reconstructed.getTraceParent()).isEqualTo(traceParent);
     }
-
-    @Test
-    void shouldRetainTraceParentWhenWithStateApplied() {
-        String traceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
-        TriggerEvaluationResult result = new TriggerEvaluationResult(
-            "exec-1",
-            State.Type.CREATED,
-            null,
-            null,
-            1,
-            null,
-            null
-        ).withTraceParent(traceParent);
-
-        TriggerEvaluationResult updated = result.withState(State.Type.RUNNING);
-        assertThat(updated.traceParent()).isEqualTo(traceParent);
-
-        TriggerId triggerId = TriggerId.of("tenant-1", "ns-1", "flow-1", "trig-1");
-        Execution execution = updated.toExecution(triggerId);
-        assertThat(execution.getTraceParent()).isEqualTo(traceParent);
-    }
 }

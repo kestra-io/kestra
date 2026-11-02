@@ -139,12 +139,13 @@ export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
         }
         const background = (message: string) => getComputedStyle(row(message)).backgroundColor
         const selectedInfo = background("selected info")
+        const plainInfo = background("plain info")
 
         expect(background("selected error")).toBe(selectedInfo)
         expect(background("selected warn")).toBe(selectedInfo)
-        expect(background("plain error")).not.toBe(selectedInfo)
-        expect(background("plain warn")).not.toBe(selectedInfo)
-        expect(background("plain info")).not.toBe(selectedInfo)
+        expect(background("plain error")).not.toBe(plainInfo)
+        expect(background("plain warn")).not.toBe(plainInfo)
+        expect(plainInfo).not.toBe(selectedInfo)
 
         for (const message of ["selected error", "selected warn", "selected info"]) {
             const line = row(message)

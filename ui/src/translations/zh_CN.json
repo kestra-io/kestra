@@ -1718,7 +1718,12 @@
           "running": "运行中",
           "finish_now": "完成导览",
           "dismiss": "隐藏",
-          "skipped_hint": "产品导览将保留在左侧菜单中，如果您想稍后继续。"
+          "skipped_hint": "产品导览将保留在左侧菜单中，如果您想稍后继续。",
+          "run_without_docker": "在没有 Docker 的情况下运行",
+          "enable_docker": "如何启用 Docker"
+        },
+        "notices": {
+          "still_running": "Execution仍在运行。有些运行需要几分钟，例如在Python依赖项安装时。完成后，导览将继续。"
         },
         "intro": {
           "kicker": "欢迎使用 Kestra",
@@ -1857,7 +1862,8 @@
           "no_execution_to_replay": "尚无可重放的执行。请在上一步运行该 flow，然后重试。",
           "replay": "Replay 以 {state} 状态完成。打开此页面上的 log 以查看 {task} 报告了什么，然后重试。",
           "save_flow": "导览 flow 无法保存。{reason}",
-          "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。"
+          "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。",
+          "docker_unavailable": "Kestra 无法连接到 Docker，因此 Python task 无法启动。请在没有 Docker 的情况下运行，或授予 Kestra 访问 Docker 的权限，然后重试。"
         },
         "steps": {
           "1": "编写和运行一个 flow",

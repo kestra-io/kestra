@@ -5,9 +5,9 @@ import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
-import {useExecutionsStore, type Execution} from "../../../../stores/executions"
+import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import {useMiscStore} from "override/stores/misc"
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
@@ -15,6 +15,14 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
 }))
 
 const triggerScope = reactive({visible: false, enabled: false})
+const logsAllowed = vi.hoisted(() => ({value: true}))
+
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({user: {
+        isAllowed: (resource: string, act: string, namespace: string) =>
+            (resource === "EXECUTION" && act === "ACCESS_LOGS" && namespace === "io.kestra.tests") === logsAllowed.value,
+    }}),
+}))
 
 const globalConfig = {
     stubs: {
@@ -71,6 +79,15 @@ describe("Banner", () => {
         setActivePinia(createPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
+        logsAllowed.value = true
+    })
+
+    test("offers to copy the logs only to a user who can access them", () => {
+        expect(mountBanner().text()).toContain("copy logs")
+
+        logsAllowed.value = false
+
+        expect(mountBanner().text()).not.toContain("copy logs")
     })
 
     test("renders no chevron when the state change trigger is disabled", () => {
@@ -191,5 +208,25 @@ describe("Banner", () => {
 
         expect(wrapper.find("[data-test=searchable-outputs]").text()).toContain("orderIds: fresh")
         expect(wrapper.find("[data-test=searchable-outputs]").text()).not.toContain("stale")
+    })
+
+    test("explains a pausing execution that will ask for an approval", () => {
+        const banner = mountBanner(buildExecution("PAUSING")).find("[data-test='approval-banner']")
+
+        expect(banner.text()).toContain("approval.banner.pausing")
+    })
+
+    test("asks for a review only when the paused task run is an approval", () => {
+        useExecutionsStore().flow = {tasks: [
+            {id: "approval", type: "io.kestra.plugin.core.flow.Approval"},
+            {id: "pause", type: "io.kestra.plugin.core.flow.Pause"},
+        ]} as never
+        const pausedOn = (taskId: string) => ({
+            ...buildExecution("PAUSED"),
+            taskRunList: [{id: "tr", taskId, state: {current: "PAUSED"}}],
+        }) as unknown as Execution
+
+        expect(mountBanner(pausedOn("approval")).find("[data-test='approval-banner']").text()).toContain("approval.banner.paused")
+        expect(mountBanner(pausedOn("pause")).find("[data-test='approval-banner']").exists()).toBe(false)
     })
 })

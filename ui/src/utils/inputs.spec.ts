@@ -66,7 +66,7 @@ describe("normalize for TIME hydrates the wall-clock time", () => {
             ["09:05:03", 9, 5, 3],
             ["14:30", 14, 30, 0],
         ] as const) {
-            const hydrated = dayjs(normalize("TIME", value))
+            const hydrated = dayjs(normalize("TIME", value) as string)
             expect([hydrated.hour(), hydrated.minute(), hydrated.second()]).toEqual([hour, minute, second])
         }
     })

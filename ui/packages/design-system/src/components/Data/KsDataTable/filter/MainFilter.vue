@@ -6,7 +6,7 @@
             placement="bottom-start"
             trigger="click"
             :width="300"
-            :popperClass="'p-0'"
+            popperClass="customize-filters-popper"
             :showArrow="false"
             :disabled="filter.readOnly?.value || isComplex"
             @hide="isCustomizeFiltersVisible = false"
@@ -466,5 +466,11 @@
         pointer-events: none;
         opacity: 0.6;
     }
+}
+</style>
+
+<style>
+.customize-filters-popper.customize-filters-popper {
+    padding: 0;
 }
 </style>

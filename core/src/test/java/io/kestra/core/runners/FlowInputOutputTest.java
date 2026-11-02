@@ -37,6 +37,7 @@ import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -474,6 +475,74 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst().value());
+    }
+
+    @Test
+    void shouldSkipExpressionRenderingWhenReadingInputsWithCustomValueAllowed() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(result).containsEntry("select", "custom");
+    }
+
+    @Test
+    void shouldFailRenderingExpressionWhenReadingInputsWithoutValue() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .required(false)
+                        .build()
+                )
+            )
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("Cannot render 'expression'");
+    }
+
+    @Test
+    void shouldStillRenderExpressionWhenValidatingInputsWithCustomValueAllowed() {
+        // Given
+        SelectInput input = SelectInput.builder()
+            .id("select")
+            .type(Type.SELECT)
+            .expression("{{ ['a', 'b'] }}")
+            .allowCustomValue(true)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(((SelectInput) results.getFirst().input()).getValues()).extracting(ValueOption::value).containsExactly("a", "b");
     }
 
     @Test

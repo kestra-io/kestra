@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -33,10 +34,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
-import io.kestra.core.repositories.CheckpointRepositoryInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -44,6 +41,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -286,6 +284,8 @@ public final class ExecutorTestHarness {
                 Mockito.mock(ConcurrencyLimitService.class),
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
+                runContextFactory,
+                Mockito.mock(ApprovalRequestHandler.class),
                 executionOutputService,
                 Mockito.mock(SearchableOutputRepositoryInterface.class),
                 Mockito.mock(CheckpointRepositoryInterface.class),
@@ -331,7 +331,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             workerQueueService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             Optional.empty(),
             killQueue,
             loopExecutionEventQueue,
@@ -360,6 +360,7 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             killSwitchService,
             killSwitchActionService,
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             metricRegistry,
             tracerFactory,
             clock
@@ -369,6 +370,7 @@ public final class ExecutorTestHarness {
             executionStateStore,
             executionDelayStateStore,
             flowMetaStore,
+            flowService,
             taskOutputService,
             executionOutputService,
             asyncOperationService,
@@ -451,7 +453,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             runContextFactory,
             metricRegistry
         );

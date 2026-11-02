@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, ref} from "vue"
+    import {computed, onBeforeUnmount, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -32,6 +32,7 @@
     import {useBlueprintsStore} from "../../stores/blueprints"
     import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import useRouteContext from "../../composables/useRouteContext"
 
@@ -40,7 +41,7 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+    import {COPILOT_DRAFT_KEY, ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
     import {resolveFlowTemplate} from "../../utils/newFlowTemplate"
 
     const route = useRoute()
@@ -50,6 +51,7 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
+    const unsavedChangesStore = useUnsavedChangesStore()
 
     const setupError = ref<string>()
 
@@ -80,6 +82,9 @@
         const recipePresetFlow = route.query.recipePreset === "true"
             ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
             : ""
+        const copilotDraftFlow = route.query.copilotDraft
+            ? sessionStorage.getItem(COPILOT_DRAFT_KEY) ?? ""
+            : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
             action.CREATE,
@@ -100,6 +105,9 @@
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
+        } else if (copilotDraftFlow) {
+            flowYaml = copilotDraftFlow
+            sessionStorage.removeItem(COPILOT_DRAFT_KEY)
         } else if (blueprintSourceYaml) {
             flowYaml = blueprintSourceYaml
         } else if(blueprintId && blueprintSource === "community"){
@@ -168,6 +176,22 @@
 
     flowStore.isCreating = true
     initialize()
+
+    // The page is reused when the Copilot opens a draft from `flows/create` itself, so setup does not run again
+    // and the router guard, which only compares paths, does not ask before the edits are replaced.
+    watch(() => route.query.copilotDraft, async (draft) => {
+        if (!draft) return
+
+        if (unsavedChangesStore.unsavedChange) {
+            if (!await unsavedChangesStore.showDialog()) {
+                sessionStorage.removeItem(COPILOT_DRAFT_KEY)
+                return
+            }
+            unsavedChangesStore.unsavedChange = false
+        }
+
+        initialize()
+    })
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined

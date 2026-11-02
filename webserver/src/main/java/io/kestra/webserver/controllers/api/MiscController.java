@@ -89,7 +89,7 @@ public class MiscController {
     @Inject
     CookiesConfiguration cookiesConfiguration;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
     private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")

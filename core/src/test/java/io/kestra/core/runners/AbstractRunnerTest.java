@@ -732,6 +732,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-fail.yaml" })
+    void avgDurationSLAShouldFail() throws Exception {
+        slaTestCase.avgDurationSLAShouldFail();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-not-enough-history.yaml" })
+    void avgDurationSLAShouldNotMonitorWithoutEnoughHistory() throws Exception {
+        slaTestCase.avgDurationSLAShouldNotMonitorWithoutEnoughHistory();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/sla-execution-condition.yaml" })
     void executionConditionSLAShouldPass() throws Exception {
         slaTestCase.executionConditionSLAShouldPass();

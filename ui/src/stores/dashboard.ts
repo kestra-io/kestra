@@ -11,13 +11,9 @@ import * as Utils from "../utils/utils"
 import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-<<<<<<< HEAD
-import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
-=======
 import resource from "../models/resource"
 import action from "../models/action"
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
->>>>>>> upstream/develop
+import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"

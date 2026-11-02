@@ -12,7 +12,7 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-warning-dialog .icon {
     font-size: var(--ks-font-size-lg);
     color: var(--ks-status-warning);

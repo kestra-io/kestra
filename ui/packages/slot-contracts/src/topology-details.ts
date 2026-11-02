@@ -37,6 +37,10 @@ export const propsSchema = z.object({
         sort?: string
         taskRunId?: string
     }) => Promise<PagedResultsMetricEntry>>().optional(),
+    // Calls the plugin's own PluginEndpoint `name` for this task's current run, and rejects outside an execution.
+    fetchEndpoint: z.custom<(name: string, params?: Record<string, string>, query?: {
+        taskRunId?: string
+    }) => Promise<unknown>>().optional(),
 })
 
 export default defineArtifactSlot(() => ({

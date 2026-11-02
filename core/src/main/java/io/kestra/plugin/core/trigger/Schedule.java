@@ -127,6 +127,24 @@ import lombok.extern.slf4j.Slf4j;
             full = true
         ),
         @Example(
+            title = "Schedule a flow on the last calendar day of the month at 11:00 AM, including weekends and leap days.",
+            code = """
+                id: monthly_last_calendar_day
+                namespace: company.team
+
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: Running on the last calendar day of the month!
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 L * *"
+                """,
+            full = true
+        ),
+        @Example(
             title = "Schedule a flow on the last working day of the month at 6:00 AM.",
             code = """
                 id: monthly_last_working_day

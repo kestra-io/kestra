@@ -446,6 +446,33 @@ class DefaultFlowMetaStoreTest {
             .build();
     }
 
+    @Test
+    void shouldKeepNewerRevisionWhenAnOlderFlowEventArrivesLate() {
+        FlowWithSource flow = createFlow();
+
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(2).build());
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(1).build());
+
+        Optional<FlowInterface> found = flowMetaStore.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
+        assertThat(found).isPresent();
+        assertThat(found.get().getRevision()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldNotResurrectDeletedFlowWhenAnOlderFlowEventArrivesLate() {
+        FlowWithSource flow = createFlow();
+
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(1).build());
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(2).deleted(true).build());
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(1).build());
+
+        assertThat(flowMetaStore.allLastVersion()).noneMatch(it -> it.getId().equals(flow.getId()));
+
+        flowMetaStore.onFlowEvent(flow.toBuilder().revision(3).build());
+
+        assertThat(flowMetaStore.allLastVersion()).anyMatch(it -> it.getId().equals(flow.getId()) && it.getRevision() == 3);
+    }
+
     private FlowWithSource createFlow() {
         return FlowWithSource.builder()
             .tenantId(TenantService.MAIN_TENANT)

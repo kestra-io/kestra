@@ -26,7 +26,6 @@ export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "multi-select" as const,
                     valueProvider: namespaceValueProvider(),
-                    searchable: true,
                 },
             ] : [],
         }

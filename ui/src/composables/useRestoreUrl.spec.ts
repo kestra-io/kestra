@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
-import {defineComponent, h} from "vue"
+import {defineComponent, h, ref} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 import {createRouter, createMemoryHistory, type Router, type RouteLocation} from "vue-router"
 import useRestoreUrl, {getRestoredQuery} from "./useRestoreUrl"
@@ -16,10 +16,10 @@ function createTestRouter(): Router {
     })
 }
 
-function mountRestoreUrl(router: Router) {
+function mountRestoreUrl(router: Router, options?: Parameters<typeof useRestoreUrl>[0]) {
     return mount(defineComponent({
         setup() {
-            return useRestoreUrl()
+            return useRestoreUrl(options)
         },
         render: () => h("div"),
     }), {global: {plugins: [router]}})
@@ -62,12 +62,28 @@ describe("useRestoreUrl", () => {
 
         wrapper = mountRestoreUrl(router)
 
-        // Mimics Dashboard.vue appending its id param right after mount: this navigation
-        // cancels the in-flight restore, which used to drop the saved filters for good.
+        // The page navigating again right after mount cancels the in-flight restore,
+        // which used to drop the saved filters for good.
         await router.push({name: "home", params: {tenant: "main", dashboard: "default"}})
         await new Promise((resolve) => setTimeout(resolve, 150))
 
         expect(router.currentRoute.value.params.dashboard).toBe("default")
+        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
+    })
+
+    it("restores only the saved query of the dashboard the page resolves", async () => {
+        const router = createTestRouter()
+        await router.push({name: "home", params: {tenant: "main"}})
+        window.sessionStorage.setItem("home_dashA_main_restore_url", JSON.stringify({"filters[timeRange][EQUALS]": "PT168H"}))
+        window.sessionStorage.setItem("home_dashB_main_restore_url", JSON.stringify(SAVED_QUERY))
+        const scope = ref<string>()
+        const dashboard = mountRestoreUrl(router, {scope})
+        wrapper = dashboard
+
+        await router.push({name: "home", params: {tenant: "main", dashboard: "dashB"}})
+        scope.value = "dashB"
+        await dashboard.vm.goToRestoreUrl()
+
         expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
 

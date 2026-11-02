@@ -6,7 +6,7 @@
             placement="bottom-start"
             trigger="click"
             :width="300"
-            :popperClass="'p-0'"
+            popperClass="customize-filters-popper"
             :showArrow="false"
             :disabled="filter.readOnly?.value || isComplex"
             @hide="isCustomizeFiltersVisible = false"
@@ -322,10 +322,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter-tokens {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
-
     display: contents;
 }
 
@@ -335,6 +334,7 @@
 
 /* The border box is always present and only its colour toggles, so drawing the rule cannot
    change the layout that decides whether to draw it. */
+
 .filter-chip-wrap.ends-conditional-group {
     padding-right: var(--ks-spacing-2);
     border-right: 1px solid transparent;
@@ -380,28 +380,28 @@
         background-color: var(--ks-btn-secondary-bg-hover);
     }
 
-    .rules-pill-content {
+    & .rules-pill-content {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
     }
 
-    .rules-pill-label {
+    & .rules-pill-label {
         color: var(--ks-text-link);
         font-weight: 600;
     }
 
-    :deep(.rules-pill-icon svg) {
+    & :deep(.rules-pill-icon svg) {
         color: var(--ks-text-link) !important;
         font-size: var(--ks-font-size-md);
     }
 
-    :deep(.rules-pill-chevron svg) {
+    & :deep(.rules-pill-chevron svg) {
         color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
 
-    .rules-pill-dot {
+    & .rules-pill-dot {
         position: absolute;
         top: -2px;
         right: -2px;
@@ -423,7 +423,7 @@
         background-color: var(--ks-btn-secondary-bg-hover);
     }
 
-    :deep(svg) {
+    & :deep(svg) {
         color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
@@ -447,12 +447,12 @@
     min-width: 150px;
     max-width: 200px;
 
-    :deep(.kel-input__wrapper),
-    :deep(.kel-input__inner) {
+    & :deep(.kel-input__wrapper),
+    & :deep(.kel-input__inner) {
         border-radius: var(--ks-radius-base);
     }
 
-    :deep(.kel-input__wrapper) {
+    & :deep(.kel-input__wrapper) {
         height: 32px;
     }
 
@@ -467,5 +467,10 @@
         opacity: 0.6;
     }
 }
+</style>
 
+<style>
+.customize-filters-popper.customize-filters-popper {
+    padding: 0;
+}
 </style>

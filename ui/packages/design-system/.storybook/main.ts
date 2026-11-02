@@ -1,5 +1,6 @@
+import {fileURLToPath} from "node:url"
 import {mergeConfig} from "vite"
-import {resolve} from "path"
+import {resolve, dirname} from "path"
 import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const srcDir = resolve(import.meta.dirname, "../src")
@@ -7,13 +8,13 @@ const srcDir = resolve(import.meta.dirname, "../src")
 const config: StorybookConfig = {
     stories: ["../src/**/*.stories.@(ts|tsx)", "../tests/storybook/**/*.stories.@(ts|tsx)"],
     addons: [
-        "@storybook/addon-themes",
-        "@storybook/addon-vitest",
-        "@storybook/addon-a11y",
-        "@storybook/addon-docs",
+        getAbsolutePath("@storybook/addon-themes"),
+        getAbsolutePath("@storybook/addon-vitest"),
+        getAbsolutePath("@storybook/addon-a11y"),
+        getAbsolutePath("@storybook/addon-docs"),
     ],
     framework: {
-        name: "@storybook/vue3-vite",
+        name: getAbsolutePath("@storybook/vue3-vite"),
         options: {
             // Storybook resolves this tsconfig from the git root, not from this file
             docgen: {
@@ -43,3 +44,7 @@ const config: StorybookConfig = {
 }
 
 export default config
+
+function getAbsolutePath(value: string): string {
+    return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)))
+}

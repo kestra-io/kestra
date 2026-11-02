@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('interrupt') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('interrupt') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -14,7 +14,7 @@
 
             <template #default>
                 <p>
-                    <i18n-t keypath="interrupt confirm" tag="span">
+                    <i18n-t keypath="interrupt confirm" tag="span" scope="global">
                         <template #task><code>{{ taskRun.taskId }}</code></template>
                         <template #id><code>{{ execution.id }}</code></template>
                     </i18n-t>
@@ -23,7 +23,7 @@
                 </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="status-badge" :status="taskRun.state.current" />
                 </p>
 
                 <KsSelect
@@ -38,8 +38,8 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <i18n-t keypath="mark as" tag="span">
+                            <KsExecutionStatus size="small" :label="true" class="status-badge" :status="item.code" />
+                            <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
                         </template>
@@ -78,11 +78,13 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun: ExecutionTaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         attemptIndex: undefined,
     })
 
@@ -142,3 +144,8 @@
             })
     }
 </script>
+<style scoped>
+.status-badge {
+    margin-inline-end: var(--ks-spacing-1);
+}
+</style>

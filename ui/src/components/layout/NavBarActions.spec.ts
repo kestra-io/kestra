@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 import {defineComponent} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import NavBarActions from "./NavBarActions.vue"
@@ -101,6 +101,37 @@ describe("NavBarActions — callers that opt into the secondary slot", () => {
 
         // Two-slot layout: the action moves into the overflow, the secondary is visible.
         expect(visibleButton(wrapper, "Edit Flow")).toBeDefined()
+        expect(visibleButton(wrapper, "Delete logs")).toBeUndefined()
+        expect(overflowTrigger(wrapper)).toBeDefined()
+    })
+})
+
+describe("NavBarActions — on a phone", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    it("keeps only the primary action inline and moves the rest into the overflow", () => {
+        // Given
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+        }))
+
+        // When
+        const wrapper = mountActions({
+            default: "<button>Delete logs</button>",
+            secondary: "<button>Edit Flow</button>",
+            primary: "<button>Execute</button>",
+        })
+
+        // Then
+        expect(visibleButton(wrapper, "Execute")).toBeDefined()
+        expect(visibleButton(wrapper, "Edit Flow")).toBeUndefined()
         expect(visibleButton(wrapper, "Delete logs")).toBeUndefined()
         expect(overflowTrigger(wrapper)).toBeDefined()
     })

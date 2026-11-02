@@ -33,10 +33,10 @@
         (executionsStore.execution?.taskRunList ?? []).some((taskRun) => loopIds.value.has(taskRun.taskId)),
     )
 
-    const iterationsRoute = computed(() => loopIterationsRoute(executionsStore.execution?.id, props.taskId))
+    const iterationsRoute = computed(() => loopIterationsRoute(executionsStore.execution, props.taskId))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-iterations-notice {
         margin-bottom: var(--ks-spacing-4);
     }

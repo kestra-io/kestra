@@ -1,12 +1,13 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent, h} from "vue"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 vi.mock("@kestra-io/design-system", () => ({
     KsMessageBox: {confirm: vi.fn(() => Promise.resolve())},
 }))
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (k: string) => k})}))
-for (const icon of ["DeleteOutline", "PencilOutline", "CheckCircle"]) {
+for (const icon of ["Delete", "Pencil", "CheckCircle"]) {
     vi.doMock(`vue-material-design-icons/${icon}.vue`, () => ({
         default: defineComponent({name: icon, setup: () => () => h("span")}),
     }))
@@ -38,7 +39,7 @@ const mountLink = (title: string) => {
     setActivePinia(createPinia())
     wrapper = mount(BookmarkLink, {
         props: {href: "/flows", title},
-        global: {stubs: {RouterLink: RouterLinkStub, KsInput}, mocks: {$t: (k: string) => k}},
+        global: {plugins: [memoryRouter()], stubs: {RouterLink: RouterLinkStub, KsInput}, mocks: {$t: (k: string) => k}},
     })
     return wrapper
 }

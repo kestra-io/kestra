@@ -1,4 +1,5 @@
 import {createI18n} from "vue-i18n"
+import {memoryRouter} from "../../../memoryRouter"
 import en from "../../../../../src/translations/en.json"
 
 /**
@@ -53,4 +54,9 @@ export const ksStubs = {
 }
 
 /** Common `global` mount option for copilot component tests. */
-export const mountGlobal = {plugins: [i18n], stubs: ksStubs}
+export const mountGlobal = {
+    get plugins() {
+        return [i18n, memoryRouter()]
+    },
+    stubs: ksStubs,
+}

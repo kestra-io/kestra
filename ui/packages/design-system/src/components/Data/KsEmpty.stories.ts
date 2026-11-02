@@ -14,10 +14,12 @@ export default meta
 type Story = StoryObj<typeof KsEmpty>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsEmpty},
-        template: "<div style=\"padding:24px\"><ks-empty /></div>",
+        setup() { return {args} },
+        template: "<div style=\"padding:24px\"><ks-empty v-bind=\"args\" /></div>",
     }),
+    args: {imageSize: 180, description: "No data", background: true},
 }
 
 export const WithAction: Story = {
@@ -31,6 +33,7 @@ export const WithAction: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom image size */
@@ -45,6 +48,7 @@ export const ImageSize: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom description slot */
@@ -62,6 +66,7 @@ export const CustomDescription: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const CustomImage: Story = {
@@ -80,6 +85,7 @@ export const CustomImage: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Transparent variant: omits the surface background for empty states nested inside an already-surfaced panel. */
@@ -88,4 +94,5 @@ export const NoBackground: Story = {
         components: {KsEmpty},
         template: "<div style=\"padding:24px\"><ks-empty :background=\"false\" description=\"No results\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }

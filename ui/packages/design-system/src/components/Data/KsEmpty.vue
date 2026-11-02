@@ -47,13 +47,15 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/empty' as *;
+</style>
 
+<style>
     .kel-empty {
         background-color: var(--ks-bg-surface);
+    }
 
-        &--no-background {
-            background-color: transparent;
-        }
+    .kel-empty--no-background {
+        background-color: transparent;
     }
 
     .kel-empty__description {

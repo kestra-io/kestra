@@ -42,7 +42,7 @@
     const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .img-block {
         display: block;
         text-align: center;

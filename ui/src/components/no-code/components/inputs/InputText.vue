@@ -1,5 +1,5 @@
 <template>
-    <span v-if="required" class="me-1 text-danger">*</span>
+    <span v-if="required" class="required-mark">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
         <KsInput
@@ -44,7 +44,7 @@
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
         readonly: {type: Boolean, default: false},
-        margin: {type: String, default: "mt-1 mb-2"},
+        margin: {type: String, default: ""},
         class: {type: String, default: undefined},
         haveError: {type: Boolean, default: false},
         inputStyle: {type: Object, default: () => ({})},
@@ -64,8 +64,17 @@
     })
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
+<style scoped src="../../styles/code.css" />
+<style scoped>
+.required-mark {
+    margin-right: var(--ks-spacing-1);
+    color: var(--ks-text-error);
+}
+
+.wrapper {
+    margin-top: var(--ks-spacing-1);
+    margin-bottom: var(--ks-spacing-2);
+}
 
 :deep(.kel-input__icon) {
     .lock-icon {

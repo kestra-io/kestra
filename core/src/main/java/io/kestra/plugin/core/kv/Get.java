@@ -4,6 +4,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -77,16 +78,24 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String flowNamespace = runContext.flowInfo().namespace();
         String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
+        boolean rErrorOnMissing = runContext.render(this.errorOnMissing).as(Boolean.class).orElse(false);
 
         Optional<KVValue> value;
-        if (Objects.equals(renderedNamespace, flowNamespace)) {
-            value = ((DefaultRunContext) runContext).services().kvStoreService().findValueWithInheritance(runContext.flowInfo().tenantId(), flowNamespace, renderedKey);
-        } else {
-            runContext.acl().allowNamespace(renderedNamespace).check();
-            value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+        try {
+            if (Objects.equals(renderedNamespace, flowNamespace)) {
+                value = ((DefaultRunContext) runContext).services().kvStoreService().findValueWithInheritance(runContext.flowInfo().tenantId(), flowNamespace, renderedKey);
+            } else {
+                runContext.acl().allowNamespace(renderedNamespace).check();
+                value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+            }
+        } catch (ResourceExpiredException e) {
+            if (rErrorOnMissing) {
+                throw e;
+            }
+            value = Optional.empty();
         }
 
-        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {
+        if (rErrorOnMissing && value.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 

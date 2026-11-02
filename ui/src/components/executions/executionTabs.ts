@@ -35,12 +35,14 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,
         path: "gantt",
         component: () => import("./Gantt.vue"),
+        props: {showBanner: true},
         meta: {tab: "gantt", title: "gantt"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/logs`,
         path: "logs",
         component: () => import("./Logs.vue"),
+        props: {showBanner: true},
         meta: {tab: "logs", title: "logs"},
     },
     {
@@ -53,7 +55,13 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/metrics`,
         path: "metrics",
         component: () => import("./ExecutionMetric.vue"),
-        meta: {tab: "metrics", title: "metrics"},
+        meta: {tab: "metrics", title: "metrics", fullContainer: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/artifacts`,
+        path: "artifacts",
+        component: () => import("./Artifacts.vue"),
+        meta: {tab: "artifacts", title: "execution_artifacts.title", maximized: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/dependencies`,
@@ -66,14 +74,14 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/audit-logs`,
         path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
-        meta: {tab: "audit-logs", title: "auditlogs", maximized: true, locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", maximized: true, locked: true, docId: "auditlogs"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/assets`,
         path: "assets",
         component: () => import("../demo/Assets.vue"),
         props: {topbar: false},
-        meta: {tab: "assets", title: "assets.title", maximized: true, locked: true},
+        meta: {tab: "assets", title: "assets.title", maximized: true, locked: true, docId: "asset"},
     },
 ]
 

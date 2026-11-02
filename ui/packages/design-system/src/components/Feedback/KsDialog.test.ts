@@ -61,7 +61,7 @@ describe("KsDialog", () => {
             props: {modelValue: true, large: true},
             global: globalConfig,
         })
-        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(750px, 90vw)")
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(750px, 92vw)")
     })
 
     test("explicit width overrides large", () => {
@@ -69,7 +69,31 @@ describe("KsDialog", () => {
             props: {modelValue: true, large: true, width: "60%"},
             global: globalConfig,
         })
-        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("60%")
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(60%, 92vw)")
+    })
+
+    test("reads a unitless string width as pixels", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, width: "650"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(650px, 92vw)")
+    })
+
+    test("leaves an intrinsic width keyword alone", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, width: "auto"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("auto")
+    })
+
+    test("caps a numeric width to the viewport", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, width: 650},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(650px, 92vw)")
     })
 
     test("wraps the body in a scrollbar when scrollable", async () => {

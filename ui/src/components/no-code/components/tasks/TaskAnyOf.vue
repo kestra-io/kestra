@@ -255,7 +255,7 @@
     const {getBlockComponent} = useBlockComponent()
 
     const currentSchemaType = computed(() =>
-        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
+        currentSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
     )
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {

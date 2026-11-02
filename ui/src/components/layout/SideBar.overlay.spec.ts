@@ -13,7 +13,7 @@ const {route} = await vi.hoisted(async () => {
 vi.mock("vue-router", () => ({
     useRoute: () => route,
     useRouter: () => ({push: vi.fn(), resolve: vi.fn()}),
-    RouterLink: {props: ["to"], template: "<slot :href=\"to\" :navigate=\"() => {}\" />"},
+    RouterLink: {props: ["to", "custom"], template: "<slot :href=\"to\" :navigate=\"() => {}\" />"},
 }))
 
 vi.mock("override/components/useLeftMenu", () => ({useLeftMenu: () => ({menu: []})}))

@@ -21,7 +21,7 @@ const NOTIFICATION_ROUTES: Record<string, RouteResolver> = {
     ASYNC_OPERATION: resolveAsyncOperationRoute,
 }
 
-async function resolveExecutionRoute(notification: Notification): Promise<NotificationRoute | null> {
+export async function resolveExecutionRoute(notification: Notification): Promise<NotificationRoute | null> {
     const execution = await ExecutionsAPI.execution({executionId: notification.referenceId as string}).catch(() => null)
     return execution ? {name: "executions/update", params: {namespace: execution.namespace, flowId: execution.flowId, id: execution.id}} : null
 }

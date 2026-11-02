@@ -26,6 +26,7 @@ vi.mock("vue-i18n", () => ({
     t: (key:string) => key,
   }),
   createI18n: () => ({
+    global: {mergeLocaleMessage() {}},
     install(app:AppContext) {
       app.config.globalProperties.$t = (key:string) => key
     },

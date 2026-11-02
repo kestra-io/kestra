@@ -37,6 +37,7 @@ export const links: Record<string, string> = {
     blueprints: "https://kestra.io/docs/enterprise/governance/custom-blueprints?utm_source=app&utm_medium=referral&utm_campaign=blueprints",
     namespace: "https://kestra.io/docs/enterprise/governance/namespace-management?utm_source=app&utm_medium=referral&utm_campaign=namespace",
     variables: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore?utm_source=app&utm_medium=referral&utm_campaign=variables",
+    reusableInputs: "https://kestra.io/docs/workflow-components/reusable-inputs?utm_source=app&utm_medium=referral&utm_campaign=reusable-inputs",
     secrets: "https://kestra.io/docs/concepts/secret?utm_source=app&utm_medium=referral&utm_campaign=secrets",
     promote: "https://kestra.io/docs/enterprise/governance/promote?utm_source=app&utm_medium=referral&utm_campaign=promote",
     /** Groups have no page of their own; RBAC covers them. */

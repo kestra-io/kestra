@@ -7,7 +7,7 @@
                     <template #content>
                         <KsMarkdown class="description-tooltip" :content="current.description!" />
                     </template>
-                    <KsButton :icon="HelpCircleOutlineIcon" :aria-label="$t('description')" link />
+                    <KsButton :icon="InformationIcon" :aria-label="$t('description')" link />
                 </KsTooltip>
             </h5>
             <KsMarkdown v-if="current.description && !stepDescriptionAsTooltip" :content="current.description" class="text-description" />
@@ -27,7 +27,7 @@
                         draggable="true"
                         @dragstart="onInputDragStart($event, input.id)"
                     >
-                        <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                        <KsMarkdown :content="inputLabel(input)" class="md-label" />
                         <KsButton
                             :icon="ContentCopyIcon"
                             :tooltip="`${$t('copy_to_clipboard')}: ${inputRefExpression(input.id)}`"
@@ -40,7 +40,7 @@
                                 <KsMarkdown :data-testid="`input-description-${input.id}`" class="description-tooltip" :content="input.description" />
                             </template>
                             <KsButton
-                                :icon="HelpCircleOutlineIcon"
+                                :icon="InformationIcon"
                                 :aria-label="$t('description')"
                                 link
                                 @click.prevent
@@ -137,29 +137,29 @@
                         :data-testid="`input-form-${input.id}`"
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="1"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="0.001"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'BOOL'"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChangeBool(input)"
-                    class="w-100 boolean-inputs"
+                    class="boolean-inputs"
                 />
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
@@ -199,7 +199,7 @@
                 <div
                     v-if="input.type === 'ARRAY'"
                     :data-testid="`input-form-${input.id}`"
-                    class="w-100"
+                    class="array-input"
                 >
                     <div v-if="editingArrayId !== input.id" class="preview">
                         <div class="tags">
@@ -211,7 +211,7 @@
                             </KsTag>
                         </div>
                         <KsButton
-                            class="p-3"
+                            class="array-edit-button"
                             @click="toggleArrayEdit(input.id)"
                             :icon="Pencil"
                         >
@@ -245,18 +245,18 @@
                                     :data-testid="`array-item-remove-${input.id}-${index}`"
                                     @click="removeArrayItem(input, index)"
                                 >
-                                    <DeleteOutline />
+                                    <Delete />
                                 </KsIconButton>
                             </div>
                         </div>
                         <KsButton
-                            class="add-new mt-1 border-0"
+                            class="add-new"
                             @click="addNewArrayItem(input)"
                             :icon="Plus"
                         >
                             {{ $t('add_new_item') }}
                         </KsButton>
-                        <div class="d-flex justify-content-end mt-2">
+                        <div class="array-edit-actions">
                             <KsButton
                                 @click="toggleArrayEdit(input.id)"
                                 type="primary"
@@ -321,7 +321,7 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-end">
+        <div class="input-errors">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
 
@@ -354,7 +354,7 @@
         </div>
     </template>
 
-    <KsAlert type="info" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :closable="false" class="no-inputs-alert" v-else>
         {{ $t("no inputs") }}
     </KsAlert>
 </template>
@@ -371,12 +371,12 @@
     import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import * as Utils from "../../utils/utils"
-    import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
+    import DeleteIcon from "vue-material-design-icons/Delete.vue"
     import PencilIcon from "vue-material-design-icons/Pencil.vue"
     import PlusIcon from "vue-material-design-icons/Plus.vue"
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
     import ContentCopyIcon from "vue-material-design-icons/ContentCopy.vue"
-    import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue"
+    import InformationIcon from "vue-material-design-icons/Information.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
@@ -405,7 +405,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
@@ -447,7 +447,7 @@
     // `isDefault: true` for it — the default must not be written back over an input the user edited.
     const userEditedInputs = new Set<string>()
 
-    const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
+    const Delete = markRaw(DeleteIcon) as Component
     const Pencil = markRaw(PencilIcon) as Component
     const Plus = markRaw(PlusIcon) as Component
     const ContentSave = markRaw(ContentSaveIcon) as Component
@@ -724,15 +724,28 @@
         }, {})
     })
 
+    function hasLimit(value: unknown): value is number {
+        return typeof value === "number"
+    }
+
+    function numberMin(input: InputMetaData): number {
+        return hasLimit(input.min) ? input.min : -Infinity
+    }
+
+    function numberMax(input: InputMetaData): number {
+        if (!hasLimit(input.max)) return Infinity
+        return hasLimit(input.min) && input.min > input.max ? Infinity : input.max
+    }
+
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
 
-        if (min !== undefined && max !== undefined) {
+        if (hasLimit(min) && hasLimit(max)) {
             if (min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`
             return `Minimum value is ${min}, maximum value is ${max}.`
-        } else if (min !== undefined) {
+        } else if (hasLimit(min)) {
             return `Minimum value is ${min}.`
-        } else if (max !== undefined) {
+        } else if (hasLimit(max)) {
             return `Maximum value is ${max}.`
         }
         return false
@@ -779,7 +792,7 @@
                     acc.push({
                         ...it.input,
                         errors: it.errors,
-                        value: it.value || it.input.prefill,
+                        value: it.value === "" ? it.input.prefill : (it.value ?? it.input.prefill),
                         isDefault: it.isDefault,
                     })
                 }
@@ -1083,6 +1096,7 @@
 
 <style scoped>
 .md-label {
+    display: inline-flex;
     height: var(--ks-font-size-lg);
 }
 
@@ -1162,6 +1176,15 @@
     }
 }
 
+.input-errors {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.no-inputs-alert {
+    margin-bottom: var(--ks-spacing-4);
+}
+
 .hint {
     font-size: var(--ks-font-size-xs);
     color: var(--ks-text-secondary);
@@ -1182,6 +1205,7 @@
 :deep(.boolean-inputs) {
     display: flex;
     align-items: center;
+    width: 100%;
 
     .kel-radio-button {
         &.is-active {
@@ -1221,6 +1245,14 @@
         padding: 0.5rem;
     }
 
+}
+
+.array-input {
+    width: 100%;
+}
+
+.array-edit-button {
+    padding: var(--ks-spacing-4);
 }
 
 .preview {
@@ -1291,7 +1323,9 @@
     }
 
     .add-new {
+        margin-top: var(--ks-spacing-1);
         padding: 5px 8px;
+        border: 0;
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         background: none;
@@ -1299,6 +1333,12 @@
         &:hover {
             color: var(--ks-text-secondary);
         }
+    }
+
+    .array-edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--ks-spacing-2);
     }
 }
 

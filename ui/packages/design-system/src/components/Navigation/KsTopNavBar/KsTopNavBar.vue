@@ -127,7 +127,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-topnavbar {
         height: 60px;
         flex-shrink: 0;
@@ -197,17 +197,17 @@
     }
 
     .dock-toggle {
-         &.is-open {
+        &.is-open {
             color: var(--ks-icon-default);
         }
-        
+
         @media (max-width: 767px) {
             display: none;
         }
     }
 
     .side {
-        :deep(ul) {
+        & :deep(ul) {
             display: flex;
             list-style: none;
             padding: 0;

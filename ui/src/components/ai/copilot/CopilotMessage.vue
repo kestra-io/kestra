@@ -12,7 +12,7 @@
          The resource id is a monospace code token, matching how ids read elsewhere in the copilot. -->
     <div v-else-if="message.type === 'CONTEXT' && message.context" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
         <KsText size="small" class="copilot-context-notice-text">
-            <i18n-t :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'" tag="span">
+            <i18n-t :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'" tag="span" scope="global">
                 <template #type>{{ $t(message.context.noun) }}</template>
                 <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
             </i18n-t>

@@ -1,11 +1,12 @@
 import {beforeEach, describe, expect, test} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import {markRaw} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelTabs from "./MultiPanelTabs.vue"
 import {i18nMount} from "../../tests/unit/i18nMount"
 
-const IconStub = {template: "<span class='icon-stub' />"}
-const PaneStub = {name: "PaneStub", template: "<div class='pane-stub' />"}
+const IconStub = markRaw({template: "<span class='icon-stub' />"})
+const PaneStub = markRaw({name: "PaneStub", template: "<div class='pane-stub' />"})
 
 function makePanel(uid: string) {
     const tab = {uid, button: {label: uid, icon: IconStub}, component: PaneStub}

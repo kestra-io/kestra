@@ -1,9 +1,9 @@
 import {describe, expect, it, beforeEach} from "vitest"
-import {defineComponent, h} from "vue"
+import {defineComponent, h, ref} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 
 import AssetNode from "../../../../src/components/dependencies/components/dag/AssetNode.vue"
-import {DAG_CARD_FOOTER} from "../../../../src/components/dependencies/utils/dagConstants"
+import {DAG_CARD_FOOTER, DAG_HOVERED, DAG_SELECTED, DAG_SHOWN, DAG_TRACED} from "../../../../src/components/dependencies/utils/dagConstants"
 import en from "../../../../src/translations/en.json"
 import {i18nMount} from "../../i18nMount"
 
@@ -21,7 +21,13 @@ function mountCard(data: Record<string, unknown> = {}, footer?: unknown) {
         locales: en,
         global: {
             stubs: {Handle: true},
-            provide: footer ? {[DAG_CARD_FOOTER as symbol]: footer} : {},
+            provide: {
+                [DAG_SELECTED as symbol]: ref(undefined),
+                [DAG_HOVERED as symbol]: ref(undefined),
+                [DAG_TRACED as symbol]: ref(null),
+                [DAG_SHOWN as symbol]: ref(null),
+                ...(footer ? {[DAG_CARD_FOOTER as symbol]: footer} : {}),
+            },
         },
     })
 }

@@ -9,7 +9,6 @@ import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 import * as Utils from "../../../utils/utils"
-
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
     useRoute: () => ({query: {}}),
@@ -70,6 +69,18 @@ const globalConfig = {
         KsTag: {template: "<span><slot /></span>"},
         ExpressionDebugger: true,
     },
+}
+
+function computeFlowForExecution(flow: Partial<FlowForExecution> = {}): FlowForExecution {
+    return {
+        id: "flow",
+        namespace: "io.kestra.tests",
+        disabled: false,
+        deleted: false,
+        draft: false,
+        tasks: [],
+        ...flow,
+    }
 }
 
 function mountExplorer(
@@ -146,6 +157,36 @@ async function mountLoopExplorer(outputsByTaskRunId: Record<string, Record<strin
 describe("ExecutionVariableExplorer", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+    })
+
+    test("tags the flow outputs declared searchable by the flow", async () => {
+        vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
+        useExecutionsStore().flow = computeFlowForExecution({
+            outputs: [
+                {
+                    id: "orderIds", 
+                    type: "STRING", 
+                    searchable: true,
+                },
+                {
+                    id: "plain", 
+                    type: "STRING", 
+                },
+            ],
+        })
+        
+        const wrapper = mountExplorer({})
+        await flushPromises()
+
+        const items = sidebarSections(wrapper).find((section) => section.key === "flowOutputs")?.items
+        await selectVariable(wrapper, "orderIds", "flowOutputs")
+
+        expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderIds", true], ["plain", false]])
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
+
+        await selectVariable(wrapper, "plain", "flowOutputs")
+
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(false)
     })
 
     test("uses render for variables containing expressions", async () => {

@@ -1,9 +1,10 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {flushPromises} from "@vue/test-utils"
 import FailedTaskCard from "./FailedTaskCard.vue"
 import {useExecutionsStore, type Execution} from "../../../../stores/executions"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {routedPinia} from "../../../../../tests/unit/memoryRouter"
 
 const messages = {execution_mobile: {failed_task: "Failed task", view_task_logs: "View task logs"}}
 
@@ -26,7 +27,7 @@ const mountCard = (state = "FAILED") => i18nMount(FailedTaskCard, {
 
 describe("FailedTaskCard", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
         vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([{taskRunId: "tr-1", message: "Ledger is off"}] as never)
     })
 

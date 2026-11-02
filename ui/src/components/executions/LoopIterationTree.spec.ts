@@ -1,216 +1,197 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
-import {mount} from "@vue/test-utils"
-
-const mockFindExecutions = vi.fn()
-vi.mock("../../stores/executions", () => ({
-    useExecutionsStore: () => ({
-        findExecutions: mockFindExecutions,
-        flow: {},
-    }),
-}))
-
-const mockExecutionApi = vi.fn()
-vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    execution: (...args: unknown[]) => mockExecutionApi(...args),
-}))
-
-const mockFindTaskById = vi.fn()
-vi.mock("../../utils/flowUtils", () => ({
-    findTaskById: (...args: unknown[]) => mockFindTaskById(...args),
-}))
-
+import {beforeEach, describe, expect, it, vi} from "vitest"
+import {flushPromises} from "@vue/test-utils"
+import {createPinia, setActivePinia} from "pinia"
+import {ref} from "vue"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+import {useExecutionsStore} from "../../stores/executions"
 import LoopIterationTree from "./LoopIterationTree.vue"
+import type {ExecutionTaskRun} from "./executionTaskRun"
+import {GANTT_TREE, LOOP_TYPE, createGanttTree, createTaskRunNode, type GanttTree} from "./gantt/ganttTree"
 
-function iterationExecution(id: string, value: string, state = "SUCCESS") {
-    return {
-        id,
-        namespace: "company.team",
-        flowId: "nested_loop_demo",
-        state: {
-            current: state,
-            histories: [
-                {state: "RUNNING", date: "2026-01-01T00:00:00Z"},
-                {state, date: "2026-01-01T00:00:01Z"},
-            ],
-        },
-        loopRun: {taskId: "per_region", taskRunId: "tr1", index: 0, value, parents: []},
+const mockExecution = vi.hoisted(() => vi.fn())
+vi.mock("@kestra-io/kestra-sdk/executions", () => ({
+    execution: (...args: unknown[]) => mockExecution(...args),
+}))
+
+const histories = [
+    {state: "RUNNING", date: "2026-01-01T00:00:00Z"},
+    {state: "SUCCESS", date: "2026-01-01T00:00:01Z"},
+]
+
+const iterationExecution = (id: string, value: string, index: number, state = "SUCCESS") => ({
+    id,
+    state: {current: state, histories},
+    loopRun: {taskId: "per_region", taskRunId: "tr-region", index, value, parents: []},
+})
+
+const loopTaskRun = {id: "tr-region", taskId: "per_region", state: {current: "SUCCESS", histories}} as unknown as ExecutionTaskRun
+const loopNode = createTaskRunNode({id: "root-execution", namespace: "company.team", flowId: "nested_loop_demo"}, loopTaskRun, LOOP_TYPE, [])
+
+let tree: GanttTree
+let findExecutions: ReturnType<typeof vi.spyOn>
+
+function pageOf(total: number, size = 10) {
+    return async (options: Record<string, unknown>) => {
+        if (options.onlyTotal) return total
+        const page = (options.page as number) ?? 1
+        const start = (page - 1) * size
+        const results = Array.from({length: Math.max(0, Math.min(size, total - start))}, (_, i) => iterationExecution(`it-${start + i}`, `REGION-${start + i}`, start + i))
+        return {results, total}
     }
 }
 
-const KsButtonStub = {
-    name: "KsButton",
-    props: ["loading", "tag", "to", "size", "link"],
-    emits: ["click"],
-    template: "<button class=\"ks-button-stub\" @click=\"$emit('click')\"><slot /></button>",
-}
-
-const KsCheckboxStub = {
-    name: "KsCheckbox",
-    props: ["modelValue"],
-    emits: ["update:modelValue"],
-    template: "<input type=\"checkbox\" class=\"ks-checkbox-stub\" :checked=\"modelValue\" @change=\"$emit('update:modelValue', $event.target.checked)\" />",
-}
-
-const stubs = {
-    KsAlert: {template: "<div class=\"ks-alert-stub\"><slot /></div>"},
-    KsButton: KsButtonStub,
-    KsCheckbox: KsCheckboxStub,
-    KsIcon: {template: "<div><slot /></div>"},
-    KsExecutionStatus: {template: "<span class=\"status-stub\" />"},
-    SubFlowLink: {template: "<span class=\"subflow-link-stub\" />"},
-    Duration: {template: "<span class=\"duration-stub\" />"},
-    TaskRunLine: {props: ["currentTaskRun"], template: "<div class=\"task-run-line-stub\">{{ currentTaskRun.taskId }}<slot /></div>"},
-    ChevronRight: {template: "<i />"},
-    ChevronDown: {template: "<i />"},
-    Loading: {template: "<i />"},
-    RouterLink: {template: "<a><slot /></a>"},
-}
-
-function mountTree(props = {}) {
-    return mount(LoopIterationTree, {
-        props: {
-            executionId: "root-execution",
-            taskId: "per_region",
-            namespace: "company.team",
-            flowId: "nested_loop_demo",
-            ...props,
-        },
+function mountTree() {
+    return i18nMount(LoopIterationTree, {
+        props: {node: loopNode},
         global: {
-            stubs,
-            components: {
-                LoopIterationTree,
-            },
-            mocks: {
-                $t: (key: string, params?: Record<string, unknown>) => (params ? `${key}:${JSON.stringify(params)}` : key),
+            provide: {[GANTT_TREE as symbol]: tree},
+            stubs: {
+                SubFlowLink: true,
+                TaskRunActions: true,
+                TaskIcon: true,
+                Duration: true,
+                RouterLink: {template: "<a><slot /></a>"},
             },
         },
     })
 }
+
+beforeEach(() => {
+    setActivePinia(createPinia())
+    mockExecution.mockReset()
+    findExecutions = vi.spyOn(useExecutionsStore(), "findExecutions")
+    tree = createGanttTree({compact: ref(false), levelFilter: ref(undefined)})
+})
 
 describe("LoopIterationTree", () => {
-    beforeEach(() => {
-        mockFindExecutions.mockReset()
-        mockExecutionApi.mockReset()
-        mockFindTaskById.mockReset()
-        mockFindTaskById.mockReturnValue({type: "io.kestra.plugin.core.flow.Commands"})
-    })
-
-    it("does not fetch iterations until the toggle is expanded", async () => {
-        mockFindExecutions.mockResolvedValue({results: [], total: 0})
-        mountTree()
-
-        expect(mockFindExecutions).not.toHaveBeenCalled()
-    })
-
-    it("fetches iterations on first expand, scoped to parentId/kind/taskId", async () => {
-        mockFindExecutions.mockResolvedValue({results: [iterationExecution("it-1", "EMEA")], total: 1})
-        const wrapper = mountTree()
-
-        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
-        await wrapper.vm.$nextTick()
-        await flushPromises()
-
-        expect(mockFindExecutions).toHaveBeenCalledTimes(1)
-        const args = mockFindExecutions.mock.calls[0][0]
-        expect(args["filters[parentId][EQUALS]"]).toBe("root-execution")
-        expect(args["filters[kind][EQUALS]"]).toBe("LOOP")
-        expect(args["filters[taskId][EQUALS]"]).toBe("per_region")
-    })
-
-    it("fetches a row's own task runs only when that row is expanded, not its siblings", async () => {
-        mockFindExecutions.mockResolvedValue({
-            results: [iterationExecution("it-1", "EMEA"), iterationExecution("it-2", "AMER")],
-            total: 2,
-        })
-        mockExecutionApi.mockResolvedValue({id: "it-1", namespace: "company.team", flowId: "nested_loop_demo", taskRunList: []})
+    it("shouldFetchFirstPageScopedToLoopWhenMounted", async () => {
+        findExecutions.mockImplementation(pageOf(3) as never)
 
         const wrapper = mountTree()
-        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
-        expect(mockExecutionApi).not.toHaveBeenCalled()
-
-        const rows = wrapper.findAll(".loop-iteration-row-main")
-        expect(rows).toHaveLength(2)
-
-        await rows[0].trigger("click")
-        await flushPromises()
-
-        expect(mockExecutionApi).toHaveBeenCalledTimes(1)
-        expect(mockExecutionApi).toHaveBeenCalledWith({executionId: "it-1"})
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({
+            "filters[parentId][EQUALS]": "root-execution",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "per_region",
+            page: 1,
+        }))
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(3)
+        expect(wrapper.find("[data-test='loop-preview-footer']").exists()).toBe(false)
     })
 
-    it("shows an error with retry, and retry re-fetches", async () => {
-        mockFindExecutions
-            .mockRejectedValueOnce(new Error("network error"))
-            .mockResolvedValueOnce({results: [iterationExecution("it-1", "EMEA")], total: 1})
-
+    it("shouldFetchIterationTaskRunsOnlyForTheRowWhoseChevronIsToggled", async () => {
+        findExecutions.mockImplementation(pageOf(2) as never)
+        mockExecution.mockResolvedValue({
+            id: "it-0",
+            taskRunList: [{id: "tr-extract", taskId: "extract", state: {current: "SUCCESS", histories}}],
+        })
         const wrapper = mountTree()
-        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
+        await flushPromises()
+        expect(mockExecution).not.toHaveBeenCalled()
+
+        await wrapper.findAll("[data-test='gantt-row-chevron']")[0].trigger("click")
         await flushPromises()
 
-        expect(wrapper.find(".ks-alert-stub").exists()).toBe(true)
-        expect(wrapper.find("[data-test=\"loop-iteration-row\"]").exists()).toBe(false)
-
-        await wrapper.find(".ks-alert-stub button").trigger("click")
-        await flushPromises()
-
-        expect(mockFindExecutions).toHaveBeenCalledTimes(2)
-        expect(wrapper.find(".ks-alert-stub").exists()).toBe(false)
-        expect(wrapper.find("[data-test=\"loop-iteration-row\"]").exists()).toBe(true)
+        expect(mockExecution).toHaveBeenCalledTimes(1)
+        expect(mockExecution).toHaveBeenCalledWith({executionId: "it-0"})
+        expect(wrapper.findAll("[data-test='iteration-task-run']")).toHaveLength(1)
     })
 
-    it("expands a nested Loop inside an iteration's task runs", async () => {
-        mockFindExecutions.mockImplementation(async (params: Record<string, unknown>) => {
-            if (params["filters[taskId][EQUALS]"] === "per_region") {
-                return {results: [iterationExecution("outer-1", "EMEA")], total: 1}
-            }
-            if (params["filters[taskId][EQUALS]"] === "per_quarter") {
-                return {results: [iterationExecution("inner-1", "Q1")], total: 1}
-            }
-            return {results: [], total: 0}
+    it("shouldListTheInnerLoopIterationsWhenANestedLoopRowIsExpandedInsideAnIteration", async () => {
+        useExecutionsStore().flow = {
+            id: "nested_loop_demo",
+            namespace: "company.team",
+            tasks: [{id: "per_region", type: LOOP_TYPE, tasks: [{id: "per_quarter", type: LOOP_TYPE, tasks: []}]}],
+        } as unknown as FlowForExecution
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (options.onlyTotal) return 1
+            return options["filters[taskId][EQUALS]"] === "per_quarter"
+                ? {results: [iterationExecution("inner-0", "Q1", 0)], total: 1}
+                : {results: [iterationExecution("outer-0", "EMEA", 0)], total: 1}
+        }) as never)
+        mockExecution.mockResolvedValue({
+            id: "outer-0",
+            taskRunList: [{id: "tr-quarter", taskId: "per_quarter", state: {current: "SUCCESS", histories}}],
         })
-        mockExecutionApi.mockImplementation(async (params: {executionId?: string}) => {
-            const execId = params.executionId
-            if (execId === "outer-1" || execId === "root-execution") {
-                return {
-                    id: "outer-1",
-                    namespace: "company.team",
-                    flowId: "nested_loop_demo",
-                    taskRunList: [{id: "tr-per-quarter", taskId: "per_quarter", state: {current: "SUCCESS"}}],
-                }
-            }
-            return {id: execId, namespace: "company.team", flowId: "nested_loop_demo", taskRunList: []}
-        })
-        mockFindTaskById.mockImplementation((_flow: unknown, taskId: string) =>
-            taskId === "per_quarter" ? {type: "io.kestra.plugin.core.flow.Loop"} : {type: "io.kestra.plugin.core.flow.Commands"})
-
         const wrapper = mountTree()
-        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
-        const mainRow = wrapper.find(".loop-iteration-row-main")
-        await mainRow.trigger("click")
-        await wrapper.vm.$nextTick()
+        await wrapper.get("[data-test='gantt-row-chevron']").trigger("click")
+        await flushPromises()
+        await wrapper.get("[data-test='iteration-task-run'] [data-test='gantt-row-chevron']").trigger("click")
         await flushPromises()
 
-        await vi.waitFor(() => {
-            expect(wrapper.findAll(".loop-iteration-tree")).toHaveLength(2)
-        })
-
-        const nestedTree = wrapper.findAll(".loop-iteration-tree")[1]
-        await nestedTree.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
-        await flushPromises()
-
-        expect(mockFindExecutions).toHaveBeenCalledWith(expect.objectContaining({
-            "filters[parentId][EQUALS]": "outer-1",
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({
+            "filters[parentId][EQUALS]": "outer-0",
             "filters[kind][EQUALS]": "LOOP",
             "filters[taskId][EQUALS]": "per_quarter",
         }))
+        expect(wrapper.findAll("[data-test='loop-iteration-row']").map(row => row.text())).toEqual([
+            expect.stringContaining("EMEA"),
+            expect.stringContaining("Q1"),
+        ])
+    })
+
+    it("shouldSelectIterationRowWithoutTogglingItWhenRowIsClicked", async () => {
+        findExecutions.mockImplementation(pageOf(2) as never)
+        const wrapper = mountTree()
+        await flushPromises()
+
+        await wrapper.findAll("[data-test='loop-iteration-row']")[1].trigger("click")
+
+        expect(tree.selected.value?.key).toBe("it:it-1")
+        expect(tree.isExpanded("it:it-1")).toBe(false)
+        expect(mockExecution).not.toHaveBeenCalled()
+    })
+
+    it("shouldShowErrorWithRetryThatRefetchesWhenFirstPageFails", async () => {
+        findExecutions
+            .mockRejectedValueOnce(new Error("network error"))
+            .mockImplementation(pageOf(1) as never)
+        const wrapper = mountTree()
+        await flushPromises()
+        expect(wrapper.find("[data-test='loop-iteration-row']").exists()).toBe(false)
+
+        await wrapper.findComponent({name: "KsAlert"}).findComponent({name: "KsButton"}).trigger("click")
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='loop-iteration-row']").exists()).toBe(true)
+    })
+
+    it("shouldLoadNextPageWhenLoadMoreIsClicked", async () => {
+        findExecutions.mockImplementation(pageOf(12) as never)
+        const wrapper = mountTree()
+        await flushPromises()
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(10)
+        expect(wrapper.get("[data-test='loop-preview-footer']").text()).toContain("load_10_more")
+
+        await wrapper.get("[data-test='loop-load-more']").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(12)
+        expect(wrapper.find("[data-test='loop-load-more']").exists()).toBe(false)
+    })
+
+    it("shouldOnlyListFailedIterationsWhenGlobalFailedOnlyIsOn", async () => {
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (options.onlyTotal) return 2
+            const failedOnly = options["filters[state][IN]"] !== undefined
+            return {
+                results: failedOnly
+                    ? [iterationExecution("it-1", "AMER", 1, "FAILED")]
+                    : [iterationExecution("it-0", "EMEA", 0), iterationExecution("it-1", "AMER", 1, "FAILED")],
+                total: failedOnly ? 1 : 2,
+            }
+        }) as never)
+        const wrapper = mountTree()
+        await flushPromises()
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(2)
+
+        tree.failedOnly.value = true
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test='loop-iteration-row']")).toHaveLength(1)
     })
 })
-
-async function flushPromises() {
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    await new Promise((resolve) => setTimeout(resolve, 0))
-}

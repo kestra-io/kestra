@@ -11,7 +11,7 @@
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span>
-                <i18n-t keypath="pause title" tag="span">
+                <i18n-t keypath="pause title" tag="span" scope="global">
                     <template #id><code>{{ execution.id }}</code></template>
                 </i18n-t>
                 <br>

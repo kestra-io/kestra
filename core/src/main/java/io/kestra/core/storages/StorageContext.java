@@ -195,6 +195,14 @@ public class StorageContext {
     }
 
     /**
+     * Tells whether the path points inside the storage folder of the given execution.
+     */
+    public static boolean isInExecutionStorage(Execution execution, URI path) {
+        String executionPrefix = forExecution(execution).getExecutionStorageURI().getPath() + "/";
+        return path.getPath() != null && path.getPath().startsWith(executionPrefix);
+    }
+
+    /**
      * Gets the storage URI of the given cacheID, and optionally the given objectID.
      *
      * @param cacheId the ID of the cache.

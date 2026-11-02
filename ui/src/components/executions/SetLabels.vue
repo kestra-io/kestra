@@ -33,7 +33,7 @@
             </div>
 
             <div class="set-labels__footer">
-                <i18n-t keypath="Set labels to execution" tag="p" class="set-labels__description">
+                <i18n-t keypath="Set labels to execution" tag="p" scope="global" class="set-labels__description">
                     <template #id><code>{{ execution.id }}</code></template>
                 </i18n-t>
                 <div class="set-labels__actions">

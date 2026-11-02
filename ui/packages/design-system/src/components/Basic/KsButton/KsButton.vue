@@ -7,7 +7,7 @@
         <ElButton
             :aria-label="tooltip"
             v-bind="({...filteredProps(), ...$attrs})"
-            :class="{'is-square': square, 'is-block': block}"
+            :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
             @click="emit('click', $event)"
             plain
         >
@@ -25,7 +25,7 @@
     <ElButton
         v-else
         v-bind="({...filteredProps(), ...$attrs})"
-        :class="{'is-square': square, 'is-block': block}"
+        :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
         @click="emit('click', $event)"
         plain
     >
@@ -43,10 +43,24 @@
 
 <script lang="ts">
     export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+
+    interface KsButtonTone {
+        border: string
+        text: string
+    }
+
+    export const KS_BUTTON_TONES: Partial<Record<KsButtonType | "error", KsButtonTone>> = {
+        primary: {border: "var(--ks-btn-primary-bg-default)", text: "var(--ks-btn-primary-text)"},
+        success: {border: "var(--ks-border-success)", text: "var(--ks-text-success)"},
+        warning: {border: "var(--ks-border-warning)", text: "var(--ks-text-warning)"},
+        danger: {border: "var(--ks-border-error)", text: "var(--ks-text-error)"},
+        error: {border: "var(--ks-border-error)", text: "var(--ks-text-error)"},
+        info: {border: "var(--ks-border-info)", text: "var(--ks-text-info)"},
+    }
 </script>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import {computed, type Component} from "vue"
 
     import {ElButton} from "element-plus"
 
@@ -87,51 +101,26 @@
     }>()
 
     const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block"])
+
+    const tone = computed(() => (props.type ? KS_BUTTON_TONES[props.type] : undefined))
 </script>
 
 <style lang="scss">
-    @use "sass:map";
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/button';
-    @use '../../../assets/styles/color-palette' as palette;
+</style>
 
-    $tag-color-map: (
-        primary: (
-            border: var(--ks-btn-primary-bg-default),
-            text: var(--ks-btn-primary-text),
-        ),
-        success: (
-            border: var(--ks-border-success),
-            text: var(--ks-text-success),
-        ),
-        warning: (
-            border: var(--ks-border-warning),
-            text: var(--ks-text-warning),
-        ),
-        danger: (
-            border: var(--ks-border-error),
-            text: var(--ks-text-error),
-        ),
-        error: (
-            border: var(--ks-border-error),
-            text: var(--ks-text-error),
-        ),
-        info: (
-            border: var(--ks-border-info),
-            text: var(--ks-text-info),
-        ),
-    );
-
+<style>
     .kel-button {
         --kel-button-font-weight: 600;
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
         --kel-button-disabled-text-color: var(--ks-text-inactive);
 
-        [class*="kel-icon"] + span {
+        & [class*="kel-icon"] + span {
             margin-left: var(--ks-spacing-2);
         }
 
-        > span {
+        & > span {
             width: var(--ks-button-content-width, auto);
         }
 
@@ -153,9 +142,10 @@
         /* Icon-only buttons centre the glyph. vue-material-design-icons nudges its SVG down by
            0.125em (baseline alignment meant for inline-with-text use), which reads as off-centre
            in a round/square button — neutralise it so the icon sits dead centre. */
+
         &.is-circle,
         &.is-square {
-            .material-design-icon > .material-design-icon__svg {
+            & .material-design-icon > .material-design-icon__svg {
                 bottom: 0;
                 left: 50%;
                 transform: translateX(-50%);
@@ -165,26 +155,20 @@
         &.is-plain:not(.is-text) {
             --kel-button-border-color: var(--ks-btn-secondary-border-default);
             --kel-button-bg-color: var(--ks-btn-secondary-bg-default);
-
             --kel-button-hover-text-color: var(--ks-text-primary);
             --kel-button-hover-bg-color: var(--ks-btn-secondary-bg-hover);
             --kel-button-hover-border-color: var(--ks-btn-secondary-border-hover);
-
             --kel-button-active-text-color: var(--ks-text-primary);
             --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
             --kel-button-active-border-color: var(--ks-btn-secondary-border-active);
 
-            @each $i, $colors in $tag-color-map {
-                &.kel-button--#{$i} {
-                    --kel-button-text-color: #{map.get($colors, text)};
-
-                    --kel-button-hover-text-color: #{map.get($colors, text)};
-                    --kel-button-hover-border-color: #{map.get($colors, border)};
-
-                    --kel-button-active-text-color: #{map.get($colors, text)};
-                    --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                    --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-                }
+            &.kel-button--toned {
+                --kel-button-text-color: v-bind("tone?.text");
+                --kel-button-hover-text-color: v-bind("tone?.text");
+                --kel-button-hover-border-color: v-bind("tone?.border");
+                --kel-button-active-text-color: v-bind("tone?.text");
+                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
+                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
             }
 
             &.is-disabled {
@@ -193,15 +177,12 @@
                 color: var(--ks-text-inactive);
             }
 
-
             &.kel-button--primary {
                 --kel-button-bg-color: var(--ks-btn-primary-bg-default);
                 --kel-button-border-color: var(--ks-btn-primary-bg-default);
-
                 --kel-button-hover-text-color: var(--ks-btn-primary-text);
                 --kel-button-hover-bg-color: var(--ks-btn-primary-bg-hover);
                 --kel-button-hover-border-color: var(--ks-btn-primary-bg-hover);
-
                 --kel-button-active-text-color: var(--ks-btn-primary-text);
                 --kel-button-active-bg-color: var(--ks-btn-primary-bg-active);
                 --kel-button-active-border-color: var(--ks-btn-primary-bg-active);

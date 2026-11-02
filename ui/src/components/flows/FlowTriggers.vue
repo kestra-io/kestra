@@ -48,7 +48,18 @@
                         @resume="unpauseBackfill(props.row as TriggerRow)"
                         @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper class="trigger-logs" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
+                    <LogsWrapper
+                        class="trigger-logs"
+                        :filters="{
+                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                            'filters[triggerId][EQUALS]': props.row.id
+                        }"
+                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                        :withCharts="false"
+                        :reloadLogs
+                        embed
+                    />
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -357,6 +368,7 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../utils/inputs"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -558,20 +570,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))

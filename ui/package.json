@@ -20,6 +20,7 @@
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "build:sdk": "node scripts/ensure-sdk.mjs",
+        "generate:sbom": "cyclonedx-npm --spec-version 1.6 --omit dev --output-reproducible --output-format JSON --output-file build/sbom/bom.json",
         "generate:openapi-spec": "cd .. && ./gradlew :webserver:generateOpenapiSpec",
         "generate:sdk": "node scripts/ensure-sdk.mjs --check-spec",
         "preview": "vite preview",
@@ -40,6 +41,7 @@
         "postinstall": "npx patch-package"
     },
     "dependencies": {
+        "@cyclonedx/cyclonedx-npm": "^6.0.1",
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@google/genai": "^2.11.0",

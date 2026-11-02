@@ -65,7 +65,7 @@
                 <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                     {{ $t("export") }}
                 </KsButton>
-                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="Delete">
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
@@ -211,7 +211,7 @@
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION) && canViewCharts"
                     prop="state"
                     :label="$t('execution statistics')"
                     className="row-graph"
@@ -326,7 +326,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import Upload from "vue-material-design-icons/Upload.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
@@ -357,6 +357,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
@@ -493,6 +494,7 @@
     })
 
     const user = computed(() => authStore.user)
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)

@@ -51,6 +51,7 @@ export const Default: Story = {
         const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-horizontal")!
         await expect(getComputedStyle(dragger).width).toBe("8px")
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Vertical splitter */
@@ -80,6 +81,7 @@ export const Vertical: Story = {
         const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-vertical")!
         await expect(getComputedStyle(dragger).height).toBe("8px")
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Three-panel layout */
@@ -108,6 +110,7 @@ export const ThreePanels: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Size constraints – panels respect min and max */
@@ -131,6 +134,7 @@ export const SizeConstraints: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Non-resizable panel */
@@ -154,6 +158,7 @@ export const NonResizable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Nested splitters */
@@ -186,4 +191,5 @@ export const Nested: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

@@ -6,19 +6,28 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.ResumeFromBreakpoint;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
@@ -48,6 +57,15 @@ public class LoopCaseTest {
 
     @Inject
     private LogDataStoreInterface logRepositoryInterface;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private TestRunnerUtils runnerUtils;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     public void loopSerial(Execution execution) throws InternalException {
         // Then
@@ -611,6 +629,27 @@ public class LoopCaseTest {
         assertThat(subflowExecution2.getTaskRunList()).hasSize(1);
     }
 
+    public void loopNestedWithSubflow(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subflowExecutions = executionRepository.find(
+            Pageable.UNPAGED,
+            execution.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("minimal")
+                    .build()
+            )
+        );
+        assertThat(subflowExecutions).hasSize(4);
+        assertThat(subflowExecutions).allSatisfy(e -> {
+            assertThat(e.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(ExecutionKind.isNormal(e)).isTrue();
+        });
+    }
+
     public void loopWithPause(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -640,6 +679,35 @@ public class LoopCaseTest {
             String expectedValue = sub.getLoopRun().index() + " - " + sub.getLoopRun().value();
             return expectedValue.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
         }));
+    }
+
+    public void loopBreakpointOnChildTask(String tenantId) throws QueueException {
+        Flow flow = flowRepository.findById(tenantId, "io.kestra.tests", "loop-breakpoint").orElseThrow();
+        Execution created = Execution.newExecution(flow, null).withBreakpoints(List.of(Breakpoint.of("inner")));
+
+        Execution suspended = runnerUtils.emitAndAwaitExecution(e -> e.getState().isBreakpoint(), created);
+        assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertIterationSuspendedAtInner(created, 0));
+
+        executionCommandQueue.emit(ResumeFromBreakpoint.from(created, Optional.of("inner")));
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertIterationSuspendedAtInner(created, 1));
+
+        executionCommandQueue.emit(ResumeFromBreakpoint.from(created, Optional.empty()));
+        Execution ended = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), created);
+        assertThat(ended.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionRepository.findLoopSubExecutions(tenantId, created.getId(), "loop"))
+            .hasSize(2)
+            .allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+    }
+
+    private void assertIterationSuspendedAtInner(Execution parent, int index) {
+        assertThat(executionRepository.findById(parent.getTenantId(), parent.getId()).orElseThrow().getState().getCurrent())
+            .isEqualTo(State.Type.BREAKPOINT);
+        List<Execution> iterations = executionRepository.findLoopSubExecutions(parent.getTenantId(), parent.getId(), "loop");
+        assertThat(iterations).hasSize(index + 1);
+        Execution iteration = iterations.get(index);
+        assertThat(iteration.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+        assertThat(iteration.findTaskRunsByTaskId("inner").getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
     }
 
     private Execution findSubflowExecution(Execution parent) {

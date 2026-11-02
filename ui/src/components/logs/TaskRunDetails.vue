@@ -309,6 +309,7 @@
     import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
     import {handledIf} from "../../utils/kestraHttp"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -671,7 +672,7 @@
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log) =>
+        [...executionsStore.reusedLogsOf(followedExecution.value?.id, props.levelFilter), ...rawLogs.value].filter((log) =>
             log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )
@@ -765,7 +766,8 @@
                     if (parentScroller) {
                         const scrollerStyles =
                             window.getComputedStyle(parentScroller)
-                        scrollerElement.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px`
+                        const availableHeight = parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight
+                        if (availableHeight > 0) scrollerElement.style.maxHeight = `${availableHeight}px`
                     }
                 })
             }
@@ -1174,7 +1176,7 @@
         executionsStore
             .loadLogs({
                 executionId: id,
-                params: p,
+                filters: routeQueryToQueryFilters(p),
             })
             .then((logs) => {
                 // A response for an execution the view has since left would overwrite the current one's logs.

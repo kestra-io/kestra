@@ -1,7 +1,8 @@
 <template>
     <ElBadge
         v-bind="({...filteredProps(), ...$attrs} as BadgeProps)"
-        :class="{'kel-badge--inline': inline, 'kel-badge--small': size === 'small'}"
+        :type="type === 'neutral' ? undefined : type"
+        :class="{'kel-badge--inline': inline, 'kel-badge--small': size === 'small', 'ks-badge--neutral': type === 'neutral'}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -18,7 +19,8 @@
 
     const props = defineProps<{
         value?: string | number
-        type?: "primary" | "success" | "warning" | "danger" | "info"
+        /** `neutral` is a grey pill for counts that sit next to content without competing with it. */
+        type?: "primary" | "success" | "warning" | "danger" | "info" | "neutral"
         max?: number
         isDot?: boolean
         hidden?: boolean
@@ -27,7 +29,7 @@
         size?: "small" | "default"
     }>()
 
-    const filteredProps = useFilteredProps(props, ["inline", "size"])
+    const filteredProps = useFilteredProps(props, ["inline", "size", "type"])
 
     defineSlots<{
         default?(): unknown
@@ -42,6 +44,11 @@
 <style>
     .kel-badge .kel-badge__content--danger {
         background-color: var(--ks-red-500);
+    }
+
+    .kel-badge.ks-badge--neutral .kel-badge__content {
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-secondary);
     }
 
     .kel-badge--inline {

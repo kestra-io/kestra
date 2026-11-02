@@ -27,7 +27,6 @@ export const useMetricFilter = (): ComputedRef<FilterConfiguration> => {
                             value: taskRun.id,
                         }))
                     },
-                    searchable: true,
                 },
             ],
         }
@@ -56,7 +55,6 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                             value,
                         }))
                     },
-                    searchable: true,
                 },
                 {
                     key: "metric",
@@ -72,7 +70,6 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                             value,
                         }))
                     },
-                    searchable: true,
                 },
                 {
                     key: "timeRange",

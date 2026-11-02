@@ -45,7 +45,8 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     private Type itemType = Type.STRING;
 
     @Schema(
-        title = "If the user can provide customs value."
+        title = "If the user can provide customs value.",
+        description = "When a value is provided at execution creation, the `expression` is not rendered."
     )
     @NotNull
     @Builder.Default

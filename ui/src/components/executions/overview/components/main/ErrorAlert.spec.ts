@@ -16,10 +16,11 @@ const messages = {
 
 const execution = {id: "e1", namespace: "ns", flowId: "flow", kind: "NORMAL", state: {current: "FAILED"}} as unknown as Execution
 
-const errorLogs = ["EMEA", "AMER", "LATAM", "ANZ", "JP", "APAC"].map((region, index) => ({
+// Newest first, as the server answers the paginated `sort=timestamp:desc` request.
+const errorLogs = ["APAC", "JP", "ANZ", "LATAM"].map((region, index) => ({
     level: "ERROR",
     taskId: "reconcile",
-    timestamp: `2026-10-14T11:55:49.${700 + index}Z`,
+    timestamp: `2026-10-14T11:55:49.${705 - index}Z`,
     message: `Ledger ${region} is off`,
 }))
 
@@ -42,6 +43,23 @@ describe("ErrorAlert", () => {
 
     afterAll(() => localStorage.clear())
 
+    it("requests only the 4 newest error logs from the server", async () => {
+        // Given
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue(errorLogs as never)
+
+        // When
+        mountAlert()
+        await flushPromises()
+
+        // Then
+        expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            store: false,
+            executionId: "e1",
+            size: 4,
+            sort: ["timestamp:desc"],
+        }))
+    })
+
     it("ends the expanded view with the error the collapsed preview quotes", async () => {
         // Given
         const wrapper = mountAlert()
@@ -56,6 +74,32 @@ describe("ErrorAlert", () => {
         expect(lines).toEqual(["Ledger LATAM is off", "Ledger ANZ is off", "Ledger JP is off", "Ledger APAC is off"])
     })
 
+    it.each(["NORMAL", "PLAYGROUND"])("loads errors by execution ID without excluding %s logs with a kind filter", async (kind) => {
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockImplementation(async ({filters}) =>
+            filters?.some(filter => filter.field === "kind") ? [] : errorLogs as never,
+        )
+        const wrapper = i18nMount(ErrorAlert, {
+            messages,
+            props: {execution: {...execution, kind} as Execution},
+            global: {stubs: {LogLine: true}},
+        })
+        await flushPromises()
+
+        expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            executionId: "e1",
+            filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+        }))
+        expect(wrapper.text()).toContain("Ledger APAC is off")
+    })
+
+    it("keeps the failure title visible when error logs are unavailable", async () => {
+        vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([])
+        const wrapper = mountAlert()
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("Execution failed!")
+        expect(wrapper.find("[data-test=error-alert-toggle]").exists()).toBe(false)
+    })
     it("names the toggle and reports whether the logs are shown", async () => {
         // Given
         const wrapper = mountAlert()

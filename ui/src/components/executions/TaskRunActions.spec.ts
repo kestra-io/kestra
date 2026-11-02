@@ -152,7 +152,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
         expect(click).toHaveBeenCalled()
         click.mockRestore()
@@ -179,7 +179,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-4",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
     })
 
@@ -281,5 +281,34 @@ describe("TaskRunActions", () => {
         const wrapper2 = mountActions(props2)
         // Defaults to the first task run since it's a clean execution id
         expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
+    })
+
+    it("requests 100 logs when triggering fix with AI", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.loadLogs = vi.fn().mockResolvedValue([])
+
+        const wrapper = mountActions({
+            taskRun: {
+                id: "tr-failed",
+                taskId: "task-failed",
+                state: state("FAILED"),
+                attempts: [{state: state("FAILED")}],
+            },
+            execution: executionProps("ex-failed"),
+        })
+
+        const fixBtn = wrapper.find(".fix-with-ai")
+        expect(fixBtn.exists()).toBe(true)
+        await fixBtn.trigger("click")
+
+        expect(executionsStore.loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "ex-failed",
+            filters: [
+                {field: "taskRunId", operation: "EQUALS", value: "tr-failed"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ],
+            size: 100,
+        })
     })
 })

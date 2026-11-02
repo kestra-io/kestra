@@ -2,6 +2,8 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, userEvent, waitFor, within} from "storybook/test"
 import LoopStateBar from "../../../../packages/topology/src/nodes/LoopStateBar.vue"
 
+const REAL_POINTER_EVENTS = ["mouseover", "mouseout", "mouseenter", "mouseleave"] as const
+
 const meta: Meta<typeof LoopStateBar> = {
     title: "Topology/LoopStateBar",
     component: LoopStateBar,
@@ -10,6 +12,16 @@ const meta: Meta<typeof LoopStateBar> = {
         setup: () => ({args}),
         template: "<div style=\"width: 20rem; padding: var(--ks-spacing-4); background: var(--ks-bg-surface);\"><LoopStateBar v-bind=\"args\" /></div>",
     }),
+    // The test browser's own cursor fires trusted mouseovers whenever a story mounts under it, which the bar reads as the pointer leaving.
+    beforeEach: () => {
+        const ignoreRealPointer = (event: Event) => {
+            if (event.isTrusted) event.stopImmediatePropagation()
+        }
+        for (const type of REAL_POINTER_EVENTS) window.addEventListener(type, ignoreRealPointer, true)
+        return () => {
+            for (const type of REAL_POINTER_EVENTS) window.removeEventListener(type, ignoreRealPointer, true)
+        }
+    },
 }
 
 export default meta

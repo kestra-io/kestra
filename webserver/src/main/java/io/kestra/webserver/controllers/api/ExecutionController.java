@@ -103,7 +103,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
-import io.kestra.webserver.services.ExecutionOutputFilterService;
+import io.kestra.webserver.services.SearchableDataFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -180,7 +180,7 @@ public class ExecutionController {
     protected FlowRepositoryInterface flowRepository;
 
     @Inject
-    private ExecutionOutputFilterService executionOutputFilterService;
+    private SearchableDataFilterService searchableDataFilterService;
 
     @Inject
     private FlowService flowService;
@@ -351,7 +351,7 @@ public class ExecutionController {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantId,
-            executionOutputFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
+            searchableDataFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -371,7 +371,7 @@ public class ExecutionController {
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        if (field == QueryFilter.Field.OUTPUTS || !QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
+        if (field == QueryFilter.Field.SEARCHABLE_DATA || !QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Field " + field + " is not supported for executions"
@@ -381,7 +381,7 @@ public class ExecutionController {
         return executionRepository.findDistinctFieldValues(
             tenantId,
             field,
-            executionOutputFilterService.resolve(tenantId, filters),
+            searchableDataFilterService.resolve(tenantId, filters),
             Pageable.from(0, size)
         );
     }
@@ -3082,7 +3082,7 @@ public class ExecutionController {
             .find(
                 Pageable.UNPAGED,
                 tenantId,
-                executionOutputFilterService.resolve(tenantId, filters)
+                searchableDataFilterService.resolve(tenantId, filters)
             );
     }
 

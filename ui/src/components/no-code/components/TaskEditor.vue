@@ -61,7 +61,7 @@
     import FieldValidationErrors from "./FieldValidationErrors.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
-    import {NoCodeElement, Schemas} from "../utils/types"
+    import {NoCodeElement, Schemas, type FieldValue} from "../utils/types"
     import {Schema} from "./tasks/getTaskComponent"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
@@ -141,7 +141,7 @@
     )
 
     const frameValue = computed({
-        get: () => (navCurrent.value ? getPath(taskModel.value, navCurrent.value.path) : undefined),
+        get: () => (navCurrent.value ? getPath<FieldValue>(taskModel.value, navCurrent.value.path) : undefined),
         set: (value) => {
             if (!navCurrent.value) return
             const next = cloneDeep(toRaw(taskModel.value) ?? {})

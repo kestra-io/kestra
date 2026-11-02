@@ -409,6 +409,20 @@ describe("ExecutionsTimeline", () => {
         expect([startMs, endMs]).toEqual([toolbar.props("rangeStartMs"), toolbar.props("rangeEndMs")])
     })
 
+    it("should draw the flows of child namespaces at the namespace level from the aggregated counts", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchRowDensity.mockResolvedValue(rowsOf([
+            {startMs: HOUR_START_MS, state: "SUCCESS", count: 2000, namespace: "company", flowId: "flow-a"},
+            {startMs: HOUR_START_MS, state: "SUCCESS", count: 1500, namespace: "company.team", flowId: "flow-b"},
+        ]))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {props: {namespace: "company"}})
+
+        const rows = wrapper.findAll(".stub-row").map(row => [row.attributes("data-label"), row.attributes("data-total")])
+        expect(rows).toEqual([["flow-a", "2000"], ["team.flow-b", "1500"]])
+    })
+
     it("should keep drawing raw executions, without any aggregated request, when the raw fetch holds all of them", async () => {
         const executions = Array.from({length: MAX_RAW_EXECUTIONS}, (_, i) => buildExecution(`exec-${i}`, "SUCCESS"))
         store.findExecutions.mockResolvedValue({results: executions, total: MAX_RAW_EXECUTIONS})

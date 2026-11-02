@@ -2328,6 +2328,7 @@
       "default": "기본 대시보드",
       "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
+      "overdue": "기한 초과 — {date}",
       "edition": {
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
@@ -2350,7 +2351,8 @@
         "paused": "일시 중지됨",
         "success": "성공",
         "warning": "경고",
-        "failed": "실패"
+        "failed": "실패",
+        "upcoming": "예정됨"
       }
     },
     "setup": {

@@ -1,6 +1,6 @@
 <template>
     <div class="table-root">
-        <TableQuickFilter :chart="props.chart" @change="onQuickFilterChange" />
+        <TableQuickFilter :chart="props.chart" :showUpcoming @change="onQuickFilterChange" />
 
         <Motion
             as="div"
@@ -14,7 +14,8 @@
                 <KsDataTable
                     :id="containerID"
                     :data="data.results"
-                    :total="isPaginationEnabled(props.chart) ? data.total : 0"
+                    :rowKey
+                    :total="isPaginationEnabled(activeChart) ? data.total : 0"
                     :currentPage="pageNumber"
                     :pageSize="pageSize"
                     :height="240"
@@ -24,7 +25,7 @@
                     @page-changed="handlePageChange"
                 >
                     <KsTableColumn
-                        v-for="[key, value] in Object.entries(props.chart.data?.columns ?? {})"
+                        v-for="[key, value] in Object.entries(activeChart.data?.columns ?? {})"
                         :key
                         :label="value.displayName || key"
                         :width="value.field === 'STATE' ? 140 : undefined"
@@ -53,22 +54,23 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import {useStorage} from "@vueuse/core"
     import {Motion} from "motion-v"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import type {Chart, ChartResults, Column} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
-    import {stateFilterForTab} from "./quickFilters"
+    import {UPCOMING_TAB, hasQuickFilters, stateFilterForTab, upcomingChartFor, type TabKey} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
     import Namespace from "./table/columns/Namespace.vue"
     import {useStateFilter} from "../../filter/composables/useStateFilter"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
+    import {useI18n} from "vue-i18n"
 
     const {navigateToStateFilter} = useStateFilter()
+    const {t} = useI18n({useScope: "global"})
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -88,9 +90,28 @@
     // Identifier columns get a larger share of the flexible width so namespace and flow ids stay readable; dates truncate recoverably behind their tooltip.
     const ENTITY_LINK_FIELDS = ["NAMESPACE", "FLOW_ID"]
 
+    const activeTab = ref<TabKey>("all")
+
+    // Only a bundled definition renders through the preview endpoint, the one path that can serve a chart the dashboard never declared.
+    const showUpcoming = computed(() => props.showDefault && hasQuickFilters(props.chart))
+
+    const upcomingChart = computed(() => upcomingChartFor(props.chart, {
+        namespace: t("namespace"),
+        flow: t("flow"),
+        trigger: t("trigger"),
+        nextExecution: t("next_execution"),
+    }))
+
+    const activeChart = computed(() => activeTab.value === UPCOMING_TAB.key ? upcomingChart.value : props.chart)
+
     const hasIdColumn = computed(() =>
-        Object.values(props.chart.data?.columns ?? {}).some((c: Column) => c?.field === "ID"),
+        Object.values(activeChart.value.data?.columns ?? {}).some((c: Column) => c?.field === "ID"),
     )
+
+    // A data source without an ID column (triggers, for one) would key every row on the same
+    // undefined, which the table reports as duplicate keys and then mis-patches on a tab change.
+    const rowKey = (row: Record<string, unknown>) =>
+        String(row.id ?? Object.values(row).join("|"))
 
     const resolvedComponent = (field: string | undefined) => {
         switch (field) {
@@ -110,7 +131,7 @@
     }
 
     const resolvedProps = (field: string | undefined, key: string, row: Record<string, unknown>) => {
-        const baseProps = {field: key, row, columns: props.chart.data?.columns ?? {}}
+        const baseProps = {field: key, row, columns: activeChart.value.data?.columns ?? {}}
 
         switch (field) {
         case "ID":
@@ -137,30 +158,54 @@
     }
 
     const data = ref<ChartResults>()
-    const activeTab = ref("all")
     const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)
-    const pageSize = useStorage(
-        `dashboard-page-size:${props.dashboardId ?? "default"}:${props.chart.id}`,
-        25,
-        sessionStorage,
-        {writeDefaults: false},
-    )
 
-    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
+    const pageSizeKey = computed(() => `dashboard-page-size:${props.dashboardId ?? "default"}:${activeChart.value.id}`)
+    const pageSize = ref(readStoredPageSize())
+
+    function readStoredPageSize() {
+        const stored = Number(sessionStorage.getItem(pageSizeKey.value))
+        return stored > 0 ? stored : 25
+    }
+
+    watch(pageSize, (size) => sessionStorage.setItem(pageSizeKey.value, String(size)))
+
+    // generate() reads these at call time, so plain getters keep the request on the tab's chart.
+    const chartSource = {
+        get chart() {
+            return activeChart.value
+        },
+        get filters() {
+            return props.filters
+        },
+        get showDefault() {
+            return props.showDefault
+        },
+    }
+
+    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, chartSource, false)
+
+    // A fast All -> Upcoming -> All sequence can still resolve out of order behind the load queue,
+    // so a response is only kept when the tab that asked for it is still the active one.
+    let pendingRequest = 0
 
     const getData = async () => {
-        const pagination = isPaginationEnabled(props.chart)
+        const requestId = ++pendingRequest
+        const pagination = isPaginationEnabled(activeChart.value)
             ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
             : undefined
         const append = stateFilter.value ? [stateFilter.value] : undefined
-        data.value = await generate(pagination, undefined, append)
+        const results = await generate(pagination, undefined, append)
+        if (requestId !== pendingRequest) return
+        data.value = results
     }
 
-    const onQuickFilterChange = (filter: QueryFilter | null, tab: string) => {
+    const onQuickFilterChange = (filter: QueryFilter | null, tab: TabKey) => {
         stateFilter.value = filter
         activeTab.value = tab
         pageNumber.value = 1
+        pageSize.value = readStoredPageSize()
         getData()
     }
 
@@ -184,12 +229,16 @@
 
     function exportParameters() {
         return {
-            ...(isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : {}),
+            ...(isPaginationEnabled(activeChart.value) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : {}),
             filters: stateFilter.value ? [stateFilter.value] : [],
         }
     }
 
-    defineExpose({refresh, exportParameters})
+    function exportChart() {
+        return activeChart.value
+    }
+
+    defineExpose({refresh, exportParameters, exportChart})
 
     watch(() => route.fullPath, () => refresh(), {immediate: true})
 </script>

@@ -2328,6 +2328,7 @@
       "default": "Default Dashboard",
       "set_default": "Set as default",
       "empty": "There are no results to be shown.",
+      "overdue": "Overdue — {date}",
       "edition": {
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
@@ -2350,7 +2351,8 @@
         "paused": "Paused",
         "success": "Success",
         "warning": "Warning",
-        "failed": "Failed"
+        "failed": "Failed",
+        "upcoming": "Upcoming"
       }
     },
     "setup": {

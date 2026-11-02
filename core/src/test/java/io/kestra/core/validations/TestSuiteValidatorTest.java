@@ -127,6 +127,36 @@ class TestSuiteValidatorTest {
         verify(context).buildConstraintViolationWithTemplate(contains("Flow with id: 'my-flow' does not exist"));
     }
 
+    @Test
+    void shouldBeInvalidWhenTestCasesShareTheSameId() {
+        givenFlow();
+        TestSuite testSuite = TestSuite.builder()
+            .id("suite")
+            .tenantId("main")
+            .namespace("io.kestra.tests")
+            .flowId("my-flow")
+            .testCases(List.of(unitTest("case", Fixtures.builder().build()), unitTest("case", Fixtures.builder().build())))
+            .build();
+
+        boolean valid = isValid(testSuite);
+
+        assertThat(valid).isFalse();
+        verify(context).buildConstraintViolationWithTemplate(contains("Duplicate unit test id with name [case]"));
+    }
+
+    @Test
+    void shouldBeInvalidWhenFixturesTargetTheSameTaskTwice() {
+        givenFlow();
+        TestSuite testSuite = testSuite(Fixtures.builder()
+            .tasks(List.of(TaskFixture.builder().id("log").build(), TaskFixture.builder().id("log").build()))
+            .build());
+
+        boolean valid = isValid(testSuite);
+
+        assertThat(valid).isFalse();
+        verify(context).buildConstraintViolationWithTemplate(contains("Duplicate task id in fixtures with name [log]"));
+    }
+
     private void givenFlow() {
         Flow flow = Flow.builder()
             .id("my-flow")
@@ -143,11 +173,15 @@ class TestSuiteValidatorTest {
             .tenantId("main")
             .namespace("io.kestra.tests")
             .flowId("my-flow")
-            .testCases(List.of(UnitTest.builder()
-                .id("case")
-                .type(UnitTest.class.getName())
-                .fixtures(fixtures)
-                .build()))
+            .testCases(List.of(unitTest("case", fixtures)))
+            .build();
+    }
+
+    private UnitTest unitTest(String id, Fixtures fixtures) {
+        return UnitTest.builder()
+            .id(id)
+            .type(UnitTest.class.getName())
+            .fixtures(fixtures)
             .build();
     }
 

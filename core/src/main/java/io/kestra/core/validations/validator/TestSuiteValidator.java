@@ -42,7 +42,16 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
             violations.add("Flow with id: '%s' does not exist on Namespace: '%s'.".formatted(value.getFlowId(), value.getNamespace()));
         } else {
             Flow flow = maybeFlow.get();
+
             if (!ListUtils.isEmpty(value.getTestCases())) {
+                // validate no duplicate it test id
+                List<String> ids = value.getTestCases().stream().map(it -> it.getId()).toList();
+                List<String> duplicateIds = ListUtils.getDuplicates(ids);
+                if (!duplicateIds.isEmpty()) {
+                    violations.add("Duplicate unit test id with name [" + String.join(", ", duplicateIds) + "]");
+                }
+
+                // validate each unit test
                 value.getTestCases().forEach(it -> validate(flow, it, violations));
             }
         }
@@ -68,6 +77,13 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
 
         if (!ListUtils.isEmpty(unitTest.getFixtures().getTasks())) {
             unitTest.getFixtures().getTasks().forEach(it -> validateTask(flow, it, violations));
+        }
+
+        // validate no duplicate taskId in fixture
+        List<String> ids = ListUtils.emptyOnNull(unitTest.getFixtures().getTasks()).stream().map(it -> it.getId()).toList();
+        List<String> duplicateIds = ListUtils.getDuplicates(ids);
+        if (!duplicateIds.isEmpty()) {
+            violations.add("Duplicate task id in fixtures with name [" + String.join(", ", duplicateIds) + "]");
         }
     }
 

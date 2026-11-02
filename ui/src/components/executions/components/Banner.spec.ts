@@ -31,6 +31,7 @@ const globalConfig = {
         KsTooltip: {template: "<div><slot /></div>"},
         KsIconButton: {template: "<button><slot /></button>"},
         SetLabels: true,
+        ApprovalActions: {props: ["execution", "taskRun"], template: "<span data-test=\"approval-action\">{{ taskRun.id }}</span>"},
         RunTimeline: true,
         Duration: true,
         ChangeExecutionStatus: {
@@ -229,5 +230,16 @@ describe("Banner", () => {
 
         expect(mountBanner(pausedOn("approval")).find("[data-test='approval-banner']").text()).toContain("approval.banner.paused")
         expect(mountBanner(pausedOn("pause")).find("[data-test='approval-banner']").exists()).toBe(false)
+    })
+
+    test("hands the approval task run to the review actions, while it pauses as once it is paused", () => {
+        useExecutionsStore().flow = {tasks: [{id: "approval", type: "io.kestra.plugin.core.flow.Approval"}]} as never
+        const approvalIn = (state: string) => ({
+            ...buildExecution(state),
+            taskRunList: [{id: `tr-${state}`, taskId: "approval", state: {current: state}}],
+        }) as unknown as Execution
+
+        expect(mountBanner(approvalIn("PAUSING")).find("[data-test='approval-action']").text()).toBe("tr-PAUSING")
+        expect(mountBanner(approvalIn("PAUSED")).find("[data-test='approval-action']").text()).toBe("tr-PAUSED")
     })
 })

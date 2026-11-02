@@ -10,6 +10,8 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.runners.ReusableInputsExpander;
 import io.kestra.core.utils.ListUtils;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
@@ -57,7 +59,7 @@ public class FlowForExecution extends AbstractFlow {
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .inputs(flow.getInputs())
-            .outputs(ListUtils.emptyOnNull(flow.getOutputs()).stream().<Output>map(OutputForExecution::of).toList())
+            .outputs(ListUtils.emptyOnNull(flow.getOutputs()).stream().<Output> map(OutputForExecution::of).toList())
             .tasks(flow.getTasks().stream().map(TaskForExecution::of).toList())
             .errors(ListUtils.emptyOnNull(flow.getErrors()).stream().map(TaskForExecution::of).toList())
             ._finally(ListUtils.emptyOnNull(flow.getFinally()).stream().map(TaskForExecution::of).toList())
@@ -67,6 +69,13 @@ public class FlowForExecution extends AbstractFlow {
             .deleted(flow.isDeleted())
             .draft(flow.isDraft())
             .build();
+    }
+
+    @Schema(hidden = false)
+    @ArraySchema(schema = @Schema(implementation = OutputForExecution.Declaration.class))
+    @Override
+    public List<Output> getOutputs() {
+        return super.getOutputs();
     }
 
     @JsonIgnore

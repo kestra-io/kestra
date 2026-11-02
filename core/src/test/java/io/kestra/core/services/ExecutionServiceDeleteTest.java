@@ -18,7 +18,9 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
@@ -57,6 +59,8 @@ class ExecutionServiceDeleteTest {
             mock(ConcurrencyLimitService.class),
             mock(FlowParsingService.class),
             mock(TaskOutputService.class),
+            mock(RunContextFactory.class),
+            mock(ApprovalRequestHandler.class),
             mock(ExecutionOutputService.class),
             mock(SearchableOutputRepositoryInterface.class),
             mock(CheckpointRepositoryInterface.class),

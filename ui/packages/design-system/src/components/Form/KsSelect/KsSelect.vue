@@ -171,7 +171,7 @@
         &.kel-select--single-line-tags {
             & .kel-select__selection {
                 flex-wrap: nowrap;
-                overflow: clip;
+                overflow-x: clip;
 
                 & .kel-tag {
                     min-width: 0;
@@ -298,6 +298,11 @@
         .kel-select .kel-select__input {
             font-size: 1rem;
         }
+    }
+
+    .kel-tag.in-tooltip.kel-tag--default.kel-tag--light {
+        --kel-tag-text-color: var(--ks-text-primary);
+        --kel-tag-bg-color: var(--ks-bg-tag);
     }
 
     .kel-select__popper {

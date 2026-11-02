@@ -71,6 +71,18 @@ const globalConfig = {
     },
 }
 
+function computeFlowForExecution(flow: Partial<FlowForExecution> = {}): FlowForExecution {
+    return {
+        id: "flow",
+        namespace: "io.kestra.tests",
+        disabled: false,
+        deleted: false,
+        draft: false,
+        tasks: [],
+        ...flow,
+    }
+}
+
 function mountExplorer(
     variables: Record<string, unknown>,
     trigger?: {id: string; type: string; variables?: Record<string, unknown>},
@@ -149,14 +161,20 @@ describe("ExecutionVariableExplorer", () => {
 
     test("tags the flow outputs declared searchable by the flow", async () => {
         vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
-        useExecutionsStore().flow = {
-            id: "flow",
-            namespace: "io.kestra.tests",
+        useExecutionsStore().flow = computeFlowForExecution({
             outputs: [
-                {id: "orderIds", type: "STRING", value: "{{ outputs.x }}", searchable: true},
-                {id: "plain", type: "STRING", value: "{{ outputs.x }}"},
+                {
+                    id: "orderIds", 
+                    type: "STRING", 
+                    searchable: true,
+                },
+                {
+                    id: "plain", 
+                    type: "STRING", 
+                },
             ],
-        } as FlowForExecution
+        })
+        
         const wrapper = mountExplorer({})
         await flushPromises()
 

@@ -200,4 +200,40 @@ describe("TourOverlay", () => {
         expect(store.state.status).toBe("skipped")
         expect(find("[data-test=tour-notice]")).toBeNull()
     })
+
+    it("verifies an execution the user starts while another one is still being verified", async () => {
+        let finishFirst: (value: unknown) => void = () => {}
+        mocks.actions.waitForExecution
+            .mockReturnValueOnce(new Promise((resolve) => (finishFirst = resolve)))
+            .mockResolvedValueOnce(execution("exec-2", "SUCCESS"))
+        const store = await mountOnFlowGenerated()
+
+        await goTo(executionPath("exec-1", "gantt"))
+        await goTo(executionPath("exec-2", "gantt"))
+        finishFirst(execution("exec-1", "FAILED"))
+        await flushPromises()
+
+        expect(mocks.actions.waitForExecution).toHaveBeenCalledTimes(2)
+        expect(store.state.currentStepId).toBe("first_execution")
+    })
+
+    it("leaves no error behind when the tour is skipped while an execution is being verified", async () => {
+        let signal: AbortSignal | undefined
+        mocks.actions.waitForExecution.mockImplementation((_id: string, options: {signal: AbortSignal}) => {
+            signal = options.signal
+            return new Promise((_resolve, reject) => {
+                options.signal.addEventListener("abort", () => reject(new DOMException("The wait was aborted.", "AbortError")))
+            })
+        })
+        const store = await mountOnFlowGenerated()
+
+        await goTo(executionPath("exec-1", "gantt"))
+        await click("[data-test=tour-skip]")
+        store.state.status = "in_progress"
+        await flushPromises()
+
+        expect(signal?.aborted).toBe(true)
+        expect(mocks.actions.waitForExecution).toHaveBeenCalledTimes(1)
+        expect(document.body.textContent).not.toContain("The wait was aborted.")
+    })
 })

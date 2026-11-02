@@ -1687,7 +1687,7 @@
           "enable_docker": "How to enable Docker"
         },
         "notices": {
-          "still_running": "The execution is still running. The first run can take a few minutes while the Python dependencies install. The tour continues when it finishes."
+          "still_running": "The execution is still running. Some runs take a few minutes, for example while Python dependencies install. The tour continues when it finishes."
         },
         "intro": {
           "kicker": "Welcome to Kestra",

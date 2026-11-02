@@ -5,6 +5,7 @@ export const TOUR_FLOW_ID = "order_summary"
 export const TOUR_REPORT_FLOW_ID = "daily_report"
 export const TOUR_WEBHOOK_TRIGGER_ID = "new_order"
 export const TOUR_WEBHOOK_TRIGGER_TYPE = "io.kestra.plugin.core.trigger.Webhook"
+export const TOUR_SUMMARIZE_TASK_ID = "summarize"
 
 // A flow variable, not inline: `url` is a secret property and a plain value there warns in the editor.
 export const TOUR_SLACK_VARIABLE = "slack_webhook"
@@ -31,7 +32,7 @@ tasks:
     type: io.kestra.plugin.core.http.Download
     uri: https://dummyjson.com/carts
 
-  - id: summarize
+  - id: ${TOUR_SUMMARIZE_TASK_ID}
     type: io.kestra.plugin.scripts.python.Script${SUMMARIZE_TASK_RUNNER[runner]}
     dependencies:
       - kestra
@@ -62,7 +63,7 @@ export const TOUR_NOTIFY_TASK_BROKEN = `
   - id: notify
     type: ${TOUR_NOTIFY_TASK_TYPE}
     url: "{{ vars.${TOUR_SLACK_VARIABLE} }}"
-    messageText: "Revenue today: \${{ outputs.summarize.vars.revenu }}"`
+    messageText: "Revenue today: \${{ outputs.${TOUR_SUMMARIZE_TASK_ID}.vars.revenu }}"`
 
 export const TOUR_NOTIFY_TASK_FIXED = TOUR_NOTIFY_TASK_BROKEN.replace(
     "vars.revenu }}",

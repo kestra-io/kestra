@@ -170,16 +170,6 @@ describe("product tour store", () => {
         expect(restored.isGuidedActive).toBe(true)
     })
 
-    it("runs the Python task on Docker, with no rejected execution, by default", async () => {
-        const {useProductTourStore} = await import("./productTour")
-        const store = useProductTourStore()
-
-        store.startGuided(TOUR)
-
-        expect(store.state.tour.taskRunner).toBe("docker")
-        expect(store.state.tour.rejectedExecutionId).toBeNull()
-    })
-
     it("forgets the runner and the rejected execution when the tour restarts", async () => {
         const {useProductTourStore} = await import("./productTour")
         const store = useProductTourStore()

@@ -1682,12 +1682,7 @@
           "running": "Wird ausgeführt",
           "finish_now": "Tour beenden",
           "dismiss": "Dies ausblenden",
-          "skipped_hint": "Die Produkttour bleibt im linken Menü, falls du sie später fortsetzen möchtest.",
-          "run_without_docker": "Ohne Docker ausführen",
-          "enable_docker": "So aktivierst du Docker"
-        },
-        "notices": {
-          "still_running": "Die Ausführung läuft noch. Beim ersten Lauf kann die Installation der Python-Abhängigkeiten einige Minuten dauern. Die Tour geht weiter, sobald sie beendet ist."
+          "skipped_hint": "Die Produkttour bleibt im linken Menü, falls du sie später fortsetzen möchtest."
         },
         "intro": {
           "kicker": "Willkommen bei Kestra",
@@ -1826,8 +1821,7 @@
           "no_execution_to_replay": "Es gibt noch keine Execution für einen Replay. Führe den Flow im vorherigen Schritt aus und versuche es dann erneut.",
           "replay": "Der Replay endete mit dem Status {state}. Öffne die Logs auf dieser Seite, um zu sehen, was <code>notify</code> gemeldet hat, und versuche es dann erneut.",
           "save_flow": "Der Tour-Flow konnte nicht gespeichert werden. {reason}",
-          "test_event": "Der Webhook hat mit {status} geantwortet. Prüfe, ob der Flow gespeichert und der Trigger aktiviert ist, und versuche es dann erneut.",
-          "docker_unavailable": "Kestra kann Docker nicht erreichen, daher konnte die Python-task nicht gestartet werden. Führe sie ohne Docker aus oder gib Kestra Zugriff auf Docker und versuche es dann erneut."
+          "test_event": "Der Webhook hat mit {status} geantwortet. Prüfe, ob der Flow gespeichert und der Trigger aktiviert ist, und versuche es dann erneut."
         },
         "steps": {
           "1": "Einen Flow schreiben und ausführen",

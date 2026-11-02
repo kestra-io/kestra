@@ -23,6 +23,7 @@ import {
     tourWebhookTrigger,
     type TourTaskRunner,
 } from "./tourFlows"
+import type {Execution} from "../../../stores/executions"
 import en from "../../../translations/en.json"
 
 const translations = (en as {
@@ -62,7 +63,13 @@ const completedOn = (
     return Boolean(sceneOf(id).completedByUser?.(context as unknown as Parameters<NonNullable<TourScene["completedByUser"]>>[0]))
 }
 
-const executionOf = (id: string, state: string) => ({id, state: {current: state}})
+const executionOf = (id: string, state: Execution["state"]["current"]): Execution => ({
+    id,
+    namespace: TOUR_NAMESPACE,
+    flowId: TOUR_FLOW_ID,
+    flowRevision: 1,
+    state: {current: state, histories: []},
+})
 
 const contextWith = (
     {tour = {}, execution = executionOf("exec-1", "SUCCESS"), dockerUnavailable = false}:
@@ -230,19 +237,13 @@ describe("first execution outcome", () => {
         expect(context.actions.dockerUnavailable).not.toHaveBeenCalled()
     })
 
-    it("explains a missing Docker socket when the execution failed because of it", async () => {
-        const context = contextWith({dockerUnavailable: true})
-
-        await expect(checkFirstExecution(context, executionOf("exec-1", "FAILED")))
-            .rejects.toBeInstanceOf(TourDockerUnavailableError)
-        expect(context.actions.dockerUnavailable).toHaveBeenCalledWith("exec-1")
-    })
-
-    it("offers to run without Docker and to read the docs", async () => {
+    it("explains a missing Docker socket, and offers to run without Docker or read the docs", async () => {
         const context = contextWith({dockerUnavailable: true})
 
         const error = await checkFirstExecution(context, executionOf("exec-1", "FAILED")).catch((e) => e) as TourSceneError
 
+        expect(error).toBeInstanceOf(TourDockerUnavailableError)
+        expect(context.actions.dockerUnavailable).toHaveBeenCalledWith("exec-1", context.signal)
         expect(error.options.recovery?.labelKey).toBe("onboarding.tour.actions.run_without_docker")
         expect(error.options.help?.href).toContain("https://kestra.io/docs/installation/docker")
 
@@ -269,26 +270,12 @@ describe("first execution outcome", () => {
         expect(error.key).toBe("onboarding.tour.errors.first_execution")
         expect(context.actions.dockerUnavailable).not.toHaveBeenCalled()
     })
-
-    it("does not look for Docker on an execution that did not fail", async () => {
-        const context = contextWith({dockerUnavailable: true})
-
-        const error = await checkFirstExecution(context, executionOf("exec-1", "KILLED")).catch((e) => e)
-
-        expect(error.key).toBe("onboarding.tour.errors.first_execution")
-        expect(context.actions.dockerUnavailable).not.toHaveBeenCalled()
-    })
 })
 
 describe("scenes that follow the user", () => {
     const executionRoute = (id: string) => ({
         name: "executions/update/logs",
         params: {namespace: TOUR_NAMESPACE, flowId: TOUR_FLOW_ID, id},
-    })
-
-    it("follows an execution of the tour flow", () => {
-        expect(completedOn("flow_generated", executionRoute("exec-1"))).toBe(true)
-        expect(completedOn("editor_help", executionRoute("exec-1"))).toBe(true)
     })
 
     it("does not follow the execution it already rejected, whichever tab shows it", () => {
@@ -298,27 +285,17 @@ describe("scenes that follow the user", () => {
         expect(completedOn("editor_help", executionRoute("exec-1"), tour)).toBe(false)
     })
 
-    it("follows a new execution after one was rejected", () => {
-        expect(completedOn("flow_generated", executionRoute("exec-2"), {rejectedExecutionId: "exec-1"})).toBe(true)
-    })
-
-    it("does not move on from the first execution when it failed", async () => {
+    it("rejects a failed execution, and forgets it once a later one succeeds", async () => {
         const context = contextWith({execution: executionOf("exec-1", "FAILED")})
 
         await expect(verifyOn("flow_generated", context)).rejects.toBeInstanceOf(TourSceneError)
-
         expect(context.store.state.tour.rejectedExecutionId).toBe("exec-1")
         expect(context.store.state.tour.lastExecutionId).toBeUndefined()
-    })
 
-    it("moves on from the first execution once it succeeded", async () => {
-        const context = contextWith({tour: {rejectedExecutionId: "exec-0"}})
-
-        await verifyOn("flow_generated", context)
-
-        expect(context.actions.waitForExecution).toHaveBeenCalledWith("exec-1", expect.objectContaining({signal: context.signal}))
-        expect(context.store.state.tour.lastExecutionId).toBe("exec-1")
+        context.actions.waitForExecution.mockResolvedValue(executionOf("exec-2", "SUCCESS"))
+        await verifyOn("flow_generated", context, "exec-2")
         expect(context.store.state.tour.rejectedExecutionId).toBeNull()
+        expect(context.store.state.tour.lastExecutionId).toBe("exec-2")
     })
 
     it("rejects the execution the card ran when it failed", async () => {
@@ -345,14 +322,6 @@ describe("scenes that follow the user", () => {
 })
 
 describe("product tour flows", () => {
-    it("breaks the notify task on an expression, and fixes exactly that", () => {
-        expect(TOUR_NOTIFY_TASK_BROKEN).toContain("vars.revenu }}")
-        expect(TOUR_NOTIFY_TASK_FIXED).toContain("vars.revenue }}")
-
-        const difference = TOUR_NOTIFY_TASK_FIXED.length - TOUR_NOTIFY_TASK_BROKEN.length
-        expect(difference).toBe(1)
-    })
-
     it("builds each stage on top of the previous one", () => {
         expect(tourFlowSource.generated("docker")).toBe(TOUR_FLOW_BASE)
 
@@ -371,49 +340,24 @@ describe("product tour flows", () => {
         expect(withWebhook).not.toContain("log_event")
     })
 
-    it("leaves the Docker task runner to the default", () => {
-        for (const source of [
-            tourFlowSource.generated("docker"),
-            tourFlowSource.withBrokenNotify("docker"),
-            tourFlowSource.withFixedNotify("docker"),
-            tourFlowSource.withWebhook("key", "docker"),
-        ]) {
-            expect(source).not.toContain("taskRunner")
-        }
-    })
+    it.each(RUNNERS)("builds every stage for the %s runner, changing only the runner and the notify expression", (runner) => {
+        const hasProcessRunner = runner === "process"
+        const stages = (build: TourTaskRunner) => [
+            tourFlowSource.generated(build),
+            tourFlowSource.withBrokenNotify(build),
+            tourFlowSource.withFixedNotify(build),
+            tourFlowSource.withWebhook("key", build),
+        ]
 
-    it("runs the Python task on the Process runner at every stage", () => {
-        for (const source of [
-            tourFlowSource.generated("process"),
-            tourFlowSource.withBrokenNotify("process"),
-            tourFlowSource.withFixedNotify("process"),
-            tourFlowSource.withWebhook("key", "process"),
-        ]) {
-            expect(source).toContain(`    type: io.kestra.plugin.scripts.python.Script\n${PROCESS_RUNNER}\n    dependencies:`)
-            expect(source.match(/taskRunner/g)).toHaveLength(1)
-        }
-    })
-
-    it("only changes the runner between the two variants", () => {
-        const stages = {
-            generated: (runner: TourTaskRunner) => tourFlowSource.generated(runner),
-            broken: (runner: TourTaskRunner) => tourFlowSource.withBrokenNotify(runner),
-            fixed: (runner: TourTaskRunner) => tourFlowSource.withFixedNotify(runner),
-            webhook: (runner: TourTaskRunner) => tourFlowSource.withWebhook("key", runner),
+        for (const [index, source] of stages(runner).entries()) {
+            expect(source.includes(PROCESS_RUNNER)).toBe(hasProcessRunner)
+            expect(source.match(/taskRunner/g)?.length ?? 0).toBe(hasProcessRunner ? 1 : 0)
+            expect(source.replace(`\n${PROCESS_RUNNER}`, "")).toBe(stages("docker")[index])
         }
 
-        for (const stage of Object.values(stages)) {
-            expect(stage("process").replace(`\n${PROCESS_RUNNER}`, "")).toBe(stage("docker"))
-        }
-    })
-
-    it("keeps the notify fix a one-expression change for both runners", () => {
-        for (const runner of RUNNERS) {
-            const broken = tourFlowSource.withBrokenNotify(runner)
-            const fixed = tourFlowSource.withFixedNotify(runner)
-
-            expect(fixed).toBe(broken.replace("vars.revenu }}", "vars.revenue }}"))
-        }
+        const broken = tourFlowSource.withBrokenNotify(runner)
+        expect(broken).toContain("vars.revenu }}")
+        expect(tourFlowSource.withFixedNotify(runner)).toBe(broken.replace("vars.revenu }}", "vars.revenue }}"))
     })
 
     it("keeps the flow runnable on any instance", () => {

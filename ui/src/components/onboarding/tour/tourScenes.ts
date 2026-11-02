@@ -166,7 +166,7 @@ const settleExecution = async (
 }
 
 export const checkFirstExecution = async (
-    {actions, store}: TourSceneBase,
+    {actions, store, signal}: TourSceneContext,
     execution: Execution | undefined,
 ) => {
     const state = execution?.state?.current
@@ -177,7 +177,7 @@ export const checkFirstExecution = async (
         state === "FAILED"
         && store.state.tour.taskRunner === "docker"
         && execution?.id
-        && await actions.dockerUnavailable(execution.id)
+        && await actions.dockerUnavailable(execution.id, signal)
     ) {
         throw new TourDockerUnavailableError()
     }

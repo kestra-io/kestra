@@ -513,7 +513,7 @@ class ExecutionCommandMessageHandlerTest {
         when(newExecution.withState(State.Type.FAILED)).thenReturn(failedExecution);
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"))).thenReturn(newExecution);
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"), any(), any())).thenReturn(newExecution);
         when(killSwitchService.evaluate(failedExecution)).thenReturn(EvaluationType.PASS);
         when(flowService.getFailedChecks(eq(flow), any()))
             .thenReturn(List.of(Check.builder().when("{{ false }}").message("failed").behavior(Check.Behavior.FAIL_EXECUTION).build()));

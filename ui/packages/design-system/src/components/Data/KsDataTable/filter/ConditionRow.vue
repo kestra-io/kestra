@@ -128,7 +128,7 @@
     </KsPopover>
 
     <KsButton
-        v-if="!readOnly"
+        v-if="!readOnly && keyConfig?.removable !== false"
         link
         class="cond-delete"
         :icon="Delete"

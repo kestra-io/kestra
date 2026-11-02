@@ -325,7 +325,6 @@
         maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
     }
 
-    // Whatever activated the tab (toolbar, file tree, topology), it has to end up on screen.
     watch(() => panels.value.map(p => p.activeTab?.uid), (uids, previous) => {
         for (const uid of uids) {
             if (!uid || previous?.includes(uid)) continue
@@ -551,7 +550,6 @@
     const MIN_PANEL_WIDTH = 360
     const {width: splitterWidth} = useElementSize(useTemplateRef("splitter"))
 
-    // A new panel takes the average share, so every panel shrinks by the same ratio.
     const canAddPanel = computed(() => {
         const sizes = panels.value.map(p => p.size)
         const total = sizes.reduce((a, b) => a + b, 0)

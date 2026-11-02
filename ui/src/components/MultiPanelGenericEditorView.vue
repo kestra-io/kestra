@@ -117,7 +117,11 @@
         }
 
         if(openTabs.value.includes(tabValue)){
-            focusTab(tabValue)
+            if(hasMainView.value){
+                focusTab(tabValue)
+            } else {
+                onRemoveTab(tabValue)
+            }
             return
         }
 
@@ -126,7 +130,7 @@
             return
         }
 
-        const target = panels.value[targetPanelIndex(panel.main)]
+        const target = hasMainView.value ? panels.value[targetPanelIndex(panel.main)] : undefined
         if(target){
             target.tabs.push(panel.panel.activeTab)
             target.activeTab = panel.panel.activeTab
@@ -143,12 +147,12 @@
         }
     }
 
+    const hasMainView = computed(() => props.editorElements.some(e => e.main))
+
     function isMainTab(uid: string) {
         return props.editorElements.some(e => e.main && (uid === e.uid || uid.startsWith(`${e.uid}-`)))
     }
 
-    // Main views share the panel holding the first main view, companions the panel beside it.
-    // -1 means there is no such panel yet, so the view opens a new one.
     function targetPanelIndex(main: boolean) {
         if(!panels.value.length) return -1
         const mainIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => isMainTab(t.uid))))

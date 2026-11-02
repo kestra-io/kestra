@@ -196,6 +196,18 @@ describe("MultiPanelGenericEditorView view placement", () => {
         ])
     })
 
+    test("keeps one panel per view and closes an open view when no element is main", () => {
+        const wrapper = i18nMount(MultiPanelGenericEditorView, {
+            global: globalConfig,
+            props: {editorElements: [makeElement("code"), makeElement("doc"), makeElement("blueprints")], defaultActiveTabs: ["code", "doc"]},
+        })
+
+        wrapper.vm.setTabValue("blueprints")
+        wrapper.vm.setTabValue("code")
+
+        expect(wrapper.vm.panels.map(p => p.tabs.map(t => t.uid))).toEqual([[], ["doc"], ["blueprints"]])
+    })
+
     test("focuses a view that is already open instead of closing it", () => {
         const wrapper = mountPlacement(["code", "doc"])
         wrapper.vm.setTabValue("nocode")

@@ -10,10 +10,6 @@
     display: flex !important;
 }
 
-.d-inline-flex {
-    display: inline-flex !important;
-}
-
 .d-none {
     display: none !important;
 }
@@ -28,10 +24,6 @@
 
 .mw-100 {
     max-width: 100% !important;
-}
-
-.mh-100 {
-    max-height: 100% !important;
 }
 
 .flex-column {
@@ -79,11 +71,6 @@
     margin-left: 0.5rem !important;
 }
 
-.mx-3 {
-    margin-right: 1rem !important;
-    margin-left: 1rem !important;
-}
-
 .my-4 {
     margin-top: 1.5rem !important;
     margin-bottom: 1.5rem !important;
@@ -107,10 +94,6 @@
 
 .me-2 {
     margin-right: 0.5rem !important;
-}
-
-.me-3 {
-    margin-right: 1rem !important;
 }
 
 .mb-0 {

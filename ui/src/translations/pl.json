@@ -1682,7 +1682,12 @@
           "running": "Uruchomiony",
           "finish_now": "Zakończ przewodnik",
           "dismiss": "Ukryj to",
-          "skipped_hint": "Przewodnik po produkcie pozostanie w lewym menu, jeśli chcesz wrócić do niego później."
+          "skipped_hint": "Przewodnik po produkcie pozostanie w lewym menu, jeśli chcesz wrócić do niego później.",
+          "run_without_docker": "Uruchom bez Dockera",
+          "enable_docker": "Jak włączyć Dockera"
+        },
+        "notices": {
+          "still_running": "Wykonanie nadal trwa. Pierwsze uruchomienie może potrwać kilka minut, ponieważ instalowane są zależności Pythona. Przewodnik przejdzie dalej po jego zakończeniu."
         },
         "intro": {
           "kicker": "Witamy w Kestra",
@@ -1821,7 +1826,8 @@
           "no_execution_to_replay": "Nie ma jeszcze egzekucji, dla której można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
           "replay": "Replay zakończył się statusem {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił <code>notify</code>, a potem spróbuj ponownie.",
           "save_flow": "Nie udało się zapisać Flow przewodnika. {reason}",
-          "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie."
+          "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie.",
+          "docker_unavailable": "Kestra nie może połączyć się z Dockerem, więc Task w Pythonie nie mógł się uruchomić. Uruchom go bez Dockera albo daj Kestrze dostęp do Dockera i spróbuj ponownie."
         },
         "steps": {
           "1": "Napisz i uruchom Flow",

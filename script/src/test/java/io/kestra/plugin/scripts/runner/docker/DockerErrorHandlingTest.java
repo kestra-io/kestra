@@ -65,4 +65,10 @@ class DockerErrorHandlingTest {
 
         assertThat(Docker.isDockerSocketAccessError(exception)).isFalse();
     }
+
+    @Test
+    void shouldStartSocketErrorMessageWithTheSentenceTheProductTourMatches() {
+        assertThat(Docker.dockerSocketNotAccessibleMessage("unix:///var/run/docker.sock"))
+            .startsWith("Docker execution failed because Docker socket is not accessible.");
+    }
 }

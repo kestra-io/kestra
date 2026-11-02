@@ -66,8 +66,9 @@ jobs:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
+        # oss_base_branch picks the client-sdk spec EE diffs against: develop -> next/v2.1, releases/v2.0.x -> main.
         client-payload: >-
-          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}","oss_base_branch":"${{ github.event.pull_request.base.ref }}"}
 
       # ------------------------------------------------------------------------
       # LEGACY (DISABLED): EE CI used to be triggered by a repository dispatch

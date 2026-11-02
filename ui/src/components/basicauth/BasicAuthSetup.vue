@@ -79,7 +79,7 @@
                                 </KsCheckItem>
                             </div>
                         </KsForm>
-                        <div class="d-flex justify-content-end gap-1">
+                        <div class="setup-actions user-actions">
                             <KsButton type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
                             </KsButton>
@@ -125,7 +125,7 @@
                             </KsFormItem>
                         </KsForm>
 
-                        <div class="d-flex justify-content-end">
+                        <div class="setup-actions">
                             <KsButton type="primary" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
                             </KsButton>
@@ -413,3 +413,14 @@
 </script>
 
 <style src="./setup.css" scoped />
+
+<style scoped>
+    .setup-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .user-actions {
+        gap: var(--ks-spacing-1);
+    }
+</style>

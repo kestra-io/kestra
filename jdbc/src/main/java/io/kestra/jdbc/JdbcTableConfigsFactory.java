@@ -23,6 +23,7 @@ import io.kestra.core.notification.model.Notification;
 import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.searchable.SearchableOutput;
 import io.kestra.core.server.ServiceInstance;
 
 import io.micronaut.context.annotation.Bean;
@@ -201,6 +202,12 @@ public class JdbcTableConfigsFactory {
     @Named("notification_items")
     public InstantiableJdbcTableConfig notificationItems() {
         return new InstantiableJdbcTableConfig("notification_items", NotificationItem.class, "notification_items");
+    }
+
+    @Bean
+    @Named("searchableoutputs")
+    public InstantiableJdbcTableConfig searchableOutputs() {
+        return new InstantiableJdbcTableConfig("searchableoutputs", SearchableOutput.class, "searchable_outputs");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

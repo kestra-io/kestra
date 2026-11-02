@@ -372,8 +372,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         // as loops can run concurrently, the state might already be set by another task run
         TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
 
-        // a late iteration event must not fold the cumulative accumulators again once the loop already terminated
-        if (accumulated.taskRunStatistic().count() > 0 && !parentTaskRun.getState().isTerminated()) {
+        if (accumulated.taskRunStatistic().count() > 0) {
             Execution execution = executor.getExecution();
             executor.withExecution(
                 execution.withMetadata(

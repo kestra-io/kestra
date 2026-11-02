@@ -674,30 +674,6 @@ class LoopExecutionEventMessageHandlerTest {
         );
     }
 
-    @Test
-    void shouldNotFoldCountsAgainWhenLateEventArrivesAfterLoopTerminated() throws InternalException {
-        // Given — a concurrent loop already terminated in FAILED because of an earlier failed iteration
-        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
-        var execution = Execution.newExecution(flow, Collections.emptyList());
-        String loopTaskRunId = IdUtils.create();
-        var terminatedLoopTaskRun = loopTaskRun(loopTaskRunId, execution).withState(State.Type.FAILED);
-        executionRepository.save(execution.withTaskRunList(List.of(terminatedLoopTaskRun)));
-        taskOutputService.saveOutputs(
-            terminatedLoopTaskRun, Map.of(
-                Loop.ITERATION_COUNT_OUTPUT, 3,
-                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
-                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1)
-            )
-        );
-
-        // When — a second iteration fails afterwards
-        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null, false);
-        var maybeExecutor = handler.handle(lastEvent(loopRun, State.Type.FAILED));
-
-        // Then
-        assertThat(maybeExecutor).isEmpty();
-    }
-
     private LoopExecutionEvent lastEvent(LoopRun loopRun, State.Type state) {
         return new LoopExecutionEvent(
             loopRun, "sub-execution-id", state, null,

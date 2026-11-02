@@ -77,6 +77,7 @@
                     @open-link="emit(EVENTS.OPEN_LINK, $event)"
                     @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @show-artifacts="emit(EVENTS.SHOW_ARTIFACTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
                     @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
@@ -257,7 +258,7 @@
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, SCOPED_LONGEST_DURATIONS_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, SCOPED_LONGEST_DURATIONS_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
     import type {LoopLaneData} from "./utils/loopOutcome"
     import {useLongestTaskRunDuration} from "./composables/useLongestTaskRunDuration"
     import {useScopedLongestDurations} from "./composables/useScopedLongestDurations"
@@ -296,6 +297,7 @@
         validationIssuesByTask?: Map<string, string[]>;
         focusedTaskId?: string;
         loopLanes?: Record<string, LoopLaneData>;
+        artifactCounts?: Record<string, number>;
         // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
         defaultViewport?: Partial<ViewportTransform>;
     }>(), {
@@ -323,6 +325,7 @@
         validationIssuesByTask: undefined,
         focusedTaskId: undefined,
         loopLanes: undefined,
+        artifactCounts: undefined,
         defaultViewport: undefined,
     })
 
@@ -355,12 +358,11 @@
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
     provide(LOD_INJECTION_KEY, lod)
-    // Quantised to a plain number on purpose: every pill re-renders when this changes, so a
-    // value tracking the raw zoom would repaint the whole graph on every wheel tick.
     provide(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => pillZoomCompensation(vueFlowStore.viewport.value.zoom)))
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
     provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
+    provide(ARTIFACT_COUNTS_INJECTION_KEY, computed(() => props.artifactCounts ?? {}))
     // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
     // every TaskNode reducing over it independently would be N× the same work.
     provide(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, useScopedLongestDurations(() => Object.values(props.subflowsExecutions)))
@@ -431,6 +433,7 @@
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
             EVENTS.SHOW_OUTPUTS,
+            EVENTS.SHOW_ARTIFACTS,
             EVENTS.REPLAY_TASK,
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",

@@ -29,9 +29,6 @@ const TaskIconSpy = defineComponent({
     },
 })
 
-/** `zoom` is the canvas zoom the node is asked to render at; it reaches the node as the quantised
- *  compensation factor Topology provides, exactly as it does at runtime. Left out, nothing is
- *  provided at all, which is how a node mounted outside a canvas sees it. */
 function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}, zoom?: number) {
     return i18nMount(BasicNode, {
         props: {
@@ -116,6 +113,38 @@ describe("BasicNode layout", () => {
     })
 })
 
+describe("BasicNode status row", () => {
+    const slots = {"status-row": "<span class='row-marker'>chip</span>", footer: "<div class='footer-marker'>bar</div>"}
+
+    it("should render the status row below the card, outside of it", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect(wrapper.find(".node-wrapper > .node-core + .node-status-row > .row-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-core .row-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill"}, slots)
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).not.toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row when no status row is given", () => {
+        const wrapper = mountBasicNode({}, {footer: slots.footer})
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+    })
+
+    it("should place the retry badge on the task icon and the runner above the title", () => {
+        const wrapper = mountBasicNode({}, {"icon-badge": "<i class='badge-marker' />", runner: "<b class='runner-marker' />"})
+
+        expect(wrapper.find(".icon > .badge-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-content > .node-runner + .node-title").exists()).toBe(true)
+    })
+})
+
 describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
     const slots = {
         subtitle: "<span class='subtitle-marker'>Log</span>",
@@ -129,9 +158,6 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         const wrapper = mountBasicNode({lod: "pill", state: "FAILED"}, slots)
 
         expect(wrapper.find(".node-pill").exists()).toBe(true)
-        // The state survives as the pill's own glyph, while the card's `title-status` slot — a
-        // live-ticking Duration and the validation badge — stays out, which is the cost the pill
-        // tier exists to avoid paying on every node of a zoomed-out graph.
         expect(wrapper.find(PILL_STATUS).exists()).toBe(true)
         expect(wrapper.find(".status-marker").exists()).toBe(false)
         expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
@@ -159,10 +185,6 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
 })
 
 describe("BasicNode pill status (kestra-io/kestra#21619)", () => {
-    // Every state, with SUCCESS and FAILED the pair the report turns on: telling a failed task
-    // from a successful one is the whole point. The two carrying no background tint (SKIPPED, and
-    // anything falling through to NEUTRAL such as WARNING) are the ones a colour-only indicator
-    // would lose, so they are covered here rather than assumed.
     it.each([
         ["SUCCESS", CheckCircleOutline, "--ks-text-success"],
         ["FAILED", CloseCircleOutline, "--ks-text-error"],
@@ -203,8 +225,6 @@ describe("BasicNode pill status at low zoom (kestra-io/kestra#21619)", () => {
         mountBasicNode({lod: "pill", state: "FAILED"}, {}, zoom).find(PILL_STATUS).attributes("style")
 
     it("should widen the state ring as the canvas zooms out, so it survives in screen pixels", () => {
-        // Graph-space width x zoom is what actually reaches the screen: a 1px ring is 0.29px at
-        // fit-to-view, which is the sub-pixel ring the report describes as "just plugin icons".
         expect(ringWidthOf(ZOOM_LOD.PILL)).toContain("border-width: 2px")
         expect(ringWidthOf(0.29)).toContain("border-width: 3px")
         expect(ringWidthOf(0.25)).toContain("border-width: 4px")
@@ -219,9 +239,6 @@ describe("BasicNode pill status at low zoom (kestra-io/kestra#21619)", () => {
         expect(ringWidthOf(1)).toContain("border-width: 1px")
     })
 
-    // The flow editor renders the same pills with no execution behind them, so there is no state
-    // to make visible there and nothing to compensate for: widening their border would be a
-    // restyling of the editor smuggled in through an execution fix.
     it("should leave a pill with no execution state at its authored width, however far out the canvas is", () => {
         for (const zoom of [ZOOM_LOD.PILL, 0.29, 0.02]) {
             const wrapper = mountBasicNode({lod: "pill"}, {}, zoom)
@@ -234,13 +251,9 @@ describe("BasicNode pill status at low zoom (kestra-io/kestra#21619)", () => {
     it("should enlarge the status glyph at low zoom but never past the cap that keeps it on its pill", () => {
         expect(glyphScaleOf(1)).toContain("scale(1)")
         expect(glyphScaleOf(0.29)).toContain(`scale(${PILL_COMPENSATION.GLYPH_MAX})`)
-        // Still capped two thirds of the way to MIN_ZOOM, where the ring has long since capped too.
         expect(glyphScaleOf(0.02)).toContain(`scale(${PILL_COMPENSATION.GLYPH_MAX})`)
     })
 
-    // One state of each kind the gate above has to tell apart: SUCCESS and FAILED carry a tint,
-    // while SKIPPED and WARNING carry none, so their style object holds only undefined values. All
-    // four have run, so all four are compensated; only a stateless pill is left alone.
     it.each(["SUCCESS", "FAILED", "SKIPPED", "WARNING"])("should compensate a %s task at fit-to-view zoom", (state) => {
         const wrapper = mountBasicNode({lod: "pill", state}, {}, 0.29)
 

@@ -8,9 +8,6 @@ describe("pillZoomCompensation (kestra-io/kestra#21619)", () => {
     })
 
     it("should hold the ring near one screen pixel from the pill threshold down to the cap", () => {
-        // 0.49 sits just under the pill threshold, 0.29 is where a 13-task execution lands at
-        // fit-to-view, and 0.25 is the last zoom the cap can still fully compensate. The band is
-        // wider than a single value because the ring is quantised to whole pixels.
         for (const zoom of [0.49, 0.45, 0.4, 0.35, 0.3, 0.29, 0.25]) {
             const onScreen = pillZoomCompensation(zoom) * zoom
             expect(onScreen).toBeGreaterThan(0.8)
@@ -34,8 +31,6 @@ describe("pillZoomCompensation (kestra-io/kestra#21619)", () => {
         const seen = new Set<number>()
         for (let zoom = ZOOM_LOD.PILL; zoom > 0.02; zoom -= 0.002) seen.add(pillZoomCompensation(zoom))
 
-        // Whole pixels across the whole pill range means 2, 3 and 4 and nothing in between. A
-        // sub-pixel step would multiply this, repainting every node for a width no browser draws.
         expect([...seen].sort()).toEqual([2, 3, PILL_COMPENSATION.RING_MAX])
     })
 })

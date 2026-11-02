@@ -27,6 +27,7 @@ export const EVENTS = {
     EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
+    SHOW_ARTIFACTS: "showArtifacts",
     REPLAY_TASK: "replayTask",
     MOUSE_OVER: "mouseover",
     MOUSE_LEAVE: "mouseleave",
@@ -58,9 +59,10 @@ export interface ShowDetailsConfig {
 
 export const NODE_SIZES = {
     TASK_WIDTH: 218,
-    TASK_WIDTH_EXECUTION: 273,
+    TASK_WIDTH_EXECUTION: 251,
     TASK_HEIGHT: 56,
-    TASK_HEIGHT_EXECUTION: 80,
+    TASK_HEIGHT_EXECUTION: 64,
+    TASK_STATUS_ROW_HEIGHT: 21,
     TRIGGER_WIDTH: 218,
     TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,
@@ -102,27 +104,12 @@ export const ZOOM_LOD = {
     EXPANDED: 1.3,
 } as const
 
-// Everything drawn inside a pill shrinks with the canvas, so by the time a 13-task execution has
-// been fitted to the view (~0.29) its 1px state ring is sub-pixel and the row reads as bare plugin
-// icons (kestra-io/kestra#21619). The ring and the status glyph are scaled back by the inverse of
-// the zoom, quantised so the nodes repaint a handful of times across the range rather than on
-// every wheel tick, and capped — separately, because the two have different room to grow.
 export const PILL_COMPENSATION = {
-    /** Whole pixels: a browser snaps a fractional border width to a device pixel anyway, so a
-     *  finer step would repaint every node without changing anything that gets drawn. */
     STEP: 1,
-    /** The ring is the pill's border, which `box-sizing: border-box` thickens inwards inside the
-     *  pill's fixed 2.5rem box, so widening it moves nothing and can be compensated nearly fully:
-     *  4 holds it at ~1 screen pixel from the pill threshold down to 0.25 zoom. */
     RING_MAX: 4,
-    /** The glyph only annotates the pill, so it has to stay smaller than the pill it sits on and
-     *  cannot reach a constant screen size — this bounds it at a legible compromise instead. */
     GLYPH_MAX: 2.5,
 } as const
 
-/** Inverse-zoom scale for a pill's ring, quantised to {@link PILL_COMPENSATION.STEP}, never below
- *  1 and never above {@link PILL_COMPENSATION.RING_MAX}. A zoom that is not a usable positive
- *  number scales nothing. */
 export function pillZoomCompensation(zoom: number): number {
     if (!Number.isFinite(zoom) || zoom <= 0) return 1
     const bounded = Math.min(1 / zoom, PILL_COMPENSATION.RING_MAX)

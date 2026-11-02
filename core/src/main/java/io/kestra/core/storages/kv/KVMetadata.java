@@ -1,5 +1,6 @@
 package io.kestra.core.storages.kv;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -22,7 +23,14 @@ public class KVMetadata {
 
         this.description = description;
         if (ttl != null) {
-            this.expirationDate = Instant.now().plus(ttl);
+            try {
+                this.expirationDate = Instant.now().plus(ttl);
+            } catch (ArithmeticException | DateTimeException e) {
+                throw new IllegalArgumentException(
+                    String.format("ttl '%s' is too large: the expiration date would be beyond the latest supported date", ttl),
+                    e
+                );
+            }
         }
     }
 

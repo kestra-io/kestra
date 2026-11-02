@@ -67,7 +67,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         Executions.Fields.LABELS, "labels",
         Executions.Fields.START_DATE, "start_date",
         Executions.Fields.END_DATE, "end_date",
-        Executions.Fields.TRIGGER_EXECUTION_ID, "trigger_execution_id"
+        Executions.Fields.TRIGGER_EXECUTION_ID, "trigger_execution_id",
+        Executions.Fields.KIND, "kind"
     );
 
     @Override
@@ -294,6 +295,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
     }
 
+    private static boolean hasKindFilter(@Nullable List<? extends AbstractFilter<Executions.Fields>> filters) {
+        return filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsKindFilter);
+    }
+
+    private static boolean containsKindFilter(AbstractFilter<?> filter) {
+        if (filter instanceof Or<?> orFilter) {
+            return orFilter.getValues().stream().anyMatch(AbstractJdbcExecutionRepository::containsKindFilter);
+        }
+        return filter.getField() == Executions.Fields.KIND;
+    }
+
     @Override
     protected Name getColumnName(QueryFilter.Field field) {
         if (field == QueryFilter.Field.TASK_ID) {
@@ -370,7 +382,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
-        var condition = field("namespace").eq(namespace).and(field("flow_id").eq(id));
+        var condition = CaseSensitiveMatch.eq(field("namespace", String.class), namespace).and(field("flow_id").eq(id));
         return findPage(pageable, tenantId, condition);
     }
 
@@ -399,9 +411,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
         if (namespace != null) {
             if (flowId != null) {
-                select = select.and(field("namespace").eq(namespace));
+                select = select.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
             } else {
-                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
+                select = select
+                    .and(DSL.or(CaseSensitiveMatch.eq(field("namespace", String.class), namespace), CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
             }
         }
 
@@ -614,8 +627,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
-                    .and(NORMAL_KIND_CONDITION);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                if (!hasKindFilter(descriptors.getWhere())) {
+                    selectConditionStep = selectConditionStep.and(NORMAL_KIND_CONDITION);
+                }
 
                 List<? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -659,12 +674,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId));
 
-            var selectConditionStep = where(
+            SelectConditionStep<Record> selectConditionStep = where(
                 selectStep,
                 filterService,
                 filters,
                 getFieldsMapping()
-            ).and(NORMAL_KIND_CONDITION);
+            );
+            if (!hasKindFilter(filters)) {
+                selectConditionStep = selectConditionStep.and(NORMAL_KIND_CONDITION);
+            }
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {

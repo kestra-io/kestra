@@ -225,7 +225,13 @@ export function generateDagreGraph(
         const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
 
         if (collapsed.has(nodeUid) && !absorbedByParent) {
-            const node = {uid: nodeUid, type: "collapsedcluster", isFlowableLane: isTrueFlowableCluster(cluster.cluster)}
+            const flowableNode = flowGraph.nodes.find((n) => n.uid === nodeUid)
+            const node = {
+                uid: nodeUid,
+                type: "collapsedcluster",
+                isFlowableLane: isTrueFlowableCluster(cluster.cluster),
+                executionId: flowableNode?.executionId,
+            }
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
@@ -344,7 +350,7 @@ export function buildEffectiveGetNodeDimensions(
         }
 
         if (hasExecution && (isTaskNode(node) || isCollapsedLane(node))) {
-            dimensions.height = NODE_SIZES.TASK_HEIGHT_EXECUTION
+            dimensions.height = NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT
         }
 
         return dimensions

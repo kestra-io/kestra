@@ -19,8 +19,18 @@
         <KsOption v-for="op in comparators" :key="op" :label="labelForComparator(op)" :value="op" />
     </KsSelect>
 
+    <FilterNumber
+        v-if="keyConfig?.valueType === 'number'"
+        class="cond-value-input"
+        inline
+        :modelValue="numberModel"
+        :range="filter.comparator === Comparators.BETWEEN"
+        :label="keyConfig.label"
+        @update:modelValue="onNumber"
+    />
+
     <KsInput
-        v-if="isTextValue"
+        v-else-if="isTextValue"
         class="cond-value-input"
         :modelValue="textValue"
         :placeholder="keyConfig?.label"
@@ -65,7 +75,6 @@
         <FilterMultiSelect
             :modelValue="multiDraft"
             :options="options"
-            :searchable="keyConfig?.searchable"
             :filterKey="keyConfig?.key"
             @update:modelValue="(v: string[]) => (multiDraft = v)"
         />
@@ -81,7 +90,17 @@
         @visible-change="(v: boolean) => v && ensureOptions()"
         @update:modelValue="onValueChange"
     >
-        <KsOption v-for="opt in options" :key="opt.value" :label="opt.label" :value="opt.value" />
+        <KsOption v-for="opt in options" :key="opt.value" :label="opt.label" :value="opt.value">
+            <span class="cond-option">
+                {{ opt.label }}
+                <KsBadge
+                    v-if="opt.count !== undefined"
+                    :value="formatCount(opt.count!)"
+                    type="neutral"
+                    inline
+                />
+            </span>
+        </KsOption>
     </KsSelect>
 
     <KsPopover
@@ -123,6 +142,7 @@
 
     import FilterKVPairs from "./layout/FilterKVPairs.vue"
     import FilterMultiSelect from "./layout/FilterMultiSelect.vue"
+    import FilterNumber from "./layout/FilterNumber.vue"
     import {createAppliedFilter} from "./utils/filterChipFactory"
     import {
         Comparators,
@@ -134,6 +154,7 @@
         type FilterValue,
     } from "./utils/filterTypes"
     import {ChevronDown, Delete} from "./utils/icons"
+    import {formatCount} from "./utils/helpers"
     import {EXECUTION_STATUSES} from "../../KsExecutionStatus/types"
 
     const props = defineProps<{
@@ -199,6 +220,8 @@
         return typeof props.filter.value === "string" ? props.filter.value : ""
     })
 
+    const numberModel = computed(() => props.filter.value as string | string[])
+
     const kvModel = computed(() => (Array.isArray(props.filter.value) ? props.filter.value : []))
 
     const labelFor = (value: string | string[]): string => {
@@ -245,8 +268,10 @@
 
     const changeComparator = (op: Comparators | undefined) => {
         if (op === undefined) return
-        const wasMulti = isMulti.value
-        const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
+        const isNumber = keyConfig.value?.valueType === "number"
+        const wasMulti = isMulti.value || (isNumber && props.filter.comparator === Comparators.BETWEEN)
+        const willBeMulti = (keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op))
+            || (isNumber && op === Comparators.BETWEEN)
         const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
             && op !== Comparators.IN
             && op !== Comparators.NOT_IN
@@ -273,6 +298,9 @@
     }
 
     const onKeyValue = (value: string[]) => emitUpdate(value, value[0] ?? "")
+
+    const onNumber = (value: string | string[]) =>
+        emitUpdate(value, Array.isArray(value) ? value.join(" - ") : value)
 
     const multiDraft = ref<string[]>([])
 
@@ -353,7 +381,13 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+.cond-option {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
 .cond-field {
     flex-shrink: 0;
     width: auto;
@@ -406,7 +440,7 @@
     cursor: pointer;
     font-family: inherit;
 
-    .label {
+    & .label {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         white-space: nowrap;
@@ -418,7 +452,7 @@
         }
     }
 
-    .chevron {
+    & .chevron {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
         font-size: var(--ks-font-size-base);
@@ -471,7 +505,7 @@
     display: inline-flex;
     align-items: center;
 
-    :deep(svg) {
+    & :deep(svg) {
         width: 14px;
         height: 14px;
     }

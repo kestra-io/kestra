@@ -1,0 +1,323 @@
+import {describe, expect, it} from "vitest"
+import {
+    assignLanes,
+    axisTickCount,
+    axisTickFormat,
+    bucketize,
+    densityPointsFrom,
+    densitySeries,
+    MAX_DENSITY_REQUESTS,
+    planDensityRequests,
+    stateChartColor,
+    buildAxisTicks,
+    countByState,
+    groupByNamespace,
+    isWithinNamespace,
+    shouldBucketRow,
+    type TimelineExecution,
+} from "./executionsTimeline"
+
+const execution = (overrides: Partial<TimelineExecution>): TimelineExecution => ({
+    id: "id",
+    namespace: "company.team",
+    flowId: "flow",
+    state: "SUCCESS",
+    startMs: 0,
+    endMs: 1000,
+    ...overrides,
+})
+
+describe("groupByNamespace", () => {
+    it("should group executions by namespace then by flow with total and failed counts", () => {
+        const executions = [
+            execution({id: "1", namespace: "company.a", flowId: "flow1", state: "SUCCESS"}),
+            execution({id: "2", namespace: "company.a", flowId: "flow1", state: "FAILED"}),
+            execution({id: "3", namespace: "company.a", flowId: "flow2", state: "SUCCESS"}),
+            execution({id: "4", namespace: "company.b", flowId: "flow3", state: "KILLED"}),
+        ]
+
+        const groups = groupByNamespace(executions)
+
+        expect(groups.map(g => g.namespace)).toEqual(["company.a", "company.b"])
+        const namespaceA = groups.find(g => g.namespace === "company.a")!
+        expect(namespaceA.total).toBe(3)
+        expect(namespaceA.failed).toBe(1)
+        expect(namespaceA.flows.map(f => f.flowId).sort()).toEqual(["flow1", "flow2"])
+
+        const namespaceB = groups.find(g => g.namespace === "company.b")!
+        expect(namespaceB.total).toBe(1)
+        expect(namespaceB.failed).toBe(1)
+    })
+
+    it("should return an empty list when there are no executions", () => {
+        expect(groupByNamespace([])).toEqual([])
+    })
+})
+
+describe("assignLanes", () => {
+    it("should keep non-overlapping executions on the same lane", () => {
+        const executions = [
+            execution({id: "1", startMs: 0, endMs: 100}),
+            execution({id: "2", startMs: 200, endMs: 300}),
+        ]
+
+        const lanes = assignLanes(executions)
+
+        expect(lanes.map(e => e.lane)).toEqual([0, 0])
+    })
+
+    it("should push overlapping executions onto separate lanes", () => {
+        const executions = [
+            execution({id: "1", startMs: 0, endMs: 500}),
+            execution({id: "2", startMs: 100, endMs: 400}),
+            execution({id: "3", startMs: 150, endMs: 200}),
+        ]
+
+        const lanes = assignLanes(executions)
+
+        expect(lanes.find(e => e.id === "1")!.lane).toBe(0)
+        expect(lanes.find(e => e.id === "2")!.lane).toBe(1)
+        expect(lanes.find(e => e.id === "3")!.lane).toBe(2)
+    })
+
+    it("should reuse a lane once its previous execution has ended", () => {
+        const executions = [
+            execution({id: "1", startMs: 0, endMs: 100}),
+            execution({id: "2", startMs: 0, endMs: 200}),
+            execution({id: "3", startMs: 150, endMs: 250}),
+        ]
+
+        const lanes = assignLanes(executions)
+
+        expect(lanes.find(e => e.id === "1")!.lane).toBe(0)
+        expect(lanes.find(e => e.id === "2")!.lane).toBe(1)
+        expect(lanes.find(e => e.id === "3")!.lane).toBe(0)
+    })
+})
+
+describe("shouldBucketRow", () => {
+    it("should not bucket when executions land in separate slots", () => {
+        const executions = [
+            execution({id: "1", startMs: 0}),
+            execution({id: "2", startMs: 50}),
+        ]
+
+        expect(shouldBucketRow(executions, 0, 100, 100)).toBe(false)
+    })
+
+    it("should bucket once two executions land in the same slot", () => {
+        const executions = Array.from({length: 100}, (_, i) => execution({id: String(i), startMs: i}))
+
+        expect(shouldBucketRow(executions, 0, 100, 100)).toBe(true)
+    })
+
+    it("should not bucket an empty row", () => {
+        expect(shouldBucketRow([], 0, 100, 100)).toBe(false)
+    })
+
+    it("should bucket a tight cluster zoomed out to a much wider range", () => {
+        const oneHourMs = 60 * 60 * 1000
+        const thirtyTwoDaysMs = 32 * 24 * 60 * 60 * 1000
+        const executions = Array.from({length: 15}, (_, i) =>
+            execution({id: String(i), startMs: i * (oneHourMs / 15), endMs: i * (oneHourMs / 15) + 1000}))
+
+        expect(shouldBucketRow(executions, 0, thirtyTwoDaysMs, 600)).toBe(true)
+    })
+})
+
+describe("bucketize", () => {
+    it("should aggregate executions into buckets carrying per-state counts and a dominant state", () => {
+        const executions = [
+            execution({id: "1", state: "SUCCESS", startMs: 0}),
+            execution({id: "2", state: "SUCCESS", startMs: 10}),
+            execution({id: "3", state: "FAILED", startMs: 10}),
+            execution({id: "4", state: "SUCCESS", startMs: 90}),
+        ]
+
+        const buckets = bucketize(executions, 0, 100, 10)
+
+        expect(buckets.length).toBeGreaterThan(0)
+        const total = buckets.reduce((sum, bucket) => sum + bucket.total, 0)
+        expect(total).toBe(4)
+        expect(buckets.every(bucket => bucket.dominantState.length > 0)).toBe(true)
+        expect(buckets.every(bucket => !("id" in bucket))).toBe(true)
+    })
+
+    it("should return no buckets for an empty or zero-width range", () => {
+        expect(bucketize([execution({})], 100, 100, 50)).toEqual([])
+        expect(bucketize([execution({})], 0, 100, 0)).toEqual([])
+    })
+})
+
+describe("countByState", () => {
+    it("should count executions per state, sorted by count descending", () => {
+        const executions = [
+            execution({state: "SUCCESS"}),
+            execution({state: "SUCCESS"}),
+            execution({state: "FAILED"}),
+        ]
+
+        expect(countByState(executions)).toEqual([
+            {state: "SUCCESS", count: 2},
+            {state: "FAILED", count: 1},
+        ])
+    })
+})
+
+describe("buildAxisTicks", () => {
+    it("should return tickCount + 1 evenly spaced ticks across the range", () => {
+        const ticks = buildAxisTicks(0, 60_000, 6, 60_000 + 120_000)
+
+        expect(ticks).toHaveLength(7)
+        expect(ticks.map(t => t.ms)).toEqual([0, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000])
+        expect(ticks.every(t => !t.isNow)).toBe(true)
+    })
+
+    it("should flag only the last tick as now when the range end is pinned to now", () => {
+        const rangeEndMs = 60_000
+        const nowMs = rangeEndMs + 1_000
+
+        const ticks = buildAxisTicks(0, rangeEndMs, 6, nowMs)
+
+        expect(ticks.slice(0, -1).every(t => !t.isNow)).toBe(true)
+        expect(ticks.at(-1)?.isNow).toBe(true)
+    })
+
+    it("should not flag any tick as now when the range end is far from now", () => {
+        const ticks = buildAxisTicks(0, 60_000, 6, 60_000 + 120_000)
+
+        expect(ticks.every(t => !t.isNow)).toBe(true)
+    })
+
+    it("should return no ticks for a zero-width range", () => {
+        expect(buildAxisTicks(1_000, 1_000, 6, 1_000)).toEqual([])
+    })
+})
+
+describe("axisTickFormat", () => {
+    const DAY = 86_400_000
+
+    it("should fall back to seconds when consecutive ticks land less than a minute apart", () => {
+        expect(axisTickFormat(2 * 60_000, 6)).toBe("LTS")
+    })
+
+    it("should show the time alone within a single day", () => {
+        expect(axisTickFormat(6 * 60 * 60_000, 6)).toBe("LT")
+    })
+
+    it("should add the date once the range spans a day or more", () => {
+        expect(axisTickFormat(DAY, 6)).toBe("MMM D, LT")
+    })
+
+    it("should drop the time once the range spans more than a week", () => {
+        expect(axisTickFormat(30 * DAY, 6)).toBe("MMM D")
+    })
+})
+
+describe("densitySeries", () => {
+    it("should keep the empty buckets that bucketize drops, so a chart can draw a continuous baseline", () => {
+        const executions: TimelineExecution[] = [
+            {id: "1", namespace: "n", flowId: "f", state: "SUCCESS", startMs: 100, endMs: 200},
+        ]
+
+        const series = densitySeries([{startMs: 100, state: "SUCCESS", count: 1}], 0, 1_000, 10)
+
+        expect(series).toHaveLength(10)
+        expect(series.filter(bucket => bucket.total === 0)).toHaveLength(9)
+        expect(bucketize(executions, 0, 1_000, 30)).toHaveLength(1)
+    })
+
+    it("should add up aggregated counts instead of counting one run per point", () => {
+        const series = densitySeries([
+            {startMs: 100, state: "SUCCESS", count: 1200},
+            {startMs: 150, state: "FAILED", count: 30},
+        ], 0, 1_000, 10)
+
+        expect(series[1].total).toBe(1230)
+        expect(series[1].byState).toEqual({SUCCESS: 1200, FAILED: 30})
+    })
+})
+
+describe("densityPointsFrom", () => {
+    it("should read the date, state and count of each aggregated row", () => {
+        expect(densityPointsFrom([
+            {date: "2026-10-19T10:00:00.000Z", state: "FAILED", total: 4},
+            {date: "not a date", state: "SUCCESS", total: 1},
+        ])).toEqual([{startMs: Date.parse("2026-10-19T10:00:00.000Z"), state: "FAILED", count: 4}])
+    })
+})
+
+describe("planDensityRequests", () => {
+    const HOUR_MS = 60 * 60 * 1000
+    const NOW_MS = Date.parse("2026-10-22T12:00:00.000Z")
+
+    it("should ask for minutes over a short window, in one request reaching now", () => {
+        const plan = planDensityRequests(NOW_MS - 2 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.granularityMs).toBe(60_000)
+        expect(plan.requests).toEqual([{startMs: NOW_MS - 2 * HOUR_MS, endMs: NOW_MS, lookAheadEndMs: undefined}])
+    })
+
+    it("should cover the default two-day context in hours, chunked so the backend keeps an hourly grouping", () => {
+        const plan = planDensityRequests(NOW_MS - 48 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.granularityMs).toBe(HOUR_MS)
+        expect(plan.requests.length).toBeLessThanOrEqual(MAX_DENSITY_REQUESTS)
+        expect(plan.requests[0].startMs).toBe(NOW_MS - 48 * HOUR_MS)
+        expect(plan.requests.at(-1)!.endMs).toBe(NOW_MS)
+        plan.requests.slice(1).forEach((request, index) => expect(request.startMs).toBe(plan.requests[index].endMs))
+        plan.requests.forEach(request => expect((request.lookAheadEndMs ?? NOW_MS) - request.startMs).toBeLessThan(48 * HOUR_MS))
+    })
+
+    it("should let a run that ends after its chunk still count, by looking one chunk ahead", () => {
+        const plan = planDensityRequests(NOW_MS - 48 * HOUR_MS, NOW_MS, NOW_MS)
+        const [first, second] = plan.requests
+
+        expect(first.lookAheadEndMs).toBe(Math.min(first.endMs + (second.endMs - second.startMs), NOW_MS))
+    })
+
+    it("should bound a past window by its own end instead of now", () => {
+        const plan = planDensityRequests(NOW_MS - 10 * 24 * HOUR_MS, NOW_MS - 9 * 24 * HOUR_MS, NOW_MS)
+
+        expect(plan.requests.at(-1)!.lookAheadEndMs).toBeDefined()
+    })
+
+    it("should never send more than the request budget, even over a year", () => {
+        const plan = planDensityRequests(NOW_MS - 2 * 365 * 24 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.requests.length).toBeLessThanOrEqual(MAX_DENSITY_REQUESTS)
+    })
+})
+
+describe("stateChartColor", () => {
+    it("should map a state to its chart token, and states without one to the closest token", () => {
+        expect(stateChartColor("BREAKPOINT")).toBe("var(--ks-chart-breakpoint)")
+        expect(stateChartColor("SUBMITTED")).toBe("var(--ks-chart-created)")
+    })
+})
+
+describe("axisTickCount", () => {
+    it("should keep the full set of ticks when the lanes are wide", () => {
+        expect(axisTickCount(1100)).toBe(6)
+    })
+
+    it("should thin the ticks out so their labels do not overlap on a narrow screen", () => {
+        expect(axisTickCount(200)).toBe(2)
+        expect(axisTickCount(100)).toBe(1)
+    })
+
+    it("should never drop below a single interval", () => {
+        expect(axisTickCount(0)).toBe(1)
+    })
+})
+
+describe("isWithinNamespace", () => {
+    it("should match the namespace itself and its descendants, like the PREFIX filter", () => {
+        expect(isWithinNamespace("company", "company")).toBe(true)
+        expect(isWithinNamespace("company.team", "company")).toBe(true)
+    })
+
+    it("should not match a sibling that only shares the leading characters", () => {
+        expect(isWithinNamespace("companyx", "company")).toBe(false)
+    })
+})

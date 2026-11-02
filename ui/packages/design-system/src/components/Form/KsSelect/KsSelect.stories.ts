@@ -1,12 +1,13 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {ElOption, ElTag} from "element-plus"
 import {within, userEvent, expect} from "storybook/test"
 import KsSelect from "./KsSelect.vue"
 
 const meta: Meta<typeof KsSelect> = {
     title: "Components/Form/KsSelect",
-    component: KsSelect,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsSelect as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         modelValue: {control: false},
@@ -80,7 +81,27 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {placeholder: "Select a status"},
+    args: {
+        placeholder: "Select a status",
+        size: "default",
+        disabled: false,
+        filterable: false,
+        clearable: false,
+        allowCreate: false,
+        remote: false,
+        remoteShowSuffix: false,
+        multiple: false,
+        collapseTags: false,
+        required: false,
+        valueKey: "value",
+        placement: "bottom-start",
+        popperClass: "",
+        showArrow: false,
+        loading: false,
+        fit: false,
+        selectAll: false,
+        singleLineTags: false,
+    },
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
@@ -158,6 +179,7 @@ export const Multiple: Story = {
 
 /** Small size – as used in Pagination */
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSelect, ElOption},
         setup() {
@@ -481,4 +503,31 @@ export const WithLabelSlot: Story = {
         `,
     }),
     args: {size: "small", placeholder: "Version"},
+}
+
+/** Mobile – on touch screens (`pointer: coarse`) the select is 44px high with 16px text */
+export const Mobile: Story = {
+    parameters: {
+        controls: {disable: true},
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsSelect, ElOption},
+        setup() { return {value: ref("failed")} },
+        template: `
+            <div style="padding:16px">
+                <ks-select v-model="value" placeholder="State">
+                    <el-option label="Failed" value="failed" />
+                    <el-option label="Success" value="success" />
+                </ks-select>
+            </div>
+        `,
+    }),
 }

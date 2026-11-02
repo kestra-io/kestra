@@ -60,11 +60,12 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: loop
                     type: io.kestra.plugin.core.flow.LoopUntil
-                    condition: "{{ outputs.return.value == '4' }}"
+                    condition: "{{ outputs.return.values.result == '4' }}"
                     tasks:
                       - id: return
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ outputs.loop.iterationCount }}"
+                        type: io.kestra.plugin.core.output.OutputValues
+                        values:
+                          result: "{{ outputs.loop.iterationCount }}"
                 """
         )
     },

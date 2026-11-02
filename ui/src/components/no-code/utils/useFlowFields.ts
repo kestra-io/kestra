@@ -26,13 +26,7 @@ export const SECTIONS_IDS = [
 ]
 
 // once all those fields are displayed, the rest of the fields are displayed
-// in alphabetical order, except the ones in HIDDEN_FIELDS
-const HIDDEN_FIELDS = [
-    "deleted",
-    "tenantId",
-    "revision",
-    "pluginDefaults",
-]
+// in alphabetical order
 
 export function useFlowFields(flowSource: ComputedRef<string>){
     const flowStore = useFlowStore()
@@ -68,7 +62,7 @@ export function useFlowFields(flowSource: ComputedRef<string>){
 
     const fieldsFromSchemaRest = computed(() => {
         return Object.keys(pluginsStore.flowRootProperties ?? {})
-            .filter((key) => !MAIN_KEYS.includes(key) && !HIDDEN_FIELDS.includes(key) && (!pluginsStore.flowRootProperties?.[key]?.$deprecated || parsedFlow.value[key]))
+            .filter((key) => !MAIN_KEYS.includes(key) && (!pluginsStore.flowRootProperties?.[key]?.$deprecated || parsedFlow.value[key]))
             .map((key) => getFieldFromKey(key, "general")).sort((a, b) => {
                 const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number])
                 const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number])

@@ -177,6 +177,83 @@ export function densityPointsFrom(rows: Record<string, unknown>[]): DensityPoint
         .filter(point => !Number.isNaN(point.startMs) && point.count > 0)
 }
 
+export interface RowDensityPoint extends DensityPoint {
+    namespace: string;
+    flowId: string;
+}
+
+export interface AggregatedFlowGroup {
+    namespace: string;
+    flowId: string;
+    total: number;
+    failed: number;
+    points: DensityPoint[];
+}
+
+export interface AggregatedNamespaceGroup {
+    namespace: string;
+    total: number;
+    failed: number;
+    flows: AggregatedFlowGroup[];
+}
+
+export function rowDensityPointsFrom(rows: Record<string, unknown>[]): RowDensityPoint[] {
+    return rows.flatMap(row => {
+        const [point] = densityPointsFrom([row])
+        return point ? [{...point, namespace: String(row.namespace), flowId: String(row.flowId)}] : []
+    })
+}
+
+export function sumDensityPoints(points: DensityPoint[]): DensityPoint[] {
+    const sums = new Map<string, DensityPoint>()
+    for (const {startMs, state, count} of points) {
+        const key = `${startMs}|${state}`
+        const sum = sums.get(key)
+        if (sum) sum.count += count
+        else sums.set(key, {startMs, state, count})
+    }
+    return [...sums.values()]
+}
+
+export function groupDensityByNamespace(points: RowDensityPoint[]): AggregatedNamespaceGroup[] {
+    const namespaces = new Map<string, Map<string, DensityPoint[]>>()
+
+    for (const {namespace, flowId, ...point} of points) {
+        let flows = namespaces.get(namespace)
+        if (!flows) {
+            flows = new Map()
+            namespaces.set(namespace, flows)
+        }
+        const flowPoints = flows.get(flowId) ?? []
+        flowPoints.push(point)
+        flows.set(flowId, flowPoints)
+    }
+
+    const countOf = (flowPoints: DensityPoint[], keep: (point: DensityPoint) => boolean = () => true) =>
+        flowPoints.reduce((sum, point) => keep(point) ? sum + point.count : sum, 0)
+
+    return [...namespaces.entries()]
+        .map(([namespace, flows]) => {
+            const flowGroups: AggregatedFlowGroup[] = [...flows.entries()]
+                .map(([flowId, flowPoints]) => ({
+                    namespace,
+                    flowId,
+                    total: countOf(flowPoints),
+                    failed: countOf(flowPoints, point => isFailedLikeState(point.state)),
+                    points: flowPoints,
+                }))
+                .sort((a, b) => b.total - a.total)
+
+            return {
+                namespace,
+                total: flowGroups.reduce((sum, f) => sum + f.total, 0),
+                failed: flowGroups.reduce((sum, f) => sum + f.failed, 0),
+                flows: flowGroups,
+            }
+        })
+        .sort((a, b) => b.total - a.total)
+}
+
 const toPoint = (execution: TimelineExecution): DensityPoint => ({startMs: execution.startMs, state: execution.state, count: 1})
 
 export function bucketize(
@@ -190,6 +267,21 @@ export function bucketize(
 
     const {slotCount, slotSpanMs} = slotResolution(span, availableWidthPx)
     return fillBuckets(executions.map(toPoint), rangeStartMs, rangeEndMs, slotCount, slotSpanMs).filter(bucket => bucket.total > 0)
+}
+
+export function bucketizeDensity(
+    points: DensityPoint[],
+    rangeStartMs: number,
+    rangeEndMs: number,
+    availableWidthPx: number,
+    granularityMs: number,
+): StateBucket[] {
+    const span = rangeEndMs - rangeStartMs
+    if (span <= 0 || availableWidthPx <= 0) return []
+
+    const bucketSpanMs = Math.max(slotResolution(span, availableWidthPx).slotSpanMs, granularityMs)
+    const visiblePoints = points.filter(point => point.startMs + granularityMs > rangeStartMs && point.startMs < rangeEndMs)
+    return fillBuckets(visiblePoints, rangeStartMs, rangeEndMs, Math.ceil(span / bucketSpanMs), bucketSpanMs).filter(bucket => bucket.total > 0)
 }
 
 export function densitySeries(
@@ -257,14 +349,37 @@ export interface StateCount {
     count: number;
 }
 
+function sortedStateCounts(counts: Map<string, number>): StateCount[] {
+    return [...counts.entries()]
+        .map(([state, count]) => ({state, count}))
+        .sort((a, b) => b.count - a.count)
+}
+
 export function countByState(executions: TimelineExecution[]): StateCount[] {
     const counts = new Map<string, number>()
     for (const execution of executions) {
         counts.set(execution.state, (counts.get(execution.state) ?? 0) + 1)
     }
-    return [...counts.entries()]
-        .map(([state, count]) => ({state, count}))
-        .sort((a, b) => b.count - a.count)
+    return sortedStateCounts(counts)
+}
+
+export function countPointsByState(points: DensityPoint[]): StateCount[] {
+    const counts = new Map<string, number>()
+    for (const point of points) {
+        counts.set(point.state, (counts.get(point.state) ?? 0) + point.count)
+    }
+    return sortedStateCounts(counts)
+}
+
+export type FetchMode = "raw" | "aggregated"
+
+export const MAX_RAW_EXECUTIONS = 1000
+export const RAW_MODE_REENTRY_THRESHOLD = 800
+
+export function resolveFetchMode(total: number, previousMode: FetchMode): FetchMode {
+    if (total > MAX_RAW_EXECUTIONS) return "aggregated"
+    if (previousMode === "aggregated" && total > RAW_MODE_REENTRY_THRESHOLD) return "aggregated"
+    return "raw"
 }
 
 export interface AxisTick {

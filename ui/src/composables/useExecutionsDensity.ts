@@ -3,12 +3,15 @@ import {decodeSearchParams} from "@kestra-io/design-system"
 import type {QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 import {useDashboardStore} from "../stores/dashboard"
 import DENSITY_CHART from "../components/executions/timeline/executions_density_chart.yaml?raw"
-import {densityPointsFrom, planDensityRequests, type DensityPoint} from "../utils/executionsTimeline"
+import {planDensityRequests, rowDensityPointsFrom, sumDensityPoints, type DensityPoint, type RowDensityPoint} from "../utils/executionsTimeline"
 
 const TIME_FIELDS = new Set<string>(["timeRange", "startDate", "endDate"])
+export const DENSITY_PAGE_SIZE = 20_000
 
 export interface ExecutionsDensity {
     points: DensityPoint[];
+    rowPoints: RowDensityPoint[];
+    isCapped: boolean;
     granularityMs: number;
     ignoredFilters: QueryFilterField[];
 }
@@ -24,6 +27,8 @@ export function useExecutionsDensity() {
         const responses = await Promise.all(plan.requests.map(request => dashboardStore.chartPreview({
             chart: DENSITY_CHART,
             globalFilter: {
+                pageNumber: 1,
+                pageSize: DENSITY_PAGE_SIZE,
                 filters: [
                     ...scopeFilters,
                     {field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: new Date(request.startMs).toISOString()},
@@ -34,10 +39,14 @@ export function useExecutionsDensity() {
             },
         })))
 
+        const rowPoints = responses.flatMap((response, index) =>
+            rowDensityPointsFrom(response.results).filter(point => point.startMs < plan.requests[index].endMs),
+        )
+
         return {
-            points: responses.flatMap((response, index) =>
-                densityPointsFrom(response.results).filter(point => point.startMs < plan.requests[index].endMs),
-            ),
+            points: sumDensityPoints(rowPoints),
+            rowPoints,
+            isCapped: responses.some(response => response.total > response.results.length),
             granularityMs: plan.granularityMs,
             ignoredFilters: [...new Set(responses.flatMap(response => response.ignoredFilters ?? []))],
         }

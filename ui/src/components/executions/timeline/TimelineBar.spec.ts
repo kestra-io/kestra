@@ -86,6 +86,7 @@ interface BarProps {
     execution?: TimelineExecution;
     bucket?: StateBucket;
     intensity?: number;
+    zoomable?: boolean;
 }
 
 function mountBar(props: BarProps) {
@@ -112,6 +113,23 @@ describe("TimelineBar", () => {
         expect(bucketEl.attributes("data-bucket-state")).toBe("SUCCESS")
         expect(bucketEl.attributes("style")).toContain("color-mix")
         expect(bucketEl.attributes("style")).toContain("var(--ks-chart-success)")
+    })
+
+    it("should ask to zoom to its own range when a zoomable bucket is clicked", async () => {
+        const wrapper = mountBar({bucket, zoomable: true})
+
+        await wrapper.get("button.timeline-bucket").trigger("click")
+
+        expect(wrapper.emitted("zoom-to-range")).toEqual([[{startMs: 0, endMs: 1000}]])
+    })
+
+    it("should not offer a click target on a bucket that only summarizes fetched executions", async () => {
+        const wrapper = mountBar({bucket})
+
+        await wrapper.get(".timeline-bucket").trigger("click")
+
+        expect(wrapper.find("button.timeline-bucket").exists()).toBe(false)
+        expect(wrapper.emitted("zoom-to-range")).toBeUndefined()
     })
 
     it("should blend a denser bucket more strongly toward its tint", () => {

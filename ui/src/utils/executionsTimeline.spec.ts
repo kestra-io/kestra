@@ -4,6 +4,8 @@ import {
     axisTickCount,
     axisTickFormat,
     bucketize,
+    bucketizeDensity,
+    countPointsByState,
     densityPointsFrom,
     densitySeries,
     MAX_DENSITY_REQUESTS,
@@ -12,8 +14,14 @@ import {
     buildAxisTicks,
     countByState,
     groupByNamespace,
+    groupDensityByNamespace,
     isWithinNamespace,
+    MAX_RAW_EXECUTIONS,
+    RAW_MODE_REENTRY_THRESHOLD,
+    resolveFetchMode,
+    rowDensityPointsFrom,
     shouldBucketRow,
+    sumDensityPoints,
     type TimelineExecution,
 } from "./executionsTimeline"
 
@@ -319,5 +327,118 @@ describe("isWithinNamespace", () => {
 
     it("should not match a sibling that only shares the leading characters", () => {
         expect(isWithinNamespace("companyx", "company")).toBe(false)
+    })
+})
+
+describe("resolveFetchMode", () => {
+    it("should stay raw while every execution fits in the raw fetch", () => {
+        expect(resolveFetchMode(MAX_RAW_EXECUTIONS, "raw")).toBe("raw")
+    })
+
+    it("should switch to aggregated as soon as the raw fetch can no longer hold every execution", () => {
+        expect(resolveFetchMode(MAX_RAW_EXECUTIONS + 1, "raw")).toBe("aggregated")
+    })
+
+    it("should stay aggregated between the two thresholds so zooming near the limit does not flip-flop", () => {
+        expect(resolveFetchMode(RAW_MODE_REENTRY_THRESHOLD + 1, "aggregated")).toBe("aggregated")
+        expect(resolveFetchMode(MAX_RAW_EXECUTIONS, "aggregated")).toBe("aggregated")
+    })
+
+    it("should return to raw once the window is clearly below the raw fetch limit", () => {
+        expect(resolveFetchMode(RAW_MODE_REENTRY_THRESHOLD, "aggregated")).toBe("raw")
+        expect(resolveFetchMode(0, "aggregated")).toBe("raw")
+    })
+})
+
+describe("per-row density", () => {
+    const HOUR = Date.parse("2026-10-19T10:00:00.000Z")
+    const NEXT_HOUR = HOUR + 3_600_000
+    const rows = [
+        {date: "2026-10-19T10:00:00.000Z", state: "SUCCESS", namespace: "company.a", flowId: "flow1", total: 4},
+        {date: "2026-10-19T10:00:00.000Z", state: "FAILED", namespace: "company.a", flowId: "flow1", total: 1},
+        {date: "2026-10-19T11:00:00.000Z", state: "SUCCESS", namespace: "company.a", flowId: "flow2", total: 2},
+        {date: "2026-10-19T10:00:00.000Z", state: "SUCCESS", namespace: "company.b", flowId: "flow3", total: 10},
+        {date: "not a date", state: "SUCCESS", namespace: "company.b", flowId: "flow3", total: 5},
+    ]
+
+    it("should keep the namespace and flow of each aggregated row and drop the unreadable ones", () => {
+        const points = rowDensityPointsFrom(rows)
+
+        expect(points).toHaveLength(4)
+        expect(points[0]).toEqual({startMs: HOUR, state: "SUCCESS", count: 4, namespace: "company.a", flowId: "flow1"})
+    })
+
+    it("should sum the rows of every flow into the global density the scrubber draws", () => {
+        const global = sumDensityPoints(rowDensityPointsFrom(rows))
+
+        expect(global).toHaveLength(3)
+        expect(global).toContainEqual({startMs: HOUR, state: "SUCCESS", count: 14})
+        expect(global).toContainEqual({startMs: HOUR, state: "FAILED", count: 1})
+        expect(global).toContainEqual({startMs: NEXT_HOUR, state: "SUCCESS", count: 2})
+    })
+
+    it("should group the rows by namespace then flow with accurate total and failed counts, busiest first", () => {
+        const groups = groupDensityByNamespace(rowDensityPointsFrom(rows))
+
+        expect(groups.map(group => [group.namespace, group.total, group.failed])).toEqual([["company.b", 10, 0], ["company.a", 7, 1]])
+        const namespaceA = groups.find(group => group.namespace === "company.a")!
+        expect(namespaceA.flows.map(flow => [flow.flowId, flow.total, flow.failed])).toEqual([["flow1", 5, 1], ["flow2", 2, 0]])
+        expect(namespaceA.flows[0].points).toEqual([
+            {startMs: HOUR, state: "SUCCESS", count: 4},
+            {startMs: HOUR, state: "FAILED", count: 1},
+        ])
+    })
+
+    it("should count the states of aggregated points for the legend", () => {
+        expect(countPointsByState(sumDensityPoints(rowDensityPointsFrom(rows)))).toEqual([
+            {state: "SUCCESS", count: 16},
+            {state: "FAILED", count: 1},
+        ])
+    })
+})
+
+describe("bucketizeDensity", () => {
+    const HOUR_MS = 3_600_000
+    const START = Date.parse("2026-10-19T00:00:00.000Z")
+
+    it("should keep one bucket per granularity step even when the row is wide enough for finer slots", () => {
+        const points = [
+            {startMs: START + HOUR_MS, state: "SUCCESS", count: 700},
+            {startMs: START + 2 * HOUR_MS, state: "FAILED", count: 300},
+        ]
+
+        const buckets = bucketizeDensity(points, START, START + 24 * HOUR_MS, 1200, HOUR_MS)
+
+        expect(buckets.map(bucket => [bucket.startMs - START, bucket.endMs - bucket.startMs, bucket.total, bucket.dominantState])).toEqual([
+            [HOUR_MS, HOUR_MS, 700, "SUCCESS"],
+            [2 * HOUR_MS, HOUR_MS, 300, "FAILED"],
+        ])
+    })
+
+    it("should not smear points outside the window onto its edges", () => {
+        const points = [
+            {startMs: START - 3 * HOUR_MS, state: "SUCCESS", count: 50},
+            {startMs: START + 30 * HOUR_MS, state: "SUCCESS", count: 50},
+            {startMs: START + 5 * HOUR_MS, state: "SUCCESS", count: 2},
+        ]
+
+        const buckets = bucketizeDensity(points, START, START + 24 * HOUR_MS, 1200, HOUR_MS)
+
+        expect(buckets.reduce((sum, bucket) => sum + bucket.total, 0)).toBe(2)
+    })
+
+    it("should count the hour that started just before the window opens", () => {
+        const buckets = bucketizeDensity([{startMs: START - HOUR_MS / 2, state: "SUCCESS", count: 9}], START, START + 24 * HOUR_MS, 1200, HOUR_MS)
+
+        expect(buckets.map(bucket => bucket.total)).toEqual([9])
+    })
+
+    it("should merge neighbouring steps when the row is too narrow to draw one bucket per step", () => {
+        const points = Array.from({length: 24}, (_, i) => ({startMs: START + i * HOUR_MS, state: "SUCCESS", count: 1}))
+
+        const buckets = bucketizeDensity(points, START, START + 24 * HOUR_MS, 30, HOUR_MS)
+
+        expect(buckets.length).toBeLessThan(24)
+        expect(buckets.reduce((sum, bucket) => sum + bucket.total, 0)).toBe(24)
     })
 })

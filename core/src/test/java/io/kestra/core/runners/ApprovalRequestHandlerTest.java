@@ -6,13 +6,16 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.event.Level;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.MapUtils;
@@ -25,6 +28,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,6 +56,9 @@ class ApprovalRequestHandlerTest {
 
     @Inject
     TaskOutputService taskOutputService;
+
+    @Inject
+    LogDataStoreInterface logRepository;
 
     @MockBean
     @Replaces(ApprovalRequestHandler.NoopApprovalRequestHandler.class)
@@ -81,6 +88,18 @@ class ApprovalRequestHandlerTest {
         assertThat(outputs.get("url")).isEqualTo("https://example.test/case/1");
         assertThat(outputs.get("caseId")).isEqualTo("case-1");
         assertThat(outputs.get("written")).isEqualTo("by-handler");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldLogTheOpenedApprovalWhenACaseBacksTheRequest() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+            assertThat(logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.INFO))
+                .extracting(LogEntry::getMessage)
+                .contains("Approval case-1 opened.")
+        );
     }
 
     @Test

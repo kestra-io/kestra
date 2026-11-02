@@ -350,21 +350,18 @@ jobs:
   ee-frontend-types:
     name: Frontend - EE type check
     needs: [file-changes]
-    if: "needs.file-changes.outputs.ui == 'true' && github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]'"
+    if: "needs.file-changes.outputs.ui == 'true' && github.event.pull_request.head.repo.fork == false"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
+    # The `secrets` context is not allowed in `if:`, so the app id is mirrored into env for the guards below.
+    env:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
-      # EE reaches OSS as ../../kestra from ui-ee, so both repositories are checked out side by side.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        name: Checkout - OSS sources
-        with:
-          path: kestra
-          persist-credentials: false
-
       - name: Generate GitHub App token for kestra-ee
         id: ee-token
+        if: env.GH_BOT_APP_ID != ''
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.GH_BOT_APP_ID }}
@@ -373,8 +370,17 @@ jobs:
           repositories: kestra-ee
           permission-contents: read
 
+      # EE reaches OSS as ../../kestra from ui-ee, so both repositories are checked out side by side.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - OSS sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          path: kestra
+          persist-credentials: false
+
       - name: Resolve the EE branch
         id: ee-branch
+        if: steps.ee-token.outputs.token != ''
         env:
           GH_TOKEN: ${{ steps.ee-token.outputs.token }}
           HEAD_REF: ${{ github.head_ref }}
@@ -391,6 +397,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout - EE sources
+        if: steps.ee-token.outputs.token != ''
         with:
           repository: kestra-io/kestra-ee
           ref: ${{ steps.ee-branch.outputs.ref }}
@@ -404,6 +411,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         name: Setup Node
+        if: steps.ee-token.outputs.token != ''
         with:
           node-version-file: 'kestra/ui/.nvmrc'
           cache: npm
@@ -413,14 +421,17 @@ jobs:
 
       # EE resolves vue, pinia and the other shared libraries from kestra/ui/node_modules.
       - name: Install OSS Node dependencies
+        if: steps.ee-token.outputs.token != ''
         working-directory: kestra/ui
         run: npm ci
 
       - name: Install EE Node dependencies
+        if: steps.ee-token.outputs.token != ''
         working-directory: kestra-ee/ui-ee
         run: npm ci
 
       - name: Type-check ui-ee
+        if: steps.ee-token.outputs.token != ''
         working-directory: kestra-ee/ui-ee
         run: npm run check:types
 

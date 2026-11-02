@@ -62,13 +62,13 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(Task::getId)
             .toList();
 
-        List<String> duplicateIds = getDuplicates(taskIds);
+        List<String> duplicateIds = ListUtils.getDuplicates(taskIds);
 
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate task id with name [" + String.join(", ", duplicateIds) + "]");
         }
 
-        duplicateIds = getDuplicates(value.allTriggerIds());
+        duplicateIds = ListUtils.getDuplicates(value.allTriggerIds());
 
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate trigger id with name [" + String.join(", ", duplicateIds) + "]");
@@ -84,7 +84,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         // input unique name (top-level): catches two top-level entries sharing an id even when their
         // expanded child paths are disjoint (e.g. two FORMs both named 'environment').
-        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
+        duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate input with name [" + String.join(", ", duplicateIds) + "]");
         }
@@ -93,7 +93,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         List<String> expandedPaths = Input.collectExpandedPaths(value.getInputs());
         // Only dotted paths are form-relevant: a duplicate bare path can only be two top-level non-FORM inputs,
         // already reported by the top-level "Duplicate input with name" check above.
-        List<String> duplicatePaths = getDuplicates(expandedPaths).stream().filter(path -> path.contains(".")).toList();
+        List<String> duplicatePaths = ListUtils.getDuplicates(expandedPaths).stream().filter(path -> path.contains(".")).toList();
         if (!duplicatePaths.isEmpty()) {
             violations.add("Duplicate input path [" + String.join(", ", duplicatePaths) + "]");
         }
@@ -111,7 +111,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         violations.addAll(eeOnlyInputsViolations(value.getInputs()));
 
         // output unique name
-        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
+        duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
@@ -276,13 +276,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             });
         });
 
-    }
-
-    protected static List<String> getDuplicates(List<String> taskIds) {
-        return taskIds.stream()
-            .distinct()
-            .filter(entry -> Collections.frequency(taskIds, entry) > 1)
-            .toList();
     }
 
     /**

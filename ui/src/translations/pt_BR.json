@@ -541,6 +541,8 @@
     "refresh": "Atualizar",
     "filter by status": "Filtrar execuções pelo status {status}",
     "topology-graph": {
+      "retried": "Esta Task foi retried",
+      "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientação do gráfico",
       "zoom-in": "Aumentar zoom",
       "zoom-out": "Diminuir zoom",
@@ -669,6 +671,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variáveis",
+    "task_run_popup": {
+      "open": "Detalhes da Task",
+      "count_error": "Não foi possível carregar a contagem",
+      "load_error": "Não foi possível carregar esta visualização.",
+      "retry": "Tentar novamente",
+      "child_runs_capped": "Exibindo os logs das primeiras {count} execuções de Task filhas apenas.",
+      "no_artifacts": "Esta Task não fornece um artifact.",
+      "task_source": "Fonte do Task",
+      "worker_info": "Informações do Worker"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Nenhuma task deste flow fornece um artifact.",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "Sair da tela cheia"
     },
     "variable_explorer": {
+      "task_outputs": "Outputs do Task",
       "title": "Entrada/Saída",
       "search_placeholder": "Pesquisar Key ou value...",
       "tasks_outputs": "Tasks outputs",

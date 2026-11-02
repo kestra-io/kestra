@@ -1718,7 +1718,12 @@
           "running": "Em execução",
           "finish_now": "Finalizar tour",
           "dismiss": "Ocultar isto",
-          "skipped_hint": "O tour do produto fica no menu esquerdo se você quiser retomá-lo mais tarde."
+          "skipped_hint": "O tour do produto fica no menu esquerdo se você quiser retomá-lo mais tarde.",
+          "run_without_docker": "Executar sem Docker",
+          "enable_docker": "Como habilitar o Docker"
+        },
+        "notices": {
+          "still_running": "A execução ainda está em andamento. A primeira execução pode levar alguns minutos enquanto as dependências do Python são instaladas. O tour continua quando ela terminar."
         },
         "intro": {
           "kicker": "Bem-vindo ao Kestra",
@@ -1857,7 +1862,8 @@
           "no_execution_to_replay": "Não há execuções para reproduzir ainda. Execute o flow na etapa anterior e tente novamente.",
           "replay": "A repetição terminou como {state}. Abra os logs nesta página para ver o que a {task} relatou e tente novamente.",
           "save_flow": "O flow do tour não pôde ser salvo. {reason}",
-          "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente."
+          "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente.",
+          "docker_unavailable": "O Kestra não consegue acessar o Docker, por isso a task Python não pôde iniciar. Execute-a sem Docker ou dê ao Kestra acesso ao Docker e tente novamente."
         },
         "steps": {
           "1": "Escrever e executar um flow",

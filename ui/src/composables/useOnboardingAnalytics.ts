@@ -11,7 +11,9 @@ export type OnboardingTourEvent =
     | "tour_started"
     | "tour_continued"
     | "tour_completed"
-    | "tour_closed";
+    | "tour_closed"
+    | "tour_docker_unavailable"
+    | "tour_docker_fallback";
 
 interface TrackOnboardingOptions {
     event: OnboardingTourEvent;

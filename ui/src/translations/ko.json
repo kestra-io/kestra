@@ -1718,7 +1718,12 @@
           "running": "실행 중",
           "finish_now": "투어 완료",
           "dismiss": "숨기기",
-          "skipped_hint": "제품 둘러보기는 나중에 다시 시작하고 싶을 경우 왼쪽 메뉴에 남아 있습니다."
+          "skipped_hint": "제품 둘러보기는 나중에 다시 시작하고 싶을 경우 왼쪽 메뉴에 남아 있습니다.",
+          "run_without_docker": "Docker 없이 실행",
+          "enable_docker": "Docker를 활성화하는 방법"
+        },
+        "notices": {
+          "still_running": "실행이 아직 진행 중입니다. 첫 실행은 Python 종속성을 설치하는 동안 몇 분이 걸릴 수 있습니다. 실행이 끝나면 둘러보기가 이어집니다."
         },
         "intro": {
           "kicker": "Kestra에 오신 것을 환영합니다",
@@ -1857,7 +1862,8 @@
           "no_execution_to_replay": "아직 재실행할 실행 내역이 없습니다. 이전 단계에서 flow를 실행한 다음 다시 시도하세요.",
           "replay": "Replay가 {state}로 완료되었습니다. 이 페이지에서 log를 열어 {task}가 보고한 내용을 확인한 다음 다시 시도하세요.",
           "save_flow": "투어 flow를 저장할 수 없습니다. {reason}",
-          "test_event": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인한 다음, 다시 시도하세요."
+          "test_event": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인한 다음, 다시 시도하세요.",
+          "docker_unavailable": "Kestra가 Docker에 접근할 수 없어 Python task를 시작하지 못했습니다. Docker 없이 실행하거나 Kestra에 Docker 접근 권한을 부여한 다음 다시 시도하세요."
         },
         "steps": {
           "1": "flow 작성 및 실행",

@@ -122,7 +122,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size()).isEqualTo(2);
-        assertThat(run.getUris().getFirst().getPath()).endsWith(".tmp");
+        assertThat(StorageContext.logicalPath(run.getUris().getFirst())).endsWith(".tmp");
         assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(10)) + "\n");
     }
 

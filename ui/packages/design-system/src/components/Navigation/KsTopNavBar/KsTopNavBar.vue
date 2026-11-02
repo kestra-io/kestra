@@ -1,5 +1,5 @@
 <template>
-    <nav class="ks-topnavbar d-flex align-items-center w-100">
+    <nav class="ks-topnavbar d-flex align-items-center">
         <KsIconButton
             v-if="sidebarCollapsed"
             class="icon-btn"
@@ -129,6 +129,7 @@
 
 <style scoped>
     .ks-topnavbar {
+        width: 100%;
         height: 60px;
         flex-shrink: 0;
         padding: 0 var(--ks-spacing-4);

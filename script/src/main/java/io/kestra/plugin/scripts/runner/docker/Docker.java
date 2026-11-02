@@ -851,7 +851,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             + "If the Docker daemon cannot access the worker filesystem, use the VOLUME file handling strategy instead.").formatted(source);
     }
 
-    private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
+    static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
         return "Docker execution failed because Docker socket is not accessible.\n\n" +
             "Fix:\n" +
             "- Mount docker socket:\n" +

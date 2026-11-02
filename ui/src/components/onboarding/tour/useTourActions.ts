@@ -13,6 +13,7 @@ import {EXECUTION_PARENT_ROUTE} from "../../executions/executionTabs"
 import {sendWebhookTestEvent} from "../../flows/testEvent"
 import {STORED_PANELS_RELOAD_EVENT} from "../../../composables/useStoredPanels"
 import {TourSceneError} from "./tourScenes"
+import {isDockerSocketFailure} from "./tourDocker"
 import {
     TOUR_FLOW_ID,
     TOUR_MANUAL_LABEL,
@@ -29,6 +30,15 @@ const FLOW_TAB = {
     revisions: `${FLOW_PARENT_ROUTE}/revisions`,
     triggers: `${FLOW_PARENT_ROUTE}/triggers`,
 } as const
+
+const STILL_RUNNING_AFTER_MS = 180_000
+const DOCKER_LOGS_ATTEMPTS = 4
+const DOCKER_LOGS_RETRY_MS = 1000
+
+export interface WaitForExecutionOptions {
+    signal?: AbortSignal;
+    onStillRunning?: () => void;
+}
 
 const randomWebhookKey = () => {
     const random = Math.random().toString(36).slice(2, 10)
@@ -64,7 +74,7 @@ export function useTourActions() {
             return
         }
 
-        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, tourFlowSource.generated())
+        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, tourFlowSource.generated(tour().taskRunner))
         await router.push({
             name: "flows/create",
             query: {onboardingPreset: "true"},
@@ -253,22 +263,30 @@ export function useTourActions() {
         return flow?.revision as number | undefined
     }
 
-    const waitForExecution = async (executionId: string, timeoutMs = 180_000) => {
+    const waitForExecution = async (
+        executionId: string,
+        {signal, onStillRunning}: WaitForExecutionOptions = {},
+    ) => {
         const startedAt = Date.now()
+        let hasNotified = false
         for (;;) {
+            if (signal?.aborted) {
+                throw new DOMException("The wait was aborted.", "AbortError")
+            }
             const execution = await executionsStore.loadExecution({id: executionId})
             const current = execution?.state?.current
             if (current && State.isTerminated(current)) {
                 return execution
             }
-            if (Date.now() - startedAt > timeoutMs) {
-                return execution
+            if (!hasNotified && Date.now() - startedAt > STILL_RUNNING_AFTER_MS) {
+                hasNotified = true
+                onStillRunning?.()
             }
             await wait(1000)
         }
     }
 
-    const executeFlow = async (flowId: string = TOUR_FLOW_ID) => {
+    const executeFlow = async (flowId: string = TOUR_FLOW_ID, options: WaitForExecutionOptions = {}) => {
         const execution = await executionsStore.triggerExecution({
             namespace: TOUR_NAMESPACE,
             id: flowId,
@@ -278,11 +296,28 @@ export function useTourActions() {
         })
         tourStore.setTourState({lastExecutionId: execution.id})
         await openExecution(execution.id, flowId)
-        return waitForExecution(execution.id)
+        return waitForExecution(execution.id, options)
+    }
+
+    const dockerUnavailable = async (executionId: string) => {
+        for (let attempt = 0; attempt < DOCKER_LOGS_ATTEMPTS; attempt++) {
+            const logs = await executionsStore.loadLogs({
+                executionId,
+                filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+                store: false,
+            }).catch(() => [])
+            if (isDockerSocketFailure(logs ?? [])) {
+                return true
+            }
+            if (attempt < DOCKER_LOGS_ATTEMPTS - 1) {
+                await wait(DOCKER_LOGS_RETRY_MS)
+            }
+        }
+        return false
     }
 
     // Replay, not restart: only replay copies successful task-run outputs, which the fixed message needs.
-    const replayFromFailedTask = async () => {
+    const replayFromFailedTask = async (options: WaitForExecutionOptions = {}) => {
         const executionId = tour().failedExecutionId ?? tour().lastExecutionId
         if (!executionId) {
             throw new TourSceneError("onboarding.tour.errors.no_execution_to_replay")
@@ -303,7 +338,7 @@ export function useTourActions() {
         const replayedId = replayed?.id ?? executionId
         tourStore.setTourState({restartedExecutionId: replayedId, lastExecutionId: replayedId})
         await openExecution(replayedId)
-        return waitForExecution(replayedId)
+        return waitForExecution(replayedId, options)
     }
 
     const ensureWebhookKey = () => {
@@ -420,6 +455,7 @@ export function useTourActions() {
         replayFromFailedTask,
         latestRevision,
         waitForExecution,
+        dockerUnavailable,
         waitForReportExecution,
         findEventExecution,
         ensureWebhookKey,

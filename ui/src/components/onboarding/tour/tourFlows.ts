@@ -13,7 +13,18 @@ export const TOUR_SLACK_MOCK_URL = "https://kestra.io/api/mock"
 const TOUR_FLOW_HEADER = `id: ${TOUR_FLOW_ID}
 namespace: ${TOUR_NAMESPACE}`
 
-const TOUR_BASE_TASKS = `
+export type TourTaskRunner = "docker" | "process"
+
+const TOUR_PROCESS_RUNNER_TYPE = "io.kestra.plugin.core.runner.Process"
+
+const SUMMARIZE_TASK_RUNNER: Record<TourTaskRunner, string> = {
+    docker: "",
+    process: `
+    taskRunner:
+      type: ${TOUR_PROCESS_RUNNER_TYPE}`,
+}
+
+const baseTasks = (runner: TourTaskRunner) => `
 
 tasks:
   - id: fetch_orders
@@ -21,7 +32,7 @@ tasks:
     uri: https://dummyjson.com/carts
 
   - id: summarize
-    type: io.kestra.plugin.scripts.python.Script
+    type: io.kestra.plugin.scripts.python.Script${SUMMARIZE_TASK_RUNNER[runner]}
     dependencies:
       - kestra
     script: |
@@ -34,7 +45,7 @@ tasks:
       print(f"Revenue today: \${revenue:,}")
       Kestra.outputs({'revenue': revenue})`
 
-export const TOUR_FLOW_BASE = TOUR_FLOW_HEADER + TOUR_BASE_TASKS
+export const TOUR_FLOW_BASE = TOUR_FLOW_HEADER + baseTasks("docker")
 
 export const TOUR_NOTIFY_TASK_TYPE = "io.kestra.plugin.slack.notifications.SlackIncomingWebhook"
 
@@ -89,13 +100,13 @@ triggers:
           - SUCCESS`
 
 export const tourFlowSource = {
-    generated: () => TOUR_FLOW_BASE,
-    withBrokenNotify: () =>
-        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + TOUR_BASE_TASKS + TOUR_NOTIFY_TASK_BROKEN,
-    withFixedNotify: () =>
-        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + TOUR_BASE_TASKS + TOUR_NOTIFY_TASK_FIXED,
-    withWebhook: (key: string) =>
-        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + TOUR_BASE_TASKS + TOUR_NOTIFY_TASK_FIXED
+    generated: (runner: TourTaskRunner) => TOUR_FLOW_HEADER + baseTasks(runner),
+    withBrokenNotify: (runner: TourTaskRunner) =>
+        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + baseTasks(runner) + TOUR_NOTIFY_TASK_BROKEN,
+    withFixedNotify: (runner: TourTaskRunner) =>
+        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + baseTasks(runner) + TOUR_NOTIFY_TASK_FIXED,
+    withWebhook: (key: string, runner: TourTaskRunner) =>
+        TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + baseTasks(runner) + TOUR_NOTIFY_TASK_FIXED
         + tourWebhookTrigger(key),
 }
 

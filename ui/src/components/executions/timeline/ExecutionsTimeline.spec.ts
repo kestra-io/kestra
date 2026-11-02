@@ -46,6 +46,8 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
 })
 
 import ExecutionsTimeline from "./ExecutionsTimeline.vue"
+import {MAX_RAW_EXECUTIONS, RAW_MODE_REENTRY_THRESHOLD, sumDensityPoints, type RowDensityPoint} from "../../../utils/executionsTimeline"
+import {START_QUERY_KEY, END_QUERY_KEY} from "../../../composables/useTimelineRange"
 
 const messages = {
     now: "Now",
@@ -59,9 +61,9 @@ const messages = {
 
 const TimelineRowStub = defineComponent({
     name: "TimelineRow",
-    props: ["label", "executions", "total", "failed", "rangeStartMs", "rangeEndMs", "availableWidthPx", "packLanes", "dimmedStates", "drillable"],
-    emits: ["drill-in", "open-own-page", "show-only-flow"],
-    template: "<div class=\"stub-row\" :data-label=\"label\" :data-total=\"total\" :data-failed=\"failed\" />",
+    props: ["label", "executions", "densityPoints", "densityGranularityMs", "total", "failed", "rangeStartMs", "rangeEndMs", "availableWidthPx", "packLanes", "dimmedStates", "drillable"],
+    emits: ["drill-in", "open-own-page", "show-only-flow", "zoom-to-range"],
+    template: "<div class=\"stub-row\" :data-label=\"label\" :data-total=\"total\" :data-failed=\"failed\" :data-aggregated=\"densityPoints !== undefined\" />",
 })
 
 const ChartLegendStub = defineComponent({
@@ -101,6 +103,20 @@ const stubs = {
     KsEmpty: {template: "<div><slot /><slot name=\"description\" /></div>"},
     KsButton: {template: "<button><slot /></button>"},
 }
+
+const EMPTY_DENSITY = {points: [], rowPoints: [], isCapped: false, granularityMs: 60_000, ignoredFilters: []}
+
+function densityOf(rowPoints: RowDensityPoint[], overrides: Record<string, unknown> = {}) {
+    return {...EMPTY_DENSITY, rowPoints, points: sumDensityPoints(rowPoints), granularityMs: 3_600_000, ...overrides}
+}
+
+const HOUR_START_MS = Date.parse("2026-01-01T00:00:00Z")
+
+const aggregatedRowPoints: RowDensityPoint[] = [
+    {startMs: HOUR_START_MS, state: "SUCCESS", count: 3000, namespace: "company.team", flowId: "flow-a"},
+    {startMs: HOUR_START_MS, state: "FAILED", count: 40, namespace: "company.team", flowId: "flow-a"},
+    {startMs: HOUR_START_MS, state: "SUCCESS", count: 500, namespace: "company.other", flowId: "flow-b"},
+]
 
 function buildExecution(id: string, state: string, {namespace = "company.team", flowId = "flow-a"}: {namespace?: string; flowId?: string} = {}) {
     return {
@@ -143,7 +159,7 @@ describe("ExecutionsTimeline", () => {
     let wrapper: VueWrapper | undefined
 
     beforeEach(() => {
-        density.fetchDensity.mockResolvedValue({points: [], granularityMs: 60_000, ignoredFilters: []})
+        density.fetchDensity.mockResolvedValue(EMPTY_DENSITY)
     })
 
     afterEach(() => {
@@ -357,7 +373,7 @@ describe("ExecutionsTimeline", () => {
 
     it("should feed the density bar from the aggregate over the context window, not from the capped rows", async () => {
         store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 5000})
-        density.fetchDensity.mockResolvedValue({points: [{startMs: 1, state: "SUCCESS", count: 5000}], granularityMs: 3_600_000, ignoredFilters: ["childFilter"]})
+        density.fetchDensity.mockResolvedValue({...EMPTY_DENSITY, points: [{startMs: 1, state: "SUCCESS", count: 5000}], granularityMs: 3_600_000, ignoredFilters: ["childFilter"]})
 
         const router = createTestRouter()
         wrapper = await mountTimeline(router)
@@ -369,5 +385,100 @@ describe("ExecutionsTimeline", () => {
         expect(toolbar.props("density")).toEqual([{startMs: 1, state: "SUCCESS", count: 5000}])
         expect(toolbar.props("densityGranularityMs")).toBe(3_600_000)
         expect(toolbar.props("densityIgnoredFilters")).toEqual(["childFilter"])
+    })
+
+    it("should draw accurate per-namespace rows from the aggregated counts when more executions ran than the raw fetch can hold", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        const rows = wrapper.findAll(".stub-row").map(row => [row.attributes("data-label"), row.attributes("data-total"), row.attributes("data-failed"), row.attributes("data-aggregated")])
+        expect(rows).toEqual([["company.team", "3040", "40", "true"], ["company.other", "500", "0", "true"]])
+        expect(wrapper.find("[data-test=timeline-truncated]").exists()).toBe(false)
+        expect(wrapper.find(".ks-tag").text()).toBe("Total 3540")
+        expect(wrapper.find("[data-test=timeline-failed-count]").text()).toBe("Failed 40")
+        expect(wrapper.find("[data-test=\"legend-item-SUCCESS\"]").text()).toBe("SUCCESS (3500)")
+    })
+
+    it("should keep drawing raw executions when the raw fetch holds all of them", async () => {
+        const executions = Array.from({length: MAX_RAW_EXECUTIONS}, (_, i) => buildExecution(`exec-${i}`, "SUCCESS"))
+        store.findExecutions.mockResolvedValue({results: executions, total: MAX_RAW_EXECUTIONS})
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("false")
+        expect(wrapper.find("[data-test=timeline-truncated]").exists()).toBe(false)
+    })
+
+    it("should stay raw and keep the truncation notice when the aggregate ignores an active filter", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints, {ignoredFilters: ["childFilter"]}))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("false")
+        expect(wrapper.find("[data-test=timeline-truncated]").text()).toBe("Showing 1 of 3540")
+    })
+
+    it("should stay raw and keep the truncation notice when the aggregate hit its row cap", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints, {isCapped: true}))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("false")
+        expect(wrapper.find("[data-test=timeline-truncated]").exists()).toBe(true)
+    })
+
+    it("should stay raw with the truncation notice, not an error, when the aggregate request fails", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {})
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchDensity.mockRejectedValue(new Error("too_many_buckets"))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("false")
+        expect(wrapper.find("[data-test=timeline-truncated]").exists()).toBe(true)
+        expect(wrapper.find(".ks-alert[data-type=error]").exists()).toBe(false)
+        vi.mocked(console.error).mockRestore()
+    })
+
+    it("should only return to raw bars once the zoomed window is clearly below the raw fetch limit", async () => {
+        const totals = [3540, RAW_MODE_REENTRY_THRESHOLD + 50, RAW_MODE_REENTRY_THRESHOLD]
+        store.findExecutions.mockImplementation(() => Promise.resolve({results: [buildExecution("1", "SUCCESS")], total: totals.shift()}))
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("true")
+
+        await router.push({query: {"filters[timeRange][EQUALS]": "PT12H"}})
+        await settle()
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("true")
+
+        await router.push({query: {"filters[timeRange][EQUALS]": "PT6H"}})
+        await settle()
+        expect(wrapper.find(".stub-row").attributes("data-aggregated")).toBe("false")
+    })
+
+    it("should zoom the timeline to the bucket range when an aggregated bucket is clicked", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 3540})
+        density.fetchDensity.mockResolvedValue(densityOf(aggregatedRowPoints))
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+        const endMs = HOUR_START_MS + 3_600_000
+        wrapper.getComponent(TimelineRowStub).vm.$emit("zoom-to-range", {startMs: HOUR_START_MS, endMs})
+        await settle()
+
+        expect(router.currentRoute.value.query[START_QUERY_KEY]).toBe(new Date(HOUR_START_MS).toISOString())
+        expect(router.currentRoute.value.query[END_QUERY_KEY]).toBe(new Date(endMs).toISOString())
     })
 })

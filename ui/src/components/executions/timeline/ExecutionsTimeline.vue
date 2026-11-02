@@ -18,7 +18,7 @@
         <div v-if="showBreadcrumb" class="timeline-breadcrumb-bar">
             <KsBreadcrumb :items="breadcrumbItems" />
             <div class="scope-stats">
-                <KsTag>{{ $t("executionsTimeline.breadcrumb.total", {count: scopedExecutions.length}) }}</KsTag>
+                <KsTag>{{ $t("executionsTimeline.breadcrumb.total", {count: scopedTotal}) }}</KsTag>
                 <KsTag v-if="scopedFailedCount > 0" type="danger" data-test="timeline-failed-count">
                     {{ $t("executionsTimeline.breadcrumb.failed", {count: scopedFailedCount}) }}
                 </KsTag>
@@ -74,6 +74,8 @@
                             :key="row.key"
                             :label="row.label"
                             :executions="row.executions"
+                            :densityPoints="row.densityPoints"
+                            :densityGranularityMs="aggregation?.granularityMs"
                             :total="row.total"
                             :failed="row.failed"
                             :rangeStartMs="rangeStartMs"
@@ -85,6 +87,7 @@
                             @drill-in="onDrillIn(row)"
                             @open-own-page="onOpenOwnPage(row)"
                             @show-only-flow="onShowOnlyFlow"
+                            @zoom-to-range="({startMs, endMs}) => setRange(startMs, endMs)"
                         />
                     </TransitionGroup>
                 </template>
@@ -118,9 +121,12 @@
     import {useExecutionsDensity, type ExecutionsDensity} from "../../../composables/useExecutionsDensity"
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
-    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, stateChartColor, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {
+        groupByNamespace, groupDensityByNamespace, countByState, countPointsByState, buildAxisTicks, axisTickCount, axisTickFormat,
+        isFailedLikeState, isWithinNamespace, resolveFetchMode, stateChartColor, MAX_RAW_EXECUTIONS,
+        type DensityPoint, type FetchMode, type RowDensityPoint, type StateCount, type TimelineExecution,
+    } from "../../../utils/executionsTimeline"
 
-    const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
     const TIME_FILTER_KEYS = [TIME_RANGE_QUERY_KEY, START_QUERY_KEY, END_QUERY_KEY]
     const ROW_LABEL_WIDTH_PX = 180
@@ -192,15 +198,25 @@
 
     const showBreadcrumb = computed(() => props.flowId === undefined)
 
+    const aggregation = ref<{rowPoints: RowDensityPoint[]; granularityMs: number} | undefined>(undefined)
+    const fetchMode = ref<FetchMode>("raw")
+
     const scopedExecutions = computed(() => rawExecutions.value)
-    const scopedFailedCount = computed(() =>
-        scopedExecutions.value.filter(e => isFailedLikeState(e.state)).length,
+    const aggregatedGroups = computed(() => groupDensityByNamespace(aggregation.value?.rowPoints ?? []))
+    const scopedTotal = computed(() => aggregation.value
+        ? aggregatedGroups.value.reduce((sum, group) => sum + group.total, 0)
+        : scopedExecutions.value.length,
+    )
+    const scopedFailedCount = computed(() => aggregation.value
+        ? aggregatedGroups.value.reduce((sum, group) => sum + group.failed, 0)
+        : scopedExecutions.value.filter(e => isFailedLikeState(e.state)).length,
     )
 
     interface TimelineRowData {
         key: string;
         label: string;
         executions: TimelineExecution[];
+        densityPoints?: DensityPoint[];
         total: number;
         failed: number;
         namespace: string;
@@ -208,6 +224,8 @@
     }
 
     const rows = computed<TimelineRowData[]>(() => {
+        if (aggregation.value) return aggregatedRows.value
+
         if (viewLevel.value === "flow") {
             return [{
                 key: effectiveFlowId.value!,
@@ -246,10 +264,51 @@
         }))
     })
 
+    const aggregatedRows = computed<TimelineRowData[]>(() => {
+        if (viewLevel.value === "flow") {
+            return [{
+                key: effectiveFlowId.value!,
+                label: effectiveFlowId.value!,
+                executions: [],
+                densityPoints: aggregatedGroups.value.flatMap(group => group.flows.flatMap(flow => flow.points)),
+                total: scopedTotal.value,
+                failed: scopedFailedCount.value,
+                namespace: effectiveNamespace.value!,
+                flowId: effectiveFlowId.value,
+            }]
+        }
 
-    const legendExecutions = ref<TimelineExecution[]>([])
+        if (viewLevel.value === "namespace") {
+            const namespace = effectiveNamespace.value!
+            return aggregatedGroups.value
+                .filter(group => isWithinNamespace(group.namespace, namespace))
+                .flatMap(group => group.flows)
+                .map(flow => ({
+                    key: `${flow.namespace}.${flow.flowId}`,
+                    label: flow.namespace === namespace ? flow.flowId : `${flow.namespace.slice(namespace.length + 1)}.${flow.flowId}`,
+                    executions: [],
+                    densityPoints: flow.points,
+                    total: flow.total,
+                    failed: flow.failed,
+                    namespace: flow.namespace,
+                    flowId: flow.flowId,
+                }))
+        }
+
+        return aggregatedGroups.value.map(group => ({
+            key: group.namespace,
+            label: group.namespace,
+            executions: [],
+            densityPoints: group.flows.flatMap(flow => flow.points),
+            total: group.total,
+            failed: group.failed,
+            namespace: group.namespace,
+        }))
+    })
+
+    const legendStateCounts = ref<StateCount[]>([])
     const legendItems = computed(() =>
-        countByState(legendExecutions.value).map(({state, count}) => ({
+        legendStateCounts.value.map(({state, count}) => ({
             label: state,
             color: stateChartColor(state),
             count,
@@ -337,13 +396,13 @@
     }
 
     const {fetchDensity} = useExecutionsDensity()
-    const density = ref<ExecutionsDensity>({points: [], granularityMs: 60_000, ignoredFilters: []})
+    const density = ref<ExecutionsDensity>({points: [], rowPoints: [], isCapped: false, granularityMs: 60_000, ignoredFilters: []})
     const densityIgnoredFilterLabels = computed(() => density.value.ignoredFilters.map(field =>
         field === "q" ? t("search") : activeFilterConfiguration.value.keys?.find(key => key.key === field)?.label ?? field,
     ))
 
     const fetchedTotal = ref(0)
-    const isTruncated = computed(() => fetchedTotal.value > rawExecutions.value.length)
+    const isTruncated = computed(() => !aggregation.value && fetchedTotal.value > rawExecutions.value.length)
 
     function mapToTimelineExecutions(results: ApiLightExecution[] | undefined): TimelineExecution[] {
         return (results ?? [])
@@ -359,6 +418,19 @@
             }))
     }
 
+    async function fetchDensitySafely(...args: Parameters<typeof fetchDensity>): Promise<ExecutionsDensity | undefined> {
+        try {
+            return await fetchDensity(...args)
+        } catch (densityError) {
+            console.error("Failed to load timeline density", densityError)
+            return undefined
+        }
+    }
+
+    function isAggregable(candidate: ExecutionsDensity | undefined): candidate is ExecutionsDensity {
+        return candidate !== undefined && !candidate.isCapped && candidate.ignoredFilters.length === 0
+    }
+
     let latestFetchId = 0
 
     async function fetchExecutions() {
@@ -368,7 +440,7 @@
         error.value = undefined
         try {
             const query = loadQuery({
-                size: MAX_FETCHED_EXECUTIONS,
+                size: MAX_RAW_EXECUTIONS,
                 page: 1,
                 sort: "state.startDate:desc",
                 commit: false,
@@ -376,23 +448,38 @@
             const [domainStartMs, domainEndMs] = computeScrubberDomain(rangeStartMs.value, rangeEndMs.value)
             const [response, fetchedDensity] = await Promise.all([
                 executionsStore.findExecutions(query) as Promise<PagedResultsApiLightExecution>,
-                fetchDensity(query, domainStartMs, domainEndMs),
+                fetchDensitySafely(query, domainStartMs, domainEndMs),
             ])
             if (isStale()) return
 
             const fetched = mapToTimelineExecutions(response.results)
-            let legend = fetched
-            if (dimmedStates.value.size > 0) {
-                const {[STATE_EXCLUDE_KEY]: _excluded, ...legendQuery} = query
-                const legendResponse = await executionsStore.findExecutions(legendQuery) as PagedResultsApiLightExecution
+            const total = response.total ?? response.results?.length ?? 0
+            const mode = resolveFetchMode(total, fetchMode.value)
+            const {[STATE_EXCLUDE_KEY]: _excluded, ...legendQuery} = query
+            const hasDimmedStates = dimmedStates.value.size > 0
+
+            let aggregatedDensity = mode === "aggregated" && isAggregable(fetchedDensity) ? fetchedDensity : undefined
+            let legend: StateCount[] | undefined
+            if (aggregatedDensity) {
+                const legendDensity = hasDimmedStates ? await fetchDensitySafely(legendQuery, domainStartMs, domainEndMs) : aggregatedDensity
                 if (isStale()) return
-                legend = mapToTimelineExecutions(legendResponse.results)
+                aggregatedDensity = isAggregable(legendDensity) ? aggregatedDensity : undefined
+                legend = isAggregable(legendDensity) ? countPointsByState(legendDensity.points) : undefined
+            }
+            if (!legend) {
+                const legendExecutions = hasDimmedStates
+                    ? mapToTimelineExecutions(((await executionsStore.findExecutions(legendQuery)) as PagedResultsApiLightExecution).results)
+                    : fetched
+                if (isStale()) return
+                legend = countByState(legendExecutions)
             }
 
             rawExecutions.value = fetched
-            fetchedTotal.value = response.total ?? response.results?.length ?? 0
-            density.value = fetchedDensity
-            legendExecutions.value = legend
+            fetchedTotal.value = total
+            fetchMode.value = mode
+            aggregation.value = aggregatedDensity && {rowPoints: aggregatedDensity.rowPoints, granularityMs: aggregatedDensity.granularityMs}
+            if (fetchedDensity) density.value = fetchedDensity
+            legendStateCounts.value = legend
         } catch (fetchError) {
             if (isStale()) return
             console.error("Failed to load timeline executions", fetchError)

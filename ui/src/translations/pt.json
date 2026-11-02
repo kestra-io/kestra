@@ -2353,6 +2353,7 @@
       "default": "Dashboard Padrão",
       "set_default": "Definir como padrão",
       "empty": "Não há resultados para serem exibidos.",
+      "overdue": "Atrasado — {date}",
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Edite este gráfico"
@@ -2375,7 +2376,8 @@
         "paused": "Pausado",
         "success": "Sucesso",
         "warning": "Aviso",
-        "failed": "Falhou"
+        "failed": "Falhou",
+        "upcoming": "Próximos"
       }
     },
     "setup": {

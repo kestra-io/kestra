@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -188,6 +189,46 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
         assertThat(after - before).isEqualTo(2L);
     }
 
+    @Test
+    void shouldFilterStatisticsByStates() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+
+        executionStatisticsRepository.saveBatch(
+            List.of(
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, "namespace", "flow", bucket, State.Type.WARNING, IdUtils.create(), 3000),
+                raw(tenant, "namespace", "flow", bucket, State.Type.FAILED, IdUtils.create(), 5000)
+            )
+        );
+
+        // When
+        List<DailyExecutionStatistics> stats = statisticsFor(tenant, List.of(State.Type.SUCCESS, State.Type.WARNING), bucket);
+
+        // Then
+        assertThat(stats).hasSize(1);
+        assertThat(stats.getFirst().getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
+        assertThat(stats.getFirst().getExecutionCounts().get(State.Type.WARNING)).isEqualTo(1L);
+        assertThat(stats.getFirst().getExecutionCounts().get(State.Type.FAILED)).isZero();
+        assertThat(stats.getFirst().getDuration().getCount()).isEqualTo(2L);
+        assertThat(stats.getFirst().getDuration().getAvg().toMillis()).isEqualTo(2000L);
+    }
+
+    @Test
+    void shouldCountNoExecutionWhenNoExecutionMatchesStates() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+        executionStatisticsRepository.save(raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000));
+
+        // When
+        List<DailyExecutionStatistics> stats = statisticsFor(tenant, List.of(State.Type.FAILED), bucket);
+
+        // Then
+        assertThat(stats).allSatisfy(it -> assertThat(it.getDuration().getCount()).isZero());
+    }
+
     private long allTenantsCountFor(Instant bucket) {
         this.refresh();
 
@@ -202,12 +243,20 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
         return stats.getFirst().getExecutionCounts().getOrDefault(State.Type.SUCCESS, 0L);
     }
 
+    private List<DailyExecutionStatistics> statisticsFor(String tenant, List<State.Type> states, Instant bucket) {
+        this.refresh();
+
+        return executionStatisticsRepository.statistics(
+            tenant, "namespace", "flow", states, bucket, bucket, DateUtils.GroupType.MINUTE
+        );
+    }
+
     private DailyExecutionStatistics statisticsFor(String tenant, String namespace, String flowId, Instant bucket) {
         // refresh before querying
         this.refresh();
 
         List<DailyExecutionStatistics> stats = executionStatisticsRepository.statistics(
-            tenant, namespace, flowId, bucket, bucket, DateUtils.GroupType.MINUTE
+            tenant, namespace, flowId, Collections.emptyList(), bucket, bucket, DateUtils.GroupType.MINUTE
         );
         assertThat(stats).hasSize(1);
         return stats.getFirst();

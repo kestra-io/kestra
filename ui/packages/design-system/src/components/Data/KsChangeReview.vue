@@ -2,55 +2,51 @@
     <div class="ks-change-review">
         <div class="ks-change-review__head">
             <KsText tag="h3" size="large" class="ks-change-review__heading">{{ heading }}</KsText>
-            <div v-if="meta.length" class="ks-change-review__meta">
-                <KsText v-for="item in meta" :key="item" size="small" class="ks-change-review__muted">{{ item }}</KsText>
-            </div>
-        </div>
-
-        <div class="ks-change-review__tiles">
-            <div
-                v-for="tile in tiles"
-                :key="tile.label"
-                class="ks-change-review__tile"
-                :class="{'ks-change-review__tile--zero': !tile.count}"
-                :style="toneStyle(tile.tone)"
-            >
-                <span class="ks-change-review__glyph">{{ tile.glyph }}</span>
-                <span class="ks-change-review__count">{{ tile.count }}</span>
-                <span class="ks-change-review__label">
-                    {{ tile.label }}
-                    <small v-if="tile.hint">{{ tile.hint }}</small>
-                </span>
-            </div>
+            <KsText v-if="meta.length" size="small" class="ks-change-review__muted">{{ meta.join(" · ") }}</KsText>
         </div>
 
         <div v-if="shownSegments.length" class="ks-change-review__bar" aria-hidden="true">
             <span v-for="segment in shownSegments" :key="segment.label" :style="{flex: segment.value, background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />
         </div>
-        <div class="ks-change-review__legend">
-            <KsText v-for="segment in shownSegments" :key="segment.label" size="small" class="ks-change-review__muted">
-                <i :style="{background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />{{ segment.value }} {{ segment.label }}
+
+        <div v-if="filters.length" class="ks-change-review__filters" role="group" :aria-label="filterLabel">
+            <KsCheckTag :checked="filter === KS_CHANGE_REVIEW_ALL" @change="filter = KS_CHANGE_REVIEW_ALL">
+                {{ allLabel }} <span class="ks-change-review__filter-count">{{ allCount }}</span>
+            </KsCheckTag>
+            <KsCheckTag v-for="segment in filters" :key="segment.name" :checked="filter === segment.name" @change="filter = segment.name">
+                <template v-if="segment.glyph" #icon>
+                    <span class="ks-change-review__glyph" :style="{color: KS_CHANGE_REVIEW_TONES[segment.tone].color}">{{ segment.glyph }}</span>
+                </template>
+                {{ segment.label }} <span class="ks-change-review__filter-count">{{ segment.value }}</span>
+            </KsCheckTag>
+            <KsText v-for="segment in passive" :key="segment.label" size="small" class="ks-change-review__muted ks-change-review__passive">
+                <i :style="{background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />{{ segment.label }}
             </KsText>
-            <KsText v-if="total" size="small" class="ks-change-review__muted ks-change-review__total">{{ total }}</KsText>
         </div>
 
-        <KsSegmented v-model="tab" :options="tabOptions" size="small" class="ks-change-review__tabs" />
-        <slot :name="tab" />
+        <KsTabs v-model="tab" type="box">
+            <KsTabPane v-for="item in tabs" :key="item.name" :name="item.name">
+                <template #label>
+                    <span class="ks-change-review__tab">
+                        {{ item.label }}
+                        <KsTag v-if="item.count !== undefined" size="small">{{ item.count }}</KsTag>
+                    </span>
+                </template>
+                <div class="ks-change-review__pane">
+                    <slot :name="item.name" />
+                </div>
+            </KsTabPane>
+        </KsTabs>
     </div>
 </template>
 
 <script lang="ts">
     export type KsChangeReviewTone = "success" | "warning" | "danger" | "info" | "neutral"
 
-    export interface KsChangeReviewTile {
-        glyph: string
-        count: number
-        label: string
-        hint?: string
-        tone: KsChangeReviewTone
-    }
-
     export interface KsChangeReviewSegment {
+        /** Makes the segment a filter; the label of a segment without one is the whole text of its legend. */
+        name?: string
+        glyph?: string
         value: number
         label: string
         tone: KsChangeReviewTone
@@ -62,41 +58,41 @@
         count?: number
     }
 
-    export const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string, background: string}> = {
-        success: {color: "var(--ks-status-success)", background: "var(--ks-bg-success)"},
-        warning: {color: "var(--ks-status-warning)", background: "var(--ks-bg-warning)"},
-        danger: {color: "var(--ks-status-error)", background: "var(--ks-bg-error)"},
-        info: {color: "var(--ks-status-running)", background: "var(--ks-bg-info)"},
-        neutral: {color: "var(--ks-border-strong)", background: "var(--ks-bg-base)"},
+    export const KS_CHANGE_REVIEW_ALL = "all"
+
+    export const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string}> = {
+        success: {color: "var(--ks-status-success)"},
+        warning: {color: "var(--ks-status-warning)"},
+        danger: {color: "var(--ks-status-error)"},
+        info: {color: "var(--ks-status-running)"},
+        neutral: {color: "var(--ks-border-strong)"},
     }
 </script>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import KsText from "../Basic/KsText.vue"
-    import KsSegmented from "./KsSegmented.vue"
+    import KsTabPane from "../Navigation/KsTabs/KsTabPane.vue"
+    import KsTabs from "../Navigation/KsTabs/KsTabs.vue"
+    import KsCheckTag from "./KsTag/KsCheckTag.vue"
+    import KsTag from "./KsTag/KsTag.vue"
 
     const props = withDefaults(defineProps<{
         heading: string
         meta?: string[]
-        tiles: KsChangeReviewTile[]
         segments?: KsChangeReviewSegment[]
-        total?: string
+        allLabel: string
+        allCount: number
+        filterLabel: string
         tabs: KsChangeReviewTab[]
-    }>(), {meta: () => [], segments: () => [], total: undefined})
+    }>(), {meta: () => [], segments: () => []})
 
     const tab = defineModel<string>("tab", {required: true})
+    const filter = defineModel<string>("filter", {default: KS_CHANGE_REVIEW_ALL})
 
     const shownSegments = computed(() => props.segments.filter(segment => segment.value > 0))
-
-    const tabOptions = computed(() => props.tabs.map(item => ({
-        label: item.count === undefined ? item.label : `${item.label} ${item.count}`,
-        value: item.name,
-    })))
-
-    function toneStyle(tone: KsChangeReviewTone): Record<string, string> {
-        return {"--ks-change-review-tone": KS_CHANGE_REVIEW_TONES[tone].color, "--ks-change-review-tone-background": KS_CHANGE_REVIEW_TONES[tone].background}
-    }
+    const filters = computed(() => shownSegments.value.filter((segment): segment is KsChangeReviewSegment & {name: string} => segment.name !== undefined))
+    const passive = computed(() => shownSegments.value.filter(segment => segment.name === undefined))
 </script>
 
 <style scoped>
@@ -109,75 +105,19 @@
 
     .ks-change-review__head {
         display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-1);
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--ks-spacing-1) var(--ks-spacing-4);
     }
 
     .ks-change-review__heading {
-        align-self: flex-start;
         margin: 0;
         font-weight: var(--ks-font-weight-semibold);
     }
 
-    .ks-change-review__meta,
-    .ks-change-review__legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--ks-spacing-1) var(--ks-spacing-4);
-    }
-
     .ks-change-review__muted {
         color: var(--ks-text-secondary);
-    }
-
-    .ks-change-review__tiles {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-        gap: var(--ks-spacing-3);
-    }
-
-    .ks-change-review__tile {
-        display: flex;
-        align-items: baseline;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3) var(--ks-spacing-4);
-        border: 1px solid color-mix(in srgb, var(--ks-change-review-tone) 40%, var(--ks-border-default));
-        border-radius: var(--ks-radius-base);
-        background: var(--ks-change-review-tone-background);
-        color: var(--ks-change-review-tone);
-    }
-
-    .ks-change-review__tile--zero {
-        border-color: var(--ks-border-default);
-        background: var(--ks-bg-base);
-        color: var(--ks-text-inactive);
-    }
-
-    .ks-change-review__glyph,
-    .ks-change-review__count {
-        font-family: var(--ks-font-family-mono);
-        font-weight: var(--ks-font-weight-semibold);
-        font-variant-numeric: tabular-nums;
-    }
-
-    .ks-change-review__glyph {
-        font-size: var(--ks-font-size-lg);
-    }
-
-    .ks-change-review__count {
-        font-size: var(--ks-font-size-4xl);
-        line-height: 1;
-    }
-
-    .ks-change-review__label {
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-secondary);
-
-        & small {
-            display: block;
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-inactive);
-        }
     }
 
     .ks-change-review__bar {
@@ -186,10 +126,26 @@
         height: 0.375rem;
         border-radius: var(--ks-radius-xs);
         overflow: hidden;
-        background: var(--ks-bg-tag);
     }
 
-    .ks-change-review__legend i {
+    .ks-change-review__filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
+
+    .ks-change-review__glyph {
+        font-family: var(--ks-font-family-mono);
+        font-weight: var(--ks-font-weight-semibold);
+    }
+
+    .ks-change-review__filter-count {
+        font-variant-numeric: tabular-nums;
+        color: var(--ks-text-secondary);
+    }
+
+    .ks-change-review__passive i {
         display: inline-block;
         width: var(--ks-spacing-2);
         height: var(--ks-spacing-2);
@@ -197,13 +153,13 @@
         border-radius: var(--ks-radius-xs);
     }
 
-    .ks-change-review__total {
-        margin-left: auto;
+    .ks-change-review__pane {
+        padding-top: var(--ks-spacing-3);
     }
 
-    .ks-change-review__tabs {
-        align-self: flex-start;
-        max-width: 100%;
-        overflow-x: auto;
+    .ks-change-review__tab {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 </style>

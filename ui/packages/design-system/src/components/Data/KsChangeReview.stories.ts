@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, within} from "storybook/test"
-import {ref} from "vue"
-import KsChangeReview from "./KsChangeReview.vue"
+import {expect, userEvent, within} from "storybook/test"
+import {computed, ref} from "vue"
+import KsChangeReview, {KS_CHANGE_REVIEW_ALL} from "./KsChangeReview.vue"
 import KsTable from "./KsTable/KsTable.vue"
 import KsTableColumn from "./KsTable/KsTableColumn.vue"
 
@@ -10,56 +10,58 @@ const meta: Meta<typeof KsChangeReview> = {
     component: KsChangeReview,
     tags: ["autodocs"],
     parameters: {
-        docs: {description: {component: "KsChangeReview lays out a change to review before it is applied: a heading, one tile per total, a bar of the share of each kind of change, and tabs whose content each tool provides in a slot named after the tab. It knows nothing of the tool, so a Terraform plan and an Ansible check run share the same layout."}},
+        docs: {description: {component: "KsChangeReview lays out a change to review before it is applied: a heading, a bar of the share of each kind of change, one chip per kind that filters the change (bound with `v-model:filter`), and tabs whose content each tool provides in a slot named after the tab. A segment without a `name` only shows in the bar, its label being the whole text of its legend. It knows nothing of the tool, so a Terraform plan and an Ansible check run share the same layout."}},
     },
 }
 export default meta
 type Story = StoryObj<typeof KsChangeReview>
 
-const terraform = {
-    heading: "Terraform plan",
-    meta: ["Terraform 1.9.8"],
-    tiles: [
-        {glyph: "+", count: 3, label: "to add", hint: "2 new, 1 replaced", tone: "success"},
-        {glyph: "~", count: 3, label: "to change", tone: "warning"},
-        {glyph: "−", count: 3, label: "to destroy", hint: "2 removed, 1 replaced", tone: "danger"},
-    ],
-    segments: [
-        {value: 2, label: "create", tone: "success"},
-        {value: 1, label: "replace", tone: "info"},
-        {value: 3, label: "update", tone: "warning"},
-        {value: 2, label: "destroy", tone: "danger"},
-        {value: 18, label: "unchanged", tone: "neutral"},
-    ],
-    total: "26 resources in the plan",
-    tabs: [
-        {name: "resources", label: "Resources", count: 8},
-        {name: "outputs", label: "Outputs", count: 6},
-        {name: "variables", label: "Variables", count: 11},
-    ],
-} as const
-
 const resources = [
-    {action: "-/+", address: "module.app.terraform_data.app[0]", reason: "must be replaced"},
-    {action: "+", address: "module.app.terraform_data.app[1]", reason: "will be created"},
-    {action: "~", address: "module.app.terraform_data.app_security_group", reason: "updated in-place"},
-    {action: "-", address: "module.app.terraform_data.bastion[0]", reason: "will be destroyed"},
+    {action: "REPLACE", glyph: "±", address: "module.app.terraform_data.app[0]"},
+    {action: "CREATE", glyph: "+", address: "module.app.terraform_data.app[1]"},
+    {action: "UPDATE", glyph: "~", address: "module.app.terraform_data.app_security_group"},
+    {action: "DELETE", glyph: "−", address: "module.app.terraform_data.bastion[0]"},
+    {action: "DELETE", glyph: "−", address: "module.app.terraform_data.bastion_security_group[0]"},
 ]
 
 export const TerraformPlan: Story = {
     render: () => ({
         components: {KsChangeReview, KsTable, KsTableColumn},
         setup() {
-            return {review: terraform, tab: ref("resources"), resources}
+            const filter = ref(KS_CHANGE_REVIEW_ALL)
+            const shown = computed(() => resources.filter(resource => filter.value === KS_CHANGE_REVIEW_ALL || resource.action === filter.value))
+            return {
+                review: {
+                    heading: "5 changes",
+                    meta: ["23 resources in the plan", "Terraform 1.5.7"],
+                    segments: [
+                        {name: "CREATE", glyph: "+", value: 1, label: "Create", tone: "success"},
+                        {name: "REPLACE", glyph: "±", value: 1, label: "Replace", tone: "info"},
+                        {name: "UPDATE", glyph: "~", value: 1, label: "Update", tone: "warning"},
+                        {name: "DELETE", glyph: "−", value: 2, label: "Destroy", tone: "danger"},
+                        {value: 18, label: "18 resources unchanged", tone: "neutral"},
+                    ],
+                    allLabel: "All changes",
+                    allCount: resources.length,
+                    filterLabel: "Filter the changes by action",
+                    tabs: [
+                        {name: "resources", label: "Resources", count: resources.length},
+                        {name: "outputs", label: "Outputs", count: 6},
+                        {name: "variables", label: "Variables", count: 11},
+                    ],
+                },
+                tab: ref("resources"),
+                filter,
+                shown,
+            }
         },
         template: `
             <div style="padding:24px;max-width:960px">
-                <ks-change-review v-model:tab="tab" v-bind="review">
+                <ks-change-review v-model:tab="tab" v-model:filter="filter" v-bind="review">
                     <template #resources>
-                        <ks-table :data="resources" size="small">
-                            <ks-table-column prop="action" width="56" />
+                        <ks-table :data="shown" rowKey="address" size="small">
+                            <ks-table-column prop="glyph" width="56" />
                             <ks-table-column prop="address" label="Address" />
-                            <ks-table-column prop="reason" label="Change" />
                         </ks-table>
                     </template>
                     <template #outputs><p>The outputs of the plan.</p></template>
@@ -69,8 +71,11 @@ export const TerraformPlan: Story = {
     }),
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement)
-        await expect(canvas.getByText("Terraform plan")).toBeInTheDocument()
-        await expect(canvas.getByText("module.app.terraform_data.app[0]")).toBeInTheDocument()
+        await expect(canvas.getByText("5 changes")).toBeInTheDocument()
+        await userEvent.click(canvas.getByText("Destroy"))
+        await expect(canvas.queryByText("module.app.terraform_data.app[0]")).not.toBeInTheDocument()
+        await expect(canvas.getByText("module.app.terraform_data.bastion[0]")).toBeInTheDocument()
+        await userEvent.click(canvas.getByText("All changes"))
     },
 }
 
@@ -80,19 +85,16 @@ export const AnsibleCheckRun: Story = {
         setup() {
             return {
                 review: {
-                    heading: "Ansible check run",
+                    heading: "5 tasks would change",
                     meta: ["ansible-core 2.17", "site.yml", "3 hosts"],
-                    tiles: [
-                        {glyph: "~", count: 5, label: "would change", hint: "on 2 hosts", tone: "warning"},
-                        {glyph: "✓", count: 21, label: "already in place", tone: "success"},
-                        {glyph: "!", count: 0, label: "unreachable", tone: "danger"},
-                    ],
                     segments: [
-                        {value: 5, label: "changed", tone: "warning"},
-                        {value: 21, label: "ok", tone: "success"},
-                        {value: 2, label: "skipped", tone: "neutral"},
+                        {name: "changed", glyph: "~", value: 5, label: "Would change", tone: "warning"},
+                        {value: 21, label: "21 already in place", tone: "success"},
+                        {value: 2, label: "2 skipped", tone: "neutral"},
                     ],
-                    total: "28 tasks",
+                    allLabel: "All tasks",
+                    allCount: 5,
+                    filterLabel: "Filter the tasks",
                     tabs: [
                         {name: "tasks", label: "Tasks", count: 5},
                         {name: "hosts", label: "Hosts", count: 3},
@@ -122,7 +124,8 @@ export const AnsibleCheckRun: Story = {
     }),
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement)
-        await expect(canvas.getByText("Ansible check run")).toBeInTheDocument()
+        await expect(canvas.getByText("5 tasks would change")).toBeInTheDocument()
+        await expect(canvas.getByText("21 already in place")).toBeInTheDocument()
         await expect(canvas.getByText("Template nginx.conf")).toBeInTheDocument()
     },
 }

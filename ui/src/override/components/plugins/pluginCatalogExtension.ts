@@ -8,8 +8,14 @@ export interface PluginCatalogExtension {
     pageActions?: Component;
     /** Rendered above the catalog toolbar. */
     banner?: Component;
-    /** Rendered in the catalog toolbar, next to the category filters. */
+    /** Rendered in the catalog toolbar, next to the category filters; receives every artifact entry as `catalog`. */
     toolbar?: Component;
+    /**
+     * Rendered instead of the cards while `showTable()` is true. Receives the filtered, sorted entries as `plugins`,
+     * every artifact entry as `catalog`, and the lowercased `search` and the selected `categories`.
+     */
+    table?: Component;
+    showTable?: () => boolean;
     /** Narrows the catalog cards on top of search and categories. */
     matches?: (plugin: Plugin) => boolean;
     /** Rendered on each catalog card above its footer; receives the artifact entry as `plugin`. */

@@ -40,7 +40,7 @@
                 </KsCheckTag>
             </div>
 
-            <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" />
+            <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" :catalog="baseList" />
 
             <div class="sort-by">
                 <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
@@ -55,8 +55,17 @@
             </div>
         </div>
 
+        <component
+            :is="catalogExtension.table"
+            v-if="catalogExtension.table && catalogExtension.showTable?.()"
+            :plugins="pluginsList"
+            :catalog="baseList"
+            :search="searchInput"
+            :categories="selectedCategories"
+        />
+
         <KsNoData
-            v-if="pluginsList.length === 0"
+            v-else-if="pluginsList.length === 0"
             :description="$t('pluginPage.noResults')"
         />
 

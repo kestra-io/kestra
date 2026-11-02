@@ -77,6 +77,9 @@ const preview: Preview = {
     beginStoryScope(`${title} > ${name}`)
     setMockClient(unmockedClient)
     renderError = undefined
+    // Stories share one iframe, so a preference saved by one story would otherwise reach the next.
+    localStorage.clear()
+    sessionStorage.clear()
   },
   afterEach() {
     if (renderError) {

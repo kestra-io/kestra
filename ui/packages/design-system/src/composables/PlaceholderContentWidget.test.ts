@@ -68,6 +68,12 @@ describe("PlaceholderContentWidget", () => {
         expect(fake.applyFontInfo).toHaveBeenCalledWith(node)
     })
 
+    it("keeps the line breaks of a multi-line placeholder", () => {
+        const node = new PlaceholderContentWidget("# Example\nkey: value", fakeEditor().editor).getDomNode()
+
+        expect(node.style.whiteSpace).toBe("pre")
+    })
+
     it("removes itself from the editor when disposed", () => {
         const fake = fakeEditor()
         const widget = new PlaceholderContentWidget("Type here", fake.editor)

@@ -512,7 +512,7 @@
         total: computed(() => generated.value?.total ?? 0),
     })
 
-    watch(() => route.params.filters, () => refresh(), {deep: true})
+    watch(() => route.fullPath, () => refresh())
 
     const labelTimezone = dayjs.tz.guess()
 

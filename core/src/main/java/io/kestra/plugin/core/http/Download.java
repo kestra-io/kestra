@@ -201,8 +201,11 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         }
         try {
             Charset charset = Charset.forName(value.substring(0, firstQuote));
+            // Quotes around the encoded part are not RFC 5987, but some servers send them.
+            String encoded = unquote(value.substring(secondQuote + 1));
             // URLDecoder is a form decoder: keep a literal '+' instead of turning it into a space.
-            return URLDecoder.decode(value.substring(secondQuote + 1).replace("+", "%2B"), charset);
+            String decoded = URLDecoder.decode(encoded.replace("+", "%2B"), charset);
+            return decoded.chars().anyMatch(Character::isISOControl) ? null : decoded;
         } catch (IllegalArgumentException e) {
             return null;
         }

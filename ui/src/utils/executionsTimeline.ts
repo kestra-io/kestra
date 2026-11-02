@@ -203,17 +203,6 @@ export function rowDensityPointsFrom(rows: Record<string, unknown>[]): RowDensit
     })
 }
 
-export function sumDensityPoints(points: DensityPoint[]): DensityPoint[] {
-    const sums = new Map<string, DensityPoint>()
-    for (const {startMs, state, count} of points) {
-        const key = `${startMs}|${state}`
-        const sum = sums.get(key)
-        if (sum) sum.count += count
-        else sums.set(key, {startMs, state, count})
-    }
-    return [...sums.values()]
-}
-
 export function groupDensityByNamespace(points: RowDensityPoint[]): AggregatedNamespaceGroup[] {
     const namespaces = new Map<string, Map<string, DensityPoint[]>>()
 

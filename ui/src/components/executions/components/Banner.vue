@@ -98,7 +98,7 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
@@ -157,6 +157,14 @@
                 </span>
             </div>
         </div>
+
+        <KsAlert
+            v-if="approvalBanner"
+            type="info"
+            :title="$t(approvalBanner)"
+            :closable="false"
+            data-test="approval-banner"
+        />
     </div>
 </template>
 
@@ -170,7 +178,11 @@
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
+    import {findApprovalTaskRun} from "../../../utils/approval"
     import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../models/resource"
+    import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -205,6 +217,15 @@
     const {t} = useI18n({useScope: "global"})
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const approvalBanner = computed(() => {
+        // the generated SDK StateType does not list PAUSING until the SDK is regenerated
+        if ((props.execution.state.current as string) === State.PAUSING) {
+            return "approval.banner.pausing"
+        }
+
+        return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
+    })
 
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
@@ -267,6 +288,9 @@
         },
         {immediate: true},
     )
+
+    const authStore = useAuthStore()
+    const canAccessLogs = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.ACCESS_LOGS, props.execution.namespace) ?? true)
 
     const copyLogs = () => {
         executionsStore

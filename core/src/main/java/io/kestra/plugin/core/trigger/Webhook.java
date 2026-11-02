@@ -96,29 +96,23 @@ import reactor.core.publisher.Mono;
             title = """
                 Webhook with text/plain response for Microsoft Graph validation handshakes.
                 When a service like Microsoft Graph validates the webhook endpoint, it sends a validationToken that must be echoed back as plain text.
+                `responseBody` returns it as soon as the execution is created, without waiting for the flow to finish.
                 """,
             code = """
                 id: microsoft_graph_webhook
                 namespace: company.team
 
                 tasks:
-                  - id: handle_request
-                    type: io.kestra.plugin.core.output.OutputValues
-                    values:
-                      result: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
-
-                outputs:
-                  - id: response
-                    type: STRING
-                    value: "{{ outputs.handle_request.values.result }}"
+                  - id: log_request
+                    type: io.kestra.plugin.core.log.Log
+                    message: "Microsoft Graph called the webhook"
 
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
                     key: "{{ secret('WEBHOOK_KEY') }}"
-                    wait: true
-                    returnOutputs: true
                     responseContentType: "text/plain"
+                    responseBody: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
                 """,
             full = true
         ),
@@ -253,7 +247,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     @PluginProperty
     @Schema(
         title = "Custom response body.",
-        description = "Body returned to the webhook caller instead of the default execution metadata or flow outputs. The value can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs."
+        description = "Body returned to the webhook caller instead of the default execution metadata or flow outputs. The value can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs. The body is sent to anyone who calls the webhook, so it should not contain secrets."
     )
     private Property<String> responseBody;
 

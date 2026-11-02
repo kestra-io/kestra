@@ -1,5 +1,9 @@
 <template>
-    <TopNavBar :title="title" />
+    <TopNavBar :title="title">
+        <template v-if="catalogExtension.pageActions" #actions>
+            <component :is="catalogExtension.pageActions" />
+        </template>
+    </TopNavBar>
 
     <KsAlert v-if="loadError" type="error">
         {{ $t("pluginPage.loadError") }}
@@ -56,7 +60,7 @@
             <KsTooltip
                 v-for="plugin in pluginsList"
                 :showAfter="1000"
-                :key="`${plugin.name}-${plugin.subGroup ?? ''}`"
+                :key="plugin.name"
             >
                 <template #content>
                     <div class="tasks-tooltips">
@@ -82,7 +86,7 @@
                     </div>
                 </template>
                 <PluginCard
-                    :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
+                    :iconCls="plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
                     :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
@@ -108,6 +112,7 @@
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
+    import {usePluginCatalogExtension} from "override/components/plugins/pluginCatalogExtension"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -125,6 +130,7 @@
     const miscStore = useMiscStore()
     const enrichmentStore = usePluginsEnrichmentStore()
     const {totalPlugins} = usePluginsCount()
+    const catalogExtension = usePluginCatalogExtension()
 
     const title = computed(() => t("plugins.names"))
     const routeInfo = computed(() => ({title: title.value, breadcrumb: undefined}))
@@ -155,22 +161,9 @@
     const pluginTitle = (plugin: Plugin): string => String(plugin?.manifest?.["X-Kestra-Title"] ?? plugin?.title ?? "").toLowerCase()
 
     const baseList = computed<Plugin[]>(() => {
-        const source = filteredPlugins.value ?? []
-        const grouped = source.reduce((acc: Record<string, Plugin[]>, plugin) => {
-            (acc[plugin.group] ??= []).push(plugin)
-            return acc
-        }, {})
-
-        const filtered = Object.values(grouped).flatMap(group => {
-            const subGroups = group.filter(p => p.subGroup && isVisible(p))
-            return subGroups.length ? subGroups : group.filter(p => !p.subGroup)
-        })
-
-        return filtered
-            .filter((plugin, index, self) =>
-                index === self.findIndex(p => p.name === plugin.name && p.subGroup === plugin.subGroup),
-            )
-            .filter(plugin => isVisible(plugin))
+        return (filteredPlugins.value ?? [])
+            .filter(plugin => !plugin.subGroup && isVisible(plugin))
+            .filter((plugin, index, self) => index === self.findIndex(p => p.name === plugin.name))
     })
 
     const CATEGORY_ICONS: Record<string, Component> = markRaw({
@@ -248,17 +241,11 @@
 
     const openGroup = (plugin: Plugin) => {
         if (!plugin?.name) return
-        const params: Record<string, string> = {...route.params as Record<string, string>, name: plugin.name}
-        if (plugin.subGroup) params.subGroup = plugin.subGroup
-        router.push({name: "plugins/group", params})
+        router.push({name: "plugins/group", params: {...route.params as Record<string, string>, name: plugin.name}})
     }
 
     const isVisible = (plugin: Plugin) => {
         return allElements(plugin).length > 0
-    }
-
-    const hasIcon = (cls: string | undefined) => {
-        return cls !== undefined && icons.value[cls] !== undefined
     }
 
     const allElementsByTypeEntries = (plugin: Plugin): [string, string[]][] => {

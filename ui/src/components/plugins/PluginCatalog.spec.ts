@@ -126,12 +126,19 @@ describe("PluginCatalog", () => {
         expect(pythonCard.text()).toContain("4")
     })
 
-    test("shows only the subgroup cards of a plugin with visible subgroups", async () => {
+    test("shows one card per plugin artifact, not one per subgroup", async () => {
         const wrapper = await mountCatalog()
         const titles = wrapper.findAll("h5").map(t => t.text())
 
-        expect(titles).toContain("Dbt CLI")
-        expect(titles).toContain("Dbt Cloud")
-        expect(titles).not.toContain("DBT")
+        expect(titles).toEqual(["DBT", "Python"])
+    })
+
+    test("finds the artifact card when searching for a task of one of its subgroups", async () => {
+        const wrapper = await mountCatalog()
+
+        await wrapper.find("input").setValue("cloud.triggerrun")
+        await flushPromises()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
     })
 })

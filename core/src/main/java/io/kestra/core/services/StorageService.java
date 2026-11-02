@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageSplitInterface;
+import io.kestra.core.utils.FileUtils;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 
@@ -70,6 +71,11 @@ public abstract class StorageService {
                 .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
                 .toList();
         }
+    }
+
+    private static String extensionOf(URI from) {
+        String extension = FileUtils.getExtension(from);
+        return extension != null ? extension : ".tmp";
     }
 
     private static List<Path> split(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate)

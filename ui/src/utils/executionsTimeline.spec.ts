@@ -21,7 +21,6 @@ import {
     resolveFetchMode,
     rowDensityPointsFrom,
     shouldBucketRow,
-    sumDensityPoints,
     type TimelineExecution,
 } from "./executionsTimeline"
 
@@ -352,7 +351,6 @@ describe("resolveFetchMode", () => {
 
 describe("per-row density", () => {
     const HOUR = Date.parse("2026-10-19T10:00:00.000Z")
-    const NEXT_HOUR = HOUR + 3_600_000
     const rows = [
         {date: "2026-10-19T10:00:00.000Z", state: "SUCCESS", namespace: "company.a", flowId: "flow1", total: 4},
         {date: "2026-10-19T10:00:00.000Z", state: "FAILED", namespace: "company.a", flowId: "flow1", total: 1},
@@ -368,15 +366,6 @@ describe("per-row density", () => {
         expect(points[0]).toEqual({startMs: HOUR, state: "SUCCESS", count: 4, namespace: "company.a", flowId: "flow1"})
     })
 
-    it("should sum the rows of every flow into the global density the scrubber draws", () => {
-        const global = sumDensityPoints(rowDensityPointsFrom(rows))
-
-        expect(global).toHaveLength(3)
-        expect(global).toContainEqual({startMs: HOUR, state: "SUCCESS", count: 14})
-        expect(global).toContainEqual({startMs: HOUR, state: "FAILED", count: 1})
-        expect(global).toContainEqual({startMs: NEXT_HOUR, state: "SUCCESS", count: 2})
-    })
-
     it("should group the rows by namespace then flow with accurate total and failed counts, busiest first", () => {
         const groups = groupDensityByNamespace(rowDensityPointsFrom(rows))
 
@@ -390,7 +379,7 @@ describe("per-row density", () => {
     })
 
     it("should count the states of aggregated points for the legend", () => {
-        expect(countPointsByState(sumDensityPoints(rowDensityPointsFrom(rows)))).toEqual([
+        expect(countPointsByState(rowDensityPointsFrom(rows))).toEqual([
             {state: "SUCCESS", count: 16},
             {state: "FAILED", count: 1},
         ])

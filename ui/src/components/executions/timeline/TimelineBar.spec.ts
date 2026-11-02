@@ -123,6 +123,23 @@ describe("TimelineBar", () => {
         expect(wrapper.emitted("zoom-to-range")).toEqual([[{startMs: 0, endMs: 1000}]])
     })
 
+    it("should label a zoomable bucket with its run count, dominant state and time range", () => {
+        const wrapper = i18nMount(TimelineBar, {
+            props: {leftPercent: 0, widthPercent: 10, dimmed: false, bucket, zoomable: true},
+            messages: {executionsTimeline: {
+                row: {runsCount: "{count} runs"},
+                bucket: {stateCount: "{state}: {count}"},
+                toolbar: {range: "{start} → {end} ({duration})"},
+            }},
+            global: {stubs},
+        })
+
+        const label = wrapper.get("button.timeline-bucket").attributes("aria-label")
+        expect(label).toContain("10 runs")
+        expect(label).toContain(": 8")
+        expect(label).toContain("1970-01-01T00:00:00.000Z → 1970-01-01T00:00:01.000Z (1s)")
+    })
+
     it("should not offer a click target on a bucket that only summarizes fetched executions", async () => {
         const wrapper = mountBar({bucket})
 

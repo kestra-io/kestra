@@ -158,6 +158,59 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
             });
     }
 
+    @Override
+    public List<Execution> drainAndPop(FlowInterface flow, int limit, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                var dslContext = DSL.using(configuration);
+                var txContext = new JdbcTransactionContext(dslContext);
+                List<Execution> popped = new ArrayList<>();
+
+                if (limit < 0) {
+                    int previousSize;
+                    do {
+                        previousSize = popped.size();
+                        executionQueuedStateStore.pop(
+                            txContext,
+                            flow.getTenantId(),
+                            flow.getNamespace(),
+                            flow.getId(),
+                            (ctx, queued) -> popped.add(consumer.apply(ctx, queued))
+                        );
+                    } while (popped.size() > previousSize);
+                    return popped;
+                }
+
+                Optional<ConcurrencyLimit> maybeLimit = fetchOne(dslContext, flow);
+                int running = maybeLimit.map(ConcurrencyLimit::getRunning).orElse(0);
+                int availableSlots = Math.max(0, limit - running);
+
+                while (availableSlots > 0) {
+                    int previousSize = popped.size();
+                    executionQueuedStateStore.pop(
+                        txContext,
+                        flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        (ctx, queued) ->
+                        {
+                            increment(ctx, flow);
+                            popped.add(consumer.apply(ctx, queued));
+                        }
+                    );
+                    if (popped.size() == previousSize) {
+                        break;
+                    }
+                    availableSlots--;
+                }
+
+                return popped;
+            });
+    }
+
     /**
      * Increment the concurrency limit counter.
      * Must only be called when a queued execution is popped, other use cases must pass thought the standard process of creating an execution.

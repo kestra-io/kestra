@@ -6,6 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Concurrency;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -116,23 +117,7 @@ public class ConcurrencySlotReleaseProcessor {
                 limits,
                 executionQueuedStateStore,
                 this::candidateLimits,
-                (txContext, queued) ->
-                {
-                    var newExecution = queued.withState(State.Type.RUNNING);
-
-                    // the popped execution claimed one slot in every incremented scope: stamp
-                    // them the same way the gate does for directly admitted executions
-                    if (newExecution.getMetadata() != null) {
-                        List<String> claimedScopes = claimedScopes(queued, limits, flowScopedRelease);
-                        newExecution = newExecution.withMetadata(newExecution.getMetadata().withConcurrencyScopes(claimedScopes));
-                    }
-
-                    metricRegistry.counter(
-                        MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
-                        metricRegistry.tags(newExecution)
-                    ).increment();
-                    return newExecution;
-                }
+                (txContext, queued) -> mapToRunning(queued, limits, flowScopedRelease)
             );
         } catch (RuntimeException e) {
             // The execution row has already been committed as terminated, so this release is a
@@ -147,15 +132,70 @@ public class ConcurrencySlotReleaseProcessor {
     }
 
     /**
+     * Drains queued executions for the given flow up to its available concurrency slots, or all of
+     * them if concurrency was removed, returning the popped executions marked RUNNING.
+     */
+    public List<Execution> drain(FlowInterface flow) {
+        try {
+            List<ScopedConcurrencyLimit> limits = concurrencyLimitResolver.resolveLimits(flow);
+            boolean flowScopedRelease = limits.size() == 1 && limits.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW;
+
+            if (limits.isEmpty() || limits.getFirst().concurrency() == null) {
+                return concurrencyLimitStateStore.drainAndPop(
+                    flow,
+                    -1,
+                    executionQueuedStateStore,
+                    (txContext, queued) -> mapToRunning(queued, limits, flowScopedRelease)
+                );
+            }
+
+            ScopedConcurrencyLimit firstLimit = limits.getFirst();
+            if (firstLimit.concurrency().getBehavior() != Concurrency.Behavior.QUEUE) {
+                return List.of();
+            }
+
+            return concurrencyLimitStateStore.drainAndPop(
+                flow,
+                firstLimit.concurrency().getLimit(),
+                executionQueuedStateStore,
+                (txContext, queued) -> mapToRunning(queued, limits, flowScopedRelease)
+            );
+        } catch (RuntimeException e) {
+            log.error(
+                "Cannot drain queued executions for flow '{}.{}': the running count stays at its current value until it is corrected manually.",
+                flow.getNamespace(), flow.getId(), e
+            );
+            return List.of();
+        }
+    }
+
+    private Execution mapToRunning(Execution queued, List<ScopedConcurrencyLimit> limits, boolean flowScopedRelease) {
+        var newExecution = queued.withState(State.Type.RUNNING);
+
+        // the popped execution claimed one slot in every incremented scope: stamp
+        // them the same way the gate does for directly admitted executions
+        if (newExecution.getMetadata() != null) {
+            List<String> claimedScopes = claimedScopes(queued, limits, flowScopedRelease);
+            newExecution = newExecution.withMetadata(newExecution.getMetadata().withConcurrencyScopes(claimedScopes));
+        }
+
+        metricRegistry.counter(
+            MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
+            metricRegistry.tags(newExecution)
+        ).increment();
+        return newExecution;
+    }
+
+    /**
      * Whether an execution without the {@link io.kestra.core.models.executions.ExecutionMetadata#getConcurrencyScopes()}
      * claim stamp held a slot, decided from its state history.
      * Both cases below describe an execution the concurrency gate rejected, which was therefore never counted.
      * <p>
      * Two different populations reach this fallback, and only one of them is temporary:
      * <ul>
-     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
-     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
-     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
+     * <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
+     * <li>executions moved to RUNNING while bypassing the admission gate, which never
+     * increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
      * </ul>
      */
     private static boolean claimedASlotAccordingToHistory(Execution execution) {

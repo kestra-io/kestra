@@ -100,6 +100,49 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     }
 
     @Override
+    public synchronized List<Execution> drainAndPop(FlowInterface flow, int limit, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer) {
+        List<Execution> popped = new ArrayList<>();
+        if (limit < 0) {
+            int previousSize;
+            do {
+                previousSize = popped.size();
+                executionQueuedStateStore.pop(
+                    NoopTransactionContext.INSTANCE,
+                    flow.getTenantId(),
+                    flow.getNamespace(),
+                    flow.getId(),
+                    (txContext, queued) -> popped.add(consumer.apply(txContext, queued))
+                );
+            } while (popped.size() > previousSize);
+            return popped;
+        }
+
+        int running = running(limits.get(uid(flow)));
+        int availableSlots = Math.max(0, limit - running);
+
+        while (availableSlots > 0) {
+            int previousSize = popped.size();
+            executionQueuedStateStore.pop(
+                NoopTransactionContext.INSTANCE,
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                (txContext, queued) ->
+                {
+                    increment(txContext, flow);
+                    popped.add(consumer.apply(txContext, queued));
+                }
+            );
+            if (popped.size() == previousSize) {
+                break;
+            }
+            availableSlots--;
+        }
+        return popped;
+    }
+
+    @Override
     public synchronized ExecutionRunning countThenProcess(FlowInterface flow, List<ScopedConcurrencyLimit> scopes,
         BiFunction<TransactionContext, List<Integer>, Pair<ExecutionRunning, Boolean>> consumer) {
         List<Integer> counts = scopes.stream()

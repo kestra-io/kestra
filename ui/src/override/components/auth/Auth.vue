@@ -104,7 +104,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .auth {
         display: flex;
         width: 100%;

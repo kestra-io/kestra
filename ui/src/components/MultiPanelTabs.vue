@@ -1,5 +1,5 @@
 <template>
-    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <KsSplitter ref="splitter" class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
             <KsNoData
                 :icon="ViewArrayOutline"
@@ -90,11 +90,12 @@
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
                                 <span class="tab-title">{{ tab.button.label }}</span>
-                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
+                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" data-test="tab-dirty" />
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
                                     :title="$t('close')"
+                                    data-test="tab-close"
                                 />
                             </button>
                             <div v-else class="potential-container">
@@ -119,8 +120,10 @@
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
                             class="split_right"
-                            :title="$t('multi_panel_editor.split_panel')"
+                            :disabled="!canAddPanel"
+                            :title="canAddPanel ? $t('multi_panel_editor.split_panel') : $t('multi_panel_editor.split_panel_no_room')"
                             :aria-label="$t('multi_panel_editor.split_panel')"
+                            data-test="panel-split"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -133,7 +136,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
+                            <KsButton :icon="DotsVertical" link class="tab-icon panel-actions-button" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -227,10 +230,11 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, type Component} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, useTemplateRef, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
+    import {useElementSize} from "@vueuse/core"
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -321,6 +325,17 @@
         maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
     }
 
+    watch(() => panels.value.map(p => p.activeTab?.uid), (uids, previous) => {
+        for (const uid of uids) {
+            if (!uid || previous?.includes(uid)) continue
+            const panelIndex = uids.indexOf(uid)
+            if (maximizedPanelIndex.value != null && maximizedPanelIndex.value !== panelIndex) {
+                maximizedPanelIndex.value = null
+            }
+            nextTick(() => ensureActiveTabVisible(panelIndex, uid))
+        }
+    })
+
     watch(() => panels.value.length, (length) => {
         if (maximizedPanelIndex.value != null && maximizedPanelIndex.value >= length) {
             maximizedPanelIndex.value = null
@@ -357,7 +372,8 @@
     const showDropZones = computed(() =>
         realDragging.value &&
         movedTabInfo.value &&
-        !draggingPanel.value,
+        !draggingPanel.value &&
+        canAddPanel.value,
     )
 
     function onResize(_index: number, sizes: number[]) {
@@ -531,6 +547,16 @@
 
     const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length))
 
+    const MIN_PANEL_WIDTH = 360
+    const {width: splitterWidth} = useElementSize(useTemplateRef("splitter"))
+
+    const canAddPanel = computed(() => {
+        const sizes = panels.value.map(p => p.size)
+        const total = sizes.reduce((a, b) => a + b, 0)
+        const smallest = Math.min(defaultSize.value, ...sizes)
+        return smallest * splitterWidth.value / (total + defaultSize.value) >= MIN_PANEL_WIDTH
+    })
+
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return
 
@@ -609,6 +635,7 @@
     }, {deep: true})
 
     function splitPanel(panelIndex: number){
+        if(!canAddPanel.value) return
         const panel = panels.value[panelIndex]
         const newPanel = {
             tabs: [panel.activeTab],
@@ -710,7 +737,7 @@
     }
 
     function ensureActiveTabVisible(panelIndex: number, tabId: string){
-        const container = tabContainerRefs.value[panelIndex]
+        const container = tabContainerRefs.value.find(r => r.dataset.panelIndex === panelIndex.toString())
         if(!container){
             return
         }
@@ -732,7 +759,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .panel-maximized {
         position: relative;
         background: var(--ks-bg-base);
@@ -848,8 +875,12 @@
                 height: 16px;
                 width: 16px;
             }
-            &:hover {
+            &:hover:not(:disabled) {
                 color: var(--ks-text-primary);
+            }
+            &:disabled {
+                color: var(--ks-icon-inactive);
+                cursor: not-allowed;
             }
         }
         .buttons-container{
@@ -900,6 +931,10 @@
 
     .tab-icon{
         color: var(--ks-icon-muted);
+    }
+
+    .panel-actions-button {
+        margin-inline-end: var(--ks-spacing-2);
     }
 
     .small-text {
@@ -985,13 +1020,13 @@
     }
 
     .default-theme{
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.kel-splitter__splitter){
+        & :deep(.kel-splitter__splitter){
             border-left-color: var(--ks-border-default);
             background-color: var(--ks-bg-surface);
             &:before, &:after{
@@ -999,7 +1034,7 @@
             }
         }
 
-       :deep(.kel-splitter-bar) {
+       & :deep(.kel-splitter-bar) {
            z-index: 1;
        }
     }

@@ -14,6 +14,7 @@
             <div class="task-edit-modal-header">
                 <span class="task-edit-modal-title">{{ title }}</span>
                 <KsIconButton
+                    v-if="!outsideFlow"
                     class="task-edit-modal-header-action"
                     :type="docsOpen ? 'primary' : 'default'"
                     :aria-label="$t('documentation.documentation')"
@@ -76,6 +77,8 @@
                     :parentPath="parentPath"
                     :refPath="refPath"
                     :blockSchemaPath="blockSchemaPath"
+                    :editedPath="editedPath"
+                    :outsideFlow="outsideFlow"
                     @update:task="emit('update:task', $event)"
                     @close="emit('close')"
                     @select-nested="(...args) => emit('select-nested', ...args)"
@@ -95,7 +98,7 @@
         <template v-if="!hintDismissed" #footer>
             <div class="task-edit-modal-hint" data-test="task-edit-modal-open-mode-hint">
                 <KsText size="small">
-                    <i18n-t keypath="block_editor.open_mode_hint" tag="span">
+                    <i18n-t keypath="block_editor.open_mode_hint" tag="span" scope="global">
                         <template #settings>
                             <router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>
                         </template>
@@ -141,8 +144,10 @@
         parentPath: string
         refPath?: number
         blockSchemaPath: string
+        editedPath?: string
         crumbs: Crumb[]
         creating?: boolean
+        outsideFlow?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -193,7 +198,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-edit-modal-header {
         display: flex;
         align-items: center;

@@ -126,7 +126,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .label.kel-check-tag,
 .label-more {
     background-color: var(--ks-bg-tag);

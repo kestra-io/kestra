@@ -4,7 +4,6 @@
             <img
                 :src="executeimg"
                 alt="Kestra"
-                class="img-fluid"
             >
             <h2 class="title">
                 {{ $t("no-executions-view.title") }}
@@ -33,9 +32,10 @@
     defineProps<{isNamespace?: boolean}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .empty-template {
     min-height: calc(100vh - 174px);
+    min-height: calc(100dvh - 174px);
     display: flex;
     flex-direction: column;
     align-items: center;

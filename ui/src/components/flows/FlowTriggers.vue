@@ -48,7 +48,18 @@
                         @resume="unpauseBackfill(props.row as TriggerRow)"
                         @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
+                    <LogsWrapper
+                        class="trigger-logs"
+                        :filters="{
+                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                            'filters[triggerId][EQUALS]': props.row.id
+                        }"
+                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                        :withCharts="false"
+                        :reloadLogs
+                        embed
+                    />
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -202,7 +213,7 @@
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                        <TextSearch class="mr-1" />
+                                        <TextSearch />
                                         {{ $t("details") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
@@ -210,7 +221,7 @@
                                         :disabled="!scope.row.locked"
                                         @click="restart(scope.row as TriggerRow)"
                                     >
-                                        <Restart class="mr-1" />
+                                        <Restart />
                                         {{ $t("restart") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
@@ -218,7 +229,7 @@
                                         :disabled="!scope.row.locked"
                                         @click="unlock(scope.row as TriggerRow)"
                                     >
-                                        <LockOff class="mr-1" />
+                                        <LockOff />
                                         {{ $t("unlock") }}
                                     </KsDropdownItem>
                                 </KsDropdownMenu>
@@ -229,11 +240,11 @@
             </KsTableColumn>
         </KsDataTable>
 
-        <div v-if="triggersWithType.length" class="mt-4">
+        <div v-if="triggersWithType.length" class="add-trigger">
             <KsButton
                 @click="addNewTrigger"
                 :icon="Plus"
-                class="border-0 p-3"
+                class="add-trigger-button"
             >
                 {{ $t('no_code.creation.triggers') }}
             </KsButton>
@@ -357,6 +368,7 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../utils/inputs"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -558,20 +570,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))
@@ -835,9 +835,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
-// The parent flow tab strips horizontal padding when a data table is present
-// (full-width-table behaviour); restore the standard gutter for this tab.
+<style scoped>
+/* The parent flow tab strips horizontal padding when a data table is present */
+/* (full-width-table behaviour); restore the standard gutter for this tab. */
 .triggers-tab {
     padding-inline: var(--ks-spacing-5);
 }
@@ -877,5 +877,18 @@
     p {
         margin-bottom: auto;
     }
+}
+
+:deep(.trigger-logs) {
+    margin: var(--ks-spacing-4);
+}
+
+.add-trigger {
+    margin-top: var(--ks-spacing-5);
+}
+
+.add-trigger-button {
+    border: 0;
+    padding: var(--ks-spacing-4);
 }
 </style>

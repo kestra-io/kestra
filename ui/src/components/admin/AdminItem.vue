@@ -47,7 +47,7 @@
     onUnmounted(() => store.clearTabsIfOwner(OWNER))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .admin-item {
         margin: 0;
         --ks-sidebar-item-title-color: currentColor;

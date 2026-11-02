@@ -1,27 +1,8 @@
-import {vi} from "vitest";
-
-// triggerStore.search(), flowStore.findFlows() and pluginsStore.listTriggers() all call their
-// generated SDK submodule functions directly, which go through the SDK's own internal client
-// rather than the axios instance setMockClient() swaps - so each has to be intercepted at the
-// submodule level. The Template below still uses setMockClient() as a catch-all for anything
-// exercised by user interaction (unlock/restart/backfill actions), since this story has no
-// play() function driving those paths.
-const mockState = vi.hoisted(() => ({triggers: [] as ApiTriggerAndState[]}))
-vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
-    searchTriggers: async () => ({results: mockState.triggers, total: mockState.triggers.length}),
-}))
-vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    searchFlows: async () => ({results: [], total: 0}),
-}))
-vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
-    listTriggerPlugins: async () => ({results: [], total: 0}),
-}))
-
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite";
 import Triggers from "./Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
 import {setMockClient, type ApiTriggerAndState, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
-import {mockClientFallback, mockResponse} from "../../../../.storybook/apiMock";
+import {mockClientFallback, mockResponse, mockStoryApiRoutes} from "../../../../.storybook/apiMock";
 
 const meta: Meta<typeof Triggers> = {
     title: "Components/Admin/Triggers",
@@ -122,7 +103,10 @@ const triggersData = [
 
 const Template: StoryFn<{triggers: ApiTriggerAndState[]}> = (args) => ({
     setup() {
-        mockState.triggers = args.triggers
+        mockStoryApiRoutes({
+            "GET /triggers/search": {results: args.triggers, total: args.triggers.length},
+            "GET /flows/search": {results: [], total: 0},
+        })
 
         const store: Partial<AxiosLikeClient> = {}
         store.get = async function<T>(uri: string) {

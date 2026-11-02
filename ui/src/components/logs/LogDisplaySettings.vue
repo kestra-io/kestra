@@ -74,7 +74,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .log-display-settings {
         display: flex;
         flex-direction: column;

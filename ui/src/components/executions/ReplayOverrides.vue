@@ -1,5 +1,5 @@
 <template>
-    <section v-ks-loading="loading" class="replay-overrides" data-test="replay-overrides">
+    <section v-ks-loading="loading" class="replay-overrides" data-test="replay-overrides" data-dialog-wide>
         <h4 class="section-title">
             {{ $t("replayOverrides.title") }}
         </h4>
@@ -19,27 +19,29 @@
             {{ $t("replayOverrides.empty", {taskId}) }}
         </KsText>
 
-        <div v-for="value in values" :key="value.expression" class="override-row" data-test="replay-override">
-            <div class="override-label">
-                <code>{{ asExpression(value.expression) }}</code>
-                <KsText v-if="value.kind !== 'SECRET' && value.kind !== 'BLOCK'" size="small" type="info" data-test="replay-override-rendered">
-                    {{ $t("replayOverrides.rendered", {value: formatValue(value.value)}) }}
-                </KsText>
-            </div>
+        <div v-if="values.length" class="override-rows">
+            <div v-for="value in values" :key="value.expression" class="override-row" data-test="replay-override">
+                <div class="override-label">
+                    <code>{{ asExpression(value.expression) }}</code>
+                    <KsText v-if="value.kind !== 'SECRET' && value.kind !== 'BLOCK'" size="small" type="info" data-test="replay-override-rendered">
+                        {{ $t("replayOverrides.rendered", {value: formatValue(value.value)}) }}
+                    </KsText>
+                </div>
 
-            <div v-if="isOverridable(value)" class="override-field">
-                <KsInput
-                    v-model="texts[value.expression!]"
-                    :aria-label="value.expression"
-                    data-test="replay-override-input"
-                />
-                <KsText v-if="parsed[value.expression!]?.error" size="small" type="danger" data-test="replay-override-error">
-                    {{ $t(`replayOverrides.error.${parsed[value.expression!].error}`) }}
+                <div v-if="isOverridable(value)" class="override-field">
+                    <KsInput
+                        v-model="texts[value.expression!]"
+                        :aria-label="value.expression"
+                        data-test="replay-override-input"
+                    />
+                    <KsText v-if="parsed[value.expression!]?.error" size="small" type="danger" data-test="replay-override-error">
+                        {{ $t(`replayOverrides.error.${parsed[value.expression!].error}`) }}
+                    </KsText>
+                </div>
+                <KsText v-else size="small" type="info" data-test="replay-override-locked">
+                    {{ $t(`replayOverrides.locked.${value.kind}`) }}
                 </KsText>
             </div>
-            <KsText v-else size="small" type="info" data-test="replay-override-locked">
-                {{ $t(`replayOverrides.locked.${value.kind}`) }}
-            </KsText>
         </div>
     </section>
 </template>
@@ -109,11 +111,15 @@
     margin: 0;
 }
 
-.override-row {
+.override-rows {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(calc(var(--ks-spacing-16) * 2), 1fr);
     gap: var(--ks-spacing-3);
     align-items: start;
+}
+
+.override-row {
+    display: contents;
 }
 
 .override-label,

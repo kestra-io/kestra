@@ -15,14 +15,21 @@
     const tree = useGanttTree()
     const state = computed(() => props.node.taskRun.state.current)
     const terminal = computed(() => State.isTerminated(state.value))
+    const outputs = computed(() => tree.loopOutputs(props.node.taskRun.id)?.outputs)
 
     const bar = computed(() => {
-        const outputs = tree.loopOutputs(props.node.taskRun.id)?.outputs
-        const total = outputs?.iterationCount
-        const terminated = outputs?.terminatedIterations as StateCounts | undefined
-        const running = outputs?.runningIterations as number | undefined
+        const total = outputs.value?.iterationCount
+        const terminated = outputs.value?.terminatedIterations as StateCounts | undefined
+        const running = outputs.value?.runningIterations as number | undefined
         if (typeof total !== "number" || (terminated === undefined && running === undefined)) return undefined
         return {counts: terminated, total, running: terminal.value ? 0 : running}
+    })
+
+    const everyIterationTerminated = computed(() => {
+        const total = outputs.value?.iterationCount
+        const terminated = outputs.value?.terminatedIterations as StateCounts | undefined
+        if (typeof total !== "number" || terminated === undefined || outputs.value?.runningIterations !== 0) return false
+        return Object.values(terminated).reduce<number>((sum, count) => sum + (count ?? 0), 0) >= total
     })
 
     let timer: ReturnType<typeof setInterval> | undefined
@@ -32,7 +39,7 @@
         timer = undefined
     }
 
-    watch(() => !terminal.value, (active) => {
+    watch(() => !terminal.value && !everyIterationTerminated.value, (active) => {
         stopPolling()
         if (active) timer = setInterval(() => tree.loadLoopOutputs(props.node), LOOP_OUTPUTS_REFRESH_MS / 2)
     }, {immediate: true})

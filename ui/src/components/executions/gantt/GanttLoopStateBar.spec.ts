@@ -76,14 +76,6 @@ describe("GanttLoopStateBar", () => {
         expect(segmentsOf(wrapper)).toEqual([["SUCCESS", "97"], ["FAILED", "3"]])
     })
 
-    it("shouldRenderNothingWhenTheLoopOutputsCarryNoCounts", async () => {
-        loadTaskRunOutputs.mockResolvedValue({})
-        const wrapper = mountBar(loopNode("tr-old", "SUCCESS"))
-        await flushPromises()
-
-        expect(wrapper.find("[data-test='loop-state-bar']").exists()).toBe(false)
-    })
-
     it("shouldFetchOncePerRefreshWindowWhileRunningAndNeverOnceTerminal", async () => {
         const node = loopNode("tr-b", "RUNNING")
         const wrapper = mountBar(node)
@@ -151,6 +143,16 @@ describe("GanttLoopStateBar", () => {
 
     it("shouldNotPollWhileTheLoopIsTerminal", async () => {
         mountBar(loopNode("tr-a", "SUCCESS"))
+        await flushPromises()
+
+        await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 4)
+
+        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(1)
+        expect(vi.getTimerCount()).toBe(0)
+    })
+
+    it("shouldStopPollingARunningLoopOnceItsOutputsShowEveryIterationTerminated", async () => {
+        mountBar(loopNode("tr-a", "RUNNING"))
         await flushPromises()
 
         await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 4)

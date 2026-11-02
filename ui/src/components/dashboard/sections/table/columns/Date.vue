@@ -1,6 +1,6 @@
 <template>
     <KsTooltip v-if="date" :content="tooltip">
-        <span class="date" :class="{overdue}">{{ date }}</span>
+        <span class="date" :class="{overdue}">{{ overdue ? $t("dashboards.overdue", {date}) : date }}</span>
     </KsTooltip>
 </template>
 

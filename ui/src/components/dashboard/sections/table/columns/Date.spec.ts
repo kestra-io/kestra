@@ -53,6 +53,7 @@ describe("dashboard table Date column", () => {
         })
 
         expect(wrapper.find("span.date").classes()).toContain("overdue")
+        expect(wrapper.find("span.date").text()).toMatch(/^Overdue — /)
         expect(wrapper.find("[data-test=tooltip]").attributes("data-content"))
             .toBe(`Overdue — ${dayjs(past).tz(dayjs.tz.guess()).format("llll")}`)
     })
@@ -86,7 +87,7 @@ describe("dashboard table Date column", () => {
         const wrapper = i18nMount(DateColumn, {messages: {dashboards: {overdue: "Overdue — {date}"}}, props: {field: FIELD, relative: true}})
 
         expect(wrapper.find("span.date").text())
-            .toBe(dayjs(FIELD).tz(TIMEZONE).calendar(null, {sameElse: "L [at] LT"}))
+            .toContain(dayjs(FIELD).tz(TIMEZONE).calendar(null, {sameElse: "L [at] LT"}))
     })
 
     it("should honour the date format from settings alongside the timezone", () => {

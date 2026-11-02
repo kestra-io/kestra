@@ -455,12 +455,16 @@
       "confirm_whole": "Reproduzir toda a execução"
     },
     "replayOverrides": {
+      "action": "Replay com overrides",
+      "dialog_title": "Replay {taskId} com substituições",
+      "revision_note": "O replay é executado na revisão {revision}, a mesma em que esta execução foi executada.",
+      "task_code": "Definição de {taskId}",
+      "code_error": "Não foi possível carregar a definição de {taskId}.",
       "title": "Substituir expressões",
       "description": "O que as expressões da task {taskId} renderizaram nesta execução. Defina uma para executar a task com esse valor: sua definição permanece como está, as tasks anteriores são reutilizadas e todas as outras tasks renderizam dados reais.",
       "load_error": "Não foi possível carregar as expressões da task {taskId}.",
       "empty": "A Task {taskId} não renderiza nenhuma expressão em suas próprias propriedades.",
       "rendered": "Renderizado {value}",
-      "other_revision": "Expressões só podem ser substituídas na revisão original do flow.",
       "confirm": "Replay com {count} substituição | Replay com {count} substituições",
       "locked": {
         "BLOCK": "Dentro de um bloco if ou for, que faz parte da lógica da task. Altere-o com uma nova revisão.",

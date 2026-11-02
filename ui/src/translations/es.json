@@ -455,12 +455,16 @@
       "confirm_whole": "Reproducir toda la ejecución"
     },
     "replayOverrides": {
+      "action": "Reproducir con anulaciones",
+      "dialog_title": "Replay {taskId} con anulaciones",
+      "revision_note": "La reproducción se ejecuta en la revisión {revision}, la misma en la que se ejecutó esta egzekucja.",
+      "task_code": "Definición de {taskId}",
+      "code_error": "No se pudo cargar la definición de {taskId}.",
       "title": "Anular expresiones",
       "description": "Lo que las expresiones de la task {taskId} renderizaron en esta ejecución. Establece uno para ejecutar la task con ese valor en su lugar: su definición permanece como está, las tasks anteriores se reutilizan y todas las demás tasks renderizan datos reales.",
       "load_error": "No se pudieron cargar las expresiones de la Task {taskId}.",
       "empty": "El Task {taskId} no renderiza ninguna expresión en sus propias propiedades.",
       "rendered": "Renderizado {value}",
-      "other_revision": "Las expresiones solo se pueden anular en la revisión original del Flow.",
       "confirm": "Replay con {count} override | Replay con {count} overrides",
       "locked": {
         "BLOCK": "Dentro de un bloque if o for, que forma parte de la lógica del Task. Cámbialo con una nueva revisión.",

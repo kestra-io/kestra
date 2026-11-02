@@ -455,12 +455,16 @@
       "confirm_whole": "Execution全体をリプレイ"
     },
     "replayOverrides": {
+      "action": "オーバーライドでリプレイ",
+      "dialog_title": "オーバーライドで{taskId}をReplay",
+      "revision_note": "リプレイは、このExecutionが実行されたリビジョン {revision} で実行されます。",
+      "task_code": "{taskId} の定義",
+      "code_error": "{taskId} の定義を読み込めませんでした。",
       "title": "式を上書き",
       "description": "このExecutionでTask {taskId}の式がレンダリングしたもの。代わりにその値でTaskを実行するように設定します。その定義はそのまま残り、その前のTaskは再利用され、他のすべてのTaskは実際のデータをレンダリングします。",
       "load_error": "Task {taskId} の式を読み込めませんでした。",
       "empty": "Task {taskId} は、自身のプロパティに式をレンダリングしません。",
       "rendered": "レンダリングされた {value}",
-      "other_revision": "式は元のFlowリビジョンでのみオーバーライドできます。",
       "confirm": "{count} 件のオーバーライドでリプレイ | {count} 件のオーバーライドでリプレイ",
       "locked": {
         "BLOCK": "ifまたはforブロック内。これはTaskのロジックの一部です。新しいリビジョンで変更してください。",

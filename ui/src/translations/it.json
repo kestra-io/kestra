@@ -455,12 +455,16 @@
       "confirm_whole": "Riproduci l'intera Execution"
     },
     "replayOverrides": {
+      "action": "Replay con override",
+      "dialog_title": "Replay {taskId} con override",
+      "revision_note": "Il replay viene eseguito sulla revisione {revision}, quella su cui è stata eseguita questa esecuzione.",
+      "task_code": "Definizione di {taskId}",
+      "code_error": "Impossibile caricare la definizione di {taskId}.",
       "title": "Sovrascrivi espressioni",
       "description": "Cosa hanno reso le espressioni del task {taskId} in questa esecuzione. Impostane una per eseguire il task con quel valore: la sua definizione rimane invariata, i task precedenti vengono riutilizzati e ogni altro task rende dati reali.",
       "load_error": "Impossibile caricare le espressioni del task {taskId}.",
       "empty": "Il Task {taskId} non restituisce alcuna espressione nelle sue proprietà.",
       "rendered": "Renderizzato {value}",
-      "other_revision": "Le espressioni possono essere sovrascritte solo sulla revisione originale del flow.",
       "confirm": "Replay con {count} override | Replay con {count} override",
       "locked": {
         "BLOCK": "All'interno di un blocco if o for, che fa parte della logica del task. Modificalo con una nuova revisione.",

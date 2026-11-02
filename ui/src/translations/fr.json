@@ -455,12 +455,16 @@
       "confirm_whole": "Rejouer l'exécution entière"
     },
     "replayOverrides": {
+      "action": "Rejouer avec des remplacements",
+      "dialog_title": "Rejouer {taskId} avec des remplacements",
+      "revision_note": "Le replay s'exécute sur la révision {revision}, celle sur laquelle cette exécution a été exécutée.",
+      "task_code": "Définition de {taskId}",
+      "code_error": "Impossible de charger la définition de {taskId}.",
       "title": "Expressions de remplacement",
       "description": "Ce que les expressions de la task {taskId} ont rendu dans cette exécution. Définissez-en une pour exécuter la task avec cette valeur à la place : sa définition reste telle quelle, les tasks précédentes sont réutilisées, et toutes les autres tasks rendent des données réelles.",
       "load_error": "Impossible de charger les expressions de la task {taskId}.",
       "empty": "La Task {taskId} ne rend aucune expression dans ses propres propriétés.",
       "rendered": "Rendu {value}",
-      "other_revision": "Les expressions ne peuvent être remplacées que sur la révision originale du flow.",
       "confirm": "Rejouer avec {count} remplacement | Rejouer avec {count} remplacements",
       "locked": {
         "BLOCK": "À l'intérieur d'un bloc if ou for, qui fait partie de la logique de la task. Modifiez-le avec une nouvelle révision.",

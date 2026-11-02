@@ -40,7 +40,11 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         List<String> violations = new ArrayList<>();
 
-        Set<String> dataColumns = MapUtils.emptyOnNull(dataChart.getData().getColumns()).keySet();
+        var columns = MapUtils.emptyOnNull(dataChart.getData().getColumns());
+        Set<String> dataColumns = columns.keySet();
+        if (columns.isEmpty()) {
+            violations.add("`data.columns` is required and must declare at least one column.");
+        }
         if (dataChart.getChartOptions() != null) {
             List<String> neededColumns = dataChart.getChartOptions().neededColumns();
             neededColumns.forEach(column ->
@@ -61,7 +65,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             });
         }
 
-        dataChart.getData().getColumns().forEach((key, value) ->
+        columns.forEach((key, value) ->
         {
             if (value.getField() == null && value.getAgg() != AggregationType.COUNT) {
                 violations.add("Column '" + key + "' doesn't have a field to select from.");
@@ -70,7 +74,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         Integer minNumberOfAggregations = dataChart.minNumberOfAggregations();
         Integer maxNumberOfAggregations = dataChart.maxNumberOfAggregations();
-        List<? extends ColumnDescriptor<?>> aggregationsColumns = dataChart.getData().getColumns().values().stream().filter(column -> column.getAgg() != null).toList();
+        List<? extends ColumnDescriptor<?>> aggregationsColumns = columns.values().stream().filter(column -> column.getAgg() != null).toList();
         if (minNumberOfAggregations != null) {
             if (aggregationsColumns.size() < minNumberOfAggregations) {
                 violations.add("At least " + minNumberOfAggregations + " aggregation is needed for " + dataChart.getClass().getName() + ".");
@@ -83,7 +87,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
         }
 
         if (!aggregationsColumns.isEmpty()) {
-            List<?> aggregationForbiddenFieldsUsed = dataChart.getData().getColumns().values().stream()
+            List<?> aggregationForbiddenFieldsUsed = columns.values().stream()
                 .map(ColumnDescriptor::getField)
                 .filter(Objects::nonNull)
                 .filter(dataChart.getData().aggregationForbiddenFields()::contains).toList();
@@ -92,13 +96,13 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             }
         }
 
-        Set<String> usedFields = dataChart.getData().getColumns().values().stream().map(c -> c.getAgg() + "-" + c.getField() + "-" + c.getKey()).collect(Collectors.toSet());
-        if (usedFields.size() != dataChart.getData().getColumns().size()) {
+        Set<String> usedFields = columns.values().stream().map(c -> c.getAgg() + "-" + c.getField() + "-" + c.getKey()).collect(Collectors.toSet());
+        if (usedFields.size() != columns.size()) {
             violations.add("Fields can only appear once in `data.columns`.");
         }
 
         if (
-            dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
+            columns.entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
                 && !("elasticsearch".equals(repositoryConfiguration.type()))
         ) {
             violations.add("LABELS column is only supported with an ElasticSearch database.");

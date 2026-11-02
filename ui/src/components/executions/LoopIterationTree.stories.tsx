@@ -1,8 +1,11 @@
+import {ref} from "vue";
 import {userEvent, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {mockStoryApiRoutes, type ApiRouteContext} from "../../../.storybook/apiMock";
 import LoopIterationTree from "./LoopIterationTree.vue";
+import type {ExecutionTaskRun} from "./executionTaskRun";
+import {LOOP_TYPE, createTaskRunNode, provideGanttTree} from "./gantt/ganttTree";
 
 function iterationRow(index: number, value: string) {
     return {
@@ -44,6 +47,27 @@ function mockIterationRoutes(total: number) {
     })
 }
 
+const loopTaskRun = {
+    id: "tr1",
+    taskId: "per_region",
+    state: {current: "SUCCESS", histories: [{state: "CREATED", date: "2026-09-30T01:45:58Z"}, {state: "SUCCESS", date: "2026-09-30T01:45:59Z"}]},
+} as unknown as ExecutionTaskRun;
+
+const loopNode = createTaskRunNode(
+    {id: "root-execution", namespace: "company.team", flowId: "nested_loop_demo"},
+    loopTaskRun,
+    LOOP_TYPE,
+    [],
+);
+
+const renderTree = (total: number) => ({
+    setup() {
+        mockIterationRoutes(total)
+        provideGanttTree({compact: ref(false), levelFilter: ref(undefined)})
+        return () => <LoopIterationTree node={loopNode} />
+    }
+});
+
 const meta: Meta<typeof LoopIterationTree> = {
     title: "Components/Executions/LoopIterationTree",
     component: LoopIterationTree,
@@ -70,27 +94,13 @@ const meta: Meta<typeof LoopIterationTree> = {
 
 export default meta;
 
-// Click "Iterations" to expand — under the 10-item page size, so no preview footer appears.
+// Under the 10-item page size, so no preview footer appears.
 export const Default: StoryObj<{total: number}> = {
-    render: (args) => ({
-        setup() {
-            mockIterationRoutes(args.total)
-            return () =>
-                <LoopIterationTree
-                    executionId="root-execution"
-                    taskId="per_region"
-                    namespace="company.team"
-                    flowId="nested_loop_demo"
-                />
-        }
-    }),
+    render: (args) => renderTree(args.total),
     args: {
         total: 3,
     },
     play: async ({canvasElement}) => {
-        const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
-        await userEvent.click(toggle)
-
         await waitFor(() => {
             const rows = canvasElement.querySelectorAll('[data-test="loop-iteration-row"]')
             if (rows.length !== 3) throw new Error(`expected 3 iteration rows, got ${rows.length}`)
@@ -98,27 +108,13 @@ export const Default: StoryObj<{total: number}> = {
     },
 }
 
-// Over the page size — preview footer and failed-only filter both appear.
+// Over the page size — the preview footer appears.
 export const OverThePreviewLimit: StoryObj<{total: number}> = {
-    render: (args) => ({
-        setup() {
-            mockIterationRoutes(args.total)
-            return () =>
-                <LoopIterationTree
-                    executionId="root-execution"
-                    taskId="per_region"
-                    namespace="company.team"
-                    flowId="nested_loop_demo"
-                />
-        }
-    }),
+    render: (args) => renderTree(args.total),
     args: {
         total: 12,
     },
     play: async ({canvasElement}) => {
-        const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
-        await userEvent.click(toggle)
-
         await waitFor(() => {
             const rows = canvasElement.querySelectorAll('[data-test="loop-iteration-row"]')
             if (rows.length !== 10) throw new Error(`expected 10 iteration rows on page 1, got ${rows.length}`)

@@ -1,5 +1,5 @@
 <template>
-    <section v-ks-loading="loading" class="replay-overrides" data-test="replay-overrides" data-dialog-wide>
+    <section v-ks-loading="loading" class="replay-overrides" data-test="replay-overrides">
         <h4 class="section-title">
             {{ $t("replayOverrides.title") }}
         </h4>

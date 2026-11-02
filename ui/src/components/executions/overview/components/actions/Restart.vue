@@ -194,19 +194,7 @@
                 </KsButton>
             </template>
 
-            <ReplayOverrides
-                v-if="canOverride && replayTaskRun"
-                v-model:overrides="overrides"
-                v-model:invalid="overridesInvalid"
-                :executionId="execution.id"
-                :taskRunId="replayTaskRun.id"
-                :taskId="replayTaskRun.taskId"
-            />
-            <KsText v-else-if="replayTaskRun" tag="p" size="small" type="info" class="other-revision" data-test="replay-overrides-other-revision">
-                {{ $t("replayOverrides.other_revision") }}
-            </KsText>
-
-            <template v-if="hasInputs && !overrideCount">
+            <template v-if="hasInputs">
                 <template v-if="!replayTaskRun">
                     <h4 class="section-title">
                         {{ $t("replay inputs") }}:
@@ -232,7 +220,7 @@
                 {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
-                {{ confirmLabel }}
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -274,7 +262,6 @@
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
-    import ReplayOverrides from "../../../ReplayOverrides.vue"
     import {EXECUTION_PARENT_ROUTE} from "../../../executionTabs"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -362,20 +349,9 @@
         && effectiveRevision.value !== undefined
         && effectiveRevision.value !== props.execution.flowRevision,
     )
-    const overrides = ref<Record<string, unknown>>({})
-    const overridesInvalid = ref(false)
-    const canOverride = computed(() => !!replayTaskRun.value && replayRevisionMode.value === "original")
-    const overrideCount = computed(() => canOverride.value ? Object.keys(overrides.value).length : 0)
-
     const replayBlocked = computed(() =>
-        replayCheck.value.status === "checking"
-        || (replayCheck.value.status === "refused" && !replayWhole.value)
-        || (canOverride.value && overridesInvalid.value),
+        replayCheck.value.status === "checking" || (replayCheck.value.status === "refused" && !replayWhole.value),
     )
-    const confirmLabel = computed(() => {
-        if (overrideCount.value) return t("replayOverrides.confirm", {count: overrideCount.value}, overrideCount.value)
-        return replayTaskRun.value ? t("replayCheck.confirm_from_task") : t("replayCheck.confirm_whole")
-    })
     const checkParams = computed(() => ({revision: effectiveRevision.value, taskId: props.taskRun?.taskId}))
 
     const revisionsOptions = computed(() =>
@@ -478,11 +454,6 @@
     const handleReplayExecute = () => {
         isOpen.value = false
 
-        if (overrideCount.value) {
-            restart()
-            return
-        }
-
         if (hasInputs.value && (!canReuseInputs.value || (!replayTaskRun.value && inputMode.value === "modify"))) {
             openReplayWithInputsDialog()
             return
@@ -500,24 +471,14 @@
         restart()
     }
 
-    const send = () => {
-        if (!props.isReplay) return executionsStore.restartExecution({executionId: props.execution.id})
-        if (overrideCount.value && replayTaskRun.value) {
-            return executionsStore.replayExecutionWithOverrides({
-                executionId: props.execution.id,
-                taskRunId: replayTaskRun.value.id,
-                overrides: overrides.value,
-            })
-        }
-        return executionsStore.replayExecution({
-            executionId: props.execution.id,
-            taskRunId: replayTaskRun.value?.id,
-            revision: revisionsSelected.value,
-        })
-    }
-
     const restart = async () => {
-        const response = await send()
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({executionId: props.execution.id})
 
         const newExecution = response
 
@@ -597,10 +558,6 @@
 <style scoped>
 :global(.ks-restart-tooltip--no-pointer) {
     pointer-events: none;
-}
-
-.other-revision {
-    margin-top: var(--ks-spacing-3);
 }
 
 .restart {

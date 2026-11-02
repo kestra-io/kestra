@@ -455,12 +455,16 @@
         "confirm_whole": "Replay whole execution"
     },
     "replayOverrides": {
+      "action": "Replay with overrides",
+      "dialog_title": "Replay {taskId} with overrides",
+      "revision_note": "The replay runs on revision {revision}, the one this execution ran on.",
+      "task_code": "Definition of {taskId}",
+      "code_error": "Could not load the definition of {taskId}.",
       "title": "Override expressions",
       "description": "What the expressions of task {taskId} rendered in this execution. Set one to run the task with that value instead: its definition stays as it is, the tasks before it are reused, and every other task renders real data.",
       "load_error": "Could not load the expressions of task {taskId}.",
       "empty": "Task {taskId} renders no expression in its own properties.",
       "rendered": "Rendered {value}",
-      "other_revision": "Expressions can only be overridden on the original flow revision.",
       "confirm": "Replay with {count} override | Replay with {count} overrides",
       "locked": {
         "BLOCK": "Inside an if or for block, which is part of the task's logic. Change it with a new revision.",

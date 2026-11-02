@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest"
+import {afterAll, describe, test, expect} from "vitest"
 import {ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskComplex from "./TaskComplex.vue"
@@ -6,6 +6,7 @@ import TaskObject from "./TaskObject.vue"
 import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "./useBlockComponent"
 
 const CHECK_DEFINITION = "io.kestra.core.models.flows.check.Check"
 
@@ -45,6 +46,8 @@ function mountTaskComplex() {
         },
     })
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("TaskComplex (allOf $ref merge)", () => {
     test("carries the merged required array down to TaskObject for a Checks-shaped schema", () => {

@@ -3,7 +3,11 @@ import {getComparator} from "@kestra-io/design-system"
 
 type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
 const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {
-    return JSON.parse(localStorage.getItem(key) || "[]")
+    try {
+        return JSON.parse(localStorage.getItem(key) || "[]")
+    } catch {
+        return []
+    }
 }
 
 const setItem = (key: string, value: object) => {

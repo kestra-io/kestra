@@ -1,4 +1,5 @@
 import {ref, computed} from "vue"
+import type {Schema} from "../components/tasks/getTaskComponent"
 
 export interface Crumb {
     path: string;
@@ -6,14 +7,17 @@ export interface Crumb {
 }
 
 export interface NavFrame extends Crumb {
-    schema: any;
+    schema: Schema;
 }
 
 const SCROLL_STABLE_FRAMES = 3
 const SCROLL_MAX_FRAMES = 60
 
 export function scrollThenFocus(el: HTMLElement, focusTarget?: HTMLElement | null) {
-    const target = focusTarget ?? el.querySelector<HTMLElement>("input, textarea, select, button, [tabindex]") ?? el
+    const target = focusTarget
+        ?? el.querySelector<HTMLElement>("input:not([type=hidden]), textarea, select")
+        ?? el.querySelector<HTMLElement>("button, [tabindex]")
+        ?? el
 
     let lastTop = el.getBoundingClientRect().top
     let stableFrames = 0

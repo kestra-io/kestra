@@ -122,6 +122,42 @@ class KillReleasesConcurrencySlotTest {
         assertThat(harness).as("the revived task would have re-held a slot; nothing does, and the delay is consumed").hasRunning(flow, 0).hasPendingDelays(0);
     }
 
+    @Test
+    void killingTheSlotHolderWhileItsLoopUntilWaitsForTheNextIterationReleasesTheSlotAndPopsTheQueue() {
+        FlowWithSource flow = singleSlotFlowWithHourlyLoopUntil();
+        Execution slotHolder = Executions.created(flow);
+        Execution queued = Executions.created(flow);
+        harness.clock().set(T0);
+        harness.run(List.of(slotHolder, queued), ScriptedWorker.succeeding(T0));
+        assertThat(harness).as("before the kill: the holder's loop waits for its next iteration, on no worker").hasExecutionInState(slotHolder, State.Type.PAUSED).hasQueuedExactly(queued).hasPendingDelays(1);
+
+        harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
+
+        assertThat(harness).as("the kill ended the holder").hasExecutionInState(slotHolder, State.Type.KILLED);
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList()).as("the waiting loop is killed too, nothing is left in KILLING").allMatch(t -> t.getState().isTerminated());
+        assertThat(harness).as("the kill freed the slot: the queued execution was popped").hasNothingQueued();
+        assertThat(harness).as("the popped execution started its loop").hasExecutionInState(queued, State.Type.PAUSED).hasRunning(flow, 1);
+    }
+
+    @Test
+    void anExpiredLoopUntilIterationDoesNotRestartAnExecutionKilledWhileItWaited() {
+        FlowWithSource flow = singleSlotFlowWithHourlyLoopUntil();
+        Execution killedWhileWaiting = Executions.created(flow);
+        harness.clock().set(T0);
+        harness.run(List.of(killedWhileWaiting), ScriptedWorker.succeeding(T0));
+        harness.run(List.of(killRequest(killedWhileWaiting)), ScriptedWorker.succeeding(T0));
+        assertThat(harness).as("before the next iteration date").hasExecutionInState(killedWhileWaiting, State.Type.KILLED);
+
+        // LoopUntil computes its next iteration date from the wall clock, not the harness one
+        Instant nextIterationPassed = Instant.now().plus(Duration.ofHours(2));
+        List<Trace.Emission> onExpiry = harness.tickExecutionDelays(nextIterationPassed);
+        harness.run(List.of(), ScriptedWorker.succeeding(nextIterationPassed));
+
+        assertThat(harness).as("a kill is final: the loop of a killed execution never runs another iteration").hasExecutionInState(killedWhileWaiting, State.Type.KILLED);
+        assertThat(onExpiry).as("the expired iteration sends nothing to a worker").extracting(Trace.Emission::queue).doesNotContain("workerJobEvent");
+        assertThat(harness).as("the slot stays free and no delay is left").hasRunning(flow, 0).hasPendingDelays(0);
+    }
+
     private void assertKilledAndQueueDrained(FlowWithSource flow, Execution slotHolder, Execution queued) {
         assertThat(harness).as("the kill ended the holder").hasExecutionInState(slotHolder, State.Type.KILLED);
         assertThat(harness).as("the kill freed the slot: the queued execution was popped").hasNothingQueued();
@@ -150,6 +186,29 @@ class KillReleasesConcurrencySlotTest {
                   type: constant
                   interval: PT1H
                   maxAttempts: 3
+            """.formatted(IdUtils.create().toLowerCase(), Flows.NAMESPACE));
+        harness.registerFlow(flow);
+        return flow;
+    }
+
+    private FlowWithSource singleSlotFlowWithHourlyLoopUntil() {
+        FlowWithSource flow = Flows.yaml("""
+            id: loop-until-%s
+            namespace: %s
+            concurrency:
+              behavior: QUEUE
+              limit: 1
+            tasks:
+              - id: loop
+                type: io.kestra.plugin.core.flow.LoopUntil
+                condition: "{{ false }}"
+                checkFrequency:
+                  interval: PT1H
+                  maxIterations: 10
+                tasks:
+                  - id: a
+                    type: io.kestra.plugin.core.log.Log
+                    message: hello
             """.formatted(IdUtils.create().toLowerCase(), Flows.NAMESPACE));
         harness.registerFlow(flow);
         return flow;

@@ -26,7 +26,6 @@ export const useSecretsFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "multi-select",
                     valueProvider: namespaceValueProvider(),
-                    searchable: true,
                 },
             ] : [],
         }

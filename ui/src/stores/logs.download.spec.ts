@@ -28,8 +28,12 @@ describe("logs store downloadLogs", () => {
         setActivePinia(createPinia())
         searchLogs.mockReset()
         downloadUrl.mockReset()
+        vi.spyOn(console, "error").mockImplementation(() => {})
     })
-    afterEach(() => localStorage.clear())
+    afterEach(() => {
+        vi.restoreAllMocks()
+        localStorage.clear()
+    })
 
     it("should page through every page and report the export complete", async () => {
         searchLogs

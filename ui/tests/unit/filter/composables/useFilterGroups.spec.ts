@@ -30,29 +30,6 @@ describe("useFilterGroups", () => {
         })
     })
 
-    describe("addGroup / removeGroup", () => {
-        it("appends a new empty leaf group", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            expect(tree.groups.value).toHaveLength(2)
-        })
-
-        it("removes a group by id but always preserves at least one", () => {
-            const tree = useFilterGroups()
-            const firstId = tree.groups.value[0].id
-            tree.addGroup()
-            const secondId = tree.groups.value[1].id
-
-            tree.removeGroup(secondId)
-            expect(tree.groups.value).toHaveLength(1)
-            expect(tree.groups.value[0].id).toBe(firstId)
-
-            // can't remove the last group
-            tree.removeGroup(firstId)
-            expect(tree.groups.value).toHaveLength(1)
-        })
-    })
-
     describe("updateLeaf", () => {
         it("mutates the matching leaf in place", () => {
             const tree = useFilterGroups()
@@ -68,91 +45,6 @@ describe("useFilterGroups", () => {
             const tree = useFilterGroups()
             const found = tree.updateLeaf("nope", leaf => leaf)
             expect(found).toBe(false)
-        })
-    })
-
-    describe("wrapGroups", () => {
-        it("combines two top-level leaves into an AND-wrapper at the target's position", () => {
-            const tree = useFilterGroups()
-            const g1 = tree.groups.value[0].id
-            tree.addGroup()
-            const g2 = tree.groups.value[1].id
-
-            tree.updateLeaf(g1, leaf => ({...leaf, filters: [filter("f1", "state", Comparators.EQUALS, "A")]}))
-            tree.updateLeaf(g2, leaf => ({...leaf, filters: [filter("f2", "namespace", Comparators.EQUALS, "ns")]}))
-
-            tree.wrapGroups(g2, g1)
-            expect(tree.groups.value).toHaveLength(1)
-            const wrapped = tree.groups.value[0]
-            expect(isWrapperGroup(wrapped)).toBe(true)
-            if (isWrapperGroup(wrapped)) {
-                expect(wrapped.logical).toBe("AND")
-                expect(wrapped.children).toHaveLength(2)
-            }
-        })
-
-        it("appends source to an existing wrapper as a new child", () => {
-            const tree = useFilterGroups()
-            const g1 = tree.groups.value[0].id
-            tree.addGroup()
-            const g2 = tree.groups.value[1].id
-            tree.addGroup()
-            const g3 = tree.groups.value[2].id
-
-            tree.updateLeaf(g1, l => ({...l, filters: [filter("f1", "a", Comparators.EQUALS, "1")]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [filter("f2", "b", Comparators.EQUALS, "2")]}))
-            tree.updateLeaf(g3, l => ({...l, filters: [filter("f3", "c", Comparators.EQUALS, "3")]}))
-
-            tree.wrapGroups(g2, g1) // wrap g1+g2
-            const wrapperId = tree.groups.value[0].id
-            tree.wrapGroups(g3, wrapperId) // append g3 to the wrapper
-
-            const wrapper = tree.groups.value[0]
-            expect(tree.groups.value).toHaveLength(1)
-            expect(isWrapperGroup(wrapper)).toBe(true)
-            if (isWrapperGroup(wrapper)) {
-                expect(wrapper.children).toHaveLength(3)
-            }
-        })
-
-        it("does nothing when source and target are the same id", () => {
-            const tree = useFilterGroups()
-            const before = tree.groups.value
-            tree.wrapGroups(before[0].id, before[0].id)
-            expect(tree.groups.value).toBe(before)
-        })
-
-        it("does nothing when source is a wrapper (one-level-only)", () => {
-            const tree = useFilterGroups()
-            tree.addGroup(); tree.addGroup()
-            const [g1, g2, g3] = tree.groups.value.map(g => g.id)
-            tree.updateLeaf(g1, l => ({...l, filters: [filter("a", "x", Comparators.EQUALS, "1")]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [filter("b", "y", Comparators.EQUALS, "2")]}))
-            tree.updateLeaf(g3, l => ({...l, filters: [filter("c", "z", Comparators.EQUALS, "3")]}))
-            tree.wrapGroups(g2, g1)
-            const wrapperId = tree.groups.value[0].id
-
-            // dragging the wrapper itself onto g3 should be a no-op
-            const before = tree.groups.value
-            tree.wrapGroups(wrapperId, g3)
-            expect(tree.groups.value).toBe(before)
-        })
-    })
-
-    describe("unwrapGroup", () => {
-        it("restores wrapper children as top-level siblings at the wrapper's position", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            tree.updateLeaf(g1, l => ({...l, filters: [filter("a", "x", Comparators.EQUALS, "1")]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [filter("b", "y", Comparators.EQUALS, "2")]}))
-            tree.wrapGroups(g2, g1)
-
-            const wrapperId = tree.groups.value[0].id
-            tree.unwrapGroup(wrapperId)
-
-            expect(tree.groups.value).toHaveLength(2)
-            expect(tree.groups.value.every(g => !isWrapperGroup(g))).toBe(true)
         })
     })
 

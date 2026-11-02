@@ -1,0 +1,23 @@
+id: approval-expire
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    timeout: PT1S
+    onWait:
+      - id: notify
+        type: io.kestra.plugin.core.log.Log
+        message: "Approval requested"
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: "Cleanup"

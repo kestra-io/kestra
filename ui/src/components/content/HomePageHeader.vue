@@ -13,7 +13,7 @@
     defineProps<Props>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .home-page-header {
   h2 {
     padding-top: 0;
@@ -24,7 +24,7 @@
     border: none;
   }
 
-  :deep(p) {
+  & :deep(p) {
     font-size: var(--ks-font-size-sm);
     line-height: var(--ks-font-size-xl);
     margin: .5rem 0;

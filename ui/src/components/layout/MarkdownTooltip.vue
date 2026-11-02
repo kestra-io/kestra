@@ -44,7 +44,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     a {
         cursor: pointer;
     }

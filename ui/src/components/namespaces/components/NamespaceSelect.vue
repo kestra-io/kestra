@@ -107,7 +107,7 @@
         const ids = [modelValue.value].flat().filter(Boolean) as string[]
         namespacesStore.loadAutocomplete({ids})
 
-        if (props.autoDefault && (modelValue.value === undefined || modelValue.value.length === 0)) {
+        if (props.autoDefault && modelValue.value !== null && !modelValue.value?.length) {
             const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
@@ -120,7 +120,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tag-label {
         max-width: 12.5rem;
         min-width: 5ch;

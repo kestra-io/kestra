@@ -1,7 +1,8 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
+import type {Flow} from "../../stores/flow"
 
-let mockFlow: Record<string, any> | undefined
+let mockFlow: Partial<Flow> | undefined
 vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({
         get flow() {

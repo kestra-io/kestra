@@ -42,7 +42,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox';
+</style>
 
+<style>
     .kel-checkbox {
         --kel-checkbox-text-color: var(--ks-text-primary);
         --kel-checkbox-checked-text-color: var(--ks-text-primary);

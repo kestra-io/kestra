@@ -144,6 +144,7 @@ public class FlowToolSchemaMapper {
             case TimeInput i -> toTimeType((TimeInput) input, baseSchema);
             case URIInput i -> toURIType((URIInput) input, baseSchema);
             case YamlInput i -> toObjectType(input, baseSchema);
+            case TableInput i -> toTableType(i, baseSchema);
             default -> throw new IllegalStateException("Unexpected value: " + input);
         };
     }
@@ -160,6 +161,23 @@ public class FlowToolSchemaMapper {
         return Map.of(
             "type", getJsonSchemaType(arrayInput.getItemType())
         );
+    }
+
+    private Map<String, Object> toTableType(TableInput input, Map<String, Object> baseSchema) {
+        baseSchema.put("items", Map.of(
+            "type", "object",
+            "properties", input.getColumns().stream().collect(Collectors.toMap(Input::getId, this::convert)),
+            "required", findRequiredInputFields(input.getColumns()),
+            "additionalProperties", false
+        ));
+        if (input.getMinRows() != null) {
+            baseSchema.put("minItems", input.getMinRows());
+        }
+        if (input.getMaxRows() != null) {
+            baseSchema.put("maxItems", input.getMaxRows());
+        }
+
+        return baseSchema;
     }
 
     private static Map<String, Object> toBoolType(BoolInput input, Map<String, Object> baseSchema) {
@@ -346,7 +364,7 @@ public class FlowToolSchemaMapper {
             case INT -> "integer";
             case FLOAT -> "number";
             case BOOL -> "boolean";
-            case ARRAY, MULTISELECT -> "array";
+            case ARRAY, MULTISELECT, TABLE -> "array";
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }

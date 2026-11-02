@@ -113,6 +113,7 @@ export const LegendStaysOpenWhileHoveringIt: Story = {
         await userEvent.hover(bar)
         await waitFor(() => expect(legendShown()).toBe(true))
         await userEvent.hover(document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")!)
+        canvasElement.dispatchEvent(new MouseEvent("mouseover", {bubbles: true}))
         await settle()
         expect(legendShown()).toBe(true)
 

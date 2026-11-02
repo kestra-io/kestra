@@ -2,9 +2,10 @@ import {defineStore} from "pinia"
 import {ref} from "vue"
 import * as NotificationsAPI from "@kestra-io/kestra-sdk/notifications"
 import {history_ as fetchHistory} from "@kestra-io/kestra-sdk/notifications"
-import type {Notification} from "@kestra-io/kestra-sdk"
+import type {Notification as SdkNotification} from "@kestra-io/kestra-sdk"
 
-export type {Notification} from "@kestra-io/kestra-sdk"
+// `url` is missing from the generated SDK until it is regenerated from the new OpenAPI spec.
+export type Notification = SdkNotification & {url?: string | null}
 
 const HISTORY_PAGE_SIZE = 20
 const RECONNECT_DELAY_MS = 3000

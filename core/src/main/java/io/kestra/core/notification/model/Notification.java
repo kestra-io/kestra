@@ -66,6 +66,13 @@ public class Notification implements HasUID {
     private String referenceId;
 
     /**
+     * Where a click on the notification leads: a Kestra-relative path starting with {@code /} or an
+     * absolute {@code http(s)} URL. {@code null} when the notification has no link of its own.
+     */
+    @Nullable
+    private String url;
+
+    /**
      * Progress indicators for {@link CoreNotificationType#ASYNC_OPERATION}, {@code null} for every
      * other type. These are <strong>not</strong> persisted: the source of truth is the
      * {@code notification_items} table (see {@link NotificationItem}), one row per targeted

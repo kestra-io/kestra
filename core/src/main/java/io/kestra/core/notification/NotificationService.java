@@ -79,19 +79,20 @@ public class NotificationService {
      * user (no real user model).
      */
     public Notification notify(@Nullable String userId, @Nullable String tenantId, NotificationType type, String title, @Nullable String referenceId) {
-        Notification created = createNotification(userId, tenantId, type, null, title, referenceId, false);
+        Notification created = createNotification(userId, tenantId, type, null, title, referenceId, null, false);
         emit(NotificationEventType.CREATED, created);
         return created;
     }
 
     /**
      * Creates one notification per user named in {@code usernames}, as seen from {@code tenantId}, already
-     * marked read when {@code read} is set. Throws when a username cannot be notified from that tenant.
+     * marked read when {@code read} is set, and linking to {@code url} when given. Throws when a username
+     * cannot be notified from that tenant.
      */
-    public List<Notification> notifyUsers(String tenantId, List<String> usernames, String title, boolean read) {
+    public List<Notification> notifyUsers(String tenantId, List<String> usernames, String title, @Nullable String url, boolean read) {
         return resolveUserIds(tenantId, usernames).stream()
             .map(userId -> {
-                Notification created = createNotification(userId, tenantId, CoreNotificationType.GENERIC, null, title, null, read);
+                Notification created = createNotification(userId, tenantId, CoreNotificationType.GENERIC, null, title, null, url, read);
                 emit(NotificationEventType.CREATED, created);
                 return created;
             })
@@ -120,6 +121,7 @@ public class NotificationService {
             operationType,
             "%s requested for %d item%s".formatted(humanize(operationType), resourceIds.size(), resourceIds.size() == 1 ? "" : "s"),
             operationId,
+            null,
             !resourceIds.isEmpty()
         );
 
@@ -154,6 +156,7 @@ public class NotificationService {
         @Nullable AsyncOperationType asyncOperationType,
         String title,
         @Nullable String referenceId,
+        @Nullable String url,
         boolean read) {
         Instant now = Instant.now();
 
@@ -167,6 +170,7 @@ public class NotificationService {
                 .resourceType(asyncOperationType != null ? asyncOperationType.resourceType() : null)
                 .title(title)
                 .referenceId(referenceId)
+                .url(url)
                 .read(read)
                 .createdDate(now)
                 .updatedDate(now)

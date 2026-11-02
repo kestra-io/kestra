@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.notification;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import io.kestra.core.models.annotations.Example;
@@ -50,6 +52,7 @@ import lombok.experimental.SuperBuilder;
                       - alice@example.com
                       - bob@example.com
                     title: "{{ flow.id }} finished, execution {{ execution.id }}"
+                    url: "/main/executions/{{ flow.namespace }}/{{ flow.id }}/{{ execution.id }}"
                 """
         )
     }
@@ -62,6 +65,12 @@ public class Notify extends Task implements RunnableTask<Notify.Output>, SystemT
     @Schema(title = "The notification title shown to the users.")
     @NotNull
     private Property<String> title;
+
+    @Schema(
+        title = "The page opened when the notification is clicked.",
+        description = "Either a path of the Kestra UI starting with `/`, without the `/ui` prefix (e.g. `/main/executions`), opened in the same tab, or an absolute `http` or `https` URL, shown as a link."
+    )
+    private Property<String> url;
 
     @Schema(
         title = "Whether the notification is created already read.",
@@ -77,12 +86,32 @@ public class Notify extends Task implements RunnableTask<Notify.Output>, SystemT
             throw new IllegalArgumentException("The 'users' property must name at least one user.");
         }
         String renderedTitle = runContext.render(title).as(String.class).orElseThrow();
+        String renderedUrl = runContext.render(url).as(String.class).map(Notify::validateUrl).orElse(null);
         boolean renderedRead = runContext.render(read).as(Boolean.class).orElse(false);
 
         NotificationService notificationService = ((DefaultRunContext) runContext).services().additionalService(NotificationService.class);
-        List<Notification> notifications = notificationService.notifyUsers(runContext.flowInfo().tenantId(), renderedUsers, renderedTitle, renderedRead);
+        List<Notification> notifications = notificationService.notifyUsers(runContext.flowInfo().tenantId(), renderedUsers, renderedTitle, renderedUrl, renderedRead);
 
         return Output.builder().count(notifications.size()).build();
+    }
+
+    private static String validateUrl(String value) {
+        if (value.startsWith("/") && !value.startsWith("//")) {
+            return value;
+        }
+
+        try {
+            URI uri = new URI(value);
+            if (("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())) && uri.getHost() != null) {
+                return value;
+            }
+        } catch (URISyntaxException e) {
+            // reported below with the same message
+        }
+
+        throw new IllegalArgumentException(
+            "The 'url' property must be a path starting with '/' or an absolute http or https URL, but was '%s'.".formatted(value)
+        );
     }
 
     @Builder

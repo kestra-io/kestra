@@ -43,6 +43,29 @@ class NotifyTest {
             .isEqualTo(true);
     }
 
+    @ExecuteFlow("flows/valids/notify-users-url.yaml")
+    @Test
+    void shouldStoreTheUrlOnTheNotification(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(notificationsTitled("Relative: " + execution.getId()))
+            .singleElement()
+            .extracting(Notification::getUrl)
+            .isEqualTo("/main/executions/io.kestra.tests/notify-users-url/" + execution.getId());
+        assertThat(notificationsTitled("Absolute: " + execution.getId()))
+            .singleElement()
+            .extracting(Notification::getUrl)
+            .isEqualTo("https://kestra.io/docs");
+    }
+
+    @ExecuteFlow("flows/valids/notify-users-invalid-url.yaml")
+    @Test
+    void shouldFailWhenTheUrlIsNeitherAPathNorAnHttpUrl(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        assertThat(notificationsTitled("Never sent: " + execution.getId())).isEmpty();
+    }
+
     private List<Notification> notificationsTitled(String title) {
         return notificationService.findByUser(null, null, 100).stream()
             .filter(notification -> title.equals(notification.getTitle()))

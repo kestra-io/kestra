@@ -81,7 +81,7 @@
     import OperationCard from "./OperationCard.vue"
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {useNotificationsStore, type Notification} from "../../stores/notifications"
-    import {resolveNotificationRoute} from "../../utils/notificationRoute"
+    import {isAbsoluteNotificationUrl, isRelativeNotificationUrl, resolveNotificationRoute} from "../../utils/notificationRoute"
 
     const store = useNotificationsStore()
     const miscStore = useMiscStore()
@@ -111,6 +111,16 @@
         if (!notification.read) {
             await setRead(notification, true)
         }
+
+        if (isRelativeNotificationUrl(notification.url)) {
+            await beforeNotificationNavigation(notification)
+            miscStore.contextInfoBarOpenTab = ""
+            await router.push(notification.url)
+            return
+        }
+
+        // An absolute url is a real link in the row, so the browser handles the navigation.
+        if (isAbsoluteNotificationUrl(notification.url)) return
 
         const route = await resolveNotificationRoute(notification)
         if (route === null) return

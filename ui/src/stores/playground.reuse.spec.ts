@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {reactive} from "vue"
 
@@ -46,6 +46,10 @@ async function store() {
 }
 
 describe("playground runs planned by the server", () => {
+    afterAll(() => {
+        sessionStorage.removeItem("playgroundClientId")
+    })
+
     beforeEach(() => {
         setActivePinia(createPinia())
         vi.clearAllMocks()

@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {afterAll, describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 const flowStore = {
@@ -48,6 +48,10 @@ const loadStore = async () => {
 }
 
 describe("playground run saves a draft", () => {
+    afterAll(() => {
+        sessionStorage.removeItem("playgroundClientId")
+    })
+
     beforeEach(() => {
         vi.resetModules()
         vi.clearAllMocks()

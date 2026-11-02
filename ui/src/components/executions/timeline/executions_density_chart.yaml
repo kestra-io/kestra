@@ -11,10 +11,6 @@ data:
       field: START_DATE
     state:
       field: STATE
-    namespace:
-      field: NAMESPACE
-    flowId:
-      field: FLOW_ID
     total:
       agg: COUNT
       graphStyle: BARS

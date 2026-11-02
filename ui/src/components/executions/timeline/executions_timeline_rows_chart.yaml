@@ -1,0 +1,25 @@
+id: executions_timeline_rows
+type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+chartOptions:
+  displayName: Executions timeline rows
+  column: date
+  colorByColumn: state
+data:
+  type: io.kestra.plugin.core.dashboard.data.Executions
+  columns:
+    date:
+      field: START_DATE
+    state:
+      field: STATE
+    namespace:
+      field: NAMESPACE
+    flowId:
+      field: FLOW_ID
+    total:
+      agg: COUNT
+      graphStyle: BARS
+  orderBy:
+    - column: date
+    - column: namespace
+    - column: flowId
+    - column: state

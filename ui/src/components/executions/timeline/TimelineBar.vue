@@ -92,7 +92,7 @@
             class="timeline-bar timeline-bucket"
             :class="{dimmed, zoomable}"
             :type="zoomable ? 'button' : undefined"
-            :aria-label="zoomable ? $t('executionsTimeline.row.runsCount', {count: bucket.total}) : undefined"
+            :aria-label="zoomable ? bucketLabel() : undefined"
             :data-bucket-state="bucket.dominantState"
             :style="bucketStyle"
             @click="zoomToBucket"
@@ -102,6 +102,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
     import {useRouter} from "vue-router"
     import {categoryLabel, dateUtils, durationUtils} from "@kestra-io/design-system"
     import {stateChartColor, type StateBucket, type TimelineExecution} from "../../../utils/executionsTimeline"
@@ -125,6 +126,7 @@
     const POPOVER_MIN_SPACE_ABOVE_PX = 300
     const POPOVER_POPPER_OPTIONS = {modifiers: [{name: "flip", enabled: false}]}
 
+    const {t} = useI18n()
     const router = useRouter()
     const popoverVisible = ref(false)
     const tooltipVisible = ref(false)
@@ -153,6 +155,20 @@
             background: `color-mix(in srgb, ${tint} ${mixPercent}%, var(--ks-bg-hover))`,
         }
     })
+
+    function bucketLabel() {
+        const {bucket} = props
+        if (!bucket) return undefined
+        return [
+            t("executionsTimeline.row.runsCount", {count: bucket.total}),
+            t("executionsTimeline.bucket.stateCount", {state: categoryLabel(bucket.dominantState), count: bucket.byState[bucket.dominantState]}),
+            t("executionsTimeline.toolbar.range", {
+                start: dateUtils.dateFilter(new Date(bucket.startMs).toISOString()),
+                end: dateUtils.dateFilter(new Date(bucket.endMs).toISOString()),
+                duration: durationUtils.humanDuration((bucket.endMs - bucket.startMs) / 1000),
+            }),
+        ].join(", ")
+    }
 
     const formattedStart = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.startMs).toISOString()) : "")
     const formattedEnd = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.endMs).toISOString()) : "")

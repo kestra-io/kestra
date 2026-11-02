@@ -208,6 +208,52 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldRejectAFlowWithTheSameIdSearchableOnAnInputAndAnOutput() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: orderId
+                type: STRING
+                searchable: true
+            outputs:
+              - id: orderId
+                type: STRING
+                value: "{{ inputs.orderId }}"
+                searchable: true
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).get()
+            .satisfies(violation -> assertThat(violation.getMessage()).contains("cannot be searchable on both an input and an output"));
+    }
+
+    @Test
+    void shouldAcceptTheSameIdOnAnInputAndAnOutputWhenOnlyOneIsSearchable() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: orderId
+                type: STRING
+                searchable: true
+            outputs:
+              - id: orderId
+                type: STRING
+                value: "{{ inputs.orderId }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
     void shouldGetConstraintErrorGivenInputWithBothDefaultsAndPrefill() {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """

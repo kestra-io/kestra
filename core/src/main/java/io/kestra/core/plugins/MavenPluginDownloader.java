@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -26,10 +27,12 @@ import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.configuration.PluginsConfiguration;
 import io.kestra.core.utils.Version;
@@ -247,6 +250,9 @@ public class MavenPluginDownloader implements Closeable {
         try {
             DefaultArtifact artifact = new DefaultArtifact(dependency);
             VersionRangeResult version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));
+            if (version.getHighestVersion() == null) {
+                throw notFound(dependency, repositories);
+            }
 
             final String highestVersion = version.getHighestVersion().toString();
             ArtifactRequest artifactRequest = new ArtifactRequest(
@@ -265,9 +271,34 @@ public class MavenPluginDownloader implements Closeable {
                 highestVersion.endsWith("-SNAPSHOT") ? highestVersion : result.getArtifact().getVersion(),
                 result.getArtifact().getPath().toUri()
             );
-        } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
+        } catch (ArtifactResolutionException e) {
+            if (isAbsentFromEveryRepository(e)) {
+                throw notFound(dependency, repositories);
+            }
+            throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
+        } catch (VersionRangeResolutionException e) {
             throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
         }
+    }
+
+    /**
+     * True only when every repository answered that the artifact does not exist: a repository that could not be
+     * reached or refused the credentials leaves the artifact's existence unknown, which is a server-side failure.
+     */
+    private static boolean isAbsentFromEveryRepository(final ArtifactResolutionException e) {
+        List<Exception> exceptions = e.getResults().stream()
+            .flatMap(result -> result.getExceptions().stream())
+            .toList();
+        return !exceptions.isEmpty() && exceptions.stream().allMatch(ArtifactNotFoundException.class::isInstance);
+    }
+
+    // Names repositories by id only, since a configured URL may embed credentials.
+    private static InvalidException notFound(final String dependency, final List<RemoteRepository> repositories) {
+        String repositoryIds = repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", "));
+        return new InvalidException(
+            dependency,
+            "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).".formatted(dependency, repositoryIds)
+        );
     }
 
     /**

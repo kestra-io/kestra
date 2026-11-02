@@ -9,13 +9,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.InvalidException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.configuration.PluginsConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MavenPluginDownloaderTest {
 
     private static final String SNAPSHOT = "io.kestra.test:plugin-test:1.0.0-SNAPSHOT";
+    private static final String MISSING_ARTIFACT = "io.kestra.plugin:plugin-that-does-not-exist:1.0.0";
 
     @TempDir
     Path remote;
@@ -42,6 +46,34 @@ class MavenPluginDownloaderTest {
 
             publishReleaseVersions("1.0.0", "1.1.0");
             assertThat(downloader.listAllVersions("io.kestra.test:plugin-test:LATEST")).containsExactly("1.0.0");
+        }
+    }
+
+    @Test
+    void shouldRejectAsInvalidWhenArtifactIsAbsentFromEveryRepository() throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            assertThatThrownBy(() -> downloader.resolve(MISSING_ARTIFACT))
+                .isInstanceOf(InvalidException.class)
+                .hasMessage("Plugin artifact `%s` was not found in any of the configured Maven repositories (remote).".formatted(MISSING_ARTIFACT));
+        }
+    }
+
+    @Test
+    void shouldRejectAsInvalidWhenNoVersionMatchesTheRange() throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:[1,2)"))
+                .isInstanceOf(InvalidException.class);
+        }
+    }
+
+    @Test
+    void shouldNotBlameTheRequestWhenARepositoryCannotBeReached() throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            List<MavenPluginRepositoryConfig> unreachable = List.of(new MavenPluginRepositoryConfig("unreachable", "http://127.0.0.1:1/maven", null));
+
+            assertThatThrownBy(() -> downloader.resolve(MISSING_ARTIFACT, unreachable))
+                .isInstanceOf(KestraRuntimeException.class)
+                .isNotInstanceOf(InvalidException.class);
         }
     }
 

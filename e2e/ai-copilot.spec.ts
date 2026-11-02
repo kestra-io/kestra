@@ -228,10 +228,11 @@ test.describe("AI Copilot", () => {
         await expect(draft).toContainText("id: demo")
 
         await page.locator(D.draftOpen).click()
-        // Hands the drafted YAML to the flow create editor via the blueprint-source handoff.
-        await page.waitForURL(/\/flows\/new\?.*blueprintId=copilot-draft/)
-        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
-        expect(new URL(page.url()).searchParams.get("blueprintSourceYaml")).toContain("id: demo")
+        // Hands the drafted YAML to the flow create editor through sessionStorage, keeping it out of the
+        // URL (a refresh of a URL carrying raw `|` characters made the server answer with a 500).
+        await page.waitForURL(/\/flows\/new\?copilotDraft=\d+$/)
+        expect(new URL(page.url()).searchParams.has("blueprintSourceYaml")).toBe(false)
+        await expect(page.getByTestId("monaco-editor").getByText("id: demo")).toBeVisible()
     })
 
     /** OSS cannot store dashboards (isCustomDashboardsEnabled: false), so the draft card hides its actions; the actionable path is covered by the EE suite. */

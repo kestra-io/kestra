@@ -55,8 +55,7 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
 
     @NotNull
     @NotEmpty
-    @Valid
-    private List<UnitTest> testCases;
+    private List<@Valid UnitTest> testCases;
 
     @Builder.Default
     @ServerOwned

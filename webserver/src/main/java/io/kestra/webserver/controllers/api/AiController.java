@@ -43,9 +43,13 @@ public class AiController {
     @Inject
     protected TenantService tenantService;
 
+    @Deprecated(since = "2.1.0", forRemoval = true)
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/generate/flow", produces = "application/yaml")
-    @Operation(tags = { "AI" }, summary = "Generate or regenerate a flow based on a prompt")
+    @Operation(
+        tags = { "AI" }, deprecated = true, summary = "Generate or regenerate a flow based on a prompt (deprecated)",
+        description = "Deprecated, will be removed in 2.2.0: use the AI Copilot threads API (ai/threads) instead."
+    )
     public HttpResponse<String> generateFlow(
         @RequestBody(description = "Prompt and context required for flow generation") @Body FlowGenerationPrompt flowGenerationPrompt,
         HttpRequest<?> httpRequest) {

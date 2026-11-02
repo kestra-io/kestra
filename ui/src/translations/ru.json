@@ -541,6 +541,8 @@
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
     "topology-graph": {
+      "retried": "Эта Task была повторена",
+      "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
       "zoom-out": "Уменьшить",
@@ -669,6 +671,16 @@
     "inputs": "Входные данные",
     "input": "Ввод",
     "variables": "Переменные",
+    "task_run_popup": {
+      "open": "Детали Task",
+      "count_error": "Не удалось загрузить количество",
+      "load_error": "Не удалось загрузить это представление.",
+      "retry": "Повторить",
+      "child_runs_capped": "Показаны log'и только первых {count} дочерних Task Run'ов.",
+      "no_artifacts": "Эта Task не предоставляет artifact.",
+      "task_source": "Исходный код Task",
+      "worker_info": "Информация о Worker"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Ни одна task этого flow не предоставляет artifact.",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "variable_explorer": {
+      "task_outputs": "Выводы Task'а",
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",

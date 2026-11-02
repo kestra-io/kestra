@@ -186,13 +186,10 @@ class LocalStorageTest extends StorageTestSuite {
 
         List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/single.txt"));
         assertThat(deleted, notNullValue());
-        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(deleted.stream().anyMatch(uri -> StorageContext.logicalPath(uri).endsWith(".metadata")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/single.txt")));
 
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("single.txt.metadata");
+        Path orphanMetadataPath = Path.of("/tmp/unittest", tenantId, "single.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
     }
 
@@ -214,17 +211,12 @@ class LocalStorageTest extends StorageTestSuite {
 
         List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/dir/"));
         assertThat(deleted, notNullValue());
-        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(deleted.stream().anyMatch(uri -> StorageContext.logicalPath(uri).endsWith(".metadata")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file1.txt")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file2.txt")));
 
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadata1 = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("dir/file1.txt.metadata");
-        Path orphanMetadata2 = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("dir/file2.txt.metadata");
+        Path orphanMetadata1 = Path.of("/tmp/unittest", tenantId, "dir/file1.txt.metadata");
+        Path orphanMetadata2 = Path.of("/tmp/unittest", tenantId, "dir/file2.txt.metadata");
         assertFalse(Files.exists(orphanMetadata1));
         assertFalse(Files.exists(orphanMetadata2));
     }

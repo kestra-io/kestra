@@ -123,6 +123,9 @@ public class ExecutorService {
                             Level.INFO,
                             "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, limit.concurrency().getQueueLimit()
                         );
+                        runContextLoggerFactory.create(executionRunning.getExecution()).get().warn(
+                            "Execution is CANCELLED due to concurrency queue limit reached ({}/{}).", queuedCount, limit.concurrency().getQueueLimit()
+                        );
 
                         yield executionRunning
                             .withExecution(
@@ -147,9 +150,14 @@ public class ExecutorService {
                         .withExecution(newExecution)
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.QUEUED);
                 }
-                case CANCEL -> executionRunning
-                    .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
-                    .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                case CANCEL -> {
+                    runContextLoggerFactory.create(executionRunning.getExecution()).get().warn(
+                        "Execution is CANCELLED due to {}concurrency limit exceeded.", scopeDescription(limit)
+                    );
+                    yield executionRunning
+                        .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                }
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution()
                         .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + scopeDescription(limit) + "concurrency limit exceeded"));

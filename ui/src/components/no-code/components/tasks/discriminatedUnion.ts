@@ -154,10 +154,17 @@ export function branchDisplayName(branch: ImplementationBranch, branches: Implem
     return qualifier ? `${name} (${qualifier})` : name
 }
 
-/** The value a freshly picked branch starts from: its `type`, and for an ambiguous branch the nested implementation that tells it apart. */
-export function newImplementation(branch: ImplementationBranch, branches: ImplementationBranch[]): Record<string, unknown> {
+/**
+ * The value a freshly picked branch starts from: its `type`, and for an ambiguous branch the nested implementation that tells it apart.
+ * Switching between branches of the same class (`Table (Triggers)` to `Table (Executions)`) keeps the value's own properties, as only the nested implementation differs.
+ */
+export function newImplementation(branch: ImplementationBranch, branches: ImplementationBranch[], previous?: Record<string, unknown>): Record<string, unknown> {
     if (!isAmbiguous(branch, branches)) return {type: branch.type}
+    const kept = previous?.type === branch.type
+        ? Object.fromEntries(Object.entries(previous).filter(([key]) => !(key in branch.nested)))
+        : {}
     return {
+        ...kept,
         type: branch.type,
         ...Object.fromEntries(Object.entries(branch.nested).map(([key, nestedType]) => [key, {type: nestedType}])),
     }

@@ -15,7 +15,7 @@ describe("EmptyTemplate", () => {
     test("adds the plain class when requested", () => {
         const wrapper = mount(EmptyTemplate, {props: {plain: true}})
 
-        expect(wrapper.classes()).toContain("plain")
+        expect(wrapper.classes()).toEqual(["container", "empty-template", "plain"])
     })
 
     test("does not add the plain class by default", () => {

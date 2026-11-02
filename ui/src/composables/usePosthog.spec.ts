@@ -1,36 +1,98 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
+import {trackSetupEvent} from "./usePosthog"
 
-const posthogMock = {
-    __loaded: false,
-    init: vi.fn(),
-    register_for_session: vi.fn(),
-    get_property: vi.fn(() => "alias"),
-    alias: vi.fn(),
+const {posthogEvents, miscStore, uidState} = vi.hoisted(() => ({
+    posthogEvents: vi.fn(),
+    miscStore: {configs: undefined as {isAnonymousUsageEnabled?: boolean, uuid?: string} | undefined},
+    uidState: {value: undefined as string | undefined},
+}))
+
+vi.mock("../stores/api", () => ({
+    useApiStore: () => ({posthogEvents}),
+}))
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => miscStore,
+}))
+
+vi.mock("../utils/uid", () => ({
+    getUid: () => uidState.value,
+    ensureUid: () => "user-uid",
+}))
+
+function sentPayload() {
+    expect(posthogEvents).toHaveBeenCalledOnce()
+    return posthogEvents.mock.calls[0][0]
 }
 
-vi.mock("posthog-js", () => ({default: posthogMock}))
-vi.mock("../stores/api", () => ({
-    useApiStore: () => ({loadConfig: async () => ({id: "instance", posthog: {token: "phc_test", apiHost: "https://ph.test"}})}),
-}))
-vi.mock("override/stores/misc", () => ({useMiscStore: () => ({configs: {}})}))
-vi.mock("../utils/uid", () => ({ensureUid: () => "uid", getUid: () => "uid"}))
+describe("trackSetupEvent", () => {
+    beforeEach(() => {
+        posthogEvents.mockReset()
+        miscStore.configs = {isAnonymousUsageEnabled: true, uuid: "instance-uuid"}
+        uidState.value = "user-uid"
+    })
 
-import {initPostHogForSetup} from "./usePosthog"
+    it("should send nothing when anonymous usage is disabled", () => {
+        miscStore.configs = {isAnonymousUsageEnabled: false, uuid: "instance-uuid"}
 
-describe("initPostHogForSetup", () => {
-    beforeEach(() => vi.clearAllMocks())
+        trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
 
-    it("captures clicks on links and buttons only, without their text", async () => {
-        await initPostHogForSetup({uuid: "instance", version: "1.0.0"})
+        expect(posthogEvents).not.toHaveBeenCalled()
+    })
 
-        expect(posthogMock.init).toHaveBeenCalledWith("phc_test", expect.objectContaining({
-            api_host: "https://ph.test",
-            autocapture: {dom_event_allowlist: ["click"], element_allowlist: ["a", "button"]},
-            mask_all_text: true,
-            capture_exceptions: true,
-            capture_dead_clicks: true,
-            rageclick: true,
-            capture_performance: {web_vitals: true},
-        }))
+    it("should send nothing when no uid exists", () => {
+        uidState.value = undefined
+
+        trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
+
+        expect(posthogEvents).not.toHaveBeenCalled()
+    })
+
+    it("should forward the event type, the instance id and the user id", () => {
+        trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
+
+        expect(sentPayload()).toMatchObject({
+            type: "setup_flow:completed",
+            instance_id: "instance-uuid",
+            user_id: "user-uid",
+        })
+    })
+
+    it("should attach the user info when a first name was given", () => {
+        trackSetupEvent("setup_flow:completed", {}, {
+            firstName: "Ada",
+            lastName: "Lovelace",
+            username: "ada@example.com",
+        })
+
+        expect(sentPayload()).toMatchObject({
+            user_firstname: "Ada",
+            user_lastname: "Lovelace",
+            user_email: "ada@example.com",
+        })
+    })
+
+    it("should attach no user info when no first name was given", () => {
+        trackSetupEvent("setup_flow:completed", {}, {username: "ada@example.com"})
+
+        const payload = sentPayload()
+        expect(payload).not.toHaveProperty("user_firstname")
+        expect(payload).not.toHaveProperty("user_lastname")
+        expect(payload).not.toHaveProperty("user_email")
+    })
+
+    it("should merge the additional data in and let it override the user info", () => {
+        trackSetupEvent("setup_flow:completed", {user_email: "override@example.com", source: "setup"}, {
+            firstName: "Ada",
+            lastName: "Lovelace",
+            username: "ada@example.com",
+        })
+
+        expect(sentPayload()).toMatchObject({
+            user_firstname: "Ada",
+            user_lastname: "Lovelace",
+            user_email: "override@example.com",
+            source: "setup",
+        })
     })
 })

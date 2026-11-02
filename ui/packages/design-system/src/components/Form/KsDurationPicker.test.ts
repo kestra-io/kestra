@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import KsDurationPicker from "./KsDurationPicker.vue"
+import locales from "./KsDurationPicker.locale"
 import {i18nMount} from "../../../tests/units/i18nMount"
 
 describe("KsDurationPicker", () => {
@@ -81,8 +82,7 @@ describe("KsDurationPicker", () => {
     })
 
     test("rejects calendar-based (year/month/week) durations as invalid", async () => {
-        const wrapper = i18nMount(KsDurationPicker, {
-        })
+        const wrapper = i18nMount(KsDurationPicker, {locales})
 
         const customInputEl = wrapper.find(".ks-duration-picker__custom input")
         await customInputEl.setValue("P1Y")
@@ -93,6 +93,18 @@ describe("KsDurationPicker", () => {
         const emitted = wrapper.emitted("update:modelValue")
         const lastEmit = emitted![emitted!.length - 1]
         expect(lastEmit[0]).toBeNull()
+    })
+
+    test("shows the invalid duration message in the UI language", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {locales})
+        wrapper.vm.$i18n.locale = "de"
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        await customInputEl.setValue("abc")
+        await customInputEl.trigger("input")
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).toContain("Ungültige ISO-8601-Dauer: abc")
     })
 
     test("custom duration input shows invalid message for bad input", async () => {
@@ -176,6 +188,47 @@ describe("KsDurationPicker", () => {
         expect((customInputEl.element as HTMLInputElement).value).toBe("PT10M")
         const emitted = wrapper.emitted("update:modelValue")
         expect(emitted![emitted!.length - 1][0]).toBe("PT10M")
+    })
+
+    test.each([
+        ["PT1.5S", "1.5"],
+        ["PT1M30.5S", "30.5"],
+    ])("keeps fractional seconds from a %s value on mount", async (value, seconds) => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: value},
+        })
+        await wrapper.vm.$nextTick()
+
+        const secondsInput = wrapper.findAll(".ks-duration-picker__field input")[3]
+        expect((secondsInput.element as HTMLInputElement).value).toBe(seconds)
+        expect((wrapper.find(".ks-duration-picker__custom input").element as HTMLInputElement).value).toBe(value)
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe(value)
+    })
+
+    test("accepts typed fractional seconds", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {locales})
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        await customInputEl.setValue("PT0.5S")
+        await customInputEl.trigger("input")
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).not.toContain("Invalid ISO 8601 duration")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT0.5S")
+    })
+
+    test("keeps a value it cannot represent on mount instead of clearing it", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            locales,
+            props: {modelValue: "P1Y"},
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+        expect((wrapper.find(".ks-duration-picker__custom input").element as HTMLInputElement).value).toBe("P1Y")
+        expect(wrapper.text()).toContain("Invalid ISO 8601 duration: P1Y")
     })
 
     test("empty modelValue results in null emit", async () => {

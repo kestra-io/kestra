@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows.sla.types;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +27,7 @@ class MaxDurationSLATest {
             .build();
         Thread.sleep(100);
 
-        Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution);
+        Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution, Map.of(SLA.SLA_DURATION_ATTRIBUTE, maxDurationSLA.getDuration()));
         assertTrue(evaluate.isPresent());
         assertThat(evaluate.get().reason()).contains("execution duration of");
         assertThat(evaluate.get().reason()).contains("exceed the maximum duration of PT0.05S.");
@@ -40,7 +42,7 @@ class MaxDurationSLATest {
             .state(new State().withState(State.Type.RUNNING))
             .build();
 
-        Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution);
+        Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution, Map.of(SLA.SLA_DURATION_ATTRIBUTE, maxDurationSLA.getDuration()));
         assertTrue(evaluate.isEmpty());
     }
 }

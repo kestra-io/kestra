@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed,ref,watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
     import {PublicApiError} from "../../utils/publicApi"
     import TopNavBar from "../layout/TopNavBar.vue"
     import useRouteContext from "../../composables/useRouteContext"
@@ -55,11 +55,16 @@
     import ProseA from "../content/ProseA.vue"
     import ChildTableOfContents from "../content/ChildTableOfContents.vue"
     import ChildCard from "../content/ChildCard.vue"
-    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
+    import {DOC_PATH_INJECTION_KEY, removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     const markdownComponents = {
         a: ProseA,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ChildCard,
@@ -85,6 +90,8 @@
         const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path
         return routePath?.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined
     })
+
+    provide(DOC_PATH_INJECTION_KEY, computed(() => path.value ? `docs/${path.value}` : "docs"))
 
     const routeInfo = computed(() => ({
         title: docStore.pageMetadata?.title ?? t("docs"),

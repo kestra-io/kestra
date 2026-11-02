@@ -20,8 +20,10 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.ArrayInput;
 import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
@@ -35,8 +37,11 @@ import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.TableFilter;
 import io.kestra.core.models.flows.input.TableInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -46,7 +51,10 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.io.buffer.ReadBufferFactory;
@@ -63,6 +71,7 @@ import reactor.core.publisher.Mono;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -82,6 +91,9 @@ class FlowInputOutputTest {
 
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     KVMetadataStateStore kvMetadataStateStore;
@@ -434,6 +446,32 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldObfuscateSecretsWhenValidatingInputsDeclaredAfterTheirDependent() {
+        // Given: the dependent input is declared first, so its dependency is resolved through the dependency path
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("dependency"), null))
+            .required(false)
+            .build();
+        StringInput dependency = StringInput.builder()
+            .id("dependency")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(dependent, dependency), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results).filteredOn(it -> it.input().getId().equals("dependency"))
+            .singleElement()
+            .extracting(InputAndValue::value)
+            .isEqualTo("******");
+    }
+
+    @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given
         MultiselectInput input = MultiselectInput.builder()
@@ -448,6 +486,130 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst().value());
+    }
+
+    @Test
+    void shouldSaveOnlySearchableInputsWhenReadingExecutionInputs() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .flowId("test-flow")
+            .flowRevision(1)
+            .namespace("io.kestra.test")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                StringInput.builder().id("orderId").type(Type.STRING).searchable(true).build(),
+                ArrayInput.builder().id("orderIds").type(Type.ARRAY).itemType(Type.STRING).searchable(true).build(),
+                StringInput.builder().id("ignored").type(Type.STRING).build()
+            ))
+            .build();
+
+        // When
+        flowInputOutput.readExecutionInputs(flow, execution, Map.of("orderId", "ORD-1", "orderIds", List.of("ORD-2", "ORD-3"), "ignored", "x"));
+
+        // Then
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderId")).contains(new SearchableData(tenant, execution.getId(), "orderId", "ORD-1"));
+        assertThat(searchableDataRepository.findExecutionIds(tenant, "orderIds", QueryFilter.Op.IN, List.of("ORD-2", "ORD-3"), 10)).containsExactly(execution.getId());
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "ignored")).isEmpty();
+    }
+
+    @Test
+    void shouldNotSaveSearchableInputsWhenAnotherInputIsInvalid() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .flowId("test-flow")
+            .flowRevision(1)
+            .namespace("io.kestra.test")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                StringInput.builder().id("orderId").type(Type.STRING).searchable(true).build(),
+                IntInput.builder().id("count").type(Type.INT).required(true).build()
+            ))
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, execution, Map.of("orderId", "ORD-1")))
+            .isInstanceOf(InputOutputValidationException.class);
+        assertThat(searchableDataRepository.findById(tenant, execution.getId(), "orderId")).isEmpty();
+    }
+
+    @Test
+    void shouldSkipExpressionRenderingWhenReadingInputsWithCustomValueAllowed() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(result).containsEntry("select", "custom");
+    }
+
+    @Test
+    void shouldFailRenderingExpressionWhenReadingInputsWithoutValue() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .required(false)
+                        .build()
+                )
+            )
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("Cannot render 'expression'");
+    }
+
+    @Test
+    void shouldStillRenderExpressionWhenValidatingInputsWithCustomValueAllowed() {
+        // Given
+        SelectInput input = SelectInput.builder()
+            .id("select")
+            .type(Type.SELECT)
+            .expression("{{ ['a', 'b'] }}")
+            .allowCustomValue(true)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(((SelectInput) results.getFirst().input()).getValues()).extracting(ValueOption::value).containsExactly("a", "b");
     }
 
     @Test
@@ -1471,6 +1633,9 @@ class FlowInputOutputTest {
                 "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3: expected an object"
             );
+        assertThat(values.getFirst().exceptions())
+            .extracting(InputOutputValidationException::getPath, InputOutputValidationException::getDetail)
+            .contains(tuple("disks[1].size_gb", "it must be less than `2048`"), tuple("disks[2]", "expected an object"));
     }
 
     @Test
@@ -1557,6 +1722,117 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
         assertThat(values.getFirst().isDefault()).isTrue();
         assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("size_gb", 10, "mountpoint", "/")));
+    }
+
+    private static TableInput componentsFilteredBy(TableFilter.Operation operation, Object value) {
+        return componentsFilteredByBuilder(operation, value).build();
+    }
+
+    private static TableInput.TableInputBuilder<?, ?> componentsFilteredByBuilder(TableFilter.Operation operation, Object value) {
+        return TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .columns(List.of(
+                StringInput.builder().id("type").type(Type.STRING).build(),
+                StringInput.builder().id("name").type(Type.STRING).build()
+            ))
+            .defaults(Property.ofValue(List.of(
+                Map.of("type", "linux", "name", "web"),
+                Map.of("type", "windows", "name", "ad"),
+                Map.of("type", "linux", "name", "db")
+            )))
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .filters(List.of(new TableFilter("type", operation, value)));
+    }
+
+    @Test
+    void shouldKeepOnlyTheDefaultRowsMatchingFiltersRenderedFromTheInputsTheyDependOn() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(List.<Input<?>>of(types, components), null, DEFAULT_TEST_EXECUTION, Map.of("component_types", List.of("linux")));
+
+        InputAndValue table = values.get(1);
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web"), Map.of("type", "linux", "name", "db")));
+        assertThat(((TableInput) table.input()).getFilters().getFirst().value()).isEqualTo(List.of("linux"));
+        assertThat(((TableInput) table.input()).getMatchingDefaults()).containsExactly(0, 2);
+    }
+
+    private List<InputAndValue> submitComponents(TableInput components, String rows) {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        return flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", rows)
+        );
+    }
+
+    @Test
+    void shouldAcceptSubmittedRowsMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "db")));
+    }
+
+    @Test
+    void shouldRefuseASubmittedRowNotMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"windows\", \"name\": \"ad\"}]").get(1);
+
+        assertThat(table.exceptions()).singleElement().satisfies(exception -> {
+            assertThat(exception.getMessage()).contains("row 2, column `type`: it doesn't match the filter `IN [linux]`");
+            assertThat(exception.getPath()).isEqualTo("components[1].type");
+            assertThat(exception.getDetail()).isEqualTo("it doesn't match the filter `IN [linux]`");
+        });
+    }
+
+    @Test
+    void shouldRefuseMoreSubmittedRowsThanTheMatchingDefaultsWithoutRowDuplication() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("it must have at most `2` rows");
+    }
+
+    @Test
+    void shouldAcceptADuplicatedRowWhenRowDuplicationIsAllowed() {
+        TableInput components = componentsFilteredByBuilder(TableFilter.Operation.IN, "{{ inputs.component_types }}").allowRowDuplication(true).build();
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat((List<?>) table.value()).hasSize(3);
+    }
+
+    @Test
+    void shouldCheckASelectColumnAgainstTheValuesOfItsExpression() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .columns(List.of(SelectInput.builder().id("type").type(Type.SELECT).expression("{{ inputs.component_types }}").build()))
+            .build();
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", "[{\"type\": \"linux\"}, {\"type\": \"windows\"}]")
+        );
+
+        InputAndValue table = values.get(1);
+        assertThat(((SelectInput) ((TableInput) table.input()).getColumns().getFirst()).getValues()).extracting(ValueOption::value).containsExactly("linux");
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("row 2, column `type`");
     }
 
     @Test

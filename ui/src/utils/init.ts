@@ -2,7 +2,8 @@ import {createRouter, createWebHistory} from "vue-router"
 import type {App} from "vue"
 import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordRaw, Router} from "vue-router"
 import {configure} from "vue-gtag"
-import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
+import type {I18nOptions} from "vue-i18n"
+import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
@@ -13,7 +14,7 @@ import {setDesignSystemLocale, dateUtils, registerDesignSystemI18n} from "@kestr
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
-import {documentationGuard} from "./documentationGuard"
+import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
 import {createPosthogVueErrorHandler} from "./posthog"
 import {useMiscStore} from "override/stores/misc"
@@ -29,7 +30,7 @@ export default async (
     routes: RouteRecordRaw[],
     _stores: unknown,
     translations: Record<string, unknown>,
-    additionalTranslations: Record<string, unknown> = {},
+    additionalTranslations: TranslationProvider = {},
     guards: {
         beforeEach?: RouterGuard,
         beforeResolve?: RouterGuard,
@@ -48,6 +49,7 @@ export default async (
     app.config.errorHandler ??= createPosthogVueErrorHandler(() => useMiscStore().configs)
 
     router.beforeEach(documentationGuard)
+    router.afterEach(updateDocId)
 
     if(guards.beforeEach){
         router.beforeEach(guards.beforeEach.bind(null, router))
@@ -90,21 +92,20 @@ export default async (
     // l18n
     const locale = Utils.getLang()
 
-    // FIXME: any - setupI18n options type doesn't expose all options
     const i18n = setupI18n({
         locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    } as any) // FIXME: any
+    } as Parameters<typeof setupI18n>[0] & I18nOptions)
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations as any) // FIXME: additional translations provider lacks its module type
+        await loadLocaleMessages(i18n, locale, additionalTranslations)
         await setI18nLanguage(i18n, locale)
     }
     setDesignSystemLocale(locale)

@@ -278,8 +278,8 @@
     import TaskIcon from "./TaskIcon.vue"
     import {buildHighlightHtml} from "../../utils/crossResourceSearch"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
-    import {getTheme, copy} from "../../utils/utils"
-    import {useMiscStore} from "override/stores/misc"
+    import {copy} from "../../utils/utils"
+    import {useTheme} from "../../composables/useTheme"
     import {usePluginsStore} from "../../stores/plugins"
     import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
@@ -311,17 +311,14 @@
     })
 
     const {t} = useI18n()
-    const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
     const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
     const introSection = ref("overview")
     const introSearch = ref("")
 
-    const isDarkTheme = computed(() => {
-        void miscStore.theme
-        return getTheme() === "dark"
-    })
+    const theme = useTheme()
+    const isDarkTheme = computed(() => theme.value === "dark")
 
     const currentPlugin = computed(() => {
         return props.plugin ?? pluginsStore.editorPlugin

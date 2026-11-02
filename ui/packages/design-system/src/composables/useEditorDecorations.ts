@@ -1,4 +1,4 @@
-import {watch, type Ref} from "vue"
+import {getCurrentScope, onScopeDispose, watch, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
 
 const PEBBLE_BLOCK_PATTERN = "\\{\\{([\\s\\S]*?)\\}\\}|\\{%([\\s\\S]*?)%\\}"
@@ -106,6 +106,12 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
     watch(ctx.highlightLine, (line) => {
         if (line) selectLine(line)
     })
+
+    if (getCurrentScope()) {
+        onScopeDispose(() => {
+            collection?.clear()
+        })
+    }
 
     return {attach, highlightPebble, highlightLinesRange, clearLinesRangeHighlights, highlightInitial}
 }

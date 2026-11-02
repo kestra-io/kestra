@@ -27,9 +27,11 @@
             @remove="emit('remove', $event)"
         />
         <KsButton
+            v-if="isRemovable"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :aria-label="$t('filter.remove_filter')"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
@@ -48,6 +50,7 @@
         Comparators,
     } from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {normalizeRelativeDate} from "../utils/relativeDates"
     import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
@@ -67,7 +70,7 @@
     ]
 
     const getRelativeDateLabel = (value: string): string => {
-        const found = RELATIVE_DATE.find((item) => item.value === value)
+        const found = RELATIVE_DATE.find((item) => item.value === normalizeRelativeDate(value))
         return found ? found.label : value
     }
 
@@ -85,8 +88,10 @@
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
 
+    const isRemovable = computed(() => props.filterKey?.removable !== false)
+
     const onAuxClick = (event: MouseEvent) => {
-        if (event.button !== 1) return
+        if (event.button !== 1 || !isRemovable.value) return
         event.preventDefault()
         event.stopPropagation()
         emit("remove", props.filter.id)

@@ -541,6 +541,8 @@
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
     "topology-graph": {
+      "retried": "Ten Task został ponowiony",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
       "graph-orientation": "Orientacja grafu",
       "zoom-in": "Powiększ",
       "zoom-out": "Pomniejsz",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "nie rozpoczęto"
       }
     },
     "show task logs": "Pokaż logi Taska",
@@ -669,6 +675,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "task_run_popup": {
+      "open": "Szczegóły Taska",
+      "count_error": "Nie można załadować liczby",
+      "load_error": "Nie można załadować tego widoku.",
+      "retry": "Ponów",
+      "child_runs_capped": "Wyświetlanie logów tylko pierwszych {count} podrzędnych Task Runów.",
+      "no_artifacts": "Ten Task nie dostarcza Artifactu.",
+      "task_source": "Źródło Taska",
+      "worker_info": "Informacje o Workerze"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "variable_explorer": {
+      "task_outputs": "Outputy Taska",
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
@@ -2257,7 +2274,8 @@
       "close_all_panels": "Zamknij wszystkie panele",
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
       "fullscreen": "Pełny ekran",
-      "split_panel": "Podziel panel"
+      "split_panel": "Podziel panel",
+      "split_panel_no_room": "Za mało miejsca na kolejny panel"
     },
     "search_docs": "Szukaj",
     "no_results_found": "Nie znaleziono wyników",

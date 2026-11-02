@@ -541,6 +541,8 @@
     "refresh": "Rafraîchir",
     "filter by status": "Filtrer les exécutions par statut {status}",
     "topology-graph": {
+      "retried": "Cette tâche a été relancée",
+      "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
       "zoom-out": "Dézoomer",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "non démarré"
       }
     },
     "show task logs": "Afficher les journaux de la tâche",
@@ -669,6 +675,16 @@
     "inputs": "Entrées",
     "input": "Entré",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Détails de la Task",
+      "count_error": "Impossible de charger le nombre",
+      "load_error": "Impossible de charger cette vue.",
+      "retry": "Réessayer",
+      "child_runs_capped": "Affichage des logs des {count} premières exécutions de Task enfant uniquement.",
+      "no_artifacts": "Cette tâche ne fournit pas d'artifact.",
+      "task_source": "Source de la Task",
+      "worker_info": "Infos Worker"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Aucune task de ce flow ne fournit d'artifact.",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "Quitter le mode plein écran"
     },
     "variable_explorer": {
+      "task_outputs": "Sorties de Task",
       "title": "Entrée/Sortie",
       "search_placeholder": "Rechercher une Key ou une value...",
       "tasks_outputs": "Tasks outputs",
@@ -2257,7 +2274,8 @@
       "close_all_panels": "Fermer tous les panneaux",
       "exit_fullscreen": "Quitter le mode plein écran",
       "fullscreen": "Plein écran",
-      "split_panel": "Diviser le panneau"
+      "split_panel": "Diviser le panneau",
+      "split_panel_no_room": "Pas assez de place pour un autre panneau"
     },
     "search_docs": "Rechercher",
     "no_results_found": "Aucun résultat trouvé",

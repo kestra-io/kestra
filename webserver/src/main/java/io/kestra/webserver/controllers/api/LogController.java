@@ -43,7 +43,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogDataStoreInterface.class)
@@ -159,20 +158,8 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 
-        Flux<Event<FollowLogEvent>> flux = Flux.<Event<FollowLogEvent>> create(emitter ->
-        {
-            // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-            emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
-
-            // fetch repository first
-            logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters)
-                .toStream()
-                .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
-
-            // consume in realtime — pass the same filter list, the streaming service uses
-            // the FollowLogEventMatcher (backed by Searchable<FollowLogEvent>) to apply it
-            logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters);
-        }, FluxSink.OverflowStrategy.BUFFER)
+        Flux<Event<FollowLogEvent>> flux = logStreamingService
+            .follow(executionId, subscriberId, logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters), effectiveFilters)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(

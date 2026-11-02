@@ -107,6 +107,23 @@ class SplitTest {
     }
 
     @Test
+    void rowsWithoutExtensionUnderFolderWithDot() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        URI put = storageUpload(10, "/file/storage/%s/inputs/sales.data/data".formatted(IdUtils.create()));
+
+        Split result = Split.builder()
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(5))
+            .build();
+
+        Split.Output run = result.run(runContext);
+
+        assertThat(run.getUris().size()).isEqualTo(2);
+        assertThat(run.getUris().getFirst().getPath()).endsWith(".tmp");
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(10)) + "\n");
+    }
+
+    @Test
     void bytes() throws Exception {
         RunContext runContext = runContextFactory.of();
         URI put = storageUpload(12288);
@@ -568,6 +585,10 @@ class SplitTest {
     }
 
     URI storageUpload(int count) throws URISyntaxException, IOException {
+        return storageUpload(count, "/file/storage/%s/get.yml".formatted(IdUtils.create()));
+    }
+
+    URI storageUpload(int count, String path) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("unit", "");
 
         Files.write(tempFile.toPath(), content(count));
@@ -575,7 +596,7 @@ class SplitTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
+            new URI(path),
             new FileInputStream(tempFile)
         );
     }

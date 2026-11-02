@@ -1,0 +1,12 @@
+id: approval-comment-from-onwait
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    commentRequired: "{{ outputs.level.values.mode }}"
+    onWait:
+      - id: level
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          mode: ALWAYS

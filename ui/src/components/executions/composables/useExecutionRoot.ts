@@ -84,6 +84,7 @@ export function useExecutionRoot() {
                     name,
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
                     ...(name === "artifacts" ? {count: executionArtifacts.artifacts.value.length} : {}),
                     // Dependencies surfaces a live count and is disabled when there are none.
                     ...(name === "dependencies"

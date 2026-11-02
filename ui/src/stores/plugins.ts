@@ -373,7 +373,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
         if (cachedPluginDoc) {
-            if (options.all !== true) {
+            if (options.commit !== false && options.all !== true) {
                 nextTick(() => {
                     plugin.value = cachedPluginDoc
                 })

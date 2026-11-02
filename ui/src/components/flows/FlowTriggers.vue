@@ -368,6 +368,7 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../utils/inputs"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -569,20 +570,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))

@@ -32,9 +32,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {disabled: false, size: "default", activeText: "", inactiveText: "", activeValue: true, inactiveValue: false},
 }
 
 export const WithLabels: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSwitch},
         setup() { return {value: ref(false)} },
@@ -47,6 +49,7 @@ export const WithLabels: Story = {
 }
 
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSwitch},
         setup() { return {v1: ref(true), v2: ref(true), v3: ref(true)} },
@@ -62,6 +65,7 @@ export const Sizes: Story = {
 
 /** Extended value types – string/number active/inactive values */
 export const ExtendedValues: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSwitch},
         setup() {
@@ -85,6 +89,7 @@ export const ExtendedValues: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSwitch},
         setup() { return {value: ref(true)} },

@@ -20,12 +20,19 @@
                     :label="option.label"
                     :value="option.value"
                 >
-                    <span v-if="option.color" class="color-option">
+                    <span class="option-content">
                         <span
+                            v-if="option.color"
                             class="color-dot"
                             :style="{backgroundColor: option.color}"
                         />
                         {{ option.label }}
+                        <KsBadge
+                            v-if="option.count !== undefined"
+                            :value="formatCount(option.count!)"
+                            type="neutral"
+                            inline
+                        />
                     </span>
                 </KsOption>
             </KsSelect>
@@ -74,7 +81,8 @@
 <script setup lang="ts">
     import {reactive, toRefs, watchEffect} from "vue"
     import TimeRangeSwitch from "./TimeRangeSwitch.vue"
-    import type {DateFilterOption} from "../utils/filterTypes"
+    import type {DateFilterOption, FilterValue} from "../utils/filterTypes"
+    import {formatCount} from "../utils/helpers"
 
     const props = defineProps<{
         label?: string;
@@ -85,7 +93,7 @@
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";
         dateFilterMode?: string;
-        options: {value: string; label: string; color?: string}[];
+        options: FilterValue[];
     }>()
 
     const emit = defineEmits<{
@@ -211,10 +219,10 @@
     font-size: var(--ks-font-size-sm);
 }
 
-.color-option {
+.option-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ks-spacing-2);
 
     & .color-dot {
         display: inline-block;

@@ -27,16 +27,22 @@ export const Default: Story = {
         components: {KsSegmented},
         setup() {
             const value = ref("daily")
-            const options = ["daily", "weekly", "monthly"]
-            return {args, value, options}
+            return {args, value}
         },
         template: `
             <div style="padding:24px">
-                <ks-segmented v-model="value" :options="options" v-bind="args" />
+                <ks-segmented v-model="value" v-bind="args" />
                 <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Value: {{ value }}</span>
             </div>
         `,
     }),
+    args: {
+        options: ["daily", "weekly", "monthly"],
+        size: "default",
+        variant: "primary",
+        disabled: false,
+        block: false,
+    },
 }
 
 export const WithObjectOptions: Story = {
@@ -58,6 +64,7 @@ export const WithObjectOptions: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Options may carry an icon, rendered before the label. */
@@ -80,6 +87,7 @@ export const WithIcons: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Sizes, plain and with icons — the icon scales with the control. */
@@ -104,6 +112,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Disabled – entire control or individual options */
@@ -133,6 +142,7 @@ export const Disabled: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Block: Story = {
@@ -145,6 +155,7 @@ export const Block: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Neutral: Story = {
@@ -160,4 +171,5 @@ export const Neutral: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

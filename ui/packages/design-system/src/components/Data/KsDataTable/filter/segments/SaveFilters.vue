@@ -4,7 +4,7 @@
             type="default"
             :disabled="disabled"
             @click="showSaveDialog = true"
-            :icon="ContentSaveOutline"
+            :icon="ContentSave"
             class="no-bg-border"
         >
             <slot />
@@ -93,7 +93,7 @@
                     type="primary"
                     @click="saveFilter"
                     :disabled="!filterName.trim() || hasDuplicate"
-                    :icon="ContentSaveOutline"
+                    :icon="ContentSave"
                 >
                     {{ isEditMode ? $t("filter.update") : $t("filter.save") }}
                 </KsButton>
@@ -108,7 +108,7 @@
     import type {AppliedFilter, FilterGroup, LogicalOperator, SavedFilter} from "../utils/filterTypes"
     import {isWrapperGroup} from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
-    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
+    import {CloseCircleOutline, ContentSave} from "../utils/icons"
 
     interface PreviewLeaf {
         id: string;

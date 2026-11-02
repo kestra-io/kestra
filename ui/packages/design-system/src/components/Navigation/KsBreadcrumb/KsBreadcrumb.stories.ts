@@ -46,10 +46,13 @@ export const Default: Story = {
     args: {
         title: "Preferences",
         items: [{label: "Admin", onClick: () => {}}],
+        showLeading: false,
+        leadingTo: "/",
     },
 }
 
 export const WithIcon: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         setup() { return {CogOutline} },
@@ -66,6 +69,7 @@ export const WithIcon: Story = {
 }
 
 export const TitleOnly: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -77,6 +81,7 @@ export const TitleOnly: Story = {
 }
 
 export const Collapsed: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -98,6 +103,7 @@ export const Collapsed: Story = {
 }
 
 export const NotCollapsed: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -116,6 +122,7 @@ export const NotCollapsed: Story = {
 }
 
 export const NoLeading: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -130,6 +137,7 @@ export const NoLeading: Story = {
 }
 
 export const WithLeading: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -149,6 +157,7 @@ export const WithLeading: Story = {
  * hovering an entry with content flies out its own namespaces and flows, as deep as the tree goes.
  */
 export const WithSiblings: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         setup() {
@@ -176,6 +185,7 @@ export const WithSiblings: Story = {
 
 /** A level with nothing to offer gets no chevron: here only the root has one, the current page does not. */
 export const EmptySiblings: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         setup() {
@@ -196,6 +206,7 @@ export const EmptySiblings: Story = {
 }
 
 export const TitleSlot: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsBreadcrumb},
         template: `
@@ -213,6 +224,7 @@ export const TitleSlot: Story = {
 /** Mobile – below 768px only the monogram and the current entity name remain; ancestors and separators are hidden */
 export const Mobile: Story = {
     parameters: {
+        controls: {disable: true},
         viewport: {
             options: {
                 mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},

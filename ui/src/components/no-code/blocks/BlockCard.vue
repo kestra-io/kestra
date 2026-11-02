@@ -82,7 +82,7 @@
                 tabindex="-1"
                 @click.stop="emit('delete')"
             >
-                <DeleteOutline />
+                <Delete />
             </KsIconButton>
         </div>
     </div>
@@ -92,7 +92,7 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import Play from "vue-material-design-icons/Play.vue"
     import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"

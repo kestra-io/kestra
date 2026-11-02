@@ -385,9 +385,9 @@ class PluginControllerTest {
         );
 
         assertThat((Map<String, Object>) doc.get("properties"))
-            .as("flow schema exposes every flow property, including the draft revision flag")
-            .hasSize(24)
-            .containsKey("draft");
+            .as("flow schema exposes every property an author writes, but none of the server-owned ones")
+            .hasSize(20)
+            .doesNotContainKeys("revision", "updated", "deleted", "draft");
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 

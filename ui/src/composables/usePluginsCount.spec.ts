@@ -8,7 +8,6 @@ const {publicFetchJson, countUniquePluginElements} = vi.hoisted(() => ({
 
 vi.mock("../utils/publicApi", () => ({publicFetchJson}))
 vi.mock("../utils/pluginUtils", () => ({countUniquePluginElements}))
-vi.mock("../utils/pluginCatalogCount", () => ({PLUGIN_CATALOG_COUNT: 1234}))
 vi.mock("../stores/api", () => ({API_URL: "https://api.test"}))
 
 // The composable caches its request and count at module scope, so every case loads a fresh copy.
@@ -24,13 +23,13 @@ describe("usePluginsCount", () => {
         countUniquePluginElements.mockReset()
     })
 
-    it("starts at the catalog baseline until the request resolves", async () => {
+    it("has no count until the request resolves", async () => {
         publicFetchJson.mockReturnValue(new Promise(() => {}))
         const usePluginsCount = await loadComposable()
 
         const {totalPlugins} = usePluginsCount()
 
-        expect(totalPlugins.value).toBe(1234)
+        expect(totalPlugins.value).toBeUndefined()
     })
 
     it("rounds the fetched count down to the nearest hundred", async () => {
@@ -44,7 +43,7 @@ describe("usePluginsCount", () => {
         expect(totalPlugins.value).toBe(1800)
     })
 
-    it("keeps the baseline when the rounded count is 0", async () => {
+    it("stays without a count when the rounded count is 0", async () => {
         publicFetchJson.mockResolvedValue([])
         countUniquePluginElements.mockReturnValue(99)
         const usePluginsCount = await loadComposable()
@@ -53,10 +52,10 @@ describe("usePluginsCount", () => {
 
         await flushPromises()
         expect(countUniquePluginElements).toHaveBeenCalled()
-        expect(totalPlugins.value).toBe(1234)
+        expect(totalPlugins.value).toBeUndefined()
     })
 
-    it("keeps the baseline and does not throw when the request fails", async () => {
+    it("stays without a count and does not throw when the request fails", async () => {
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
         publicFetchJson.mockRejectedValue(new Error("network down"))
         const usePluginsCount = await loadComposable()
@@ -65,7 +64,7 @@ describe("usePluginsCount", () => {
 
         await flushPromises()
         expect(warn).toHaveBeenCalled()
-        expect(totalPlugins.value).toBe(1234)
+        expect(totalPlugins.value).toBeUndefined()
         warn.mockRestore()
     })
 

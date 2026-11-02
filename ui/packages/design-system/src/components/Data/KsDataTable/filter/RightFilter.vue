@@ -5,8 +5,10 @@
     >
         <KsButton
             v-if="filter.tableOptions.value?.refresh?.shown"
-            @click="filter.refreshData"
+            @click="refreshData"
             :icon="Refresh"
+            :loading="isRefreshing"
+            :disabled="isRefreshing"
             :size="'default'"
             class="refresh-button"
         >
@@ -45,7 +47,7 @@
                     <KsButton
                         type="primary"
                         class="save-current-btn"
-                        :icon="ContentSaveOutline"
+                        :icon="ContentSave"
                         :disabled="saveDisabled"
                         @click="saveFiltersRef?.open()"
                     >
@@ -140,7 +142,7 @@
 
 <script setup lang="ts">
     import {computed, ref, inject} from "vue"
-    import {BookmarkOutline, ChevronDown, CogOutline, ContentSaveOutline, Refresh} from "./utils/icons"
+    import {BookmarkOutline, ChevronDown, CogOutline, ContentSave, Refresh} from "./utils/icons"
     import Table from "vue-material-design-icons/Table.vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
     import type {SavedFilter} from "./utils/filterTypes"
@@ -154,6 +156,7 @@
     const saveFiltersRef = ref<InstanceType<typeof SaveFilters> | null>(null)
     const isColumnsVisible = ref(false)
     const isSettingsVisible = ref(false)
+    const isRefreshing = ref(false)
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const saveDisabled = computed(() =>
@@ -184,6 +187,25 @@
     const handleLoad = (savedFilter: SavedFilter) => {
         filter.loadSavedFilter(savedFilter)
         isSavedFiltersVisible.value = false
+    }
+
+    const refreshData = () => {
+        if (isRefreshing.value) return
+
+        isRefreshing.value = true
+        try {
+            const result = filter.refreshData()
+            if (!result) {
+                isRefreshing.value = false
+                return
+            }
+            void result.then(
+                () => isRefreshing.value = false,
+                () => isRefreshing.value = false,
+            )
+        } catch {
+            isRefreshing.value = false
+        }
     }
 </script>
 

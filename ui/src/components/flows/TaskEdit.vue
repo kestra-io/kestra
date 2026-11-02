@@ -3,10 +3,11 @@
         v-if="presentation !== 'panel'"
         :is="component"
         :icon="CodeTags"
+        :size="buttonSize"
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'KsButton' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ label ?? $t("show task source") }}</span>
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -208,6 +209,9 @@
 
     interface Props {
         component?: string;
+        labeled?: boolean;
+        label?: string;
+        buttonSize?: string;
         task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
@@ -230,6 +234,9 @@
 
     const props = withDefaults(defineProps<Props>(), {
         component: "KsButton",
+        labeled: false,
+        label: undefined,
+        buttonSize: undefined,
         task: undefined,
         taskRaw: undefined,
         taskId: undefined,
@@ -612,7 +619,10 @@
         }
 
         taskYaml.value = value
-        timer.value = setTimeout(commitEdit, 500)
+        timer.value = setTimeout(() => {
+            timer.value = undefined
+            commitEdit()
+        }, 500)
     }
 
     const flushPendingEdit = () => {
@@ -638,7 +648,7 @@
         }
         const incoming = raw ?? YAML_UTILS.stringify(newTask)
         const keepLocalEdit = props.presentation === "panel"
-            ? panelHasFocus.value
+            ? normalizeYaml(incoming) === normalizeYaml(taskYaml.value) || (panelHasFocus.value && isDirty.value)
             : normalizeYaml(incoming) === normalizeYaml(taskBaseline.value)
         if (incoming !== taskYaml.value && !keepLocalEdit) {
             taskYaml.value = incoming

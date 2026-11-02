@@ -34,7 +34,7 @@ const executionsChart = {
 const mountTable = (showDefault: boolean) =>
     i18nMount(Table, {
         messages: {dashboards: {quick_filters: {upcoming: "Upcoming"}}},
-        props: {chart: executionsChart as never, showDefault},
+        props: {chart: executionsChart as never, showDefault, dashboardId: "stored"},
         global: {
             stubs: {
                 KsDataTable: {name: "KsDataTable", props: ["rowKey"], template: "<div><slot /></div>"},

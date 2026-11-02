@@ -160,20 +160,22 @@
     import {errorsOnFieldOrItems} from "../../../../utils/validationErrors"
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
+    import type {Schema} from "./getTaskComponent"
+    import type {FieldValue} from "../../utils/types"
 
-    const modelValue = defineModel<any>()
+    const modelValue = defineModel<FieldValue>()
 
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema: Schema;
         root?: string;
         fieldKey: string;
-        task: any;
+        task?: Record<string, unknown>;
         required?: string[];
         disabled?: boolean;
         siblingKeys?: string[];
         rootOverride?: string;
         frameRoot?: boolean;
-    }>(), {frameRoot: false})
+    }>(), {task: undefined, frameRoot: false})
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
@@ -201,10 +203,10 @@
     const componentProps = computed(() => {
         return {
             modelValue: modelValue.value,
-            "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
+            "onUpdate:modelValue": (value: FieldValue) => {
                 modelValue.value = value
             },
-            "onUpdate:selectedSchema": (value: any) => {
+            "onUpdate:selectedSchema": (value: string | undefined) => {
                 hasSelectedASchema.value = value !== undefined
             },
             pebble: pebbleState.value,
@@ -284,7 +286,7 @@
     const isObjectAnyOf = computed(() => {
         const anyOf = props.schema?.anyOf
         if (!Array.isArray(anyOf) || anyOf.length === 0) return false
-        return anyOf.every((s: any) => s.$ref || s.allOf || s.type === "object")
+        return anyOf.every((s) => s.$ref || s.allOf || s.type === "object")
     })
 
     const isNestedObject = computed(() =>

@@ -36,7 +36,7 @@ const DOCKER_LOGS_ATTEMPTS = 4
 const DOCKER_LOGS_RETRY_MS = 1000
 
 export interface WaitForExecutionOptions {
-    signal?: AbortSignal;
+    signal: AbortSignal;
     onStillRunning?: () => void;
 }
 
@@ -265,12 +265,12 @@ export function useTourActions() {
 
     const waitForExecution = async (
         executionId: string,
-        {signal, onStillRunning}: WaitForExecutionOptions = {},
+        {signal, onStillRunning}: WaitForExecutionOptions,
     ) => {
         const startedAt = Date.now()
         let hasNotified = false
         for (;;) {
-            if (signal?.aborted) {
+            if (signal.aborted) {
                 throw new DOMException("The wait was aborted.", "AbortError")
             }
             const execution = await executionsStore.loadExecution({id: executionId})
@@ -286,7 +286,7 @@ export function useTourActions() {
         }
     }
 
-    const executeFlow = async (flowId: string = TOUR_FLOW_ID, options: WaitForExecutionOptions = {}) => {
+    const executeFlow = async (flowId: string = TOUR_FLOW_ID, options: WaitForExecutionOptions) => {
         const execution = await executionsStore.triggerExecution({
             namespace: TOUR_NAMESPACE,
             id: flowId,
@@ -299,8 +299,8 @@ export function useTourActions() {
         return waitForExecution(execution.id, options)
     }
 
-    const dockerUnavailable = async (executionId: string) => {
-        for (let attempt = 0; attempt < DOCKER_LOGS_ATTEMPTS; attempt++) {
+    const dockerUnavailable = async (executionId: string, signal: AbortSignal) => {
+        for (let attempt = 0; attempt < DOCKER_LOGS_ATTEMPTS && !signal.aborted; attempt++) {
             const logs = await executionsStore.loadLogs({
                 executionId,
                 filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
@@ -317,7 +317,7 @@ export function useTourActions() {
     }
 
     // Replay, not restart: only replay copies successful task-run outputs, which the fixed message needs.
-    const replayFromFailedTask = async (options: WaitForExecutionOptions = {}) => {
+    const replayFromFailedTask = async (options: WaitForExecutionOptions) => {
         const executionId = tour().failedExecutionId ?? tour().lastExecutionId
         if (!executionId) {
             throw new TourSceneError("onboarding.tour.errors.no_execution_to_replay")

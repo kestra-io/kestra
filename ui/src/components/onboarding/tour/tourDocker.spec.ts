@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 
 import {isDockerSocketFailure} from "./tourDocker"
+import {TOUR_SUMMARIZE_TASK_ID} from "./tourFlows"
 
 const DOCKER_JAVA_MESSAGE = "Docker execution failed because Docker socket is not accessible.\n\n"
     + "Fix:\n"
@@ -12,37 +13,13 @@ const DOCKER_JAVA_MESSAGE = "Docker execution failed because Docker socket is no
     + "Tried Docker host: unix:///var/run/docker.sock"
 
 describe("docker socket failure detection", () => {
-    it("matches the error the Docker task runner logs", () => {
-        expect(isDockerSocketFailure([
-            {level: "ERROR", taskId: "summarize", message: DOCKER_JAVA_MESSAGE},
-        ])).toBe(true)
-    })
-
-    it("matches regardless of case", () => {
-        expect(isDockerSocketFailure([
-            {level: "ERROR", taskId: "summarize", message: DOCKER_JAVA_MESSAGE.toUpperCase()},
-        ])).toBe(true)
-    })
-
-    it("ignores other errors on the task", () => {
-        expect(isDockerSocketFailure([
-            {level: "ERROR", taskId: "summarize", message: "ModuleNotFoundError: No module named 'kestra'"},
-        ])).toBe(false)
-    })
-
-    it("ignores the marker on another task", () => {
-        expect(isDockerSocketFailure([
-            {level: "ERROR", taskId: "notify", message: DOCKER_JAVA_MESSAGE},
-        ])).toBe(false)
-    })
-
-    it("ignores the marker below the error level", () => {
-        expect(isDockerSocketFailure([
-            {level: "INFO", taskId: "summarize", message: DOCKER_JAVA_MESSAGE},
-        ])).toBe(false)
-    })
-
-    it("is false without logs", () => {
-        expect(isDockerSocketFailure([])).toBe(false)
+    it.each([
+        ["the message the Docker task runner logs", "ERROR", TOUR_SUMMARIZE_TASK_ID, DOCKER_JAVA_MESSAGE, true],
+        ["the message in another case", "ERROR", TOUR_SUMMARIZE_TASK_ID, DOCKER_JAVA_MESSAGE.toUpperCase(), true],
+        ["another error on the task", "ERROR", TOUR_SUMMARIZE_TASK_ID, "ModuleNotFoundError: No module named 'kestra'", false],
+        ["the message on another task", "ERROR", "notify", DOCKER_JAVA_MESSAGE, false],
+        ["the message below the error level", "INFO", TOUR_SUMMARIZE_TASK_ID, DOCKER_JAVA_MESSAGE, false],
+    ] as const)("on %s", (_name, level, taskId, message, expected) => {
+        expect(isDockerSocketFailure([{level, taskId, message}])).toBe(expected)
     })
 })

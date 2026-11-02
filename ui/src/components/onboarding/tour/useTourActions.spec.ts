@@ -22,6 +22,8 @@ vi.mock("../../../stores/productTour", () => ({
 
 const STILL_RUNNING_MS = 180_000
 
+const signal = new AbortController().signal
+
 const execution = (state: string) => ({id: "exec-1", state: {current: state}})
 
 const dockerLog = {
@@ -46,7 +48,7 @@ describe("tour actions", () => {
         const onStillRunning = vi.fn()
         let settled = false
 
-        const waiting = useTourActions().waitForExecution("exec-1", {onStillRunning})
+        const waiting = useTourActions().waitForExecution("exec-1", {signal, onStillRunning})
         void waiting.then(() => (settled = true))
 
         await vi.advanceTimersByTimeAsync(STILL_RUNNING_MS - 2000)
@@ -72,7 +74,7 @@ describe("tour actions", () => {
             .mockResolvedValue(execution("FAILED"))
         const onStillRunning = vi.fn()
 
-        const waiting = useTourActions().waitForExecution("exec-1", {onStillRunning})
+        const waiting = useTourActions().waitForExecution("exec-1", {signal, onStillRunning})
         await vi.advanceTimersByTimeAsync(1000)
 
         await expect(waiting).resolves.toMatchObject({state: {current: "FAILED"}})
@@ -100,7 +102,7 @@ describe("tour actions", () => {
             .mockResolvedValueOnce([])
             .mockResolvedValue([dockerLog])
 
-        const detection = useTourActions().dockerUnavailable("exec-1")
+        const detection = useTourActions().dockerUnavailable("exec-1", signal)
         await vi.advanceTimersByTimeAsync(1000)
 
         await expect(detection).resolves.toBe(true)
@@ -116,19 +118,23 @@ describe("tour actions", () => {
             {level: "ERROR", taskId: "summarize", message: "ModuleNotFoundError"},
         ])
 
-        const detection = useTourActions().dockerUnavailable("exec-1")
+        const detection = useTourActions().dockerUnavailable("exec-1", signal)
         await vi.advanceTimersByTimeAsync(10_000)
 
         await expect(detection).resolves.toBe(false)
         expect(mocks.executionsStore.loadLogs).toHaveBeenCalledTimes(4)
     })
 
-    it("treats logs that cannot be read as not being about Docker", async () => {
-        mocks.executionsStore.loadLogs.mockRejectedValue(new Error("boom"))
+    it("stops looking for the Docker error once the tour is closed", async () => {
+        mocks.executionsStore.loadLogs.mockResolvedValue([])
+        const controller = new AbortController()
 
-        const detection = useTourActions().dockerUnavailable("exec-1")
+        const detection = useTourActions().dockerUnavailable("exec-1", controller.signal)
+        await vi.advanceTimersByTimeAsync(1000)
+        controller.abort()
         await vi.advanceTimersByTimeAsync(10_000)
 
         await expect(detection).resolves.toBe(false)
+        expect(mocks.executionsStore.loadLogs).toHaveBeenCalledTimes(2)
     })
 })

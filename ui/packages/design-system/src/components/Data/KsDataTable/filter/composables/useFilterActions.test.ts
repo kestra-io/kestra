@@ -171,4 +171,15 @@ describe("useFilterActions - non-removable key", () => {
 
         expect(timeRangeValues(tree)).toEqual(["P30D"])
     })
+
+    test("removeGroup puts a non-removable chip back when its group is deleted", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+        const [lockedGroup] = tree.groups.value
+        actions.addGroup()
+
+        actions.removeGroup(lockedGroup.id)
+
+        expect(timeRangeValues(tree)).toEqual(["P30D"])
+    })
 })

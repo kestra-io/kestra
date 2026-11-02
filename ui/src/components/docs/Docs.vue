@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
     import {computed,ref,watch} from "vue"
-    import type {AxiosError} from "axios"
+    import {PublicApiError} from "../../utils/publicApi"
     import TopNavBar from "../layout/TopNavBar.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import {useDocStore} from "../../stores/doc"
@@ -55,11 +55,16 @@
     import ProseA from "../content/ProseA.vue"
     import ChildTableOfContents from "../content/ChildTableOfContents.vue"
     import ChildCard from "../content/ChildCard.vue"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
     import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     const markdownComponents = {
         a: ProseA,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ChildCard,
@@ -107,7 +112,7 @@
             try {
                 response = await docStore.fetchResource(path.value ? `/docs/${path.value}` : "/docs")
             } catch (error) {
-                loadError.value = (error as AxiosError).response?.status === 404 ? "notFound" : "failed"
+                loadError.value = error instanceof PublicApiError && error.status === 404 ? "notFound" : "failed"
                 return
             }
 
@@ -124,7 +129,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .docs-not-found {
         display: flex;
         flex-direction: column;

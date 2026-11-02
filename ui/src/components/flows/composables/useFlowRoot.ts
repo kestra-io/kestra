@@ -73,6 +73,7 @@ export function useFlowRoot() {
                     name,
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
                     // Dependencies surfaces a live count and is disabled when there are none.
                     ...(name === "dependencies"
                         ? {
@@ -105,7 +106,7 @@ export function useFlowRoot() {
     watch(() => [route.params.namespace, route.params.id], () => load())
 
     watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                 const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"

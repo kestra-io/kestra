@@ -294,7 +294,7 @@
     watch(() => route.params.id, load)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-tools {
         display: flex;
         flex-direction: column;

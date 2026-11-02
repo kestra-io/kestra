@@ -42,7 +42,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {placeholder: "Select time", clearable: true},
+    args: {placeholder: "Select time", format: "HH:mm:ss", size: "default", disabled: false, clearable: true},
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const input = canvas.getByRole("combobox")
@@ -52,6 +52,7 @@ export const Default: Story = {
 
 /** Disabled state */
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTimePicker},
         template: `
@@ -69,6 +70,7 @@ export const Disabled: Story = {
 
 /** All sizes */
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTimePicker},
         template: `
@@ -83,6 +85,7 @@ export const Sizes: Story = {
 
 /** With value format – emits ISO string instead of Date */
 export const ValueFormat: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTimePicker},
         setup() {

@@ -50,7 +50,11 @@
 
                     <div v-if="showConfirmBar" class="source-search-preview__confirm-bar">
                         <span class="source-search-preview__confirm-msg">
-                            <span v-html="confirmBarMessage" />
+                            <i18n-t keypath="source_search.confirm_bar_message" tag="span" scope="global">
+                                <template #matches><b>{{ $t("source_search.match_count", {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b></template>
+                                <template #flows><b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b></template>
+                                <template #skipped><b>{{ readOnlyExcludedCount }}</b></template>
+                            </i18n-t>
                             <span v-if="excludedFromReplaceCount > 0" class="source-search-preview__confirm-excluded">
                                 {{ $t('source_search.confirm_bar_excluded', {count: excludedFromReplaceCount}) }}
                             </span>
@@ -191,12 +195,6 @@
     })
 
     const excludedFromReplaceCount = computed(() => props.excludedFromReplaceCount ?? 0)
-    const bold = (value: string | number) => `<b>${escapeHtml(String(value))}</b>`
-    const confirmBarMessage = computed(() => t("source_search.confirm_bar_message", {
-        matches: bold(t("source_search.match_count", {count: props.selectionSummary?.selectedMatchCount ?? 0})),
-        flows: bold(props.selectionSummary?.selectedFlowCount ?? 0),
-        skipped: bold(props.readOnlyExcludedCount),
-    }))
 
     const showConfirmBar = computed(() => Boolean(props.selectionSummary))
 
@@ -356,7 +354,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-preview {
     height: 100%;
     display: flex;
@@ -551,7 +549,7 @@
     font-weight: 600;
     overflow-wrap: anywhere;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

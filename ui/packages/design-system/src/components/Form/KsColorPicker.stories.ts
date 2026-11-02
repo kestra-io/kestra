@@ -32,9 +32,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {showAlpha: false, disabled: false, size: "default", alphaOnSurface: false},
 }
 
 export const WithAlpha: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("rgba(64, 158, 255, 0.5)")} },
@@ -48,6 +50,7 @@ export const WithAlpha: Story = {
 }
 
 export const WithPredefine: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() {
@@ -66,6 +69,7 @@ export const WithPredefine: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("#409EFF")} },
@@ -74,6 +78,7 @@ export const Disabled: Story = {
 }
 
 export const Size: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("#409EFF")} },
@@ -82,5 +87,24 @@ export const Size: Story = {
             <ks-color-picker v-model="value" />
             <ks-color-picker v-model="value" size="small" />
         </div>`,
+    }),
+}
+
+export const AlphaOnSurface: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsColorPicker},
+        setup() {
+            return {
+                value: ref("rgba(5, 66, 182, 0.08)"),
+                predefine: ["rgba(171, 0, 9, 0.08)", "rgba(164, 69, 0, 0.08)", "rgba(33, 93, 66, 0.08)", "rgba(5, 66, 182, 0.08)", "rgba(99, 27, 243, 0.08)"],
+            }
+        },
+        template: `
+            <div style="padding:24px;display:flex;align-items:center;gap:16px">
+                <ks-color-picker v-model="value" :predefine="predefine" show-alpha alpha-on-surface />
+                <span style="font-size:13px;opacity:0.6">Translucent swatches are shown over the page surface instead of a checkerboard</span>
+            </div>
+        `,
     }),
 }

@@ -1,4 +1,5 @@
-import {describe, test, expect, vi} from "vitest"
+import {describe, test, expect, vi, afterEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
 import KsDataTable from "./KsDataTable.vue"
 import KsBulkSelect from "./KsBulkSelect.vue"
 import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -173,6 +174,86 @@ describe("KsDataTable", () => {
         pagination.vm.$emit("currentChange", 3)
 
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 3, size: 10}])
+    })
+
+    describe("scroll position on pagination", () => {
+        const scrollIntoView = vi.fn()
+
+        afterEach(() => {
+            scrollIntoView.mockReset()
+            document.body.innerHTML = ""
+        })
+
+        const mountScrolledPastTheTop = () => {
+            const scroller = document.createElement("div")
+            scroller.style.overflowY = "auto"
+            document.body.appendChild(scroller)
+
+            const wrapper = i18nMount(KsDataTable, {
+                props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
+                attachTo: scroller,
+            })
+
+            const list = wrapper.find(".ks-data-table-wrapper").element as HTMLElement
+            list.scrollIntoView = scrollIntoView
+            list.getBoundingClientRect = () => ({top: -400} as DOMRect)
+            scroller.getBoundingClientRect = () => ({top: 60} as DOMRect)
+
+            const rows = wrapper.find(".kel-scrollbar__wrap").element as HTMLElement
+            rows.scrollTop = 300
+
+            return {wrapper, rows}
+        }
+
+        test("brings the top of the list back into view when the user changes page", () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+
+            expect(rows.scrollTop).toBe(0)
+            expect(scrollIntoView).toHaveBeenCalledWith({block: "start"})
+        })
+
+        test("brings the top of the list back into view when the user changes page size", () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            wrapper.findComponent(KsPagination).vm.$emit("sizeChange", 25)
+
+            expect(rows.scrollTop).toBe(0)
+            expect(scrollIntoView).toHaveBeenCalledWith({block: "start"})
+        })
+
+        test("leaves the page where it is when the top of the list is already visible", () => {
+            const {wrapper} = mountScrolledPastTheTop()
+            const list = wrapper.find(".ks-data-table-wrapper").element as HTMLElement
+            list.getBoundingClientRect = () => ({top: 200} as DOMRect)
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+
+            expect(scrollIntoView).not.toHaveBeenCalled()
+        })
+
+        test("looks for the scrolling ancestor once, not on every page change", () => {
+            const {wrapper} = mountScrolledPastTheTop()
+            const scroller = wrapper.element.parentElement as HTMLElement
+            const getComputedStyle = vi.spyOn(window, "getComputedStyle")
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 3)
+
+            expect(getComputedStyle.mock.calls.filter(([element]) => element === scroller)).toHaveLength(1)
+            expect(scrollIntoView).toHaveBeenCalledTimes(2)
+            getComputedStyle.mockRestore()
+        })
+
+        test("keeps the scroll position when the page changes from outside, as on back navigation", async () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            await wrapper.setProps({currentPage: 2})
+
+            expect(rows.scrollTop).toBe(300)
+            expect(scrollIntoView).not.toHaveBeenCalled()
+        })
     })
 
     test("renders without error when selectable is true", () => {
@@ -525,5 +606,88 @@ describe("KsDataTable", () => {
         table.vm.$emit("select", [], {id: "missing"})
 
         expect(toggle).not.toHaveBeenCalled()
+    })
+
+    test("tags each cell with its card role when mobileColumns is set", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table
+                    :data="data"
+                    :total="3"
+                    :mobileColumns="{leading: 'status', title: 'id', titleAside: 'duration', meta: ['revision', 'namespace'], metaAside: 'size', actions: 'act'}"
+                >
+                    <ks-table-column prop="id" label="ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                    <ks-table-column prop="status" label="Status" />
+                    <ks-table-column prop="duration" label="Duration" />
+                    <ks-table-column prop="size" label="Size" />
+                    <ks-table-column prop="revision" label="Revision" />
+                    <ks-table-column columnKey="act" label="Actions" />
+                    <ks-table-column prop="hidden" label="Hidden" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA}),
+        })
+
+        await flushPromises()
+        const cells = wrapper.findAll("tbody tr:first-child td").map((cell) => cell.classes())
+
+        expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(true)
+        expect(cells[0]).toContain("ks-mobile-title")
+        expect(cells[1]).toContain("ks-mobile-meta")
+        expect(cells[1]).not.toContain("ks-mobile-meta-first")
+        expect(cells[2]).toContain("ks-mobile-leading")
+        expect(cells[3]).toContain("ks-mobile-title-aside")
+        expect(cells[4]).toContain("ks-mobile-meta-aside")
+        expect(cells[5]).toContain("ks-mobile-meta-first")
+        expect(cells[6]).toContain("ks-mobile-actions")
+        expect(cells[7]).toContain("ks-mobile-hidden")
+    })
+
+    test("orders the meta cells through a custom property instead of a class", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3" :mobileColumns="{title: 'id', meta: ['namespace', 'status']}">
+                    <ks-table-column prop="status" label="Status" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                    <ks-table-column prop="id" label="ID" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA}),
+        })
+
+        await flushPromises()
+        const cells = wrapper.findAll("tbody tr:first-child td")
+
+        expect(cells[0].attributes("style")).toContain("--ks-mobile-order: 1")
+        expect(cells[1].attributes("style")).toContain("--ks-mobile-order: 0")
+        expect(cells[2].attributes("style") ?? "").not.toContain("--ks-mobile-order")
+    })
+
+    test("does not scope the card gutter to tables without mobileColumns", async () => {
+        const wrapper = i18nMount(KsDataTable, {props: {data: SAMPLE_DATA, total: 3}})
+
+        expect(wrapper.find(".ks-data-table-wrapper--cards").exists()).toBe(false)
+    })
+
+    test("leaves the table untouched without mobileColumns", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3">
+                    <ks-table-column prop="id" label="ID" className="custom" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA}),
+        })
+
+        await flushPromises()
+        const cell = wrapper.find("tbody tr:first-child td")
+
+        expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(false)
+        expect(cell.classes()).toContain("custom")
+        expect(cell.classes().some((name) => name.startsWith("ks-mobile-"))).toBe(false)
     })
 })

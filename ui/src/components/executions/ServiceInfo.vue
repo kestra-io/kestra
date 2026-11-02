@@ -51,7 +51,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .service-info {
         display: flex;
         flex-direction: column;

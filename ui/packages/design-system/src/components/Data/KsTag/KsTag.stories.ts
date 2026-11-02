@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor, within} from "storybook/test"
 import {ref} from "vue"
-import KsTag from "./KsTag.vue"
+import KsTag, {KS_TAG_TONES} from "./KsTag.vue"
 
 const meta: Meta<typeof KsTag> = {
     title: "Components/Data/KsTag",
@@ -28,7 +28,16 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-tag v-bind=\"args\">My Tag <a href=\"#\">with link</a></ks-tag></div>",
     }),
-    args: {type: "primary"},
+    args: {
+        type: "primary",
+        size: "default",
+        effect: "plain",
+        label: "",
+        closable: false,
+        round: false,
+        plain: false,
+        truncate: false,
+    },
 }
 
 export const Types: Story = {
@@ -68,6 +77,24 @@ export const Types: Story = {
             </table>
         `,
     }),
+    async play({canvasElement}) {
+        const resolved = (property: "color" | "backgroundColor", value: string) => {
+            const probe = document.createElement("span")
+            probe.style[property] = value
+            canvasElement.append(probe)
+            const result = getComputedStyle(probe)[property]
+            probe.remove()
+            return result
+        }
+
+        const plainRow = [...canvasElement.querySelectorAll("tr")].at(-1) as HTMLElement
+        for (const [label, type] of [["Primary", "primary"], ["Success", "success"], ["Info", "info"], ["Warning", "warning"], ["Danger", "danger"]] as const) {
+            const styles = getComputedStyle(within(plainRow).getByText(label).closest(".kel-tag") as Element)
+            await expect(styles.color).toBe(resolved("color", KS_TAG_TONES[type]!.text))
+            await expect(styles.backgroundColor).toBe(resolved("backgroundColor", KS_TAG_TONES[type]!.bg))
+        }
+    },
+    parameters: {controls: {disable: true}},
 }
 
 export const Effects: Story = {
@@ -81,6 +108,7 @@ export const Effects: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** With icon slot */
@@ -97,6 +125,7 @@ export const WithIcon: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 
@@ -123,6 +152,7 @@ export const Closable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Rounded tags */
@@ -139,6 +169,7 @@ export const Rounded: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Edit dynamically – add and remove tags */
@@ -184,6 +215,7 @@ export const EditDynamically: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** `xs` sits below Element Plus's smallest size, for dense listings where a `small` pill outweighs the row label beside it. */
@@ -199,6 +231,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Without `truncate` a long label pushes the tag past its container instead of clipping. */
@@ -220,4 +253,5 @@ export const Truncated: Story = {
         expect(long.scrollWidth).toBeGreaterThan(long.clientWidth)
         expect(canvas.getByText("short").scrollWidth).toBe(canvas.getByText("short").clientWidth)
     },
+    parameters: {controls: {disable: true}},
 }

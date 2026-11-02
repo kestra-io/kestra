@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -126,6 +127,34 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
                         "Concurrency limit reached for flow {}.{} after decrementing the execution running count. No new executions will be dequeued.", flow.getNamespace(), flow.getId()
                     );
                 }
+            });
+    }
+
+    @Override
+    public List<Execution> decrementAndPopAll(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore,
+        BiFunction<TransactionContext, Execution, Execution> consumer) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                var dslContext = DSL.using(configuration);
+                fetchOne(dslContext, flow).ifPresent(
+                    concurrencyLimit -> update(dslContext, concurrencyLimit.withRunning(Math.max(0, concurrencyLimit.getRunning() - 1)))
+                );
+
+                List<Execution> popped = new ArrayList<>();
+                int previousSize;
+                do {
+                    previousSize = popped.size();
+                    executionQueuedStateStore.pop(
+                        new JdbcTransactionContext(dslContext),
+                        flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        (ctx, queued) -> popped.add(consumer.apply(ctx, queued))
+                    );
+                } while (popped.size() > previousSize);
+                return popped;
             });
     }
 

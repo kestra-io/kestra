@@ -162,7 +162,7 @@
                 :label="$t('settings.blocks.theme.fields.color_mode')"
             >
                 <template #description>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
+                    <span>{{ $t("settings.blocks.theme.descriptions.color_mode") }}</span><br>
                     <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
                 </template>
                 <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
@@ -309,7 +309,7 @@
 <script setup lang="ts">
     import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
-    import {dateUtils, dayjs} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, editorFontFamily} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
@@ -394,7 +394,7 @@
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
         appFontSize: appFontSizeMode.value,
-        editorFontFamily: localStorage.getItem(storageKeys.EDITOR_FONT_FAMILY) || "'JetBrains Mono', monospace",
+        editorFontFamily: editorFontFamily(),
         autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
         hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
         lang: Utils.getLang(),
@@ -796,7 +796,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-template {
     display: flex;
     flex-direction: column;

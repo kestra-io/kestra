@@ -132,7 +132,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprint-card {
         display: flex;
         cursor: pointer;
@@ -147,7 +147,7 @@
             box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             width: 100%;
             height: 100%;
         }
@@ -212,7 +212,7 @@
                 display: flex;
                 flex-shrink: 0;
 
-                :deep(.task-icon) {
+                & :deep(.task-icon) {
                     width: 1.5rem;
                     height: 1.5rem;
                 }

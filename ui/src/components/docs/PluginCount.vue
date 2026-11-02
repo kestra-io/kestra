@@ -1,5 +1,5 @@
 <template>
-    <span> {{ totalPlugins }}+ </span>
+    <span v-if="totalPlugins"> {{ totalPlugins }}+ </span>
 </template>
 
 <script setup lang="ts">

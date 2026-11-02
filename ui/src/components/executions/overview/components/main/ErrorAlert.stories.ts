@@ -83,6 +83,36 @@ export const BacktickStripping: Story = {
     },
 }
 
+/** A sub-execution link tag in the raw message reads as the sub-execution id in the preview. */
+export const LinkTagInPreview: Story = {
+    beforeEach() {
+        mockStoryApiRoutes({
+            "GET /logs/:executionId": [
+                {
+                    level: "ERROR",
+                    message: "Loop iteration 2 ended in FAILED in sub-execution [[link execution=\"sub-exec-42\" flowId=\"my-flow\" namespace=\"company.team\"]], check that execution's logs for details",
+                },
+            ],
+        })
+    },
+    render: () => ({
+        components: {ErrorAlert},
+        setup() {
+            return {execution}
+        },
+        template: "<ErrorAlert :execution=\"execution\" />",
+    }),
+    async play({canvasElement}) {
+        const preview = await waitFor(() => {
+            const el = canvasElement.querySelector<HTMLElement>(".error-preview")
+            expect(el).toBeTruthy()
+            return el!
+        })
+        await expect(preview.textContent).toContain("in sub-execution sub-exec-42, check")
+        await expect(preview.textContent).not.toContain("[[link")
+    },
+}
+
 /** Clicking the chevron expands the alert to show the full list of error log lines. */
 export const ExpandedLogLines: Story = {
     beforeEach() {
@@ -102,7 +132,7 @@ export const ExpandedLogLines: Story = {
         template: "<ErrorAlert :execution=\"execution\" />",
     }),
     async play({canvasElement}) {
-        const expandBtn = canvasElement.querySelector<HTMLElement>(".expand-btn")!
+        const expandBtn = await within(canvasElement).findByRole("button", {name: /expand/i})
         await userEvent.click(expandBtn)
         await expect(canvasElement.querySelector(".logs")).toBeTruthy()
         await expect(canvasElement.querySelector(".error-preview")).toBeNull()
@@ -113,8 +143,13 @@ export const ExpandedLogLines: Story = {
     },
 }
 
-/** When the execution has no error logs the component renders nothing visible. */
+/** The failure title remains visible when error logs are unavailable. */
 export const NoLogs: Story = {
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await expect(await canvas.findByText(/execution failed/i)).toBeTruthy()
+        await expect(canvas.queryByRole("button", {name: /expand/i})).toBeNull()
+    },
     beforeEach() {
         mockStoryApiRoutes({"GET /logs/:executionId": []})
     },

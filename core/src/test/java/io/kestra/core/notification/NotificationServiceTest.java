@@ -105,6 +105,9 @@ public abstract class NotificationServiceTest {
         notificationService.notifyAsyncOperation(USER_ID, TenantService.MAIN_TENANT, "op-items-2", CoreAsyncOperationType.EXECUTION_KILL, List.of("res-1", "res-2"));
         notificationService.updateNotificationItemOutcome("op-items-2", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED);
 
+        // this may actually update/refresh the counters depending on the backend
+        notificationItemRepository.countUpToDateOperationOutcomesByOperationId(TenantService.MAIN_TENANT, "op-items-2");
+
         List<Notification> notifications = notificationService.findByUser(USER_ID, null, 50);
         Notification notification = notifications.stream()
             .filter(n -> "op-items-2".equals(n.getReferenceId()))

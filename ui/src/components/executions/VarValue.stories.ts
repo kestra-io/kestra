@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from "@storybook/vue3"
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor, within} from "storybook/test"
 
 import VarValue from "./VarValue.vue"

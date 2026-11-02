@@ -281,6 +281,19 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(namespaces).doesNotContain(deletedNamespace);
     }
 
+    @Test
+    void shouldKeepKeysDistinctWhenNamespacesDifferOnlyByCase() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, "company.a", "secret"));
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, "company.A", "secret"));
+
+        assertThat(kvMetadataRepositoryInterface.findByName(tenantId, "company.a", "secret").map(PersistedKvMetadata::getNamespace))
+            .contains("company.a");
+        assertThat(kvMetadataRepositoryInterface.findByName(tenantId, "company.A", "secret").map(PersistedKvMetadata::getNamespace))
+            .contains("company.A");
+        assertThat(kvMetadataRepositoryInterface.findByName(tenantId, "COMPANY.A", "secret")).isEmpty();
+    }
+
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
         return PersistedKvMetadata.builder()
             .tenantId(tenantId)

@@ -39,11 +39,11 @@ export const Default: Story = {
         },
         template: `
             <div style="padding:24px">
-                <ks-check-tag v-model:checked="checked" v-bind="args">Option</ks-check-tag>
+                <ks-check-tag v-bind="args" v-model:checked="checked">Option</ks-check-tag>
             </div>
         `,
     }),
-    args: {checked: false},
+    args: {checked: false, disabled: false, size: "small", pill: false},
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const tag = canvas.getByText("Option")
@@ -66,6 +66,7 @@ export const Checked: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".kel-check-tag.is-checked")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Disabled state */
@@ -83,6 +84,7 @@ export const Disabled: Story = {
         const disabled = canvasElement.querySelectorAll(".kel-check-tag.is-disabled")
         await expect(disabled.length).toBe(2)
     },
+    parameters: {controls: {disable: true}},
 }
 
 export const Pill: Story = {
@@ -119,6 +121,7 @@ export const Pill: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".kel-check-tag--pill")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Icon, default variant */
@@ -151,6 +154,7 @@ export const DefaultWithIcon: Story = {
         const icon = canvasElement.querySelector(".kel-check-tag:not(.kel-check-tag--pill) .kel-check-tag__icon")
         await expect(icon).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Multi-select group */
@@ -183,4 +187,5 @@ export const MultiSelectGroup: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

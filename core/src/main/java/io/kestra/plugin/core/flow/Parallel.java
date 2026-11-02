@@ -53,16 +53,16 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.core.flow.Parallel
                     tasks:
                       - id: 1st
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.startDate }}"
 
                       - id: 2nd
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.id }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.id }}"
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         ),
         @Example(
@@ -82,23 +82,23 @@ import lombok.experimental.SuperBuilder;
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task1
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task2
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                       - id: sequence2
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task3
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task4
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
                 """
         ),
         @Example(
@@ -139,9 +139,9 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
     @Schema(
         title = "What to do with the other still-running tasks when one task fails.",
         description = """
-            `CONTINUE` (default): other tasks keep running to completion, as today.
+            `CONTINUE`: other tasks keep running to completion.
 
-            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+            `CANCEL` / `FAIL` (default): as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
     )
     private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAIL);
 

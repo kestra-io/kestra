@@ -1,6 +1,6 @@
 <template>
     <div class="expression-debugger">
-        <h2>{{ $t("eval.expression") }}</h2>
+        <h2 v-if="!hideTitle">{{ $t("eval.expression") }}</h2>
         <KsEditor
             v-bind="editorBindings"
             v-model="editorValue"
@@ -20,7 +20,7 @@
             v-if="error"
             type="error"
             :closable="false"
-            class="error overflow-auto"
+            class="error"
         >
             <p>
                 <strong>{{ error }}</strong>
@@ -85,6 +85,7 @@
         expression?: string;
         /** File URI of the selected value, previewed without waiting for an evaluation. */
         fileUri?: string;
+        hideTitle?: boolean;
     }>()
 
     const editorBindings = useEditorBindings()
@@ -173,7 +174,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .expression-debugger {
     display: flex;
     flex-direction: column;

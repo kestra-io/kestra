@@ -9,6 +9,7 @@ import {KsNotification} from "@kestra-io/design-system"
 import {apiFetch, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 import FlowRevisions from "./FlowRevisions.vue"
 import {useFlowStore, type FlowRevision} from "../../stores/flow"
+import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
 
 const NAMESPACE = "company.team"
 const FLOW_ID = "restore-revisions"
@@ -127,6 +128,7 @@ function restoreStory(side: "left" | "right"): Story {
             await userEvent.click(canvas.getAllByRole("combobox")[side === "left" ? 1 : 2])
             await userEvent.click(within(document.body).getByRole("option", {name: /Revision 1/}))
             await waitFor(() => expect(canvas.getByText(/RESTORED_REVISION_ONE/)).toBeVisible(), {timeout: 10000})
+            useUnsavedChangesStore().unsavedChange = true
             await userEvent.click(canvas.getByTestId(`restore-${side}`))
             const dialog = within(await within(document.body).findByRole("dialog", {name: "Confirmation"}))
             await userEvent.click(dialog.getByRole("button", {name: "OK"}))
@@ -140,6 +142,7 @@ function restoreStory(side: "left" | "right"): Story {
             const flowStore = useFlowStore()
             await expect(flowStore.haveChange).toBe(false)
             await expect(flowStore.flowYamlOrigin).toBe(flowStore.flow?.source)
+            await expect(useUnsavedChangesStore().unsavedChange).toBe(false)
         },
     }
 }

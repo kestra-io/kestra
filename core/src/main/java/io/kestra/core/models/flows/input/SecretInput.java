@@ -4,7 +4,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.utils.RegexUtils;
-import io.kestra.core.validations.Regex;
+import io.kestra.core.validations.SafeRegexValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -19,7 +19,7 @@ public class SecretInput extends Input<EncryptedString> {
     @Schema(
         title = "Regular expression validating the value."
     )
-    @Regex
+    @SafeRegexValidation
     String validator;
 
     @Override

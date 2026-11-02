@@ -20,6 +20,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.searchable.SearchableOutput;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -43,6 +45,9 @@ public abstract class AbstractExecutionServiceTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    SearchableOutputRepositoryInterface searchableOutputRepository;
 
     @Test
     void purge() throws Exception {
@@ -141,5 +146,43 @@ public abstract class AbstractExecutionServiceTest {
         );
 
         assertThat(purge.getExecutionsCount()).isZero();
+    }
+
+    @Test
+    void purgeShouldPurgeSearchableOutputs() throws Exception {
+        String tenantId = TestsUtils.randomTenant();
+        State state = new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS);
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .state(state)
+            .flowId("abc")
+            .namespace("io.kestra.test")
+            .flowRevision(1)
+            .build();
+        executionRepository.save(execution);
+        searchableOutputRepository.save(new SearchableOutput(tenantId, execution.getId(), "first", "value"));
+        searchableOutputRepository.save(new SearchableOutput(tenantId, execution.getId(), "second", "value"));
+
+        assertThat(searchableOutputRepository.findById(tenantId, execution.getId(), "first")).isPresent();
+
+        ExecutionService.PurgeResult purge = executionService.purge(
+            true,
+            true,
+            true,
+            true,
+            tenantId,
+            "io.kestra.test",
+            "abc",
+            null,
+            ZonedDateTime.now(),
+            null,
+            100
+        );
+
+        assertThat(purge.getExecutionsCount()).isEqualTo(1);
+        assertThat(purge.getSearchableOutputsCount()).isEqualTo(2);
+        assertThat(searchableOutputRepository.findById(tenantId, execution.getId(), "first")).isEmpty();
+        assertThat(searchableOutputRepository.findById(tenantId, execution.getId(), "second")).isEmpty();
     }
 }

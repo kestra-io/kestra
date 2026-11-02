@@ -39,6 +39,10 @@
             </KsTag>
         </div>
 
+        <div v-if="slots.status" class="plugin-card__status">
+            <slot name="status" />
+        </div>
+
         <hr v-if="hasDivider" class="plugin-card__divider">
 
         <footer v-if="hasFooter" class="plugin-card__footer">
@@ -101,6 +105,7 @@
     defineSlots<{
         icon?(): unknown
         "title-badge"?(): unknown
+        status?(): unknown
         "footer-content"?(): unknown
     }>()
 
@@ -211,6 +216,13 @@
     .plugin-card__tags {
         display: flex;
         flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+    }
+
+    .plugin-card__status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         gap: var(--ks-spacing-2);
     }
 

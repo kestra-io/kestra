@@ -38,6 +38,8 @@
                 </KsCheckTag>
             </div>
 
+            <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" />
+
             <div class="sort-by">
                 <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
                 <KsSelect v-model="sortBy" size="small" class="sort-select">
@@ -95,7 +97,11 @@
                     :taskCount="taskCount(plugin)"
                     :blueprintCount="blueprintCount(plugin)"
                     @click="openGroup(plugin)"
-                />
+                >
+                    <template v-if="catalogExtension.cardStatus" #status>
+                        <component :is="catalogExtension.cardStatus" :plugin />
+                    </template>
+                </PluginCard>
             </KsTooltip>
         </section>
     </template>
@@ -228,6 +234,7 @@
         return baseList.value
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => matchesSelectedCategories(plugin))
+            .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
             .sort(comparators[sortBy.value])
     })
 
@@ -290,6 +297,7 @@
             loadError.value = true
         })
         enrichmentStore.fetchEnrichment()
+        catalogExtension.load?.()
     })
 </script>
 

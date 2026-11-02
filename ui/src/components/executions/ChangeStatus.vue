@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('change state') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -84,11 +84,13 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun?: TaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         taskRun: undefined,
         attemptIndex: undefined,
     })

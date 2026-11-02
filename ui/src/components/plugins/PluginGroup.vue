@@ -82,6 +82,10 @@
         <div v-else class="plugin-group__state">
             <KsSkeleton animated :rows="6" />
         </div>
+
+        <template v-if="groupPlugin && !groupPlugin.subGroup && catalogExtension.versions" #versions>
+            <component :is="catalogExtension.versions" :plugin="groupPlugin" />
+        </template>
     </PluginLayout>
 </template>
 
@@ -97,6 +101,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
+    import {usePluginCatalogExtension} from "override/components/plugins/pluginCatalogExtension"
     import {extractPluginElements, isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
     import {blueprintTaskTypes} from "../../composables/useBlueprintPlugins"
@@ -115,6 +120,7 @@
     const route = useRoute()
     const router = useRouter()
     const {t} = useI18n()
+    const catalogExtension = usePluginCatalogExtension()
 
     const groupBlueprints = ref<Blueprint[]>([])
 

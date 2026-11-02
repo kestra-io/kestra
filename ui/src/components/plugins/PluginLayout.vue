@@ -77,7 +77,11 @@
                         :currentVersionDate
                         :minKestraVersion
                         @select-version="onSelectVersion"
-                    />
+                    >
+                        <template v-if="$slots.versions" #versions>
+                            <slot name="versions" />
+                        </template>
+                    </PluginOverview>
                 </aside>
             </div>
         </div>
@@ -85,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, watch} from "vue"
+    import {computed, onMounted, useSlots, watch} from "vue"
     import semver from "semver"
     import {useRoute, useRouter} from "vue-router"
     import {KsIconButton, KsMarkdown, KsTag, type KsBreadcrumbItem} from "@kestra-io/design-system"
@@ -247,8 +251,11 @@
     const currentVersionDate = computed<string | null>(() => currentEnrichedVersion.value?.publishedAt ?? null)
     const minKestraVersion = computed<string | null>(() => currentEnrichedVersion.value?.minKestraCompatibilityVersion ?? null)
 
+    const slots = useSlots()
+
     const hasOverviewContent = computed<boolean>(() =>
-        enrichedVersions.value.length > 0
+        Boolean(slots.versions)
+        || enrichedVersions.value.length > 0
         || createdBy.value !== null
         || managedBy.value !== null
         || pluginCategories.value.length > 0

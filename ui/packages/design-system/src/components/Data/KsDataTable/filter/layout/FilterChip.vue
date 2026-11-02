@@ -12,7 +12,7 @@
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
-                :content="formatTooltipValue(filter.value)"
+                :content="isNumberRange ? filter.valueLabel : formatTooltipValue(filter.value)"
                 placement="top"
             >
                 <component :is="renderValueResult" />
@@ -146,8 +146,10 @@
         return props.filter.comparatorLabel
     }
 
+    const isNumberRange = computed(() => props.filter.comparator === Comparators.BETWEEN)
+
     const renderValueResult = computed(() =>
-        h("span", {class: "value"}, formatValue(props.filter.value)),
+        h("span", {class: "value"}, isNumberRange.value ? props.filter.valueLabel : formatValue(props.filter.value)),
     )
 
     const isNegative = computed(() =>

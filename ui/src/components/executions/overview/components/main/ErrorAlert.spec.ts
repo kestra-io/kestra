@@ -74,6 +74,32 @@ describe("ErrorAlert", () => {
         expect(lines).toEqual(["Ledger LATAM is off", "Ledger ANZ is off", "Ledger JP is off", "Ledger APAC is off"])
     })
 
+    it.each(["NORMAL", "PLAYGROUND"])("loads errors by execution ID without excluding %s logs with a kind filter", async (kind) => {
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockImplementation(async ({filters}) =>
+            filters?.some(filter => filter.field === "kind") ? [] : errorLogs as never,
+        )
+        const wrapper = i18nMount(ErrorAlert, {
+            messages,
+            props: {execution: {...execution, kind} as Execution},
+            global: {stubs: {LogLine: true}},
+        })
+        await flushPromises()
+
+        expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            executionId: "e1",
+            filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+        }))
+        expect(wrapper.text()).toContain("Ledger APAC is off")
+    })
+
+    it("keeps the failure title visible when error logs are unavailable", async () => {
+        vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([])
+        const wrapper = mountAlert()
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("Execution failed!")
+        expect(wrapper.find("[data-test=error-alert-toggle]").exists()).toBe(false)
+    })
     it("names the toggle and reports whether the logs are shown", async () => {
         // Given
         const wrapper = mountAlert()

@@ -19,7 +19,7 @@
                             <KsMarkdown :content="trigger.description" />
                         </template>
                         <KsIcon class="info" :size="16">
-                            <InformationOutline />
+                            <Information />
                         </KsIcon>
                     </KsTooltip>
                 </div>
@@ -62,7 +62,7 @@
     import {computed} from "vue"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Information from "vue-material-design-icons/Information.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
 

@@ -1,11 +1,11 @@
 <template>
     <div
         ref="sidebar"
-        class="p-2 sidebar"
+        class="sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
     >
-        <div class="flex-row d-flex">
+        <div class="toolbar">
             <KsSelect
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
@@ -25,11 +25,11 @@
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
             </KsSelect>
-            <KsButtonGroup class="d-flex">
+            <KsButtonGroup class="toolbar-actions">
                 <KsTooltip
                     :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
+                    <KsButton :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
@@ -37,7 +37,6 @@
                     :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
-                        class="px-2"
                         :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
@@ -67,7 +66,7 @@
                 >
                     <KsDropdown :disabled="!canManageFiles">
                         <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
-                            <PlusBox />
+                            <Upload />
                         </KsButton>
                         <template #dropdown>
                             <KsDropdownMenu>
@@ -86,7 +85,7 @@
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <KsButton class="px-2" @click="exportFiles()">
+                    <KsButton @click="exportFiles()">
                         <FolderDownloadOutline />
                     </KsButton>
                 </KsTooltip>
@@ -103,14 +102,14 @@
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
-            class="mt-3"
+            class="file-tree"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
-                <div class="m-4 empty">
+                <div class="empty">
                     <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
@@ -121,7 +120,7 @@
                     :ref="(el: any) => dropdowns[data.id as string] = el"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
-                    class="w-100"
+                    class="tree-node-dropdown"
                 >
                     <div
                         class="tree-node-hitbox"
@@ -131,7 +130,7 @@
                         <div class="item-line">
                             <KsCheckbox
                                 v-if="selectionMode"
-                                class="me-2"
+                                class="item-prefix"
                                 :modelValue="selectedNodes.includes(data.id)"
                                 @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
@@ -140,7 +139,7 @@
                             <TypeIcon
                                 :name="data.fileName"
                                 :folder="!data.leaf"
-                                class="me-2"
+                                class="item-prefix"
                             />
                             <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
                         </div>
@@ -222,7 +221,7 @@
             @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
@@ -231,10 +230,10 @@
                 ref="creation_name"
                 v-model="dialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
 
-            <div class="py-1">
+            <div class="parent-folder-label">
                 <span>
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
@@ -243,7 +242,7 @@
                 v-model="dialog.folder"
                 clearable
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             >
                 <KsOption
                     v-for="folder in filesStore.folders"
@@ -275,7 +274,7 @@
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
@@ -284,7 +283,7 @@
                 ref="renaming_name"
                 v-model="renameDialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
             <template #footer>
                 <div>
@@ -308,7 +307,7 @@
             :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global" class="py-3">
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global">
                 <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
                     <code>{{ value }}</code>
                 </template>
@@ -386,7 +385,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import FilePlus from "vue-material-design-icons/FilePlus.vue"
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue"
-    import PlusBox from "vue-material-design-icons/PlusBox.vue"
+    import Upload from "vue-material-design-icons/Upload.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
     import {useI18n} from "vue-i18n"
@@ -1129,12 +1128,38 @@
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
+.dialog-label {
+    padding-bottom: var(--ks-spacing-1);
+}
+
+.parent-folder-label {
+    padding-block: var(--ks-spacing-1);
+}
+
+.dialog-field {
+    margin-bottom: var(--ks-spacing-4);
+}
+
 .sidebar {
+    padding: var(--ks-spacing-2);
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
+
+    & .toolbar,
+    & .toolbar-actions {
+        display: flex;
+    }
+
+    & .file-tree {
+        margin-top: var(--ks-spacing-4);
+    }
+
+    & .tree-node-dropdown {
+        width: 100%;
+    }
 
     .filter{
         & :deep(.kel-select__wrapper) {
@@ -1145,6 +1170,7 @@
     }
 
     .empty {
+        margin: var(--ks-spacing-5);
         position: relative;
         top: 100px;
         text-align: center;
@@ -1171,8 +1197,7 @@
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: .5rem;
-        padding-right: .5rem;
+        padding-inline: var(--ks-spacing-2);
 
         &.kel-button--primary {
             opacity: 1;
@@ -1274,6 +1299,10 @@
     .item-line{
         display: flex;
         align-items: center;
+
+        & .item-prefix {
+            margin-right: var(--ks-spacing-2);
+        }
     }
 }
 </style>

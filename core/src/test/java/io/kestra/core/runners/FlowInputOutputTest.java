@@ -37,6 +37,7 @@ import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -379,6 +380,86 @@ class FlowInputOutputTest {
         Assertions.assertEquals("******", results.getFirst().value());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldMaskSecretsWhenRenderingResumeDescriptions(boolean validateSubmittedInputs) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description("Secret: {{ secret('???') }}")
+            .defaults(Property.ofValue("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        var results = validateSubmittedInputs
+            ? flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()
+            : flowInputOutput.resolveResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo("Secret: ******");
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(results.getFirst().value()).isEqualTo("******");
+        assertThat(input.getDescription()).isEqualTo("Secret: {{ secret('???') }}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Use `{{ trigger.date }}`", "{{ thisFunctionDoesNotExist() }}" })
+    void shouldPreserveResumeDescriptionsWhenRenderingFails(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ 1 + 1 }}", "Use `{{ trigger.date }}`" })
+    void shouldKeepDescriptionsLiteralWhenValidatingRegularFlowInputs(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()).containsEntry("input", null);
+    }
+
+    @Test
+    void shouldObfuscateSecretsWhenValidatingInputsDeclaredAfterTheirDependent() {
+        // Given: the dependent input is declared first, so its dependency is resolved through the dependency path
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("dependency"), null))
+            .required(false)
+            .build();
+        StringInput dependency = StringInput.builder()
+            .id("dependency")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(dependent, dependency), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results).filteredOn(it -> it.input().getId().equals("dependency"))
+            .singleElement()
+            .extracting(InputAndValue::value)
+            .isEqualTo("******");
+    }
+
     @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given
@@ -394,6 +475,74 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst().value());
+    }
+
+    @Test
+    void shouldSkipExpressionRenderingWhenReadingInputsWithCustomValueAllowed() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(result).containsEntry("select", "custom");
+    }
+
+    @Test
+    void shouldFailRenderingExpressionWhenReadingInputsWithoutValue() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    SelectInput.builder()
+                        .id("select")
+                        .type(Type.SELECT)
+                        .expression("{{ thisFunctionDoesNotExist() }}")
+                        .allowCustomValue(true)
+                        .required(false)
+                        .build()
+                )
+            )
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("Cannot render 'expression'");
+    }
+
+    @Test
+    void shouldStillRenderExpressionWhenValidatingInputsWithCustomValueAllowed() {
+        // Given
+        SelectInput input = SelectInput.builder()
+            .id("select")
+            .type(Type.SELECT)
+            .expression("{{ ['a', 'b'] }}")
+            .allowCustomValue(true)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("select", "custom"));
+
+        // Then
+        assertThat(((SelectInput) results.getFirst().input()).getValues()).extracting(ValueOption::value).containsExactly("a", "b");
     }
 
     @Test

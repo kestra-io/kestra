@@ -48,8 +48,28 @@ const meta: Meta<typeof KsCascaderPanel> = {
 export default meta
 type Story = StoryObj<typeof KsCascaderPanel>
 
+export const Playground: Story = {
+    render: (args) => ({
+        components: {KsCascaderPanel},
+        setup() {
+            const value = ref<string[]>([])
+            return {args, value}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-cascader-panel v-bind="args" v-model="value" />
+                <p style="margin-top:12px;font-size:13px;opacity:0.6">
+                    Selected: {{ value.length ? value.join(' / ') : '(none)' }}
+                </p>
+            </div>
+        `,
+    }),
+    args: {options: baseOptions},
+}
+
 /** Default panel with two-level options */
 export const Default: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCascaderPanel},
         setup() {
@@ -74,6 +94,7 @@ export const Default: Story = {
 
 /** Pre-selected value */
 export const PreSelected: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCascaderPanel},
         setup() {
@@ -93,6 +114,7 @@ export const PreSelected: Story = {
 
 /** Three-level deep options */
 export const ThreeLevels: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCascaderPanel},
         setup() {

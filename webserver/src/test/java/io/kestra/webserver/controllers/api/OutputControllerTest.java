@@ -5,18 +5,24 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableOutput;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -32,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class OutputControllerTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutputControllerTest.class);
+
     @Inject
     @Client("/")
     private ReactorHttpClient client;
@@ -44,6 +52,9 @@ class OutputControllerTest {
 
     @Inject
     private ExecutionOutputService executionOutputService;
+
+    @Inject
+    private SearchableOutputRepositoryInterface searchableOutputRepository;
 
     @Test
     void getTaskOutput() {
@@ -173,7 +184,7 @@ class OutputControllerTest {
             .state(new State(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
-        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+        executionOutputService.saveOutputs(LOGGER, Flow.builder().id("flowId").namespace("namespace").build(), execution, Map.of("some", "output"));
 
         // When - every route now has a literal second segment ('executions' or 'tasks'), so there is no ambiguity
         Map<String, Object> response = client.toBlocking().retrieve(
@@ -197,7 +208,7 @@ class OutputControllerTest {
             .state(new State(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
-        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+        executionOutputService.saveOutputs(LOGGER, Flow.builder().id("flowId").namespace("namespace").build(), execution, Map.of("some", "output"));
 
         // When / Then - the request is resolved on the MAIN tenant, so it must not see another tenant's outputs
         assertThrows(
@@ -217,6 +228,109 @@ class OutputControllerTest {
                 HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/not-found"),
                 Argument.mapOf(String.class, Object.class)
             )
+        );
+    }
+
+    private Execution saveExecution(String tenantId) {
+        return executionRepository.save(
+            Execution.builder()
+                .tenantId(tenantId)
+                .id(IdUtils.create())
+                .namespace("namespace")
+                .flowId("flowId")
+                .state(new State(State.Type.SUCCESS))
+                .build()
+        );
+    }
+
+    @Test
+    void listSearchableOutputs() {
+        // Given
+        String tenantId = TenantService.MAIN_TENANT;
+        var execution = saveExecution(tenantId);
+        searchableOutputRepository.save(new SearchableOutput(tenantId, execution.getId(), "orderIds", "ORD-8841"));
+        searchableOutputRepository.save(new SearchableOutput(tenantId, execution.getId(), "customerId", "CUST-12"));
+        searchableOutputRepository.save(new SearchableOutput(tenantId, execution.getId(), "region", "eu"));
+        String uri = "/api/v1/" + tenantId + "/outputs/searchable/" + execution.getId();
+
+        // When
+        PagedResults<Map<String, Object>> first = client.toBlocking().retrieve(
+            HttpRequest.GET(uri + "?page=1&size=2"), Argument.of(PagedResults.class, Argument.mapOf(String.class, Object.class))
+        );
+        PagedResults<Map<String, Object>> second = client.toBlocking().retrieve(
+            HttpRequest.GET(uri + "?page=2&size=2"), Argument.of(PagedResults.class, Argument.mapOf(String.class, Object.class))
+        );
+
+        // Then
+        assertThat(first.getTotal()).isEqualTo(3);
+        assertThat(first.getResults()).containsExactly(
+            Map.of("outputId", "customerId", "value", "CUST-12"),
+            Map.of("outputId", "orderIds", "value", "ORD-8841")
+        );
+        assertThat(second.getResults()).containsExactly(Map.of("outputId", "region", "value", "eu"));
+    }
+
+    @Test
+    void listSearchableOutputsShouldReturnEmptyWhenTheExecutionHasNone() {
+        String tenantId = TenantService.MAIN_TENANT;
+        var execution = saveExecution(tenantId);
+
+        PagedResults<?> response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/searchable/" + execution.getId()), PagedResults.class
+        );
+
+        assertThat(response.getTotal()).isZero();
+        assertThat(response.getResults()).isEmpty();
+    }
+
+    @Test
+    void listSearchableOutputsShouldThrowNotFoundWhenExecutionNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/" + TenantService.MAIN_TENANT + "/outputs/searchable/not-found"), PagedResults.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void listSearchableOutputsShouldThrowNotFoundWhenExecutionBelongsToAnotherTenant() {
+        // Given
+        var execution = saveExecution("another-tenant");
+        searchableOutputRepository.save(new SearchableOutput("another-tenant", execution.getId(), "orderIds", "ORD-8841"));
+
+        // When / Then - the request is resolved on the MAIN tenant, so it must not see another tenant's outputs
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/" + TenantService.MAIN_TENANT + "/outputs/searchable/" + execution.getId()), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void listSearchableOutputsShouldListEachItemOfAnArrayOutput() {
+        // Given
+        String tenantId = TenantService.MAIN_TENANT;
+        var execution = saveExecution(tenantId);
+        searchableOutputRepository.saveBatch(List.of(
+            new SearchableOutput(tenantId, execution.getId(), "orderIds", 0, "ORD-1"),
+            new SearchableOutput(tenantId, execution.getId(), "orderIds", 1, "ORD-2"),
+            new SearchableOutput(tenantId, execution.getId(), "orderIds", 2, "ORD-3")
+        ));
+
+        // When
+        PagedResults<Map<String, Object>> response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/searchable/" + execution.getId() + "?page=1&size=2"),
+            Argument.of(PagedResults.class, Argument.mapOf(String.class, Object.class))
+        );
+
+        // Then
+        assertThat(response.getTotal()).isEqualTo(3);
+        assertThat(response.getResults()).containsExactly(
+            Map.of("outputId", "orderIds", "value", "ORD-1"),
+            Map.of("outputId", "orderIds", "value", "ORD-2")
         );
     }
 }

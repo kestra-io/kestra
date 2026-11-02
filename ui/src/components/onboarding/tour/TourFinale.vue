@@ -58,6 +58,7 @@
     import {useOnboardingResources} from "../useOnboardingResources"
     import OnboardingResourceList from "../OnboardingResourceList.vue"
     import {TOUR_NAMESPACE} from "./tourFlows"
+    import {tourDocsUrl} from "./tourDocs"
 
     const emit = defineEmits<{
         restart: [];
@@ -83,12 +84,7 @@
         secret: "https://kestra.io/docs/concepts/secret",
     }
 
-    const DOCS_UTM = "?utm_source=app&utm_medium=referral&utm_campaign=product-tour"
-
-    const docsUrl = (name: keyof typeof DOCS) => {
-        const [base, fragment] = DOCS[name].split("#")
-        return `${base}${DOCS_UTM}${fragment ? `#${fragment}` : ""}`
-    }
+    const docsUrl = (name: keyof typeof DOCS) => tourDocsUrl(DOCS[name])
 
     const TAKEAWAYS = [
         {key: "copilot", docs: ["copilot", "agentSkills", "autocompletion"]},

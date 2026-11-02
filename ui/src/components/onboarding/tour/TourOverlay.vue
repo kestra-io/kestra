@@ -67,7 +67,7 @@
                         {{ $t(translationKey("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
                         <span class="guide-step-name">{{ $t(translationKey(`steps.${scene.step}`)) }}</span>
                     </span>
-                    <KsButton link class="guide-skip" @click="skipTour">
+                    <KsButton link class="guide-skip" data-test="tour-skip" @click="skipTour">
                         {{ $t(translationKey("actions.skip")) }}
                     </KsButton>
                 </div>
@@ -132,7 +132,34 @@
                         </i18n-t>
                         <span v-else>{{ error.message }}</span>
                     </template>
+                    <div v-if="error.recovery || error.help" class="guide-alert-actions">
+                        <KsButton
+                            v-if="error.recovery"
+                            size="small"
+                            :disabled="isWorking"
+                            data-test="tour-error-recovery"
+                            @click="recover(error.recovery)"
+                        >
+                            {{ $t(error.recovery.labelKey) }}
+                        </KsButton>
+                        <a
+                            v-if="error.help"
+                            :href="error.help.href"
+                            target="_blank"
+                            rel="noopener"
+                            data-test="tour-error-help"
+                        >{{ $t(error.help.labelKey) }}</a>
+                    </div>
                 </KsAlert>
+
+                <KsAlert
+                    v-if="notice"
+                    type="info"
+                    :closable="false"
+                    class="guide-alert"
+                    data-test="tour-notice"
+                    :title="notice"
+                />
 
                 <div class="guide-actions">
                     <KsButton v-if="sceneIndex > 0" :disabled="isBusy" @click="back">
@@ -150,6 +177,7 @@
                         type="primary"
                         :loading="isWorking"
                         :disabled="isWorking"
+                        data-test="tour-next"
                         @click="next"
                     >
                         {{ nextLabel }}
@@ -168,7 +196,15 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
+    import {
+        TourSceneError,
+        sceneIdsOf,
+        sceneIndexOf,
+        stepGroupsOf,
+        workingLabelKey,
+        type TourErrorHelp,
+        type TourErrorRecovery,
+    } from "./tourScenes"
     import {scrimClipPath, type Hole} from "./tourScrim"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
@@ -237,18 +273,43 @@
         return true
     }
 
-    type TourError = {key: string; params: Record<string, unknown>} | {message: string}
+    type TourError = ({key: string; params: Record<string, unknown>} | {message: string}) & {
+        recovery?: TourErrorRecovery;
+        help?: TourErrorHelp;
+    }
 
     const isBusy = ref(false)
     const isReady = ref(false)
     const error = ref<TourError | null>(null)
+    const notice = ref<string | null>(null)
     const showFinale = ref(false)
 
     const isWorking = computed(() => isBusy.value || !isReady.value)
 
     const sceneIndex = computed(() => sceneIndexOf(scenes, tourStore.state.currentStepId))
     const scene = computed(() => scenes[sceneIndex.value])
-    const context = computed(() => ({actions, store: tourStore}))
+
+    let controller = new AbortController()
+
+    const abortPendingWork = () => {
+        controller.abort()
+        controller = new AbortController()
+        notice.value = null
+    }
+
+    const sceneContext = () => {
+        const {signal} = controller
+        return {
+            actions,
+            store: tourStore,
+            signal,
+            onStillRunning: () => {
+                if (!signal.aborted) {
+                    notice.value = t(translationKey("notices.still_running"))
+                }
+            },
+        }
+    }
 
     const showIntro = computed(
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
@@ -538,9 +599,17 @@
 
     const describeError = (e: unknown): TourError => {
         if (e instanceof TourSceneError) {
-            return {key: e.key, params: e.params}
+            const {recovery, help} = e.options
+            return {key: e.key, params: e.params, recovery, help}
         }
         return {message: (e as {message?: string} | null)?.message ?? String(e)}
+    }
+
+    const showError = (e: unknown) => {
+        error.value = describeError(e)
+        if (e instanceof TourSceneError && e.options.event) {
+            track(e.options.event)
+        }
     }
 
     const runScene = async () => {
@@ -548,7 +617,7 @@
         error.value = null
         clearHighlight()
         try {
-            await scene.value?.enter?.(context.value)
+            await scene.value?.enter?.(sceneContext())
             isReady.value = true
             applyHighlight()
             startPolling()
@@ -556,7 +625,7 @@
                 confettiBurst()
             }
         } catch (e) {
-            error.value = describeError(e)
+            showError(e)
             isReady.value = true
             startPolling()
         }
@@ -578,18 +647,33 @@
         isBusy.value = true
         error.value = null
         track("tour_continued")
+        const {signal} = controller
         try {
-            await scene.value?.action?.(context.value)
+            await scene.value?.action?.(sceneContext())
             if (sceneIndex.value + 1 < scenes.length) {
                 await goTo(sceneIndex.value + 1)
             } else {
                 finishTour()
             }
         } catch (e) {
-            error.value = describeError(e)
+            if (!signal.aborted) {
+                showError(e)
+            }
         } finally {
             isBusy.value = false
+            notice.value = null
         }
+    }
+
+    const recover = async (recovery: TourErrorRecovery) => {
+        if (isWorking.value) {
+            return
+        }
+        if (recovery.event) {
+            track(recovery.event)
+        }
+        await recovery.run({store: tourStore})
+        await next()
     }
 
     const back = async () => {
@@ -613,6 +697,7 @@
 
     const skipTour = () => {
         track("tour_closed")
+        abortPendingWork()
         clearHighlight()
         stopPolling()
         variant.cleanup?.(actions)
@@ -622,6 +707,7 @@
 
     const finishTour = () => {
         track("tour_completed")
+        abortPendingWork()
         clearHighlight()
         stopPolling()
         variant.cleanup?.(actions)
@@ -654,9 +740,25 @@
         if (isBusy.value || showIntro.value || !tourStore.isGuidedActive) {
             return
         }
-        const completed = scene.value?.completedByUser?.({...context.value, route})
-        if (!completed) {
+        const current = scene.value
+        if (!current?.completedByUser?.({actions, store: tourStore, route})) {
             return
+        }
+        if (current.verify) {
+            isBusy.value = true
+            error.value = null
+            const {signal} = controller
+            try {
+                await current.verify({...sceneContext(), route})
+            } catch (e) {
+                if (!signal.aborted) {
+                    showError(e)
+                }
+                return
+            } finally {
+                isBusy.value = false
+                notice.value = null
+            }
         }
         track("tour_continued", {done_by: "user"})
         await goTo(sceneIndex.value + 1)
@@ -687,7 +789,7 @@
             if (isBusy.value || showIntro.value) {
                 return
             }
-            void poll(context.value)
+            void poll(sceneContext())
         }, 2500)
     }
 
@@ -711,6 +813,7 @@
     })
 
     onBeforeUnmount(() => {
+        abortPendingWork()
         clearHighlight()
         stopPolling()
         stopDrag?.()
@@ -845,6 +948,17 @@
 
     .guide-alert {
         margin-bottom: var(--ks-spacing-3);
+    }
+
+    .guide-alert-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        margin-top: var(--ks-spacing-2);
+
+        & a {
+            color: var(--ks-text-link);
+        }
     }
 
     .guide-callout {

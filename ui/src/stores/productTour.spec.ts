@@ -169,4 +169,42 @@ describe("product tour store", () => {
         expect(restored.state.tour.introSeen).toBe(true)
         expect(restored.isGuidedActive).toBe(true)
     })
+
+    it("runs the Python task on Docker, with no rejected execution, by default", async () => {
+        const {useProductTourStore} = await import("./productTour")
+        const store = useProductTourStore()
+
+        store.startGuided(TOUR)
+
+        expect(store.state.tour.taskRunner).toBe("docker")
+        expect(store.state.tour.rejectedExecutionId).toBeNull()
+    })
+
+    it("forgets the runner and the rejected execution when the tour restarts", async () => {
+        const {useProductTourStore} = await import("./productTour")
+        const store = useProductTourStore()
+
+        store.startGuided(TOUR)
+        store.setTourState({taskRunner: "process", rejectedExecutionId: "exec-1"})
+        store.startGuided(TOUR)
+
+        expect(store.state.tour.taskRunner).toBe("docker")
+        expect(store.state.tour.rejectedExecutionId).toBeNull()
+    })
+
+    it("loads a tour saved before the runner existed", async () => {
+        persisted.set("kestra.productTour.state", JSON.stringify({
+            status: "in_progress",
+            mode: "guided",
+            currentStepId: "flow_generated",
+            tour: {introSeen: true, lastExecutionId: "exec-1"},
+        }))
+
+        const {useProductTourStore} = await import("./productTour")
+        const store = useProductTourStore()
+
+        expect(store.state.tour.lastExecutionId).toBe("exec-1")
+        expect(store.state.tour.taskRunner).toBe("docker")
+        expect(store.state.tour.rejectedExecutionId).toBeNull()
+    })
 })

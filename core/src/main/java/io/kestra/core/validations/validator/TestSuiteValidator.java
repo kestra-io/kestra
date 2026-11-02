@@ -72,7 +72,7 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
     }
 
     private void validateTask(Flow flow, TaskFixture taskFixture, List<String> violations) {
-        if (flow.allTasks().noneMatch(it -> it.getId().equals(taskFixture.getId()))) {
+        if (flow.allTasksWithChilds().stream().noneMatch(it -> it.getId().equals(taskFixture.getId()))) {
             violations.add("Task '" + taskFixture.getId() + "' does not exist in the flow");
         }
     }

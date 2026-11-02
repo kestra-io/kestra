@@ -20,6 +20,7 @@ import io.kestra.core.test.flow.Fixtures;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.validations.validator.TestSuiteValidator;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -87,6 +88,29 @@ class TestSuiteValidatorTest {
         // Then
         assertThat(valid).isFalse();
         verify(context).buildConstraintViolationWithTemplate(contains("Task 'unknown' does not exist in the flow"));
+    }
+
+    @Test
+    void shouldBeValidWhenFixtureTargetsASubTaskOfALoop() {
+        Flow flow = Flow.builder()
+            .id("my-flow")
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Loop.builder()
+                .id("loop")
+                .type(Loop.class.getName())
+                .values(List.of("a", "b"))
+                .tasks(List.of(Log.builder().id("log-in-loop").type(Log.class.getName()).message(Property.ofValue("hi")).build()))
+                .build()))
+            .build();
+        when(flowService.findById("main", "io.kestra.tests", "my-flow")).thenReturn(Optional.of(flow));
+        TestSuite testSuite = testSuite(Fixtures.builder()
+            .tasks(List.of(TaskFixture.builder().id("log-in-loop").build()))
+            .build());
+
+        boolean valid = isValid(testSuite);
+
+        assertThat(valid).isTrue();
+        verify(context, never()).disableDefaultConstraintViolation();
     }
 
     @Test

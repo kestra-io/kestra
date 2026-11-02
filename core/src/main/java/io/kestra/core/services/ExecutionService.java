@@ -10,6 +10,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.async.AsyncOperationsConfiguration;
@@ -52,7 +54,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -68,6 +69,7 @@ import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.multipart.CompletedPart;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -103,7 +105,7 @@ public class ExecutionService {
     private final RunContextFactory runContextFactory;
     private final ApprovalRequestHandler approvalRequestHandler;
     private final ExecutionOutputService executionOutputService;
-    private final SearchableOutputRepositoryInterface searchableOutputRepository;
+    private final SearchableDataRepositoryInterface searchableDataRepository;
     private final CheckpointRepositoryInterface checkpointRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -127,7 +129,7 @@ public class ExecutionService {
         RunContextFactory runContextFactory,
         ApprovalRequestHandler approvalRequestHandler,
         ExecutionOutputService executionOutputService,
-        SearchableOutputRepositoryInterface searchableOutputRepository,
+        SearchableDataRepositoryInterface searchableDataRepository,
         CheckpointRepositoryInterface checkpointRepository,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
@@ -148,7 +150,7 @@ public class ExecutionService {
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
         this.approvalRequestHandler = Objects.requireNonNull(approvalRequestHandler);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
-        this.searchableOutputRepository = Objects.requireNonNull(searchableOutputRepository);
+        this.searchableDataRepository = Objects.requireNonNull(searchableDataRepository);
         this.checkpointRepository = Objects.requireNonNull(checkpointRepository);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
@@ -670,6 +672,7 @@ public class ExecutionService {
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;
+        copySearchableData(execution, newExecution);
         if (emitEvent) {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
@@ -692,6 +695,18 @@ public class ExecutionService {
                 return false;
             })
             .collect(Collectors.toSet());
+    }
+
+    private void copySearchableData(Execution original, Execution replayed) {
+        try {
+            List<SearchableData> copied = searchableDataRepository.findByExecutionId(original.getTenantId(), original.getId(), Pageable.UNPAGED)
+                .stream()
+                .map(it -> new SearchableData(it.tenantId(), replayed.getId(), it.dataId(), it.index(), it.value()))
+                .toList();
+            searchableDataRepository.saveBatch(copied);
+        } catch (Exception e) {
+            log.error("Failed to copy the searchable data of the execution '{}' to its replay '{}', they will not be searchable: {}", original.getId(), replayed.getId(), e.getMessage(), e);
+        }
     }
 
     private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {
@@ -1044,7 +1059,7 @@ public class ExecutionService {
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
                     builder.checkpointsCount(this.checkpointRepository.purge(executions));
-                    builder.searchableOutputsCount(this.searchableOutputRepository.purge(executions));
+                    builder.searchableOutputsCount(this.searchableDataRepository.purge(executions));
                 }
 
                 if (purgeLog) {

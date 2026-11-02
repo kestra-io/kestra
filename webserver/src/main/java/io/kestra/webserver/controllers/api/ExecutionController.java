@@ -1303,6 +1303,10 @@ public class ExecutionController {
             return null;
         }
 
+        if (StorageContext.isInNamespaceFiles(execution.getNamespace(), path)) {
+            return null;
+        }
+
         // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
         // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
         String flowId = execution.getFlowId();

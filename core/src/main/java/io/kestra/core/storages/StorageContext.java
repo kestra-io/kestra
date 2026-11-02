@@ -203,6 +203,13 @@ public class StorageContext {
     }
 
     /**
+     * Tells whether the path points inside the namespace files of the given namespace, child namespaces excluded.
+     */
+    public static boolean isInNamespaceFiles(String namespace, URI path) {
+        return path.getPath() != null && path.getPath().startsWith(namespaceFilePrefix(namespace) + "/");
+    }
+
+    /**
      * Gets the storage URI of the given cacheID, and optionally the given objectID.
      *
      * @param cacheId the ID of the cache.

@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,12 +46,15 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -95,6 +99,9 @@ class ExecutionControllerTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     @Inject
     @Client("/")
@@ -1287,6 +1294,61 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldServeNamespaceFileGivenItsInternalStorageUri() throws Exception {
+        // Given - an execution whose output points to a namespace file the way fileURI() returns it
+        String ns = "io.kestra.test-nsfile-uri";
+        Execution execution = saveSucceededExecution(ns);
+        String csv = "id,total\n1,10\n";
+        Namespace namespace = namespaceFactory.of(MAIN_TENANT, ns);
+        namespace.putFile(Path.of("/orders.csv"), new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+        URI fileUri = namespace.get(Path.of("/orders.csv")).uri();
+        String encodedPath = URLEncoder.encode(fileUri.toString(), StandardCharsets.UTF_8);
+        String filesUrl = "/api/v1/main/executions/" + execution.getId() + "/file";
+
+        // When
+        FileMetas metas = client.toBlocking().retrieve(GET(filesUrl + "/metas?path=" + encodedPath), FileMetas.class);
+        Map<String, Object> preview = client.toBlocking().retrieve(GET(filesUrl + "/preview?path=" + encodedPath), Argument.mapOf(String.class, Object.class));
+        String content = client.toBlocking().retrieve(GET(filesUrl + "?path=" + encodedPath), String.class);
+
+        // Then
+        assertThat(fileUri.toString()).isEqualTo("kestra:///io/kestra/test-nsfile-uri/_files/orders.csv");
+        assertThat(metas.getSize()).isEqualTo(csv.length());
+        assertThat(preview).containsEntry("extension", "csv");
+        assertThat(content).isEqualTo(csv);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "kestra:///io/kestra/test-nsfile-other/_files/secret.txt",
+        "kestra:///io/kestra/test-nsfile-own/_files/../../test-nsfile-other/_files/secret.txt"
+    })
+    void shouldNotServeNamespaceFileOfAnotherNamespace(String path) throws Exception {
+        // Given - the execution lives in one namespace, the file in another
+        Execution execution = saveSucceededExecution("io.kestra.test-nsfile-own");
+        namespaceFactory.of(MAIN_TENANT, "io.kestra.test-nsfile-other")
+            .putFile(Path.of("/secret.txt"), new ByteArrayInputStream("sensitive-data".getBytes(StandardCharsets.UTF_8)));
+        String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8);
+
+        // When / Then
+        assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId() + "/file?path=" + encodedPath), String.class)
+        );
+    }
+
+    private Execution saveSucceededExecution(String namespace) {
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
+            .namespace(namespace)
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        return executionRepository.save(execution);
     }
 
     @Test

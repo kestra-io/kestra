@@ -5,6 +5,7 @@ import {
     loopIterationCountsOf,
     loopOutcome,
     loopTaskContext,
+    nestedLoopIterationCounts,
     taskRunStateCountsOf,
     type LoopLaneData,
 } from "./loopOutcome"
@@ -98,11 +99,11 @@ describe("loopTaskContext", () => {
     it("shouldSummarizeRunsWhileTheLoopIsUnscoped", () => {
         const lanes = {per_region: lane({taskRunStateCounts: {upload: {FAILED: 3, SKIPPED: 477}}})}
 
-        expect(loopTaskContext("per_region.upload", "upload", lanes)).toEqual({unscoped: true, summary: {runs: 480, failed: 3}})
+        expect(loopTaskContext("per_region.upload", "upload", lanes)).toEqual({unscoped: true, summary: {runs: 480, failed: 3}, counts: {FAILED: 3, SKIPPED: 477}})
     })
 
     it("shouldShowNoNumberWhenTheCountsKeyIsAbsent", () => {
-        expect(loopTaskContext("per_region.upload", "upload", {per_region: lane({})})).toEqual({unscoped: true, summary: undefined})
+        expect(loopTaskContext("per_region.upload", "upload", {per_region: lane({})})).toEqual({unscoped: true, summary: undefined, counts: undefined})
     })
 
     it("shouldFallBackToTheOuterLoopCountsWhenTheInnerLoopHasNoRun", () => {
@@ -118,5 +119,26 @@ describe("loopTaskContext", () => {
         const lanes = {per_region: lane({scopedNumber: 2, taskRunStateCounts: {upload: {FAILED: 1}}})}
 
         expect(loopTaskContext("per_region.upload", "upload", lanes)).toEqual({unscoped: false})
+    })
+})
+
+describe("nestedLoopIterationCounts", () => {
+    const lane = (overrides: Partial<LoopLaneData>): LoopLaneData => ({taskId: "x", status: "ready", parentScoped: true, ...overrides})
+
+    it("shouldReadTheNestedLoopCountsFromTheNearestOuterLoopThatHasThem", () => {
+        const nested = lane({taskId: "per_invoice", status: "nested"})
+        const lanes = {
+            per_region: lane({loopIterationCounts: {per_invoice: {SUCCESS: 30, FAILED: 2}}}),
+            "per_region.per_group": lane({status: "nested"}),
+            "per_region.per_group.per_invoice": nested,
+        }
+
+        expect(nestedLoopIterationCounts(nested, "per_region.per_group.per_invoice", lanes)).toEqual({SUCCESS: 30, FAILED: 2})
+    })
+
+    it("shouldReturnNothingWhenNoOuterLoopCountsIt", () => {
+        const nested = lane({taskId: "per_invoice", status: "nested"})
+
+        expect(nestedLoopIterationCounts(nested, "per_region.per_invoice", {per_region: lane({}), "per_region.per_invoice": nested})).toBeUndefined()
     })
 })

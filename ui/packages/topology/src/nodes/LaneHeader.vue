@@ -1,7 +1,7 @@
 <template>
     <div
         class="lane-header"
-        :class="{'lane-header--card': layout === 'card', 'lane-header--pill': isPill}"
+        :class="{'lane-header--card': layout === 'card', 'lane-header--pill': isPill, 'lane-header--with-bar': stateBar}"
         :style="headerStyle"
         :tabindex="loopLane ? 0 : undefined"
         :aria-keyshortcuts="loopLane ? '[ ]' : undefined"
@@ -21,7 +21,7 @@
                     onlyIcon
                 />
             </div>
-            <div class="lane-labels">
+            <div class="lane-labels" data-test="lane-labels">
                 <span class="lane-type" :title="typeTooltip">{{ typeLine }}</span>
                 <span class="lane-id">{{ idLabel }}</span>
             </div>
@@ -60,6 +60,9 @@
         <div v-if="loopLane && showScope && layout === 'card'" class="lane-loop-row">
             <slot name="loopScope" :uid="laneUid" :lane="loopLane" />
         </div>
+        <div v-if="stateBar" class="lane-state-bar">
+            <LoopStateBar v-bind="stateBar" />
+        </div>
     </div>
 </template>
 <script setup lang="ts">
@@ -78,13 +81,16 @@
         loopChip,
         loopChipFromIterations,
         loopOutcome,
+        nestedLoopIterationCounts,
         nestedLoopIterationSummary,
+        summarizeTaskRuns,
         isLoopTaskType,
         type LoopChip,
     } from "../utils/loopOutcome"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import {buildNodeActions, type ActionableTask, type NodeActionsContext} from "../utils/nodeActions"
+    import LoopStateBar from "./LoopStateBar.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import ValidationBadge from "./ValidationBadge.vue"
     import {
@@ -201,6 +207,17 @@
         return summary ? loopChipFromIterations(summary) : undefined
     })
 
+    const stateBar = computed(() => {
+        const lane = loopLane.value
+        if (!lane) return undefined
+        if (lane.status === "nested") {
+            const counts = nestedLoopIterationCounts(lane, laneUid.value, loopLanes?.value ?? {})
+            return summarizeTaskRuns(counts) ? {counts} : undefined
+        }
+        if (!outcome.value || lane.scopedNumber !== undefined) return undefined
+        return {counts: lane.terminatedIterations, running: lane.runningIterations, total: lane.iterationCount}
+    })
+
     const showScope = computed(() => Boolean(loopLane.value) && !isPill.value && !notRun.value)
 
     const notRun = computed(() => loopLane.value?.status === "not-started")
@@ -289,6 +306,7 @@
 </script>
 <style scoped>
     .lane-header {
+        position: relative;
         pointer-events: auto;
         display: flex;
         flex-direction: column;
@@ -299,6 +317,10 @@
         padding: 0 var(--ks-spacing-2);
         border-radius: var(--ks-radius-base) var(--ks-radius-base) 0 0;
         overflow: hidden;
+    }
+
+    .lane-header--with-bar {
+        padding-bottom: calc(var(--ks-spacing-1) * 1.5);
     }
 
     .lane-header:focus-visible {
@@ -437,6 +459,14 @@
     .lane-outcome-mid,
     .lane-outcome-min {
         display: none;
+    }
+
+    .lane-state-bar {
+        --loop-state-bar-height: calc(var(--ks-spacing-1) / 2);
+        position: absolute;
+        right: var(--ks-spacing-2);
+        bottom: calc(var(--ks-spacing-1) / 2);
+        left: var(--ks-spacing-2);
     }
 
     .lane-loop-scope {

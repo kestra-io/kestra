@@ -133,6 +133,7 @@ export function enclosingLoopUids(nodeUid: string, lanes: Record<string, LoopLan
 export interface LoopTaskContext {
     unscoped: boolean;
     summary?: LoopTaskRunSummary;
+    counts?: StateCounts;
 }
 
 export function loopTaskContext(nodeUid: string, taskId: string, lanes: Record<string, LoopLaneData>): LoopTaskContext | undefined {
@@ -146,13 +147,18 @@ export function loopTaskContext(nodeUid: string, taskId: string, lanes: Record<s
         .map((laneUid) => lanes[laneUid].taskRunStateCounts)
         .find((candidate) => candidate !== undefined)
 
-    return {unscoped: true, summary: summarizeTaskRuns(counts?.[taskId])}
+    const taskCounts = counts?.[taskId]
+    return {unscoped: true, summary: summarizeTaskRuns(taskCounts), counts: taskCounts}
 }
 
-export function nestedLoopIterationSummary(lane: LoopLaneData, laneUid: string, lanes: Record<string, LoopLaneData>): LoopTaskRunSummary | undefined {
+export function nestedLoopIterationCounts(lane: LoopLaneData, laneUid: string, lanes: Record<string, LoopLaneData>): StateCounts | undefined {
     const counts = [...enclosingLoopUids(laneUid, lanes)].reverse()
         .map((enclosingUid) => lanes[enclosingUid].loopIterationCounts)
         .find((candidate) => candidate !== undefined)
 
-    return summarizeTaskRuns(counts?.[lane.taskId])
+    return counts?.[lane.taskId]
+}
+
+export function nestedLoopIterationSummary(lane: LoopLaneData, laneUid: string, lanes: Record<string, LoopLaneData>): LoopTaskRunSummary | undefined {
+    return summarizeTaskRuns(nestedLoopIterationCounts(lane, laneUid, lanes))
 }

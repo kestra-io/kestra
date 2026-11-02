@@ -2210,6 +2210,8 @@
   "topology-graph|loop-chip|success|full": "af657af9de53",
   "topology-graph|loop-chip|success|mid": "b26e9a793009",
   "topology-graph|loop-chip|success|min": "b26e9a793009",
+  "topology-graph|loop-state-bar|item": "4ded612010a0",
+  "topology-graph|loop-state-bar|not-started": "7a7400f46669",
   "topology-graph|loop|all-iterations": "50a8cd83bdaf",
   "topology-graph|loop|clear-scopes": "1856f7c79a29",
   "topology-graph|loop|failed-group": "6dd9b14dfc4f",

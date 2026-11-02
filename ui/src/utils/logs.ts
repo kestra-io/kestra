@@ -94,7 +94,7 @@ export function chartColorFromLevel(level: LevelKey, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`
 }
 
-export function sort(value: Record<string, any>) {
+export function sort(value: Record<string, unknown>) {
     return Object.keys(value)
         .sort((a, b) => {
             return index(LOG_LEVELS, a) - index(LOG_LEVELS, b)
@@ -104,7 +104,7 @@ export function sort(value: Record<string, any>) {
                 obj[key] = value[key]
                 return obj
             },
-            {} as Record<string, any>,
+            {} as Record<string, unknown>,
         )
 }
 

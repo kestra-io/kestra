@@ -53,16 +53,14 @@
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
     import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin} from "../../utils/pluginUtils"
-    import {getTheme} from "../../utils/utils"
+    import {useTheme} from "../../composables/useTheme"
     import useRouteContext from "../../composables/useRouteContext"
 
     const pluginsStore = usePluginsStore()
     const enrichmentStore = usePluginsEnrichmentStore()
     const miscStore = useMiscStore()
-    const isDarkTheme = computed(() => {
-        void miscStore.theme
-        return getTheme() === "dark"
-    })
+    const theme = useTheme()
+    const isDarkTheme = computed(() => theme.value === "dark")
     const route = useRoute()
     const {t, te} = useI18n()
 

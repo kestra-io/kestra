@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 vi.mock("vue-router", () => ({
@@ -28,6 +28,10 @@ vi.mock("@kestra-io/kestra-sdk/playground", () => ({
 const {usePlaygroundStore} = await import("./playground")
 
 describe("playground readyToStart", () => {
+    afterAll(() => {
+        sessionStorage.removeItem("playgroundClientId")
+    })
+
     beforeEach(() => {
         setActivePinia(createPinia())
         Object.assign(flowStore, {

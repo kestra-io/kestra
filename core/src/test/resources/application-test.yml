@@ -27,6 +27,10 @@ flyway:
       out-of-order: true
 
 kestra:
+  local-files:
+    # the Gradle test working directory is the module directory
+    allowed-paths:
+      - ${user.dir}/build/resources/test
   encryption:
     secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
   url: https://mysuperhost.com/subpath

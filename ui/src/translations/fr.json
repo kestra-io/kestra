@@ -467,7 +467,7 @@
       "rendered": "Rendu {value}",
       "confirm": "Rejouer avec {count} remplacement | Rejouer avec {count} remplacements",
       "locked": {
-        "BLOCK": "À l'intérieur d'un bloc if ou for, qui fait partie de la logique de la task. Modifiez-le avec une nouvelle révision.",
+        "BLOCK": "À l'intérieur d'une boucle for, d'un set ou d'une macro, où il peut lire des variables qui n'existent que là. Modifiez-le avec une nouvelle révision.",
         "CONSTANT": "Ne lit rien de l'exécution, donc cela fait partie de la définition. Modifiez-le avec une nouvelle révision.",
         "SECRET": "Lit un secret ou le kv store au moment de l'exécution.",
         "FILE": "Lit ou rend un fichier depuis le stockage interne."

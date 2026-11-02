@@ -467,7 +467,7 @@
       "rendered": "渲染 {value}",
       "confirm": "使用 {count} 个覆盖重放",
       "locked": {
-        "BLOCK": "在 if 或 for 块内，这是 Task 逻辑的一部分。使用新版本更改它。",
+        "BLOCK": "在 for 循环、集合或宏中，它可以读取仅存在于那里的变量。使用新版本进行更改。",
         "CONSTANT": "不读取 Execution 中的任何内容，因此它是定义的一部分。请使用新版本进行更改。",
         "SECRET": "在运行时读取 Secret 或 KV store。",
         "FILE": "从内部存储读取或渲染文件。"

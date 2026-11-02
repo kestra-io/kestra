@@ -467,7 +467,7 @@
       "rendered": "Renderizzato {value}",
       "confirm": "Replay con {count} override | Replay con {count} override",
       "locked": {
-        "BLOCK": "All'interno di un blocco if o for, che fa parte della logica del task. Modificalo con una nuova revisione.",
+        "BLOCK": "All'interno di un ciclo for, di un set o di una macro, dove può leggere variabili che esistono solo lì. Modificalo con una nuova revisione.",
         "CONSTANT": "Non legge nulla dall'execution, quindi fa parte della definizione. Modificalo con una nuova revisione.",
         "SECRET": "Legge un Secret o il KV store in fase di esecuzione.",
         "FILE": "Legge o renderizza un file dallo storage interno."

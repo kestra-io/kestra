@@ -467,7 +467,7 @@
       "rendered": "Wyrenderowano {value}",
       "confirm": "Replay z {count} nadpisaniem | Replay z {count} nadpisaniami | Replay z {count} nadpisaniami",
       "locked": {
-        "BLOCK": "Wewnątrz bloku if lub for, który jest częścią logiki Taska. Zmień go w nowej wersji.",
+        "BLOCK": "Wewnątrz pętli for, zestawu lub makra, gdzie może odczytywać zmienne, które istnieją tylko tam. Zmień to nową wersją.",
         "CONSTANT": "Nie odczytuje niczego z egzekucji, więc jest częścią definicji. Zmień to, tworząc nową wersję.",
         "SECRET": "Odczytuje sekret lub kv store w czasie wykonania.",
         "FILE": "Odczytuje lub renderuje plik z wewnętrznej pamięci masowej."

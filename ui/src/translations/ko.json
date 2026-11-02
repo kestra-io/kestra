@@ -467,7 +467,7 @@
       "rendered": "렌더링된 {value}",
       "confirm": "{count}개 재정의로 Replay | {count}개 재정의로 Replay",
       "locked": {
-        "BLOCK": "if 또는 for 블록 내부에 있으며, Task 로직의 일부입니다. 새 revision으로 변경하세요.",
+        "BLOCK": "for 루프, 세트 또는 매크로 내부에서 해당 위치에만 존재하는 변수를 읽을 수 있습니다. 새 revision으로 변경하세요.",
         "CONSTANT": "Execution에서 아무것도 읽지 않으므로 정의의 일부입니다. 새 revision으로 변경하세요.",
         "SECRET": "런타임에 Secret 또는 KV store를 읽습니다.",
         "FILE": "내부 스토리지에서 파일을 읽거나 렌더링합니다."

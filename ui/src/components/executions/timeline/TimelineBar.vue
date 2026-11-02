@@ -87,11 +87,15 @@
                 <span class="hint">{{ $t("executionsTimeline.bucket.hint") }}</span>
             </div>
         </template>
-        <div
+        <component
+            :is="zoomable ? 'button' : 'div'"
             class="timeline-bar timeline-bucket"
-            :class="{dimmed}"
+            :class="{dimmed, zoomable}"
+            :type="zoomable ? 'button' : undefined"
+            :aria-label="zoomable ? $t('executionsTimeline.row.runsCount', {count: bucket.total}) : undefined"
             :data-bucket-state="bucket.dominantState"
             :style="bucketStyle"
+            @click="zoomToBucket"
         />
     </KsTooltip>
 </template>
@@ -109,10 +113,12 @@
         widthPercent: number;
         dimmed: boolean;
         intensity?: number;
+        zoomable?: boolean;
     }>()
 
     const emit = defineEmits<{
         "show-only-flow": [{namespace: string; flowId: string}];
+        "zoom-to-range": [{startMs: number; endMs: number}];
     }>()
 
     // Popper's flip modifier has to stay off for an explicit placement to stick.
@@ -166,6 +172,11 @@
         })
     }
 
+    function zoomToBucket() {
+        if (!props.bucket || !props.zoomable) return
+        emit("zoom-to-range", {startMs: props.bucket.startMs, endMs: props.bucket.endMs})
+    }
+
     function showOnlyThisFlow() {
         if (!props.execution) return
         popoverVisible.value = false
@@ -206,6 +217,10 @@
     bottom: 0.125rem;
     border-radius: var(--ks-radius-xs);
     cursor: default;
+
+    &.zoomable {
+        cursor: pointer;
+    }
 }
 
 .timeline-bar[data-state="SUCCESS"] {

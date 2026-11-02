@@ -1,7 +1,6 @@
 <template>
     <KsTooltip v-if="segments.length" placement="bottom" trigger="manual" :visible="visible">
         <div
-            ref="bar"
             class="loop-state-bar"
             role="img"
             tabindex="0"
@@ -53,7 +52,6 @@
 
     const {t, n} = useI18n()
 
-    const bar = useTemplateRef<HTMLElement>("bar")
     const legend = useTemplateRef<HTMLElement>("legend")
     const hovered = ref(false)
     const focused = ref(false)
@@ -94,30 +92,28 @@
         if (event.key === "Escape") dismiss()
     }
 
-    function onDocumentMouseover(event: MouseEvent) {
-        const target = event.target as Node
-        if (bar.value?.contains(target)) return
-        if (legend.value?.closest("[role='tooltip']")?.contains(target)) show()
-        else scheduleHide()
+    const popper = computed(() => legend.value?.closest<HTMLElement>("[role='tooltip']") ?? null)
+
+    function detachPopper(element: HTMLElement | null | undefined) {
+        element?.removeEventListener("mouseenter", show)
+        element?.removeEventListener("mouseleave", scheduleHide)
     }
 
-    function removeDocumentListeners() {
-        document.removeEventListener("keydown", onDocumentKeydown)
-        document.removeEventListener("mouseover", onDocumentMouseover)
-    }
+    watch(popper, (element, previous) => {
+        detachPopper(previous)
+        element?.addEventListener("mouseenter", show)
+        element?.addEventListener("mouseleave", scheduleHide)
+    })
 
     watch(visible, (isVisible) => {
-        if (isVisible) {
-            document.addEventListener("keydown", onDocumentKeydown)
-            document.addEventListener("mouseover", onDocumentMouseover)
-        } else {
-            removeDocumentListeners()
-        }
+        if (isVisible) document.addEventListener("keydown", onDocumentKeydown)
+        else document.removeEventListener("keydown", onDocumentKeydown)
     })
 
     onBeforeUnmount(() => {
         clearTimeout(hideTimer)
-        removeDocumentListeners()
+        detachPopper(popper.value)
+        document.removeEventListener("keydown", onDocumentKeydown)
     })
 </script>
 

@@ -137,8 +137,10 @@
     import CloudOutline from "vue-material-design-icons/CloudOutline.vue"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Creation from "vue-material-design-icons/Creation.vue"
+    import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
     import TagOutline from "vue-material-design-icons/TagOutline.vue"
+    import WrenchOutline from "vue-material-design-icons/WrenchOutline.vue"
 
     const route = useRoute()
     const router = useRouter()
@@ -187,9 +189,10 @@
         AI: Creation,
         BUSINESS: BriefcaseOutline,
         CLOUD: CloudOutline,
-        CORE: Creation,
+        CORE: PackageVariantClosed,
         DATA: SourceBranch,
         INFRASTRUCTURE: CogOutline,
+        TOOL: WrenchOutline,
     })
 
     const availableCategories = computed<string[]>(() =>

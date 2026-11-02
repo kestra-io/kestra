@@ -111,6 +111,15 @@ export default defineConfig([
             }]}],
         },
     },
+    {
+        files: ["**/*.stories.{ts,tsx}"],
+        rules: {
+            "no-restricted-syntax": ["error", {
+                selector: "CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/]",
+                message: "Story files share one iframe (isolate: false), so a module mock leaks into the files after it: register API data with mockStoryApiRoutes() from .storybook/apiMock.ts.",
+            }],
+        },
+    },
     ...storybook.configs["flat/recommended"],
     // `.css` files, plus the plain `<style>` blocks and `style="…"` attributes of each SFC.
     {

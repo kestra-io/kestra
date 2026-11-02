@@ -501,6 +501,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         }
         if (opened.caseId() != null) {
             outputs.put("caseId", opened.caseId());
+            runContext.logger().info("Approval {} opened.", opened.caseId());
         }
         return outputs;
     }

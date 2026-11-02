@@ -126,6 +126,20 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
 
+        // searchable inputs and outputs share one table keyed by id, so the same id on both sides would overwrite each other
+        Set<String> searchableInputIds = ListUtils.emptyOnNull(value.getInputs()).stream()
+            .filter(input -> Boolean.TRUE.equals(input.getSearchable()))
+            .map(Data::getId)
+            .collect(Collectors.toSet());
+        List<String> searchableIdsInBoth = ListUtils.emptyOnNull(value.getOutputs()).stream()
+            .filter(output -> Boolean.TRUE.equals(output.getSearchable()))
+            .map(Data::getId)
+            .filter(searchableInputIds::contains)
+            .toList();
+        if (!searchableIdsInBoth.isEmpty()) {
+            violations.add("The id [%s] cannot be searchable on both an input and an output, searchable data is keyed by id.".formatted(String.join(", ", searchableIdsInBoth)));
+        }
+
         findMissingInputsForTriggers(value).forEach(violations::add);
 
         validateDeclaredInputValues(value, violations);

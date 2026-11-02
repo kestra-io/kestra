@@ -1,10 +1,13 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
 import {defineComponent, h, inject} from "vue"
 import {createRouter, createMemoryHistory} from "vue-router"
 import KsFilter from "./KsFilter.vue"
+import FilterEditPopper from "./filter/layout/FilterEditPopper.vue"
+import FilterFooter from "./filter/layout/FilterFooter.vue"
 import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys"
 import {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./filter/utils/filterAnalytics"
-import {Comparators} from "./filter/utils/filterTypes"
+import {Comparators, type FilterKeyConfig} from "./filter/utils/filterTypes"
 import type {AppliedFilter, FilterContext, SavedFilter} from "../../../index"
 import {i18nMount} from "../../../../tests/units/i18nMount"
 
@@ -67,6 +70,33 @@ describe("KsFilter", () => {
         // FilterOptions is hidden by default (showOptions starts false)
         expect(wrapper.find(".expand-panel").exists()).toBe(false)
     })
+
+    test("returnsTheRefreshCallbackPromiseAndInvokesItOnce", async () => {
+        let context: FilterContext | undefined
+        const Harness = defineComponent({
+            setup() {
+                context = inject(FILTER_CONTEXT_INJECTION_KEY)
+                return () => h("div")
+            },
+        })
+        const refreshPromise = Promise.resolve("refreshed")
+        const callback = vi.fn(() => refreshPromise)
+        const wrapper = i18nMount(KsFilter, {
+            props: {
+                configuration: {title: "", keys: []},
+                tableOptions: {refresh: {shown: true, callback}},
+            },
+            slots: {extra: () => h(Harness)},
+            global: globalConfig,
+        })
+
+        const result = context!.refreshData()
+
+        expect(result).toBe(refreshPromise)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(wrapper.emitted("refresh")).toHaveLength(1)
+        await result
+    })
 })
 
 describe("KsFilter saved-filter analytics", () => {
@@ -82,12 +112,12 @@ describe("KsFilter saved-filter analytics", () => {
 
     const mountWithTracker = async () => {
         const tracker = vi.fn()
-        const router = createRouter({
+        const testRouter = createRouter({
             history: createMemoryHistory(),
             routes: [{path: "/executions", name: "executions", component: {template: "<div/>"}}],
         })
-        await router.push("/executions")
-        await router.isReady()
+        await testRouter.push("/executions")
+        await testRouter.isReady()
 
         let context: FilterContext | undefined
         const Harness = defineComponent({
@@ -101,7 +131,7 @@ describe("KsFilter saved-filter analytics", () => {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
             global: {
-                plugins: [router],
+                plugins: [testRouter],
                 provide: {[SAVED_FILTER_ANALYTICS_INJECTION_KEY as symbol]: tracker},
             },
         })
@@ -147,7 +177,7 @@ describe("KsFilter saved-filter analytics", () => {
     })
 
     test("does not throw when no analytics tracker is provided", async () => {
-        const router = createRouter({
+        const testRouter = createRouter({
             history: createMemoryHistory(),
             routes: [{path: "/", component: {template: "<div/>"}}],
         })
@@ -161,9 +191,84 @@ describe("KsFilter saved-filter analytics", () => {
         i18nMount(KsFilter, {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
-            global: {plugins: [router]},
+            global: {plugins: [testRouter]},
         })
 
         expect(() => context!.saveFilter("X", "", [makeAppliedFilter()])).not.toThrow()
+    })
+})
+
+describe("KsFilter reset to default", () => {
+    const timeRangeKey: FilterKeyConfig = {
+        key: "timeRange",
+        label: "Interval",
+        valueType: "time-range",
+        comparators: [Comparators.EQUALS],
+        valueProvider: async () => [
+            {label: "Last 24 hours", value: "PT24H"},
+            {label: "Last 7 days", value: "P7D"},
+            {label: "Last 30 days", value: "PT720H"},
+        ],
+    }
+
+    const stateKey: FilterKeyConfig = {
+        key: "state",
+        label: "State",
+        valueType: "multi-select",
+        visibleByDefault: true,
+        comparators: [Comparators.IN],
+    }
+
+    const sevenDays: AppliedFilter = {
+        id: "tr1",
+        key: "timeRange",
+        keyLabel: "Started",
+        comparator: Comparators.EQUALS,
+        comparatorLabel: "Equals",
+        value: "P7D",
+        valueLabel: "Last 7 days",
+    }
+
+    const mountPopperInFilter = async (props: {defaultDuration?: string} = {}) => {
+        const testRouter = createRouter({
+            history: createMemoryHistory(),
+            routes: [{path: "/", component: {template: "<div/>"}}],
+        })
+        await testRouter.push("/")
+        await testRouter.isReady()
+
+        const wrapper = i18nMount(KsFilter, {
+            props: {configuration: {title: "", keys: [stateKey, timeRangeKey]}, prefix: "test", ...props},
+            slots: {extra: () => h(FilterEditPopper, {filter: sevenDays, filterKey: timeRangeKey})},
+            global: {plugins: [testRouter]},
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    const lastAppliedValue = (wrapper: Awaited<ReturnType<typeof mountPopperInFilter>>) => {
+        const popper = wrapper.findComponent(FilterEditPopper)
+        const updates = popper.emitted("update") as Array<[AppliedFilter]> | undefined
+        return updates?.at(-1)?.[0].value
+    }
+
+    beforeEach(() => localStorage.clear())
+
+    test("restores the page default interval when the interval key declares no defaultValue", async () => {
+        const wrapper = await mountPopperInFilter()
+
+        wrapper.findComponent(FilterFooter).vm.$emit("reset")
+        await flushPromises()
+
+        expect(lastAppliedValue(wrapper)).toBe("PT24H")
+    })
+
+    test("restores the default duration the page was given", async () => {
+        const wrapper = await mountPopperInFilter({defaultDuration: "P30D"})
+
+        wrapper.findComponent(FilterFooter).vm.$emit("reset")
+        await flushPromises()
+
+        expect(lastAppliedValue(wrapper)).toBe("PT720H")
     })
 })

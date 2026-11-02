@@ -17,13 +17,13 @@
         disabled?: boolean;
         schema?: Schema;
         root?: string;
-        task?: any;
+        task?: Record<string, unknown>;
     }>()
 
     const modelValue = defineModel<string>({default: ""})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .wrapper {
     display: flex;
     align-items: stretch;
@@ -32,12 +32,12 @@
     border: 1px solid var(--ks-border-default);
     width: 100%;
 
-    :deep(.kel-textarea__inner),
-    :deep(.editor-container) {
+    & :deep(.kel-textarea__inner),
+    & :deep(.editor-container) {
         box-shadow: none;
     }
 
-    :deep(.ks-editor) {
+    & :deep(.ks-editor) {
         flex: 1;
     }
 }

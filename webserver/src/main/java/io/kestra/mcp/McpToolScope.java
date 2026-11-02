@@ -1,6 +1,7 @@
 package io.kestra.mcp;
 
 import io.kestra.core.models.AccessScope;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 
 /**
  * Reads the {@link AccessScope} an {@link McpToolAccessControl} grants a caller.
@@ -17,8 +18,8 @@ public final class McpToolScope {
         return switch (scope.kind()) {
             case GLOBAL -> true;
             case DENY_ALL -> false;
-            case NAMESPACES -> namespace != null && scope.namespaces().stream()
-                .anyMatch(granted -> namespace.equals(granted) || namespace.startsWith(granted + "."));
+            case NAMESPACES -> scope.namespaces().stream()
+                .anyMatch(granted -> NamespaceInterface.isDescendantOrSelf(granted, namespace));
         };
     }
 

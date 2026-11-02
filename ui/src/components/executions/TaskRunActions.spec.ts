@@ -1,9 +1,19 @@
-import {mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
-import TaskRunActions from "./TaskRunActions.vue"
+import type {State, StateType} from "@kestra-io/kestra-sdk"
+import type {Execution} from "../../stores/executions"
 import {useExecutionsStore} from "../../stores/executions"
+import TaskRunActions from "./TaskRunActions.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+
+function state(current: StateType): State {
+    return {current, histories: []}
+}
+
+function executionProps(id: string): Execution {
+    return {id, flowId: "flow-1", namespace: "ns-1", flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: state("SUCCESS")}
+}
 
 vi.mock("vue-router", () => ({
     useRoute: vi.fn(() => ({
@@ -18,26 +28,14 @@ vi.mock("../../utils/toast", () => ({
     })),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {
-        en: {
-            iteration_number: "iteration_number",
-            delete_log_iteration: "delete_log_iteration",
-        },
-    },
-})
 
 type TaskRunActionsProps = InstanceType<typeof TaskRunActions>["$props"]
 
 function mountActions(propsData: Partial<TaskRunActionsProps>) {
-    return mount(TaskRunActions, {
+    return i18nMount(TaskRunActions, {
+        messages: {iteration_number: "iteration_number", delete_log_iteration: "delete_log_iteration"},
         props: propsData as TaskRunActionsProps,
         global: {
-            plugins: [i18n],
             stubs: {
                 KsDropdown: {
                     template: "<div><slot name=\"dropdown\" /></div>",
@@ -86,14 +84,14 @@ describe("TaskRunActions", () => {
         setActivePinia(createPinia())
     })
 
-    const execution = {id: "ex-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}}
+    const execution = executionProps("ex-1")
 
     it("renders options and resolves labels", () => {
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iteration 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iteration 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: undefined, state: state("SUCCESS")},
             ],
             execution,
         })
@@ -110,10 +108,10 @@ describe("TaskRunActions", () => {
         executionsStore.deleteLogs = vi.fn().mockResolvedValue({})
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution2,
         })
@@ -135,23 +133,29 @@ describe("TaskRunActions", () => {
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution3,
         })
+
+        // The resolved content is handed to a download link, whose click jsdom cannot navigate.
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
 
         const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
         const downloadBtn = wrapper.find("[data-test='task-run-download-logs']")
         await downloadBtn.trigger("click")
+        await flushPromises()
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
+        expect(click).toHaveBeenCalled()
+        click.mockRestore()
     })
 
     const execution4 = {...execution, id: "ex-4"}
@@ -160,10 +164,10 @@ describe("TaskRunActions", () => {
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution4,
         })
@@ -175,7 +179,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-4",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
     })
 
@@ -185,26 +189,26 @@ describe("TaskRunActions", () => {
                 id: "tr-1",
                 taskId: "task-1",
                     value: "Iter 1",
-                    state: {current: "FAILED"},
-                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                    state: state("FAILED"),
+                    attempts: [{state: state("FAILED")}, {state: state("SUCCESS")}],
             },
             taskRuns: [
                 {
                     id: "tr-1",
                     taskId: "task-1",
                     value: "Iter 1",
-                    state: {current: "FAILED"},
-                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                    state: state("FAILED"),
+                    attempts: [{state: state("FAILED")}, {state: state("SUCCESS")}],
                 },
                 {
                     id: "tr-2",
                     taskId: "task-1",
                     value: "Iter 2",
-                    state: {current: "SUCCESS"},
-                    attempts: [{state: {current: "SUCCESS"}}],
+                    state: state("SUCCESS"),
+                    attempts: [{state: state("SUCCESS")}],
                 },
             ],
-            execution: {id: "ex-5", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-5"),
             attemptIndex: 1,
         })
 
@@ -216,9 +220,9 @@ describe("TaskRunActions", () => {
     })
     it("hides selector for single-iteration tasks", () => {
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: undefined, state: state("SUCCESS")},
             ],
             execution,
         })
@@ -228,12 +232,12 @@ describe("TaskRunActions", () => {
 
     it("persists selection across unmount and remount for the same execution", async () => {
         const props = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-store-test", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-store-test"),
         }
 
         let wrapper = mountActions(props)
@@ -251,12 +255,12 @@ describe("TaskRunActions", () => {
 
     it("starts clean for a different execution id", async () => {
         const props1 = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-diff-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-diff-1"),
         }
 
         const wrapper1 = mountActions(props1)
@@ -266,16 +270,45 @@ describe("TaskRunActions", () => {
 
         // Use a new execution id, but same task
         const props2 = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-diff-2", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-diff-2"),
         }
 
         const wrapper2 = mountActions(props2)
         // Defaults to the first task run since it's a clean execution id
         expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
+    })
+
+    it("requests 100 logs when triggering fix with AI", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.loadLogs = vi.fn().mockResolvedValue([])
+
+        const wrapper = mountActions({
+            taskRun: {
+                id: "tr-failed",
+                taskId: "task-failed",
+                state: state("FAILED"),
+                attempts: [{state: state("FAILED")}],
+            },
+            execution: executionProps("ex-failed"),
+        })
+
+        const fixBtn = wrapper.find(".fix-with-ai")
+        expect(fixBtn.exists()).toBe(true)
+        await fixBtn.trigger("click")
+
+        expect(executionsStore.loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "ex-failed",
+            filters: [
+                {field: "taskRunId", operation: "EQUALS", value: "tr-failed"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ],
+            size: 100,
+        })
     })
 })

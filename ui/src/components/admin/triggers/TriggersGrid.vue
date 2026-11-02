@@ -150,7 +150,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .triggers-grid {
         display: flex;
         flex-direction: column;

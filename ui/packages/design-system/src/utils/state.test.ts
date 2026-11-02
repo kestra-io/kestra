@@ -159,6 +159,7 @@ describe("getNonRunningStates", () => {
             "QUEUED",
             "RETRYING",
             "RETRIED",
+            "RESUBMITTED",
         ])
     })
 })

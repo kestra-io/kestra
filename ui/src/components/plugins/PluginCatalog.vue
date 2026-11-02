@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
+                    :placeholder="totalPlugins ? $t('pluginPage.search', {count: totalPlugins}) : $t('search')"
                     clearable
                 />
             </div>
@@ -49,7 +49,6 @@
 
         <KsNoData
             v-if="pluginsList.length === 0"
-            class="my-6"
             :description="$t('pluginPage.noResults')"
         />
 
@@ -67,7 +66,7 @@
                         >
                             <p
                                 v-if="elements.length > 0"
-                                class="mb-0"
+                                class="task-type"
                             >
                                 {{ $t(elementType) }}
                             </p>
@@ -307,7 +306,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -316,11 +315,13 @@
         gap: var(--ks-spacing-3);
         width: 100%;
         padding: var(--ks-spacing-6);
+    }
 
-        &__search {
-            min-width: 17rem;
-        }
+    .filter-toolbar__search {
+        min-width: 17rem;
+    }
 
+    .filter-toolbar {
         .category-tags {
             display: flex;
             flex-wrap: wrap;
@@ -361,10 +362,10 @@
         gap: var(--ks-spacing-4);
         grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
+    }
 
-        &--loading {
-            margin-top: var(--ks-spacing-4);
-        }
+    .plugins-container--loading {
+        margin-top: var(--ks-spacing-4);
     }
 
     .plugin-skeleton {
@@ -378,6 +379,10 @@
         max-height: 20rem;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+
+    .task-type {
+        margin-bottom: 0;
     }
 
     @media (max-width: 650px) {

@@ -28,8 +28,12 @@ describe("logs store downloadLogs", () => {
         setActivePinia(createPinia())
         searchLogs.mockReset()
         downloadUrl.mockReset()
+        vi.spyOn(console, "error").mockImplementation(() => {})
     })
-    afterEach(() => localStorage.clear())
+    afterEach(() => {
+        vi.restoreAllMocks()
+        localStorage.clear()
+    })
 
     it("should page through every page and report the export complete", async () => {
         searchLogs
@@ -55,11 +59,12 @@ describe("logs store downloadLogs", () => {
     })
 
     it("should opt out of the global error toast on a failed page", async () => {
-        searchLogs.mockRejectedValueOnce(new Error("boom"))
+        const error = new Error("boom")
+        searchLogs.mockRejectedValueOnce(error)
 
         await useLogsStore().downloadLogs({})
 
-        expect(searchLogs.mock.calls[0][1]).toEqual({showMessageOnError: false})
+        expect(error).toHaveProperty("__kestra_handled", true)
     })
 
     it("should follow nextCursor under cursor pagination until an empty page", async () => {

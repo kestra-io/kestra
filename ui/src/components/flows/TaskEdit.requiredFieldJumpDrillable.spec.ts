@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from "vitest"
+import {afterAll, describe, it, expect, vi} from "vitest"
 import {createPinia} from "pinia"
 import {computed, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
@@ -66,12 +66,18 @@ vi.mock("../../composables/playground/usePlaygroundRun", () => ({
     }),
 }))
 
+vi.mock("../../composables/useContextSections", async () => {
+    const {ref} = await import("vue")
+    return {useContextSections: () => ({sections: ref([])})}
+})
+
 vi.mock("./TaskEditData.vue", () => ({
     default: {name: "TaskEditData", props: ["kind", "title", "subtitle", "sections", "filterable", "collapsible", "isCollapsed", "side"], template: "<div />"},
 }))
 
 import TaskEdit from "./TaskEdit.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "../no-code/components/tasks/useBlockComponent"
 
 // A second item whose nested `connection` object makes TaskArray render it behind a
 // collapsed KsDrillRow instead of inline (see `shouldDrillItem`), so its `url` field
@@ -138,6 +144,8 @@ function mountTaskEdit() {
         },
     })
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("TaskEdit jump into a collapsed drillable array item", () => {
     it("drills into the item and focuses its unset required field", async () => {

@@ -11,6 +11,7 @@ const THEMES: Record<string, monaco.editor.IStandaloneThemeData> = {
         colors: {
             "minimap.background": "#161822",
             "diffEditor.insertedLineBackground": "#029E734D",
+            "diffEditor.insertedTextBackground": "#00000000",
         },
     },
     light: {
@@ -27,6 +28,7 @@ const THEMES: Record<string, monaco.editor.IStandaloneThemeData> = {
             "editor.selectionBackground": "#E8E5FF",
             "editor.wordHighlightBackground": "#E8E5FF",
             "diffEditor.insertedLineBackground": "#029E734D",
+            "diffEditor.insertedTextBackground": "#00000000",
         },
     },
 }

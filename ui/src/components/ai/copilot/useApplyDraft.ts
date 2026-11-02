@@ -3,17 +3,22 @@ import {useRoute, useRouter} from "vue-router"
 import type {RouteLocationNormalizedLoaded} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox, KsText} from "@kestra-io/design-system"
-import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import {handled, handledIf} from "../../../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
+import {useTestSuiteDraftActions} from "override/components/ai/copilot/testSuiteDraftActions"
 import {useFlowStore} from "../../../stores/flow"
 import {routeFamily} from "../../../utils/routeFamily"
+import {COPILOT_DRAFT_KEY} from "../../../utils/storageKeys"
 import DiffView from "./DiffView.vue"
+import {alertError, confirmApply as confirmApplyDialog, isAlreadyExists, parseArtefactYaml} from "./draftApply"
 import type {ArtefactDraftEvent} from "./types"
+
+export {parseArtefactYaml}
 
 /**
  * True when the given flow is the one currently open in the editor — reused by the editor's live
@@ -26,16 +31,6 @@ export function isViewingFlow(route: RouteLocationNormalizedLoaded, namespace: s
         && String(route.params.id) === id
 }
 
-/** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
-export function parseArtefactYaml(yaml: string): {namespace: string; id: string} {
-    try {
-        const parsed = YAML_UTILS.parse<{namespace?: string; id?: string}>(yaml)
-        return {namespace: parsed?.namespace ?? "", id: parsed?.id ?? ""}
-    } catch {
-        return {namespace: "", id: ""}
-    }
-}
-
 /**
  * Actions for an AI-drafted artefact:
  *   - `openInEditor` — hand the drafted YAML to the matching creation editor to review + save there.
@@ -43,7 +38,8 @@ export function parseArtefactYaml(yaml: string): {namespace: string; id: string}
  *
  * Handles flow and dashboard drafts. Custom dashboards are EE-only: in OSS `dashboards/create`
  * resolves to the Enterprise demo page and the CRUD API is locked, so dashboard drafts only ever
- * occur in EE. Apps are EE-only too; they have no OSS editor/API, so that path is added in `ui-ee`.
+ * occur in EE. Apps and unit tests are EE-only too; they have no OSS editor/API, so those paths are
+ * added in `ui-ee` through the `override/` draft actions.
  */
 export function useApplyDraft() {
     const route = useRoute()
@@ -53,9 +49,11 @@ export function useApplyDraft() {
     /** True while a direct apply is in flight (disables the button). */
     const applying = ref(false)
 
-    // App drafts are EE-only; OSS reports them unsupported (no-op). EE shadows this via `override/`.
+    // App and unit-test drafts are EE-only; OSS reports them unsupported and EE shadows these via `override/`.
     const appActions = useAppDraftActions()
     const appSupported = appActions.supported
+    const testSuiteActions = useTestSuiteDraftActions()
+    const testSuiteSupported = testSuiteActions.supported
 
     // Dashboard drafts are only actionable when the backend can serve custom dashboards
     // (`GET /configs` capability flag, false once custom dashboards are locked in OSS).
@@ -65,11 +63,7 @@ export function useApplyDraft() {
 
     const tenantParam = (): Record<string, string | string[]> => (route.params.tenant ? {tenant: route.params.tenant} : {})
 
-    // Per-request client option (the SDK endpoints' SECOND arg, spread into the request options and
-    // read by the global error interceptor). `showMessageOnError: false` opts this call out of the
-    // global error toast — we handle failures locally: a create that hits "already exists" is an
-    // expected step of the create→update fallback, and any real failure gets our own alert.
-    const silent = {showMessageOnError: false} as Parameters<typeof FlowsAPI.createFlow>[1]
+    const confirmApply = (message: string, title: string): Promise<boolean> => confirmApplyDialog(t, message, title)
 
     /** (A) Open the drafted YAML in the matching creation editor to review + save there. */
     function openInEditor(draft: ArtefactDraftEvent): void {
@@ -77,15 +71,22 @@ export function useApplyDraft() {
             appActions.openInEditor(draft)
             return
         }
+        if (draft.kind === "TEST_SUITE") {
+            testSuiteActions.openInEditor(draft)
+            return
+        }
         if (draft.kind === "DASHBOARD") {
             // The dashboard create editor seeds its source from a `sourceYaml` query (see Create.vue).
             router.push({name: "dashboards/create", query: {sourceYaml: draft.yaml}, params: {...tenantParam()}})
             return
         }
-        // FLOW: reuse the `blueprintSourceYaml` handoff FlowCreate.vue already understands.
+        // FLOW: hand the YAML over through sessionStorage (consumed by FlowCreate.vue) instead of the
+        // URL - a drafted flow is long and vue-router leaves characters such as `|` unencoded, which
+        // makes the server answer a refresh of that URL with a 500 (illegal character in query).
+        sessionStorage.setItem(COPILOT_DRAFT_KEY, draft.yaml)
         router.push({
             name: "flows/create",
-            query: {blueprintId: "copilot-draft", blueprintSourceYaml: draft.yaml},
+            query: {copilotDraft: String(Date.now())},
             params: {...tenantParam()},
         })
     }
@@ -96,6 +97,15 @@ export function useApplyDraft() {
     async function apply(draft: ArtefactDraftEvent): Promise<boolean> {
         if (draft.kind === "DASHBOARD") {
             return applyDashboard(draft)
+        }
+        if (draft.kind === "TEST_SUITE") {
+            // EE owns this path; the flag stays here so the card's Apply button disables while it runs.
+            applying.value = true
+            try {
+                return await testSuiteActions.apply(draft)
+            } finally {
+                applying.value = false
+            }
         }
         return applyFlow(draft)
     }
@@ -126,13 +136,12 @@ export function useApplyDraft() {
             try {
                 await FlowsAPI.createFlow(
                     {body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.createFlow>[0],
-                    silent,
                 )
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
+                handled(e)
                 await FlowsAPI.updateFlow(
                     {namespace, id, body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.updateFlow>[0],
-                    silent,
                 )
             }
             // When the user is already viewing this flow, apply transparently — like a save: refresh
@@ -147,6 +156,7 @@ export function useApplyDraft() {
             }
             return true
         } catch (e) {
+            handled(e)
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
             return false
         } finally {
@@ -190,10 +200,11 @@ export function useApplyDraft() {
             // A brand-new flow (the primary path — nothing persisted yet) 404s here by design; ignore
             // it like the fallback below does, rather than letting the global interceptor raise its own
             // error toast before the confirm dialog even opens.
-            const data = await flowStore.loadFlow({namespace, id, store: false}, {...silent, ignoreNotFound: true})
+            const data = await flowStore.loadFlow({namespace, id, store: false})
             return data?.source ?? ""
-        } catch {
-            return ""
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return ""
+            throw e
         }
     }
 
@@ -212,16 +223,18 @@ export function useApplyDraft() {
         try {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
             /** Raw client because dashboard writes are Enterprise-only routes, absent from the OSS SDK; see the dashboard store. */
-            const yaml = {...silent, headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
+            const yaml = {headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
             try {
                 await useClient().post(`${apiUrl()}/dashboards`, draft.yaml, yaml)
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
+                handled(e)
                 await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
             return true
         } catch (e) {
+            handled(e)
             await alertError(e, t("ai.copilot.draft.applyErrorDashboard"), t("ai.copilot.draft.applyTitleDashboard"))
             return false
         } finally {
@@ -229,23 +242,5 @@ export function useApplyDraft() {
         }
     }
 
-    function confirmApply(message: string, title: string): Promise<boolean> {
-        return KsMessageBox.confirm(message, title, {
-            type: "warning",
-            confirmButtonText: t("ai.copilot.draft.apply"),
-            cancelButtonText: t("cancel"),
-        }).then(() => true).catch(() => false)
-    }
-
-    async function alertError(e: unknown, fallback: string, title: string): Promise<void> {
-        const message = asProblem(e)?.detail ?? (e instanceof Error ? e.message : undefined) ?? fallback
-        await KsMessageBox.alert(message, title, {type: "error"})
-    }
-
-    /** A create failed because the artefact already exists, so update it instead. */
-    function isAlreadyExists(e: unknown): boolean {
-        return isProblemType(e, ProblemTypes.ENTITY_ALREADY_EXISTS)
-    }
-
-    return {applying, appSupported, dashboardSupported, openInEditor, apply}
+    return {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply}
 }

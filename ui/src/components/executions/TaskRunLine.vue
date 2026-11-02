@@ -56,6 +56,14 @@
             </small>
         </div>
 
+        <div v-if="executionsStore.isReusedTaskRun(followedExecution.id, currentTaskRun.id)">
+            <KsTooltip :content="$t('reused_task_run.tooltip', {date: formatAttemptDate(currentTaskRun.state.startDate)})">
+                <KsTag size="small" data-test="task-run-reused">
+                    {{ $t("reused_task_run.label") }}
+                </KsTag>
+            </KsTooltip>
+        </div>
+
         <div class="task-status">
             <KsExecutionStatus
                 size="small"
@@ -126,9 +134,10 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
     import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
-    import type {Execution} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
 
     const pluginsStore = usePluginsStore()
+    const executionsStore = useExecutionsStore()
     const {navigateToStateFilter} = useStateFilter()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
@@ -238,7 +247,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -247,14 +256,14 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        & > * {
             display: flex;
             align-items: center;
         }
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs)
+            font-size: var(--ks-font-size-xs);
         }
 
         .task-duration small {
@@ -288,6 +297,14 @@
         }
     }
 
+    @media (max-width: 767px) {
+        .taskrun-header .task-id {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
+        }
+    }
+
     .attempt-header.attempt-header--flush {
         border-bottom: none;
         padding: 0;
@@ -299,7 +316,7 @@
             width: 115px;
             height: 32px;
 
-            :deep(.kel-select__wrapper) {
+            & :deep(.kel-select__wrapper) {
                 height: 32px;
                 min-height: 32px;
             }

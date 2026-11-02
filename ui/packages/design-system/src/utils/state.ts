@@ -58,6 +58,13 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         isKillable: true,
         isFailed: false,
     },
+    PAUSING: {
+        name: "PAUSING",
+        icon: PauseCircle,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
     KILLING: {
         name: "KILLING",
         icon: CloseCircle,
@@ -128,6 +135,13 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         isKillable: false,
         isFailed: false,
     },
+    RESUBMITTED: {
+        name: "RESUBMITTED",
+        icon: Refresh,
+        isRunning: false,
+        isKillable: false,
+        isFailed: false,
+    },
     BREAKPOINT: {
         name: "BREAKPOINT",
         icon: PauseCircle,
@@ -145,6 +159,7 @@ export const CREATED = "CREATED" as const
 export const RESTARTED = "RESTARTED" as const
 export const SUCCESS = "SUCCESS" as const
 export const RUNNING = "RUNNING" as const
+export const PAUSING = "PAUSING" as const
 export const KILLING = "KILLING" as const
 export const KILLED = "KILLED" as const
 export const FAILED = "FAILED" as const

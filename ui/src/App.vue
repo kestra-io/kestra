@@ -11,6 +11,7 @@
                 <router-view />
             </component>
         </div>
+        <div id="bottom-actions-slot" />
     </div>
     <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
@@ -20,8 +21,9 @@
 </template>
 
 <script lang="ts" setup>
-    import "./styles/vendor.scss"
-    import "./styles/app.scss"
+    import "./styles/vendor.css"
+    import "@kestra-io/design-system/src/assets/styles/index.scss"
+    import "./styles/app.css"
 
     import {ref, computed, watch, onMounted, provide, defineAsyncComponent} from "vue"
     import {useRoute} from "vue-router"
@@ -93,13 +95,17 @@
             return null
         }
 
-        await docStore.initResourceUrlTemplate(config.version)
+        if (config.version) {
+            await docStore.initResourceUrlTemplate(config.version)
 
-        apiStore.loadFeeds({
-            version: config.version,
-            iid: config.uuid,
-            uid: uid,
-        })
+            if (config.uuid) {
+                apiStore.loadFeeds({
+                    version: config.version,
+                    iid: config.uuid,
+                    uid: uid,
+                })
+            }
+        }
 
         void initPosthogIfEnabled(config)
 

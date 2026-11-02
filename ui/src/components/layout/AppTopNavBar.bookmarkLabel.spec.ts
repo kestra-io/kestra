@@ -48,12 +48,12 @@ const starCurrentPage = () => {
 
 describe("AppTopNavBar favourite label", () => {
     beforeEach(() => {
-        localStorage.clear()
+        localStorage.removeItem("starred.bookmarks")
         setActivePinia(createPinia())
     })
 
     afterEach(() => {
-        localStorage.clear()
+        localStorage.removeItem("starred.bookmarks")
     })
 
     it("uses the page provided bookmark label when there is one", () => {

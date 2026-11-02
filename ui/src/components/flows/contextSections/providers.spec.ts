@@ -54,29 +54,11 @@ describe("kvContextSectionProvider", () => {
 
         await kvContextSectionProvider({namespace: "team.a"})
 
-        expect(listAllKeys).toHaveBeenCalledWith(
-            {
-                size: 1000,
-                filters: [{field: "namespace", operation: "EQUALS", value: "team.a"}],
-            },
-            {showMessageOnError: false, ignoreNotFound: true},
-        )
-        expect(listKeysWithInheritence).toHaveBeenCalledWith(
-            {namespace: "team.a"},
-            {showMessageOnError: false, ignoreNotFound: true},
-        )
-    })
-
-    it("never raises the shared error toast — a namespace with no KV store yet must fail silently", async () => {
-        const {kvContextSectionProvider} = await import("./providers")
-        listAllKeys.mockResolvedValue({results: [], total: 0})
-        listKeysWithInheritence.mockResolvedValue([])
-
-        await kvContextSectionProvider({namespace: "team.a"})
-
-        for (const call of [...listAllKeys.mock.calls, ...listKeysWithInheritence.mock.calls]) {
-            expect(call[1]).toMatchObject({showMessageOnError: false})
-        }
+        expect(listAllKeys).toHaveBeenCalledWith({
+            size: 1000,
+            filters: [{field: "namespace", operation: "EQUALS", value: "team.a"}],
+        })
+        expect(listKeysWithInheritence).toHaveBeenCalledWith({namespace: "team.a"})
     })
 
     it("escapes a quote in the key so it cannot break out of the Pebble string literal", async () => {
@@ -127,19 +109,7 @@ describe("secretsContextSectionProvider", () => {
 
         await secretsContextSectionProvider({namespace: "team.a"})
 
-        expect(inheritedSecrets).toHaveBeenCalledWith(
-            {namespace: "team.a"},
-            {showMessageOnError: false, ignoreNotFound: true},
-        )
-    })
-
-    it("never raises the shared error toast — a namespace with no secrets access must fail silently", async () => {
-        const {secretsContextSectionProvider} = await import("./providers")
-        inheritedSecrets.mockResolvedValue({"team.a": []})
-
-        await secretsContextSectionProvider({namespace: "team.a"})
-
-        expect(inheritedSecrets.mock.calls[0][1]).toMatchObject({showMessageOnError: false})
+        expect(inheritedSecrets).toHaveBeenCalledWith({namespace: "team.a"})
     })
 
     it("escapes a quote in the secret name so it cannot break out of the Pebble string literal", async () => {
@@ -175,18 +145,7 @@ describe("namespaceFilesContextSectionProvider", () => {
 
         await namespaceFilesContextSectionProvider({namespace: "team.a"})
 
-        expect(searchNamespaceFiles).toHaveBeenCalledWith(
-            {namespace: "team.a", q: "*"},
-            {showMessageOnError: false, ignoreNotFound: true},
-        )
+        expect(searchNamespaceFiles).toHaveBeenCalledWith({namespace: "team.a", q: "*"})
     })
 
-    it("never raises the shared error toast — a namespace with no files must fail silently", async () => {
-        const {namespaceFilesContextSectionProvider} = await import("./providers")
-        searchNamespaceFiles.mockResolvedValue([])
-
-        await namespaceFilesContextSectionProvider({namespace: "team.a"})
-
-        expect(searchNamespaceFiles.mock.calls[0][1]).toMatchObject({showMessageOnError: false})
-    })
 })

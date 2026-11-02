@@ -47,7 +47,7 @@ const storageKeys = (storage: Storage | undefined) =>
     storage ? Object.keys(storage).sort().join(",") : ""
 
 const snapshot = () => ({
-    globals: new Map(WATCHED_GLOBALS.map((key) => [key, (globalThis as any)[key]])),
+    globals: new Map(WATCHED_GLOBALS.map((key) => [key, globalThis[key]])),
     title: document.title,
     bodyChildren: bodyElements().length,
     teleported: teleportedCount(),

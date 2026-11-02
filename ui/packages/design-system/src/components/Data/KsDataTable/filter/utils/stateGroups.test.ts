@@ -10,9 +10,9 @@ describe("resolveStateGroups", () => {
         const groups = resolveStateGroups(toOptions(ALL_STATES))
         const byKey = Object.fromEntries(groups.map(g => [g.key, g.options.map(o => o.value)]))
 
-        expect(byKey.running).toEqual(["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"])
+        expect(byKey.running).toEqual(["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "PAUSING", "RETRYING"])
         expect(byKey.paused).toEqual(["PAUSED", "BREAKPOINT"])
-        expect(byKey.completed).toEqual(["SUCCESS", "WARNING", "SKIPPED", "RETRIED"])
+        expect(byKey.completed).toEqual(["SUCCESS", "WARNING", "SKIPPED", "RETRIED", "RESUBMITTED"])
         expect(byKey.failed).toEqual(["FAILED", "KILLING", "KILLED", "CANCELLED"])
     })
 

@@ -163,6 +163,7 @@ public class WorkingDirectoryTest {
                 childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
                 childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
             ))
+            .state(new State().withState(State.Type.RUNNING))
             .build();
 
         // When resolving the state now that every subtask has terminated

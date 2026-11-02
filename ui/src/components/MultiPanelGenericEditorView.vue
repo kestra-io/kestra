@@ -5,7 +5,7 @@
                 <KsButton
                     v-if="bottomVisible && slots['bottom-panel']"
                     :icon="splitOrientation === 'vertical' ? ViewSplitVertical : ViewSplitHorizontal"
-                    :tooltip="splitOrientation === 'vertical' ? $t('split_horizontal') : $t('split_vertical')"
+                    :tooltip="splitOrientation === 'vertical' ? $t('move_panel_to_side') : $t('move_panel_to_bottom')"
                     class="orientation-toggle"
                     @click="toggleOrientation"
                 />
@@ -156,7 +156,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .main-editor{
         display: grid;
         grid-template-rows: auto 1fr;
@@ -181,21 +181,21 @@
     }
 
     .default-theme{
-        :deep(.kel-splitter__horizontal > .kel-splitter-bar){
+        & :deep(.kel-splitter__horizontal > .kel-splitter-bar){
             width: 2px !important;
         }
 
-        :deep(.kel-splitter__vertical > .kel-splitter-bar){
+        & :deep(.kel-splitter__vertical > .kel-splitter-bar){
             height: 4px !important;
             width: 100% !important;
             cursor: ns-resize;
         }
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
         }
 
-        :deep(.kel-splitter__splitter){
+        & :deep(.kel-splitter__splitter){
             border-top-color: var(--ks-border-default);
             background-color: var(--ks-bg-surface);
             &:before, &:after{

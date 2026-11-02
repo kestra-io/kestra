@@ -44,8 +44,10 @@ public interface Schedulable extends WorkerTriggerInterface {
     /**
      * Compute the previous evaluation of a trigger.
      * This is used when a trigger misses some schedule to compute the next date to evaluate in the past.
+     *
+     * @return the last scheduled date before now, or empty when no schedule happened before now.
      */
-    ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException;
+    Optional<ZonedDateTime> previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException;
 
     /**
      * Load the default RecoverMissedSchedules from plugin property, or else ALL.

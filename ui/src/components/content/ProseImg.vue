@@ -1,5 +1,5 @@
 <template>
-    <span class="text-center d-block img-block">
+    <span class="img-block">
         <img
             v-bind="$attrs"
             :alt="alt"
@@ -42,7 +42,12 @@
     const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .img-block {
+        display: block;
+        text-align: center;
+    }
+
     img {
         max-width: 100%;
     }

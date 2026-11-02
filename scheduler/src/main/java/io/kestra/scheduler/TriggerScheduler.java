@@ -199,8 +199,8 @@ public class TriggerScheduler {
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
-                } else if (trigger instanceof Schedulable schedulableTrigger) {
-                    // we recompute the Schedule nextExecutionDate if needed
+                } else if (trigger instanceof Schedulable schedulableTrigger && triggerState.getBackfill() == null) {
+                    // A running backfill is left untouched: recomputing the next evaluation date would drop its remaining range.
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
@@ -210,9 +210,11 @@ public class TriggerScheduler {
                         TriggerState currentTriggerState = triggerState;
                         switch (recoverMissedSchedules) {
                             case LAST -> {
-                                ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
+                                Optional<ZonedDateTime> previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
+                                Instant lastKnownDate = Optional.ofNullable(currentTriggerState.getEvaluatedAt())
+                                    .orElse(currentTriggerState.getNextEvaluationDate());
+                                if (previousDate.isPresent() && lastKnownDate != null && previousDate.get().toInstant().isAfter(lastKnownDate)) {
+                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate.get());
                                     triggerStateStore.save(currentTriggerState);
                                 }
                             }

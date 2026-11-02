@@ -1,7 +1,7 @@
 <template>
     <component :is="component" :icon="Server" @click="visible = !visible">
-        <span v-if="component !== 'KsButton'">
-            {{ $t("worker information") }}
+        <span v-if="labeled || component !== 'KsButton'">
+            {{ label ?? $t("worker information") }}
         </span>
 
         <KsDialog
@@ -17,8 +17,8 @@
 
             <template #default>
                 <div class="workers">
-                    <div v-for="(item, index) in taskRun.attempts" :key="item.id">
-                        <KsText v-if="taskRun.attempts.length > 1" tag="p" size="small" type="info" class="attempt">
+                    <div v-for="(item, index) in taskRun.attempts" :key="index">
+                        <KsText v-if="(taskRun.attempts?.length ?? 0) > 1" tag="p" size="small" type="info" class="attempt">
                             {{ $t("attempt") }} {{ index + 1 }}
                         </KsText>
                         <ServiceInfo :serviceId="String(item.workerId)" />
@@ -40,27 +40,25 @@
     import ServiceInfo from "./ServiceInfo.vue"
     import Server from "vue-material-design-icons/Server.vue"
 
-    interface Attempt {
-        id: string | number;
-        workerId: string | number;
-    }
+    import type {TaskRun} from "@kestra-io/kestra-sdk"
 
-    interface TaskRun {
-        id: string | number;
-        attempts: Attempt[];
-    }
-
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         component?: string;
-        taskRun: TaskRun;
-    }>()
+        labeled?: boolean;
+        label?: string;
+        taskRun: Pick<TaskRun, "id" | "attempts">;
+    }>(), {
+        component: undefined,
+        labeled: false,
+        label: undefined,
+    })
 
     const visible = ref(false)
 
     const uuid = computed(() => `workerinfo-${props.taskRun.id}`)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .title {
         font-weight: var(--ks-font-weight-semibold);
     }
@@ -70,7 +68,7 @@
         flex-direction: column;
         gap: var(--ks-spacing-3);
 
-        > div + div {
+        & > div + div {
             border-top: var(--ks-border-block-secondary);
             padding-top: var(--ks-spacing-3);
         }

@@ -20,6 +20,8 @@
             @showOutputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
             @replayTask="emit(EVENTS.REPLAY_TASK, $event)"
             @addError="emit(EVENTS.ADD_ERROR, $event)"
+            @loopStep="emit(EVENTS.LOOP_STEP, $event)"
+            @loopScopeFailed="emit(EVENTS.LOOP_SCOPE_FAILED, $event)"
         >
             <template #lead>
                 <span
@@ -32,6 +34,12 @@
                         <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
                     </KsTooltip>
                 </span>
+            </template>
+            <template #taskActions="taskActionProps">
+                <slot name="taskActions" v-bind="taskActionProps" />
+            </template>
+            <template #loopScope="loopScopeProps">
+                <slot name="loopScope" v-bind="loopScopeProps" />
             </template>
         </LaneHeader>
         <div v-else class="cluster-heading" :style="{height: `${NODE_SIZES.LANE_HEADER_HEIGHT}px`}">
@@ -67,7 +75,11 @@
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsTooltip, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
@@ -108,6 +120,8 @@
         EVENTS.SHOW_OUTPUTS,
         EVENTS.REPLAY_TASK,
         EVENTS.ADD_ERROR,
+        EVENTS.LOOP_STEP,
+        EVENTS.LOOP_SCOPE_FAILED,
     ])
 
     const badgeStyle = computed(() => {
@@ -131,7 +145,7 @@
         return Utils.afterLastDot(props.id ?? "")
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .circle-button {
         pointer-events: auto !important;
     }

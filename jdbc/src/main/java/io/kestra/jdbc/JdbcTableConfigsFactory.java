@@ -2,6 +2,7 @@ package io.kestra.jdbc;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
@@ -18,8 +19,11 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.notification.model.Notification;
+import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.searchable.SearchableOutput;
 import io.kestra.core.server.ServiceInstance;
 
 import io.micronaut.context.annotation.Bean;
@@ -153,6 +157,12 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
+    @Named("checkpoints")
+    public InstantiableJdbcTableConfig checkpoints() {
+        return new InstantiableJdbcTableConfig("checkpoints", Checkpoint.class, "checkpoints");
+    }
+
+    @Bean
     @Named("executionoutputs")
     public InstantiableJdbcTableConfig executionOutputs() {
         return new InstantiableJdbcTableConfig("executionoutputs", ExecutionOutput.class, "execution_outputs");
@@ -180,6 +190,24 @@ public class JdbcTableConfigsFactory {
     @Named("agentmessage")
     public InstantiableJdbcTableConfig agentMessage() {
         return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "ai_agent_message");
+    }
+
+    @Bean
+    @Named("notifications")
+    public InstantiableJdbcTableConfig notifications() {
+        return new InstantiableJdbcTableConfig("notifications", Notification.class, "notifications");
+    }
+
+    @Bean
+    @Named("notification_items")
+    public InstantiableJdbcTableConfig notificationItems() {
+        return new InstantiableJdbcTableConfig("notification_items", NotificationItem.class, "notification_items");
+    }
+
+    @Bean
+    @Named("searchableoutputs")
+    public InstantiableJdbcTableConfig searchableOutputs() {
+        return new InstantiableJdbcTableConfig("searchableoutputs", SearchableOutput.class, "searchable_outputs");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

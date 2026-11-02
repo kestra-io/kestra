@@ -1,5 +1,5 @@
 <template>
-    <div class="w-100">
+    <div class="task-wrapper">
         <LeafBlockCard
             v-if="isSet"
             :block="cardBlock"
@@ -32,6 +32,7 @@
     import LeafBlockCard from "../../blocks/LeafBlockCard.vue"
     import BlockEmptyDrop from "../../blocks/BlockEmptyDrop.vue"
     import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {Schema} from "./getTaskComponent"
     import {useI18n} from "vue-i18n"
 
     const {t} = useI18n()
@@ -63,15 +64,15 @@
         return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/")
     })
 
-    const localSchema = computed(() => getValueAtJsonPath(fullSchema.value,  blockSchemaPath.value))
+    const localSchema = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value as Record<string, unknown>, blockSchemaPath.value))
 
     const fieldTitle = computed(() => {
         const schema = localSchema.value
 
         if(schema?.anyOf && Array.isArray(schema.anyOf)){
-            const titles: string[] = schema.anyOf.map((s: any) => s.allOf?.find((a: any) => a.title)?.title ?? s.title)
+            const titles: (string | undefined)[] = schema.anyOf.map((s: Schema) => s.allOf?.find((a: Schema) => a.title)?.title ?? s.title)
 
-            if(titles.every((title) => title === titles[0])){
+            if(titles.length > 0 && titles[0] && titles.every((title) => title === titles[0])){
                 return titles[0]
             }
         }
@@ -112,3 +113,9 @@
         model.value = undefined
     }
 </script>
+
+<style scoped>
+.task-wrapper {
+    width: 100%;
+}
+</style>

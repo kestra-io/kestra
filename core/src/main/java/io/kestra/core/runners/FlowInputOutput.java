@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
@@ -32,16 +33,19 @@ import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.core.annotation.Nullable;
@@ -50,6 +54,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
@@ -99,11 +104,27 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data) {
+        return validateInputs(inputs, flow, execution, data, false);
+    }
+
+    /** Validates Pause resume values and renders descriptions without exposing decrypted secrets. */
+    public Mono<List<InputAndValue>> validateResumeInputs(final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Publisher<CompletedPart> data) {
+        return validateInputs(inputs, flow, execution, data, true);
+    }
+
+    private Mono<List<InputAndValue>> validateInputs(final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Publisher<CompletedPart> data,
+        final boolean renderDescriptions) {
         if (ListUtils.isEmpty(inputs))
             return Mono.just(Collections.emptyList());
 
         return readData(inputs, execution, data, false)
-            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false));
+            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false, renderDescriptions, false));
     }
 
     /**
@@ -280,7 +301,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true)
+        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
             .stream()
             .filter(InputAndValue::enabled)
             .map(it ->
@@ -330,6 +351,26 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data,
         final boolean decryptSecrets) {
+        return resolveInputs(inputs, flow, execution, data, decryptSecrets, false, false);
+    }
+
+    /** Resolves Pause resume form defaults and descriptions with secrets masked. */
+    public List<InputAndValue> resolveResumeInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data) {
+        return resolveInputs(inputs, flow, execution, data, false, true, false);
+    }
+
+    private List<InputAndValue> resolveInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data,
+        final boolean decryptSecrets,
+        final boolean renderDescriptions,
+        final boolean forExecution) {
         if (inputs == null) {
             return Collections.emptyList();
         }
@@ -344,7 +385,7 @@ public class FlowInputOutput {
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets, renderDescriptions, forExecution));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
     }
@@ -355,7 +396,9 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final @NotNull Execution execution,
         final @NotNull Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets,
+        final boolean renderDescriptions,
+        final boolean forExecution) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved())
@@ -365,8 +408,8 @@ public class FlowInputOutput {
 
         try {
             // Resolve all input dependencies and check whether input is enabled
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets, renderDescriptions, forExecution);
             // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
             final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
             boolean isInputEnabled = dependencies.isEmpty() ||
@@ -392,18 +435,33 @@ public class FlowInputOutput {
 
             // render input (e.g. a SELECT's dynamic `expression` values). A failure here means the field
             // itself can't be rendered, so flag it as a render error so the UI can surface it eagerly.
+            // When creating an execution with a custom value allowed, the list is not needed: the value is accepted as is.
+            boolean skipRendering = forExecution
+                && input instanceof RenderableInput renderable
+                && Boolean.TRUE.equals(renderable.getAllowCustomValue())
+                && resolvable.get().value() != null;
             try {
-                input = RenderableInput.mayRenderInput(input, expression ->
-                {
-                    try {
-                        return runContext.renderTyped(expression);
-                    } catch (IllegalVariableEvaluationException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                });
+                if (!skipRendering) {
+                    input = RenderableInput.mayRenderInput(input, expression ->
+                    {
+                        try {
+                            return runContext.renderTyped(expression);
+                        } catch (IllegalVariableEvaluationException e) {
+                            throw new RuntimeException(e.getMessage(), e);
+                        }
+                    });
+                }
             } catch (Exception e) {
                 resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                 return resolvable.get();
+            }
+            final Supplier<RunContext> nonDecryptingContext = Suppliers.memoize(() -> buildRunContextForExecutionAndInputs(flow, execution, dependencies, false));
+            if (renderDescriptions && input.getDescription() != null && PebbleUtil.containsOpeningBlockDelimiter(input.getDescription())) {
+                try {
+                    input = input.withDescription(nonDecryptingContext.get().render(input.getDescription()));
+                } catch (IllegalVariableEvaluationException ignored) {
+                    // Descriptions can contain literal Pebble examples with unavailable variables.
+                }
             }
             resolvable.setInput(input);
 
@@ -426,7 +484,7 @@ public class FlowInputOutput {
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
-                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
                 } catch (Exception e) {
@@ -444,14 +502,14 @@ public class FlowInputOutput {
                     resolvable.resolveWithValue(null);
                 }
             } else {
-                var parsedInput = parseData(execution, input, value);
                 try {
+                    var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
                     Set<InputOutputValidationException> exceptions = e.getConstraintViolations().stream()
-                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput))
+                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput, pathOf(c, finalInput)))
                         .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
@@ -463,6 +521,23 @@ public class FlowInputOutput {
         }
 
         return resolvable.get();
+    }
+
+    /**
+     * The violation's property path when it points inside the value ({@code id.a[0].b}), null when it is about the
+     * input as a whole. Bean-validation violations on the input's own fields are not value locations, so the path is
+     * only kept when it continues past the id with a {@code .} or a {@code [}.
+     */
+    private static String pathOf(ConstraintViolation<?> violation, Input<?> input) {
+        String path = violation.getPropertyPath().toString();
+        String id = input.getId();
+
+        if (!path.startsWith(id) || path.length() == id.length()) {
+            return null;
+        }
+
+        char next = path.charAt(id.length());
+        return next == '.' || next == '[' ? path : null;
     }
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
@@ -479,6 +554,7 @@ public class FlowInputOutput {
             case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
@@ -496,12 +572,12 @@ public class FlowInputOutput {
 
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.as((Property<T>) input.getDefaults().skipCache(), renderer, clazz);
+        return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
     }
 
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.asList((Property<List<T>>) input.getDefaults().skipCache(), renderer, clazz);
+        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
     }
 
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
@@ -524,7 +600,7 @@ public class FlowInputOutput {
     }
 
     private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets, final boolean renderDescriptions, final boolean forExecution) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -532,7 +608,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets, renderDescriptions, forExecution))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 
@@ -617,7 +693,7 @@ public class FlowInputOutput {
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
             case DURATION -> TypeConverter.toDuration(current);
-            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, TABLE, FORM, REUSABLE_INPUTS -> null;
         });
     }
 
@@ -691,6 +767,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case TABLE -> parseTable(execution, (TableInput) data, current);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
@@ -698,6 +775,74 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
+    }
+
+    private List<Map<String, Object>> parseTable(Execution execution, TableInput table, Object current) throws Exception {
+        List<?> rows = current instanceof List<?> list ? list : JacksonMapper.toList(current.toString());
+
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        List<Map<String, Object>> parsed = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Object value = rows.get(i);
+            if (!(value instanceof Map<?, ?> map)) {
+                violations.add(violation("row " + (i + 1) + ": expected an object", table, table.getId() + "[" + i + "]", value));
+                continue;
+            }
+            parsed.add(parseRecord(execution, table.getColumns(), map, "row " + (i + 1) + ", column ", table.getId() + "[" + i + "]", violations));
+        }
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+        return parsed;
+    }
+
+    /**
+     * Coerces and validates one record against its typed fields, a {@code TABLE} row against the table columns.
+     * Every failing field is reported into {@code violations} with {@code prefix} + the field id in front of the
+     * cause, so a caller can surface all of them at once, and with {@code path} + the field id as its property path
+     * ({@code disks[1].size_gb}), which is where the value sits inside the input.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String prefix, String path, Set<ConstraintViolation<?>> violations) {
+        Map<String, Object> record = new LinkedHashMap<>();
+        Set<String> declared = fields.stream().map(Input::getId).collect(Collectors.toSet());
+        row.keySet().stream()
+            .map(String::valueOf)
+            .filter(key -> !declared.contains(key))
+            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
+        for (Input<?> field : fields) {
+            String label = prefix + "`" + field.getId() + "`";
+            String propertyPath = path + "." + field.getId();
+            Object value = row.get(field.getId());
+            if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
+                value = null;
+            }
+            if (value == null) {
+                if (Boolean.TRUE.equals(field.getRequired())) {
+                    violations.add(violation(label + ": missing required value", field, propertyPath, null));
+                } else {
+                    record.put(field.getId(), null);
+                }
+                continue;
+            }
+            try {
+                Type itemType = field instanceof ItemTypeInterface item ? item.getItemType() : null;
+                Object parsed = parseType(execution, field.getType(), field.getId(), itemType, value, field);
+                ((Input) field).validate(parsed);
+                record.put(field.getId(), parsed);
+            } catch (ConstraintViolationException e) {
+                Object invalid = value;
+                e.getConstraintViolations().forEach(c -> violations.add(violation(label + ": " + c.getMessage(), field, propertyPath, invalid)));
+            } catch (Exception e) {
+                violations.add(violation(label + ": " + e.getMessage(), field, propertyPath, value));
+            }
+        }
+        return record;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static ConstraintViolation<?> violation(String message, Input<?> input, String propertyPath, Object invalidValue) {
+        return ManualConstraintViolation.of(message, (Input) input, Input.class, propertyPath, invalidValue);
     }
 
     private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {

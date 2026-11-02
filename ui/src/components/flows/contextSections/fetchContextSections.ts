@@ -1,4 +1,5 @@
 import {resolveTenant} from "@kestra-io/kestra-sdk/shared"
+import {handled} from "../../../utils/kestraHttp"
 import type {ContextSectionInput, ContextSectionProvider, DataSection, ProviderSection} from "./types"
 
 // Cached per namespace+tenant for the session: a KV key/secret/file added after the editor was opened
@@ -15,6 +16,9 @@ async function safelyRun(provider: ContextSectionProvider, input: ContextSection
     try {
         return {status: "ok", section: await provider(input)}
     } catch (error) {
+        // Best-effort sidebar suggestions: a missing namespace or a transient failure means no chips,
+        // not the shared HTTP client's error toast on top of the task editor.
+        handled(error)
         console.error("Context section provider failed", error)
         return {status: "error"}
     }

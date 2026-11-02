@@ -66,7 +66,6 @@ describe("dashboard store dangling id handling", () => {
         await expect(dashboardStore.load("deleted-dashboard-id")).resolves.toBeUndefined()
         expect(dashboardFn).toHaveBeenCalledWith(
             {id: "deleted-dashboard-id"},
-            expect.objectContaining({showMessageOnError: false}),
         )
     })
 
@@ -80,7 +79,6 @@ describe("dashboard store dangling id handling", () => {
         expect(dashboardChartDataFn).toHaveBeenCalledWith(
             "/api/v1/main/dashboards/deleted-dashboard-id/charts/chart",
             {},
-            expect.objectContaining({showMessageOnError: false}),
         )
     })
 

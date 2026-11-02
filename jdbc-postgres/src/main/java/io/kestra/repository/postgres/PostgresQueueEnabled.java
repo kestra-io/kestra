@@ -7,6 +7,6 @@ import io.micronaut.context.annotation.Requires;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
-@Requires(property = "kestra.queue.type", value = "postgres")
+@Requires(property = "kestra.queue.type", pattern = "(?i)postgres")
 public @interface PostgresQueueEnabled {
 }

@@ -24,6 +24,7 @@
                 :blockSchemaPath
                 @update:model-value="onTaskTypeSelect"
             />
+            <FieldValidationErrors :errors="typeErrors" />
         </KsFormItem>
     </KsForm>
     <div @click="() => onTaskEditorClick(taskModel)">
@@ -57,12 +58,15 @@
     import TaskObjectField from "./tasks/TaskObjectField.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
+    import FieldValidationErrors from "./FieldValidationErrors.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
+    import {Schema} from "./tasks/getTaskComponent"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
-        FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
+        FIELDNAME_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
@@ -109,7 +113,7 @@
     const pluginDefaultsForType = computed<Record<string, unknown>>(() => {
         const type = selectedTaskType.value || taskModel.value?.type
         if (!type) return {}
-        let parsed: any
+        let parsed: {pluginDefaults?: Array<{type?: string; values?: Record<string, unknown>}>} | undefined
         try {
             parsed = YAML_UTILS.parse(fullSource.value)
         } catch {
@@ -127,6 +131,9 @@
     })
     provide(PLUGIN_DEFAULTS_INJECTION_KEY, pluginDefaultsForType)
 
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+    const typeErrors = computed<string[]>(() => navStack.value.length ? [] : validationErrors?.value.get("type") ?? [])
+
     const rootLabel = computed(() =>
         taskModel.value?.id
         || selectedTaskType.value?.split(".").pop()
@@ -138,7 +145,7 @@
         set: (value) => {
             if (!navCurrent.value) return
             const next = cloneDeep(toRaw(taskModel.value) ?? {})
-            setPath(next as Record<string, any>, navCurrent.value.path, value)
+            setPath(next as Record<string, unknown>, navCurrent.value.path, value)
             onTaskInput(next)
         },
     })
@@ -161,7 +168,7 @@
         return parentPath !== "inputs"
     })
 
-    const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
+    const schemaAtBlockPath = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
     const isTaskDefinitionBasedOnType = computed(() => {
         const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined
         if (!firstAnyOf) return false
@@ -169,9 +176,9 @@
             return firstAnyOf?.properties?.type !== undefined
         }
         if(Array.isArray(firstAnyOf.allOf)){
-            return firstAnyOf.allOf.some((item: any) => {
-                return resolve$ref(fullSchema.value, item)
-                    .properties?.type !== undefined
+            return firstAnyOf.allOf.some((item) => {
+                const resolved = resolve$ref(fullSchema.value, item) as Schema | undefined
+                return resolved?.properties?.type !== undefined
             })
         }
         return true
@@ -189,7 +196,7 @@
     }, {immediate: true})
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<{
-        definitions: Record<string, any>,
+        definitions: Record<string, unknown>,
         $ref: string,
     }>({
         definitions: {},
@@ -230,13 +237,13 @@
         }
     })
 
-    const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
+    const fieldDefinition = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
 
     const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
-            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
+            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: { $ref?: string }) => {
                 if (item.$ref) {
-                    const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref)
+                    const resolvedItem = getValueAtJsonPath<Schema | undefined>(fullSchema.value, item.$ref)
                     if (resolvedItem?.allOf) {
                         let type = "", refValue
                         for (const subItem of resolvedItem.allOf) {
@@ -260,8 +267,9 @@
 
                     if(typeField.enum){
                         for(const typeAsEnum of typeField.enum){
-                            acc[typeAsEnum] = acc[typeAsEnum] || []
-                            acc[typeAsEnum].push(removeRefPrefix(item.$ref))
+                            const key = String(typeAsEnum)
+                            acc[key] = acc[key] || []
+                            acc[key].push(removeRefPrefix(item.$ref))
                         }
                     }
 
@@ -282,7 +290,7 @@
         return {}
     })
 
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, Schema>>({}))
 
     const resolvedTypes = computed<string[]>(() => {
         return typeMap.value[selectedTaskType.value ?? ""] || []
@@ -296,8 +304,8 @@
         const types = new Set<string>()
         for(const s of resolvedSchemas.value){
             const dataResolved = s?.properties?.data?.$ref
-                ? getValueAtJsonPath(fullSchema.value, s.properties.data.$ref)
-                : s?.properties?.data
+                ? getValueAtJsonPath<Schema | undefined>(fullSchema.value, s.properties.data.$ref)
+                : s?.properties?.data as Schema | undefined
             const typeConst = dataResolved?.properties?.type?.const
             if(typeConst){
                 types.add(typeConst)
@@ -335,8 +343,8 @@
                 for(const typeLocal of resolvedTypes.value){
                     const schema = definitions.value?.[typeLocal]
                     const dataResolved = schema.properties?.data?.$ref
-                        ? getValueAtJsonPath(fullSchema.value, schema.properties?.data.$ref)
-                        : schema.properties?.data
+                        ? getValueAtJsonPath<Schema | undefined>(fullSchema.value, schema.properties?.data.$ref)
+                        : schema.properties?.data as Schema | undefined
                     const typeConst = dataResolved?.properties?.type?.const
                     if(typeConst === dataType){
                         return typeLocal
@@ -355,8 +363,8 @@
     const REQUIRED_FIELDS = ["id", "data"]
 
     const schema = computed(() => {
-        const localSchema = resolvedLocalSchema.value
-        if(isTaskDefinitionBasedOnType.value){
+        const localSchema = resolvedLocalSchema.value as Schema | undefined
+        if(isTaskDefinitionBasedOnType.value && localSchema){
             localSchema.required = localSchema.required ?? []
             for(const field of REQUIRED_FIELDS){
                 if(!localSchema.required.includes(field) && resolvedProperties.value?.[field]){
@@ -367,30 +375,35 @@
         return localSchema
     })
 
-    const resolvedLocalSchema = computed(() => {
+    const resolvedLocalSchema = computed<Schema | Schemas | undefined>(() => {
         return versionedSchema.value ?? (isTaskDefinitionBasedOnType.value
             ? definitions.value?.[resolvedType.value] ?? {}
             : schemaAtBlockPath.value)
     })
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
-        if (resolvedLocalSchema.value?.properties) {
-            return resolvedLocalSchema.value.properties
+        if ((resolvedLocalSchema.value as Schema | undefined)?.properties) {
+            return (resolvedLocalSchema.value as Schema).properties
         }
 
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value
 
-            const commonProps = Object.keys(schemas[0].properties).filter((key) => {
-                return schemas.every((s) => s.properties[key] !== undefined)
+            const firstSchemaProps = schemas[0]?.properties
+            if (!firstSchemaProps || schemas.some((s) => !s?.properties)) {
+                return undefined
+            }
+
+            const commonProps = Object.keys(firstSchemaProps).filter((key) => {
+                return schemas.every((s) => s?.properties?.[key] !== undefined)
             }).reduce((acc, key) => {
                 if (schemas.every((s) => {
-                    return isDeepEqual(schemas[0].properties[key], s.properties[key])
+                    return isDeepEqual(firstSchemaProps[key], s?.properties?.[key])
                 })) {
-                    acc[key] = schemas[0].properties[key]
+                    acc[key] = firstSchemaProps[key]
                 }
                 return acc
-            }, {} as Record<string, any>)
+            }, {} as Record<string, Schema>)
 
             if(dataTypes.value.length > 1){
                 commonProps["data"] = {
@@ -452,7 +465,10 @@
         }
     })
 
-    const requiredFieldsSchema = computed(() => ({...schema.value, properties: schema.value?.properties ?? properties.value}))
+    const requiredFieldsSchema = computed(() => ({
+        ...schema.value,
+        properties: (schema.value as Schema | undefined)?.properties ?? properties.value,
+    }))
 
     const unsetRequiredFields = computed(() =>
         countUnsetRequiredFields(taskModel.value, requiredFieldsSchema.value, definitions.value),
@@ -481,7 +497,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .type-div {
         display: flex;
         text-transform: lowercase;

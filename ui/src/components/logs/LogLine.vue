@@ -5,6 +5,9 @@
         :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
+        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
+            <MenuRight />
+        </KsIcon>
         <span
             class="log-level"
             :class="{'log-level--clickable': clickableLevel}"
@@ -15,12 +18,7 @@
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
-        >
-            <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
-                <MenuRight />
-            </KsIcon>
-            {{ levelLabel }}
-        </span>
+        >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
                 <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
@@ -229,7 +227,6 @@ div.line {
         background: var(--ks-bg-hover);
     }
 
-    // Selected rows are excluded so the severity tint does not cover the selection background.
     &.log-row-error:not(.selected) {
         background: color-mix(in srgb, var(--ks-log-error) 6%, transparent);
     }
@@ -251,7 +248,6 @@ div.line {
     }
 
     .log-level {
-        position: relative;
         flex: none;
         width: 3.5rem;
         padding-top: 1px;

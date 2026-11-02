@@ -1,10 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {reactive} from "vue"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 
 const route = reactive<{params: Record<string, string>}>({
     params: {namespace: "company.team", flowId: "demo_breadcrumb_fix", id: "exec-1"},
 })
+
+// Hoisted: the store factory below hands this spy to every consumer of the store, so the
+// expectations below can read the calls the composable made.
+const {followExecution} = vi.hoisted(() => ({followExecution: vi.fn()}))
 
 vi.mock("vue-router", () => ({
     useRoute: () => route,
@@ -30,7 +34,7 @@ vi.mock("../../../stores/executions", () => ({
         logs: [],
         resetLogs: vi.fn(),
         closeSSE: vi.fn(),
-        followExecution: vi.fn(),
+        followExecution,
     }),
 }))
 
@@ -39,7 +43,8 @@ vi.mock("../executionTabs", () => ({
     EXECUTION_TAB_ROUTES: [],
 }))
 
-import {useFlowStore} from "../../../stores/flow"
+import {useFlowStore, type Flow} from "../../../stores/flow"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {useExecutionRoot} from "./useExecutionRoot"
 
 function mountExecutionRoot() {
@@ -61,8 +66,8 @@ describe("useExecutionRoot unmount cleanup", () => {
     })
 
     it("clears the flow store when navigating away from any flow", () => {
-        flowStore.flow = {namespace: "company.team", id: "some-other-flow"} as any
-        flowStore.flowGraph = {} as any
+        flowStore.flow = {namespace: "company.team", id: "some-other-flow"} as Flow
+        flowStore.flowGraph = {nodes: [], edges: [], clusters: []} as FlowGraph
 
         const wrapper = mountExecutionRoot()
         route.params = {}
@@ -73,8 +78,8 @@ describe("useExecutionRoot unmount cleanup", () => {
     })
 
     it("keeps the flow store when navigating to that flow's edit page (breadcrumb, #10722)", () => {
-        flowStore.flow = {namespace: "company.team", id: "demo_breadcrumb_fix"} as any
-        flowStore.flowGraph = {some: "graph"} as any
+        flowStore.flow = {namespace: "company.team", id: "demo_breadcrumb_fix"} as Flow
+        flowStore.flowGraph = {nodes: [{uid: "n1", type: "task"}], edges: [], clusters: []} as FlowGraph
 
         const wrapper = mountExecutionRoot()
 
@@ -84,6 +89,37 @@ describe("useExecutionRoot unmount cleanup", () => {
         wrapper.unmount()
 
         expect(flowStore.flow).toEqual({namespace: "company.team", id: "demo_breadcrumb_fix"})
-        expect(flowStore.flowGraph).toEqual({some: "graph"})
+        expect(flowStore.flowGraph).toEqual({nodes: [{uid: "n1", type: "task"}], edges: [], clusters: []})
+    })
+})
+
+describe("useExecutionRoot follow", () => {
+    beforeEach(() => {
+        route.params = {namespace: "company.team", flowId: "demo_breadcrumb_fix", id: "exec-1"}
+        followExecution.mockClear()
+    })
+
+    // The store follows one execution, identified by its id alone: namespace and flowId describe
+    // the flow, so forwarding them would subscribe to nothing.
+    it("follows the execution the route points at, by id", () => {
+        const wrapper = mountExecutionRoot()
+
+        expect(followExecution).toHaveBeenCalledWith({id: "exec-1"}, expect.any(Function))
+
+        wrapper.unmount()
+    })
+
+    it("follows the execution the route moves to", async () => {
+        const wrapper = mountExecutionRoot()
+        // Let the mount hook finish before moving the route: it records the id it followed after
+        // its first await, which would otherwise land once the watcher has already run.
+        await flushPromises()
+
+        route.params = {namespace: "company.team", flowId: "demo_breadcrumb_fix", id: "exec-2"}
+        await flushPromises()
+
+        expect(followExecution).toHaveBeenLastCalledWith({id: "exec-2"}, expect.any(Function))
+
+        wrapper.unmount()
     })
 })

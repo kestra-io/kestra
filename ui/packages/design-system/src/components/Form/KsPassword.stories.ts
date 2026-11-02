@@ -26,10 +26,11 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px;width:400px\"><ks-password v-model=\"value\" v-bind=\"args\" /></div>",
     }),
-    args: {placeholder: "Enter secret value..."},
+    args: {placeholder: "Enter secret value...", disabled: false},
 }
 
 export const WithValue: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPassword},
         setup() {
@@ -40,6 +41,7 @@ export const WithValue: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPassword},
         setup() {
@@ -50,6 +52,7 @@ export const Disabled: Story = {
 }
 
 export const MultilineValue: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsPassword},
         setup() {

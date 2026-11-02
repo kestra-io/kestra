@@ -3,14 +3,19 @@ import {describe, expect, test} from "vitest"
 import {
     Comparators,
     isLeafGroup,
+    type AppliedFilter,
     type FilterConfiguration,
     type FilterKeyConfig,
 } from "./filterTypes"
 import {
+    buildNewFilter,
+    createAppliedFilter,
     createCustomRangeFilter,
     createDefaultVisibleFilters,
     createTimeRangeFilter,
     defaultVisibleValueLabel,
+    isDateRangeValue,
+    processFieldValue,
     resolveDefaultVisibleValue,
 } from "./filterChipFactory"
 import {parseEncodedGroups} from "./routeDecoder"
@@ -405,5 +410,249 @@ describe("default visible filters", () => {
         expect(defaultVisibleValueLabel(dateRange)).toBe(
             `${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
         )
+    })
+})
+
+describe("createAppliedFilter", () => {
+    const statusConfig: FilterKeyConfig = {
+        key: "status",
+        label: "Status",
+        comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+    }
+
+    test("produces a filter carrying the field, comparator and value it was given", () => {
+        const filter = createAppliedFilter(
+            "status",
+            statusConfig,
+            Comparators.EQUALS,
+            "SUCCESS",
+            "SUCCESS",
+            "equals",
+        )
+
+        expect(filter).toMatchObject({
+            key: "status",
+            keyLabel: "Status",
+            comparator: Comparators.EQUALS,
+            comparatorLabel: "Equals",
+            value: "SUCCESS",
+            valueLabel: "SUCCESS",
+        })
+        expect(filter.id).toMatch(/^status-equals-\d+-[a-z0-9]+$/)
+    })
+
+    test("handles empty or undefined values without throwing", () => {
+        expect(() =>
+            createAppliedFilter("status", undefined, Comparators.EQUALS, "", "", "empty"),
+        ).not.toThrow()
+
+        const emptyFilter = createAppliedFilter("status", undefined, Comparators.EQUALS, "", "", "empty")
+        expect(emptyFilter).toMatchObject({
+            key: "status",
+            value: "",
+            valueLabel: "",
+        })
+
+        const undefFilter = createAppliedFilter("status", undefined, Comparators.EQUALS, undefined, "", "undef")
+        expect(undefFilter).toMatchObject({
+            key: "status",
+            value: undefined,
+            valueLabel: "",
+        })
+    })
+
+    test("falls back to the raw key when config is undefined", () => {
+        const filter = createAppliedFilter(
+            "customField",
+            undefined,
+            Comparators.EQUALS,
+            "val",
+            "val",
+            "test",
+        )
+
+        expect(filter.keyLabel).toBe("customField")
+        expect(filter.comparatorLabel).toBe("Equals")
+    })
+
+    test("uses custom keyLabelProvider and comparatorLabels when provided", () => {
+        const customConfig: FilterKeyConfig = {
+            key: "labels",
+            label: "Labels",
+            comparators: [Comparators.EQUALS],
+            comparatorLabels: {
+                [Comparators.EQUALS]: "exactly equals",
+            },
+            keyLabelProvider: (meta) => `Label (${meta?.scope ?? "default"})`,
+        }
+
+        const filter = createAppliedFilter(
+            "labels",
+            customConfig,
+            Comparators.EQUALS,
+            "team:core",
+            "team:core",
+            "custom",
+            {scope: "system"},
+        )
+
+        expect(filter.keyLabel).toBe("Label (system)")
+        expect(filter.comparatorLabel).toBe("exactly equals")
+        expect(filter.meta).toEqual({scope: "system"})
+    })
+})
+
+describe("buildNewFilter", () => {
+    test("seeds a blank filter with the documented defaults", () => {
+        const config: FilterKeyConfig = {
+            key: "state",
+            label: "Execution state",
+            comparators: [Comparators.IN, Comparators.NOT_IN],
+        }
+
+        const filter = buildNewFilter(config)
+
+        expect(filter).not.toBeNull()
+        expect(filter).toMatchObject({
+            key: "state",
+            keyLabel: "Execution state",
+            comparator: Comparators.IN,
+            comparatorLabel: "In",
+            value: [],
+            valueLabel: "",
+        })
+        expect(filter?.id).toMatch(/^state-\d+-[a-z0-9]+$/)
+    })
+
+    test("returns null when the key config has no comparators", () => {
+        const noComparatorsConfig: FilterKeyConfig = {
+            key: "readonlyField",
+            label: "Readonly",
+            comparators: [],
+        }
+
+        expect(buildNewFilter(noComparatorsConfig)).toBeNull()
+    })
+})
+
+describe("processFieldValue", () => {
+    const textConfig: FilterKeyConfig = {
+        key: "namespace",
+        label: "Namespace",
+        comparators: [Comparators.EQUALS, Comparators.CONTAINS],
+    }
+
+    const multiSelectConfig: FilterKeyConfig = {
+        key: "state",
+        label: "State",
+        valueType: "multi-select",
+        comparators: [Comparators.IN, Comparators.NOT_IN],
+    }
+
+    const keyValueConfig: FilterKeyConfig = {
+        key: "labels",
+        label: "Labels",
+        valueType: "key-value",
+        comparators: [Comparators.IN, Comparators.NOT_IN],
+    }
+
+    test("normalises a single value and an array of values the same way for scalar fields", () => {
+        const fromScalar = processFieldValue(textConfig, [{value: "prod"}], Comparators.EQUALS)
+        const fromArray = processFieldValue(textConfig, [{value: ["prod"]}], Comparators.EQUALS)
+
+        expect(fromScalar).toEqual({value: "prod", valueLabel: "prod"})
+        expect(fromArray).toEqual({value: "prod", valueLabel: "prod"})
+    })
+
+    test("normalises a single comma-separated string and an array the same way for multi-select fields", () => {
+        const fromString = processFieldValue(multiSelectConfig, [{value: "SUCCESS,FAILED"}], Comparators.IN)
+        const fromArray = processFieldValue(multiSelectConfig, [{value: ["SUCCESS", "FAILED"]}], Comparators.IN)
+
+        expect(fromString).toEqual({
+            value: ["SUCCESS", "FAILED"],
+            valueLabel: "SUCCESS, FAILED",
+        })
+        expect(fromArray).toEqual({
+            value: ["SUCCESS", "FAILED"],
+            valueLabel: "SUCCESS, FAILED",
+        })
+    })
+
+    test("normalises a single value and an array of values the same way for key-value fields", () => {
+        const fromScalar = processFieldValue(keyValueConfig, [{value: "env:prod"}], Comparators.IN)
+        const fromArray = processFieldValue(keyValueConfig, [{value: ["env:prod"]}], Comparators.IN)
+
+        expect(fromScalar).toEqual({
+            value: ["env:prod"],
+            valueLabel: "env:prod",
+        })
+        expect(fromArray).toEqual({
+            value: ["env:prod"],
+            valueLabel: "env:prod",
+        })
+    })
+
+    test("handles empty or undefined inputs without throwing", () => {
+        expect(() => processFieldValue(textConfig, [], Comparators.EQUALS)).not.toThrow()
+        expect(() => processFieldValue(multiSelectConfig, [], Comparators.IN)).not.toThrow()
+        expect(() => processFieldValue(keyValueConfig, [], Comparators.IN)).not.toThrow()
+
+        const emptyMulti = processFieldValue(multiSelectConfig, [], Comparators.IN)
+        expect(emptyMulti).toEqual({value: [], valueLabel: ""})
+
+        const emptyKV = processFieldValue(keyValueConfig, [], Comparators.IN)
+        expect(emptyKV).toEqual({value: [], valueLabel: ""})
+
+        const emptyScalar = processFieldValue(textConfig, [{value: ""}], Comparators.EQUALS)
+        expect(emptyScalar).toEqual({value: "", valueLabel: ""})
+    })
+
+    test("normalizes date and relative duration values", () => {
+        const dateConfig: FilterKeyConfig = {
+            key: "created",
+            label: "Created",
+            valueType: "date",
+            comparators: [Comparators.GREATER_THAN],
+        }
+
+        const dateResult = processFieldValue(
+            dateConfig,
+            [{value: "2026-08-01T00:00:00.000Z"}],
+            Comparators.GREATER_THAN,
+        )
+        expect(dateResult.value).toBeInstanceOf(Date)
+
+        const timeRangeConfig: FilterKeyConfig = {
+            key: "timeRange",
+            label: "Interval",
+            valueType: "time-range",
+            comparators: [Comparators.EQUALS],
+        }
+
+        const relativeResult = processFieldValue(
+            timeRangeConfig,
+            [{value: "P7D"}],
+            Comparators.EQUALS,
+        )
+        expect(relativeResult).toEqual({value: "PT168H", valueLabel: "PT168H"})
+    })
+})
+
+describe("isDateRangeValue", () => {
+    test("is true for a range object with startDate and endDate", () => {
+        const range = {
+            startDate: new Date("2026-01-01T00:00:00Z"),
+            endDate: new Date("2026-01-02T00:00:00Z"),
+        }
+        expect(isDateRangeValue(range)).toBe(true)
+    })
+
+    test.each<[string, AppliedFilter["value"]]>([
+        ["an empty string", ""],
+        ["a plain string", "2026-01-01"],
+        ["a Date instance", new Date("2026-01-01T00:00:00Z")],
+        ["an array", ["2026-01-01", "2026-01-02"]],
+    ])("is false for %s", (_, value) => {
+        expect(isDateRangeValue(value)).toBe(false)
     })
 })

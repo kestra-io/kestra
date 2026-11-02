@@ -22,7 +22,7 @@ const meta: Meta<typeof KsFileTag> = {
 export default meta
 type Story = StoryObj<typeof KsFileTag>
 
-const render = (args: Record<string, unknown>) => ({
+const render: Story["render"] = (args) => ({
     components: {KsFileTag},
     setup() { return {args} },
     template: "<div style=\"padding:24px\"><ks-file-tag v-bind=\"args\" /></div>",
@@ -40,7 +40,7 @@ export const NamedByKey: Story = {
 
 export const NameFromUri: Story = {
     render,
-    args: {uri: "kestra:///company/team/6Yd2A/outputs/quarterly-report.csv"},
+    args: {uri: "kestra:///company/team/6Yd2A/outputs/quarterly-report.csv", name: ""},
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
         await waitFor(() => expect(within(canvasElement).getByText("quarterly-report.csv")).toBeTruthy())
     },
@@ -74,6 +74,7 @@ export const ExtensionSymbols: Story = {
                 <ks-file-tag v-for="uri in uris" :key="uri" :uri="uri" />
             </div>`,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const LongName: Story = {

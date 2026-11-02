@@ -147,6 +147,7 @@ public class DashboardController {
     protected FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 
@@ -179,6 +180,7 @@ public class DashboardController {
         if (chart == null) {
             return null;
         }
+        modelValidator.validate(chart);
         var pageNumber = globalFilter.getPageNumber();
         var pageSize = globalFilter.getPageSize();
         var pageable = pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null;
@@ -218,6 +220,7 @@ public class DashboardController {
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters = globalFilter != null ? globalFilter.getFilters() : null;
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 

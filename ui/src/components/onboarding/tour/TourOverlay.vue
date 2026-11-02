@@ -708,7 +708,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour-overlay {
         position: fixed;
         inset: 0;
@@ -736,7 +736,7 @@
         left: calc(var(--menu-width) + var(--ks-spacing-4));
     }
 
-    // Same list as SELECTABLE_TEXT in the script above.
+    /* Same list as SELECTABLE_TEXT in the script above. */
     .guide-title,
     .guide-body,
     .guide-plan,
@@ -872,7 +872,7 @@
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, var(--ks-white) 30%);
     }
 
-    // Position is set every frame; a transition would make the ring trail behind its target.
+    /* Position is set every frame; a transition would make the ring trail behind its target. */
     .tour-scrim {
         position: fixed;
         inset: 0;

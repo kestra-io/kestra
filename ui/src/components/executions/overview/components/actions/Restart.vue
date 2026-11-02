@@ -47,7 +47,7 @@
         :appendToBody="true"
     >
         <template #header>
-            <div class="modal-header m-0">
+            <div class="modal-header">
                 <h3 class="modal-title">
                     {{ $t("restart execution title") }}
                 </h3>
@@ -55,17 +55,23 @@
             </div>
         </template>
 
-        <div class="p-3 pt-0">
-            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
+        <div class="modal-body">
+            <i18n-t keypath="restart confirm" tag="p" scope="global">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
             <KsAlert
                 v-if="parentLink"
                 type="warning"
                 :closable="false"
                 showIcon
-                class="mt-3"
+                class="modal-alert"
                 data-test="restart-subflow-warning"
             >
-                {{ parentWarning[0] }}<router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>{{ parentWarning[1] }}
+                <i18n-t keypath="restart subflow warning" tag="span" scope="global">
+                    <template #parent>
+                        <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
+                    </template>
+                </i18n-t>
             </KsAlert>
         </div>
 
@@ -87,7 +93,7 @@
         scrollable
     >
         <template #header>
-            <div class="modal-header m-0">
+            <div class="modal-header">
                 <h3 class="modal-title">
                     {{ $t("replay execution title") }}
                 </h3>
@@ -95,8 +101,8 @@
             </div>
         </template>
 
-        <div class="p-3 pt-0">
-            <p class="mb-0">
+        <div class="modal-body">
+            <p>
                 {{ $t("replay execution description") }}
             </p>
             <KsId :value="execution.id" :shrink="false" />
@@ -119,7 +125,7 @@
 
             <KsForm
                 v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
-                class="mt-2"
+                class="revision-form"
             >
                 <KsFormItem>
                     <KsSelect v-model="revisionsSelected">
@@ -138,7 +144,7 @@
                 type="info"
                 :closable="false"
                 showIcon
-                class="mt-3"
+                class="modal-alert"
                 data-test="replay-check-checking"
                 :title="$t('replayCheck.checking', checkParams)"
             />
@@ -147,7 +153,7 @@
                 type="warning"
                 :closable="false"
                 showIcon
-                class="mt-3"
+                class="modal-alert"
                 data-test="replay-check-error"
                 :title="$t('replayCheck.error_title', checkParams)"
                 :description="$t('replayCheck.error_description')"
@@ -157,7 +163,7 @@
                 type="success"
                 :closable="false"
                 showIcon
-                class="mt-3"
+                class="modal-alert"
                 data-test="replay-check-valid"
                 :title="$t('replayCheck.valid_title', checkParams)"
                 :description="$t('replayCheck.valid_description')"
@@ -168,7 +174,7 @@
                     type="info"
                     :closable="false"
                     showIcon
-                    class="mt-3"
+                    class="modal-alert"
                     data-test="replay-check-whole"
                     :title="$t('replayCheck.whole_title', checkParams)"
                     :description="$t('replayCheck.whole_description', checkParams)"
@@ -178,12 +184,12 @@
                     type="error"
                     :closable="false"
                     showIcon
-                    class="mt-3"
+                    class="modal-alert"
                     data-test="replay-check-refused"
                     :title="$t('replayCheck.refused_title', checkParams)"
                     :description="replayCheck.detail || $t('replayCheck.refused_description')"
                 />
-                <KsButton v-if="!replayWhole" class="mt-2" data-test="replay-whole-instead" @click="replayWhole = true">
+                <KsButton v-if="!replayWhole" class="replay-whole-btn" data-test="replay-whole-instead" @click="replayWhole = true">
                     {{ $t("replayCheck.whole_action") }}
                 </KsButton>
             </template>
@@ -203,7 +209,7 @@
                         </KsRadio>
                     </KsRadioGroup>
                 </template>
-                <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
+                <p v-if="!canReuseInputs" class="execution-description">
                     {{ $t("replay inputs new required") }}
                 </p>
             </template>
@@ -227,12 +233,10 @@
         scrollable
     >
         <template #header>
-            <span
-                v-html="$t('replay the execution', {
-                    executionId: escapeHtml(execution.id),
-                    flowId: escapeHtml(execution.flowId)
-                })"
-            />
+            <i18n-t keypath="replay the execution" tag="span" scope="global">
+                <template #executionId><code>{{ execution.id }}</code></template>
+                <template #flowId><code>{{ execution.flowId }}</code></template>
+            </i18n-t>
         </template>
 
         <ReplayWithInputs
@@ -249,11 +253,11 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
-    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {asProblem, type FlowForExecution} from "@kestra-io/kestra-sdk"
     import {handled} from "../../../../../utils/kestraHttp"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
@@ -264,7 +268,6 @@
     import {KsId} from "@kestra-io/design-system"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"
-    import {splitTranslation} from "../../../../../utils/splitTranslation"
 
     defineOptions({inheritAttrs: false})
 
@@ -298,7 +301,7 @@
     const inputMode = ref<"reuse" | "modify">("reuse")
 
     const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
-    const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
+    const componentClass = computed(() => !props.isReplay ? "restart" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
 
     const parentLink = computed(() => {
@@ -315,9 +318,8 @@
             },
         }
     })
-    const parentWarning = computed(() => splitTranslation(t, "restart subflow warning", "parent"))
 
-    const currentFlow = ref<any | undefined>(undefined)
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -470,12 +472,13 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: replayTaskRun.value?.id,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({executionId: props.execution.id})
 
         const newExecution = response
 
@@ -552,14 +555,18 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-restart-tooltip--no-pointer {
-        pointer-events: none;
-    }
-</style>
+<style scoped>
+:global(.ks-restart-tooltip--no-pointer) {
+    pointer-events: none;
+}
 
-<style scoped lang="scss">
+.restart {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
 .modal-header {
+    margin: 0;
+
     .modal-title {
         font-size: var(--ks-font-size-base);
         font-weight: 600;
@@ -567,9 +574,33 @@
         color: var(--ks-text-primary);
     }
 }
+
+.modal-body {
+    padding: var(--ks-spacing-4);
+    padding-top: 0;
+
+    p {
+        margin-bottom: 0;
+    }
+}
+
+.modal-alert {
+    margin-top: var(--ks-spacing-4);
+}
+
+.revision-form {
+    margin-top: var(--ks-spacing-2);
+}
+
+.replay-whole-btn {
+    margin-top: var(--ks-spacing-2);
+}
+
 .execution-description {
     font-size: var(--ks-font-size-xs);
     color: var(--ks-text-secondary);
+    margin-top: var(--ks-spacing-2);
+    margin-bottom: 0;
 }
 
 .section-title {
@@ -590,7 +621,7 @@
 }
 
 .radio-item {
-    :deep(.kel-radio__input) {
+    & :deep(.kel-radio__input) {
         .kel-radio__inner {
             width: 18px;
             height: 18px;
@@ -603,7 +634,7 @@
         }
     }
 
-    :deep(.kel-radio__label) {
+    & :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         padding-left: 8px;
@@ -611,7 +642,7 @@
 
 
     &.is-checked {
-        :deep(.kel-radio__input) {
+        & :deep(.kel-radio__input) {
             .kel-radio__inner {
                 border-color: var(--ks-btn-primary-bg-default);
                 background-color: var(--ks-btn-primary-bg-default);
@@ -622,7 +653,7 @@
             }
         }
 
-        :deep(.kel-radio__label) {
+        & :deep(.kel-radio__label) {
             color: var(--ks-text-primary) !important;
         }
     }

@@ -31,7 +31,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .switch-container {
     display: flex;
     align-items: center;
@@ -46,7 +46,7 @@
     position: relative;
     width: 100%;
 
-    input[type="checkbox"] {
+    & input[type="checkbox"] {
         opacity: 0;
         position: absolute;
         z-index: -1;

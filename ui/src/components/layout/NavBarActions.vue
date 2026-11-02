@@ -7,7 +7,13 @@
         for the key without invoking the slot) and would freeze at its first-render value for a
         caller that gates the `<template #secondary>` declaration itself.
     -->
-    <template v-if="$slots.secondary">
+    <template v-if="isMobile">
+        <NavBarActionsDropdown v-if="overflowCount + secondaryCount > 0">
+            <slot />
+            <slot name="secondary" />
+        </NavBarActionsDropdown>
+    </template>
+    <template v-else-if="$slots.secondary">
         <NavBarActionsDropdown v-if="overflowCount > 0">
             <slot />
         </NavBarActionsDropdown>
@@ -24,11 +30,13 @@
 
 <script setup lang="ts">
     import {Comment, Fragment, Text, computed, useSlots, type VNode} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import NavBarActionsDropdown from "./NavBarActionsDropdown.vue"
 
     const MAX_INLINE_ACTIONS = 1
 
     const slots = useSlots()
+    const isMobile = useIsMobile()
 
     const flatten = (nodes: VNode[]): VNode[] =>
         nodes.flatMap((node) => {
@@ -42,4 +50,5 @@
         })
 
     const overflowCount = computed(() => flatten(slots.default?.() ?? []).length)
+    const secondaryCount = computed(() => flatten(slots.secondary?.() ?? []).length)
 </script>

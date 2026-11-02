@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter, 'ks-data-table-wrapper--cards': mobileColumns}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -17,7 +17,7 @@
                 <slot name="table" />
             </div>
 
-            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter, 'ks-data-table-content--cards': mobileColumns, 'ks-data-table-content--leading': mobileColumns?.leading}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                 <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                     <KsBulkSelect
                         :selectAll="queryBulkAction"
@@ -42,6 +42,7 @@
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
                     :rowClassName="composedRowClassName"
+                    :cellStyle="composedCellStyle"
                     :emptyText="noDataText"
                     @selection-change="selectionChanged"
                     @select="onSelect"
@@ -74,20 +75,21 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="my-3"
+                class="pagination"
             />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
+    import {MOBILE_COLUMNS_KEY, mobileColumnOrder, type KsDataTableMobileColumns} from "./mobileColumns"
     import KsNoData from "../KsNoData.vue"
     import KsButton from "../../Basic/KsButton/KsButton.vue"
     import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
@@ -120,6 +122,7 @@
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
+        mobileColumns?: KsDataTableMobileColumns
     }>(), {
         data: () => [],
         total: 0,
@@ -142,6 +145,7 @@
         noFirstColumnGutter: false,
         tableLayout: "auto",
         fitHeight: false,
+        mobileColumns: undefined,
     })
 
     export interface SortItem {
@@ -175,6 +179,8 @@
         "select-actions"?(): unknown
     }>()
 
+    provide(MOBILE_COLUMNS_KEY, computed(() => props.mobileColumns))
+
     const slots = useSlots()
     const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
@@ -188,6 +194,20 @@
         const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    type CellStyleArg = {column: {property?: string; columnKey?: string}}
+    type CellStyle = Record<string, string | number> | undefined
+
+    const composedCellStyle = computed(() => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as ((arg: CellStyleArg) => CellStyle) | CellStyle
+        const columns = props.mobileColumns
+        if (!columns) return userStyle
+        return (arg: CellStyleArg) => {
+            const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
+            const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
+            return order === undefined ? own : {...own, "--ks-mobile-order": order}
+        }
     })
 
     const composedRowClassName = computed(() => {
@@ -492,9 +512,10 @@
     })
 </script>
 
-<style lang="scss">
-    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
-    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+<style>
+    /* Registered rather than declared on the wrapper: a plain declaration there would shadow a value */
+    /* an ancestor sets, which is the opposite of the override hook this is meant to be. */
+
     @property --ks-data-table-navbar-padding-block-start {
         syntax: "<length>";
         inherits: true;
@@ -509,7 +530,7 @@
         gap: var(--ks-spacing-2);
         text-align: center;
 
-        strong {
+        & strong {
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             font-weight: var(--ks-font-weight-bold);
@@ -528,20 +549,20 @@
         display: flex;
         flex-direction: column;
 
-        > .ks-data-table-navbar,
-        .ks-data-table-top {
+        & > .ks-data-table-navbar,
+        & .ks-data-table-top {
             padding-inline: var(--ks-data-table-gutter);
         }
 
-        > .ks-data-table-navbar {
+        & > .ks-data-table-navbar {
             padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
-        .kel-pagination {
+        & .kel-pagination {
             display: flex;
             padding-inline: var(--ks-data-table-gutter);
 
-            .kel-pagination__sizes {
+            & .kel-pagination__sizes {
                 display: flex;
                 flex: 1;
             }
@@ -552,14 +573,14 @@
         }
 
         &.no-gutter {
-            > .ks-data-table-navbar,
-            .ks-data-table-top,
-            .kel-pagination {
+            & > .ks-data-table-navbar,
+            & .ks-data-table-top,
+            & .kel-pagination {
                 padding-inline: 0;
             }
         }
 
-        .kel-checkbox__inner {
+        & .kel-checkbox__inner {
             width: 16px;
             height: 16px;
             border-radius: 4.8px;
@@ -567,7 +588,7 @@
             border: 0.8px solid var(--ks-border-strong);
         }
 
-        .kel-scrollbar__view {
+        & .kel-scrollbar__view {
             height: 100%;
         }
     }
@@ -576,38 +597,47 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+    }
 
-        &--fit {
+    .ks-data-table-body--fit {
+        min-height: 0;
+
+        & .ks-data-table-content {
+            flex: 1 1 0;
             min-height: 0;
+            overflow: hidden;
+        }
 
-            .ks-data-table-content {
-                flex: 1 1 0;
-                min-height: 0;
-                overflow: hidden;
+        & .ks-data-table-content--slot {
+            overflow: auto;
+        }
 
-                &--slot {
-                    overflow: auto;
-                }
-            }
-
-            .kel-pagination {
-                margin-top: auto;
-            }
+        & .kel-pagination {
+            margin-top: auto;
         }
     }
 
     .ks-data-table-content {
         position: relative;
-        height:100%;
+        height: 100%;
 
-        &.no-selection-gutter {
-            .kel-table th.kel-table__cell:first-child > .cell,
-            .kel-table td.kel-table__cell:first-child > .cell {
+        &.no-selection-gutter:not(.ks-data-table-content--cards) {
+            & .kel-table th.kel-table__cell:first-child > .cell,
+            & .kel-table td.kel-table__cell:first-child > .cell {
                 padding-left: var(--ks-spacing-5);
             }
         }
 
-        .bulk-select-header {
+        @media (min-width: 768px) {
+            &.no-selection-gutter.ks-data-table-content--cards {
+                & .kel-table th.kel-table__cell:first-child > .cell,
+                & .kel-table td.kel-table__cell:first-child > .cell {
+                    padding-left: var(--ks-spacing-5);
+                }
+            }
+        }
+
+        & .bulk-select-header {
             z-index: 1;
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
@@ -621,7 +651,7 @@
             }
         }
 
-        .kel-table__empty-text {
+        & .kel-table__empty-text {
             @media (max-width: 500px) {
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -629,16 +659,159 @@
             }
         }
 
-        // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
-        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
-        // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
-        .kel-table__empty-block {
+        /* element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own */
+        /* height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any */
+        /* empty-state layout). Subtract the header height we already track for the bulk-select overlay above. */
+
+        & .kel-table__empty-block {
             height: calc(100% - var(--table-header-height, 0px)) !important;
         }
 
-        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+        & .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
         }
     }
+
+    @media (max-width: 767px) {
+        .ks-data-table-wrapper--cards {
+            --ks-data-table-gutter: var(--ks-spacing-4);
+        }
+
+        .ks-data-table-content--leading {
+            --ks-data-table-leading-offset: calc(var(--ks-data-table-leading-width) + var(--ks-spacing-2));
+        }
+
+        .ks-data-table-content--cards {
+            --ks-data-table-leading-width: 0.625rem;
+
+            & .kel-table {
+                --kel-table-bg-color: transparent;
+                --kel-table-tr-bg-color: transparent;
+            }
+
+            & .kel-table__header-wrapper,
+            & .kel-table__body colgroup,
+            & .kel-table__body thead {
+                display: none;
+            }
+
+            & .kel-scrollbar__view {
+                max-width: 100%;
+            }
+
+            & .kel-table__body,
+            & .kel-table__body tbody {
+                display: block;
+                max-width: 100%;
+            }
+
+            & .kel-table__row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: var(--ks-spacing-2);
+                margin: 0 var(--ks-data-table-gutter) var(--ks-spacing-2);
+                padding: var(--ks-spacing-3);
+                background: var(--ks-bg-surface);
+                border: 1px solid var(--ks-border-default);
+                border-radius: var(--ks-radius-base);
+
+                &::after {
+                    content: "";
+                    order: 4;
+                    flex-basis: 100%;
+                    height: 0;
+                }
+            }
+
+            & .kel-table__cell {
+                min-width: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+
+                & > .cell {
+                    padding: 0;
+                    line-height: var(--ks-line-height-base);
+                    word-break: normal;
+                    overflow-wrap: anywhere;
+                }
+            }
+
+            & .ks-mobile-hidden {
+                display: none;
+            }
+
+            & .ks-mobile-leading {
+                order: 1;
+                flex: none;
+                width: var(--ks-data-table-leading-width);
+            }
+
+            & .ks-mobile-title {
+                order: 2;
+                flex: 1 1 0;
+                color: var(--ks-text-primary);
+
+                & > .cell,
+                & .ks-entity-link {
+                    font-weight: var(--ks-font-weight-bold);
+                }
+            }
+
+            & .ks-mobile-actions {
+                order: 3;
+            }
+
+            & .ks-mobile-title-aside {
+                order: 3;
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta,
+            & .ks-mobile-meta-aside {
+                margin-top: var(--ks-spacing-1);
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta {
+                order: calc(10 + var(--ks-mobile-order, 0));
+            }
+
+            & .ks-mobile-meta-first {
+                margin-inline-start: var(--ks-data-table-leading-offset, 0);
+            }
+
+            & .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
+                content: "·";
+                margin-inline-end: var(--ks-spacing-2);
+            }
+
+            & .ks-mobile-meta-aside {
+                order: 20;
+                margin-left: auto;
+            }
+
+            & .kel-table__cell .ks-entity-link {
+                padding: 0;
+                background: transparent;
+                color: inherit;
+                font-weight: inherit;
+
+                & .ks-entity-link__icon {
+                    display: none;
+                }
+            }
+        }
+    }
 </style>
+
+<style scoped>
+    .ks-data-table-wrapper :deep(.pagination) {
+        margin-block: var(--ks-spacing-4);
+    }
+</style>
+

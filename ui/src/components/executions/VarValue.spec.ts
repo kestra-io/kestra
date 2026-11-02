@@ -80,6 +80,12 @@ function editorContent(wrapper: ReturnType<typeof mountVarValue>) {
 }
 
 describe("VarValue", () => {
+    it("should render an empty string as quoted text so the cell is not blank", () => {
+        const wrapper = mountVarValue("")
+
+        expect(wrapper.text()).toContain(Utils.EMPTY_STRING_DISPLAY)
+    })
+
     it("should hand the whole value to the editor when it is small", () => {
         const value = {playbooks: {plays: [{name: "all", tasks: ["a", "b"]}]}}
 

@@ -52,8 +52,8 @@ import lombok.experimental.SuperBuilder;
                         - 'exit 1'
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         ),
         @Example(

@@ -12,6 +12,7 @@ import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
+import io.kestra.executor.testkit.Results;
 import io.kestra.executor.testkit.ScriptedWorker;
 import io.kestra.executor.testkit.Trace;
 
@@ -65,6 +66,33 @@ class FlowTriggerWaitForAllRetriesTest {
 
         // Then
         assertThat(triggered).filteredOn("patient-listener"::equals).hasSize(1);
+    }
+
+    @Test
+    void shouldFireTriggerWaitingForAllRetriesOnceFlowTaskRetriesAreExhausted() {
+        // Given
+        FlowWithSource retryingUpstream = Flows.yaml("""
+            id: upstream
+            namespace: io.kestra.tests
+            retry:
+              behavior: RETRY_FAILED_TASK
+              type: constant
+              interval: PT1S
+              maxAttempts: 2
+            tasks:
+              - id: fail
+                type: io.kestra.plugin.core.log.Log
+                message: fail
+            """);
+        harness.registerFlow(retryingUpstream);
+        harness.registerFlow(eagerListener);
+        harness.registerFlow(patientListener);
+
+        // When
+        Trace trace = harness.run(Executions.created(retryingUpstream), task -> Results.failedAttempts(task, 2, T0));
+
+        // Then
+        assertThat(triggeredFlowIds(trace)).containsExactlyInAnyOrder("eager-listener", "patient-listener");
     }
 
     @Test

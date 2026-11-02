@@ -1,7 +1,7 @@
-import axios from "axios"
 import {defineStore} from "pinia"
 import {computed, ref} from "vue"
 import {API_URL} from "./api"
+import {publicFetch, publicFetchJson} from "../utils/publicApi"
 
 const PATH_PLACEHOLDER = "{path}"
 
@@ -76,23 +76,22 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value(prefix)
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get<Record<string, DocMetadata>>(url + "/children")
-        return response.data
+        return publicFetchJson<Record<string, DocMetadata>>(url + "/children")
     }
 
     async function fetchResource(path: string): Promise<FetchResourceResponse> {
         const url = resourceUrl.value(path)
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get<string>(url)
+        const response = await publicFetch(url)
 
-        const metadataHeader = response.headers["x-kestra-metadata"]
-        const metadata = typeof metadataHeader === "string"
+        const metadataHeader = response.headers.get("x-kestra-metadata")
+        const metadata = metadataHeader !== null
             ? JSON.parse(metadataHeader) as DocMetadata
             : undefined
 
         return {
-            content: response.data,
+            content: await response.text(),
             metadata,
         }
     }
@@ -101,17 +100,19 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value()
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get<string>(`${url}/doc/${id}`)
+        const response = await publicFetch(`${url}/doc/${id}`)
 
-        const metadataHeader = response.headers["x-kestra-metadata"]
-        const metadata = typeof metadataHeader === "string"
+        const metadataHeader = response.headers.get("x-kestra-metadata")
+        const metadata = metadataHeader !== null
             ? JSON.parse(metadataHeader) as DocMetadata
             : undefined
 
-        docPath.value = metadata?.parsedUrl
+        if (id === docId.value) {
+            docPath.value = metadata?.parsedUrl
+        }
 
         return {
-            content: response.data,
+            content: await response.text(),
             metadata,
         }
     }
@@ -121,8 +122,8 @@ export const useDocStore = defineStore("doc", () => {
             const url = resourceUrl.value(undefined, "search")
             if (!url) throw new Error("Resource URL template not initialized")
 
-            const response = await axios.get<{results: Array<{url: string; title: string; highlights?: string[]}>}>(url, {params: {q, type: "DOCS"}})
-            return response.data.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
+            const response = await publicFetchJson<{results: Array<{url: string; title: string; highlights?: string[]}>}>(url, {params: {q, type: "DOCS"}})
+            return response.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
                 parsedUrl: itemUrl,
                 title,
                 preview: sanitizePreview(highlights?.[0] ?? ""),
@@ -132,8 +133,7 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value()
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get<SearchResult[]>(`${url}/search`, {params: {q}})
-        return response.data
+        return publicFetchJson<SearchResult[]>(`${url}/search`, {params: {q}})
     }
 
     function initResourceUrlTemplate(version: string) {

@@ -21,6 +21,7 @@ import namespaceFiles from "../../../assets/empty_visuals/namespaceFiles.png"
 import pluginDefaults from "../../../assets/empty_visuals/pluginDefaults.png"
 import promote from "../../../assets/empty_visuals/promote.png"
 import quotas from "../../../assets/empty_visuals/quotas.png"
+import reusableInputs from "../../../assets/empty_visuals/reusableInputs.png"
 import secrets from "../../../assets/empty_visuals/secrets.png"
 import tenants from "../../../assets/empty_visuals/tenants.png"
 import testSuite from "../../../assets/empty_visuals/testSuite.png"
@@ -57,6 +58,7 @@ export const images: Record<string, string> = {
     policies: pluginDefaults,
     promote,
     quotas,
+    reusableInputs,
     secrets,
     tenants,
     tests,

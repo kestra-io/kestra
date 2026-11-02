@@ -547,6 +547,36 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldNotDeleteRemainingSiblingWhenDeleteIsRepeated() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/delete-retry-check/a.txt"), new ByteArrayInputStream("a".getBytes()));
+        namespaceStorage.putFile(Path.of("/delete-retry-check/b.txt"), new ByteArrayInputStream("b".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/delete-retry-check/a.txt", null));
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/a.txt"))).isFalse();
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/b.txt"))).isTrue();
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/delete-retry-check/a.txt", null));
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/b.txt"))).isTrue();
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check"))).isTrue();
+    }
+
+    @Test
+    void shouldDeleteEmptiedFolderWhenAnotherNamespaceHasAFolderWithTheSamePath() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        Namespace otherNamespaceStorage = namespaceFactory.of(TENANT_ID, TestsUtils.randomNamespace());
+        namespaceStorage.putFile(Path.of("/shared-folder/a.txt"), new ByteArrayInputStream("a".getBytes()));
+        otherNamespaceStorage.putFile(Path.of("/shared-folder/b.txt"), new ByteArrayInputStream("b".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/shared-folder/a.txt", null));
+
+        assertThat(namespaceStorage.exists(Path.of("/shared-folder"))).isFalse();
+        assertThat(otherNamespaceStorage.exists(Path.of("/shared-folder/b.txt"))).isTrue();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldNotCollideSpaceAndPlusInFileName() throws IOException {
         // Given: two distinct filenames — one with a space, one with a literal '+'

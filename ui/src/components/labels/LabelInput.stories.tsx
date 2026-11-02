@@ -1,6 +1,6 @@
 import LabelInput from "./LabelInput.vue";
 import {ref} from "vue";
-import {Meta, StoryFn} from "@storybook/vue3";
+import {Meta, StoryFn} from "@storybook/vue3-vite";
 import {within, userEvent, expect, waitFor} from "storybook/test";
 
 export default {

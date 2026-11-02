@@ -3,11 +3,11 @@
         <template #content>
             <code>{{ value }}</code>
         </template>
-        <code :id="uid" @click="emit('click')" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}">
+        <code :id="uid" @click="emit('click')" class="ks-id" :class="{'ks-id--clickable': hasClickListener}">
             {{ transformValue }}
         </code>
     </KsTooltip>
-    <code v-else :id="uid" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
+    <code v-else :id="uid" class="ks-id" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
         {{ transformValue }}
     </code>
 </template>
@@ -57,9 +57,14 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    code.ks-id {
+        white-space: nowrap;
+    }
+
     code.ks-id--clickable {
         cursor: pointer;
+
         &:hover {
             text-decoration: underline;
         }

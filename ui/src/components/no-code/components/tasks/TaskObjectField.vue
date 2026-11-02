@@ -1,21 +1,25 @@
 <template>
-    <component
-        v-if="simpleType === 'list' || simpleType === 'plugin-implementation'"
-        ref="taskComponent"
-        :is="type"
-        v-bind="componentProps"
-        :disabled
-        class="mt-1 mb-2 wrapper"
-    />
-    <component
-        v-else-if="frameRoot"
-        ref="taskComponent"
-        :is="type"
-        v-bind="componentProps"
-        :bare="true"
-        :disabled
-        class="wrapper"
-    />
+    <template v-if="simpleType === 'list' || simpleType === 'plugin-implementation'">
+        <component
+            ref="taskComponent"
+            :is="type"
+            v-bind="componentProps"
+            :disabled
+            class="mt-1 mb-2 wrapper"
+        />
+        <FieldValidationErrors :errors="fieldErrors" />
+    </template>
+    <template v-else-if="frameRoot">
+        <component
+            ref="taskComponent"
+            :is="type"
+            v-bind="componentProps"
+            :bare="true"
+            :disabled
+            class="wrapper"
+        />
+        <FieldValidationErrors :errors="fieldErrors" />
+    </template>
     <div v-else-if="isNestedObject" class="nested-card">
         <div class="nested-card-head">
             <span class="nested-card-label">{{ fieldKey }}</span>
@@ -49,6 +53,7 @@
                 class="field-help"
                 :content="inlineHelpText"
             />
+            <FieldValidationErrors :errors="fieldErrors" />
         </div>
     </div>
     <KsFormItem
@@ -134,42 +139,43 @@
             class="field-help"
             :content="inlineHelpText"
         />
-        <span
-            v-if="isMissingRequired"
-            class="required-missing"
-            data-test="field-required-missing"
-        >
-            <AlertCircleOutline class="required-missing-icon" />
-            {{ $t("block_editor.required_missing") }}
-        </span>
+        <FieldValidationErrors :errors="fieldErrors" />
+        <FieldValidationErrors
+            v-if="isMissingRequired && !fieldErrors.length"
+            :errors="[$t('block_editor.required_missing')]"
+            dataTest="field-required-missing"
+        />
     </KsFormItem>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
     import Help from "vue-material-design-icons/Information.vue"
-    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
+    import FieldValidationErrors from "../FieldValidationErrors.vue"
+    import {errorsOnFieldOrItems} from "../../../../utils/validationErrors"
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
+    import type {Schema} from "./getTaskComponent"
+    import type {FieldValue} from "../../utils/types"
 
-    const modelValue = defineModel<any>()
+    const modelValue = defineModel<FieldValue>()
 
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema: Schema;
         root?: string;
         fieldKey: string;
-        task: any;
+        task?: Record<string, unknown>;
         required?: string[];
         disabled?: boolean;
         siblingKeys?: string[];
         rootOverride?: string;
         frameRoot?: boolean;
-    }>(), {frameRoot: false})
+    }>(), {task: undefined, frameRoot: false})
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
@@ -191,13 +197,16 @@
 
     const pebbleState = ref(false)
 
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+    const fieldErrors = computed<string[]>(() => validationErrors ? errorsOnFieldOrItems(validationErrors.value, fieldPath.value) : [])
+
     const componentProps = computed(() => {
         return {
             modelValue: modelValue.value,
-            "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
+            "onUpdate:modelValue": (value: FieldValue) => {
                 modelValue.value = value
             },
-            "onUpdate:selectedSchema": (value: any) => {
+            "onUpdate:selectedSchema": (value: string | undefined) => {
                 hasSelectedASchema.value = value !== undefined
             },
             pebble: pebbleState.value,
@@ -249,9 +258,11 @@
     )
 
     const {getBlockComponent} = useBlockComponent()
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
 
     const type = computed(() => {
-        return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
+        return blockComponentOverride?.(props.fieldKey, props.task)
+            ?? getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
 
@@ -277,7 +288,7 @@
     const isObjectAnyOf = computed(() => {
         const anyOf = props.schema?.anyOf
         if (!Array.isArray(anyOf) || anyOf.length === 0) return false
-        return anyOf.every((s: any) => s.$ref || s.allOf || s.type === "object")
+        return anyOf.every((s) => s.$ref || s.allOf || s.type === "object")
     })
 
     const isNestedObject = computed(() =>
@@ -287,30 +298,16 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-form-item {
     width: 100%;
 
-    > :deep(.kel-form-item__label) {
+    & > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;
         padding: 0;
     }
-}
-
-.required-missing {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    margin-top: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-error);
-}
-
-.required-missing-icon {
-    display: inline-flex;
-    font-size: var(--ks-font-size-sm);
 }
 
 .field-help {

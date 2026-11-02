@@ -541,6 +541,8 @@
     "refresh": "Aktualisieren",
     "filter by status": "Executions nach Status {status} filtern",
     "topology-graph": {
+      "retried": "Dieser Task wurde wiederholt",
+      "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
       "graph-orientation": "Graph-Ausrichtung",
       "zoom-in": "Vergrößern",
       "zoom-out": "Verkleinern",
@@ -669,6 +671,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variablen",
+    "task_run_popup": {
+      "open": "Task-Details",
+      "count_error": "Anzahl konnte nicht geladen werden",
+      "load_error": "Diese Ansicht konnte nicht geladen werden.",
+      "retry": "Wiederholen",
+      "child_runs_capped": "Es werden nur die Logs der ersten {count} untergeordneten Task Runs angezeigt.",
+      "no_artifacts": "Diese Task stellt kein Artifact bereit.",
+      "task_source": "Task-Quelle",
+      "worker_info": "Worker-Info"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Kein Task dieses Flows stellt ein Artifact bereit.",
@@ -679,6 +691,7 @@
       "exit_fullscreen": "Vollbild verlassen"
     },
     "variable_explorer": {
+      "task_outputs": "Task-Outputs",
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",

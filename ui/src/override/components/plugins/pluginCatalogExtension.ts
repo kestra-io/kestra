@@ -1,6 +1,8 @@
 import {markRaw, type Component} from "vue"
 import PluginManagementActions from "../../../components/plugins/PluginManagementActions.vue"
 import PluginVersionsLocked from "../../../components/plugins/PluginVersionsLocked.vue"
+import PluginVersioningUpsell from "../../../components/plugins/PluginVersioningUpsell.vue"
+import PluginIncludedStatus from "../../../components/plugins/PluginIncludedStatus.vue"
 import type {Plugin} from "../../../utils/pluginUtils"
 
 export interface PluginCatalogExtension {
@@ -20,6 +22,10 @@ export interface PluginCatalogExtension {
     matches?: (plugin: Plugin) => boolean;
     /** Rendered on each catalog card above its footer; receives the artifact entry as `plugin`. */
     cardStatus?: Component;
+    /** Replaces the catalog's empty-state copy; `filtered` is true while a search or a category filter is active. */
+    emptyCopy?: (filtered: boolean) => {title: string, description: string} | undefined;
+    /** Called by "Show all plugins", after the search and the category filters are cleared. */
+    reset?: () => void;
     /** Rendered in the Overview column of an artifact page, below its versions; receives the artifact entry as `plugin`. */
     versions?: Component;
     /** Called once when the catalog mounts. */
@@ -29,6 +35,8 @@ export interface PluginCatalogExtension {
 export function usePluginCatalogExtension(): PluginCatalogExtension {
     return {
         pageActions: markRaw(PluginManagementActions),
+        banner: markRaw(PluginVersioningUpsell),
+        cardStatus: markRaw(PluginIncludedStatus),
         versions: markRaw(PluginVersionsLocked),
     }
 }

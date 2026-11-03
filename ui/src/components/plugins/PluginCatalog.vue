@@ -5,9 +5,16 @@
         </template>
     </TopNavBar>
 
-    <KsAlert v-if="loadError" type="error">
-        {{ $t("pluginPage.loadError") }}
-    </KsAlert>
+    <div v-if="loadError" class="plugins-load-error">
+        <KsAlert type="error" :closable="false" :title="$t('pluginPage.loadErrorTitle')" data-test="plugins-load-error">
+            {{ $t("pluginPage.loadErrorDescription") }}
+            <div class="plugins-load-error-action">
+                <KsButton size="small" :icon="Refresh" @click="loadPlugins">
+                    {{ $t("retry") }}
+                </KsButton>
+            </div>
+        </KsAlert>
+    </div>
 
     <section v-else-if="!filteredPlugins" class="plugins-container plugins-container--loading">
         <KsSkeleton v-for="n in 8" :key="n" animated :rows="4" class="plugin-skeleton" />
@@ -64,10 +71,14 @@
             :categories="selectedCategories"
         />
 
-        <KsNoData
-            v-else-if="pluginsList.length === 0"
-            :description="$t('pluginPage.noResults')"
-        />
+        <div v-else-if="pluginsList.length === 0" class="plugins-empty" data-test="plugins-empty">
+            <KsNoData :title="emptyCopy.title">
+                {{ emptyCopy.description }}
+            </KsNoData>
+            <KsButton data-test="plugins-show-all" @click="showAllPlugins">
+                {{ $t("pluginPage.showAll") }}
+            </KsButton>
+        </div>
 
         <section v-else class="plugins-container">
             <KsTooltip
@@ -122,7 +133,7 @@
     import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
@@ -133,6 +144,7 @@
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
+    import Refresh from "vue-material-design-icons/Refresh.vue"
     import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
     import CloudOutline from "vue-material-design-icons/CloudOutline.vue"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
@@ -252,6 +264,27 @@
             .sort(comparators[sortBy.value])
     })
 
+    const isFiltered = computed(() => searchInput.value !== "" || selectedCategories.value.length > 0)
+
+    const emptyCopy = computed(() => catalogExtension.emptyCopy?.(isFiltered.value) ?? {
+        title: t("pluginPage.empty.title"),
+        description: t("pluginPage.empty.description"),
+    })
+
+    const showAllPlugins = () => {
+        searchText.value = ""
+        selectedCategories.value = []
+        catalogExtension.reset?.()
+    }
+
+    const loadPlugins = () => {
+        loadError.value = false
+        pluginsStore.ensurePlugins().catch((err) => {
+            console.error("Failed to load plugins", err)
+            loadError.value = true
+        })
+    }
+
     const loadPluginIcons = async () => {
         try {
             await pluginsStore.ensureGroupIcons()
@@ -306,16 +339,29 @@
         loadPluginIcons()
         pluginsStore.fetchIcons()
         miscStore.loadConfigs()
-        pluginsStore.ensurePlugins().catch((err) => {
-            console.error("Failed to load plugins", err)
-            loadError.value = true
-        })
+        loadPlugins()
         enrichmentStore.fetchEnrichment()
         catalogExtension.load?.()
     })
 </script>
 
 <style scoped>
+    .plugins-load-error {
+        padding: var(--ks-spacing-6);
+    }
+
+    .plugins-load-error-action {
+        margin-top: var(--ks-spacing-2);
+    }
+
+    .plugins-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-6);
+    }
+
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;

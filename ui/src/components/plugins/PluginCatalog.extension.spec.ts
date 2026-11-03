@@ -7,7 +7,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import type {Plugin} from "../../utils/pluginUtils"
 import "../../utils/global"
 
-const {showTable} = vi.hoisted(() => ({showTable: {value: true}}))
+const {showTable, scoped, reset} = vi.hoisted(() => ({showTable: {value: true}, scoped: {value: false}, reset: vi.fn()}))
 
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")
 
@@ -23,6 +23,12 @@ vi.mock("override/components/plugins/pluginCatalogExtension", async () => {
             toolbar: markRaw(PluginList("toolbar")),
             table: markRaw(PluginList("table")),
             showTable: () => showTable.value,
+            matches: () => !scoped.value,
+            emptyCopy: (filtered: boolean) => scoped.value && !filtered ? {title: "Nothing added", description: "Add one"} : undefined,
+            reset: () => {
+                reset()
+                scoped.value = false
+            },
         }),
     }
 })
@@ -55,6 +61,8 @@ describe("PluginCatalog extension", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         showTable.value = true
+        scoped.value = false
+        reset.mockClear()
     })
 
     afterEach(() => {
@@ -78,6 +86,24 @@ describe("PluginCatalog extension", () => {
         const wrapper = await mountCatalog()
 
         expect(wrapper.find("[data-test=table]").exists()).toBe(false)
+        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT"])
+    })
+
+    test("lets the extension word an empty scope, and clears every filter on Show all plugins", async () => {
+        showTable.value = false
+        scoped.value = true
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.find("[data-test=plugins-empty]").text()).toContain("Nothing added")
+
+        await wrapper.find("input").setValue("nothing-matches")
+        expect(wrapper.find("[data-test=plugins-empty]").text()).toContain("pluginPage.empty.title")
+
+        await wrapper.find("[data-test=plugins-show-all]").trigger("click")
+        await flushPromises()
+
+        expect(reset).toHaveBeenCalledOnce()
+        expect((wrapper.find("input").element as HTMLInputElement).value).toBe("")
         expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT"])
     })
 })

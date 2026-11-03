@@ -1358,7 +1358,13 @@
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
       "noResults": "No plugins match your search.",
-      "loadError": "Could not load plugins. Please try again.",
+      "loadErrorTitle": "Could not load the plugin list",
+      "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
+      "showAll": "Show all plugins",
+      "empty": {
+        "title": "No plugin matches your filters",
+        "description": "Try a different search term, or clear the category filters."
+      },
       "notFound": "This plugin could not be found.",
       "elementType": {
         "tasks": "Task",
@@ -1406,7 +1412,13 @@
         "enterpriseOnly": "Available in the Enterprise Edition",
         "lockedTitle": "Plugin version management",
         "lockedDescription": "Install plugins, keep several versions side by side and upgrade them without rebuilding the image, with the Enterprise Edition.",
-        "learnMore": "Learn more"
+        "learnMore": "Learn more",
+        "includedWithKestra": "Included with Kestra",
+        "gateNote": "Installing and upgrading plugins is available on the Enterprise Edition.",
+        "upsellTitle": "Plugin versioning is an Enterprise feature",
+        "upsellDescription": "Every plugin below ships with this Kestra image and is ready to use in a flow. On the Enterprise Edition you can also install a plugin that is not bundled, pin a version per plugin, and upgrade without rebuilding the image.",
+        "talkToUs": "Talk to us",
+        "readTheDocs": "Read the docs"
       }
     },
     "no inputs": "This flow has no inputs.",

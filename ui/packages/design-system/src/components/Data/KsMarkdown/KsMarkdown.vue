@@ -487,8 +487,11 @@
             }, {default: () => renderNodes(node.children)})
 
         case "leafDirective":
-        case "textDirective":
             return null
+
+        // No inline directive is supported, so this is a colon in plain text, such as `10:45` or `plugin-dbt:2.5.4`.
+        case "textDirective":
+            return (props.content ?? "").slice(node.position?.start.offset, node.position?.end.offset)
 
         default:
             return "children" in node && Array.isArray(node.children) ? h("div", renderNodes(node.children)) : null

@@ -61,10 +61,11 @@
     import FieldValidationErrors from "./FieldValidationErrors.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
-    import {NoCodeElement, Schemas} from "../utils/types"
+    import {NoCodeElement, Schemas, type FieldValue} from "../utils/types"
     import {Schema} from "./tasks/getTaskComponent"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
+        BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -141,7 +142,7 @@
     )
 
     const frameValue = computed({
-        get: () => (navCurrent.value ? getPath(taskModel.value, navCurrent.value.path) : undefined),
+        get: () => (navCurrent.value ? getPath<FieldValue>(taskModel.value, navCurrent.value.path) : undefined),
         set: (value) => {
             if (!navCurrent.value) return
             const next = cloneDeep(toRaw(taskModel.value) ?? {})
@@ -435,6 +436,8 @@
         }
     }, {immediate: true})
 
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
+
     function onTaskInput(val: PartialNoCodeElement | undefined) {
         taskModel.value = val
         if(fieldName){
@@ -443,7 +446,9 @@
             }
         }
 
-        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)))
+        // A field an edition renders with its own component owns its value, empty cells included.
+        const keepAsIs = (key: string, parent: Record<string, unknown>) => Boolean(blockComponentOverride?.(key, parent))
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val), keepAsIs))
     }
 
     function onTaskTypeSelect() {

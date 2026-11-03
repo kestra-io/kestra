@@ -32,7 +32,7 @@
         </template>
         <template v-if="execution" #footer>
             <span v-if="loopRunsLabel" class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
-            <Duration v-else compact :histories="histories" :denominator="durationDenominator" />
+            <Duration v-else compact :histories="histories" :execution="taskExecution" />
         </template>
         <template #content>
             <button
@@ -111,12 +111,9 @@
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
-        LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
         LOOP_LANES_INJECTION_KEY,
-        SCOPED_LONGEST_DURATIONS_INJECTION_KEY,
         ARTIFACT_COUNTS_INJECTION_KEY,
     } from "../injectionKeys"
-    import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {loopTaskContext} from "../utils/loopOutcome"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
@@ -232,9 +229,7 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
-    const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
     const loopLanes = inject(LOOP_LANES_INJECTION_KEY, undefined)
-    const scopedLongestDurations = inject(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, undefined)
     const artifactCounts = inject(ARTIFACT_COUNTS_INJECTION_KEY, undefined)
 
     function onCardClick() {
@@ -327,12 +322,6 @@
         const allStates = taskRuns.value.map((t) => t.state.current)
         return pickWorstState(allStates) ?? allStates[0]
     })
-
-    const durationDenominator = computed(() =>
-        taskExecution.value && taskExecution.value !== execution?.value
-            ? scopedLongestDurations?.value[taskExecution.value.id ?? ""] ?? computeLongestTaskRunDuration(taskExecution.value.taskRunList ?? [])
-            : longestTaskRunDuration.value,
-    )
 
     const loopContext = computed(() =>
         loopLanes ? loopTaskContext(props.data.node.uid, Utils.afterLastDot(props.data.node.uid) ?? "", loopLanes.value) : undefined,

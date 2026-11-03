@@ -1,5 +1,9 @@
 <template>
-    <ElText v-bind="({...filteredProps(), ...$attrs} as TextProps)">
+    <ElText
+        v-bind="({...filteredProps(), ...$attrs} as TextProps)"
+        :type="type === 'secondary' ? undefined : type"
+        :class="{'kel-text--secondary': type === 'secondary'}"
+    >
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -13,7 +17,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        type?: "" | "primary" | "success" | "warning" | "danger" | "info"
+        type?: "" | "primary" | "secondary" | "success" | "warning" | "danger" | "info"
         size?: "small" | "default" | "large"
         truncated?: boolean
         lineClamp?: string | number
@@ -24,7 +28,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["type"])
 </script>
 
 <style lang="scss">
@@ -35,6 +39,10 @@
 <style>
     .kel-text.kel-text--primary {
         --kel-text-color: var(--ks-text-link);
+    }
+
+    .kel-text.kel-text--secondary {
+        --kel-text-color: var(--ks-text-secondary);
     }
 
     .kel-text.kel-text--success {

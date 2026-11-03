@@ -4,6 +4,7 @@ import {useMiscStore} from "override/stores/misc"
 import {useDrillDownStore, type DrillDownTarget} from "../../../stores/drillDown"
 import {keepTopLevelFilters} from "../../../utils/queryFilters"
 import {getDrillDownPreview} from "./drillDownPreview"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 import type {Chart} from "../types.ts"
 
 interface WhereCondition {
@@ -217,7 +218,7 @@ export function buildFullQuery(target: DrillDownTarget, pagination?: {size: numb
         scope: "USER",
         ...(pagination ? {size: pagination.size, page: pagination.page} : {}),
         ...(target.timeWindow ?? (target.timeFiltered
-            ? {[TIME_RANGE_PARAM]: useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+            ? {[TIME_RANGE_PARAM]: defaultTimeRange(useMiscStore()?.configs?.chartDefaultDuration)}
             : {})),
     }
 }

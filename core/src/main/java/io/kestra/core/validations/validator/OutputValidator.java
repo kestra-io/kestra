@@ -2,6 +2,7 @@ package io.kestra.core.validations.validator;
 
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.validations.OutputValidation;
@@ -21,11 +22,11 @@ public class OutputValidator implements ConstraintValidator<OutputValidation, Ou
             return true; // nulls are allowed according to spec
         }
 
-        if (Boolean.TRUE.equals(value.getSearchable()) && value.getType() != null && !Output.SEARCHABLE_TYPES.contains(value.getType())) {
+        if (Boolean.TRUE.equals(value.getSearchable()) && value.getType() != null && !Data.SEARCHABLE_TYPES.contains(value.getType())) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
                 "The output '%s' cannot be searchable: the type %s is not supported, a searchable output must be one of %s.".formatted(
-                    value.getId(), value.getType(), Output.SEARCHABLE_TYPES.stream().map(Type::name).collect(Collectors.joining(", "))
+                    value.getId(), value.getType(), Data.SEARCHABLE_TYPES.stream().map(Type::name).collect(Collectors.joining(", "))
                 )
             ).addConstraintViolation();
             return false;

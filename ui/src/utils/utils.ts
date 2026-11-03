@@ -329,16 +329,7 @@ export function extractFileNameFromContentDisposition(header: string | null | un
 }
 
 export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
-    // default theme
-    if (theme === undefined) {
-        if (localStorage.getItem(storageKeys.THEME)) {
-            theme = localStorage.getItem(storageKeys.THEME) as SelectedTheme
-        } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            theme = "dark"
-        } else {
-            theme = "light"
-        }
-    }
+    theme ??= getSelectedTheme()
 
     const disableTransitions = document.createElement("style")
     disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))

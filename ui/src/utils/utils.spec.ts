@@ -102,6 +102,27 @@ describe("theme utils", () => {
             expect(localStorage.getItem("theme")).toBe("dark-2")
             expect(getSelectedTheme()).toBe("dark-2")
         })
+
+        it("starts a first visit on Sync with system instead of saving the OS theme of that moment", () => {
+            mockSystemPrefersDark(true)
+            const store = newStore()
+
+            switchTheme(store)
+
+            expect(store.theme).toBe("syncWithSystem")
+            expect(localStorage.getItem("theme")).toBe("syncWithSystem")
+            expect(document.documentElement.classList.contains("dark")).toBe(true)
+        })
+
+        it("keeps a saved choice when no theme is passed", () => {
+            localStorage.setItem("theme", "light")
+            mockSystemPrefersDark(true)
+
+            switchTheme(newStore())
+
+            expect(localStorage.getItem("theme")).toBe("light")
+            expect(document.documentElement.classList.contains("dark")).toBe(false)
+        })
     })
 })
 

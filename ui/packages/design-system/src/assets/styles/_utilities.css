@@ -22,10 +22,6 @@
     width: 100% !important;
 }
 
-.mw-100 {
-    max-width: 100% !important;
-}
-
 .flex-column {
     flex-direction: column !important;
 }
@@ -63,11 +59,6 @@
     margin-left: 0.5rem !important;
 }
 
-.my-4 {
-    margin-top: 1.5rem !important;
-    margin-bottom: 1.5rem !important;
-}
-
 .mt-1 {
     margin-top: 0.25rem !important;
 }
@@ -84,14 +75,6 @@
     margin-right: 0.5rem !important;
 }
 
-.mb-0 {
-    margin-bottom: 0 !important;
-}
-
-.mb-1 {
-    margin-bottom: 0.25rem !important;
-}
-
 .mb-2 {
     margin-bottom: 0.5rem !important;
 }
@@ -102,10 +85,6 @@
 
 .ms-2 {
     margin-left: 0.5rem !important;
-}
-
-.p-0 {
-    padding: 0 !important;
 }
 
 .p-2 {
@@ -129,10 +108,6 @@
     gap: 1rem !important;
 }
 
-.gap-4 {
-    gap: 1.5rem !important;
-}
-
 .fs-6 {
     font-size: 0.875rem !important;
 }
@@ -143,10 +118,6 @@
 
 .fw-bold {
     font-weight: 700 !important;
-}
-
-.text-start {
-    text-align: left !important;
 }
 
 .text-center {
@@ -161,10 +132,6 @@
 .text-success {
     color: inherit !important;
 }
-
-
-
-
 
 @media (min-width: 768px) {
     .d-md-inline-block {

@@ -341,7 +341,7 @@
             right: Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING),
         }
 
-        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length].map(Math.round).join(":")
+        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length, window.innerWidth, window.innerHeight].map(Math.round).join(":")
         if (key === lastSpotlightKey) {
             return
         }

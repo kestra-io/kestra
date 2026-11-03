@@ -301,7 +301,11 @@
         </template>
 
         <template #default>
-            <p v-html="changeStatusToast()" />
+            <i18n-t keypath="bulk change state" tag="p" scope="global">
+                <template #executionCount>
+                    <code>{{ bulkActionCount }}</code>
+                </template>
+            </i18n-t>
 
             <el-select
                 :required="true"
@@ -315,7 +319,11 @@
                 >
                     <template #default>
                         <Status size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="mark as" tag="span" scope="global">
+                            <template #status>
+                                <code>{{ item.code }}</code>
+                            </template>
+                        </i18n-t>
                     </template>
                 </el-option>
             </el-select>
@@ -354,7 +362,11 @@
                 >
                     <template #default>
                         <Status size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status>
+                                <code>{{ item.code }}</code>
+                            </template>
+                        </i18n-t>
                     </template>
                 </el-option>
             </el-select>
@@ -379,7 +391,11 @@
         </template>
 
         <template #default>
-            <p v-html="changeReplayToast()" />
+            <i18n-t keypath="bulk replay" tag="p" scope="global">
+                <template #executionCount>
+                    <code>{{ bulkActionCount }}</code>
+                </template>
+            </i18n-t>
         </template>
 
         <template #footer>
@@ -709,14 +725,12 @@
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
             code: value,
-            label: t("mark as", {status: value})
         }));
     });
 
     const unQueuestates = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
-            label: t("unqueue as", {status: value}),
         }));
     });
 
@@ -910,9 +924,7 @@
         );
     };
 
-    const changeReplayToast = () => {
-        return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
-    };
+    const bulkActionCount = computed(() => queryBulkAction.value ? executionsStore.total : selection.value.length);
 
     const changeStatus = () => {
         changeStatusDialogVisible.value = false;
@@ -923,10 +935,6 @@
             "bulkChangeExecutionStatus",
             "executions state changed"
         );
-    };
-
-    const changeStatusToast = () => {
-        return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
     };
 
     const deleteExecutions = () => {

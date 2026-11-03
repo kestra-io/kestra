@@ -76,6 +76,7 @@
                         />
                         <template v-else>
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                            <!-- nosemgrep: kestra-vue-avoid-v-html -- Shiki's codeToHtml escapes the source and only adds its own span markup. -->
                             <div class="mt-2" v-html="highlightedAiConfiguration" />
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
@@ -188,6 +189,7 @@
                 />
                 <template v-else>
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                    <!-- nosemgrep: kestra-vue-avoid-v-html -- Shiki's codeToHtml escapes the source and only adds its own span markup. -->
                     <div class="mt-2" v-html="highlightedAiConfiguration" />
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>

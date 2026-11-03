@@ -32,7 +32,11 @@
                     >
                         <template #default>
                             <Status size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span" scope="global">
+                                <template #status>
+                                    <code>{{ item.code }}</code>
+                                </template>
+                            </i18n-t>
                         </template>
                     </el-option>
                 </el-select>
@@ -176,7 +180,6 @@
                     .map(value => {
                         return {
                             code: value,
-                            label: this.$t("mark as", {status: value}),
                             disabled: value === this.taskRun.state.current
                         };
                     })

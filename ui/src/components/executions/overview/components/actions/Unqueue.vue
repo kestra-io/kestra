@@ -27,7 +27,11 @@
                 >
                     <template #default>
                         <Status size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status>
+                                <code>{{ item.code }}</code>
+                            </template>
+                        </i18n-t>
                     </template>
                 </el-option>
             </el-select>
@@ -75,7 +79,6 @@
     const states = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
-            label: t("unqueue as", {status: value}),
         }));
     });
 

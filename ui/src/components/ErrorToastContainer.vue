@@ -8,6 +8,7 @@
         <AiIcon class="me-1" />
         <span>{{ $t("fix_with_ai") }}</span>
     </el-button>
+    <!-- nosemgrep: kestra-vue-avoid-v-html -- Markdown.render passes its output through xss(). -->
     <span v-html="markdownRenderer" v-if="items.length === 0" />
     <ul>
         <li v-for="(item, index) in items" :key="index" class="font-monospace">

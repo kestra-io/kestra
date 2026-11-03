@@ -245,8 +245,8 @@
         "change state tooltip": "Change the execution state",
         "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
         "change execution state done": "Execution state updated",
-        "mark as": "Mark as <code>{status}</code>",
-        "unqueue as": "Unqueue as <code>{status}</code>",
+        "mark as": "Mark as {status}",
+        "unqueue as": "Unqueue as {status}",
         "kill": "Kill",
         "kill parents and subflow": "Kill current and subflows",
         "kill only parents": "Kill current only",
@@ -474,8 +474,8 @@
         "restore": "Restore",
         "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
         "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
-        "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
-        "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
+        "bulk replay": "Are you sure you want to replay {executionCount} execution(s)?",
+        "bulk change state": "Are you sure you want to change the state of {executionCount} execution(s)?",
         "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
         "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
         "bulk unqueue": "Are you sure you want to unqueue <code>{executionCount}</code> execution(s)?",
@@ -746,11 +746,11 @@
                 "deletion": {
                     "confirm": "Confirm",
                     "title": "Confirm deletion of content",
-                    "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
-                    "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
-                    "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?",
-                    "file_single": "Are you sure you want to delete the file <code>{name}</code>?",
-                    "folder_single": "Are you sure you want to delete the folder <code>{name}</code> and all of its contents?"
+                    "files": "Are you sure you want to delete {count} file(s)?",
+                    "folders": "Are you sure you want to delete {count} folder(s) and all of its contents?",
+                    "mixed": "Are you sure you want to delete {folders} folder(s) and {files} file(s)?",
+                    "file_single": "Are you sure you want to delete the file {name}?",
+                    "folder_single": "Are you sure you want to delete the folder {name} and all of its contents?"
                 }
             },
             "revisions": {
@@ -1759,7 +1759,7 @@
         "task failed": "Task failed",
         "task was skipped": "Task was skipped",
         "task sent a warning": "Task sent a warning",
-        "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+        "defaultsToNamespaceFile": "Defaults to namespace file: {name}",
         "no_file_choosen": "No file chosen",
         "dependency": {
             "controls": {

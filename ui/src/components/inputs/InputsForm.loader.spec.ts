@@ -564,66 +564,76 @@ describe("InputsForm required input validation error clearance (#22065)", () => 
         expect(wrapper.vm.inputError("expressionInput")).toContain("Failed to render Pebble expression")
     })
 
-    test("prevents an old asynchronous validation response from restoring a stale required error after user enters a valid value", async () => {
-        const store = useExecutionsStore()
-        let resolveSlowValidate!: (value: unknown) => void
-        const slowValidationPromise = new Promise((resolve) => { resolveSlowValidate = resolve })
-        store.validateExecution = vi.fn().mockReturnValue(slowValidationPromise)
-
-        const wrapper = mountForm([{id: "reason", type: "STRING", required: true}])
-        wrapper.vm.inputsValidated.add("reason")
-
-        wrapper.vm.inputsValues.reason = "user provided valid input"
-        wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
-        await flushPromises()
-
-        expect(wrapper.vm.inputError("reason")).toBeUndefined()
-
-        resolveSlowValidate({
-            checks: [],
-            inputs: [
-                {
-                    enabled: true,
-                    isDefault: false,
-                    input: {id: "reason", type: "STRING", required: true},
-                    errors: [{message: "Invalid value for input `reason`. Cause: Missing required input:reason", renderError: false}],
-                },
-            ],
-        })
-        await flushPromises()
-
-        expect(wrapper.vm.inputError("reason")).toBeUndefined()
-    })
-
-    test("clears and restores required errors for ARRAY inputs", async () => {
+    test("does not show a synthetic required error when backend resolves the default with isDefault: true", async () => {
         const store = useExecutionsStore()
         store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
-            {enabled: true, isDefault: false, input: {id: "items", type: "ARRAY", required: true},
-                errors: [{message: "Invalid value for input `items`. Cause: Missing required input:items", renderError: false}]},
+            {enabled: true, isDefault: true, value: "hello", input: {id: "greeting", type: "STRING", required: true, defaults: "hello"}},
+        ]})
+
+        const wrapper = mountForm([{id: "greeting", type: "STRING", required: true, defaults: "hello"}])
+        await flushPromises()
+
+        // When: the field is cleared, and backend validation resolves the default with isDefault: true
+        wrapper.vm.inputsValues.greeting = ""
+        wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
+        wrapper.vm.inputsValidated.add("greeting")
+        wrapper.vm.inputsMetaData[0].isDefault = true
+        await flushPromises()
+
+        // Then: no synthetic required error is displayed
+        expect(wrapper.vm.inputError("greeting")).toBeUndefined()
+
+        // And: a genuinely empty required input without a default (isDefault: false) still displays the required error
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
+            {enabled: true, isDefault: false, input: {id: "reason", type: "STRING", required: true}},
+        ]})
+        const wrapperNoDefault = mountForm([{id: "reason", type: "STRING", required: true}])
+        await flushPromises()
+
+        wrapperNoDefault.vm.inputsValues.reason = ""
+        wrapperNoDefault.vm.onChange(wrapperNoDefault.vm.inputsMetaData[0])
+        wrapperNoDefault.vm.inputsValidated.add("reason")
+        await flushPromises()
+
+        expect(wrapperNoDefault.vm.inputError("reason")).toBeDefined()
+        expect(wrapperNoDefault.vm.inputError("reason")).toContain("is required")
+    })
+
+    test("accepts an empty ARRAY without producing a misleading required error", async () => {
+        const store = useExecutionsStore()
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
+            {enabled: true, isDefault: false, input: {id: "items", type: "ARRAY", required: true}},
         ]})
 
         const wrapper = mountForm([
             {id: "items", type: "ARRAY", required: true},
         ])
         await flushPromises()
-
         wrapper.vm.inputsValidated.add("items")
-        expect(wrapper.vm.inputError("items")).toContain("Missing required")
 
-        // When: an item is added
-        wrapper.vm.inputsValues.items = JSON.stringify(["first item"])
+        // When: the ARRAY value is a valid serialized empty array "[]"
+        wrapper.vm.inputsValues.items = "[]"
         wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
         await flushPromises()
 
-        // Then: the required error clears immediately
+        // Then: it counts as present and does not show a synthetic required error
         expect(wrapper.vm.inputError("items")).toBeUndefined()
 
-        // When: the last item is removed (leaving empty array)
-        wrapper.vm.inputsValues.items = JSON.stringify([])
+        // When: items are added
+        wrapper.vm.inputsValues.items = JSON.stringify(["item1", "item2"])
         wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
         await flushPromises()
 
-        // Then: the required error is restored
-        expect(wrapper.vm.inputError("items")).toContain("Missing required")
+        // Then: it remains valid with no error
+        expect(wrapper.vm.inputError("items")).toBeUndefined()
+
+        // When: the value becomes absent (empty string)
+        wrapper.vm.inputsValues.items = ""
+        wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
+        await flushPromises()
+
+        // Then: the required error is shown for an absent value
+        expect(wrapper.vm.inputError("items")).toBeDefined()
+        expect(wrapper.vm.inputError("items")).toContain("is required")
     })
 })

@@ -573,16 +573,16 @@
         if (input.type === "ARRAY") {
             const val = inputsValues[id]
             if (Array.isArray(val)) {
-                return val.length > 0
+                return true
             }
             if (typeof val === "string") {
                 const trimmed = val.trim()
-                if (trimmed === "" || trimmed === "[]") {
+                if (trimmed === "") {
                     return false
                 }
                 try {
                     const parsed = JSON.parse(trimmed)
-                    return Array.isArray(parsed) && parsed.length > 0
+                    return Array.isArray(parsed)
                 } catch {
                     return false
                 }
@@ -663,7 +663,7 @@
             }
         }
 
-        if (meta.required !== false && !valuePresent && inputsValidated.value.has(id) && !hasRequiredError && !isRenderError) {
+        if (meta.required !== false && !meta.isDefault && !valuePresent && inputsValidated.value.has(id) && !hasRequiredError && !isRenderError) {
             result.push({message: t("is required", {field: inputLabel(meta)})})
         }
 

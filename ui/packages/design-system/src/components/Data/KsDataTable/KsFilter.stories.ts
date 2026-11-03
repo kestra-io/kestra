@@ -525,15 +525,25 @@ export const WithWrappedRows: Story = {
  * The same filters on a bar wide enough to keep the conditional and the global chip on one row,
  * which is the only case where the rule between the two groups is drawn.
  */
+const collectReducedMotionRules = (rules: CSSRuleList, selector: string): {rule: CSSMediaRule, selector: string}[] =>
+    [...rules].flatMap((rule) => {
+        if (rule instanceof CSSMediaRule && rule.conditionText.includes("prefers-reduced-motion")) {
+            return [{rule, selector: `${selector} ${rule.cssText}`}]
+        }
+        if (rule instanceof CSSStyleRule) {
+            return collectReducedMotionRules(rule.cssRules, `${selector} ${rule.selectorText}`)
+        }
+        return []
+    })
+
 const reducedMotionRules = () => [...document.styleSheets]
     .flatMap((sheet) => {
         try {
-            return [...sheet.cssRules]
+            return collectReducedMotionRules(sheet.cssRules, "")
         } catch {
             return []
         }
     })
-    .filter((rule): rule is CSSMediaRule => rule instanceof CSSMediaRule && rule.conditionText.includes("prefers-reduced-motion"))
 
 export const TimeRangePopoverReducedMotion: Story = {
     render: WithWrappedRows.render,
@@ -545,7 +555,9 @@ export const TimeRangePopoverReducedMotion: Story = {
             return element
         })
         const slider = overlay.querySelector<HTMLElement>(".switch-slider")!
-        const rules = reducedMotionRules().filter((rule) => /filter-popup|switch-slider/.test(rule.cssText))
+        const rules = reducedMotionRules()
+            .filter(({selector}) => /filter-popup|switch-slider/.test(selector))
+            .map(({rule}) => rule)
         expect(rules.length).toBeGreaterThanOrEqual(2)
         const conditions = rules.map((rule) => rule.media.mediaText)
         try {

@@ -138,7 +138,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
-    import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, isPluginMatched, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
@@ -211,8 +211,22 @@
     })
 
     const availableCategories = computed<string[]>(() =>
-        [...new Set((filteredPlugins.value ?? []).flatMap(p => p.categories ?? []))].sort(),
+        [...new Set(baseList.value.flatMap(p => p.categories ?? []))].sort(),
     )
+
+    const subGroupTitlesByName = computed(() => {
+        const titles = new Map<string, string[]>()
+        for (const plugin of filteredPlugins.value ?? []) {
+            if (plugin.subGroup && plugin.title) {
+                titles.set(plugin.name, [...(titles.get(plugin.name) ?? []), plugin.title.toLowerCase()])
+            }
+        }
+        return titles
+    })
+
+    const matchesSearch = (plugin: Plugin): boolean =>
+        isPluginMatched(plugin, searchInput.value)
+        || (subGroupTitlesByName.value.get(plugin.name) ?? []).some(title => title.includes(searchInput.value))
 
     const toggleCategory = (category: string) => {
         const idx = selectedCategories.value.indexOf(category)
@@ -261,7 +275,7 @@
 
     const pluginsList = computed<Plugin[]>(() => {
         return baseList.value
-            .filter(plugin => isPluginMatched(plugin, searchInput.value))
+            .filter(plugin => matchesSearch(plugin))
             .filter(plugin => matchesSelectedCategories(plugin))
             .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
             .sort(comparators[sortBy.value])
@@ -302,7 +316,7 @@
     }
 
     const isVisible = (plugin: Plugin) => {
-        return allElements(plugin).length > 0
+        return pluginElementClasses(plugin).length > 0
     }
 
     const allElementsByTypeEntries = (plugin: Plugin): [string, string[]][] => {
@@ -314,11 +328,7 @@
             ])
     }
 
-    const allElements = (plugin: Plugin): string[] => {
-        return allElementsByTypeEntries(plugin).flatMap(([, classes]) => classes)
-    }
-
-    const taskCount = (plugin: Plugin): number => allElements(plugin).length
+    const taskCount = (plugin: Plugin): number => pluginElementClasses(plugin).length
 
     const blueprintCount = (plugin: Plugin): number => {
         return enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0

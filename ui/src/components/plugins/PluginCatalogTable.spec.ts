@@ -13,7 +13,7 @@ vi.mock("../../stores/pluginsEnrichment", () => ({
         getEnrichment: (plugin: Plugin) => plugin.name === "plugin-aws" ? {title: "Amazon Web Services", blueprintCount: 18} : null,
         fetchVersions,
         getVersions: (cls: string | undefined) => cls === "io.kestra.plugin.ee.secrets.Get"
-            ? [{version: "1.2.0", releaseNotesUrl: EE_RELEASE_NOTES}, {version: "1.1.0", releaseNotesUrl: "older"}]
+            ? [{version: "1.1.0", releaseNotesUrl: "older"}, {version: "1.2.0", releaseNotesUrl: EE_RELEASE_NOTES}]
             : [],
     }),
 }))

@@ -4,7 +4,7 @@
             v-model:currentPage="currentPage"
             v-model:pageSize="pageSize"
             :data="pageRows"
-            :total="rows.length"
+            :total="plugins.length"
             rowKey="name"
             :noDataText="$t('pluginPage.empty.title')"
         >
@@ -47,8 +47,10 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import {extractPluginElements, getPluginReleaseUrl, type Plugin} from "../../utils/pluginUtils"
+    import {compareVersionsDesc, getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         plugins: Plugin[]
@@ -60,23 +62,28 @@
     const currentPage = ref(1)
     const pageSize = ref(25)
 
-    const rows = computed(() => props.plugins.map(plugin => {
-        const elementClasses = Object.values(extractPluginElements(plugin)).flat()
-        const repositoryReleaseUrl = getPluginReleaseUrl(plugin.group)
-        // EE repositories are private, so their release notes come from the public API, one version at a time.
-        const versionsCls = repositoryReleaseUrl ? undefined : elementClasses[0]
-        return {
-            name: plugin.name,
-            title: enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize(),
-            route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
-            taskCount: elementClasses.length,
-            blueprintCount: enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0,
-            versionsCls,
-            releaseNotesUrl: repositoryReleaseUrl ?? enrichmentStore.getVersions(versionsCls)[0]?.releaseNotesUrl ?? undefined,
-        }
-    }))
+    const latestReleaseNotesUrl = (cls: string): string | undefined =>
+        [...enrichmentStore.getVersions(cls)]
+            .sort((a, b) => compareVersionsDesc(a.version, b.version))[0]?.releaseNotesUrl ?? undefined
 
-    const pageRows = computed(() => rows.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value))
+    const pageRows = computed(() => props.plugins
+        .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
+        .map(plugin => {
+            const elementClasses = pluginElementClasses(plugin)
+            const repositoryReleaseUrl = getPluginReleaseUrl(plugin.group)
+            // EE repositories are private, so their release notes come from the public API, one version at a time.
+            const versionsCls = repositoryReleaseUrl ? undefined : elementClasses[0]
+            const enrichment = enrichmentStore.getEnrichment(plugin)
+            return {
+                name: plugin.name,
+                title: enrichment?.title ?? plugin.title.capitalize(),
+                route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
+                taskCount: elementClasses.length,
+                blueprintCount: enrichment?.blueprintCount ?? 0,
+                versionsCls,
+                releaseNotesUrl: repositoryReleaseUrl ?? (versionsCls ? latestReleaseNotesUrl(versionsCls) : undefined),
+            }
+        }))
 
     watch(() => pageRows.value.map(row => row.versionsCls).filter(Boolean).join(), () => {
         for (const row of pageRows.value) {
@@ -84,7 +91,7 @@
         }
     }, {immediate: true})
 
-    watch(() => rows.value.map(row => row.name).join(), () => {
+    watch(() => props.plugins.map(plugin => plugin.name).join(), () => {
         currentPage.value = 1
     })
 </script>

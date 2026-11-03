@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
-    import {links} from "../layout/empty/links"
+    import {demoLink, links} from "../layout/empty/links"
     import type {Plugin} from "../../utils/pluginUtils"
 
     defineProps<{
@@ -28,7 +28,7 @@
     }>()
 
     const DOCS_URL = links.versionPlugin
-    const CONTACT_SALES_URL = "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-versionPlugin"
+    const CONTACT_SALES_URL = demoLink("versionPlugin")
 </script>
 
 <style scoped>

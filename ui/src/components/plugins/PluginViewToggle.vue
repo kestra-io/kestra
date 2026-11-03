@@ -15,6 +15,8 @@
     import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
     import {usePluginView} from "./pluginView"
 
+    defineOptions({inheritAttrs: false})
+
     const {t} = useI18n()
     const view = usePluginView()
 

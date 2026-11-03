@@ -141,4 +141,13 @@ describe("PluginCatalog", () => {
 
         expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
     })
+
+    test("finds the artifact card when searching for the title of one of its subgroups", async () => {
+        const wrapper = await mountCatalog()
+
+        await wrapper.find("input").setValue("dbt cloud")
+        await flushPromises()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
 })

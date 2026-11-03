@@ -41,6 +41,7 @@ import {
 import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import {registerIndentedBlockScalarTokenizer} from "./yamlBlockScalarTokenizer"
 import {registerPebbleDefinitionProvider} from "./pebbleDefinitionProvider"
+import {registerPebbleHoverProvider} from "./pebbleHoverProvider"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
@@ -621,6 +622,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         this.registerSubflowLinks(autoCompletionProviders)
         registerPebbleDefinitionProvider(autoCompletionProviders)
+        const pluginsStore = usePluginsStore()
+        registerPebbleHoverProvider(autoCompletionProviders, async (cls) =>
+            (await pluginsStore.load({cls, commit: false}))?.schema?.outputs?.properties,
+        )
         this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders

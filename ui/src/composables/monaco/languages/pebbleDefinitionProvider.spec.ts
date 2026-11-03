@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {pebbleReferenceAtPosition, resolveFlowDefinition, type PebbleReference} from "./pebbleDefinitionProvider"
+import {pebbleReferenceAtPosition, resolveFlowDefinition, resolveFlowSymbols, type PebbleReference} from "./pebbleDefinitionProvider"
 
 const FLOW = `id: pipeline
 namespace: company.team
@@ -159,5 +159,29 @@ describe("resolveFlowDefinition", () => {
         expect(resolvedTexts("{{ inputs.missing }}", "missing")).toEqual([])
         expect(resolvedTexts("{{ outputs.missing.x }}", "missing")).toEqual([])
         expect(resolvedTexts("{{ trigger.date }}", "date")).toEqual([])
+    })
+})
+
+describe("resolveFlowSymbols doc comments", () => {
+    const COMMENTED = `variables:
+  # Detached from the first key by a blank line.
+
+  first: 1
+  # Section banner
+
+  # Bucket for the **curated** layer.
+  #
+  # One per environment.
+  bucket: s3://data
+  # Adjacent.
+  region: eu
+`
+    const commentOf = (key: string): string | undefined =>
+        resolveFlowSymbols(COMMENTED, {root: "vars", segments: [key], segmentIndex: 0, startColumn: 0, endColumn: 0})[0]?.comment
+
+    it("documents a key only with the comment group directly above it, with no blank line in between", () => {
+        expect(commentOf("first")).toBeUndefined()
+        expect(commentOf("bucket")).toBe("Bucket for the **curated** layer.\n\nOne per environment.")
+        expect(commentOf("region")).toBe("Adjacent.")
     })
 })

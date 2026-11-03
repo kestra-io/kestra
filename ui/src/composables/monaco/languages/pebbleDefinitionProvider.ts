@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor/editor/editor.api.js"
-import {isMap, isNode, isScalar, isSeq, parseDocument, Scalar, visit, type Document, type YAMLMap} from "yaml"
+import {isMap, isNode, isPair, isScalar, isSeq, parseDocument, Scalar, visit, type Document, type Pair, type YAMLMap} from "yaml"
 
 export interface PebbleReference {
     root: string
@@ -10,7 +10,14 @@ export interface PebbleReference {
     endColumn: number
 }
 
-type OffsetRange = [number, number]
+export type OffsetRange = [number, number]
+
+export interface FlowSymbol {
+    id: OffsetRange
+    node: YAMLMap | Pair
+    comment?: string
+    taskType?: string
+}
 
 const DELIMITER = /\{\{|\{%|\}\}|%\}/g
 const CHAIN = /[A-Za-z_]\w*(?:\.\w+|\[\s*(?:'[^']*'|"[^"]*")\s*\])*/g
@@ -81,8 +88,23 @@ function valueRange(node: unknown): OffsetRange | undefined {
     return [start, end]
 }
 
-function rangesOf(range: OffsetRange | undefined): OffsetRange[] {
-    return range ? [range] : []
+// yaml attaches the comment above a collection's first item to the collection itself.
+function leadingComment(parent: unknown, item: YAMLMap | Pair): string | undefined {
+    const own = isPair(item) ? (isNode(item.key) ? item.key.commentBefore : undefined) : item.commentBefore
+    const inherited = (isSeq(parent) || isMap(parent)) && parent.items[0] === item ? parent.commentBefore : undefined
+    return docComment(own ?? inherited)
+}
+
+// A blank line ends a comment group, so only the group touching the key documents it.
+function docComment(raw: string | null | undefined): string | undefined {
+    const lines = raw?.split("\n") ?? []
+    const group = lines.slice(lines.lastIndexOf("") + 1)
+    return group.map((line) => line.replace(/^ /, "")).join("\n").trim() || undefined
+}
+
+function symbolsOf(node: YAMLMap | Pair, idNode: unknown, parent: unknown): FlowSymbol[] {
+    const id = valueRange(idNode)
+    return id ? [{id, node, comment: leadingComment(parent, node)}] : []
 }
 
 function findById(seq: unknown, id: string): YAMLMap | undefined {
@@ -91,55 +113,68 @@ function findById(seq: unknown, id: string): YAMLMap | undefined {
         : undefined
 }
 
-function inputDefinition(root: YAMLMap, ref: PebbleReference): OffsetRange[] {
-    const input = findById(root.get("inputs", true), ref.segments[0])
+function inputSymbols(root: YAMLMap, ref: PebbleReference): FlowSymbol[] {
+    const inputs = root.get("inputs", true)
+    const input = findById(inputs, ref.segments[0])
     if (!input) {
         return []
     }
     if (ref.segmentIndex === 0) {
-        return rangesOf(valueRange(input.get("id", true)))
+        return symbolsOf(input, input.get("id", true), inputs)
     }
     if (ref.segmentIndex === 1 && scalarString(input.get("type", true)) === "FORM") {
-        const child = findById(input.get("inputs", true), ref.segments[1])
-        return rangesOf(child && valueRange(child.get("id", true)))
+        const children = input.get("inputs", true)
+        const child = findById(children, ref.segments[1])
+        return child ? symbolsOf(child, child.get("id", true), children) : []
     }
     return []
 }
 
-function taskDefinitions(root: YAMLMap, id: string): OffsetRange[] {
-    const ranges: OffsetRange[] = []
+function taskSymbols(root: YAMLMap, id: string): FlowSymbol[] {
+    const symbols: FlowSymbol[] = []
     for (const key of TASK_ROOTS) {
         const node = root.get(key, true)
         if (!isNode(node)) {
             continue
         }
         visit(node, {
-            Map(_key, map) {
+            Map(_key, map, path) {
                 if (map.has("type") && scalarString(map.get("id", true)) === id) {
-                    ranges.push(...rangesOf(valueRange(map.get("id", true))))
+                    const taskType = scalarString(map.get("type", true))
+                    symbols.push(...symbolsOf(map, map.get("id", true), path.at(-1)).map((symbol) => ({...symbol, taskType})))
                 }
             },
         })
     }
-    return ranges
+    return symbols
 }
 
-function keyDefinition(map: unknown, key: string): OffsetRange[] {
+function keySymbols(map: unknown, key: string): FlowSymbol[] {
     if (!isMap(map)) {
         return []
     }
-    return rangesOf(valueRange(map.items.find((item) => scalarString(item.key) === key)?.key))
+    const pair = map.items.find((item) => scalarString(item.key) === key)
+    return pair ? symbolsOf(pair, pair.key, map) : []
 }
 
-function labelDefinition(labels: unknown, key: string): OffsetRange[] {
-    if (isSeq(labels)) {
-        const label = labels.items.find((item) => isMap(item) && scalarString(item.get("key", true)) === key)
-        return rangesOf(isMap(label) ? valueRange(label.get("key", true)) : undefined)
+function triggerSymbols(triggers: unknown): FlowSymbol[] {
+    if (!isSeq(triggers)) {
+        return []
     }
-    return keyDefinition(labels, key)
+    return triggers.items.flatMap((trigger) => isMap(trigger)
+        ? symbolsOf(trigger, trigger.get("id", true), triggers).map((symbol) => ({...symbol, taskType: scalarString(trigger.get("type", true))}))
+        : [])
 }
 
-export function resolveFlowDefinition(source: string, ref: PebbleReference): OffsetRange[] {
+function labelSymbols(labels: unknown, key: string): FlowSymbol[] {
+    if (isSeq(labels)) {
+        const label = labels.items.find((item): item is YAMLMap => isMap(item) && scalarString(item.get("key", true)) === key)
+        return label ? symbolsOf(label, label.get("key", true), labels) : []
+    }
+    return keySymbols(labels, key)
+}
+
+export function resolveFlowSymbols(source: string, ref: PebbleReference): FlowSymbol[] {
     if (ref.segmentIndex < 0) {
         return []
     }
@@ -155,41 +190,53 @@ export function resolveFlowDefinition(source: string, ref: PebbleReference): Off
     }
     switch (ref.root) {
     case "inputs":
-        return inputDefinition(root, ref)
+        return inputSymbols(root, ref)
     case "outputs":
-        return taskDefinitions(root, ref.segments[0])
+        return taskSymbols(root, ref.segments[0])
     case "vars":
-        return ref.segmentIndex === 0 ? keyDefinition(root.get("variables", true), ref.segments[0]) : []
+        return ref.segmentIndex === 0 ? keySymbols(root.get("variables", true), ref.segments[0]) : []
     case "labels":
-        return ref.segmentIndex === 0 ? labelDefinition(root.get("labels", true), ref.segments[0]) : []
+        return ref.segmentIndex === 0 ? labelSymbols(root.get("labels", true), ref.segments[0]) : []
+    case "trigger":
+        return triggerSymbols(root.get("triggers", true))
     default:
         return []
     }
 }
 
-let lastResolution: {key: string; ranges: OffsetRange[]} | undefined
+export function resolveFlowDefinition(source: string, ref: PebbleReference): OffsetRange[] {
+    return resolveFlowSymbols(source, ref).map((symbol) => symbol.id)
+}
 
-export function providePebbleDefinition(model: monaco.editor.ITextModel, position: monaco.IPosition): monaco.languages.LocationLink[] | null {
+let lastResolution: {key: string; symbols: FlowSymbol[]} | undefined
+
+export function flowSymbolsAtPosition(model: monaco.editor.ITextModel, position: monaco.IPosition): {ref: PebbleReference; symbols: FlowSymbol[]} | undefined {
     if (!model.uri.path.includes("flow-")) {
-        return null
+        return undefined
     }
     const ref = pebbleReferenceAtPosition(model.getLineContent(position.lineNumber), position.column)
     if (!ref) {
-        return null
+        return undefined
     }
     const key = JSON.stringify([model.uri.toString(), model.getVersionId(), ref.root, ref.segmentIndex, ref.segments])
-    const ranges = lastResolution?.key === key ? lastResolution.ranges : resolveFlowDefinition(model.getValue(), ref)
-    lastResolution = {key, ranges}
-    if (ranges.length === 0) {
+    const symbols = lastResolution?.key === key ? lastResolution.symbols : resolveFlowSymbols(model.getValue(), ref)
+    lastResolution = {key, symbols}
+    return {ref, symbols}
+}
+
+export function providePebbleDefinition(model: monaco.editor.ITextModel, position: monaco.IPosition): monaco.languages.LocationLink[] | null {
+    const resolved = flowSymbolsAtPosition(model, position)
+    if (!resolved || resolved.symbols.length === 0) {
         return null
     }
+    const {ref} = resolved
     const originSelectionRange: monaco.IRange = {
         startLineNumber: position.lineNumber,
         startColumn: ref.startColumn,
         endLineNumber: position.lineNumber,
         endColumn: ref.endColumn,
     }
-    return ranges.map(([start, end]) => {
+    return resolved.symbols.map(({id: [start, end]}) => {
         const from = model.getPositionAt(start)
         const to = model.getPositionAt(end)
         const range: monaco.IRange = {

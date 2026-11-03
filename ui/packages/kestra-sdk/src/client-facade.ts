@@ -176,7 +176,9 @@ export function createClientFacade(
                 if (fn) finalError = await fn(finalError, response, request, interceptorOptions)
             }
             if (finalError && typeof finalError === "object") {
-                (finalError as Record<string, unknown>).response = {
+                const errorRecord = finalError as Record<string, unknown>
+                errorRecord.response = {
+                    ...(errorRecord.response as Record<string, unknown> | undefined),
                     data: parsedError, status: response.status, headers: headersObj, request: {responseURL: response.url},
                 }
             }

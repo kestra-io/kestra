@@ -541,6 +541,8 @@
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
     "topology-graph": {
+      "retried": "This task was retried",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "not started"
       }
     },
     "show task logs": "Show task logs",
@@ -669,6 +675,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Task details",
+      "count_error": "Could not load the count",
+      "load_error": "Could not load this view.",
+      "retry": "Retry",
+      "child_runs_capped": "Showing the logs of the first {count} child task runs only.",
+      "no_artifacts": "This task does not provide an artifact.",
+      "task_source": "Task source",
+      "worker_info": "Worker info"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "No task of this flow provides an artifact.",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "Exit fullscreen"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
+      "queued": "Queued",
+      "save_error": "Failed to update the concurrency limit, the previous value is kept."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -2257,7 +2276,8 @@
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
       "fullscreen": "Fullscreen",
-      "split_panel": "Split panel"
+      "split_panel": "Split panel",
+      "split_panel_no_room": "Not enough room for another panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",

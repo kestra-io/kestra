@@ -541,6 +541,8 @@
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
     "topology-graph": {
+      "retried": "Эта Task была повторена",
+      "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
       "zoom-out": "Уменьшить",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "не запущено"
       }
     },
     "show task logs": "Показать логи задачи",
@@ -669,6 +675,16 @@
     "inputs": "Входные данные",
     "input": "Ввод",
     "variables": "Переменные",
+    "task_run_popup": {
+      "open": "Детали Task",
+      "count_error": "Не удалось загрузить количество",
+      "load_error": "Не удалось загрузить это представление.",
+      "retry": "Повторить",
+      "child_runs_capped": "Показаны log'и только первых {count} дочерних Task Run'ов.",
+      "no_artifacts": "Эта Task не предоставляет artifact.",
+      "task_source": "Исходный код Task",
+      "worker_info": "Информация о Worker"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Ни одна task этого flow не предоставляет artifact.",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "variable_explorer": {
+      "task_outputs": "Выводы Task'а",
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
-      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit."
+      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit.",
+      "queued": "В очереди",
+      "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение."
     },
     "flowConcurrency": {
       "loadError": "Не удалось загрузить ограничение параллелизма для этого flow.",
@@ -2257,7 +2276,8 @@
       "close_all_panels": "Закрыть все панели",
       "exit_fullscreen": "Выйти из полноэкранного режима",
       "fullscreen": "На весь экран",
-      "split_panel": "Разделить панель"
+      "split_panel": "Разделить панель",
+      "split_panel_no_room": "Недостаточно места для другой панели"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",

@@ -365,4 +365,21 @@ describe("useViolationMarkers", () => {
         expect(resolveMarkers).not.toHaveBeenCalled()
         expect(oldEditor.createDecorationsCollection).not.toHaveBeenCalled()
     })
+
+    it("does not clear the same model or decorations twice after the editor becomes unavailable", async () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {editor: editorRef, wrapper} = mountMarkers(editor.editor)
+
+        editorRef.value = undefined
+        await nextTick()
+
+        setModelMarkers.mockClear()
+        editor.clear.mockClear()
+
+        wrapper.unmount()
+
+        expect(setModelMarkers).not.toHaveBeenCalled()
+        expect(editor.clear).not.toHaveBeenCalled()
+    })
 })

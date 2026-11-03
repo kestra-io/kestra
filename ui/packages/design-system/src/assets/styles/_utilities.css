@@ -76,10 +76,6 @@
     margin-top: 0.5rem !important;
 }
 
-.me-0 {
-    margin-right: 0 !important;
-}
-
 .me-1 {
     margin-right: 0.25rem !important;
 }
@@ -123,10 +119,6 @@
 .py-3 {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
-}
-
-.gap-1 {
-    gap: 0.25rem !important;
 }
 
 .gap-2 {

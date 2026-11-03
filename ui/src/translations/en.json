@@ -1361,6 +1361,11 @@
       "loadErrorTitle": "Could not load the plugin list",
       "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
       "showAll": "Show all plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Table",
+        "plugin": "Plugin"
+      },
       "empty": {
         "title": "No plugin matches your filters",
         "description": "Try a different search term, or clear the category filters."

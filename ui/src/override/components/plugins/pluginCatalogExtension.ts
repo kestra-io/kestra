@@ -3,6 +3,9 @@ import PluginManagementActions from "../../../components/plugins/PluginManagemen
 import PluginVersionsLocked from "../../../components/plugins/PluginVersionsLocked.vue"
 import PluginVersioningUpsell from "../../../components/plugins/PluginVersioningUpsell.vue"
 import PluginIncludedStatus from "../../../components/plugins/PluginIncludedStatus.vue"
+import PluginViewToggle from "../../../components/plugins/PluginViewToggle.vue"
+import PluginCatalogTable from "../../../components/plugins/PluginCatalogTable.vue"
+import {usePluginView} from "../../../components/plugins/pluginView"
 import type {Plugin} from "../../../utils/pluginUtils"
 
 export interface PluginCatalogExtension {
@@ -33,10 +36,15 @@ export interface PluginCatalogExtension {
 }
 
 export function usePluginCatalogExtension(): PluginCatalogExtension {
+    const view = usePluginView()
+
     return {
         pageActions: markRaw(PluginManagementActions),
         banner: markRaw(PluginVersioningUpsell),
         cardStatus: markRaw(PluginIncludedStatus),
+        toolbar: markRaw(PluginViewToggle),
+        table: markRaw(PluginCatalogTable),
+        showTable: () => view.value === "table",
         versions: markRaw(PluginVersionsLocked),
     }
 }

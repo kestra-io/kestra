@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../tests/unit/memoryRouter"
 import {ref} from "vue"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {i18nMount} from "../../../tests/unit/i18nMount"
@@ -58,7 +59,7 @@ function mountTree() {
 }
 
 beforeEach(() => {
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     mockExecution.mockReset()
     findExecutions = vi.spyOn(useExecutionsStore(), "findExecutions")
     tree = createGanttTree({compact: ref(false), levelFilter: ref(undefined)})

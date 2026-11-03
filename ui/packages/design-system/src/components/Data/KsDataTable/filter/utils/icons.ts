@@ -6,7 +6,7 @@ import Close from "vue-material-design-icons/Close.vue"
 import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
 import CodeBraces from "vue-material-design-icons/CodeBraces.vue"
 import CogOutline from "vue-material-design-icons/CogOutline.vue"
-import ContentSaveOutline from "vue-material-design-icons/ContentSaveOutline.vue"
+import ContentSave from "vue-material-design-icons/ContentSave.vue"
 import Delete from "vue-material-design-icons/Delete.vue"
 import Drag from "vue-material-design-icons/Drag.vue"
 import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
@@ -16,7 +16,7 @@ import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
 import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
 import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
 import Magnify from "vue-material-design-icons/Magnify.vue"
-import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+import Pencil from "vue-material-design-icons/Pencil.vue"
 import Plus from "vue-material-design-icons/Plus.vue"
 import Refresh from "vue-material-design-icons/Refresh.vue"
 import Restore from "vue-material-design-icons/Restore.vue"
@@ -32,7 +32,7 @@ export {
     CloseCircleOutline,
     CodeBraces,
     CogOutline,
-    ContentSaveOutline,
+    ContentSave,
     Delete,
     Drag,
     EyeOffOutline,
@@ -42,7 +42,7 @@ export {
     FormatListBulleted,
     InformationOutline,
     Magnify,
-    PencilOutline,
+    Pencil,
     Plus,
     Refresh,
     Restore,

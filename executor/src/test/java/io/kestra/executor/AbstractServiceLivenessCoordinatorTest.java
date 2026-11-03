@@ -68,6 +68,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
@@ -196,7 +197,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             applicationContext.getBean(MaintenanceService.class),
             applicationContext.getBean(MetricRegistry.class),
             applicationContext.getBean(ServerConfig.class),
-            applicationContext.getBean(WorkerConfig.class)
+            applicationContext.getBean(WorkerConfig.class),
+            new WorkerInfo()
         );
     }
 
@@ -278,6 +280,14 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        // The coordinator can only handle a worker whose service instance is already registered.
+        Await.until(
+            () -> serviceInstanceRepository.findById(worker.getId())
+                .filter(instance -> instance.is(Service.ServiceState.RUNNING))
+                .isPresent(),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
         // WHEN - stop first worker.
         worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
 

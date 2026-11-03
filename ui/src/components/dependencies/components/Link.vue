@@ -39,7 +39,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 code.link {
     display: block;
     max-width: 100%;

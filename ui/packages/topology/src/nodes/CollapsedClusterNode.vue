@@ -1,8 +1,9 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition" :style="statusRowHandleStyle(sourcePosition, reservesStatusRow)" />
     <LaneHeader
         v-if="data.isFlowableLane"
         class="collapsed-lane"
+        :style="laneStyle"
         layout="card"
         :taskNode="data.taskNode ?? null"
         :color="data.color"
@@ -20,6 +21,8 @@
         @showOutputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
         @replayTask="emit(EVENTS.REPLAY_TASK, $event)"
         @addError="emit(EVENTS.ADD_ERROR, $event)"
+        @loopStep="emit(EVENTS.LOOP_STEP, $event)"
+        @loopScopeFailed="emit(EVENTS.LOOP_SCOPE_FAILED, $event)"
     >
         <template #lead>
             <span
@@ -32,6 +35,12 @@
                     <UnfoldMoreHorizontal class="button-icon" alt="Expand lane" />
                 </KsTooltip>
             </span>
+        </template>
+        <template #taskActions="taskActionProps">
+            <slot name="taskActions" v-bind="taskActionProps" />
+        </template>
+        <template #loopScope="loopScopeProps">
+            <slot name="loopScope" v-bind="loopScopeProps" />
         </template>
     </LaneHeader>
     <div v-else class="collapsed-cluster-node">
@@ -52,11 +61,11 @@
             </span>
         </div>
     </div>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition" :style="statusRowHandleStyle(targetPosition, reservesStatusRow)" />
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import {Handle, Position} from "@vue-flow/core"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import {
@@ -64,7 +73,9 @@
         type PluginIconData,
         type PluginIconMap,
     } from "@kestra-io/design-system"
-    import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
+    import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
+    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {statusRowHandleStyle} from "../utils/nodeHandles"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"
 
@@ -100,9 +111,18 @@
         EVENTS.SHOW_OUTPUTS,
         EVENTS.REPLAY_TASK,
         EVENTS.ADD_ERROR,
+        EVENTS.LOOP_STEP,
+        EVENTS.LOOP_SCOPE_FAILED,
     ])
 
     const expandable = computed(() => data?.expandable || false)
+
+    const execution = inject(EXECUTION_INJECTION_KEY, undefined)
+    const reservesStatusRow = computed(() => Boolean(execution?.value) && Boolean(data.isFlowableLane))
+
+    const laneStyle = computed(() =>
+        reservesStatusRow.value ? {height: `calc(100% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px)`} : undefined,
+    )
 
     const badgeStyle = computed(() => {
         const status = CLUSTER_TAG_STATUS[data.color] ?? "info"
@@ -113,7 +133,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .collapsed-lane {
         width: 100%;
         height: 100%;

@@ -1,5 +1,8 @@
 <template>
     <div class="dependencies-wrapper">
+        <KsAlert v-if="graphTruncated" type="warning" :closable="false" class="truncated-notice">
+            {{ $t("dependency.dag.truncated") }}
+        </KsAlert>
         <DagToolbar
             v-if="showToolbar"
             v-model:layoutMode="layoutMode"
@@ -8,13 +11,14 @@
             :groupFields="groupFields"
             :groupChips="groupChips"
             :activeGroup="activeGroup"
+            :relationKinds="relationKinds"
             @preview="isolateGroup"
             @toggle="toggleGroup"
         />
         <div
             v-if="isLoading"
             v-ks-loading="true"
-            class="h-100"
+            class="loading-container"
         />
         <Empty
             v-else-if="!hasElements"
@@ -112,7 +116,9 @@
                 <NodeDetails
                     v-if="selectedNode"
                     :node="selectedNode"
+                    :loading="expandingNodeID !== undefined && expandingNodeID === selectedNodeID"
                     @close="controls.clearSelection"
+                    @expand="() => selectedNodeID && expandNode(selectedNodeID)"
                 />
                 <Table
                     v-else
@@ -149,14 +155,13 @@
     import type {LayoutMode} from "./composables/useDependencies"
     import {useDagGrouping} from "./composables/useDagGrouping"
     import {routeFamily} from "../../utils/routeFamily"
-    import {FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf} from "./utils/types"
-    import type {Types, Node, Element} from "./utils/types"
+    import {FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "./utils/types"
+    import type {Types, Node, ElementsResult} from "./utils/types"
 
     const props = defineProps<{
-        fetchAssetDependencies?: () => Promise<{
-            data: Element[];
-            count: number;
-        }>;
+        fetchAssetDependencies?: () => Promise<ElementsResult>;
+        /** Re-fetches one node's own sub-graph, for expanding a collapsed hub; asset view only. */
+        expandAssetNode?: (nodeID: string) => Promise<ElementsResult>;
         /** Opt in to the force / layered-DAG layout toggle. */
         dagView?: boolean;
     }>()
@@ -175,9 +180,10 @@
         groupField,
         groupFields,
         groupOf,
+        membersOf,
         groupChips,
         dagPriority,
-    } = useDagGrouping(() => nodesOf(getElements()))
+    } = useDagGrouping(() => nodesOf(getElements()), () => edgesOf(getElements()))
 
     const graphOptions = computed(() => ({
         series: [{
@@ -226,7 +232,10 @@
         toggleGroup,
         clearGroup,
         activeGroup,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView))
+        expandNode,
+        expandingNodeID,
+        graphTruncated,
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView), props.expandAssetNode, membersOf)
 
     const dagCanvasRef = ref<{
         zoomIn: () => void;
@@ -240,6 +249,10 @@
     const isDagCanvas = computed(() => Boolean(props.dagView) && layoutMode.value === "dag")
 
     const hasElements = computed(() => getElements().length > 0)
+
+    const relationKinds = computed(() => new Set(
+        edgesOf(getElements()).map((edge) => edge.kind).filter((kind): kind is string => Boolean(kind)),
+    ))
 
     const showToolbar = computed(() => Boolean(props.dagView) && !isLoading.value && hasElements.value)
 
@@ -307,12 +320,20 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dependencies-wrapper {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
+}
+
+.loading-container {
+    height: 100%;
+}
+
+.truncated-notice {
+    margin: var(--ks-spacing-2) var(--ks-spacing-3) 0;
 }
 
 .dependencies {

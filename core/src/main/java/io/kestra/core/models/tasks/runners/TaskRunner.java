@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -83,6 +85,12 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
                 this.additionalVars.putAll(runContext.render(taskCommands.getAdditionalVars()));
             }
 
+            // load existing checkpoints if durable is enabled
+            if (taskCommands.isDurable()) {
+                var checkpointVars = runContext.checkpoints().list().stream().collect(Collectors.toMap(Checkpoint::key, Checkpoint::value));
+                this.additionalVars.put(ScriptService.VAR_CHECKPOINTS, checkpointVars);
+            }
+
             this.additionalVars.putAll(runContext.render(this.runnerAdditionalVars(runContext, taskCommands)));
         }
 
@@ -111,6 +119,11 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
             }
             if (additionalVars.containsKey(ScriptService.VAR_BUCKET_PATH)) {
                 this.env.put(ScriptService.ENV_BUCKET_PATH, additionalVars.get(ScriptService.VAR_BUCKET_PATH).toString());
+            }
+
+            // load existing checkpoints if durable is enabled
+            if (taskCommands.isDurable()) {
+                runContext.checkpoints().list().forEach(it -> this.env.put(ScriptService.checkpointEnvName(it.key()), it.value()));
             }
 
             this.env.putAll(runContext.renderMap(this.runnerEnv(runContext, taskCommands)));

@@ -64,7 +64,7 @@ class FileChangedEventListenerTest {
     @FlakyTest(description = "OS file watcher events are non-deterministic; CI filesystems may delay or batch inotify events")
     @Test
     void test() throws IOException, TimeoutException {
-        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test") + "_team";
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 

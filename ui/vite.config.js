@@ -26,19 +26,25 @@ logger.warnOnce = (msg, options) => {
     loggerWarnOnce(msg, options)
 }
 
-import {commit} from "./plugins/commit"
+import {commit} from "./plugins/commit.ts"
 import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
-import {pwaShortcuts} from "./plugins/pwaShortcuts"
+import {pwaShortcuts} from "./plugins/pwaShortcuts.ts"
 import {baseConfig} from "./vite.config.base.js"
 
 export default defineConfig(({mode}) => {
-    return mergeConfig(baseConfig({root: __dirname, mode, apiProxyPath: "^/api"}), {
+    return mergeConfig(baseConfig({root: import.meta.dirname, mode, apiProxyPath: "^/api"}), {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
+            /** Lazy monaco (~4.5 MB) is the largest chunk on purpose; consolidateChunks keeps eager ones lean. */
+            chunkSizeWarningLimit: 5000,
+            rolldownOptions: {
+                /** Route-guard and no-code dynamic imports defer evaluation (boot cost, cycles), not chunking. */
+                checks: {ineffectiveDynamicImport: false},
+            },
         },
         server: {
             watch: {
@@ -52,7 +58,7 @@ export default defineConfig(({mode}) => {
             preserveSymlinks: true,
         },
         plugins: [
-            symlinkAlias(__dirname),
+            symlinkAlias(import.meta.dirname),
             !process.env.STORYBOOK && federation({
                 name: "host",
                 shared: {

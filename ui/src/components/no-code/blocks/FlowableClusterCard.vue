@@ -82,7 +82,7 @@
                     tabindex="-1"
                     @click.stop="emit('delete', path)"
                 >
-                    <DeleteOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -126,7 +126,7 @@
                     data-test="flowable-add-case-btn"
                     @click="addCase"
                 >
-                    <PlusCircleOutline class="flowable-cluster-add-icon" />
+                    <Plus class="flowable-cluster-add-icon" />
                     {{ $t("block_editor.add_switch_case") }}
                 </button>
                 <span v-if="isCaseKeyTaken" class="flowable-cluster-case-taken" data-test="flowable-add-case-taken">
@@ -144,9 +144,9 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Cog from "vue-material-design-icons/CogOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
@@ -320,7 +320,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flowable-cluster {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);

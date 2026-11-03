@@ -110,7 +110,7 @@ public class HarnessAssert extends AbstractAssert<HarnessAssert, ExecutorTestHar
     }
 
     private List<String> queuedIds() {
-        return actual.executionQueuedStateStore().queued().stream().map(ExecutionQueued::getExecution).map(Execution::getId).toList();
+        return actual.executionQueuedStateStore().getAllForAllTenants().stream().map(ExecutionQueued::getExecution).map(Execution::getId).toList();
     }
 
     private String described(String detail, Object... args) {

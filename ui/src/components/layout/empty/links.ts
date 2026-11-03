@@ -33,10 +33,11 @@ export const links: Record<string, string> = {
     auditlogs: "https://kestra.io/docs/enterprise/governance/audit-logs?utm_source=app&utm_medium=referral&utm_campaign=auditlogs",
     quotas: "https://kestra.io/docs/workflow-components/quotas?utm_source=app&utm_medium=referral&utm_campaign=quotas",
     instance: "https://kestra.io/docs/enterprise/instance?utm_source=app&utm_medium=referral&utm_campaign=instance",
-    dashboards: "https://kestra.io/docs/ui/dashboards?utm_source=app&utm_medium=referral&utm_campaign=dashboards",
+    dashboards: "https://kestra.io/docs/ui/dashboard?utm_source=app&utm_medium=referral&utm_campaign=dashboards",
     blueprints: "https://kestra.io/docs/enterprise/governance/custom-blueprints?utm_source=app&utm_medium=referral&utm_campaign=blueprints",
     namespace: "https://kestra.io/docs/enterprise/governance/namespace-management?utm_source=app&utm_medium=referral&utm_campaign=namespace",
     variables: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore?utm_source=app&utm_medium=referral&utm_campaign=variables",
+    reusableInputs: "https://kestra.io/docs/workflow-components/reusable-inputs?utm_source=app&utm_medium=referral&utm_campaign=reusable-inputs",
     secrets: "https://kestra.io/docs/concepts/secret?utm_source=app&utm_medium=referral&utm_campaign=secrets",
     promote: "https://kestra.io/docs/enterprise/governance/promote?utm_source=app&utm_medium=referral&utm_campaign=promote",
     /** Groups have no page of their own; RBAC covers them. */

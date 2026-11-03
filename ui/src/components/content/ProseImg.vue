@@ -1,5 +1,5 @@
 <template>
-    <span class="text-center d-block img-block">
+    <span class="img-block">
         <img
             v-bind="$attrs"
             :alt="alt"
@@ -10,10 +10,12 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, inject} from "vue"
     import {useDocStore} from "../../stores/doc"
-    import {computed} from "vue"
-    
+    import {DOC_PATH_INJECTION_KEY} from "../docs/docsUtils"
+
     const docStore = useDocStore()
+    const docPath = inject(DOC_PATH_INJECTION_KEY, undefined)
 
     const props = defineProps({
         src: {
@@ -39,10 +41,15 @@
     })
 
     const rawDocUrl = computed(() => docStore.resourceUrl(props.src)!)
-    const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value)
+    const finalUrl = computed(() => docPath?.value ? rawDocUrl.value.replace("/./", "/" + docPath.value + "/") : rawDocUrl.value)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .img-block {
+        display: block;
+        text-align: center;
+    }
+
     img {
         max-width: 100%;
     }

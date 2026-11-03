@@ -36,7 +36,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox-button';
+</style>
 
+<style>
     .kel-checkbox-button:not(.is-checked):not(.is-disabled):hover .kel-checkbox-button__inner {
         color: var(--ks-text-link);
         border-color: var(--ks-text-link);

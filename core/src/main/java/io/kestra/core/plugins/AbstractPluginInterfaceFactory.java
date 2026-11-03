@@ -74,6 +74,54 @@ public abstract class AbstractPluginInterfaceFactory<T> {
      */
     @SuppressWarnings("unchecked")
     protected T resolve(final String identifier, final Map<String, Object> pluginConfiguration) {
+        final String pluginId = PluginIdentifier.parseIdentifier(identifier).getLeft();
+        Class<? extends Plugin> pluginClass = resolveClass(identifier);
+
+        // Plugins are handled as any serializable/deserialize plugins.
+        T plugin;
+        try {
+            // Make sure config is not null, otherwise deserialization result will be null too.
+            Map<String, Object> nonEmptyConfig = Optional.ofNullable(pluginConfiguration).orElse(Map.of());
+            plugin = (T) PluginConfigurationMapper.convert(nonEmptyConfig, pluginClass, failOnUnknownProperties());
+        } catch (Exception e) {
+            throw new KestraRuntimeException(
+                String.format("Failed to create %s '%s'. Error: %s", configDisplayName(), pluginId, e.getMessage())
+            );
+        }
+
+        // Validate configuration.
+        Set<ConstraintViolation<T>> violations;
+        try {
+            violations = validator.validate(plugin);
+        } catch (ConstraintViolationException e) {
+            throw new KestraRuntimeException(
+                String.format("Failed to validate configuration for %s '%s'. Error: %s", configDisplayName(), pluginId, e.getMessage())
+            );
+        }
+        if (!violations.isEmpty()) {
+            ConstraintViolationException e = new ConstraintViolationException(violations);
+            throw new KestraRuntimeException(
+                String.format("Invalid configuration for %s '%s'. Error: '%s'", configDisplayName(), pluginId, e.getMessage()), e
+            );
+        }
+
+        return plugin;
+    }
+
+    /**
+     * Whether a configuration key the plugin does not declare rejects the configuration.
+     */
+    protected boolean failOnUnknownProperties() {
+        return true;
+    }
+
+    /**
+     * Finds the plugin class for the given identifier.
+     *
+     * @param identifier the plugin identifier, optionally in the form {@code <id>:<version>}.
+     * @throws KestraRuntimeException if no plugin matches the id or the version.
+     */
+    protected Class<? extends Plugin> resolveClass(final String identifier) {
         // Passed 'identifier' can be in the form '<id>:<version>'.
         Pair<String, String> idAndVersion = PluginIdentifier.parseIdentifier(identifier);
 
@@ -101,36 +149,7 @@ public abstract class AbstractPluginInterfaceFactory<T> {
                 )
             );
         }
-
-        // Plugins are handled as any serializable/deserialize plugins.
-        T plugin;
-        try {
-            // Make sure config is not null, otherwise deserialization result will be null too.
-            Map<String, Object> nonEmptyConfig = Optional.ofNullable(pluginConfiguration).orElse(Map.of());
-            plugin = (T) JacksonMapper.toMap(nonEmptyConfig, pluginClass);
-        } catch (Exception e) {
-            throw new KestraRuntimeException(
-                String.format("Failed to create %s '%s'. Error: %s", configDisplayName(), pluginId, e.getMessage())
-            );
-        }
-
-        // Validate configuration.
-        Set<ConstraintViolation<T>> violations;
-        try {
-            violations = validator.validate(plugin);
-        } catch (ConstraintViolationException e) {
-            throw new KestraRuntimeException(
-                String.format("Failed to validate configuration for %s '%s'. Error: %s", configDisplayName(), pluginId, e.getMessage())
-            );
-        }
-        if (!violations.isEmpty()) {
-            ConstraintViolationException e = new ConstraintViolationException(violations);
-            throw new KestraRuntimeException(
-                String.format("Invalid configuration for %s '%s'. Error: '%s'", configDisplayName(), pluginId, e.getMessage()), e
-            );
-        }
-
-        return plugin;
+        return pluginClass;
     }
 
     /**

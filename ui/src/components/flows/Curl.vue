@@ -1,10 +1,10 @@
 <template>
-    <div class="position-relative">
+    <div class="curl-wrapper">
         <pre><code>{{ curlCommand }}</code></pre>
 
         <CopyToClipboard :text="curlCommand" />
 
-        <KsAlert class="mt-3" type="info" :closable="false">
+        <KsAlert class="curl-alert" type="info" :closable="false">
             {{ $t('curl.note') }}
         </KsAlert>
     </div>
@@ -19,6 +19,8 @@
     import {Label} from "../../stores/executions"
 
     type DateInput = Parameters<typeof dayjs>[0]
+
+    const DATE_LIKE_TYPES = ["DATE", "TIME", "DATETIME"]
 
     const props = withDefaults(defineProps<{
         flow: Flow;
@@ -48,6 +50,10 @@
             let inputValue: string | undefined
             const value = props.inputs?.[input.id]
 
+            // An untouched or cleared picker holds undefined, null or "", which Execute leaves out
+            // (normalizeInputValues), and dayjs() would turn into the current date or "Invalid Date".
+            if (DATE_LIKE_TYPES.includes(input.type) && (value === undefined || value === null || value === "")) return
+
             switch (input.type) {
             case "FILE":
                 inputValue = exampleFileName.value
@@ -61,6 +67,13 @@
             case "TIME":
                 inputValue = dayjs(value as DateInput).format("HH:mm:ss")
                 break
+            case "DATETIME":
+            {
+                // The picker holds a Date, and String(date) is not a value the API can parse.
+                const date = dayjs(value as DateInput)
+                inputValue = date.isValid() ? date.toISOString() : String(value)
+                break
+            }
             default:
                 inputValue = value === undefined ? undefined : String(value)
             }
@@ -121,7 +134,15 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .curl-wrapper {
+        position: relative;
+    }
+
+    .curl-alert {
+        margin-top: var(--ks-spacing-4);
+    }
+
     pre {
         border-radius: var(--kel-border-radius-base);
         padding-right: var(--ks-spacing-8);

@@ -307,7 +307,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
     import {dateUtils, dayjs, editorFontFamily} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
@@ -771,24 +771,9 @@
         persist(storageKeys.DATE_FORMAT_STORAGE_KEY, value)
     }
 
-    function updateThemeBasedOnSystem() {
-        if (settings.theme === "syncWithSystem") {
-            Utils.switchTheme(miscStore, "syncWithSystem")
-        }
-    }
-
-    let mediaQuery: MediaQueryList | undefined
-
     onMounted(() => {
-        mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-        mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
-
         const validation = validateFlowTemplate(settings.flowTemplate)
         flowTemplateError.value = validation.errorCode ? validation : undefined
-    })
-
-    onBeforeUnmount(() => {
-        mediaQuery?.removeEventListener("change", updateThemeBasedOnSystem)
     })
 
     watch(() => miscStore.theme, () => {

@@ -66,7 +66,7 @@ function extractAllVersions(source: string){
 const yamlKeyCapture = "([^:\\n]+): *"
 
 const indentAndYamlKeyCapture = new RegExp(
-    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`,
+    `(( *)(?:- )?(?:${yamlKeyCapture})?)[^\\n]*?$`,
 )
 
 function getParentKeyByChildIndent(

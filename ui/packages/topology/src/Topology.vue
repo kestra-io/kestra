@@ -258,10 +258,8 @@
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, SCOPED_LONGEST_DURATIONS_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
     import type {LoopLaneData} from "./utils/loopOutcome"
-    import {useLongestTaskRunDuration} from "./composables/useLongestTaskRunDuration"
-    import {useScopedLongestDurations} from "./composables/useScopedLongestDurations"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -363,10 +361,6 @@
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
     provide(LOOP_LANES_INJECTION_KEY, computed(() => props.loopLanes ?? {}))
     provide(ARTIFACT_COUNTS_INJECTION_KEY, computed(() => props.artifactCounts ?? {}))
-    // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
-    // every TaskNode reducing over it independently would be N× the same work.
-    provide(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, useScopedLongestDurations(() => Object.values(props.subflowsExecutions)))
-    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, useLongestTaskRunDuration(computed(() => props.execution?.taskRunList ?? [])))
 
     const initialFitDone = ref(false)
 

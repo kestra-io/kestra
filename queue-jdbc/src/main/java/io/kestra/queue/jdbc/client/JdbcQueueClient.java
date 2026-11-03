@@ -2,11 +2,10 @@ package io.kestra.queue.jdbc.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataException;
@@ -263,77 +262,55 @@ public class JdbcQueueClient {
         return initialOffset != null ? initialOffset : 0L;
     }
 
-    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<byte[]> consumer) {
-        return dslContextWrapper.transactionResult(conf ->
-        {
-            DSLContext context = DSL.using(conf);
-            Long maxOffsetResult = null;
-
-            // Broadcast messages are always published with a null routing key. Binding it explicitly here
-            // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
-            // seek on offset instead of a full scan of every retained row for this type on each poll.
-            var select = context.select(OFFSET, VALUE)
-                .from(this.queueTable)
-                .where(TYPE.eq(queue))
-                .and(ROUTING_KEY.isNull());
-
-            if (maxOffset != null) {
-                select = select.and(OFFSET.gt(maxOffset));
-            }
-
-            var result = select
-                .orderBy(OFFSET.asc())
-                .limit(configuration.pollSize())
-                .fetch();
-
-            if (!result.isEmpty()) {
-                result.forEach(record -> consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)));
-
-                maxOffsetResult = result
-                    .stream()
-                    .map(record -> record.get(OFFSET))
-                    .max(Long::compareTo)
-                    .orElse(null);
-            }
-
-            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
-        });
+    /**
+     * @return the offsets of the messages read, in ascending order
+     */
+    public List<Long> subscribeBroadcastBatch(String queue, @Nullable Long maxOffset, Consumer<List<byte[]>> consumer) {
+        return readBroadcast(queue, maxOffset != null ? OFFSET.gt(maxOffset) : DSL.trueCondition(), consumer);
     }
 
-    public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<byte[]>> consumer) {
+    /**
+     * @return the offsets in {@code ]afterOffset, untilOffset]}, in ascending order, without reading the payloads
+     */
+    public List<Long> fetchBroadcastOffsets(String queue, Long afterOffset, Long untilOffset) {
+        return dslContextWrapper.transactionResult(
+            conf -> DSL.using(conf)
+                .select(OFFSET)
+                .from(this.queueTable)
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull())
+                .and(OFFSET.gt(afterOffset))
+                .and(OFFSET.le(untilOffset))
+                .orderBy(OFFSET.asc())
+                .fetch(OFFSET)
+        );
+    }
+
+    public List<Long> subscribeBroadcastByOffsets(String queue, Collection<Long> offsets, Consumer<List<byte[]>> consumer) {
+        return readBroadcast(queue, OFFSET.in(offsets), consumer);
+    }
+
+    private List<Long> readBroadcast(String queue, Condition condition, Consumer<List<byte[]>> consumer) {
         return dslContextWrapper.transactionResult(conf ->
         {
-            DSLContext context = DSL.using(conf);
-            Long maxOffsetResult = null;
-
             // Broadcast messages are always published with a null routing key. Binding it explicitly here
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
-            var select = context.select(OFFSET, VALUE)
+            var result = DSL.using(conf)
+                .select(OFFSET, VALUE)
                 .from(this.queueTable)
                 .where(TYPE.eq(queue))
-                .and(ROUTING_KEY.isNull());
-
-            if (maxOffset != null) {
-                select = select.and(OFFSET.gt(maxOffset));
-            }
-
-            var result = select
+                .and(ROUTING_KEY.isNull())
+                .and(condition)
                 .orderBy(OFFSET.asc())
                 .limit(configuration.pollSize())
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
-
-                maxOffsetResult = result
-                    .stream()
-                    .map(record -> record.get(OFFSET))
-                    .max(Long::compareTo)
-                    .orElse(null);
+                consumer.accept(result.map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)));
             }
 
-            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
+            return result.map(record -> record.get(OFFSET));
         });
     }
 }

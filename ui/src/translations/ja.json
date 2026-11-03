@@ -386,8 +386,8 @@
     "replay inputs new required": "このリビジョンにはinputがあります。入力を求められます。",
     "replay select taskrun": "再生するタスク実行を選択してください:",
     "change execution state done": "実行状態が更新されました",
-    "mark as": "<code>{status}</code>としてマーク",
-    "unqueue as": "<code>{status}</code>としてキューから外す",
+    "mark as": "{status}としてマーク",
+    "unqueue as": "{status}としてキューから削除",
     "kill": "キル",
     "kill parents and subflow": "現在のflowとsubflowを終了",
     "kill only parents": "現在のもののみを終了",
@@ -405,8 +405,10 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "unqueue": "キューから削除",
-    "unqueue title": "実行 <code>{id}</code> のキュー解除をしますか？<br/><br/>これはflowの同時実行制限に従わないため、許可された制限よりも多くの実行が実行される可能性があることに注意してください。",
-    "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
+    "unqueue title": "execution {id} のキュー解除を本当に実行しますか？",
+    "unqueue note": "これはFlowの同時実行制限に従わないため、許可された制限よりも多くのExecutionが実行される可能性があります。",
+    "unqueue title multiple": "{count} 件の実行をキューから削除してもよろしいですか？",
+    "unqueue multiple note": "これはFlowの同時実行制限に従わないため、許可された制限よりも多くのExecutionが実行される可能性があります。",
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
@@ -843,12 +845,12 @@
     "restore": "復元",
     "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
-    "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
-    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
+    "bulk replay": "{executionCount} 件の Execution をリプレイしてもよろしいですか？",
+    "bulk change state": "{executionCount} 件の execution の状態を変更してもよろしいですか？",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
-    "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
+    "bulk restart": "{executionCount} 件のExecutionを再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
     "errorLogs": "エラーログ",
@@ -1055,11 +1057,11 @@
         "deletion": {
           "confirm": "確認",
           "title": "コンテンツの削除を確認",
-          "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
-          "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
-          "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
-          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
-          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？"
+          "files": "{count} 個のファイルを削除してもよろしいですか？",
+          "folders": "{count} 個のフォルダーとそのすべてのコンテンツを削除してもよろしいですか？",
+          "mixed": "{folders}個のフォルダーと{files}個のファイルを削除してもよろしいですか？",
+          "file_single": "ファイル {name} を削除してもよろしいですか？",
+          "folder_single": "フォルダ {name} とそのすべてのコンテンツを削除してもよろしいですか？"
         }
       },
       "revisions": {
@@ -1536,9 +1538,9 @@
         },
         "errors": {
           "first_execution": "最初の実行は成功せず、{state}として終了しました。理由を確認するには、このページのlogsを開き、もう一度お試しください。",
-          "expected_failure": "この実行は{state}で終了したため、まだ修正すべき失敗はありません。flowにまだ<code>notify</code> taskがあることを確認し、もう一度お試しください。",
+          "expected_failure": "このExecutionは{state}で終了したため、まだ修正すべき失敗はありません。Flowに{task} taskがあることを確認してから、もう一度お試しください。",
           "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
-          "replay": "リプレイは {state} で終了しました。このページで log を開いて `notify` の報告内容を確認し、もう一度お試しください。",
+          "replay": "リプレイは{state}として終了しました。このページのlogsを開いて、{task}が報告した内容を確認し、もう一度試してください。",
           "save_flow": "ツアー flow は保存できませんでした。{reason}",
           "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
         },
@@ -2207,7 +2209,7 @@
     "reject": "拒否",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
-    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
+    "defaultsToNamespaceFile": "namespaceファイルにデフォルト設定: {name}",
     "no_file_choosen": "ファイルが選択されていません",
     "dependency": {
       "controls": {

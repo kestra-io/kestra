@@ -386,8 +386,8 @@
     "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay select taskrun": "选择要重放的task运行：",
     "change execution state done": "执行状态已更新",
-    "mark as": "标记为 <code>{status}</code>",
-    "unqueue as": "取消排队为<code>{status}</code>",
+    "mark as": "标记为 {status}",
+    "unqueue as": "取消排队为 {status}",
     "kill": "终止",
     "kill parents and subflow": "终止当前和subflows",
     "kill only parents": "仅终止当前",
@@ -405,8 +405,10 @@
     "pause confirm": "您确定要暂停执行 <code>{id}</code> 吗？",
     "pause done": "执行已PAUSED",
     "unqueue": "出队列",
-    "unqueue title": "您确定要取消执行 <code>{id}</code> 的排队吗？<br/><br/>请注意，它将不遵守 flow 并发限制，因此运行的执行数可能会超过允许的限制。",
-    "unqueue title multiple": "您确定要取消排队 <code>{count}</code> 个执行吗？<br/><br/>请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue title": "您确定要取消排队执行 {id} 吗？",
+    "unqueue note": "请注意，它不会遵守flow并发限制，因此运行的execution可能会超出允许的限制。",
+    "unqueue title multiple": "您确定要取消排队 {count} 个 execution 吗？",
+    "unqueue multiple note": "请注意，它不会遵守flow并发限制，因此运行的execution可能会超出允许的限制。",
     "unqueue done": "执行已出队列",
     "force run": "强制运行",
     "force run title": "强制运行执行 <code>{id}</code>。",
@@ -843,12 +845,12 @@
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
-    "bulk replay": "确定要重放 <code>{executionCount}</code> 个执行吗？",
-    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
+    "bulk replay": "您确定要重放 {executionCount} 个 execution 吗？",
+    "bulk change state": "您确定要更改 {executionCount} 个 execution 的状态吗？",
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
     "bulk force run": "您确定要强制运行 `{executionCount}` 个执行吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 执行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
-    "bulk restart": "确定要重新开始 <code>{executionCount}</code> 个执行吗？",
+    "bulk restart": "您确定要重新启动 {executionCount} 个 execution 吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
     "errorLogs": "错误 logs",
@@ -1055,11 +1057,11 @@
         "deletion": {
           "confirm": "确认",
           "title": "确认删除内容",
-          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
-          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
-          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
-          "file_single": "您确定要删除文件<code>{name}</code>吗？",
-          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？"
+          "files": "您确定要删除 {count} 个文件吗？",
+          "folders": "您确定要删除 {count} 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 {folders} 个文件夹和 {files} 个文件吗？",
+          "file_single": "您确定要删除文件 {name} 吗？",
+          "folder_single": "您确定要删除文件夹 {name} 及其所有内容吗？"
         }
       },
       "revisions": {
@@ -1536,9 +1538,9 @@
         },
         "errors": {
           "first_execution": "第一次执行以 {state} 状态结束，而不是成功。打开此页面上的 logs 查看原因，然后重试。",
-          "expected_failure": "本次执行以 {state} 状态完成，因此尚无需要修复的故障。请检查该 flow 是否仍包含 <code>notify</code> task，然后重试。",
+          "expected_failure": "此 execution 以 {state} 状态完成，因此尚无需要修复的故障。请检查 flow 是否仍包含 {task} task，然后重试。",
           "no_execution_to_replay": "尚无可重放的执行。请在上一步运行该 flow，然后重试。",
-          "replay": "重放结束，状态为 {state}。在此页面打开 log 查看 <code>notify</code> 报告了什么，然后重试。",
+          "replay": "Replay 以 {state} 结束。在此页面上打开 log 以查看 {task} 报告了什么，然后重试。",
           "save_flow": "导览 flow 无法保存。{reason}",
           "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。"
         },
@@ -2207,7 +2209,7 @@
     "reject": "拒绝",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
-    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：{name}",
     "no_file_choosen": "未选择文件",
     "dependency": {
       "controls": {

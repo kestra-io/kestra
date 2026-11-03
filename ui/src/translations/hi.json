@@ -386,8 +386,8 @@
     "replay inputs new required": "इस संशोधन में inputs हैं। आपको इन्हें भरने के लिए कहा जाएगा।",
     "replay select taskrun": "जिस task रन को पुनः चलाना है, उसे चुनें:",
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
-    "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
-    "unqueue as": "<code>{status}</code> के रूप में अनक्यू करें",
+    "mark as": "{status} के रूप में चिह्नित करें",
+    "unqueue as": "{status} के रूप में अनक्यू करें",
     "kill": "समाप्त करें",
     "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "kill only parents": "केवल वर्तमान को समाप्त करें",
@@ -405,8 +405,10 @@
     "pause confirm": "क्या आप वाकई execution <code>{id}</code> को रोकना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "unqueue": "अनक्यू करें",
-    "unqueue title": "क्या आप वाकई execution <code>{id}</code> को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency limit का पालन नहीं करेगा, इसलिए allowed limit से अधिक executions चल सकते हैं।",
-    "unqueue title multiple": "क्या आप वाकई <code>{count}</code> executions को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल सकती हैं।",
+    "unqueue title": "क्या आप वाकई execution {id} को Unqueue करना चाहते हैं?",
+    "unqueue note": "ध्यान दें कि यह flow Concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक execution चल सकती हैं।",
+    "unqueue title multiple": "क्या आप वाकई {count} execution(s) को Unqueue करना चाहते हैं?",
+    "unqueue multiple note": "ध्यान दें कि यह flow Concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक execution चल सकती हैं।",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
@@ -843,12 +845,12 @@
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
-    "bulk replay": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः चलाना चाहते हैं?",
-    "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
+    "bulk replay": "क्या आप वाकई {executionCount} execution(s) को फिर से चलाना चाहते हैं?",
+    "bulk change state": "क्या आप वाकई {executionCount} execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
     "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
-    "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
+    "bulk restart": "क्या आप वाकई {executionCount} execution(s) को पुनरारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
     "errorLogs": "त्रुटि लॉग",
@@ -1055,11 +1057,11 @@
         "deletion": {
           "confirm": "पुष्टि करें",
           "title": "सामग्री को हटाने की पुष्टि करें",
-          "files": "क्या आप वाकई <code>{count}</code> फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
-          "folders": "क्या आप वाकई <code>{count}</code> फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
-          "mixed": "क्या आप वाकई <code>{folders}</code> फ़ोल्डर(ओं) और <code>{files}</code> फ़ाइल(ओं) को हटाना चाहते हैं?",
-          "file_single": "क्या आप वाकई <code>{name}</code> फ़ाइल को हटाना चाहते हैं?",
-          "folder_single": "क्या आप वाकई <code>{name}</code> फ़ोल्डर और इसकी सभी सामग्री को हटाना चाहते हैं?"
+          "files": "क्या आप वाकई {count} फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
+          "folders": "क्या आप वाकई {count} फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
+          "mixed": "क्या आप वाकई {folders} फ़ोल्डर और {files} फ़ाइलें हटाना चाहते हैं?",
+          "file_single": "क्या आप वाकई फ़ाइल {name} को हटाना चाहते हैं?",
+          "folder_single": "क्या आप वाकई फ़ोल्डर {name} और उसकी सभी सामग्री को हटाना चाहते हैं?"
         }
       },
       "revisions": {
@@ -1536,9 +1538,9 @@
         },
         "errors": {
           "first_execution": "पहली निष्पादन सफल होने के बजाय {state} के रूप में समाप्त हुई। यह देखने के लिए कि ऐसा क्यों हुआ, इस पृष्ठ पर logs खोलें, फिर से प्रयास करें।",
-          "expected_failure": "यह निष्पादन {state} के रूप में समाप्त हुआ, इसलिए अभी तक ठीक करने के लिए कोई विफलता नहीं है। जांचें कि flow में अभी भी <code>notify</code> task है, फिर से प्रयास करें।",
+          "expected_failure": "यह execution {state} के रूप में समाप्त हुई, इसलिए अभी तक कोई विफलता ठीक नहीं हुई है। जांचें कि flow में अभी भी {task} task है, फिर से प्रयास करें।",
           "no_execution_to_replay": "अभी तक फिर से चलाने के लिए कोई निष्पादन नहीं है। पिछले चरण पर flow चलाएँ, फिर दोबारा प्रयास करें।",
-          "replay": "रीप्ले `{state}` के रूप में समाप्त हुआ। यह देखने के लिए कि `notify` ने क्या रिपोर्ट किया, इस पृष्ठ पर logs खोलें, फिर से प्रयास करें।",
+          "replay": "रिप्ले {state} के रूप में समाप्त हुआ। यह देखने के लिए कि {task} ने क्या रिपोर्ट किया, इस पेज पर logs खोलें, फिर दोबारा कोशिश करें।",
           "save_flow": "भ्रमण flow सहेजा नहीं जा सका। {reason}",
           "test_event": "webhook ने {status} का जवाब दिया। जांचें कि flow सहेजा गया है और trigger सक्षम है, फिर से प्रयास करें।"
         },
@@ -2207,7 +2209,7 @@
     "reject": "अस्वीकार करें",
     "last modified": "अंतिम संशोधित",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
-    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: {name}",
     "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "dependency": {
       "controls": {

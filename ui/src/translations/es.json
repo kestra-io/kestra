@@ -386,8 +386,8 @@
     "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay select taskrun": "Seleccione la ejecución de task para reproducir desde:",
     "change execution state done": "Estado de ejecución actualizado",
-    "mark as": "Marcar como <code>{status}</code>",
-    "unqueue as": "Desencolar como <code>{status}</code>",
+    "mark as": "Marcar como {status}",
+    "unqueue as": "Desencolar como {status}",
     "kill": "Terminar",
     "kill parents and subflow": "Terminar el flujo actual y los subflows",
     "kill only parents": "Matar solo el actual",
@@ -405,8 +405,10 @@
     "pause confirm": "¿Estás seguro de que quieres pausar la ejecución <code>{id}</code>?",
     "pause done": "La ejecución está PAUSED",
     "unqueue": "Desencolar",
-    "unqueue title": "¿Estás seguro de que quieres sacar de la cola la ejecución <code>{id}</code>?<br/><br/>Ten en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían ejecutarse más ejecuciones de las permitidas.",
-    "unqueue title multiple": "¿Está seguro de que desea descolar <code>{count}</code> ejecuciones?<br/><br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
+    "unqueue title": "¿Estás seguro de que quieres sacar de la cola la ejecución {id}?",
+    "unqueue note": "Ten en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían ejecutarse más ejecuciones de las permitidas.",
+    "unqueue title multiple": "¿Estás seguro de que quieres sacar de la cola {count} egzekucje?",
+    "unqueue multiple note": "Ten en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían ejecutarse más ejecuciones de las permitidas.",
     "unqueue done": "La ejecución está descolada",
     "force run": "Forzar ejecución",
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
@@ -843,12 +845,12 @@
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
     "bulk delete": "¿Estás seguro de que quieres eliminar <code>{executionCount}</code> ejecución(es)?",
-    "bulk replay": "¿Estás seguro de que quieres reproducir <code>{executionCount}</code> ejecución(es)?",
-    "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
+    "bulk replay": "¿Estás seguro de que quieres reproducir {executionCount} ejecución(es)?",
+    "bulk change state": "¿Estás seguro de que quieres cambiar el estado de {executionCount} ejecución(es)?",
     "bulk resume": "¿Estás seguro de que quieres reanudar <code>{executionCount}</code> ejecución(es)?",
     "bulk pause": "¿Está seguro de que desea pausar la(s) ejecución(es) <code>{executionCount}</code>?",
     "bulk force run": "¿Estás seguro de que quieres forzar la ejecución de `{executionCount}` ejecución(es)?\n\nADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de Task duplicadas.\n\nSe realizarán las siguientes transiciones:\n\n- Los Tasks CREATED se moverán al estado RUNNING.\n- Los Tasks RUNNING se volverán a enviar.\n- Los Tasks QUEUED se des-encolarán.\n- Los Tasks PAUSED se reanudarán.",
-    "bulk restart": "¿Estás seguro de que quieres reiniciar <code>{executionCount}</code> ejecución(es)?",
+    "bulk restart": "¿Estás seguro de que quieres reiniciar {executionCount} ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
     "cancel": "Cancelar",
     "errorLogs": "Logs de error",
@@ -1055,11 +1057,11 @@
         "deletion": {
           "confirm": "Confirmar",
           "title": "Confirmar eliminación de contenido",
-          "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
-          "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
-          "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
-          "file_single": "¿Está seguro de que desea eliminar el archivo <code>{name}</code>?",
-          "folder_single": "¿Está seguro de que desea eliminar la carpeta <code>{name}</code> y todo su contenido?"
+          "files": "¿Estás seguro de que quieres eliminar {count} archivo(s)?",
+          "folders": "¿Estás seguro de que quieres eliminar {count} carpeta(s) y todo su contenido?",
+          "mixed": "¿Estás seguro de que quieres eliminar {folders} carpeta(s) y {files} archivo(s)?",
+          "file_single": "¿Estás seguro de que quieres eliminar el archivo {name}?",
+          "folder_single": "¿Estás seguro de que quieres eliminar la carpeta {name} y todo su contenido?"
         }
       },
       "revisions": {
@@ -1536,9 +1538,9 @@
         },
         "errors": {
           "first_execution": "La primera ejecución finalizó como {state} en lugar de tener éxito. Abre los logs en esta página para ver por qué, y vuelve a intentarlo.",
-          "expected_failure": "Esta ejecución finalizó como {state}, por lo que no hay ningún fallo que corregir todavía. Verifica que el flow todavía tenga la task <code>notify</code>, luego inténtalo de nuevo.",
+          "expected_failure": "Esta ejecución finalizó como {state}, por lo que aún no hay fallas que corregir. Verifica que el Flow todavía tenga la Task {task} y luego inténtalo de nuevo.",
           "no_execution_to_replay": "Todavía no hay ninguna ejecución para reproducir. Ejecuta el flow en el paso anterior, luego inténtalo de nuevo.",
-          "replay": "La repetición finalizó como {state}. Abre los logs en esta página para ver lo que <code>notify</code> informó, y vuelve a intentarlo.",
+          "replay": "La reproducción finalizó como {state}. Abre los logs en esta página para ver lo que reportó el {task}, luego inténtalo de nuevo.",
           "save_flow": "El flow de tour no se pudo guardar. {reason}",
           "test_event": "El webhook respondió con {status}. Asegúrese de que el flow esté guardado y el trigger esté habilitado, y vuelva a intentarlo."
         },
@@ -2207,7 +2209,7 @@
     "reject": "Rechazar",
     "last modified": "Última modificación",
     "run task in playground": "Ejecutar task en el playground",
-    "defaultsToNamespaceFile": "Por defecto en el archivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Predeterminado al archivo de namespace: {name}",
     "no_file_choosen": "No se ha elegido archivo",
     "dependency": {
       "controls": {

@@ -21,7 +21,7 @@
     </section>
 
     <template v-else>
-        <component :is="catalogExtension.banner" v-if="catalogExtension.banner" />
+        <component :is="catalogExtension.banner" v-if="catalogExtension.banner" :catalog="baseList" />
 
         <div class="filter-toolbar">
             <div class="filter-toolbar__search">

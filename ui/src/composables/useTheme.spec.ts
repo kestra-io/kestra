@@ -43,4 +43,23 @@ describe("useTheme", () => {
 
         expect(theme.value).toBe("dark")
     })
+
+    it("re-evaluates when the OS theme changes while miscStore.theme stays syncWithSystem", () => {
+        const osListeners = new Set<(event: {matches: boolean}) => void>()
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            media: query,
+            matches: false,
+            addEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.add(listener),
+            removeEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.delete(listener),
+        }))
+        mockTheme.value = "syncWithSystem"
+        const theme = useTheme()
+        expect(theme.value).toBe("light")
+
+        currentReportedTheme = "dark"
+        osListeners.forEach((listener) => listener({matches: true}))
+
+        expect(theme.value).toBe("dark")
+        vi.unstubAllGlobals()
+    })
 })

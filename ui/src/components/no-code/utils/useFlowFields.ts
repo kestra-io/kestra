@@ -3,6 +3,7 @@ import {useI18n} from "vue-i18n"
 import {useFlowStore, type ParsedFlow} from "../../../stores/flow"
 import {usePluginsStore} from "../../../stores/plugins"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import type {FieldValue} from "./types"
 
 
 // fields displayed on top of the form
@@ -48,7 +49,9 @@ export function useFlowFields(flowSource: ComputedRef<string>){
     })
 
     const getFieldFromKey = (key:string, translateGroup: string) => ({
-        modelValue: parsedFlow.value[key],
+        // A single top-level flow property read off ParsedFlow's index signature is always a
+        // schema-driven leaf or branch value, never anything an index signature couldn't describe.
+        modelValue: parsedFlow.value[key] as FieldValue | undefined,
         required: pluginsStore.flowRootSchema?.required ?? [],
         disabled: !flowStore.isCreating && (key === "id" || key === "namespace"),
         schema: pluginsStore.flowRootProperties?.[key] ?? {},

@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
+      "task-details": "{task} の詳細",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",

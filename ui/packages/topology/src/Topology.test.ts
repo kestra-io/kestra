@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from "vitest"
 import {nextTick} from "vue"
 import {useVueFlow} from "@vue-flow/core"
 import Topology from "./Topology.vue"
+import {NODE_DETAILS_PEEK} from "./utils/constants"
 import type {FlowGraph} from "./utils/vueFlowUtils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
@@ -151,6 +152,116 @@ describe("Topology view refit", () => {
         vueFlow.emits.nodesInitialized([])
 
         expect(fitView).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe("Topology details peek", () => {
+    function mountWithViewportZoom(zoom: number) {
+        const id = `peek-${Math.random()}`
+        const vueFlow = useVueFlow(id)
+        vueFlow.viewport.value = {x: 0, y: 0, zoom}
+        const wrapper = i18nMount(Topology, {
+            props: {id, source: "", flowGraph: FLOW_GRAPH},
+            slots: {taskDetails: "<div class='peek-marker'>details</div>"},
+            global: {stubs: {VueFlow: {template: "<div><slot /></div>"}, Background: true, Panel: true, Controls: true, ControlButton: true}},
+        })
+        return {wrapper, vueFlow}
+    }
+
+    const ZOOM_ABOVE_PEEK_THRESHOLD = 1.5
+    const ZOOM_BELOW_PEEK_THRESHOLD = 1
+
+    const mountWithPeek = () => mountWithViewportZoom(ZOOM_ABOVE_PEEK_THRESHOLD).wrapper
+
+    const PEEK = "[data-test=\"node-details-peek\"]"
+
+    it("should open the peek for a hovered task only once the hover intent delay has passed", async () => {
+        vi.useFakeTimers()
+        try {
+            const wrapper = mountWithPeek()
+            await settle()
+
+            wrapper.vm.onMouseOver({uid: "1"})
+            vi.advanceTimersByTime(NODE_DETAILS_PEEK.HOVER_INTENT_MS - 50)
+            await nextTick()
+            expect(wrapper.find(PEEK).exists()).toBe(false)
+
+            vi.advanceTimersByTime(100)
+            await nextTick()
+            expect(wrapper.find(PEEK).exists()).toBe(true)
+            expect(wrapper.find("[data-test=\"node-details-peek-title\"]").text()).toBe("1")
+            expect(wrapper.find(".peek-marker").exists()).toBe(true)
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it("should close an open peek on Escape", async () => {
+        vi.useFakeTimers()
+        try {
+            const wrapper = mountWithPeek()
+            await settle()
+
+            wrapper.vm.onMouseOver({uid: "1"})
+            vi.advanceTimersByTime(NODE_DETAILS_PEEK.HOVER_INTENT_MS)
+            await nextTick()
+            expect(wrapper.find(PEEK).exists()).toBe(true)
+
+            window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}))
+            await nextTick()
+
+            expect(wrapper.find(PEEK).exists()).toBe(false)
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it("should pin and unpin the peek when a read-only task card is clicked", async () => {
+        const wrapper = mountWithPeek()
+        await settle()
+
+        wrapper.vm.onTaskCardClick({uid: "2"})
+        await nextTick()
+        expect(wrapper.find("[data-test=\"node-details-peek-title\"]").text()).toBe("2")
+
+        wrapper.vm.onTaskCardClick({uid: "2"})
+        await nextTick()
+        expect(wrapper.find(PEEK).exists()).toBe(false)
+    })
+
+    it("should drop a pin taken while zoomed out instead of reopening it on the next zoom-in", async () => {
+        const {wrapper, vueFlow} = mountWithViewportZoom(ZOOM_BELOW_PEEK_THRESHOLD)
+        await settle()
+
+        wrapper.vm.onTaskCardClick({uid: "2"})
+        await nextTick()
+        expect(wrapper.find(PEEK).exists()).toBe(false)
+
+        vueFlow.viewport.value = {x: 0, y: 0, zoom: ZOOM_ABOVE_PEEK_THRESHOLD}
+        await nextTick()
+
+        expect(wrapper.find(PEEK).exists()).toBe(false)
+    })
+
+    it("should keep an open peek through the empty gap of a graph regeneration", async () => {
+        vi.useFakeTimers()
+        try {
+            const {wrapper, vueFlow} = mountWithViewportZoom(ZOOM_ABOVE_PEEK_THRESHOLD)
+            await settle()
+
+            wrapper.vm.onMouseOver({uid: "1"})
+            vi.advanceTimersByTime(NODE_DETAILS_PEEK.HOVER_INTENT_MS)
+            await nextTick()
+            expect(wrapper.find(PEEK).exists()).toBe(true)
+
+            vueFlow.removeNodes(vueFlow.getNodes.value)
+            await nextTick()
+
+            expect(wrapper.find(PEEK).exists()).toBe(true)
+            expect(wrapper.find("[data-test=\"node-details-peek-title\"]").text()).toBe("1")
+        } finally {
+            vi.useRealTimers()
+        }
     })
 })
 

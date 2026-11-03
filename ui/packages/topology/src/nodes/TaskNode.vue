@@ -27,9 +27,6 @@
                 <AlertCircle />
             </span>
         </template>
-        <template #details>
-            <slot name="details" />
-        </template>
         <template v-if="execution" #footer>
             <span v-if="loopRunsLabel" class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
             <Duration v-else compact :histories="histories" :execution="taskExecution" />
@@ -223,6 +220,7 @@
         (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
         (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
         (event: typeof EVENTS.TASK_DRAG_END) :void;
+        (event: typeof EVENTS.CARD_CLICK, data: {uid: string}) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)
@@ -234,7 +232,11 @@
 
     function onCardClick() {
         const task = props.data.node.task
-        if (props.data.isReadOnly || !task || isDraggingNode?.value) return
+        if (isDraggingNode?.value) return
+        if (!task || props.data.isReadOnly) {
+            emit(EVENTS.CARD_CLICK, {uid: props.data.node.uid})
+            return
+        }
         emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
     }
 

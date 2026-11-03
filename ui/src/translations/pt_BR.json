@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "Esta Task foi retried",
+      "task-details": "Detalhes de {task}",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientação do gráfico",
       "zoom-in": "Aumentar zoom",

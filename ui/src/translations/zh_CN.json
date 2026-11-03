@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "此 task 已重试",
+      "task-details": "{task} 的详细信息",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
       "graph-orientation": "图表方向",
       "zoom-in": "放大",

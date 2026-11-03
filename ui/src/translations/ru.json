@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "Эта Task была повторена",
+      "task-details": "Сведения о {task}",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",

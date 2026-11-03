@@ -7,15 +7,15 @@
     </KsEmpty>
     <div v-else class="artifacts-layout">
         <nav class="artifacts-list" :aria-label="$t('execution_artifacts.title')">
-            <KsText size="small" class="artifacts-count muted">
+            <KsText size="small" type="secondary" class="artifacts-count">
                 {{ countLabel }}
             </KsText>
             <section v-for="group in groups" :key="group.taskId" class="artifacts-group">
                 <div class="artifacts-group-header">
                     <span class="artifacts-task-icon"><TaskIcon :cls="group.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
                     <KsText tag="strong">{{ group.taskId }}</KsText>
-                    <KsText size="small" class="muted">{{ afterLastDot(group.cls) }}</KsText>
-                    <KsText v-if="durations[group.taskId]" size="small" class="muted artifacts-duration">{{ durations[group.taskId] }}</KsText>
+                    <KsText size="small" type="secondary">{{ afterLastDot(group.cls) }}</KsText>
+                    <KsText v-if="durations[group.taskId]" size="small" type="secondary" class="artifacts-duration">{{ durations[group.taskId] }}</KsText>
                 </div>
                 <KsSelectableListItem
                     v-for="artifact in group.artifacts"
@@ -176,10 +176,6 @@
 
     .artifacts-duration {
         margin-left: auto;
-    }
-
-    .muted {
-        color: var(--ks-text-secondary);
     }
 
     .artifacts-count {

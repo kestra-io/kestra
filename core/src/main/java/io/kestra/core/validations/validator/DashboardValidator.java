@@ -27,7 +27,7 @@ public class DashboardValidator implements ConstraintValidator<DashboardValidati
             return true;
         }
 
-        List<String> duplicateIds = FlowValidator.getDuplicates(ListUtils.emptyOnNull(value.getCharts()).stream()
+        List<String> duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getCharts()).stream()
             .filter(Objects::nonNull)
             .map(Chart::getId)
             .filter(Objects::nonNull)

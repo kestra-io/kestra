@@ -4,7 +4,6 @@ import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormal
 import {configure} from "vue-gtag"
 import type {I18nOptions} from "vue-i18n"
 import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
-import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
 import Toast from "./toast"
@@ -113,7 +112,6 @@ export default async (
     // others plugins
     app.use(Toast)
     app.provide("Toast", Toast)
-    app.use(VueVirtualScroller)
 
     // filters
     app.config.globalProperties.$filters = filters

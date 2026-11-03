@@ -223,13 +223,55 @@ class DateFilterTest {
             2013-09-08T17:19:12.123000+02:00
             2013-09-08T17:19:12.123+02:00[Europe/Paris]
             2013-09-08T17:19:12.123456+02:00
-            2013-09-08T17:19:12.123456+02:00
+            2013-09-08T17:19:12.000123+02:00
             2013-09-08 17:19:12
             2013-09-08 17:19:12.123
             2013-09-08 17:19:12.123456
-            2013-09-08 17:19:12.123456
+            2013-09-08 17:19:12.000123
             2013-09-08 15:19:12.123
             2013-09-08 15:19:12.123
+            """);
+    }
+
+    @Test
+    void shouldPreserveNanosecondEpochPrecision() throws IllegalVariableEvaluationException {
+        // Regression for #20210: 19-digit nano epochs must keep the full nano fraction,
+        // including values that do not end with "000".
+        String render = variableRenderer.render(
+            """
+                {{ 1700000000123456789 | date("yyyy-MM-dd HH:mm:ss.SSSSSSSSS", timeZone="UTC") }}
+                {{ 1700000000000000001 | date("yyyy-MM-dd HH:mm:ss.SSSSSSSSS", timeZone="UTC") }}
+                {{ 1700000000123456000 | date("yyyy-MM-dd HH:mm:ss.SSSSSSSSS", timeZone="UTC") }}
+                {{ 1378653552123456789 | date(format="iso", timeZone="Europe/Paris") }}
+                {{ 1378653552000123456 | date(format="iso", timeZone="Europe/Paris") }}
+                {{ 1378653552123456000 | date(format="iso", timeZone="Europe/Paris") }}
+                """,
+            Map.of()
+        );
+
+        assertThat(render).isEqualTo("""
+            2023-11-14 22:13:20.123456789
+            2023-11-14 22:13:20.000000001
+            2023-11-14 22:13:20.123456000
+            2013-09-08T17:19:12.123456+02:00
+            2013-09-08T17:19:12.000123+02:00
+            2013-09-08T17:19:12.123456+02:00
+            """);
+    }
+
+    @Test
+    void shouldRoundTripTimestampNanoThroughDate() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            """
+                {{ "2023-11-14T22:13:20.123456789Z" | timestampNano }}
+                {{ "2023-11-14T22:13:20.123456789Z" | timestampNano | number("LONG") | date("yyyy-MM-dd HH:mm:ss.SSSSSSSSS", timeZone="UTC") }}
+                """,
+            Map.of()
+        );
+
+        assertThat(render).isEqualTo("""
+            1700000000123456789
+            2023-11-14 22:13:20.123456789
             """);
     }
 

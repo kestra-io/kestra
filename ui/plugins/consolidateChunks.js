@@ -509,6 +509,7 @@ const GROUPS = [
  */
 export function consolidateChunks({pages = {}} = {}) {
     pageGroups = PAGE_GROUPS.map((page) => pages[page.name]
+        // nosemgrep: detect-non-literal-regexp -- build-time join of two RegExp sources from the Vite config.
         ? {...page, pattern: new RegExp(`${page.pattern.source}|${pages[page.name].source}`)}
         : page)
     return {

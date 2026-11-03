@@ -292,7 +292,9 @@
         </template>
 
         <template #default>
-            <p v-html="changeStatusToast()" />
+            <i18n-t keypath="bulk change state" tag="p" scope="global">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
 
             <KsSelect
                 :required="true"
@@ -305,7 +307,9 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="mark as" tag="span" scope="global">
+                            <template #status><code>{{ item.code }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -330,7 +334,10 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
+            <i18n-t keypath="unqueue title multiple" tag="p" scope="global">
+                <template #count><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
+            <p>{{ $t("unqueue multiple note") }}</p>
 
             <KsSelect
                 :required="true"
@@ -343,7 +350,9 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status><code>{{ item.code }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -368,7 +377,9 @@
         </template>
 
         <template #default>
-            <p v-html="changeReplayToast()" />
+            <i18n-t keypath="bulk replay" tag="p" scope="global">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
         </template>
 
         <template #footer>
@@ -393,7 +404,9 @@
         </template>
 
         <template #default>
-            <p v-html="changeRestartToast()" />
+            <i18n-t keypath="bulk restart" tag="p" scope="global">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
         </template>
 
         <template #footer>
@@ -768,14 +781,12 @@
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
             code: value,
-            label: t("mark as", {status: value}),
         }))
     })
 
     const unQueuestates = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
-            label: t("unqueue as", {status: value}),
         }))
     })
 
@@ -977,13 +988,7 @@
         )
     }
 
-    const changeReplayToast = () => {
-        return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
-    }
-
-    const changeRestartToast = () => {
-        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
-    }
+    const bulkActionCount = computed(() => queryBulkAction.value ? executionsStore.total : selection.value.length)
 
     const changeStatus = async () => {
         changeStatusDialogVisible.value = false
@@ -995,10 +1000,6 @@
             "executions state changed",
         )
         window.setTimeout(() => dataTable.value?.reload(), 100)
-    }
-
-    const changeStatusToast = () => {
-        return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
     }
 
     const deleteExecutions = () => {

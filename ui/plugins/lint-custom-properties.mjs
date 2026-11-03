@@ -43,6 +43,7 @@ const rule = (primary) => {
 			return
 		}
 
+        // nosemgrep: detect-non-literal-regexp -- the pattern comes from the repository's own stylelint config.
         const regexpPattern = isString(primary) ? new RegExp(primary) : primary
 
 		/**

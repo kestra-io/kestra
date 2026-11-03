@@ -40,6 +40,7 @@
                 :value="structured"
                 :defaultExpanded="logsExpandByDefault"
             />
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- renderedHtml passes the message through xss() before adding ANSI colours, links and highlights. -->
             <pre v-else ref="lineContent" class="log-message" :style="messageStyle" v-html="renderedHtml" />
         </div>
         <CopyToClipboard class="log-copy" :text="`${log.level} ${log.timestamp} ${log.message}`" link />

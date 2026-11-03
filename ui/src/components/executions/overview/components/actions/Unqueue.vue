@@ -9,11 +9,14 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('unqueue')" />
+            <span>{{ $t('unqueue') }}</span>
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
+            <i18n-t keypath="unqueue title" tag="p" scope="global">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
+            <p>{{ $t("unqueue note") }}</p>
 
             <KsSelect
                 :required="true"
@@ -26,7 +29,9 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status><code>{{ item.code }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -42,7 +47,6 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import escape from "lodash/escape"
     import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -69,7 +73,6 @@
     const states = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
-            label: t("unqueue as", {status: value}),
         }))
     })
 

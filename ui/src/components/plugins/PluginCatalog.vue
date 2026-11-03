@@ -41,7 +41,7 @@
                     @change="toggleCategory(category)"
                 >
                     <template #icon>
-                        <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="16" />
+                        <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="14" />
                     </template>
                     <span class="category-label">{{ category }}</span>
                 </KsCheckTag>
@@ -381,8 +381,8 @@
             display: flex;
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
-            flex: 1 1 auto;
-            min-width: 0;
+            flex: 1 1 0;
+            min-width: 20rem;
         }
 
         .category-label {

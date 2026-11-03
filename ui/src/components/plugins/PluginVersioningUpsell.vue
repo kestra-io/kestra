@@ -3,22 +3,22 @@
         <KsCard shadow="never" data-test="plugin-versioning-upsell">
             <div class="plugin-versioning-upsell-content">
                 <span class="plugin-versioning-upsell-art">
-                    <LockOutline :size="24" />
+                    <LockOutline :size="20" />
                 </span>
                 <div class="plugin-versioning-upsell-body">
                     <h2 class="plugin-versioning-upsell-title">
                         {{ $t("pluginPage.management.upsellTitle") }}
                     </h2>
-                    <KsText class="plugin-versioning-upsell-description">
+                    <KsText size="small" class="plugin-versioning-upsell-description">
                         {{ $t("pluginPage.management.upsellDescription") }}
                     </KsText>
                     <div class="plugin-versioning-upsell-actions">
-                        <KsButton type="primary" tag="a" target="_blank" :href="CONTACT_SALES_URL">
+                        <KsButton type="primary" size="small" tag="a" target="_blank" :href="CONTACT_SALES_URL">
                             {{ $t("pluginPage.management.talkToUs") }}
                         </KsButton>
-                        <KsButton tag="a" target="_blank" :href="DOCS_URL">
+                        <KsButton size="small" tag="a" target="_blank" :href="DOCS_URL">
                             {{ $t("pluginPage.management.readTheDocs") }}
-                            <OpenInNew :size="16" class="plugin-versioning-upsell-external" />
+                            <OpenInNew :size="14" class="plugin-versioning-upsell-external" />
                         </KsButton>
                     </div>
                 </div>
@@ -48,7 +48,7 @@
     .plugin-versioning-upsell-content {
         display: flex;
         align-items: flex-start;
-        gap: var(--ks-spacing-4);
+        gap: var(--ks-spacing-3);
     }
 
     .plugin-versioning-upsell-art {
@@ -56,8 +56,8 @@
         flex: 0 0 auto;
         align-items: center;
         justify-content: center;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 2rem;
+        height: 2rem;
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-tag);
         color: var(--ks-icon-muted);
@@ -66,24 +66,25 @@
     .plugin-versioning-upsell-body {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-2);
+        gap: var(--ks-spacing-1);
         min-width: 0;
     }
 
     .plugin-versioning-upsell-title {
         margin: 0;
-        font-size: var(--ks-font-size-md);
+        font-size: var(--ks-font-size-sm);
         font-weight: var(--ks-font-weight-semibold);
         color: var(--ks-text-primary);
     }
 
     .plugin-versioning-upsell-description {
-        max-width: 44rem;
+        max-width: 60rem;
         color: var(--ks-text-secondary);
     }
 
     .plugin-versioning-upsell-actions {
         display: flex;
+        margin-top: var(--ks-spacing-1);
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);
     }

@@ -4,7 +4,7 @@
             <li>
                 <KsTooltip :content="$t('pluginPage.management.enterpriseOnly')">
                     <span data-test="plugin-upload-locked">
-                        <KsButton :icon="LockOutline" disabled>
+                        <KsButton :icon="LockOutline" size="small" disabled>
                             {{ $t("pluginPage.management.upload") }}
                         </KsButton>
                     </span>
@@ -13,7 +13,7 @@
             <li>
                 <KsTooltip :content="$t('pluginPage.management.enterpriseOnly')">
                     <span data-test="plugin-add-locked">
-                        <KsButton :icon="LockOutline" type="primary" disabled>
+                        <KsButton :icon="LockOutline" type="primary" size="small" disabled>
                             {{ $t("pluginPage.management.addPlugin") }}
                         </KsButton>
                     </span>
@@ -36,7 +36,7 @@
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: var(--ks-spacing-2);
+        gap: var(--ks-spacing-1);
     }
 
     .plugin-management-actions {

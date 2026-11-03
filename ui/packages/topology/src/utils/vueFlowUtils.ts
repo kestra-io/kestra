@@ -43,7 +43,7 @@ export interface GraphTaskRun {
 /** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
 export interface GraphExecution {
     id?: string;
-    state?: {current?: string};
+    state?: {current?: string; histories?: {date: string; state: string}[]};
     taskRunList?: GraphTaskRun[];
 }
 

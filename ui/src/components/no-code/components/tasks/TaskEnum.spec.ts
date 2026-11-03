@@ -1,4 +1,4 @@
-import {computed} from "vue"
+import {computed, inject} from "vue"
 import {describe, expect, test} from "vitest"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import TaskEnum from "./TaskEnum.vue"
@@ -29,7 +29,11 @@ const NamespaceSelectStub = {
         allowCreate: Boolean,
     },
     emits: ["update:modelValue"],
-    template: "<div data-testid='namespace-select'></div>",
+    setup() {
+        const providedNamespace = inject(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => ""))
+        return {providedNamespace}
+    },
+    template: "<div data-testid='namespace-select' :data-provided-namespace='providedNamespace'></div>",
 }
 
 type TaskEnumProps = {
@@ -43,6 +47,7 @@ type TaskEnumProps = {
 function mountTaskEnum(props: TaskEnumProps = {}) {
     return i18nMount(TaskEnum, {
         props,
+        messages: {no_code: {choose_placeholder: "Choose {field}"}},
         global: {
             stubs: {
                 KsSelect: KsSelectStub,
@@ -87,6 +92,21 @@ describe("TaskEnum", () => {
             "INFO",
             "ERROR",
         ])
+        expect(options.map(option => option.attributes("data-value"))).toEqual([
+            "DEBUG",
+            "INFO",
+            "ERROR",
+        ])
+    })
+
+    test("does not preselect the schema default when there is no value", () => {
+        const wrapper = mountTaskEnum({
+            schema: {enum: ["QUEUE", "CANCEL", "FAIL"], default: "QUEUE"},
+        })
+
+        expect(
+            wrapper.findComponent({name: "KsSelect"}).props("modelValue"),
+        ).toBeUndefined()
     })
 
     test("passes the current model value to the selector", () => {
@@ -110,6 +130,42 @@ describe("TaskEnum", () => {
             .vm.$emit("update:modelValue", "ERROR")
 
         expect(wrapper.emitted("update:modelValue")).toEqual([["ERROR"]])
+    })
+
+    test.each(["", null, {}])("emits undefined when the selection is cleared to %j", async (cleared) => {
+        const wrapper = mountTaskEnum({
+            schema: {enum: ["DEBUG", "INFO", "ERROR"]},
+        })
+
+        await wrapper
+            .findComponent({name: "KsSelect"})
+            .vm.$emit("update:modelValue", cleared)
+
+        expect(wrapper.emitted("update:modelValue")).toEqual([[undefined]])
+    })
+
+    test("is clearable unless the field is required", () => {
+        const optional = mountTaskEnum({schema: {enum: ["DEBUG"]}})
+        const required = mountTaskEnum({schema: {enum: ["DEBUG"]}, required: true})
+
+        expect(optional.findComponent({name: "KsSelect"}).props("clearable")).toBe(true)
+        expect(required.findComponent({name: "KsSelect"}).props("clearable")).toBe(false)
+    })
+
+    test("lets the user create a value only when allowCreate is set", () => {
+        const fixed = mountTaskEnum({schema: {enum: ["DEBUG"]}})
+        const creatable = mountTaskEnum({schema: {enum: ["DEBUG"]}, allowCreate: true})
+
+        expect(fixed.findComponent({name: "KsSelect"}).props()).toMatchObject({allowCreate: false, defaultFirstOption: false})
+        expect(creatable.findComponent({name: "KsSelect"}).props()).toMatchObject({allowCreate: true, defaultFirstOption: true})
+    })
+
+    test("names the field from the last segment of its root in the placeholder", () => {
+        const nested = mountTaskEnum({schema: {enum: ["QUEUE"]}, root: "concurrency.behavior"})
+        const unnamed = mountTaskEnum({schema: {enum: ["QUEUE"]}})
+
+        expect(nested.findComponent({name: "KsSelect"}).props("placeholder")).toBe("Choose behavior")
+        expect(unnamed.findComponent({name: "KsSelect"}).props("placeholder")).toBe("Choose value")
     })
 
     test("renders no options when the schema has no enum", () => {
@@ -158,11 +214,26 @@ describe("TaskNamespace", () => {
         ])
     })
 
-    test("renders when no default namespace is available", () => {
+    test("keeps an existing namespace instead of applying the default", () => {
+        const wrapper = mountTaskNamespace("company.team", true, "company.production")
+
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+    })
+
+    test("offers the chosen namespace as the default to the selector's descendants", () => {
+        const withValue = mountTaskNamespace("company.team", true, "company.production")
+        const withoutValue = mountTaskNamespace(undefined, true, "")
+
+        expect(withValue.find("[data-testid='namespace-select']").attributes("data-provided-namespace")).toBe("company.team")
+        expect(withoutValue.find("[data-testid='namespace-select']").attributes("data-provided-namespace")).toBe("")
+    })
+
+    test("is read-only and applies no default when the flow is not being created", () => {
         const wrapper = mountTaskNamespace(undefined, false, "")
 
         expect(
-            wrapper.findComponent({name: "NamespaceSelect"}).exists(),
+            wrapper.findComponent({name: "NamespaceSelect"}).props("readOnly"),
         ).toBe(true)
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
     })
 })

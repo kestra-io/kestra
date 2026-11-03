@@ -40,11 +40,24 @@ describe("doc store", () => {
         fetch.mockResolvedValue(new Response("# Flows", {headers: {"x-kestra-metadata": JSON.stringify({title: "Flows", parsedUrl: "/docs/flows"})}}))
         const store = useDocStore()
         store.initResourceUrlTemplate("1.3.0")
+        store.docId = "flows-intro"
 
         await store.fetchDocId("flows-intro")
 
         expect(String(fetch.mock.calls[0][0])).toBe("https://api.kestra.io/v1/docs/versions/1.3.0/doc/flows-intro")
         expect(store.docPath).toBe("/docs/flows")
+    })
+
+    /** The user navigated on while the lookup was in flight, so its answer belongs to a page they left. */
+    it("ignores the page a doc id resolved to once the user has left that doc id", async () => {
+        fetch.mockResolvedValue(new Response("# Flows", {headers: {"x-kestra-metadata": JSON.stringify({title: "Flows", parsedUrl: "/docs/flows"})}}))
+        const store = useDocStore()
+        store.initResourceUrlTemplate("1.3.0")
+        store.docId = "kv"
+
+        await store.fetchDocId("flows-intro")
+
+        expect(store.docPath).toBeUndefined()
     })
 
     /** Highlights render as text, so no markup may survive, nested or not (code-scanning alert 88). */

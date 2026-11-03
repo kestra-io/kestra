@@ -71,6 +71,18 @@ const globalConfig = {
     },
 }
 
+function computeFlowForExecution(flow: Partial<FlowForExecution> = {}): FlowForExecution {
+    return {
+        id: "flow",
+        namespace: "io.kestra.tests",
+        disabled: false,
+        deleted: false,
+        draft: false,
+        tasks: [],
+        ...flow,
+    }
+}
+
 function mountExplorer(
     variables: Record<string, unknown>,
     trigger?: {id: string; type: string; variables?: Record<string, unknown>},
@@ -149,14 +161,19 @@ describe("ExecutionVariableExplorer", () => {
 
     test("tags the flow outputs declared searchable by the flow", async () => {
         vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
-        useExecutionsStore().flow = {
-            id: "flow",
-            namespace: "io.kestra.tests",
+        useExecutionsStore().flow = computeFlowForExecution({
             outputs: [
-                {id: "orderIds", type: "STRING", value: "{{ outputs.x }}", searchable: true},
-                {id: "plain", type: "STRING", value: "{{ outputs.x }}"},
+                {
+                    id: "orderIds", 
+                    type: "STRING", 
+                    searchable: true,
+                },
+                {
+                    id: "plain", 
+                    type: "STRING", 
+                },
             ],
-        } as FlowForExecution
+        })
         const wrapper = mountExplorer({})
         await flushPromises()
 
@@ -169,6 +186,25 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "plain", "flowOutputs")
 
         expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(false)
+    })
+
+    test("tags the flow inputs declared searchable by the flow", async () => {
+        vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({})
+        useExecutionsStore().flow = computeFlowForExecution({
+            inputs: [
+                {id: "orderId", type: "STRING", searchable: true},
+                {id: "plain", type: "STRING"},
+            ],
+        })
+        const wrapper = mountExplorer({})
+        useExecutionsStore().execution!.inputs = {orderId: "ORD-1", plain: "x"}
+        await flushPromises()
+
+        const items = sidebarSections(wrapper).find((section) => section.key === "inputs")?.items
+        await selectVariable(wrapper, "orderId", "inputs")
+
+        expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderId", true], ["plain", false]])
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
     })
 
     test("uses render for variables containing expressions", async () => {

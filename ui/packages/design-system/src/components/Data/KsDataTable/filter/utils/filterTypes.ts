@@ -69,6 +69,8 @@ export interface FilterKeyConfig {
      */
     valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
     valueType: "text" | "number" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    allLabel?: string;
+    allDescription?: string;
     /**
      * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
      * mode of the time-range picker on an arbitrary date field:
@@ -99,8 +101,10 @@ export interface FilterKeyConfig {
     comparatorLabels?: Partial<Record<Comparators, string>>;
     /** When `true`, renders colored status tags in multi-select value display. */
     colored?: boolean;
-    /** Value the filter falls back to once the user removes it, so a reload does not reapply its default. */
+    /** Value the filter falls back to once the user removes or clears it, so a reload does not reapply its default. */
     clearedValue?: string;
+    /** When `false`, the chip has no remove action; clearing all filters puts back its {@link clearedValue}. */
+    removable?: boolean;
 }
 
 export interface FilterValue {

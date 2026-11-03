@@ -1,0 +1,24 @@
+id: approval-deny-behavior-cancel-with-running-sibling
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: sleep
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT3S
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+        onWait:
+          - id: notify
+            type: io.kestra.plugin.core.log.Log
+            message: "Approval requested"
+        onApprove:
+          - id: approved
+            type: io.kestra.plugin.core.log.Log
+            message: "Approved"
+        onDeny:
+          - id: denied
+            type: io.kestra.plugin.core.log.Log
+            message: "Denied"

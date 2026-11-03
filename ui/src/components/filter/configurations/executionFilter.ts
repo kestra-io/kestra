@@ -1,5 +1,7 @@
 import {computed, ComputedRef} from "vue"
-import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {useMiscStore} from "override/stores/misc"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
@@ -19,6 +21,7 @@ const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
+    const miscStore = useMiscStore()
     const route = useRoute()
 
     return computed(() => {
@@ -74,9 +77,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {
@@ -123,7 +128,8 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
-                    clearedValue: ALL_TIME_RANGE,
+                    removable: false,
+                    clearedValue: defaultTimeRange(miscStore.configs?.chartDefaultDuration),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE_OR_ALL_TIME
@@ -159,9 +165,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
-                    key: "outputs",
-                    label: t("filter.outputs.label"),
-                    description: t("filter.outputs.description"),
+                    key: "searchableData",
+                    label: t("filter.searchableData.label"),
+                    description: t("filter.searchableData.description"),
                     comparators: [
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,

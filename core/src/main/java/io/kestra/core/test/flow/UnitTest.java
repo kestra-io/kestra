@@ -2,9 +2,11 @@ package io.kestra.core.test.flow;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.flows.State;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,9 +35,14 @@ public class UnitTest {
     private Fixtures fixtures;
 
     @NotNull
-    @Valid
-    private List<Assertion> assertions;
+    private List<@Valid Assertion> assertions;
 
     @Builder.Default
     private State.Type expectedState = State.Type.SUCCESS;
+
+    @AssertTrue(message = "The expected state should be a terminal state.")
+    @JsonIgnore
+    public boolean isInTerminalState() {
+        return expectedState == null || expectedState.isTerminated();
+    }
 }

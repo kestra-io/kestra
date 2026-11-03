@@ -245,8 +245,8 @@
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "change execution state confirm": "Sind Sie sicher, dass Sie den Zustand der Ausführung <code>{id}</code> ändern möchten?",
     "change execution state done": "Ausführungszustand aktualisiert",
-    "mark as": "Als <code>{status}</code> markieren",
-    "unqueue as": "Aus der Warteschlange entfernen als <code>{status}</code>",
+    "mark as": "Als {status} markieren",
+    "unqueue as": "Aus der Queue entfernen als {status}",
     "kill": "Beenden",
     "kill parents and subflow": "Aktuelle und Subflows beenden",
     "kill only parents": "Nur aktuellen beenden",
@@ -474,8 +474,8 @@
     "restore": "Wiederherstellen",
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
-    "bulk replay": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) erneut abspielen möchten?",
-    "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
+    "bulk replay": "Möchtest du wirklich {executionCount} Execution(s) wiederholen?",
+    "bulk change state": "Möchtest du den Status von {executionCount} Execution(s) wirklich ändern?",
     "bulk resume": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) fortsetzen möchten?",
     "bulk pause": "Sind Sie sicher, dass Sie die Ausführung(en) <code>{executionCount}</code> pausieren möchten?",
     "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "Bestätigen",
           "title": "Bestätigen Sie das Löschen des Inhalts",
-          "files": "Möchten Sie wirklich <code>{count}</code> Datei(en) löschen?",
-          "folders": "Möchten Sie wirklich <code>{count}</code> Ordner und alle seine Inhalte löschen?",
-          "mixed": "Möchten Sie wirklich den Ordner <code>{folders}</code> und die Datei <code>{files}</code> löschen?",
-          "file_single": "Möchten Sie die Datei <code>{name}</code> wirklich löschen?",
-          "folder_single": "Möchten Sie den Ordner <code>{name}</code> und alle seine Inhalte wirklich löschen?"
+          "files": "Möchtest du wirklich {count} Datei(en) löschen?",
+          "folders": "Möchtest du wirklich {count} Ordner und alle zugehörigen Inhalte löschen?",
+          "mixed": "Möchtest du wirklich {folders} Ordner und {files} Datei(en) löschen?",
+          "file_single": "Möchtest du die Datei {name} wirklich löschen?",
+          "folder_single": "Möchtest du den Ordner {name} und seinen gesamten Inhalt wirklich löschen?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "Task fehlgeschlagen",
     "task was skipped": "Task wurde übersprungen",
     "task sent a warning": "Task hat eine Warnung gesendet",
-    "defaultsToNamespaceFile": "Standardmäßig auf namespace-Datei: <code>{name}</code> eingestellt",
+    "defaultsToNamespaceFile": "Standardmäßig Namespace-Datei: {name}",
     "no_file_choosen": "Keine Datei ausgewählt",
     "dependency": {
       "controls": {

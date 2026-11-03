@@ -245,8 +245,8 @@
     "change state tooltip": "Alterar o estado de execução",
     "change execution state confirm": "Tem certeza de que deseja alterar o estado da execução <code>{id}</code>?",
     "change execution state done": "Estado de execução atualizado",
-    "mark as": "Marcar como <code>{status}</code>",
-    "unqueue as": "Desenfileirar como <code>{status}</code>",
+    "mark as": "Marcar como {status}",
+    "unqueue as": "Remover da fila como {status}",
     "kill": "Matar",
     "kill parents and subflow": "Matar o flow atual e subflows",
     "kill only parents": "Matar apenas o atual",
@@ -474,8 +474,8 @@
     "restore": "Restaurar",
     "restore confirm": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
     "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
-    "bulk replay": "Tem certeza de que deseja reproduzir <code>{executionCount}</code> execução(ões)?",
-    "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
+    "bulk replay": "Tem certeza de que deseja repetir {executionCount} Execution(s)?",
+    "bulk change state": "Tem certeza de que deseja alterar o estado de {executionCount} Execution(s)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "Confirmar",
           "title": "Confirmar exclusão de conteúdo",
-          "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
-          "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
-          "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
-          "file_single": "Tem certeza de que deseja excluir o arquivo <code>{name}</code>?",
-          "folder_single": "Tem certeza de que deseja excluir a pasta <code>{name}</code> e todo o seu conteúdo?"
+          "files": "Tem certeza de que deseja excluir {count} arquivo(s)?",
+          "folders": "Tem certeza de que deseja excluir {count} pasta(s) e todo o seu conteúdo?",
+          "mixed": "Tem certeza de que deseja excluir {folders} pasta(s) e {files} arquivo(s)?",
+          "file_single": "Tem certeza de que deseja excluir o arquivo {name}?",
+          "folder_single": "Tem certeza de que deseja excluir a pasta {name} e todo o seu conteúdo?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "Tarefa falhou",
     "task was skipped": "A tarefa foi ignorada",
     "task sent a warning": "A tarefa enviou um WARNING",
-    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Padrões para o arquivo do namespace: {name}",
     "no_file_choosen": "Nenhum arquivo selecionado",
     "dependency": {
       "controls": {

@@ -245,8 +245,8 @@
     "change state tooltip": "실행 상태 변경",
     "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change execution state done": "실행 상태가 업데이트되었습니다",
-    "mark as": "<code>{status}</code>로 표시",
-    "unqueue as": "<code>{status}</code>로 대기열에서 제거",
+    "mark as": "{status}으로 표시",
+    "unqueue as": "{status}으로 대기열에서 제거",
     "kill": "종료",
     "kill parents and subflow": "현재 및 subflow 종료",
     "kill only parents": "현재 것만 종료",
@@ -474,8 +474,8 @@
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
-    "bulk replay": "<code>{executionCount}</code> 개의 실행을 재실행하시겠습니까?",
-    "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
+    "bulk replay": "{executionCount}개의 execution을 다시 재생하시겠습니까?",
+    "bulk change state": "{executionCount}개의 execution 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
     "bulk unqueue": "<code>{executionCount}</code> 실행을 대기열에서 제거하시겠습니까?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "확인",
           "title": "콘텐츠 삭제 확인",
-          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
-          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
-          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
-          "file_single": "파일 <code>{name}</code>을(를) 삭제하시겠습니까?",
-          "folder_single": "폴더 <code>{name}</code> 및 모든 내용을 삭제하시겠습니까?"
+          "files": "{count}개 파일을 삭제하시겠습니까?",
+          "folders": "{count}개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "{folders}개의 폴더와 {files}개의 파일을 삭제하시겠습니까?",
+          "file_single": "파일 {name}을(를) 삭제하시겠습니까?",
+          "folder_single": "폴더 {name} 및 모든 콘텐츠를 삭제하시겠습니까?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "작업 실패",
     "task was skipped": "Task가 건너뛰어졌습니다",
     "task sent a warning": "Task에서 경고를 보냈습니다.",
-    "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
+    "defaultsToNamespaceFile": "기본값은 namespace 파일: {name}",
     "no_file_choosen": "파일이 선택되지 않음",
     "dependency": {
       "controls": {

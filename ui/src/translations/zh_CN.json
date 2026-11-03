@@ -245,8 +245,8 @@
     "change state tooltip": "更改执行状态",
     "change execution state confirm": "您确定要更改执行<code>{id}</code>的状态吗？",
     "change execution state done": "执行状态已更新",
-    "mark as": "标记为 <code>{status}</code>",
-    "unqueue as": "取消排队为<code>{status}</code>",
+    "mark as": "标记为 {status}",
+    "unqueue as": "取消排队为 {status}",
     "kill": "终止",
     "kill parents and subflow": "终止当前和subflows",
     "kill only parents": "仅终止当前",
@@ -474,8 +474,8 @@
     "restore": "恢复",
     "restore confirm": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
-    "bulk replay": "确定要重放 <code>{executionCount}</code> 个执行吗？",
-    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
+    "bulk replay": "您确定要重放 {executionCount} 个 execution 吗？",
+    "bulk change state": "您确定要更改 {executionCount} 个 execution 的状态吗？",
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
     "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "确认",
           "title": "确认删除内容",
-          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
-          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
-          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
-          "file_single": "您确定要删除文件<code>{name}</code>吗？",
-          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？"
+          "files": "您确定要删除 {count} 个文件吗？",
+          "folders": "您确定要删除 {count} 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 {folders} 个文件夹和 {files} 个文件吗？",
+          "file_single": "您确定要删除文件 {name} 吗？",
+          "folder_single": "您确定要删除文件夹 {name} 及其所有内容吗？"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "任务失败",
     "task was skipped": "任务被跳过",
     "task sent a warning": "任务发送了警告",
-    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：{name}",
     "no_file_choosen": "未选择文件",
     "dependency": {
       "controls": {

@@ -60,16 +60,29 @@
     const currentPage = ref(1)
     const pageSize = ref(25)
 
-    const rows = computed(() => props.plugins.map(plugin => ({
-        name: plugin.name,
-        title: enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize(),
-        route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
-        taskCount: Object.values(extractPluginElements(plugin)).flat().length,
-        blueprintCount: enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0,
-        releaseNotesUrl: getPluginReleaseUrl(plugin.group),
-    })))
+    const rows = computed(() => props.plugins.map(plugin => {
+        const elementClasses = Object.values(extractPluginElements(plugin)).flat()
+        const repositoryReleaseUrl = getPluginReleaseUrl(plugin.group)
+        // EE repositories are private, so their release notes come from the public API, one version at a time.
+        const versionsCls = repositoryReleaseUrl ? undefined : elementClasses[0]
+        return {
+            name: plugin.name,
+            title: enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize(),
+            route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
+            taskCount: elementClasses.length,
+            blueprintCount: enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0,
+            versionsCls,
+            releaseNotesUrl: repositoryReleaseUrl ?? enrichmentStore.getVersions(versionsCls)[0]?.releaseNotesUrl ?? undefined,
+        }
+    }))
 
     const pageRows = computed(() => rows.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value))
+
+    watch(() => pageRows.value.map(row => row.versionsCls).filter(Boolean).join(), () => {
+        for (const row of pageRows.value) {
+            if (row.versionsCls) enrichmentStore.fetchVersions(row.versionsCls)
+        }
+    }, {immediate: true})
 
     watch(() => rows.value.map(row => row.name).join(), () => {
         currentPage.value = 1

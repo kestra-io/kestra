@@ -1368,7 +1368,8 @@
         "charts": "차트",
         "apps": "앱",
         "logExporters": "로그 익스포터",
-        "secrets": "비밀"
+        "secrets": "비밀",
+        "assets": "Asset 유형"
       },
       "sortBy": "정렬 기준",
       "sort": {

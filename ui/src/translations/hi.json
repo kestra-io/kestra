@@ -1368,7 +1368,8 @@
         "charts": "चार्ट",
         "apps": "ऐप",
         "logExporters": "लॉग एक्सपोर्टर",
-        "secrets": "गुप्त"
+        "secrets": "गुप्त",
+        "assets": "Asset प्रकार"
       },
       "sortBy": "क्रमबद्ध करें",
       "sort": {

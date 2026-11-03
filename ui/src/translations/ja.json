@@ -1368,7 +1368,8 @@
         "charts": "チャート",
         "apps": "アプリ",
         "logExporters": "ログエクスポーター",
-        "secrets": "シークレット"
+        "secrets": "シークレット",
+        "assets": "Assetタイプ"
       },
       "sortBy": "並び替え",
       "sort": {

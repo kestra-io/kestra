@@ -1368,7 +1368,8 @@
         "charts": "Wykres",
         "apps": "App",
         "logExporters": "Eksporter logów",
-        "secrets": "Sekret"
+        "secrets": "Sekret",
+        "assets": "Typ Assetu"
       },
       "sortBy": "Sortuj według",
       "sort": {

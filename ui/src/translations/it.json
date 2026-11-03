@@ -1368,7 +1368,8 @@
         "charts": "Grafico",
         "apps": "App",
         "logExporters": "Esportatore di log",
-        "secrets": "Segreto"
+        "secrets": "Segreto",
+        "assets": "Tipo di Asset"
       },
       "sortBy": "Ordina per",
       "sort": {

@@ -1368,7 +1368,8 @@
         "charts": "图表",
         "apps": "应用程序",
         "logExporters": "日志导出器",
-        "secrets": "秘密"
+        "secrets": "秘密",
+        "assets": "Asset 类型"
       },
       "sortBy": "排序依据",
       "sort": {

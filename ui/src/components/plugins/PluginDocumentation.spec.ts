@@ -41,6 +41,13 @@ const messages = {
         nav_definitions: "Definitions",
         copy_type: "Copy type",
     },
+    pluginPage: {
+        elementType: {
+            tasks: "Task",
+            triggers: "Trigger",
+            assets: "Asset type",
+        },
+    },
 }
 
 const CLS = "io.kestra.plugin.scripts.python.Script"
@@ -64,6 +71,7 @@ describe("PluginDocumentation", () => {
     beforeEach(() => {
         pinia = createPinia()
         setActivePinia(pinia)
+        usePluginsStore().plugins = []
     })
 
     const mountWithPlugin = async (plugin: Record<string, unknown>) => {
@@ -132,5 +140,31 @@ describe("PluginDocumentation", () => {
         await setPlugin({cls: CLS, version: "1.0.0", schema: SCHEMA})
 
         expect(wrapper.get("[data-test='plugin-doc-navchip-overview']").classes()).toContain("active")
+    })
+
+    test.each([
+        ["io.kestra.plugin.ee.assets.VM", "Asset type"],
+        ["io.kestra.plugin.ee.assets.EventTrigger", "Trigger"],
+        ["io.kestra.plugin.ee.assets.AssetShipper", "Task"],
+    ])("shouldLabel %s with the kind of element its plugin declares it as", async (cls, label) => {
+        usePluginsStore().plugins = [{
+            name: "assets",
+            title: "Assets",
+            group: "io.kestra.plugin.ee",
+            subGroup: "io.kestra.plugin.ee.assets",
+            tasks: [{cls: "io.kestra.plugin.ee.assets.AssetShipper"}],
+            triggers: [{cls: "io.kestra.plugin.ee.assets.EventTrigger"}],
+            assets: [{cls: "io.kestra.plugin.ee.assets.VM"}],
+        }]
+
+        const wrapper = await mountWithPlugin({cls, version: "1.0.0", schema: SCHEMA})
+
+        expect(wrapper.get("[data-test='plugin-doc-kind']").text()).toBe(label)
+    })
+
+    test("shouldHideTheKindWhenNoLoadedPluginDeclaresTheClass", async () => {
+        const wrapper = await mountWithPlugin({cls: CLS, version: "1.0.0", schema: SCHEMA})
+
+        expect(wrapper.find("[data-test='plugin-doc-kind']").exists()).toBe(false)
     })
 })

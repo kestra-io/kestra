@@ -1368,7 +1368,8 @@
         "charts": "Chart",
         "apps": "App",
         "logExporters": "Log exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset type"
       },
       "sortBy": "Sort by",
       "sort": {

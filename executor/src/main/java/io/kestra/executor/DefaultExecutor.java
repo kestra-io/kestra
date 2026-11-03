@@ -5,6 +5,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -124,7 +126,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.metricRegistry = metricRegistry;
 
         // By default, we start available processors count threads with a minimum of 8.
-        // This executor is shared for the worker task result queue and the execution queue.
+        // This executor is shared for the worker task result, execution event and execution command queues.
         // Other queues would not benefit from more consumers.
         int threadCount = executorConfiguration.threadCount() != null ? executorConfiguration.threadCount() : 0;
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(8, kestraContext.getAllocatedCpuCores() * 2);
@@ -179,56 +181,21 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private void doRun() {
         // listen to executor related queues
         this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
-        this.queueSubscribers.addFirst(
-            this.executionEventQueue.subscriber().subscribeBatch(
-                executions ->
-                {
-                    // process execution message grouped by executionId to avoid concurrency as the execution level as it would
-                    List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
-                        .filter(Either::isLeft)
-                        .collect(Collectors.groupingBy(either -> either.getLeft().executionId()))
-                        .values()
-                        .stream()
-                        .map(eithers -> CompletableFuture.runAsync(() ->
-                        {
-                            eithers.forEach(this::executionEventQueue);
-                        }, messageExecutorService))
-                        .toList();
-
-                    // directly process deserialization issues as most of the time there will be none
-                    executions.stream()
-                        .filter(Either::isRight)
-                        .forEach(either -> executionEventQueue(either));
-
-                    CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
-                }
-            )
-        );
-        this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
-        {
-            // process worker task results grouped by executionId, to avoid concurrency at the execution level:
-            // joining a later sibling's result (e.g. a failing task) before an earlier one can terminate a flowable,
-            // and silently drop the earlier task's outputs, which are never joined afterward.
-            List<CompletableFuture<Void>> perExecutionFutures = workerTaskResults.stream()
-                .filter(Either::isLeft)
-                .collect(Collectors.groupingBy(either -> either.getLeft().getTaskRun().getExecutionId()))
-                .values()
-                .stream()
-                .map(eithers -> CompletableFuture.runAsync(() ->
-                {
-                    eithers.forEach(this::workerTaskResultQueue);
-                }, messageExecutorService))
-                .toList();
-
-            // directly process deserialization issues as most of the time there will be none
-            workerTaskResults.stream()
-                .filter(Either::isRight)
-                .forEach(either -> workerTaskResultQueue(either));
-
-            CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
-        }
+        this.queueSubscribers.addFirst(this.executionEventQueue.subscriber().subscribeBatch(executionEvents ->
+            processGroupedByExecution(executionEvents, ExecutionEvent::executionId, this::executionEventQueue, messageExecutorService)
         ));
-        this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
+        // worker task results are grouped by executionId, to avoid concurrency at the execution level: joining a later
+        // sibling's result (e.g. a failing task) before an earlier one can terminate a flowable, and silently drop the
+        // earlier task's outputs, which are never joined afterward.
+        this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
+            processGroupedByExecution(workerTaskResults, result -> result.getTaskRun().getExecutionId(), this::workerTaskResultQueue, messageExecutorService)
+        ));
+        // execution commands are keyed by execution, so a batch processes different executions concurrently while the
+        // commands of one execution keep their order: on a queue whose round trip is slow, processing them one at a
+        // time would cap the executions created per second
+        this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribeBatch(executionCommands ->
+            processGroupedByExecution(executionCommands, ExecutionCommand::executionId, this::executionCommandQueue, messageExecutorService)
+        ));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribeBatch(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
@@ -348,6 +315,34 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
         executorCore.onExecution(either.getLeft());
+    }
+
+    /**
+     * Processes a batch of messages grouped by execution: the groups run concurrently on the executor service, and the
+     * messages of one execution run one after the other, in the order of the batch, so that two messages of an
+     * execution never race. Messages that could not be deserialized have no execution and are handled directly.
+     * Returns once every message was processed.
+     */
+    static <T> void processGroupedByExecution(
+        List<Either<T, DeserializationException>> messages,
+        Function<T, String> executionId,
+        Consumer<Either<T, DeserializationException>> handler,
+        java.util.concurrent.Executor executorService
+    ) {
+        List<CompletableFuture<Void>> perExecutionFutures = messages.stream()
+            .filter(Either::isLeft)
+            .collect(Collectors.groupingBy(either -> executionId.apply(either.getLeft())))
+            .values()
+            .stream()
+            .map(eithers -> CompletableFuture.runAsync(() -> eithers.forEach(handler), executorService))
+            .toList();
+
+        // directly process deserialization issues as most of the time there will be none
+        messages.stream()
+            .filter(Either::isRight)
+            .forEach(handler);
+
+        CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
     }
 
     private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {

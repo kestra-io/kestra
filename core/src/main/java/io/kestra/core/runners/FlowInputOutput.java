@@ -15,6 +15,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
+import io.kestra.core.searchable.SearchableDataUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
@@ -77,6 +80,7 @@ public class FlowInputOutput {
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
     private final ReusableInputsExpander reusableInputsExpander;
     private final LocalPathFactory localPathFactory;
+    private final SearchableDataRepositoryInterface searchableDataRepository;
 
     @Inject
     public FlowInputOutput(
@@ -84,12 +88,14 @@ public class FlowInputOutput {
         Provider<RunContextFactory> runContextFactory,
         EncryptionConfig encryptionConfig,
         ReusableInputsExpander reusableInputsExpander,
-        LocalPathFactory localPathFactory) {
+        LocalPathFactory localPathFactory,
+        SearchableDataRepositoryInterface searchableDataRepository) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
         this.reusableInputsExpander = reusableInputsExpander;
         this.localPathFactory = localPathFactory;
+        this.searchableDataRepository = searchableDataRepository;
     }
 
     /**
@@ -296,23 +302,53 @@ public class FlowInputOutput {
         return readExecutionInputs(flow.getInputs(), flow, execution, data);
     }
 
+    /**
+     * Indexes the searchable inputs of an execution. A failure is logged and doesn't fail the execution, which is then not searchable.
+     */
+    private void saveSearchableData(final FlowInterface flow, final Execution execution, final List<SearchableData> searchableData) {
+        if (searchableData.isEmpty()) {
+            return;
+        }
+
+        try {
+            searchableDataRepository.saveBatch(searchableData);
+        } catch (Exception e) {
+            runContextFactory.get().of(flow, execution).logger()
+                .error("Failed to index the searchable inputs of the execution '{}', they will not be searchable: {}", execution.getId(), e.getMessage(), e);
+        }
+    }
+
     private Map<String, Object> readExecutionInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
+        List<SearchableData> searchableData = new ArrayList<>();
         Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
             .stream()
             .filter(InputAndValue::enabled)
-            .map(it ->
-            {
+            .peek(it -> {
                 //TODO check to return all exception at-once.
                 if (it.exceptions() != null && !it.exceptions().isEmpty()) {
                     throw InputOutputValidationException.merge(it.exceptions());
                 }
+            })
+            .map(it ->
+            {
+                if (Boolean.TRUE.equals(it.input().getSearchable())) {
+                    RunContext runContext = runContextFactory.get().of(flow, execution);
+                    try {
+                        searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), execution, it.input(), it.value()));
+                    } catch (Exception e) {
+                        runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), execution.getId(), e.getMessage(), e);
+                    }
+                }
+
                 return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        // saved only once every input is valid, so a rejected execution leaves no orphan rows
+        saveSearchableData(flow, execution, searchableData);
         if (resolved.size() < data.size()) {
             RunContext runContext = runContextFactory.get().of(flow, execution);
             for (var inputKey : data.keySet()) {
@@ -463,6 +499,14 @@ public class FlowInputOutput {
                     // Descriptions can contain literal Pebble examples with unavailable variables.
                 }
             }
+            if (input instanceof TableInput table && !ListUtils.isEmpty(table.getFilters()) && table.getDefaults() != null) {
+                try {
+                    input = table.withMatchingDefaults(resolveDefaultValue(table, nonDecryptingContext.get()) instanceof List<?> rows ? rows : List.of());
+                } catch (Exception e) {
+                    resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                    return resolvable.get();
+                }
+            }
             resolvable.setInput(input);
 
             // Reject a file upload bound to an input that doesn't accept one.
@@ -487,6 +531,9 @@ public class FlowInputOutput {
                 RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
+                    if (input instanceof TableInput table && value instanceof List<?> rows) {
+                        value = table.matchingRows(rows);
+                    }
                 } catch (Exception e) {
                     resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                     return resolvable.get();
@@ -505,6 +552,9 @@ public class FlowInputOutput {
                 try {
                     var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
+                    if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
+                        table.validateSubmittedRows(rows);
+                    }
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
@@ -565,7 +615,7 @@ public class FlowInputOutput {
      * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
      * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
      */
-    private static boolean isTextType(Type type) {
+    public static boolean isTextType(Type type) {
         return type == Type.STRING || type == Type.SELECT
             || type == Type.EMAIL || type == Type.SECRET;
     }
@@ -785,10 +835,10 @@ public class FlowInputOutput {
         for (int i = 0; i < rows.size(); i++) {
             Object value = rows.get(i);
             if (!(value instanceof Map<?, ?> map)) {
-                violations.add(violation("row " + (i + 1) + ": expected an object", table, table.getId() + "[" + i + "]", value));
+                violations.add(violation("expected an object", table, table.getId() + "[" + i + "]", value));
                 continue;
             }
-            parsed.add(parseRecord(execution, table.getColumns(), map, "row " + (i + 1) + ", column ", table.getId() + "[" + i + "]", violations));
+            parsed.add(parseRecord(execution, table.getColumns(), map, table.getId() + "[" + i + "]", violations));
         }
         if (!violations.isEmpty()) {
             throw ManualConstraintViolation.toConstraintViolationException(violations);
@@ -798,20 +848,19 @@ public class FlowInputOutput {
 
     /**
      * Coerces and validates one record against its typed fields, a {@code TABLE} row against the table columns.
-     * Every failing field is reported into {@code violations} with {@code prefix} + the field id in front of the
-     * cause, so a caller can surface all of them at once, and with {@code path} + the field id as its property path
-     * ({@code disks[1].size_gb}), which is where the value sits inside the input.
+     * Every failing field is reported into {@code violations}, so a caller can surface all of them at once, with
+     * {@code path} + the field id as its property path ({@code disks[1].size_gb}), which is where the value sits inside
+     * the input.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String prefix, String path, Set<ConstraintViolation<?>> violations) {
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String path, Set<ConstraintViolation<?>> violations) {
         Map<String, Object> record = new LinkedHashMap<>();
         Set<String> declared = fields.stream().map(Input::getId).collect(Collectors.toSet());
         row.keySet().stream()
             .map(String::valueOf)
             .filter(key -> !declared.contains(key))
-            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
+            .forEach(key -> violations.add(violation("it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
         for (Input<?> field : fields) {
-            String label = prefix + "`" + field.getId() + "`";
             String propertyPath = path + "." + field.getId();
             Object value = row.get(field.getId());
             if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
@@ -819,7 +868,7 @@ public class FlowInputOutput {
             }
             if (value == null) {
                 if (Boolean.TRUE.equals(field.getRequired())) {
-                    violations.add(violation(label + ": missing required value", field, propertyPath, null));
+                    violations.add(violation("missing required value", field, propertyPath, null));
                 } else {
                     record.put(field.getId(), null);
                 }
@@ -832,9 +881,9 @@ public class FlowInputOutput {
                 record.put(field.getId(), parsed);
             } catch (ConstraintViolationException e) {
                 Object invalid = value;
-                e.getConstraintViolations().forEach(c -> violations.add(violation(label + ": " + c.getMessage(), field, propertyPath, invalid)));
+                e.getConstraintViolations().forEach(c -> violations.add(violation(c.getMessage(), field, propertyPath, invalid)));
             } catch (Exception e) {
-                violations.add(violation(label + ": " + e.getMessage(), field, propertyPath, value));
+                violations.add(violation(e.getMessage(), field, propertyPath, value));
             }
         }
         return record;

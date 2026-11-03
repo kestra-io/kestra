@@ -4,7 +4,7 @@
             <span class="artifacts-task-icon"><TaskIcon :cls="artifact.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
             <div>
                 <KsText tag="strong">{{ artifact.title }}</KsText>
-                <KsText size="small" class="muted">{{ artifact.taskId }}</KsText>
+                <KsText size="small" type="secondary">{{ artifact.taskId }}</KsText>
             </div>
             <KsSegmented
                 v-if="siblings.length > 1"
@@ -106,10 +106,6 @@
 
     .artifacts-switch {
         margin-left: auto;
-    }
-
-    .muted {
-        color: var(--ks-text-secondary);
     }
 
     .artifacts-viewer {

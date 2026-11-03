@@ -62,6 +62,8 @@ export default defineConfig({
         ],
     },
     test: {
+        // Vue's dev build prints this once per runtime whenever a <Suspense> mounts; it carries no test signal.
+        onConsoleLog: (log) => !log.startsWith("<Suspense> is an experimental feature"),
         projects: [
             "./vitest.config.unit.js",
             mergeConfig(resolvedViteConfig, {

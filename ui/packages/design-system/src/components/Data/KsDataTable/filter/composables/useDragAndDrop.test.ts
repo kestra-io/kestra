@@ -54,6 +54,16 @@ describe("useDragAndDrop", () => {
         expect(previewIds.value).toEqual(["a", "c", "b"])
     })
 
+    test("dropping exactly on the vertical midpoint of the target inserts before it", () => {
+        const {previewIds, start, over} = useDragAndDrop(vi.fn())
+        start("c", ["a", "b", "c"])
+
+        // rect top=100, height=20 -> midpoint=110; clientY=110 is not past it.
+        over("a", makeEvent(110, 100, 20))
+
+        expect(previewIds.value).toEqual(["c", "a", "b"])
+    })
+
     test("over returns without changing previewIds when the computed order matches the current preview", () => {
         const {previewIds, start, over} = useDragAndDrop(vi.fn())
         start("b", ["a", "b", "c"])
@@ -78,7 +88,8 @@ describe("useDragAndDrop", () => {
         expect(draggedMissing.previewIds.value).toEqual(["a", "b", "c"])
 
         const hoveredMissing = useDragAndDrop(vi.fn())
-        hoveredMissing.start("b", ["a", "b", "c"])
+        // Dragging the last id: without the guard the splice at -1 would reorder to ["a", "c", "b"].
+        hoveredMissing.start("c", ["a", "b", "c"])
         hoveredMissing.over("missing", event)
         expect(hoveredMissing.previewIds.value).toEqual(["a", "b", "c"])
     })

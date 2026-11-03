@@ -62,7 +62,7 @@ function resolvedProperties(
 }
 
 export function shouldDrillItem(
-    schema: FieldSchema,
+    schema: FieldSchema | undefined,
     definitions: Record<string, FieldSchema>,
     key?: string,
 ): boolean {

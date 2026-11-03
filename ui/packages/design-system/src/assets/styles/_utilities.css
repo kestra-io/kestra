@@ -26,10 +26,6 @@
     flex-grow: 1 !important;
 }
 
-.justify-content-end {
-    justify-content: flex-end !important;
-}
-
 .justify-content-center {
     justify-content: center !important;
 }
@@ -40,15 +36,6 @@
 
 .m-0 {
     margin: 0 !important;
-}
-
-.m-3 {
-    margin: 1rem !important;
-}
-
-.mx-2 {
-    margin-right: 0.5rem !important;
-    margin-left: 0.5rem !important;
 }
 
 .mt-1 {
@@ -69,14 +56,6 @@
 
 .mb-2 {
     margin-bottom: 0.5rem !important;
-}
-
-.mb-3 {
-    margin-bottom: 1rem !important;
-}
-
-.ms-2 {
-    margin-left: 0.5rem !important;
 }
 
 .p-2 {
@@ -110,10 +89,6 @@
 
 .fw-bold {
     font-weight: 700 !important;
-}
-
-.text-center {
-    text-align: center !important;
 }
 
 .text-break {

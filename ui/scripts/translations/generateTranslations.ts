@@ -285,6 +285,7 @@ function unflattenDict(d: FlatDict, sep = KEY_SEPARATOR): NestedDict {
             if (typeof current[key] !== "object" || current[key] === null) {
                 current[key] = emptyDict()
             }
+            // nosemgrep: prototype-pollution-loop -- every level is an Object.create(null) dict, so there is no prototype to reach.
             current = current[key] as NestedDict
         }
         current[keys[keys.length - 1]] = v

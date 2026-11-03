@@ -1358,7 +1358,18 @@
       "search": "Поиск по {count}+ плагинам",
       "searchTasks": "Искать {count} tasks",
       "noResults": "Нет плагинов, соответствующих вашему запросу.",
-      "loadError": "Не удалось загрузить плагины. Пожалуйста, попробуйте снова.",
+      "loadErrorTitle": "Не удалось загрузить список плагинов",
+      "loadErrorDescription": "Ваши Flow продолжают работать. Эта страница только считывает список plugin'ов.",
+      "showAll": "Показать все плагины",
+      "view": {
+        "cards": "Карточки",
+        "table": "Таблица",
+        "plugin": "Плагин"
+      },
+      "empty": {
+        "title": "Нет Plugin'ов, соответствующих вашим фильтрам",
+        "description": "Попробуйте другой поисковый запрос или очистите фильтры категорий."
+      },
       "notFound": "Этот плагин не найден.",
       "elementType": {
         "tasks": "Задача",
@@ -1399,6 +1410,20 @@
         "enterpriseEdition": "Энтерпрайз-версия",
         "certified": "Сертифицированный",
         "back": "Назад к плагинам"
+      },
+      "management": {
+        "upload": "Загрузить",
+        "addPlugin": "Добавить plugin",
+        "enterpriseOnly": "Доступно в Enterprise Edition",
+        "lockedTitle": "Управление версиями Plugin",
+        "lockedDescription": "Устанавливайте plugins, храните несколько версий параллельно и обновляйте их без пересборки образа с Enterprise Edition.",
+        "learnMore": "Узнать больше",
+        "includedWithKestra": "Включено в Kestra",
+        "gateNote": "Установка и обновление плагинов доступны в Enterprise Edition.",
+        "upsellTitle": "Управление версиями Plugin — это функция Enterprise",
+        "upsellDescription": "Каждый plugin ниже поставляется с этим образом Kestra и готов к использованию в Flow. В Enterprise Edition вы также можете установить plugin, который не входит в комплект, закрепить версию для каждого plugin и обновить его без пересборки образа.",
+        "talkToUs": "Свяжитесь с нами",
+        "readTheDocs": "Читать документацию"
       }
     },
     "no inputs": "Этот flow не имеет входных данных.",

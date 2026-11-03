@@ -1358,7 +1358,18 @@
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
       "noResults": "検索に一致するプラグインがありません。",
-      "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",
+      "loadErrorTitle": "プラグインリストを読み込めませんでした",
+      "loadErrorDescription": "Flowは引き続き実行されます。このページはプラグインのリストのみを読み取ります。",
+      "showAll": "すべてのPluginを表示",
+      "view": {
+        "cards": "カード",
+        "table": "テーブル",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "フィルターに一致するpluginがありません",
+        "description": "別の検索語を試すか、カテゴリフィルターをクリアしてください。"
+      },
       "notFound": "このプラグインが見つかりませんでした。",
       "elementType": {
         "tasks": "タスク",
@@ -1399,6 +1410,20 @@
         "enterpriseEdition": "エンタープライズエディション",
         "certified": "認定済み",
         "back": "プラグインに戻る"
+      },
+      "management": {
+        "upload": "アップロード",
+        "addPlugin": "プラグインを追加",
+        "enterpriseOnly": "Enterprise Editionで利用可能",
+        "lockedTitle": "Pluginバージョン管理",
+        "lockedDescription": "Enterprise Edition を使用すると、イメージを再構築することなく、複数のバージョンの plugin を並行してインストールおよびアップグレードできます。",
+        "learnMore": "詳細はこちら",
+        "includedWithKestra": "Kestraに同梱",
+        "gateNote": "プラグインのインストールとアップグレードはEnterprise Editionで利用できます。",
+        "upsellTitle": "Pluginのバージョン管理はEnterprise機能です",
+        "upsellDescription": "以下のすべてのpluginは、このKestraイメージに同梱されており、Flowですぐに使用できます。Enterprise Editionでは、バンドルされていないpluginをインストールしたり、pluginごとにバージョンを固定したり、イメージを再構築せずにアップグレードしたりすることもできます。",
+        "talkToUs": "お問い合わせ",
+        "readTheDocs": "ドキュメントを読む"
       }
     },
     "no inputs": "このflowにはinputがありません。",

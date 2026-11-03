@@ -1358,7 +1358,18 @@
       "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
       "noResults": "검색어와 일치하는 플러그인이 없습니다.",
-      "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",
+      "loadErrorTitle": "플러그인 목록을 로드할 수 없습니다.",
+      "loadErrorDescription": "Flow는 계속 실행됩니다. 이 페이지는 플러그인 목록만 읽습니다.",
+      "showAll": "모든 plugin 표시",
+      "view": {
+        "cards": "카드",
+        "table": "테이블",
+        "plugin": "플러그인"
+      },
+      "empty": {
+        "title": "필터와 일치하는 Plugin이 없습니다.",
+        "description": "다른 검색어를 시도하거나 카테고리 필터를 지우세요."
+      },
       "notFound": "이 플러그인을 찾을 수 없습니다.",
       "elementType": {
         "tasks": "작업",
@@ -1399,6 +1410,20 @@
         "enterpriseEdition": "엔터프라이즈 에디션",
         "certified": "인증됨",
         "back": "플러그인으로 돌아가기"
+      },
+      "management": {
+        "upload": "업로드",
+        "addPlugin": "플러그인 추가",
+        "enterpriseOnly": "Enterprise Edition에서 사용 가능",
+        "lockedTitle": "플러그인 버전 관리",
+        "lockedDescription": "Enterprise Edition으로 플러그인을 설치하고 여러 버전을 나란히 유지하며 이미지를 다시 빌드하지 않고 업그레이드하세요.",
+        "learnMore": "자세히 알아보기",
+        "includedWithKestra": "Kestra에 포함됨",
+        "gateNote": "Enterprise Edition에서 플러그인 설치 및 업그레이드를 사용할 수 있습니다.",
+        "upsellTitle": "Plugin 버전 관리는 Enterprise 기능입니다.",
+        "upsellDescription": "아래의 모든 plugin은 이 Kestra 이미지와 함께 제공되며 flow에서 바로 사용할 수 있습니다. Enterprise Edition에서는 번들로 제공되지 않는 plugin을 설치하고, plugin별로 버전을 고정하며, 이미지를 다시 빌드하지 않고도 업그레이드할 수 있습니다.",
+        "talkToUs": "문의하기",
+        "readTheDocs": "문서 읽기"
       }
     },
     "no inputs": "이 flow에는 입력이 없습니다.",

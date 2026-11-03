@@ -1358,7 +1358,18 @@
       "search": "Rechercher parmi plus de {count} plugins",
       "searchTasks": "Rechercher {count} tasks",
       "noResults": "Aucun plugin ne correspond à votre recherche.",
-      "loadError": "Impossible de charger les plugins. Veuillez réessayer.",
+      "loadErrorTitle": "Impossible de charger la liste des plugins",
+      "loadErrorDescription": "Vos flows continuent de s'exécuter. Cette page ne lit que la liste des plugins.",
+      "showAll": "Afficher tous les plugins",
+      "view": {
+        "cards": "Cartes",
+        "table": "Tableau",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Aucun plugin ne correspond à vos filtres",
+        "description": "Essayez un autre terme de recherche ou effacez les filtres de catégorie."
+      },
       "notFound": "Ce plugin est introuvable.",
       "elementType": {
         "tasks": "Tâche",
@@ -1399,6 +1410,20 @@
         "enterpriseEdition": "Édition Enterprise",
         "certified": "Certifié",
         "back": "Retour aux plugins"
+      },
+      "management": {
+        "upload": "Télécharger",
+        "addPlugin": "Ajouter un plugin",
+        "enterpriseOnly": "Disponible dans l'édition Enterprise",
+        "lockedTitle": "Gestion des versions de Plugin",
+        "lockedDescription": "Installez des plugins, conservez plusieurs versions côte à côte et mettez-les à niveau sans reconstruire l'image, avec l'Enterprise Edition.",
+        "learnMore": "En savoir plus",
+        "includedWithKestra": "Inclus avec Kestra",
+        "gateNote": "L'installation et la mise à niveau des plugins sont disponibles dans l'édition Enterprise.",
+        "upsellTitle": "La gestion des versions de Plugin est une fonctionnalité Enterprise",
+        "upsellDescription": "Chaque plugin ci-dessous est livré avec cette image Kestra et est prêt à être utilisé dans un flow. Dans l'édition Enterprise, vous pouvez également installer un plugin qui n'est pas inclus, épingler une version par plugin et mettre à niveau sans reconstruire l'image.",
+        "talkToUs": "Parlez-nous",
+        "readTheDocs": "Lire la documentation"
       }
     },
     "no inputs": "Ce flow n'a pas d'entrée.",

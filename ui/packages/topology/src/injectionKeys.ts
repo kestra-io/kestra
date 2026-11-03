@@ -11,7 +11,5 @@ export const FOCUSED_TASK_INJECTION_KEY = Symbol("focused-task-injection-key") a
 export const DROP_EDGE_INJECTION_KEY = Symbol("drop-edge-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const CANVAS_HOVERED_INJECTION_KEY = Symbol("canvas-hovered-injection-key") as InjectionKey<ComputedRef<boolean>>
-export const LONGEST_TASK_RUN_DURATION_INJECTION_KEY = Symbol("longest-task-run-duration-injection-key") as InjectionKey<ComputedRef<number>>
 export const LOOP_LANES_INJECTION_KEY = Symbol("loop-lanes-injection-key") as InjectionKey<ComputedRef<Record<string, LoopLaneData>>>
 export const ARTIFACT_COUNTS_INJECTION_KEY = Symbol("artifact-counts-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>
-export const SCOPED_LONGEST_DURATIONS_INJECTION_KEY = Symbol("scoped-longest-durations-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>

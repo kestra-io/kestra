@@ -11,7 +11,7 @@ type TaskComponent = Component & {
 
 const TasksComponents = import.meta.glob<{ default: TaskComponent }>("./Task*.vue", {eager: true})
 
-export interface Schema {
+export type Schema = {
     $ref?: string;
     $required?: boolean;
     type?: string | {const: string};

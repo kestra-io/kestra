@@ -144,7 +144,7 @@
     const childSubGroups = computed<Plugin[]>(() => {
         const g = groupPlugin.value
         if (!g || g.subGroup) return []
-        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup && elementCountFor(p) > 0)
+        return pluginsStore.latestPlugins.filter(p => p.name === g.name && p.subGroup && elementCountFor(p) > 0)
     })
 
     const isShowingSubGroups = computed<boolean>(() => childSubGroups.value.length > 0)

@@ -22,6 +22,7 @@ export type Plugin = {
     longDescription?: string;
     description?: string;
     subGroup?: string;
+    version?: string;
     tooltipContent?: string;
     categories?: string[];
     controllers?: string[];
@@ -83,6 +84,19 @@ export function compareVersionsDesc(a: string, b: string): number {
     const va = semver.coerce(a)?.version
     const vb = semver.coerce(b)?.version
     return va && vb ? semver.rcompare(va, vb) : b.localeCompare(a)
+}
+
+/** One entry per artifact and subgroup: an instance with several versions of an artifact lists each of them. */
+export function latestVersionEntries(plugins: Plugin[]): Plugin[] {
+    const latest = new Map<string, Plugin>()
+    for (const plugin of plugins) {
+        const key = `${plugin.name}:${plugin.subGroup ?? ""}`
+        const current = latest.get(key)
+        if (!current || compareVersionsDesc(plugin.version ?? "", current.version ?? "") < 0) {
+            latest.set(key, plugin)
+        }
+    }
+    return [...latest.values()]
 }
 
 export const isEnterpriseEditionPlugin = (classOrGroup?: string | null): boolean =>

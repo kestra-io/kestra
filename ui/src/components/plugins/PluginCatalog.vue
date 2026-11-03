@@ -138,7 +138,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
-    import {isEntryAPluginElementPredicate, isPluginMatched, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
@@ -195,9 +195,8 @@
     const pluginTitle = (plugin: Plugin): string => String(plugin?.manifest?.["X-Kestra-Title"] ?? plugin?.title ?? "").toLowerCase()
 
     const baseList = computed<Plugin[]>(() => {
-        return (filteredPlugins.value ?? [])
+        return latestVersionEntries(filteredPlugins.value ?? [])
             .filter(plugin => !plugin.subGroup && isVisible(plugin))
-            .filter((plugin, index, self) => index === self.findIndex(p => p.name === plugin.name))
     })
 
     const CATEGORY_ICONS: Record<string, Component> = markRaw({

@@ -5,7 +5,7 @@ import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
+import {isEntryAPluginElementPredicate, latestVersionEntries, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
@@ -233,6 +233,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const plugin = ref<PluginComponent>()
     const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
+    const latestPlugins = computed<Plugin[]>(() => latestVersionEntries(plugins.value ?? []))
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
@@ -527,13 +528,13 @@ export const usePluginsStore = defineStore("plugins", () => {
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
         if (!name || !plugins.value) return null
         if (subGroup) {
-            return plugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
+            return latestPlugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
         }
-        return plugins.value.find(p => p.name === name && !p.subGroup) ?? null
+        return latestPlugins.value.find(p => p.name === name && !p.subGroup) ?? null
     }
 
     function sidebarPluginsFor(context: {cls?: string | null; owner?: Plugin | null}): Plugin[] {
-        const all = plugins.value ?? []
+        const all = latestPlugins.value
         let ownerGroup: string | undefined
         if (context.owner) {
             ownerGroup = context.owner.group
@@ -611,6 +612,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         findPluginByCls,
         findPluginByName,
         sidebarPluginsFor,
+        latestPlugins,
         list,
         listTriggers,
         listWithSubgroup,

@@ -612,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "non démarré"
       }
     },
     "show task logs": "Afficher les journaux de la tâche",
@@ -2270,7 +2274,8 @@
       "close_all_panels": "Fermer tous les panneaux",
       "exit_fullscreen": "Quitter le mode plein écran",
       "fullscreen": "Plein écran",
-      "split_panel": "Diviser le panneau"
+      "split_panel": "Diviser le panneau",
+      "split_panel_no_room": "Pas assez de place pour un autre panneau"
     },
     "search_docs": "Rechercher",
     "no_results_found": "Aucun résultat trouvé",

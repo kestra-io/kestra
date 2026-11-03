@@ -89,7 +89,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
             Map.class
         }
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, additionalProperties = String.class)
     @NotNull
     private Object labels;
 

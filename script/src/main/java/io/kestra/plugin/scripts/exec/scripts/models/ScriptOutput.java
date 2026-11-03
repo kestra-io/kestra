@@ -33,7 +33,7 @@ public class ScriptOutput implements Output {
     @Schema(
         title = "The output files' URIs in Kestra's internal storage."
     )
-    @PluginProperty
+    @PluginProperty(additionalProperties = URI.class)
     private final Map<String, URI> outputFiles;
 
     @JsonIgnore

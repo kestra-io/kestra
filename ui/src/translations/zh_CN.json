@@ -1800,9 +1800,9 @@
         },
         "errors": {
           "first_execution": "第一次执行以 {state} 状态结束，而不是成功。打开此页面上的 logs 查看原因，然后重试。",
-          "expected_failure": "本次执行以 {state} 状态完成，因此尚无需要修复的故障。请检查该 flow 是否仍包含 <code>notify</code> task，然后重试。",
+          "expected_failure": "此 Execution 以 {state} 状态完成，因此尚无需要修复的故障。请检查 flow 是否仍包含 {task} task，然后重试。",
           "no_execution_to_replay": "尚无可重放的执行。请在上一步运行该 flow，然后重试。",
-          "replay": "重放结束，状态为 {state}。在此页面打开 log 查看 <code>notify</code> 报告了什么，然后重试。",
+          "replay": "Replay 以 {state} 状态完成。打开此页面上的 log 以查看 {task} 报告了什么，然后重试。",
           "save_flow": "导览 flow 无法保存。{reason}",
           "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。"
         },
@@ -2544,7 +2544,7 @@
     "reject": "拒绝",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
-    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：{name}",
     "no_file_choosen": "未选择文件",
     "dependency": {
       "controls": {

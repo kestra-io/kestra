@@ -1800,9 +1800,9 @@
         },
         "errors": {
           "first_execution": "最初の実行は成功せず、{state}として終了しました。理由を確認するには、このページのlogsを開き、もう一度お試しください。",
-          "expected_failure": "この実行は{state}で終了したため、まだ修正すべき失敗はありません。flowにまだ<code>notify</code> taskがあることを確認し、もう一度お試しください。",
+          "expected_failure": "このExecutionは{state}で終了したため、まだ修正すべき失敗はありません。Flowに{task} Taskがあることを確認してから、もう一度お試しください。",
           "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
-          "replay": "リプレイは {state} で終了しました。このページで log を開いて `notify` の報告内容を確認し、もう一度お試しください。",
+          "replay": "リプレイは{state}として終了しました。このページのlogを開いて{task}が報告した内容を確認し、もう一度試してください。",
           "save_flow": "ツアー flow は保存できませんでした。{reason}",
           "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
         },
@@ -2544,7 +2544,7 @@
     "reject": "拒否",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
-    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: {name}",
     "no_file_choosen": "ファイルが選択されていません",
     "dependency": {
       "controls": {

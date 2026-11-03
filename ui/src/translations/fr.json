@@ -1800,9 +1800,9 @@
         },
         "errors": {
           "first_execution": "La première exécution s'est terminée en {state} au lieu de réussir. Ouvrez les logs sur cette page pour comprendre pourquoi, puis réessayez.",
-          "expected_failure": "Cette exécution s'est terminée en {state}, il n'y a donc aucune erreur à corriger pour l'instant. Vérifiez que le flow contient toujours la task <code>notify</code>, puis réessayez.",
+          "expected_failure": "Cette exécution s'est terminée en {state}, il n'y a donc pas encore d'échec à corriger. Vérifiez que le flow contient toujours la task {task}, puis réessayez.",
           "no_execution_to_replay": "Il n'y a aucune exécution à rejouer pour l'instant. Exécutez le flow à l'étape précédente, puis réessayez.",
-          "replay": "La relecture s'est terminée en {state}. Ouvrez les logs sur cette page pour voir ce que `notify` a rapporté, puis réessayez.",
+          "replay": "Le replay s'est terminé en tant que {state}. Ouvre les logs sur cette page pour voir ce que le {task} a rapporté, puis réessaye.",
           "save_flow": "Le flow de la visite n'a pas pu être enregistré. {reason}",
           "test_event": "Le webhook a répondu avec le statut {status}. Vérifiez que le flow est enregistré et que le trigger est activé, puis réessayez."
         },
@@ -2544,7 +2544,7 @@
     "reject": "Rejeter",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
-    "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
+    "defaultsToNamespaceFile": "Par défaut, fichier de namespace : {name}",
     "no_file_choosen": "Aucun fichier choisi",
     "dependency": {
       "controls": {

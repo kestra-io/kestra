@@ -1800,9 +1800,9 @@
         },
         "errors": {
           "first_execution": "Pierwsza egzekucja zakończyła się statusem {state}, zamiast sukcesem. Otwórz logi na tej stronie, aby zobaczyć dlaczego, a potem spróbuj ponownie.",
-          "expected_failure": "Ta egzekucja zakończyła się statusem {state}, więc nie ma jeszcze błędu do naprawienia. Sprawdź, czy Flow nadal ma Taska <code>notify</code>, a potem spróbuj ponownie.",
+          "expected_failure": "Ta egzekucja zakończyła się jako {state}, więc nie ma jeszcze żadnej awarii do naprawienia. Sprawdź, czy Flow nadal ma Task {task}, a następnie spróbuj ponownie.",
           "no_execution_to_replay": "Nie ma jeszcze egzekucji, dla której można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
-          "replay": "Replay zakończył się statusem {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił <code>notify</code>, a potem spróbuj ponownie.",
+          "replay": "Replay zakończył się jako {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił {task}, a następnie spróbuj ponownie.",
           "save_flow": "Nie udało się zapisać Flow przewodnika. {reason}",
           "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie."
         },
@@ -2544,7 +2544,7 @@
     "reject": "Odrzuć",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
-    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: {name}",
     "no_file_choosen": "Nie wybrano pliku",
     "dependency": {
       "controls": {

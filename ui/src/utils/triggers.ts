@@ -43,3 +43,15 @@ export async function exportTriggersAsCSV(options: any) {
     link.remove()
     window.URL.revokeObjectURL(url)
 }
+
+export function blockerMessage(blocker: {reason?: string, message?: string}, t: (key: string) => string) {
+    switch (blocker.reason) {
+        case "POLICY":
+            // message is always explicitly set on policy failure, fallback added just in case
+            return blocker.message || t("trigger blocked unknown")
+        case "POLICY_CHECK_FAILED":
+            return t("trigger blocked policy check failed")
+        default:
+            return t("trigger blocked unknown")
+    }
+}

@@ -218,12 +218,12 @@
         fieldNav?.push({
             path: `${props.root}[${index}]`,
             label: itemLabel(items.value[index], index),
-            schema: props.schema.items,
+            schema: props.schema.items ?? {},
         })
     }
 
     const componentType = computed(() => {
-        return getBlockComponent.value?.(props.schema.items, props.root)
+        return getBlockComponent.value?.(props.schema.items ?? {}, props.root)
     })
 
     const needWrapper = computed(() => {

@@ -612,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "시작되지 않음"
       }
     },
     "show task logs": "Task Logs 보기",
@@ -724,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
-      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."
+      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다.",
+      "queued": "대기 중",
+      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -2270,7 +2276,8 @@
       "close_all_panels": "모든 패널 닫기",
       "exit_fullscreen": "전체 화면 종료",
       "fullscreen": "전체 화면",
-      "split_panel": "패널 분할"
+      "split_panel": "패널 분할",
+      "split_panel_no_room": "다른 패널을 위한 공간이 부족합니다."
     },
     "search_docs": "검색",
     "no_results_found": "결과를 찾을 수 없습니다",

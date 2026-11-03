@@ -1,5 +1,5 @@
 import type {Component} from "vue"
-import {computed} from "vue"
+import {computed, defineAsyncComponent} from "vue"
 import {useRoute} from "vue-router"
 
 import {useI18n} from "vue-i18n"
@@ -7,10 +7,6 @@ import {useI18n} from "vue-i18n"
 import {useNetwork, useStorage} from "@vueuse/core"
 const {isOnline} = useNetwork()
 
-import ContextNews from "../../components/layout/ContextNews.vue"
-import ContextDocs from "../../components/docs/ContextDocs.vue"
-import ContextNotifications from "../../components/layout/ContextNotifications.vue"
-import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
 import AiIcon from "../../components/ai/AiIcon.vue"
 import {useApiStore} from "../../stores/api"
 import {useNotificationsStore} from "../../stores/notifications"
@@ -23,6 +19,11 @@ import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
 import BellOutline from "vue-material-design-icons/BellOutline.vue"
 import {storageKeys} from "../../utils/constants"
+
+const ContextNews = defineAsyncComponent(() => import("../../components/layout/ContextNews.vue"))
+const ContextDocs = defineAsyncComponent(() => import("../../components/docs/ContextDocs.vue"))
+const ContextNotifications = defineAsyncComponent(() => import("../../components/layout/ContextNotifications.vue"))
+const CopilotChat = defineAsyncComponent(() => import("../../components/ai/copilot/CopilotChat.vue"))
 
 export interface Button {
     title: string;

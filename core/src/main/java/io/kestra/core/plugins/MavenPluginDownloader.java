@@ -18,6 +18,7 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -135,9 +136,17 @@ public class MavenPluginDownloader implements Closeable {
     }
 
     private PluginArtifact doResolve(List<RemoteRepository> repositories, String dependency, RepositorySystemSession session) {
-        PluginArtifact result = resolveArtifact(repositories, dependency, session);
+        PluginArtifact result = resolveArtifact(repositories, dependency, new DefaultArtifact(dependency).isSnapshot() ? alwaysUpdated(session) : session);
         log.debug("Resolved Plugin '{}' with '{}'", dependency, result.uri());
         return result;
+    }
+
+    /** A snapshot is republished in place: check the remote on every resolution, not once a day and per (server-long) session. */
+    private static RepositorySystemSession alwaysUpdated(RepositorySystemSession session) {
+        DefaultRepositorySystemSession copy = new DefaultRepositorySystemSession(session);
+        copy.setUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+        copy.setConfigProperty("aether.updateCheckManager.sessionState", "bypass");
+        return copy;
     }
 
     /** Returns the base session or a shallow copy with the given listener attached. */

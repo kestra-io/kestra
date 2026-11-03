@@ -612,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "未开始"
       }
     },
     "show task logs": "显示任务日志",
@@ -724,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "并发限制",
-      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"
+      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。",
+      "queued": "已排队",
+      "save_error": "更新并发限制失败，保留之前的值。"
     },
     "flowConcurrency": {
       "loadError": "无法加载此 flow 的并发限制。",
@@ -2270,7 +2276,8 @@
       "close_all_panels": "关闭所有面板",
       "exit_fullscreen": "退出全屏",
       "fullscreen": "全屏",
-      "split_panel": "拆分面板"
+      "split_panel": "拆分面板",
+      "split_panel_no_room": "没有足够的空间放置另一个面板"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",

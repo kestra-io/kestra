@@ -612,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "nie rozpoczęto"
       }
     },
     "show task logs": "Pokaż logi Taska",
@@ -724,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit.",
+      "queued": "W kolejce",
+      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -2270,7 +2276,8 @@
       "close_all_panels": "Zamknij wszystkie panele",
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
       "fullscreen": "Pełny ekran",
-      "split_panel": "Podziel panel"
+      "split_panel": "Podziel panel",
+      "split_panel_no_room": "Za mało miejsca na kolejny panel"
     },
     "search_docs": "Szukaj",
     "no_results_found": "Nie znaleziono wyników",

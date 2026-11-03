@@ -612,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "未開始"
       }
     },
     "show task logs": "Task Logsを表示",
@@ -724,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
-      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
+      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。",
+      "queued": "キュー済み",
+      "save_error": "Concurrency limit の更新に失敗しました。以前の値が保持されます。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",
@@ -2270,7 +2276,8 @@
       "close_all_panels": "すべてのパネルを閉じる",
       "exit_fullscreen": "フルスクリーンを終了",
       "fullscreen": "全画面表示",
-      "split_panel": "パネルを分割"
+      "split_panel": "パネルを分割",
+      "split_panel_no_room": "別のパネルを配置するスペースがありません"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",

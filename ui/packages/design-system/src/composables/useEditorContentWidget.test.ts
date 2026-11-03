@@ -68,8 +68,84 @@ describe("useEditorContentWidget", () => {
         await promise
     })
 
+    it("positions the widget exactly at the requested position", async () => {
+        const {addContentWidget} = useEditorContentWidget({
+            codeEditor: () => editor as unknown as monaco.editor.IStandaloneCodeEditor,
+            editorRoot: ref(editorRoot),
+        })
+
+        const widget = {
+            id: "positioned-widget",
+            position: {lineNumber: 7, column: 3},
+            height: 4,
+            right: "10px",
+        }
+
+        const promise = addContentWidget(widget)
+        const registeredWidget = editor.addContentWidget.mock.calls[0][0]
+
+        expect(registeredWidget.getPosition()).toEqual({
+            position: widget.position,
+            preference: [monaco.editor.ContentWidgetPositionPreference.EXACT],
+        })
+
+        document.body.appendChild(registeredWidget.getDomNode())
+        await vi.runAllTimersAsync()
+        await promise
+    })
+
+    it("sizes the content and offsets the widget after render", async () => {
+        const {addContentWidget} = useEditorContentWidget({
+            codeEditor: () => editor as unknown as monaco.editor.IStandaloneCodeEditor,
+            editorRoot: ref(editorRoot),
+        })
+
+        const promise = addContentWidget({
+            id: "sized-widget",
+            position: {lineNumber: 1, column: 1},
+            height: 4,
+            right: "10px",
+        })
+        const registeredWidget = editor.addContentWidget.mock.calls[0][0]
+
+        const node: HTMLElement = registeredWidget.getDomNode()
+        expect(node.querySelector<HTMLElement>(".editor-content-widget-content")!.style.height).toBe("4rem")
+
+        registeredWidget.afterRender()
+        expect(node.style.left).toBe("calc(340px)")
+
+        document.body.appendChild(node)
+        await vi.runAllTimersAsync()
+        await promise
+    })
+
+    it("shows the widget content only once its node is in the DOM", async () => {
+        const {addContentWidget, showWidgetContent} = useEditorContentWidget({
+            codeEditor: () => editor as unknown as monaco.editor.IStandaloneCodeEditor,
+            editorRoot: ref(editorRoot),
+        })
+
+        const promise = addContentWidget({
+            id: "deferred-widget",
+            position: {lineNumber: 1, column: 1},
+            height: 2,
+            right: "10px",
+        })
+
+        expect(showWidgetContent.value).toBe(false)
+
+        await vi.advanceTimersByTimeAsync(100)
+        expect(showWidgetContent.value).toBe(false)
+
+        document.body.appendChild(editor.addContentWidget.mock.calls[0][0].getDomNode())
+        await vi.runAllTimersAsync()
+        await promise
+
+        expect(showWidgetContent.value).toBe(true)
+    })
+
     it("removes the content widget when requested", async () => {
-        const {addContentWidget, removeContentWidget} = useEditorContentWidget({
+        const {addContentWidget, removeContentWidget, showWidgetContent} = useEditorContentWidget({
             codeEditor: () => editor as unknown as monaco.editor.IStandaloneCodeEditor,
             editorRoot: ref(editorRoot),
         })
@@ -85,9 +161,11 @@ describe("useEditorContentWidget", () => {
         document.body.appendChild(editor.addContentWidget.mock.calls[0][0].getDomNode())
         await vi.runAllTimersAsync()
         await promise
+        expect(showWidgetContent.value).toBe(true)
 
         removeContentWidget(widget.id)
 
+        expect(showWidgetContent.value).toBe(false)
         expect(editor.removeContentWidget).toHaveBeenCalledTimes(1)
         expect(editor.removeContentWidget.mock.calls[0][0].getId()).toBe(widget.id)
     })
@@ -134,9 +212,10 @@ describe("useEditorContentWidget", () => {
     })
 
     it("does nothing when no editor is available", async () => {
+        const codeEditor = vi.fn(() => undefined)
         const {addContentWidget, removeContentWidget, showWidgetContent} =
             useEditorContentWidget({
-                codeEditor: () => undefined,
+                codeEditor,
                 editorRoot: ref(editorRoot),
             })
 
@@ -147,10 +226,11 @@ describe("useEditorContentWidget", () => {
             right: "10px",
         })
 
+        expect(showWidgetContent.value).toBe(false)
+
         removeContentWidget("no-editor")
 
-        expect(editor.addContentWidget).not.toHaveBeenCalled()
-        expect(editor.removeContentWidget).not.toHaveBeenCalled()
+        expect(codeEditor).toHaveBeenCalledTimes(2)
         expect(showWidgetContent.value).toBe(false)
     })
 })

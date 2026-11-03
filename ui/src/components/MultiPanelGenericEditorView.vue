@@ -66,7 +66,7 @@
         }
     }
 
-    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean, preferredSize?: number} | undefined {
+    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean, main: boolean, preferredSize?: number} | undefined {
         for (const element of props.editorElements) {
             const deserializedTab = element.deserialize(value, true)
             if (deserializedTab) {
@@ -77,6 +77,7 @@
                         size: element.preferredSize ?? defaultPanelSize.value,
                     },
                     prepend: element.prepend ?? false,
+                    main: element.main ?? false,
                     preferredSize: element.preferredSize,
                 }
             }
@@ -116,21 +117,47 @@
         }
 
         if(openTabs.value.includes(tabValue)){
-            onRemoveTab(tabValue)
+            if(hasMainView.value){
+                focusTab(tabValue)
+            } else {
+                onRemoveTab(tabValue)
+            }
             return
         }
 
         const panel = getPanelFromValue(tabValue)
-        if(panel){
-            if(panel.preferredSize !== undefined){
-                makeRoomFor(panel.preferredSize)
-            }
-            if(panel.prepend){
-                panels.value.unshift(panel.panel)
-            } else {
-                panels.value.push(panel.panel)
-            }
+        if(!panel){
+            return
         }
+
+        const target = hasMainView.value ? panels.value[targetPanelIndex(panel.main)] : undefined
+        if(target){
+            target.tabs.push(panel.panel.activeTab)
+            target.activeTab = panel.panel.activeTab
+            return
+        }
+
+        if(panel.preferredSize !== undefined){
+            makeRoomFor(panel.preferredSize)
+        }
+        if(panel.prepend){
+            panels.value.unshift(panel.panel)
+        } else {
+            panels.value.push(panel.panel)
+        }
+    }
+
+    const hasMainView = computed(() => props.editorElements.some(e => e.main))
+
+    function isMainTab(uid: string) {
+        return props.editorElements.some(e => e.main && (uid === e.uid || uid.startsWith(`${e.uid}-`)))
+    }
+
+    function targetPanelIndex(main: boolean) {
+        if(!panels.value.length) return -1
+        const mainIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => isMainTab(t.uid))))
+        if(main) return mainIndex
+        return mainIndex + 1 < panels.value.length ? mainIndex + 1 : mainIndex - 1
     }
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)))

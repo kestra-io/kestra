@@ -98,6 +98,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .allowCustomValue(getAllowCustomValue())
                 .required(getRequired())
                 .defaults(getDefaults())
+                .prefill(getPrefill())
                 .description(getDescription())
                 .descriptionDisplayMode(getDescriptionDisplayMode())
                 .dependsOn(getDependsOn())

@@ -152,8 +152,6 @@ test.describe("Flow editor with namespace files open", () => {
     })
 
     test("saves a file emptied in the editor as an empty file", async ({namespace, filesApi}) => {
-        test.fail(true, "the flow's save-all skips a dirty tab whose content is \"\", so the file keeps its old content and stays dirty. Tracked in kestra-io/kestra-ee#4972")
-
         const file = fileTabId("notes.txt")
         await filesApi.writeFile("notes.txt", "to be removed")
 

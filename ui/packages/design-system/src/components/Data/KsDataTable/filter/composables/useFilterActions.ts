@@ -65,6 +65,8 @@ export function useFilterActions({
             : lastTop.id
     }
 
+    const isLocked = (key: string) => configuration.keys?.find(k => k.key === key)?.removable === false
+
     const restoreClearedValues = () => {
         const presentKeys = new Set(allFilters(tree.groups.value).map(f => f.key))
         const cleared = (configuration.keys ?? [])
@@ -99,7 +101,7 @@ export function useFilterActions({
         const enclosing = findLeafContaining(tree.groups.value, filterId)
         if (!enclosing) return
         const found = enclosing.filters.find(f => f?.id === filterId)
-        if (!found) return
+        if (!found || isLocked(found.key)) return
         tree.updateLeaf(enclosing.id, leaf => ({
             ...leaf,
             filters: leaf.filters.filter(f => f?.id !== filterId),
@@ -151,6 +153,7 @@ export function useFilterActions({
     const removeGroup = (groupId: string) => {
         if (tree.groups.value.length <= 1) return
         tree.removeGroup(groupId)
+        restoreClearedValues()
         updateRoute(false)
     }
 

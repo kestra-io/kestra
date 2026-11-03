@@ -9,7 +9,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
-import io.kestra.webserver.services.ExecutionOutputFilterService;
+import io.kestra.webserver.services.SearchableDataFilterService;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.utils.PageableUtils;
 
@@ -26,12 +26,12 @@ public class ListExecutionsTool implements AiPlatformTool {
     private static final int MAX_RESULTS = 50;
 
     private final ExecutionRepositoryInterface executionRepository;
-    private final ExecutionOutputFilterService executionOutputFilterService;
+    private final SearchableDataFilterService searchableDataFilterService;
 
     @Inject
-    public ListExecutionsTool(final ExecutionRepositoryInterface executionRepository, final ExecutionOutputFilterService executionOutputFilterService) {
+    public ListExecutionsTool(final ExecutionRepositoryInterface executionRepository, final SearchableDataFilterService searchableDataFilterService) {
         this.executionRepository = executionRepository;
-        this.executionOutputFilterService = executionOutputFilterService;
+        this.searchableDataFilterService = searchableDataFilterService;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ListExecutionsTool implements AiPlatformTool {
         List<Execution> executions = executionRepository.find(
             PageableUtils.from(1, MAX_RESULTS, List.of(Execution.STATE_START_DATE_FIELD + ":desc"), executionRepository.sortMapping()),
             tenant,
-            executionOutputFilterService.resolve(tenant, filters)
+            searchableDataFilterService.resolve(tenant, filters)
         );
 
         return new Result(

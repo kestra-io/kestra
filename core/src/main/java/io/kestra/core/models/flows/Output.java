@@ -24,13 +24,6 @@ import lombok.experimental.SuperBuilder;
 @OutputValidation
 public class Output implements Data {
     /**
-     * The types of output that can be searchable: a scalar value or an array of scalar values.
-     */
-    public static final Set<Type> SEARCHABLE_TYPES = Collections.unmodifiableSet(EnumSet.of(
-        Type.STRING, Type.EMAIL, Type.SELECT, Type.INT, Type.BOOL, Type.FLOAT, Type.URI, Type.DATETIME, Type.DATE, Type.TIME, Type.DURATION, Type.ARRAY
-    ));
-
-    /**
      * The output's unique id.
      */
     @NotNull

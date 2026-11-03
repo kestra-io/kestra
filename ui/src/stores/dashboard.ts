@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides, type ExportFormat, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
+import {useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"

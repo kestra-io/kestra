@@ -1,6 +1,8 @@
 import {defineStore} from "pinia"
 
 export class Me {
+    instanceOwner = false
+
     hasAny(_permission: string, _namespace?: string) {
         return true
     }

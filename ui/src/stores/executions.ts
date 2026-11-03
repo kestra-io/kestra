@@ -90,6 +90,16 @@ export interface InputMetaData {
     columns?: InputMetaData[];
     minRows?: number;
     maxRows?: number;
+    filters?: TableFilter[];
+    allowRowDuplication?: boolean;
+    /** The indexes of the rows of `defaults` matching the rendered filters, set by the server. */
+    matchingDefaults?: number[];
+}
+
+export interface TableFilter {
+    column: string;
+    operation: "EQUALS" | "NOT_EQUALS" | "IN" | "NOT_IN" | "CONTAINS";
+    value: unknown;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

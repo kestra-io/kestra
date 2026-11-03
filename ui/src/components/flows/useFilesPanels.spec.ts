@@ -155,4 +155,14 @@ describe("useFilesPanels save all", () => {
         expect((panels.value[0].tabs[0] as TabLive).dirty).toBe(true)
         expect(refreshedContents.value["data.txt"]).toBeUndefined()
     })
+
+    it("should save a file emptied in the editor as an empty file", async () => {
+        saveOrCreateFile.mockResolvedValue(undefined)
+        const {panels} = editFile("data.txt", "")
+
+        await flowStore.filesSaveAll!()
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: ""})
+        expect((panels.value[0].tabs[0] as TabLive).dirty).toBe(false)
+    })
 })

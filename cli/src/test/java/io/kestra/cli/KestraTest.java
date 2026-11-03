@@ -11,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.plugins.ExternalPluginsRegistrar;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -51,6 +52,28 @@ class KestraTest {
         assertThat(Kestra.runCli(args)).isZero();
 
         assertThat(out.toString()).contains("Usage: kestra server " + serverType);
+    }
+
+    @Test
+    void shouldPushPluginsPathWhenCommandLoadsExternalPlugins() {
+        String[] args = { "server", "standalone", "--plugins", "/opt/kestra/plugins" };
+
+        try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
+            ctx.getEnvironment().start();
+
+            assertThat(ctx.getProperty(ExternalPluginsRegistrar.PLUGINS_PATH_PROPERTY, String.class)).contains("/opt/kestra/plugins");
+        }
+    }
+
+    @Test
+    void shouldNotPushPluginsPathWhenCommandSkipsExternalPlugins() {
+        String[] args = { "plugins", "install", "--plugins", "/opt/kestra/plugins" };
+
+        try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
+            ctx.getEnvironment().start();
+
+            assertThat(ctx.getProperty(ExternalPluginsRegistrar.PLUGINS_PATH_PROPERTY, String.class)).isEmpty();
+        }
     }
 
     @Test

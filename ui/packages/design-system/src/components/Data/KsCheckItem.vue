@@ -23,22 +23,24 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-check-item {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
+    }
 
-        &__icon {
-            color: var(--ks-text-secondary);
-        }
+    .ks-check-item__icon {
+        color: var(--ks-text-secondary);
+    }
 
+    .ks-check-item {
         &.is-met {
             color: var(--ks-text-success);
 
-            .ks-check-item__icon {
+            & .ks-check-item__icon {
                 color: var(--ks-icon-success);
             }
         }

@@ -27,7 +27,16 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px;width:300px\"><ks-progress v-bind=\"args\" /></div>",
     }),
-    args: {percentage: 70},
+    args: {
+        percentage: 70,
+        type: "line",
+        status: "",
+        showText: true,
+        striped: false,
+        stripedFlow: false,
+        strokeWidth: 6,
+        left: 0,
+    },
 }
 
 export const Statuses: Story = {
@@ -42,6 +51,7 @@ export const Statuses: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Text inside – percentage label inside the bar */
@@ -56,6 +66,7 @@ export const TextInside: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom color – string, function, or color steps */
@@ -88,6 +99,7 @@ export const CustomColor: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Striped progress */
@@ -101,6 +113,7 @@ export const Striped: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Dashboard progress bar */
@@ -115,6 +128,7 @@ export const Dashboard: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Circle: Story = {
@@ -128,6 +142,7 @@ export const Circle: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom radius – pill-shaped thin bar */
@@ -141,4 +156,5 @@ export const Rounded: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

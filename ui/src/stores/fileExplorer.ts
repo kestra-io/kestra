@@ -2,8 +2,8 @@ import {defineStore} from "pinia"
 import {computed, ref} from "vue"
 import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {useToast} from "../utils/toast"
-import {useI18n} from "vue-i18n"
+import {makeToast} from "../utils/toast"
+import {globalI18n} from "../translations/i18n"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import type {KsTreeNode} from "@kestra-io/design-system"
 
@@ -73,8 +73,13 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     const rootLoaded = ref(false)
 
     const namespacesStore = useNamespacesStore()
-    const toast = useToast()
-    const {t} = useI18n()
+    const t = (key: string, values?: Record<string, unknown>) => {
+        if (!globalI18n.value) {
+            return key
+        }
+        return (values ? globalI18n.value?.t(key, values) : globalI18n.value?.t(key)) ?? key
+    }
+    const toast = makeToast(t)
 
     function folderNode(fileName: string, children: TreeNode[]): TreeNodeDirectory {
         return {

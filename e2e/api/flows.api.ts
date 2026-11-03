@@ -6,8 +6,15 @@ import {dirname} from "path"
 import fs from "fs"
 import path from "path"
 
+export type StoredFlow = {
+    id: string;
+    namespace: string;
+    source: string;
+    revision: number;
+}
+
 export class FlowsApi extends BaseApi {
-    private readonly flowIds: string[] = []
+    private readonly flows: {namespace: string; id: string}[] = []
 
     async generateFlowViaApi(fileName: string, fileFlowId: string) {
         const flowId = `test-flow-${uuid()}`
@@ -28,14 +35,48 @@ export class FlowsApi extends BaseApi {
             throw new Error(`Flow creation failed with HTTP ${status}`)
         }
 
-        this.flowIds.push(flowId)
+        this.flows.push({namespace: shared.namespace, id: flowId})
 
         return flowId
     }
 
+    async createFlowViaApi(source: string) {
+        const response = await this.request.post(`${this.apiUrl}/flows`, {
+            headers: {
+                "Content-Type": "application/x-yaml",
+                "Accept": "application/json",
+                "Authorization": FlowsApi.AUTH,
+            },
+            data: source,
+        })
+
+        if (response.status() !== 200) {
+            throw new Error(`Flow creation failed with HTTP ${response.status()}: ${await response.text()}`)
+        }
+
+        const {namespace, id}: StoredFlow = await response.json()
+        this.flows.push({namespace, id})
+    }
+
+    async getFlowViaApi(namespace: string, flowId: string): Promise<StoredFlow> {
+        const response = await this.request.get(`${this.apiUrl}/flows/${namespace}/${flowId}`, {
+            headers: {
+                "Accept": "application/json",
+                "Authorization": FlowsApi.AUTH,
+            },
+            params: {source: "true"},
+        })
+
+        if (response.status() !== 200) {
+            throw new Error(`Reading flow ${namespace}.${flowId} failed with HTTP ${response.status()}`)
+        }
+
+        return response.json()
+    }
+
     async removeFlowsViaApi() {
-        for(const flowId of this.flowIds) {
-            const status = (await this.request.delete(`${this.apiUrl}/flows/${shared.namespace}/${flowId}`, {
+        for(const {namespace, id: flowId} of this.flows) {
+            const status = (await this.request.delete(`${this.apiUrl}/flows/${namespace}/${flowId}`, {
                 headers: {
                     "Authorization": FlowsApi.AUTH,
                 },

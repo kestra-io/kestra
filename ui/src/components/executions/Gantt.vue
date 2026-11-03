@@ -1,202 +1,212 @@
 <template>
-    <ExecutionPending
-        v-if="isQueued"
-        :execution="execution!"
-    />
-    <template v-else-if="execution && executionsStore.flow">
-        <ExecutionProgress
-            v-if="isProgressing"
-            :execution="execution"
-            class="gantt-progress"
+    <div ref="root" class="gantt-root" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
+        <ExecutionPending
+            v-if="isQueued"
+            :execution="execution!"
         />
-        <!-- No task runs to plot: hide the filter bar + card and show only the execution
-             status (mirrors the versioned-plugins empty screen). -->
-        <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
-            <template #description>
-                <span class="gantt-empty-status">
-                    {{ $t("execution_status") }}
-                    <KsExecutionStatus :status="execution.state.current" />
-                </span>
-                <span v-if="emptyStateHint" class="gantt-empty-hint">{{ emptyStateHint }}</span>
-            </template>
-        </KsEmptyState>
-        <template v-else>
-            <KSFilter
-                :configuration="ganttExecutionFilter"
-                :tableOptions="{
-                    chart: {shown: false},
-                    columns: {shown: false},
-                    refresh: {shown: true, callback: compute}
-                }"
-                @search="search = $event"
-                @filter="onFilterChange"
+        <template v-else-if="execution && executionsStore.flow">
+            <ExecutionProgress
+                v-if="isProgressing"
+                :execution="execution"
+                class="gantt-progress"
             />
-            <div class="gantt-stage">
-                <KsCard
-                    id="gantt"
-                    data-onboarding-target="execution-gantt"
-                    shadow="never"
-                    :class="{'no-border': !hasValidDate}"
+            <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
+                <template #description>
+                    <span class="gantt-empty-status">
+                        {{ $t("execution_status") }}
+                        <KsExecutionStatus :status="execution.state.current" />
+                    </span>
+                    <span v-if="emptyStateHint" class="gantt-empty-hint">{{ emptyStateHint }}</span>
+                </template>
+            </KsEmptyState>
+            <template v-else>
+                <KSFilter
+                    :configuration="ganttExecutionFilter"
+                    :tableOptions="{
+                        chart: {shown: false},
+                        columns: {shown: false},
+                        refresh: {shown: true, callback: refresh}
+                    }"
+                    @search="search = $event"
+                    @filter="onFilterChange"
+                />
+                <div
+                    class="gantt-stage"
+                    :class="{'has-panel': hasPanel}"
+                    data-test="gantt-stage"
                 >
-                    <template #header v-if="hasValidDate">
-                        <div class="gantt-header">
-                            <div class="top">
-                                <div class="summary">
-                                    <span class="item">
-                                        <span class="label">{{ $t("total_duration") }}</span>
-                                        <Duration class="value" :histories="execution.state.histories" />
-                                    </span>
-                                    <span class="separator">/</span>
-                                    <span class="item">
-                                        <span class="label">{{ $t("tasks") }}</span>
-                                        <span class="value">{{ tasksSummary }}</span>
-                                    </span>
-                                </div>
-                                <div class="actions">
-                                    <KsButton class="copy-logs" :icon="ContentCopy" link @click="copyAllLogs">
-                                        {{ $t("copy all logs") }}
-                                    </KsButton>
-                                    <KsExecutionStatus :status="execution.state.current" />
-                                </div>
-                            </div>
-                            <div class="bottom">
-                                <div v-if="verticalLayout" class="timeline">
-                                    <span class="start">{{ startTime }}</span>
-                                    <span class="end">{{ endTime }}</span>
-                                </div>
-                                <span v-else class="tick" v-for="(date, i) in dates" :key="i">
-                                    {{ date }}
-                                </span>
-                            </div>
-                        </div>
-                    </template>
-                    <template #default>
-                        <DynamicScroller
-                            v-if="filteredSeries.length > 0"
-                            :items="filteredSeries"
-                            :minItemSize="40"
-                            keyField="id"
-                            :buffer="0"
-                            :updateInterval="0"
-                        >
-                            <template #default="{item, index, active}">
-                                <DynamicScrollerItem
-                                    :item="item"
-                                    :active="active"
-                                    :data-index="index"
-                                >
-                                    <div class="d-flex flex-column">
-                                        <div
-                                            class="gantt-row d-flex cursor-icon"
-                                            :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
-                                            @click="onTaskSelect(item.id)"
-                                        >
-                                            <div v-if="!verticalLayout" class="d-inline-flex">
-                                                <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
-                                                <ChevronDown v-else />
+                    <KsSplitter :layout="verticalLayout ? 'vertical' : 'horizontal'" class="gantt-splitter">
+                        <KsSplitterPanel :min="verticalLayout ? undefined : '35%'">
+                            <KsCard
+                                id="gantt"
+                                class="gantt-card"
+                                :bodyStyle="hasPanel ? PANEL_CARD_BODY_STYLE : undefined"
+                                data-onboarding-target="execution-gantt"
+                                shadow="never"
+                                :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout}"
+                            >
+                                <template #header v-if="hasValidDate">
+                                    <div class="gantt-header">
+                                        <div class="top">
+                                            <div class="summary">
+                                                <KsButton
+                                                    v-if="hasFailure"
+                                                    class="first-failure"
+                                                    link
+                                                    type="primary"
+                                                    data-test="gantt-first-failure"
+                                                    @click="goToFirstFailure"
+                                                >
+                                                    {{ $t("gantt_go_to_first_failure") }}
+                                                    <KsIcon size="sm"><ArrowRight /></KsIcon>
+                                                </KsButton>
                                             </div>
-                                            <div
-                                                class="task-label"
-                                                data-test="gantt-task-label"
-                                                :style="{'--depth': item.depth || 0}"
-                                            >
-                                                <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
-                                                    <TaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
-                                                </div>
-                                                <KsTooltip placement="top-start">
-                                                    <template #content>
-                                                        <code>{{ item.name }}</code>
-                                                        <small v-if="item.task?.value"><br>{{ item.task.value }}</small>
-                                                    </template>
-                                                    <span class="task-name">
-                                                        <code :title="verticalLayout ? item.name : undefined">{{ item.name }}</code>
-                                                        <small v-if="item.task?.value"> {{ item.task.value }}</small>
-                                                    </span>
-                                                </KsTooltip>
-                                            </div>
-                                            <div>
-                                                <KsTooltip v-if="item.attempts > 1" placement="right">
-                                                    <template #content>
-                                                        <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
-                                                    </template>
-                                                    <Warning class="attempt_warn me-3" />
-                                                </KsTooltip>
-                                            </div>
-                                            <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                                <div :style="taskBarStyle(item)" class="task-progress">
-                                                    <KsProgress
-                                                        :left="Math.min(item.left, 90)"
-                                                        :percentage="Math.max(100 - item.left, 10)"
-                                                        :color="item.color"
-                                                        :stroke-width="7"
-                                                        :radius="81"
-                                                        :striped="item.running"
-                                                        :stripedFlow="item.running"
-                                                        :showText="false"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div class="task-duration d-none d-md-inline-block">
-                                                <small>
-                                                    <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
-                                                </small>
-                                            </div>
-                                            <div class="task-actions" @click.stop>
-                                                <TaskRunActions
-                                                    :taskRun="item.task"
-                                                    :taskType="taskTypeByTaskRunId[item.task.id]"
-                                                    :execution="execution"
-                                                    :flow="executionsStore.flow"
-                                                />
+                                            <div class="actions">
+                                                <KsButton
+                                                    :icon="FilterVariant"
+                                                    size="small"
+                                                    :type="tree.failedOnly.value ? 'primary' : undefined"
+                                                    :aria-pressed="tree.failedOnly.value"
+                                                    data-test="gantt-failed-only"
+                                                    @click="tree.failedOnly.value = !tree.failedOnly.value"
+                                                >
+                                                    {{ $t("gantt_failed_only") }}
+                                                </KsButton>
                                             </div>
                                         </div>
-                                        <Transition name="expand">
-                                            <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
-                                                <div class="task-details__inner p-2">
-                                                    <GanttTaskLogs
-                                                        :taskRun="item.task"
-                                                        :taskType="taskTypeByTaskRunId[item.id]"
-                                                        :execution="execution"
-                                                        :flow="executionsStore.flow"
-                                                        :levelFilter="effectiveSelectedLogLevel"
-                                                        class="mh-100 mx-3"
-                                                    />
-                                                </div>
+                                        <div class="bottom">
+                                            <div class="scale" data-test="gantt-scale">
+                                                <span>{{ formatDuration(0) }}</span>
+                                                <span>{{ formatDuration(delta) }}</span>
                                             </div>
-                                        </Transition>
+                                        </div>
                                     </div>
-                                </DynamicScrollerItem>
-                            </template>
-                        </DynamicScroller>
-                        <!-- Task runs exist but the active filters/search hid them all. -->
-                        <KsNoData
-                            v-else
-                            :title="$t('gantt_no_tasks_match_filters_title')"
-                            :description="$t('gantt_no_tasks_match_filters')"
-                        />
-                    </template>
-                </KsCard>
-            </div>
+                                </template>
+                                <template #default>
+                                    <DynamicScroller
+                                        v-if="filteredSeries.length > 0"
+                                        :key="execution.id"
+                                        ref="scroller"
+                                        class="gantt-scroller"
+                                        :items="filteredSeries"
+                                        :minItemSize="44"
+                                        keyField="id"
+                                        :buffer="0"
+                                        :updateInterval="0"
+                                        role="treegrid"
+                                        :aria-label="$t('gantt_tree_label')"
+                                    >
+                                        <template #default="{item, index, active}">
+                                            <DynamicScrollerItem
+                                                :item="item"
+                                                :active="active"
+                                                :data-index="index"
+                                            >
+                                                <GanttRow
+                                                    :nodeKey="nodeOf(item).key"
+                                                    :label="item.name"
+                                                    :ancestors="nodeOf(item).ancestors"
+                                                    :offset="item.offset"
+                                                    :barStyle="taskBarStyle(item)"
+                                                    :state="item.task.state.current"
+                                                    :selected="tree.selected.value?.key === nodeOf(item).key"
+                                                    :expandable="nodeOf(item).kind === 'loop'"
+                                                    :expanded="tree.isExpanded(nodeOf(item).key)"
+                                                    @select="tree.select(nodeOf(item))"
+                                                    @toggle="tree.toggleExpanded(nodeOf(item).key)"
+                                                >
+                                                    <template #label>
+                                                        <GanttTaskLabel
+                                                            :name="item.name"
+                                                            :value="item.task?.value"
+                                                            :taskType="taskTypeByTaskRunId[item.id]"
+                                                            :attempts="item.attempts"
+                                                        >
+                                                            <GanttLoopChips
+                                                                v-if="nodeOf(item).kind === 'loop'"
+                                                                :key="nodeOf(item).key"
+                                                                :loop="loopRefOf(nodeOf(item))"
+                                                                :state="item.task.state.current"
+                                                                :nodeKey="nodeOf(item).key"
+                                                            />
+                                                        </GanttTaskLabel>
+                                                    </template>
+                                                    <template v-if="nodeOf(item).kind === 'loop'" #label-footer>
+                                                        <GanttLoopStateBar :node="nodeOf(item)" />
+                                                    </template>
+                                                    <template #duration>
+                                                        <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
+                                                    </template>
+                                                    <template #actions>
+                                                        <TaskRunActions
+                                                            :taskRun="item.task"
+                                                            :taskType="taskTypeByTaskRunId[item.task.id]"
+                                                            :execution="execution"
+                                                            :flow="executionsStore.flow"
+                                                        />
+                                                    </template>
+                                                    <template v-if="verticalLayout && item.id === firstFailure.failedTaskRun.value?.id" #failure>
+                                                        <div class="task-failure" data-test="gantt-row-failure" @click.stop @keydown.stop>
+                                                            <p v-if="firstFailure.message.value" class="task-failure-message">
+                                                                {{ firstFailure.message.value }}
+                                                            </p>
+                                                            <RouterLink class="task-failure-link" :to="firstFailure.logsRoute.value">
+                                                                {{ $t("execution_mobile.open_logs") }}
+                                                                <ArrowRight />
+                                                            </RouterLink>
+                                                        </div>
+                                                    </template>
+                                                </GanttRow>
+                                                <LoopIterationTree
+                                                    v-if="nodeOf(item).kind === 'loop' && tree.isExpanded(nodeOf(item).key)"
+                                                    :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                                    :node="nodeOf(item)"
+                                                />
+                                            </DynamicScrollerItem>
+                                        </template>
+                                    </DynamicScroller>
+                                    <KsNoData
+                                        v-else
+                                        :title="$t('gantt_no_tasks_match_filters_title')"
+                                        :description="$t('gantt_no_tasks_match_filters')"
+                                    />
+                                </template>
+                            </KsCard>
+                        </KsSplitterPanel>
+                        <KsSplitterPanel
+                            v-if="hasPanel"
+                            v-model:size="panelSize"
+                            :min="verticalLayout ? undefined : '25%'"
+                            :max="verticalLayout ? undefined : '70%'"
+                        >
+                            <div class="gantt-run-panel-slot">
+                                <GanttRunPanel />
+                            </div>
+                        </KsSplitterPanel>
+                    </KsSplitter>
+                </div>
+            </template>
         </template>
-    </template>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onUnmounted} from "vue"
+    import {ref, computed, watch, onUnmounted, provide, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
+    import {RouterLink, useRoute} from "vue-router"
 
     import type {ExecutionTaskRun} from "./executionTaskRun"
-    import {date as dateFilter} from "../../utils/filters"
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {useEventListener} from "@vueuse/core"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import {useFirstFailure} from "../../composables/useFirstFailure"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import Warning from "vue-material-design-icons/Alert.vue"
+    import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     import {Duration} from "@kestra-io/topology"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import {
         State,
         Comparators,
@@ -204,33 +214,54 @@
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
+        KsButton,
+        KsCard,
         KsExecutionStatus,
+        KsIcon,
+        KsNoData,
+        KsSplitter,
+        KsSplitterPanel,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
-    import TaskIcon from "../plugins/TaskIcon.vue"
 
     import * as FlowUtils from "../../utils/flowUtils"
-    import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
-    import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations/ganttExecutionFilter"
-    import GanttTaskLogs from "./GanttTaskLogs.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import ExecutionProgress from "./ExecutionProgress.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+    import LoopIterationTree from "./LoopIterationTree.vue"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+    import GanttRow from "./gantt/GanttRow.vue"
+    import GanttTaskLabel from "./gantt/GanttTaskLabel.vue"
+    import GanttLoopChips from "./gantt/GanttLoopChips.vue"
+    import GanttLoopStateBar from "./gantt/GanttLoopStateBar.vue"
+    import GanttRunPanel from "./gantt/GanttRunPanel.vue"
+    import {
+        createTaskRunNode,
+        firstFailedLeaf,
+        indexTaskRuns,
+        isFailed,
+        isHiddenTaskType,
+        loopRefOf,
+        owningIteration,
+        provideGanttTree,
+        taskRunAncestors,
+        taskRunKey,
+        type GanttNode,
+        type TaskRunNode,
+    } from "./gantt/ganttTree"
+    import {GANTT_TIMELINE, clampedBarStyle, formatGanttDuration as formatDuration} from "./ganttTimeline"
 
     import {storageKeys} from "../../utils/constants"
-    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
-    const TICK_FORMAT = "HH:mm:ss"
-    const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
-
     type TaskRun = ExecutionTaskRun
 
     interface TaskWrapper {
@@ -243,9 +274,9 @@
         name: string;
         start: number;
         width: number;
-        left: number;
+        waitPercent: number;
+        offset: string;
         color: string;
-        running: boolean;
         task: TaskRun;
         flowId?: string;
         namespace?: string;
@@ -254,37 +285,33 @@
         parentEndPercent?: number;
     }
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         namespace?: string;
         embed?: boolean;
+        showBanner?: boolean;
     }>(), {
         namespace: undefined,
         embed: true,
+        showBanner: false,
     })
 
     const {t} = useI18n()
     const route = useRoute()
     const toast = useToast()
     const executionsStore = useExecutionsStore()
-    const pluginsStore = usePluginsStore()
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+    const verticalLayout = useIsMobile()
     const ganttExecutionFilter = useGanttExecutionFilter()
 
+    const bannerHeight = ref(0)
+
     const TASKRUN_THRESHOLD = 50
+    const PANEL_CARD_BODY_STYLE = {flex: "1", minHeight: "0", padding: "0"}
     const COLORS = State.color()
-    const TASK_TYPES_TO_EXCLUDE = [
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
-        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
-    ]
     const ts = (date: string | Date): number => new Date(date).getTime()
+    const now = ref(Date.now())
 
     const series = ref<SeriesItem[]>([])
-    const dates = ref<string[]>([])
-    const selectedTaskRuns = ref<string[]>([])
+    const panelSize = ref("40%")
     const search = ref<string>("")
     const selectedStates = ref<string[]>([])
     const selectedStatesComparator = ref<Comparators | undefined>(undefined)
@@ -304,27 +331,51 @@
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+    const firstFailure = useFirstFailure(execution, verticalLayout)
+    const root = useTemplateRef<HTMLElement>("root")
+    const scroller = useTemplateRef<DynamicScrollerExposed>("scroller")
+    const tree = provideGanttTree({compact: verticalLayout, levelFilter: effectiveSelectedLogLevel, scrollToRow})
+    const hasPanel = computed(() => Boolean(tree.selected.value && tree.panelOpen.value))
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
 
-    const tasksSummary = computed<string>(() => {
-        const counts = new Map<string, number>()
-        for (const taskRun of execution.value?.taskRunList ?? []) {
-            const state = taskRun.state?.current
-            if (state) counts.set(state, (counts.get(state) ?? 0) + 1)
-        }
-        return [...counts.entries()]
-            .map(([state, count]) => `${count} ${state === State.SUCCESS ? "Succeeded" : state.toLowerCase()}`)
-            .join(", ")
-    })
+    const hasFailure = computed<boolean>(() =>
+        (execution.value?.taskRunList ?? []).some((taskRun: TaskRun) => isFailed(taskRun.state?.current)),
+    )
 
-    const copyAllLogs = (): void => {
-        executionsStore
-            .downloadLogs({executionId: execution.value!.id})
-            .then((response: unknown) => {
-                Utils.copy(response as string)
-                toast.success(t("copied"))
-            })
+    function goToFirstFailure(): void {
+        const failed = firstFailedLeaf((execution.value?.taskRunList ?? []) as TaskRun[], tree.taskType)
+        const node = failed ? nodeByTaskRunId.value.get(failed.id) : undefined
+        if (node) tree.revealFirstFailure(node)
+    }
+
+    function onPanelKeydown(event: KeyboardEvent): void {
+        const selected = tree.selected.value
+        if (event.defaultPrevented || !tree.panelOpen.value || !selected) {
+            return
+        }
+        const target = event.target
+        if (target instanceof Element && target !== document.body && !root.value?.contains(target)) {
+            return
+        }
+        if (target instanceof Element && target.closest("input, textarea, [contenteditable='true']")) {
+            return
+        }
+        if (event.key === "Escape") {
+            tree.closePanel()
+        } else if (owningIteration(selected) && (event.key === "[" || event.key === "]")) {
+            tree.stepIteration(selected, event.key === "[" ? -1 : 1)
+        }
+    }
+
+    useEventListener(document, "keydown", onPanelKeydown)
+
+    function scrollToRow(node: GanttNode): void {
+        const keys = [node.key, ...node.ancestors.map(ancestor => ancestor.key).reverse()]
+        const index = keys
+            .map(key => filteredSeries.value.findIndex(item => taskRunKey(item.id) === key))
+            .find(position => position >= 0)
+        if (index !== undefined) scroller.value?.scrollToItem(index)
     }
 
     const start = computed<number>(() => {
@@ -342,29 +393,45 @@
         ),
     )
 
-    const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
-        return series.value.map(serie => [serie.task, taskType(serie.task)])
+    let previousNodes = new Map<string, TaskRunNode>()
+
+    function reusableNode(previous: TaskRunNode | undefined, candidate: TaskRunNode): TaskRunNode {
+        const unchanged = previous
+            && previous.taskRun === candidate.taskRun
+            && previous.executionId === candidate.executionId
+            && previous.taskType === candidate.taskType
+            && previous.ancestors.map(ancestor => ancestor.key).join() === candidate.ancestors.map(ancestor => ancestor.key).join()
+        return unchanged ? previous : candidate
+    }
+
+    const nodeByTaskRunId = computed<Map<string, TaskRunNode>>(() => {
+        const currentExecution = execution.value
+        if (!currentExecution) {
+            return new Map()
+        }
+        const taskRunsById = indexTaskRuns(series.value.map(serie => serie.task))
+        const nodes = new Map(series.value.map(serie => [
+            serie.id,
+            reusableNode(
+                previousNodes.get(serie.id),
+                createTaskRunNode(currentExecution, serie.task, taskTypeByTaskRunId.value[serie.id], taskRunAncestors(taskRunsById, serie.task, [])),
+            ),
+        ]))
+        previousNodes = nodes
+        return nodes
     })
+
+    const nodeOf = (serie: SeriesItem): TaskRunNode => nodeByTaskRunId.value.get(serie.id)!
 
     const taskTypeByTaskRunId = computed<Record<string, string | undefined>>(() => {
-        return Object.fromEntries(
-            taskTypeByTaskRun.value.map(([taskRun, taskTypeVal]) => [taskRun.id, taskTypeVal]),
-        )
-    })
-
-    const forEachItemsTaskRunIds = computed<TaskRun[]>(() => {
-        return taskTypeByTaskRun.value
-            .filter(([, taskTypeVal]) =>
-                taskTypeVal === "io.kestra.plugin.core.flow.ForEachItem" ||
-                taskTypeVal === "io.kestra.core.tasks.flows.ForEachItem",
-            )
-            .map(([taskRun]) => taskRun)
+        return Object.fromEntries(series.value.map(serie => [serie.task.id, taskType(serie.task)]))
     })
 
     const filteredSeries = computed<SeriesItem[]>(() => {
         const normalizedSearch = search.value?.trim()?.toLowerCase()
         return series.value
-            .filter(serie => !TASK_TYPES_TO_EXCLUDE.includes(taskTypeByTaskRunId.value[serie.task.id] ?? ""))
+            .filter(serie => !isHiddenTaskType(taskTypeByTaskRunId.value[serie.task.id]))
+            .filter(serie => !tree.failedOnly.value || tree.hasFailure(nodeOf(serie)))
             .filter((serie) => {
                 if (normalizedSearch) {
                     const searchText = [
@@ -414,26 +481,11 @@
         return `${t("no_tasks_running")}\n${t("execution_starts_progress")}`
     })
 
-    const hasValidDate = computed<boolean>(() => isFinite(delta()))
+    const hasValidDate = computed<boolean>(() => isFinite(delta.value))
 
-    const startTime = computed<string>(() => {
-        if (!execution.value?.state?.histories?.[0]) return ""
-        return dateFilter(execution.value.state.histories[0].date, TICK_FORMAT)
-    })
-
-    const endTime = computed<string>(() => {
-        if (!execution.value?.state || !hasValidDate.value) return ""
-        const endDate = State.isRunning(execution.value.state.current) ? Date.now() : stop()
-        return dateFilter(endDate, TICK_FORMAT)
-    })
-
-    function delta(): number {
-        return stop() - start.value
-    }
-
-    function stop(): number {
+    const stopTimestamp = computed<number>(() => {
         if (!execution.value?.state || State.isRunning(execution.value.state.current)) {
-            return +new Date()
+            return now.value
         }
 
         return Math.max(
@@ -442,11 +494,31 @@
                 return ts(r.state.histories[lastIndex].date)
             }),
         )
-    }
+    })
+
+    const delta = computed<number>(() => stopTimestamp.value - start.value)
+
+    provide(GANTT_TIMELINE, {start, delta})
 
     function compute(): void {
+        now.value = Date.now()
         computeSeries()
-        computeDates()
+    }
+
+    async function refresh(): Promise<void> {
+        const executionId = execution.value?.id
+        if (!executionId) return
+
+        try {
+            await executionsStore.loadExecution({id: executionId})
+            compute()
+            tree.refresh()
+        } catch (error) {
+            const httpError = error as KestraHttpError
+            if (httpError.response && httpError.status !== 401 && !isReportedCentrally(httpError)) {
+                toast.error(asProblem(error)?.detail ?? t("error"))
+            }
+        }
     }
 
     function computeSeries(): void {
@@ -455,7 +527,7 @@
         }
 
         const newSeries: SeriesItem[] = []
-        const executionDelta = delta()
+        const executionDelta = delta.value
 
         const barInputs = tasks.value.map(({task}) => {
             const stopTs = State.isRunning(task.state.current)
@@ -474,24 +546,17 @@
 
         for (const taskWrapper of tasks.value) {
             const task = taskWrapper.task
-            let stopTs: number
-            if (State.isRunning(task.state.current)) {
-                stopTs = ts(new Date())
-            } else {
-                const lastIndex = task.state.histories.length - 1
-                stopTs = ts(task.state.histories[lastIndex].date)
-            }
             const startTs = ts(task.state.histories[0].date)
 
-            const runningState = task.state.histories.filter(r => r.state === State.RUNNING)
-            const left = runningState.length > 0
-                ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
+            const runningEntry = task.state.histories.find(h => h.state === State.RUNNING)
+            const waitPercent = runningEntry
+                ? Math.max(0, ((ts(runningEntry.date) - startTs) / executionDelta) * 100)
                 : 0
 
             const barPercents = barPercentsById[task.id]
             let width = barPercents.width
             if (State.isRunning(task.state.current)) {
-                width = ((stop() - startTs) / executionDelta) * 100
+                width = ((stopTimestamp.value - startTs) / executionDelta) * 100
             }
 
             const seriesItem: SeriesItem = {
@@ -499,9 +564,9 @@
                 name: task.taskId,
                 start: barPercents.start,
                 width,
-                left,
+                waitPercent,
+                offset: `+${formatDuration(startTs - start.value)}`,
                 color: COLORS[task.state.current],
-                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
@@ -512,36 +577,6 @@
             newSeries.push(seriesItem)
         }
         series.value = newSeries
-    }
-
-    function computeDates(): void {
-        // An execution cancelled or failed before any task started has no span to divide, so
-        // `delta()` is non-finite and every tick would be an unusable placeholder.
-        if (!hasValidDate.value) {
-            dates.value = []
-            return
-        }
-
-        const duration = delta()
-        const ticks = 5
-        const startVal = start.value
-        const deltaVal = duration / ticks
-        const tickFormat = deltaVal < 1000 ? PRECISE_TICK_FORMAT : TICK_FORMAT
-        const newDates: string[] = []
-
-        for (let i = 0; i < ticks; i++) {
-            newDates.push(dateFilter(startVal + i * deltaVal, tickFormat))
-        }
-
-        dates.value = newDates
-    }
-
-    function onTaskSelect(taskRunId: string): void {
-        if (selectedTaskRuns.value.includes(taskRunId)) {
-            selectedTaskRuns.value = selectedTaskRuns.value.filter(id => id !== taskRunId)
-            return
-        }
-        selectedTaskRuns.value.push(taskRunId)
     }
 
     function onFilterChange(filters: AppliedFilter[]): void {
@@ -568,11 +603,9 @@
     }
 
     function taskBarStyle(item: SeriesItem): Record<string, string> {
-        if (item.parentEndPercent !== undefined) {
-            return {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`}
-        }
-        const width = Math.max(item.width, 3)
-        return {left: `${Math.max(0, Math.min(item.start, 100 - width))}%`, width: `${width}%`}
+        const end = item.parentEndPercent ?? item.start + item.width
+        const barStart = item.start + item.waitPercent
+        return clampedBarStyle(barStart, end - barStart, item.color)
     }
 
     watch(
@@ -592,20 +625,7 @@
         {immediate: true},
     )
 
-    watch(
-        forEachItemsTaskRunIds,
-        (newValue, oldValue) => {
-            if (newValue.length > 0) {
-                const newEntriesAmount = newValue.length - (oldValue?.length ?? 0)
-                for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
-                    selectedTaskRuns.value.push(newValue[i].id)
-                }
-            }
-        },
-        {immediate: true},
-    )
-
-    /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
+    /** `autoExpandGantt` route query: `true` (first task run), `failed` (first failed), or a comma-separated task id list (first match). */
     function applyAutoExpandFromRoute(currentExecution: Execution | undefined) {
         const autoExpand = route.query.autoExpandGantt
         if (typeof autoExpand !== "string" || !autoExpand) {
@@ -620,16 +640,32 @@
             : autoExpand.split(",").map((id) => id.trim()).filter(Boolean)
 
         const taskRuns = autoExpand === "failed"
-            ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskRun.state?.current === "FAILED")
+            ? currentExecution.taskRunList.filter((taskRun: TaskRun) => isFailed(taskRun.state?.current))
             : taskIds
                 ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskIds.includes(taskRun.taskId))
                 : currentExecution.taskRunList
 
-        if (taskRuns.length) {
-            selectedTaskRuns.value = taskRuns.map((taskRun: TaskRun) => taskRun.id)
+        const matched = series.value.find(serie => taskRuns.some((taskRun: TaskRun) => taskRun.id === serie.id))
+        const node = matched ? nodeOf(matched) : undefined
+        if (node) {
+            tree.select(node, {reveal: true})
             expandedFromRoute.value = true
         }
     }
+
+    watch(nodeByTaskRunId, (nodes) => {
+        const selected = tree.selected.value
+        if (selected?.kind !== "taskRun" && selected?.kind !== "loop") return
+        if (selected.executionId !== execution.value?.id) return
+        const fresh = nodes.get(selected.taskRun.id)
+        if (fresh && (fresh.taskRun !== selected.taskRun || fresh.kind !== selected.kind)) tree.selected.value = fresh
+    })
+
+    watch(() => execution.value?.id, (id, previousId) => {
+        if (previousId === undefined || id === previousId) return
+        tree.reset()
+        expandedFromRoute.value = false
+    })
 
     watch(() => route.query.autoExpandGantt,() => applyAutoExpandFromRoute(execution.value))
 
@@ -646,15 +682,29 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .gantt-root {
+        display: flex;
+        flex-direction: column;
+    }
+
     .gantt-progress {
         margin-bottom: var(--ks-spacing-4);
     }
 
     .kel-card {
+        --gantt-offset-width: 5rem;
+        --gantt-bar-width: 12rem;
+        --gantt-duration-width: 9rem;
+        --gantt-state-width: 8rem;
         padding: 0;
 
-        :deep(.kel-card__header) {
+        &.is-compact {
+            --gantt-bar-width: 6rem;
+            --gantt-duration-width: 0rem;
+        }
+
+        & :deep(.kel-card__header) {
             padding: 0;
             font-size: var(--ks-font-size-sm);
 
@@ -677,20 +727,9 @@
                         align-items: center;
                         gap: var(--ks-spacing-2);
 
-                        .item {
-                            display: inline-flex;
-                            align-items: center;
-                            gap: var(--ks-spacing-3);
-                        }
-
-                        .label,
-                        .separator {
-                            color: var(--ks-text-secondary);
-                        }
-
-                        .value {
-                            color: var(--ks-text-primary);
-                            text-transform: capitalize;
+                        .first-failure {
+                            font-size: var(--ks-font-size-xs);
+                            color: var(--ks-text-link);
                         }
                     }
 
@@ -698,15 +737,6 @@
                         display: inline-flex;
                         align-items: center;
                         gap: var(--ks-spacing-3);
-
-                        .copy-logs {
-                            font-size: var(--ks-font-size-sm);
-                            color: var(--ks-text-secondary);
-
-                            &:hover {
-                                color: var(--ks-text-primary);
-                            }
-                        }
                     }
                 }
 
@@ -717,43 +747,25 @@
                     font-weight: normal;
                     background: var(--ks-bg-surface);
 
-                    > * {
-                        padding: .5rem;
-                        padding-right: 2.5rem;
-                        flex: 1;
-                    }
-
-                    .tick {
-                        text-align: end;
-
-                        &:first-child {
-                            background: var(--ks-bg-active);
-                        }
-                    }
-
-                    .timeline {
-                        flex: 1;
+                    .scale {
                         display: flex;
                         justify-content: space-between;
-                        align-items: center;
-                        padding: .5rem;
-                        font-weight: normal;
-
-                        .start,
-                        .end {
-                            font-size: var(--ks-font-size-sm);
-                            color: var(--ks-text-primary);
-                        }
+                        width: var(--gantt-bar-width);
+                        padding: 0 var(--ks-spacing-1);
+                        margin-left: auto;
+                        margin-right: calc(var(--ks-spacing-8) + var(--gantt-duration-width) + var(--gantt-state-width));
+                        color: var(--ks-text-secondary);
                     }
                 }
             }
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
-                max-height: calc(100vh - 223px);
+                max-height: max(15rem, calc(100vh - 223px - var(--execution-banner-height, 0px)));
+                max-height: max(15rem, calc(100dvh - 223px - var(--execution-banner-height, 0px)));
 
                 &::-webkit-scrollbar {
                     width: 5px;
@@ -768,125 +780,59 @@
                     border-radius: 5px;
                 }
             }
-
-            .gantt-row {
-                align-items: center;
-                position: relative;
-                padding-right: var(--ks-spacing-8);
-                background: var(--ks-dropdown-bg);
-                border-top: 1px solid var(--ks-border-default);
-
-                &.is-expanded {
-                    background: var(--ks-dropdown-bg-active);
-                }
-
-                * {
-                    transition: none !important;
-                    animation: none !important;
-                }
-
-                > * {
-                    padding: 1rem .25rem;
-                }
-
-                .task-label {
-                    flex: 1 1 12rem;
-                    min-width: 0;
-                    display: flex;
-                    align-items: center;
-                    gap: var(--ks-spacing-4);
-                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
-
-                    code {
-                        color: var(--ks-text-primary);
-                    }
-                }
-
-                .task-icon-box {
-                    box-sizing: content-box;
-                    flex-shrink: 0;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 1.5rem;
-                    height: 1.5rem;
-                    padding: var(--ks-spacing-1);
-                    border: 1px solid var(--ks-border-default);
-                    border-radius: 0.5rem;
-                    background: var(--ks-white);
-                }
-
-                .task-name {
-                    display: inline-block;
-                    max-width: 12rem;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    vertical-align: middle;
-
-                    code {
-                        font-size: var(--ks-font-size-sm);
-                        color: var(--ks-text-primary);
-                    }
-
-                    small {
-                        margin-left: 5px;
-                        font-family: var(--kel-font-family-monospace);
-                        font-size: var(--ks-font-size-xs);
-                    }
-                }
-
-                .attempt_warn{
-                    color: var(--ks-text-warning);
-                    vertical-align: middle;
-                }
-
-                .task-duration {
-                    flex-shrink: 0;
-
-                    small {
-                        white-space: nowrap;
-                        font-family: var(--kel-font-family-monospace);
-                        font-size: var(--ks-font-size-xs);
-                        color: var(--ks-text-primary);
-                    }
-                }
-
-                .task-actions {
-                    position: absolute;
-                    right: var(--ks-spacing-2);
-                    top: 50%;
-                    transform: translateY(-50%);
-                    padding: 0;
-                }
-
-                .task-progress {
-                    position: relative;
-                    transition: all 0.3s;
-                    min-width: 5px;
-                }
-            }
-
-            .task-details {
-                interpolate-size: allow-keywords;
-                overflow: hidden;
-                background: var(--ks-dropdown-bg-active);
-            }
-
-            .expand-enter-active,
-            .expand-leave-active {
-                transition: height 150ms ease;
-            }
-
-            .expand-enter-from,
-            .expand-leave-to {
-                height: 0;
-            }
         }
     }
 
     .no-border {
         border: none !important;
+    }
+
+    @media (max-width: 767px) {
+        #gantt .gantt-header .top {
+            flex-wrap: wrap;
+            padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        }
+
+        #gantt .gantt-header .bottom .scale {
+            flex: 1 1 auto;
+            width: auto;
+            margin: 0 calc(var(--ks-spacing-3) + var(--ks-spacing-1));
+        }
+    }
+
+    .task-failure {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-error);
+        border: 1px solid var(--ks-border-error);
+        border-radius: var(--ks-radius-base);
+        cursor: default;
+    }
+
+    .task-failure-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        color: var(--ks-text-error);
+        font-weight: var(--ks-font-weight-bold);
+        text-decoration: none;
+    }
+
+    .task-failure-message {
+        margin: 0;
+        max-width: 100%;
+        color: var(--ks-text-error);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-xs);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .gantt-empty-status {
@@ -906,23 +852,25 @@
         font-size: var(--ks-font-size-md);
     }
 
-    :deep(.vue-recycle-scroller__item-view) {
-        margin-bottom: 10px;
+    .gantt-stage.has-panel {
+        height: max(15rem, calc(100vh - 14rem - var(--execution-banner-height, 0px)));
+        height: max(15rem, calc(100dvh - 14rem - var(--execution-banner-height, 0px)));
     }
 
-    .cursor-icon {
-        cursor: pointer;
-        color: var(--ks-icon-muted);
+    .gantt-stage.has-panel .gantt-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        margin-right: var(--ks-spacing-2);
     }
 
-    :deep(.log-wrapper) {
-        .vue-recycle-scroller__item-view {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
+    .gantt-stage.has-panel .gantt-scroller {
+        height: 100%;
+        max-height: 100%;
+    }
 
-        > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
-            border-radius: var(--kel-border-radius-round);
-        }
+    .gantt-run-panel-slot {
+        height: 100%;
+        padding-left: var(--ks-spacing-2);
     }
 </style>

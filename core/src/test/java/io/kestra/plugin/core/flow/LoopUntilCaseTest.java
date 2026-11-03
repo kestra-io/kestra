@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 
@@ -27,6 +28,9 @@ public class LoopUntilCaseTest {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     public void waitfor(String tenantId) throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
         Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "waitfor");
 
@@ -42,6 +46,24 @@ public class LoopUntilCaseTest {
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst())).isNotNull();
         // the flow sets maxIterations: 3, so the loop must stop after three iterations
         assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
+    }
+
+    public void waitforMaxIterationsFromInput(String tenantId) throws TimeoutException, QueueException, InternalException {
+        Execution first = runWaitforMaxIterationsFromInput(tenantId, 1);
+        Execution second = runWaitforMaxIterationsFromInput(tenantId, 3);
+
+        assertThat((Integer) taskOutputService.getOutputs(first.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(1);
+        assertThat((Integer) taskOutputService.getOutputs(second.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
+    }
+
+    private Execution runWaitforMaxIterationsFromInput(String tenantId, int maxIterations) throws TimeoutException, QueueException {
+        return runnerUtils.runOne(
+            tenantId,
+            "io.kestra.tests",
+            "waitfor-max-iterations-from-input",
+            null,
+            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, Map.of("maxIterations", maxIterations))
+        );
     }
 
     public void waitforMaxDuration(String tenantId) throws TimeoutException, QueueException {

@@ -19,6 +19,7 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
@@ -60,6 +61,34 @@ class ScheduleOnDatesTest {
 
         // then
         assertThat(nextDate).isEqualTo(after);
+    }
+
+    @Test
+    void shouldResumeAtFirstDateHeldBackWhenBackfillReachesItsEnd() {
+        // given: a backfill on its last in-window date, created when `heldBack` was the next date to run
+        var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        var inWindow = now.minusHours(2);
+        var alreadyRan = now.minusHours(1);
+        var heldBack = now.minusMinutes(10);
+        var future = now.plusDays(1);
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(inWindow, alreadyRan, heldBack, future)))
+            .build();
+        Backfill backfill = Backfill.builder()
+            .start(inWindow.minusMinutes(1))
+            .end(inWindow.plusMinutes(1))
+            .currentDate(inWindow)
+            .previousNextExecutionDate(heldBack)
+            .build();
+        TriggerContext triggerContext = TriggerContext.builder().date(inWindow).backfill(backfill).build();
+
+        // when
+        ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext(scheduleOnDates), Optional.of(triggerContext));
+
+        // then
+        assertThat(nextDate).isEqualTo(heldBack);
     }
 
     @Test

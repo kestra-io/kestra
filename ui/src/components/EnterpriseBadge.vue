@@ -15,7 +15,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     span {
         display: inline-flex;
         align-items: center;

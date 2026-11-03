@@ -79,6 +79,14 @@
                                     <Alert />
                                 </KsIcon>
                             </div>
+                            <div v-if="extractEnumValues(property)?.length" class="compact-prop-enum">
+                                <KsText size="small">{{ $t("plugins.possible_values") }}</KsText>
+                                <div class="compact-enum-values">
+                                    <KsTag v-for="value in extractEnumValues(property)" :key="value" size="small">
+                                        {{ value }}
+                                    </KsTag>
+                                </div>
+                            </div>
                             <div
                                 v-if="property.description || property.title"
                                 class="compact-prop-desc"
@@ -168,7 +176,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsIcon, KsInput, KsSegmented, KsTag, KsTooltip} from "@kestra-io/design-system"
+    import {KsIcon, KsInput, KsSegmented, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import Alert from "vue-material-design-icons/Alert.vue"
     import AlphaBBox from "vue-material-design-icons/AlphaBBox.vue"
@@ -180,6 +188,7 @@
     import {
         aggregateAllOf,
         className,
+        extractEnumValues,
         extractTypeInfo,
         isDeprecated,
         isDynamic,
@@ -283,7 +292,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .nested :deep(p) {
         font-size: var(--ks-font-size-sm);
         line-height: 22px;
@@ -301,18 +310,18 @@
     .property-flag {
         display: inline-flex;
         align-items: center;
+    }
 
-        &--required {
-            color: var(--ks-status-error);
-        }
+    .property-flag--required {
+        color: var(--ks-status-error);
+    }
 
-        &--info {
-            color: var(--ks-status-info);
-        }
+    .property-flag--info {
+        color: var(--ks-status-info);
+    }
 
-        &--warning {
-            color: var(--ks-status-warning);
-        }
+    .property-flag--warning {
+        color: var(--ks-status-warning);
     }
 
     .property-button-right {
@@ -397,11 +406,11 @@
             border-bottom: 0;
         }
 
-        :deep(> .collapse-button > .collapse-button__label) {
+        & :deep(> .collapse-button > .collapse-button__label) {
             color: var(--ks-text-primary);
         }
 
-        :deep(> .collapse-button) {
+        & :deep(> .collapse-button) {
             padding: .75rem 1rem;
 
             &:not(.collapsed) {
@@ -409,11 +418,11 @@
             }
         }
 
-        :deep(.property-detail) {
+        & :deep(.property-detail) {
             background-color: var(--ks-bg-base);
             padding: 1rem 0;
 
-            > * {
+            & > * {
                 padding-left: 1rem;
                 padding-right: 1rem;
             }
@@ -515,24 +524,35 @@
         background: transparent;
     }
 
+    .compact-prop-enum {
+        margin-top: var(--ks-spacing-2);
+    }
+
+    .compact-enum-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+        margin-top: var(--ks-spacing-2);
+    }
+
     .compact-prop-desc {
         margin-top: var(--ks-spacing-2);
         font-size: var(--ks-font-size-sm);
         line-height: 1.5;
         color: var(--ks-text-secondary);
 
-        :deep(p) {
+        & :deep(p) {
             margin: 0;
             font-size: var(--ks-font-size-sm);
             line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 
-        :deep(p + p) {
+        & :deep(p + p) {
             margin-top: var(--ks-spacing-2);
         }
 
-        :deep(code) {
+        & :deep(code) {
             font-family: var(--ks-font-family-mono);
             font-size: 0.92em;
             background: var(--ks-bg-tag);

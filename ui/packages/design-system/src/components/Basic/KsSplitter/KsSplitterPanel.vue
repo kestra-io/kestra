@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-   import {ElSplitterPanel, type SplitterPanelProps} from "element-plus"
+    import {ElSplitterPanel, type SplitterPanelProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -35,4 +35,7 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/splitter-panel';
+</style>
+
+<style>
 </style>

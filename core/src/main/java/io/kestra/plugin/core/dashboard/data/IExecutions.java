@@ -70,6 +70,14 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
+            List<QueryFilter> kindFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.KIND)).toList();
+            if (!kindFilters.isEmpty()) {
+                kindFilters.forEach(f ->
+                {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.KIND, kindFilterValue(f.value())));
+                });
+            }
+
             List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
                 stateFilters.forEach(f ->
@@ -96,6 +104,13 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         }
 
         return updatedWhere;
+    }
+
+    private static Object kindFilterValue(Object value) {
+        if (value instanceof List<?> values) {
+            return values.stream().map(Object::toString).toList();
+        }
+        return value.toString();
     }
 
     private static AbstractFilter<Fields> labelFilter(QueryFilter.Op operation, String key, Object value) {
@@ -137,6 +152,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         NAMESPACE,
         FLOW_ID,
         FLOW_REVISION,
+        KIND,
         STATE,
         DURATION,
         LABELS,

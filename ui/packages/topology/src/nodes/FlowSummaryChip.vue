@@ -78,7 +78,7 @@
     const fullPath = computed(() => [props.namespace, props.flowId].filter(Boolean).join(" / "))
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .flow-chip {
         display: flex;
         flex-direction: column;

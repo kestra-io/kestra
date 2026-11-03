@@ -1,6 +1,6 @@
 import {describe, expect, it, beforeEach, afterEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {createApp, type App} from "vue"
+import {createApp} from "vue"
 import {createMemoryHistory, createRouter} from "vue-router"
 
 import {useBookmarksStore} from "./bookmarks"
@@ -12,18 +12,12 @@ const spaceEncodedPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline
 const spaceCanonicalPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline/overview?q=a+b"
 
 describe("bookmarks store", () => {
-    let app: App | undefined
-
     beforeEach(() => {
         localStorage.clear()
         setActivePinia(createPinia())
     })
 
-    afterEach(() => {
-        app?.unmount()
-        app = undefined
-        localStorage.clear()
-    })
+    afterEach(() => localStorage.clear())
 
     function storeWithRouter() {
         const pinia = createPinia()
@@ -32,7 +26,7 @@ describe("bookmarks store", () => {
             routes: [{path: "/:pathMatch(.*)*", component: {}}],
         })
 
-        app = createApp({})
+        const app = createApp({})
         app.use(router)
         app.use(pinia)
         setActivePinia(pinia)

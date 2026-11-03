@@ -12,7 +12,7 @@
     const props = defineProps<Props>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .badge {
     margin-left: var(--ks-spacing-2);
 }

@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {isDirectory, useFileExplorerStore, type ElTreeNode, type TreeNodeDirectory} from "./fileExplorer"
+import {isDirectory, useFileExplorerStore, getFileNameWithExtension, type ElTreeNode, type TreeNodeDirectory} from "./fileExplorer"
 
 const createDirectory = vi.fn()
 const saveOrCreateFile = vi.fn()
@@ -10,11 +10,8 @@ const readDirectory = vi.fn()
 vi.mock("override/stores/namespaces", () => ({
     useNamespacesStore: () => ({createDirectory, saveOrCreateFile, importFileDirectory, readDirectory}),
 }))
-vi.mock("vue-i18n", () => ({
-    useI18n: () => ({t: (key: string) => key}),
-}))
 vi.mock("../utils/toast", () => ({
-    useToast: () => ({success: vi.fn(), error: vi.fn()}),
+    makeToast: () => ({success: vi.fn(), error: vi.fn()}),
 }))
 
 describe("fileExplorer store", () => {
@@ -106,6 +103,7 @@ describe("fileExplorer store", () => {
 
     it("should finish the root load and not reject when the directory read fails", async () => {
         const filesStore = store()
+        const error = vi.spyOn(console, "error").mockImplementation(() => {})
         readDirectory.mockRejectedValueOnce(Object.assign(new Error("Directory not found"), {status: 404}))
 
         // Must not reject: loadNodes is called fire-and-forget, so a throw becomes an unhandled rejection.
@@ -113,6 +111,8 @@ describe("fileExplorer store", () => {
 
         // rootLoaded must flip true, otherwise NamespaceFilesEditorView spins forever over the whole browser.
         expect(filesStore.rootLoaded).toBe(true)
+        expect(error).toHaveBeenCalledOnce()
+        error.mockRestore()
     })
 
     it("should clear the tree when the root load fails so a stale namespace's files are not shown", async () => {
@@ -124,9 +124,11 @@ describe("fileExplorer store", () => {
         // The store is a singleton across navigation: a failed load must not leave the previous
         // namespace's files rendered as the new one's.
         readDirectory.mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        const error = vi.spyOn(console, "error").mockImplementation(() => {})
         await filesStore.loadNodes()
 
         expect(filesStore.fileTree).toEqual([])
+        error.mockRestore()
     })
 
     it("should resolve a failed sub-folder expansion as empty rather than leaving it stuck loading", async () => {
@@ -170,5 +172,43 @@ describe("fileExplorer store", () => {
         expect(saveOrCreateFile).not.toHaveBeenCalled()
         expect(path).toBeUndefined()
         expect(filesStore.fileTree).toEqual([])
+    })
+
+    it("should keep a file name that already carries its extension unchanged", async () => {
+        const filesStore = store()
+
+        const {path, file} = await filesStore.addFile({fileName: "one.txt", extension: "", leaf: true}, undefined, true)
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "one.txt", content: ""})
+        expect(path).toBe("one.txt")
+        expect(file?.fileName).toBe("one.txt")
+        expect(file?.extension).toBe("txt")
+    })
+
+    it("should keep a dot that is not the extension and append the configured extension", async () => {
+        const filesStore = store()
+
+        const {path, file} = await filesStore.addFile({fileName: "my.file", extension: "py", leaf: true}, undefined, true)
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "my.file.py", content: ""})
+        expect(path).toBe("my.file.py")
+        expect(file?.fileName).toBe("my.file.py")
+        expect(file?.extension).toBe("py")
+    })
+})
+
+describe("getFileNameWithExtension", () => {
+    it.each([
+        ["one.txt", ["one", "txt"]],
+        ["noextension", ["noextension", ""]],
+        ["archive.tar.gz", ["archive.tar", "gz"]],
+        [".txt", ["", "txt"]],
+        ["", ["", ""]],
+    ])("should split %j at the last dot into %j", (input, expected) => {
+        expect(getFileNameWithExtension(input)).toEqual(expected)
+    })
+
+    it("should preserve the case of the name and the extension", () => {
+        expect(getFileNameWithExtension("README.MD")).toEqual(["README", "MD"])
     })
 })

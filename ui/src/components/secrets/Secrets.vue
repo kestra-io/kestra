@@ -134,7 +134,7 @@
     }
 
     .oss-secrets-hint-title {
-        font-weight: 700;
+        font-weight: var(--ks-font-weight-bold);
         margin-bottom: var(--ks-spacing-1);
     }
 

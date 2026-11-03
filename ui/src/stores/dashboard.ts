@@ -232,13 +232,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
+        const {data} = await axios.post<Dashboard>(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }

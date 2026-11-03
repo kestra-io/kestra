@@ -12,7 +12,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
@@ -47,7 +46,7 @@ class BoundedRangeFunctionTest {
         assertThatThrownBy(
             () -> variableRenderer.render("{{ range(0, 9223372036854775807) }}", Collections.emptyMap())
         ).isInstanceOf(IllegalVariableEvaluationException.class)
-            .hasMessageContaining("cannot produce more than");
+            .hasMessageContaining("cannot produce more than 1000000 elements, but this call would produce 9223372036854775808.");
     }
 
     @Test
@@ -55,7 +54,7 @@ class BoundedRangeFunctionTest {
         assertThatThrownBy(
             () -> variableRenderer.render("{{ range(start, 0) }}", Map.of("start", Long.MIN_VALUE))
         ).isInstanceOf(IllegalVariableEvaluationException.class)
-            .hasMessageContaining("cannot produce more than");
+            .hasMessageContaining("cannot produce more than 1000000 elements, but this call would produce 9223372036854775809.");
     }
 
     @Test
@@ -63,13 +62,20 @@ class BoundedRangeFunctionTest {
         assertThatThrownBy(
             () -> variableRenderer.render("{{ range(start, end) }}", Map.of("start", Long.MIN_VALUE, "end", Long.MAX_VALUE))
         ).isInstanceOf(IllegalVariableEvaluationException.class)
-            .hasMessageContaining("cannot produce more than");
+            .hasMessageContaining("cannot produce more than 1000000 elements, but this call would produce 18446744073709551616.");
     }
 
     @Test
-    void shouldAllowRangeAtMaxSize() {
-        assertThatCode(
-            () -> variableRenderer.render("{{ range(1, 1000000) }}", Collections.emptyMap())
-        ).doesNotThrowAnyException();
+    void shouldAllowRangeAtMaxSize() throws IllegalVariableEvaluationException {
+        String result = variableRenderer.render("{{ range(1, 1000000) | length }}", Collections.emptyMap());
+        assertThat(result).isEqualTo("1000000");
+    }
+
+    @Test
+    void shouldThrowWhenRangeIsOneOverMaxSize() {
+        assertThatThrownBy(
+            () -> variableRenderer.render("{{ range(1, 1000001) }}", Collections.emptyMap())
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("cannot produce more than 1000000 elements, but this call would produce 1000001.");
     }
 }

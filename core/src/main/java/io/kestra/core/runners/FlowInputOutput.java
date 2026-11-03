@@ -470,8 +470,13 @@ public class FlowInputOutput {
             {
                 Object current = in == null ? null : in.get(output.getId());
                 try {
-                    if (current == null && Boolean.FALSE.equals(output.getRequired())) {
-                        return Optional.of(new AbstractMap.SimpleEntry<>(output.getId(), null));
+                    if (current == null) {
+                        if ( Boolean.FALSE.equals(output.getRequired())) {
+                            return Optional.of(new AbstractMap.SimpleEntry<>(output.getId(), null));
+                        }
+                        else {
+                            throw InputOutputValidationException.of("Output '" + output.getId() + "' is required", output);
+                        }
                     }
                     return parseData(execution, output, current);
                 } catch (IllegalArgumentException | ConstraintViolationException e) {

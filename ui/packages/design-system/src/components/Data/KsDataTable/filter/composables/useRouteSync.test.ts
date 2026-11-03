@@ -233,6 +233,28 @@ describe("useRouteSync", () => {
         expect(mockPush).not.toHaveBeenCalled()
     })
 
+    test("a route with the same filters but a different top-level operator is not treated as matching the live tree", () => {
+        const tree = useFilterGroups()
+        tree.replaceTree([
+            {
+                id: "g1",
+                kind: "leaf",
+                filters: [makeFilter({key: "namespace", value: "test-ns"})],
+            },
+        ], "AND")
+
+        mockRoute.query = {
+            "filters[namespace][EQUALS]": "test-ns",
+        }
+
+        const replaceSpy = vi.spyOn(tree, "replaceTree")
+
+        setup({tree})
+
+        expect(replaceSpy).toHaveBeenCalledTimes(1)
+        expect(tree.topLogical.value).toBe("OR")
+    })
+
     test("hasUnrenderableFilters is true when the query holds a key the configuration cannot render", () => {
         mockRoute.query = {
             "filters[or][0][and][0][or][0][namespace][EQUALS]": "test",

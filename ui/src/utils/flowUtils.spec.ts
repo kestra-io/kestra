@@ -122,6 +122,12 @@ tasks:
         expect(tasks.find((t) => t.id === "dbt")).toMatchObject({taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}})
     })
 
+    it("getAllTasks skips objects whose id or type is not a string", () => {
+        const tasks = [{id: "ok", type: "task"}, {id: 1, type: "task"}, {id: "no-type", type: null}]
+
+        expect(FlowUtils.getAllTasks(tasks).map((task) => task.id)).toEqual(["ok"])
+    })
+
     it("getAllTasks handles missing tasks", () => {
         expect(FlowUtils.getAllTasks(undefined)).toEqual([])
     })
@@ -142,17 +148,19 @@ tasks:
 
         const result = FlowUtils.loopOver(
             input,
-            (value) => value instanceof Object && value.type === "task",
+            (value): value is {id: string; type: string} => value instanceof Object && "type" in value && value.type === "task",
         )
 
         expect(result.map((value) => value.id)).toEqual(["a", "b", "c", "d"])
     })
 
     it("loopOver handles empty and primitive values", () => {
-        expect(FlowUtils.loopOver([], () => true)).toEqual([[]])
-        expect(FlowUtils.loopOver({}, () => true)).toEqual([{}])
-        expect(FlowUtils.loopOver(null, () => true)).toEqual([null])
-        expect(FlowUtils.loopOver("value", () => true)).toEqual(["value"])
+        const matchAll = (_value: unknown): _value is unknown => true
+
+        expect(FlowUtils.loopOver([], matchAll)).toEqual([[]])
+        expect(FlowUtils.loopOver({}, matchAll)).toEqual([{}])
+        expect(FlowUtils.loopOver(null, matchAll)).toEqual([null])
+        expect(FlowUtils.loopOver("value", matchAll)).toEqual(["value"])
     })
 
     it("getAllTaskIds returns task ids from top-level and deeply nested tasks", () => {

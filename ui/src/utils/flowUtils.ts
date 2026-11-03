@@ -1,12 +1,12 @@
 import type {Task} from "@kestra-io/kestra-sdk"
 
-export function loopOver<T = Record<string, unknown>>(
+export function loopOver<T>(
     item: unknown,
-    predicate: (item: T) => boolean,
+    predicate: (item: unknown) => item is T,
     result: T[] = [],
 ): T[] {
-    if (predicate(item as T)) {
-        result.push(item as T)
+    if (predicate(item)) {
+        result.push(item)
     }
 
     if (Array.isArray(item)) {
@@ -22,14 +22,12 @@ export function loopOver<T = Record<string, unknown>>(
 
 export type FlowTask = {type?: string; id?: string; [key: string]: unknown}
 
-function isTaskObject(value: unknown): value is FlowTask {
-    return value !== null && typeof value === "object" && "type" in value && "id" in value && value.type !== undefined && value.id !== undefined
+function isTaskObject(value: unknown): value is Task {
+    return value !== null && typeof value === "object" && "type" in value && "id" in value && typeof value.type === "string" && typeof value.id === "string"
 }
 
 export function findTaskById(flow: unknown, taskId: string): FlowTask | undefined {
-    const result = loopOver<FlowTask>(flow, (value) => {
-        return value !== null && typeof value === "object" && "id" in value && "type" in value && value.id === taskId && value.type !== undefined
-    })
+    const result = loopOver(flow, (value): value is FlowTask => isTaskObject(value) && value.id === taskId)
 
     return result.length > 0 ? result[0] : undefined
 }
@@ -37,18 +35,17 @@ export function findTaskById(flow: unknown, taskId: string): FlowTask | undefine
 // Task objects at any depth under `tasks` (flowable children, then/else, errors, cases...), parents included.
 export function getAllTasks(tasks: unknown): Task[] {
     if (!tasks) return []
-    return loopOver<Task>(tasks, isTaskObject)
+    return loopOver(tasks, isTaskObject)
 }
 
 export function getAllTaskIds(flow: unknown): string[] {
     if (!flow || typeof flow !== "object") return []
-    const flowObj = flow as { tasks?: unknown; errors?: unknown }
-    const result: FlowTask[] = []
-    if (flowObj.tasks) {
-        loopOver<FlowTask>(flowObj.tasks, isTaskObject, result)
+    const result: Task[] = []
+    if ("tasks" in flow) {
+        loopOver(flow.tasks, isTaskObject, result)
     }
-    if (flowObj.errors) {
-        loopOver<FlowTask>(flowObj.errors, isTaskObject, result)
+    if ("errors" in flow) {
+        loopOver(flow.errors, isTaskObject, result)
     }
     return [...new Set(result.map(t => String(t.id)))]
 }
@@ -56,9 +53,9 @@ export function getAllTaskIds(flow: unknown): string[] {
 export const LOOP_TASK_TYPE = "io.kestra.plugin.core.flow.Loop"
 
 export function loopTaskIds(flow: unknown): Set<string> {
-    const result = loopOver<FlowTask>(
+    const result = loopOver(
         flow,
-        (value) => value !== null && typeof value === "object" && "type" in value && value.type === LOOP_TASK_TYPE,
+        (value): value is FlowTask => value !== null && typeof value === "object" && "type" in value && value.type === LOOP_TASK_TYPE,
     )
     return new Set(result.map(task => String(task.id)))
 }

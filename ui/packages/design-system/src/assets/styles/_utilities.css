@@ -18,10 +18,6 @@
     position: absolute !important;
 }
 
-.w-100 {
-    width: 100% !important;
-}
-
 .flex-column {
     flex-direction: column !important;
 }
@@ -40,10 +36,6 @@
 
 .m-0 {
     margin: 0 !important;
-}
-
-.m-2 {
-    margin: 0.5rem !important;
 }
 
 .mt-1 {

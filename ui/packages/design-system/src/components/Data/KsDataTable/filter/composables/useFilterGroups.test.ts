@@ -1,6 +1,6 @@
 import {describe, expect, test} from "vitest"
 import {Comparators, type AppliedFilter, type FilterGroup, type LeafFilterGroup, type WrapperGroup} from "../utils/filterTypes"
-import {useFilterGroups} from "./useFilterGroups"
+import {allFilters, findLeafById, findLeafContaining, useFilterGroups} from "./useFilterGroups"
 
 const makeFilter = (id: string): AppliedFilter => ({
     id,
@@ -18,11 +18,15 @@ const makeLeaf = (id: string, filters: AppliedFilter[] = []): LeafFilterGroup =>
     filters,
 })
 
-const makeWrapper = (id: string, logical: "AND" | "OR" = "AND"): WrapperGroup => ({
+const makeWrapper = (
+    id: string,
+    logical: "AND" | "OR" = "AND",
+    children: LeafFilterGroup[] = [makeLeaf(`${id}-child`)],
+): WrapperGroup => ({
     id,
     kind: "wrapper",
     logical,
-    children: [makeLeaf(`${id}-child`)],
+    children,
 })
 
 describe("useFilterGroups", () => {
@@ -174,19 +178,6 @@ describe("useFilterGroups", () => {
     })
 })
 
-const leaf = (id: string) => ({
-    id,
-    kind: "leaf" as const,
-    filters: [],
-})
-
-const wrapper = (id: string, children: ReturnType<typeof leaf>[]) => ({
-    id,
-    kind: "wrapper" as const,
-    logical: "AND" as const,
-    children,
-})
-
 describe("useFilterGroups - group structure operations", () => {
     test("addGroup appends a new empty leaf", () => {
         const tree = useFilterGroups()
@@ -205,7 +196,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup removes the named group", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b"), leaf("c")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b"), makeLeaf("c")])
 
         tree.removeGroup("b")
 
@@ -214,7 +205,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup refuses to remove the last remaining group", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a")])
+        tree.replaceTree([makeLeaf("a")])
 
         tree.removeGroup("a")
 
@@ -223,7 +214,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup leaves the tree unchanged for an unknown id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.removeGroup("unknown")
 
@@ -232,7 +223,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups combines two leaves in an AND wrapper", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("source"), leaf("target")])
+        tree.replaceTree([makeLeaf("source"), makeLeaf("target")])
 
         tree.wrapGroups("source", "target")
 
@@ -250,8 +241,8 @@ describe("useFilterGroups - group structure operations", () => {
     test("wrapGroups appends the source to an existing wrapper", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            leaf("source"),
-            wrapper("target", [leaf("a"), leaf("b")]),
+            makeLeaf("source"),
+            makeWrapper("target", "AND", [makeLeaf("a"), makeLeaf("b")]),
         ])
 
         tree.wrapGroups("source", "target")
@@ -271,7 +262,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups is a no-op when source and target are the same", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.wrapGroups("a", "a")
 
@@ -280,7 +271,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups is a no-op when either id is unknown", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.wrapGroups("missing", "b")
         expect(tree.groups.value.map(group => group.id)).toEqual(["a", "b"])
@@ -292,8 +283,8 @@ describe("useFilterGroups - group structure operations", () => {
     test("wrapGroups is a no-op when the source is a wrapper", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            wrapper("source", [leaf("child")]),
-            leaf("target"),
+            makeWrapper("source", "AND", [makeLeaf("child")]),
+            makeLeaf("target"),
         ])
 
         tree.wrapGroups("source", "target")
@@ -307,9 +298,9 @@ describe("useFilterGroups - group structure operations", () => {
     test("unwrapGroup restores children in their original position and order", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            leaf("before"),
-            wrapper("group", [leaf("a"), leaf("b")]),
-            leaf("after"),
+            makeLeaf("before"),
+            makeWrapper("group", "AND", [makeLeaf("a"), makeLeaf("b")]),
+            makeLeaf("after"),
         ])
 
         tree.unwrapGroup("group")
@@ -324,7 +315,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("unwrapGroup is a no-op for a leaf id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.unwrapGroup("a")
 
@@ -333,10 +324,37 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("unwrapGroup is a no-op for an unknown id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), wrapper("group", [leaf("b")])])
+        tree.replaceTree([makeLeaf("a"), makeWrapper("group", "AND", [makeLeaf("b")])])
 
         tree.unwrapGroup("unknown")
 
         expect(tree.groups.value.map(group => group.id)).toEqual(["a", "group"])
+    })
+})
+
+describe("useFilterGroups - tree helpers", () => {
+    test("allFilters keeps tree order and returns nothing for an empty tree", () => {
+        const groups: FilterGroup[] = [
+            makeLeaf("leaf", [makeFilter("first")]),
+            makeWrapper("wrapper", "AND", [makeLeaf("child", [makeFilter("second")])]),
+        ]
+
+        expect(allFilters(groups).map(filter => filter.id)).toEqual(["first", "second"])
+        expect(allFilters([])).toEqual([])
+    })
+
+    test("findLeafContaining returns undefined for an unknown filter id", () => {
+        expect(findLeafContaining([makeLeaf("leaf", [makeFilter("first")])], "missing")).toBeUndefined()
+    })
+
+    test("findLeafById finds top-level and wrapped leaves but not wrappers", () => {
+        const top = makeLeaf("top")
+        const child = makeLeaf("child")
+        const groups: FilterGroup[] = [top, makeWrapper("wrapper", "AND", [child])]
+
+        expect(findLeafById(groups, "top")).toBe(top)
+        expect(findLeafById(groups, "child")).toBe(child)
+        expect(findLeafById(groups, "wrapper")).toBeUndefined()
+        expect(findLeafById(groups, "missing")).toBeUndefined()
     })
 })

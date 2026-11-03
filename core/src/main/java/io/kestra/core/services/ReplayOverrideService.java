@@ -23,6 +23,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.SecureVariableRendererFactory;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.runners.pebble.OverridableExpression;
 import io.kestra.core.runners.pebble.PebbleExpressionPrinter;
@@ -70,12 +71,18 @@ public class ReplayOverrideService {
     private final PebbleEngine pebbleEngine;
     private final PebbleExpressionPrinter printer;
     private final RunContextFactory runContextFactory;
+    private final SecureVariableRendererFactory secureVariableRendererFactory;
 
     @Inject
-    public ReplayOverrideService(PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory) {
+    public ReplayOverrideService(
+        PebbleEngineFactory pebbleEngineFactory,
+        RunContextFactory runContextFactory,
+        SecureVariableRendererFactory secureVariableRendererFactory
+    ) {
         this.pebbleEngine = Objects.requireNonNull(pebbleEngineFactory).create();
         this.printer = new PebbleExpressionPrinter(pebbleEngine.getExtensionRegistry());
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
+        this.secureVariableRendererFactory = Objects.requireNonNull(secureVariableRendererFactory);
     }
 
     /**
@@ -89,7 +96,7 @@ public class ReplayOverrideService {
             )
         );
         Task task = flow.findTaskByTaskId(taskRun.getTaskId());
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false, secureVariableRendererFactory.createOrGet());
 
         Map<String, Kind> kinds = new LinkedHashMap<>();
         templates(task).forEach(template -> parse(template).ifPresent(root -> collect(root, kinds)));

@@ -8,6 +8,7 @@ inputs:
 
 variables:
   schema: erp
+  token: "{{ secret('PASSWORD') }}"
 
 tasks:
   - id: fetch
@@ -22,7 +23,7 @@ tasks:
     then:
       - id: reserve
         type: io.kestra.plugin.core.debug.Return
-        format: "reserve {{ outputs.fetch.values.code }}"
+        format: "reserve {{ outputs.fetch.values.code }} with {{ render(vars.token) }}"
     else:
       - id: restock
         type: io.kestra.plugin.core.debug.Return

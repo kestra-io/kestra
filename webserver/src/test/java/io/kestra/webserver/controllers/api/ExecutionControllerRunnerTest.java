@@ -266,11 +266,7 @@ class ExecutionControllerRunnerTest {
 
         ZonedDateTime soon = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(2);
         Execution rescheduled = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate="
-                    + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8),
-                null
-            ),
+            HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8), null),
             Execution.class
         );
 
@@ -306,11 +302,7 @@ class ExecutionControllerRunnerTest {
         var conflict = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                HttpRequest.POST(
-                    "/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate="
-                        + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8),
-                    null
-                )
+                HttpRequest.POST("/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8), null)
             )
         );
         assertThat(conflict.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
@@ -1251,6 +1243,17 @@ class ExecutionControllerRunnerTest {
             new ReplayOverrideService.ReplayValue("outputs.fetch.values.delta", ReplayOverrideService.Kind.EXPRESSION, -12),
             new ReplayOverrideService.ReplayValue("attempt", ReplayOverrideService.Kind.BLOCK, null)
         );
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldMaskSecretReachedThroughRenderWhenListingReplayValues() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        assertThat(replayValues(failed, "reserve"))
+            .filteredOn(value -> value.expression().equals("render(vars.token)"))
+            .singleElement()
+            .satisfies(value -> assertThat(String.valueOf(value.value())).doesNotContain("password"));
     }
 
     @Test

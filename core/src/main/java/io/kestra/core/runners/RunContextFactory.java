@@ -267,14 +267,6 @@ public class RunContextFactory {
      *
      * @return the execution outputs or null if no outputs are defined in the flow or already computed in the execution
      */
-    private List<TaskRunOverride> overrides(TaskRun taskRun) {
-        try {
-            return taskOutputServiceProvider.get().getOverrides(taskRun);
-        } catch (InternalException e) {
-            throw new KestraRuntimeException("Unable to read the values overridden for task run '%s'.".formatted(taskRun.getId()), e);
-        }
-    }
-
     private Map<String, Object> executionOutputs(FlowInterface flow, Execution execution) {
         // fast path for no outputs defined in the flow
         if (flow != null && ListUtils.isEmpty(flow.getOutputs())) {
@@ -287,6 +279,14 @@ public class RunContextFactory {
             return executionOutputServiceProvider.get().getOutputs(realExecution);
         } catch (InternalException e) {
             throw new KestraRuntimeException(e);
+        }
+    }
+
+    private List<TaskRunOverride> overrides(TaskRun taskRun) {
+        try {
+            return taskOutputServiceProvider.get().getOverrides(taskRun);
+        } catch (InternalException e) {
+            throw new KestraRuntimeException("Unable to read the values overridden for task run '%s'.".formatted(taskRun.getId()), e);
         }
     }
 

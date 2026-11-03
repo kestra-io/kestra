@@ -120,7 +120,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(15);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(17);
 
         assertThat(validate.get().getMessage()).contains("inputs[file]: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("inputs[array1]: `itemType` cannot be ARRAY");
@@ -136,6 +136,8 @@ class FlowTest {
         assertThat(validate.get().getMessage()).contains("inputs[table1]: `columns` declares the id `size` more than once");
         assertThat(validate.get().getMessage()).contains("inputs[table2]: field `region` cannot declare `dependsOn`");
         assertThat(validate.get().getMessage()).contains("inputs[table3]: `minRows` cannot be greater than `maxRows`");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: filter on `region` is not about a declared column");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: filter on `size` has an empty list to compare the cells to");
         assertThat(validate.get().getMessage()).contains("Input 'table1' of type TABLE is only available in Enterprise Edition.");
     }
 

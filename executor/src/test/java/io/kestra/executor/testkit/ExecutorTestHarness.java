@@ -61,7 +61,7 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -216,7 +216,7 @@ public final class ExecutorTestHarness {
         );
         this.executionOutputService = new ExecutionOutputService(
             executionOutputRepository,
-            Mockito.mock(SearchableOutputRepositoryInterface.class),
+            Mockito.mock(SearchableDataRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new ExecutionOutputConfiguration(-1)
@@ -245,7 +245,8 @@ public final class ExecutorTestHarness {
             () -> runContextFactoryRef[0],
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander(),
-            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false))
+            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
+            Mockito.mock(SearchableDataRepositoryInterface.class)
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {
@@ -286,7 +287,7 @@ public final class ExecutorTestHarness {
                 runContextFactory,
                 Mockito.mock(ApprovalRequestHandler.class),
                 executionOutputService,
-                Mockito.mock(SearchableOutputRepositoryInterface.class),
+                Mockito.mock(SearchableDataRepositoryInterface.class),
                 Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,

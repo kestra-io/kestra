@@ -47,6 +47,8 @@
                 </KsCheckTag>
             </div>
 
+            <span class="filter-toolbar-spacer" aria-hidden="true" />
+
             <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" :catalog="baseList" />
 
             <div class="sort-by">
@@ -366,14 +368,18 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
         gap: var(--ks-spacing-3);
         width: 100%;
         padding: var(--ks-spacing-6);
     }
 
     .filter-toolbar__search {
-        min-width: 17rem;
+        flex: 0 1 17rem;
+        min-width: 12rem;
+    }
+
+    .filter-toolbar-spacer {
+        flex: 1 1 auto;
     }
 
     .filter-toolbar {
@@ -381,8 +387,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
-            flex: 1 1 0;
-            min-width: 20rem;
+            min-width: 0;
         }
 
         .category-label {

@@ -130,6 +130,12 @@
                                                                 :state="item.task.state.current"
                                                                 :nodeKey="nodeOf(item).key"
                                                             />
+                                                            <TaskRunOverrides
+                                                                v-if="item.task.overrides"
+                                                                :executionId="execution.id"
+                                                                :taskRunId="item.task.id"
+                                                                :overrides="item.task.overrides"
+                                                            />
                                                         </GanttTaskLabel>
                                                     </template>
                                                     <template #duration>
@@ -229,6 +235,7 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useGanttExecutionFilter} from "../filter/configurations/ganttExecutionFilter"
     import TaskRunActions from "./TaskRunActions.vue"
+    import TaskRunOverrides from "./TaskRunOverrides.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import ExecutionProgress from "./ExecutionProgress.vue"

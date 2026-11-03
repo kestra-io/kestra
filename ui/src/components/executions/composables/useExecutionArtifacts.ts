@@ -1,5 +1,7 @@
 import {computed, watch, type InjectionKey} from "vue"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useExecutionsStore} from "../../../stores/executions"
+import {useFlowStore} from "../../../stores/flow"
 import {useFederatedModule} from "../../../remoteComponents/useFederatedModule"
 import {getAllTasks} from "../../../utils/flowUtils"
 
@@ -18,7 +20,24 @@ export function useExecutionArtifacts() {
     const executionsStore = useExecutionsStore()
     const {RemoteComponent, taskAdditionalInfoRemote, manifestReady, hasResolvedComponent, hasFailedComponent, resolveRemoteComponent, subtitleResolvers} = useFederatedModule("execution-artifact")
 
-    const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks))
+    const flowStore = useFlowStore()
+
+    // The execution's flow comes without the properties an artifact needs, such as `taskRunner`. They are
+    // read back from the flow source, as the topology does, when it is the source of this execution's flow.
+    const sourceTaskById = computed(() => {
+        const flow = executionsStore.flow
+        const source = flowStore.flow?.source
+        const sameFlow = flow && flowStore.flow?.id === flow.id && flowStore.flow?.namespace === flow.namespace
+        if (!source || !sameFlow) return {}
+        const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
+        return Object.fromEntries(
+            ["tasks", "errors", "finally", "afterExecution"]
+                .flatMap((section) => getAllTasks(parsed?.[section]))
+                .map((task) => [task.id, task]),
+        )
+    })
+
+    const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks).map((task) => ({...sourceTaskById.value[task.id], ...task})))
 
     // A task runner ships its own artifacts, so its type is resolved and matched like the task's own.
     const ownerTypesOf = (task: {type: string, taskRunner?: {type?: string}}) =>

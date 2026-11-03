@@ -2,12 +2,14 @@ import {describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
 
 const executionsStore = vi.hoisted(() => ({flow: null as unknown}))
+const flowStore = vi.hoisted(() => ({flow: null as unknown}))
 const federated = vi.hoisted(() => ({
     resolveRemoteComponent: vi.fn(),
     taskAdditionalInfoRemote: {value: {} as Record<string, {title?: string}>},
 }))
 
 vi.mock("../../../stores/executions", () => ({useExecutionsStore: () => executionsStore}))
+vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 vi.mock("../../../remoteComponents/useFederatedModule", () => ({
     useFederatedModule: () => ({
         RemoteComponent: undefined,
@@ -25,10 +27,21 @@ import {useExecutionArtifacts} from "./useExecutionArtifacts"
 const SHELL = "io.kestra.plugin.scripts.shell.Commands"
 const RUNNER = "io.kestra.plugin.ee.aws.runner.Batch"
 
+const sourceOf = (runner?: string) => `id: f
+namespace: ns
+tasks:
+  - id: shell
+    type: ${SHELL}
+${runner ? `    taskRunner:\n      type: ${runner}\n` : ""}`
+
+// The execution's flow comes without the task runner: it is read back from the flow source.
+const strippedFlow = {id: "f", namespace: "ns", tasks: [{id: "shell", type: SHELL}]}
+
 describe("useExecutionArtifacts", () => {
     it("shouldListArtifactsOfTheTaskRunnerAndOfTheTask", () => {
         // Given
-        executionsStore.flow = {tasks: [{id: "shell", type: SHELL, taskRunner: {type: RUNNER}}]}
+        executionsStore.flow = strippedFlow
+        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf(RUNNER)}
         federated.taskAdditionalInfoRemote.value = {
             [`${SHELL}/logs`]: {},
             [`${RUNNER}/details`]: {title: "Runner details"},
@@ -47,7 +60,8 @@ describe("useExecutionArtifacts", () => {
     it("shouldResolveTheTaskRunnerTypeAlongsideTheTaskType", () => {
         // Given
         federated.resolveRemoteComponent.mockClear()
-        executionsStore.flow = {tasks: [{id: "shell", type: SHELL, taskRunner: {type: RUNNER}}]}
+        executionsStore.flow = strippedFlow
+        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf(RUNNER)}
 
         // When
         useExecutionArtifacts()
@@ -58,7 +72,21 @@ describe("useExecutionArtifacts", () => {
 
     it("shouldNotListTheRunnerArtifactsOfAnotherTask", () => {
         // Given
-        executionsStore.flow = {tasks: [{id: "plain", type: SHELL}]}
+        executionsStore.flow = strippedFlow
+        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf()}
+        federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
+
+        // When
+        const {artifacts} = useExecutionArtifacts()
+
+        // Then
+        expect(artifacts.value).toEqual([])
+    })
+
+    it("shouldIgnoreTheSourceOfAnotherFlow", () => {
+        // Given
+        executionsStore.flow = strippedFlow
+        flowStore.flow = {id: "other", namespace: "ns", source: sourceOf(RUNNER)}
         federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
 
         // When

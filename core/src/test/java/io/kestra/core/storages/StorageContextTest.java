@@ -87,6 +87,28 @@ class StorageContextTest {
     }
 
     @Test
+    void shouldAcceptPathWhenInsideExecutionStorage() {
+        Execution execution = execution("io.kestra.tests", "my-flow", "exec1");
+
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("kestra:///io/kestra/tests/my-flow/executions/exec1/tasks/t/out.txt"))).isTrue();
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("/io/kestra/tests/my-flow/executions/exec1/out.txt"))).isTrue();
+    }
+
+    @Test
+    void shouldRejectPathWhenOutsideExecutionStorage() {
+        Execution execution = execution("io.kestra.tests", "my-flow", "exec1");
+
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("kestra:///io/kestra/tests/other-flow/executions/exec1/out.txt"))).isFalse();
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("kestra:///other/my-flow/executions/exec1/out.txt"))).isFalse();
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("kestra:///io/kestra/tests/my-flow/executions/exec12/out.txt"))).isFalse();
+        assertThat(StorageContext.isInExecutionStorage(execution, URI.create("kestra:///io/kestra/tests/my-flow/executions/exec1"))).isFalse();
+    }
+
+    private static Execution execution(String namespace, String flowId, String executionId) {
+        return Execution.builder().id(executionId).namespace(namespace).flowId(flowId).build();
+    }
+
+    @Test
     void shouldGetNamespaceFilePrefix() {
         assertThat(StorageContext.namespaceFilePrefix("io.namespace")).isEqualTo("/io/namespace/_files");
     }

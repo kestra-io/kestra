@@ -33,10 +33,21 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {min: 0, max: 100},
+    args: {
+        min: 0,
+        max: 100,
+        step: 1,
+        stepStrictly: false,
+        placeholder: "",
+        size: "default",
+        disabled: false,
+        controls: true,
+        controlsPosition: "",
+    },
 }
 
 export const WithStep: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(0)} },
@@ -45,6 +56,7 @@ export const WithStep: Story = {
 }
 
 export const ControlsRight: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(10)} },
@@ -54,6 +66,7 @@ export const ControlsRight: Story = {
 
 /** Step strictly – only multiples of step are valid */
 export const StepStrictly: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(0)} },
@@ -68,6 +81,7 @@ export const StepStrictly: Story = {
 
 /** Precision – fixed decimal places */
 export const Precision: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(3.14)} },
@@ -81,6 +95,7 @@ export const Precision: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(42)} },
@@ -89,6 +104,7 @@ export const Disabled: Story = {
 }
 
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInputNumber},
         setup() {

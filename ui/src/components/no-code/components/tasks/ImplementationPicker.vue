@@ -31,7 +31,7 @@
             >
                 <TaskIcon
                     class="implementation-picker-option-icon"
-                    :cls="option.branch.ref"
+                    :cls="option.branch.type"
                     :icons="pluginsStore.icons"
                     :loadIcon="pluginsStore.loadIcon"
                     :onlyIcon="true"
@@ -59,7 +59,7 @@
     import Check from "vue-material-design-icons/Check.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {humanizeClassName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
+    import {branchDisplayName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
 
     const props = defineProps<{
         title: string
@@ -93,7 +93,7 @@
 
     const options = computed(() => props.branches.map((branch) => ({
         branch,
-        name: humanizeClassName(simpleClassName(branch.ref)),
+        name: branchDisplayName(branch, props.branches),
         description: leadSentence(
             branch.definition.title ?? branch.definition.description ?? branch.definition.markdownDescription,
         ),
@@ -104,7 +104,7 @@
         if (!query) return options.value
         return options.value.filter((option) =>
             option.name.toLowerCase().includes(query)
-            || simpleClassName(option.branch.ref).toLowerCase().includes(query)
+            || simpleClassName(option.branch.type).toLowerCase().includes(query)
             || option.description.toLowerCase().includes(query),
         )
     })

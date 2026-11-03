@@ -4,7 +4,7 @@
         :disabled="!enabled"
         trigger="click"
         placement="bottom-start"
-        :width="400"
+        width="min(400px, 92vw)"
         :showArrow="false"
         :popperStyle="{padding: '0', overflow: 'hidden', borderRadius: '0.875rem', background: 'var(--ks-bg-elevated)', boxShadow: '0px 8px 24px 0px var(--ks-shadow-elevated)'}"
     >
@@ -33,7 +33,7 @@
             </div>
 
             <div class="set-labels__footer">
-                <i18n-t keypath="Set labels to execution" tag="p" class="set-labels__description">
+                <i18n-t keypath="Set labels to execution" tag="p" scope="global" class="set-labels__description">
                     <template #id><code>{{ execution.id }}</code></template>
                 </i18n-t>
                 <div class="set-labels__actions">

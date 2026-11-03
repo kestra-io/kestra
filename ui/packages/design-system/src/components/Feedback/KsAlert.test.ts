@@ -1,7 +1,9 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../index"
-import KsAlert from "./KsAlert.vue"
+import KsAlert, {KS_ALERT_TYPES} from "./KsAlert.vue"
+// @ts-expect-error - plain .mjs module, shared with the linters
+import {knownTokens} from "../../../../../scripts/tokens/knownTokens.mjs"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -36,5 +38,14 @@ describe("KsAlert", () => {
             global: globalConfig,
         })
         expect(wrapper.text()).toContain("Test Alert Title")
+    })
+
+    test("declares the border, background, text and icon token of every type", () => {
+        const known: Set<string> = knownTokens()
+        const missing = KS_ALERT_TYPES
+            .flatMap(type => ["border", "bg", "text", "icon"].map(family => `--ks-${family}-${type}`))
+            .filter(token => !known.has(token))
+
+        expect(missing).toEqual([])
     })
 })

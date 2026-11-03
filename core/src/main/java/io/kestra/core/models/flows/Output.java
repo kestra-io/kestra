@@ -1,5 +1,11 @@
 package io.kestra.core.models.flows;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
+import io.kestra.core.validations.OutputValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +21,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@OutputValidation
 public class Output implements Data {
     /**
      * The output's unique id.
@@ -23,10 +30,12 @@ public class Output implements Data {
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
     String id;
+
     /**
      * Short description of the output.
      */
     String description;
+
     /**
      * The output value. Can be a dynamic expression.
      */
@@ -54,4 +63,13 @@ public class Output implements Data {
      * By default, an output is always required.
      */
     Boolean required;
+
+    /**
+     * Specifies whether the output is searchable or not.
+     * A searchable output will be stored in a separate table with its own index.
+     * It's only meaningful for execution outputs.
+     * <p>
+     * By default, an output is not searchable.
+     */
+    Boolean searchable;
 }

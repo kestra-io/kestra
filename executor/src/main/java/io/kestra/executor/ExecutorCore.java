@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -331,12 +332,11 @@ public class ExecutorCore {
                 Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
                 boolean terminatedByThisCycle = executionAtEntry == null
                     || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
+                for (Execution popped : concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle)) {
+                    executionQueue.emit(popped);
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(executor.getFlow(), popped.get());
+                    processFlowTriggers(executor.getFlow(), popped);
                 }
 
                 if (terminatedByThisCycle) {
@@ -544,7 +544,13 @@ public class ExecutorCore {
 
     private boolean shouldRetry(Flow flow, Execution execution) {
         if (execution.getState().isFailed() && flow.getRetry() != null) {
-            return executionService.nextRetryDate(flow.getRetry(), execution) != null;
+            AbstractRetry retry = flow.getRetry();
+            if (retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION) {
+                return executionService.nextRetryDate(retry, execution) != null;
+            }
+            return execution.findFirstByState(State.Type.RETRYING)
+                .map(t -> t.nextRetryDate(retry) != null)
+                .orElse(false);
         }
         return false;
     }

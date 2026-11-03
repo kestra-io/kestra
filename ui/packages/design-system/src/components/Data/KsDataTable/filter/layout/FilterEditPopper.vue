@@ -1,13 +1,14 @@
 <template>
     <div class="edit-popper">
         <FilterHeader
+            :class="{divided: valueComponent?.component === FilterMultiSelect}"
             :label="filterKey.label"
             :description="filterKey.description"
             @close="emits('close')"
         >
             <template #trailing>
                 <FilterComparatorSelect
-                    :shouldShowComparator
+                    :shouldShowComparator="isComparatorVisible"
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
                     @update:selected-comparator="changeComparator"
@@ -55,6 +56,7 @@
     import FilterKVPairs from "./FilterKVPairs.vue"
     import FilterDateTime from "./FilterDateTime.vue"
     import FilterMultiSelect from "./FilterMultiSelect.vue"
+    import FilterNumber from "./FilterNumber.vue"
     import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -94,6 +96,8 @@
 
     const state = reactive({
         textValue: "",
+        numberValue: "",
+        numberRange: [] as string[],
         selectValue: "",
         radioValue: "ALL",
         dateValue: null as Date | null,
@@ -118,9 +122,20 @@
         props.filterKey?.valueType === "key-value" && !isTextOp.value,
     )
 
+    const isNumberRange = computed(() =>
+        props.filterKey?.valueType === "number" && state.selectedComparator === Comparators.BETWEEN,
+    )
+
     const isTimeRange = computed(() =>
         props.filterKey?.key === "timeRange" || props.filterKey?.valueType === "time-range",
     )
+
+    // A custom range is always start <= value <= end, so a comparator would only mislead there.
+    const isComparatorVisible = computed(() => {
+        const isCustomRange = isTimeRange.value && state.timeRangeMode === "custom"
+            && (props.filterKey?.key === "timeRange" || props.filterKey?.customDateMode === "range")
+        return shouldShowComparator.value && !isCustomRange
+    })
 
     // Server-side search is opted into by declaring an `options` param on valueProvider.
     const supportsServerSideSearch = computed(() =>
@@ -181,7 +196,6 @@
                 props: {
                     modelValue: state.selectValue,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey,
                     timeRangeMode: state.timeRangeMode,
@@ -214,7 +228,6 @@
                 props: {
                     modelValue: state.keyValuePair,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey?.key,
                     serverSideSearch: supportsServerSideSearch.value,
@@ -222,6 +235,20 @@
                 events: {
                     "update:modelValue": (value: string[]) => (state.keyValuePair = value),
                     "update:search": (value: string) => onSearchChange(value),
+                },
+            },
+            number: {
+                component: FilterNumber,
+                props: {
+                    modelValue: isNumberRange.value ? state.numberRange : state.numberValue,
+                    range: isNumberRange.value,
+                    label: props.filterKey?.label,
+                },
+                events: {
+                    "update:modelValue": (value: string | string[]) => {
+                        if (Array.isArray(value)) state.numberRange = value
+                        else state.numberValue = value
+                    },
                 },
             },
             date: {
@@ -239,6 +266,8 @@
                 props: {
                     modelValue: state.radioValue,
                     options: state.valueOptions,
+                    allLabel: props.filterKey.allLabel,
+                    allDescription: props.filterKey.allDescription,
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.radioValue = value),
@@ -263,6 +292,8 @@
         switch (effectiveValueType.value) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`
+        case "number":
+            return getFilterValue()?.label ?? ""
         case "select":
             if (state.selectValue) {
                 const option = state.valueOptions?.find(opt => opt.value === state.selectValue)
@@ -270,7 +301,9 @@
             }
             return ""
         case "radio":
-            return state.radioValue === "ALL" ? "Default selected" : state.radioValue
+            return state.radioValue === "ALL"
+                ? t("filter.option_selected", {label: props.filterKey.allLabel ?? t("filter.hierarchy.all")})
+                : state.radioValue
         default:
             return ""
         }
@@ -286,12 +319,14 @@
             return
         }
 
-        // Falling back to a blank value left the filter with nothing selected, rather than with
-        // the default the page configured (the executions view's 24h interval, for instance).
-        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+        const defaultValue = filterContext
+            ? filterContext.getDefaultValue(props.filterKey)
+            : resolveDefaultVisibleValue(props.filterKey)
 
         Object.assign(state, {
             textValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberRange: [],
             selectValue: typeof defaultValue === "string" ? defaultValue : "",
             keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
@@ -317,6 +352,14 @@
         switch (effectiveValueType.value) {
         case "text":
             return {value: state.textValue, label: state.textValue}
+        case "number": {
+            if (!isNumberRange.value) return {value: state.numberValue, label: state.numberValue}
+            const [min = "", max = ""] = state.numberRange
+            // A between needs both bounds in order; until then it stays empty so it is not applied.
+            return min !== "" && max !== "" && Number(min) <= Number(max)
+                ? {value: [min, max], label: `${min} - ${max}`}
+                : {value: [], label: ""}
+        }
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
                 const startDate = state.startDateValue ?? new Date()
@@ -463,6 +506,10 @@
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : ""
                 break
+            case "number":
+                state.numberValue = typeof filter.value === "string" ? filter.value : ""
+                state.numberRange = Array.isArray(filter.value) ? [...filter.value] : []
+                break
             case "multi-select":
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : []
                 break
@@ -482,7 +529,7 @@
                         : null
                 break
             case "radio":
-                state.radioValue = typeof filter.value === "string"
+                state.radioValue = typeof filter.value === "string" && state.valueOptions.some(option => option.value === filter.value)
                     ? filter.value
                     : "ALL"
                 break
@@ -546,7 +593,7 @@
 
     const debouncedApplyLive = useDebounceFn(applyLive, 400)
 
-    watch(() => state.textValue, () => debouncedApplyLive())
+    watch([() => state.textValue, () => state.numberValue, () => state.numberRange], () => debouncedApplyLive())
 
     watch([
         () => state.selectValue,
@@ -559,3 +606,10 @@
         () => state.timeRangeMode,
     ], () => applyLive())
 </script>
+
+<style scoped>
+.filter-header.divided {
+    padding-bottom: var(--ks-spacing-3);
+    border-bottom: 1px solid var(--ks-border-default);
+}
+</style>

@@ -21,7 +21,9 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time v-if="log.timestamp" class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
+                    <span class="log-date">{{ `${timestamp.date} ` }}</span>{{ timestamp.clock }}
+                </time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -148,6 +150,12 @@
             }
         }
         return result
+    })
+
+    const timestamp = computed(() => {
+        const full = props.log.timestamp ? Filters.date(props.log.timestamp, "iso") : ""
+        const [date, ...clock] = full.split(" ")
+        return {full, date, clock: clock.join(" ")}
     })
 
     const levelLabel = computed(() => {
@@ -365,6 +373,62 @@ div.line {
     &:hover :deep(.clipboard) {
         opacity: 1;
         pointer-events: auto;
+    }
+
+    @media (hover: none) {
+        .log-copy {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    div.line {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "level header copy"
+            "message message message";
+        align-items: center;
+        gap: var(--ks-spacing-1) var(--ks-spacing-2);
+
+        .log-content {
+            display: contents;
+        }
+
+        .log-level {
+            grid-area: level;
+            width: auto;
+            padding: 0 var(--ks-spacing-1);
+            border: 1px solid currentColor;
+            border-radius: var(--ks-radius-xs);
+            font-size: var(--ks-font-size-2xs);
+            line-height: 1.4;
+        }
+
+        .log-header {
+            grid-area: header;
+        }
+
+        .log-copy {
+            grid-area: copy;
+        }
+
+        .log-message,
+        .log-json {
+            grid-area: message;
+        }
+
+        .log-date {
+            display: none;
+        }
+
+        &.density-compact .log-message {
+            white-space: pre-wrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
     }
 }
 </style>

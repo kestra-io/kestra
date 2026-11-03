@@ -15,26 +15,30 @@ export default meta
 type Story = StoryObj<typeof KsRadioCardGroup>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsRadioCardGroup},
         setup() {
             const value = ref("SERVER")
-            const options = [
-                {value: "SERVER", label: "Server", hint: "This instance deploys with a shared token"},
-                {value: "CLIENT", label: "Client", hint: "Your browser deploys with your own token"},
-            ]
-            return {value, options}
+            return {args, value}
         },
         template: `
             <div style="padding:24px;max-width:520px">
-                <ks-radio-card-group v-model="value" :options="options" ariaLabel="Connection mode" />
+                <ks-radio-card-group v-model="value" v-bind="args" />
                 <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Selected: {{ value }}</span>
             </div>
         `,
     }),
+    args: {
+        options: [
+            {value: "SERVER", label: "Server", hint: "This instance deploys with a shared token"},
+            {value: "CLIENT", label: "Client", hint: "Your browser deploys with your own token"},
+        ],
+        ariaLabel: "Connection mode",
+    },
 }
 
 export const WithIcon: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioCardGroup},
         setup() {
@@ -55,6 +59,7 @@ export const WithIcon: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioCardGroup},
         setup() {
@@ -74,6 +79,7 @@ export const Disabled: Story = {
 }
 
 export const LongText: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioCardGroup},
         setup() {

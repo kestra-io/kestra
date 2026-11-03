@@ -3,12 +3,12 @@ package io.kestra.plugin.core.flow;
 import java.time.Duration;
 
 import org.hibernate.validator.constraints.time.DurationMin;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -25,9 +25,11 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 
@@ -48,7 +50,7 @@ import lombok.experimental.SuperBuilder;
     description = """
         Stops downstream task scheduling and moves the execution to PAUSED. Resume manually from the UI, via the `/executions/{id}/resume` API, or automatically after `pauseDuration` if set.
 
-        You can declare `onResume` inputs to collect human/automation feedback before continuing."""
+        You can declare `inputs` to collect human/automation feedback before continuing."""
 )
 @Plugin(
     examples = {
@@ -115,7 +117,7 @@ import lombok.experimental.SuperBuilder;
 
                   - id: wait_for_approval
                     type: io.kestra.plugin.core.flow.Pause
-                    onResume:
+                    inputs:
                       - id: approved
                         description: Whether to approve the request
                         type: BOOL
@@ -134,7 +136,7 @@ import lombok.experimental.SuperBuilder;
 
                   - id: log
                     type: io.kestra.plugin.core.log.Log
-                    message: Status is {{ outputs.wait_for_approval.onResume.reason }}. Process finished with {{ outputs.approve.body }}
+                    message: Status is {{ outputs.wait_for_approval.inputs.reason }}. Process finished with {{ outputs.approve.body }}
                 """
         ),
         @Example(
@@ -157,7 +159,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Pause extends Task implements FlowableTask<Pause.Output> {
+public class Pause extends Task implements FlowableTask<Pause.Output>, PausableTask {
     @Schema(
         title = "Duration of the pause - if not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
         description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
@@ -188,10 +190,10 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task."
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. They work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. Defaults and descriptions can use Pebble expressions referencing the paused execution's inputs and earlier task outputs. Users can override the evaluated defaults before resuming. You can access those values in downstream tasks using the `inputs` output of the Pause task."
     )
     @PluginProperty
-    private List<@Valid Input<?>> onResume;
+    private List<@Valid Input<?>> inputs;
 
     protected List<@Valid Task> errors;
 
@@ -292,8 +294,24 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         );
     }
 
-    public Map<String, Object> generateOutputs(Map<String, Object> inputs, Resumed resumed) {
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    public void setOnResume(List<Input<?>> onResume) {
+        this.inputs = onResume;
+    }
+
+    @Override
+    public List<Input<?>> resumeInputs() {
+        return this.inputs;
+    }
+
+    @Override
+    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed, @Nullable Decision decision) {
+        if (decision != null) {
+            throw new IllegalArgumentException("Task '%s' is a Pause and cannot be resumed with a decision.".formatted(this.getId()));
+        }
+
         Output build = Output.builder()
+            .inputs(inputs)
             .onResume(inputs)
             .resumed(resumed)
             .build();
@@ -301,31 +319,60 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         return JacksonMapper.toMap(build);
     }
 
+    @Override
+    public State.Type resumedTaskRunState(State.Type newState) {
+        if (ListUtils.isEmpty(this.getErrors()) && ListUtils.isEmpty(this.getFinally())) {
+            if (newState == State.Type.RUNNING) {
+                return State.Type.SUCCESS;
+            } else if (newState == State.Type.KILLING) {
+                return State.Type.KILLED;
+            }
+            return newState;
+        }
+
+        return State.Type.RUNNING;
+    }
+
+    @Override
+    public Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
+        if (this.pauseDuration == null && this.getTimeout() == null) {
+            return Optional.empty();
+        }
+
+        Duration duration = runContext.render(this.pauseDuration).as(Duration.class).orElse(null);
+        if (duration != null && (duration.isZero() || duration.isNegative())) {
+            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
+        }
+        Duration timeout = runContext.render(this.getTimeout()).as(Duration.class).orElse(null);
+        Behavior behavior = runContext.render(this.behavior).as(Behavior.class).orElse(Behavior.RESUME);
+
+        if (duration == null && timeout == null) { // rendering can lead to null, so we must re-check here
+            return Optional.empty();
+        }
+
+        // if duration is set, we use it, and we use the Pause behavior as a state
+        // if no duration, we use the standard timeout property and use FAILED as the target state
+        return Optional.of(ExecutionDelay.builder()
+            .taskRunId(taskRun.getId())
+            .executionId(taskRun.getExecutionId())
+            .date(DateUtils.plusOrThrow(taskRun.getState().maxDate(), duration != null ? duration : timeout))
+            .state(duration != null ? behavior.mapToState() : State.Type.fail(this))
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build());
+    }
+
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "Values entered when the execution was resumed.")
+        private Map<String, Object> inputs;
+
+        @Deprecated(forRemoval = true, since = "2.1.0")
+        @Schema(title = "Deprecated, use `inputs`.")
         private Map<String, Object> onResume;
 
         @Schema(title = "Resumed information: when and by who the execution was resumed")
         private Resumed resumed;
-    }
-
-    public record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {
-        public static Resumed now() {
-            return new Resumed(null, LocalDateTime.now(), State.Type.SUCCESS);
-        }
-
-        public static Resumed now(State.Type to) {
-            return new Resumed(null, LocalDateTime.now(), to);
-        }
-
-        public static Resumed now(String by) {
-            return new Resumed(by, LocalDateTime.now(), State.Type.SUCCESS);
-        }
-
-        public static Resumed now(String by, State.Type to) {
-            return new Resumed(by, LocalDateTime.now(), to);
-        }
     }
 
     public enum Behavior {

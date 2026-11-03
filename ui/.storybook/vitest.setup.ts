@@ -2,6 +2,7 @@
 // preview.ts imports it too — the install is idempotent. Importing from both files removes any
 // dependence on the relative order of this setup file and the one addon-vitest injects itself.
 import "./apiMock"
+import {afterAll} from "vitest"
 
 // Story templates are runtime-compiled by Vue in the browser, which triggers
 // "@vue/compiler-core: decodeEntities option is passed but will be ignored in
@@ -13,3 +14,11 @@ console.warn = (...args: unknown[]) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     origWarn(...args)
 }
+
+afterAll(() => {
+    for (const node of [...document.body.children]) {
+        if (!node.id.startsWith("topnav-")) {
+            node.remove()
+        }
+    }
+})

@@ -5,7 +5,6 @@
         :showLink
         :collapsed
         @menu-collapse="onCollapse"
-        :class="{overlay: verticalLayout}"
     >
         <template #footer>
             <div class="left-menu-footer">
@@ -19,8 +18,6 @@
 </template>
 
 <script setup lang="ts">
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-
     import SideBar from "../../components/layout/SideBar.vue"
     import AdminItem from "../../components/admin/AdminItem.vue"
     import ProductTourItem from "../../components/onboarding/tour/ProductTourItem.vue"
@@ -43,7 +40,6 @@
         (e: "menu-collapse", folded: boolean): void
     }>()
 
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const {menu} = useLeftMenu()
     const {adminTabs} = useAdminTabs()
 

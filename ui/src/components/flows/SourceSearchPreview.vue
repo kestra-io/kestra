@@ -50,7 +50,7 @@
 
                     <div v-if="showConfirmBar" class="source-search-preview__confirm-bar">
                         <span class="source-search-preview__confirm-msg">
-                            <i18n-t keypath="source_search.confirm_bar_message" tag="span">
+                            <i18n-t keypath="source_search.confirm_bar_message" tag="span" scope="global">
                                 <template #matches><b>{{ $t("source_search.match_count", {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b></template>
                                 <template #flows><b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b></template>
                                 <template #skipped><b>{{ readOnlyExcludedCount }}</b></template>

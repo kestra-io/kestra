@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" class="tour-lead">
+        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" scope="global" class="tour-lead">
             <template #namespace>{{ TOUR_NAMESPACE }}</template>
             <template #secrets>
                 <a :href="docsUrl('secret')" target="_blank" rel="noopener">{{ $t("onboarding.tour.finale.docs.secret") }}</a>

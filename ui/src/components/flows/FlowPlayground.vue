@@ -13,7 +13,7 @@
                 <KsDropdown trigger="click" placement="bottom-end">
                     <KsButton :icon="DotsVertical" link class="tab-icon" :aria-label="$t('playground actions')" />
                     <template #dropdown>
-                        <KsDropdownMenu class="playground-menu">
+                        <KsDropdownMenu>
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ $t('playground.clear_history') }}</span>
                             </KsDropdownItem>
@@ -338,10 +338,6 @@
             }
         }
     }
-    .playground-menu {
-        margin: var(--ks-spacing-2);
-    }
-
     .flow-run-container {
         width: 100%;
     }

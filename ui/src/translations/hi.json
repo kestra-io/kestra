@@ -542,6 +542,7 @@
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",

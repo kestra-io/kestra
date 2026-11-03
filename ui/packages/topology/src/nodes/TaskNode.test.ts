@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {computed} from "vue"
-import {NODE_SIZES} from "../utils/constants"
+import {EVENTS, NODE_SIZES} from "../utils/constants"
 import TaskNode from "./TaskNode.vue"
 import NodeMenu from "./NodeMenu.vue"
 import {
@@ -94,7 +94,7 @@ function mountTaskNode({execution, subflows = {}, executionId = EXECUTION_ID, ta
                     ? {KsTooltip: {template: "<span><slot /></span>"}}
                     : {
                         BasicNode: {
-                            template: "<div><slot name='runner'/><slot name='icon-badge'/><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='status-row'/><slot name='title-actions'/></div>",
+                            template: "<div><slot name='runner'/><slot name='icon-badge'/><slot name='subtitle'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='status-row'/><slot name='title-actions'/></div>",
                         },
                     }),
             },
@@ -570,6 +570,26 @@ describe("TaskNode info action", () => {
         })
 
         expect(wrapper.find("[data-test='variant']").text()).toBe("task")
+    })
+})
+
+describe("TaskNode card click", () => {
+    it("should open the task form when the canvas is editable", async () => {
+        const wrapper = mountTaskNode({isReadOnly: false, realBasicNode: true})
+
+        await wrapper.find(".node-core").trigger("click")
+
+        expect(wrapper.emitted(EVENTS.EDIT)?.[0][0]).toMatchObject({task: TASK})
+        expect(wrapper.emitted(EVENTS.CARD_CLICK)).toBeUndefined()
+    })
+
+    it("should hand the click up instead of swallowing it when the canvas is read-only", async () => {
+        const wrapper = mountTaskNode({isReadOnly: true, realBasicNode: true})
+
+        await wrapper.find(".node-core").trigger("click")
+
+        expect(wrapper.emitted(EVENTS.CARD_CLICK)?.[0][0]).toEqual({uid: "root.my-task"})
+        expect(wrapper.emitted(EVENTS.EDIT)).toBeUndefined()
     })
 })
 

@@ -2,6 +2,7 @@
     <KsSegmented
         v-model="view"
         variant="neutral"
+        size="small"
         :options="viewOptions"
         data-test="plugin-view-toggle"
     />

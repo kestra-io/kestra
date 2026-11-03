@@ -36,6 +36,7 @@
                 <KsCheckTag
                     v-for="category in availableCategories"
                     :key="category"
+                    class="category-tag"
                     pill
                     :checked="selectedCategories.includes(category)"
                     @change="toggleCategory(category)"
@@ -388,6 +389,12 @@
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
             min-width: 0;
+        }
+
+        .category-tag {
+            gap: var(--ks-spacing-1);
+            padding: var(--ks-spacing-1) var(--ks-spacing-3);
+            font-weight: normal;
         }
 
         .category-label {

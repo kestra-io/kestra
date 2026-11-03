@@ -87,8 +87,8 @@ class FlowInputOutputTest {
     String secretKey;
 
     @MockBean(SecretService.class)
-    SecretService testSecretService() {
-        return new SecretService() {
+    SecretService<?> testSecretService() {
+        return new SecretService<>() {
             @Override
             public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException {
                 return TEST_SECRET_VALUE;
@@ -762,6 +762,32 @@ class FlowInputOutputTest {
             InputOutputValidationException.class,
             () -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", invalidUri))
         );
+    }
+
+    @Test
+    void shouldFailWhenRequiredOutputIsNull() {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).build()))
+            .build();
+
+        assertThatThrownBy(() -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("Output 'duck' is required");
+    }
+
+    @Test
+    void shouldAcceptNullOutputWhenNotRequired() {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).required(false).build()))
+            .build();
+
+        Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of());
+
+        assertThat(result.get("duck")).isNull();
     }
 
     @SuppressWarnings("unchecked")

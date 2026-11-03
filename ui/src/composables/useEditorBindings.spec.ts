@@ -71,6 +71,29 @@ describe("useEditorBindings", () => {
         expect(bindings.theme).toBe("light")
     })
 
+    it("follows an OS theme change under Sync with system, which leaves the misc store theme unchanged", async () => {
+        const osListeners = new Set<(event: {matches: boolean}) => void>()
+        let osDark = false
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            media: query,
+            get matches() {
+                return osDark
+            },
+            addEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.add(listener),
+            removeEventListener: (_type: string, listener: (event: {matches: boolean}) => void) => osListeners.delete(listener),
+        }))
+        localStorage.setItem(storageKeys.THEME, "syncWithSystem")
+        mocks.misc.theme = "syncWithSystem"
+        const bindings = await loadBindings()
+        expect(bindings.theme).toBe("light")
+
+        osDark = true
+        osListeners.forEach((listener) => listener({matches: true}))
+
+        expect(bindings.theme).toBe("dark")
+        vi.unstubAllGlobals()
+    })
+
     it("exposes the plugins store loadIcon as loadTaskIcon", async () => {
         const bindings = await loadBindings()
 

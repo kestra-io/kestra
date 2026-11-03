@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, onUnmounted} from "vue"
+    import {ref, watch, computed, onUnmounted, provide} from "vue"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -59,7 +59,7 @@
     import ContextDocsSearch from "./ContextDocsSearch.vue"
     import ContextInfoContent from "../ContextInfoContent.vue"
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue"
-    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
+    import {DOC_PATH_INJECTION_KEY, removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
@@ -114,6 +114,7 @@
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    provide(DOC_PATH_INJECTION_KEY, docPath)
     const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({

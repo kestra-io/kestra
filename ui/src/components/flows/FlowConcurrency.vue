@@ -25,7 +25,6 @@
             </div>
         </KsCard>
         <Executions
-            :restoreUrl="false"
             :topbar="false"
             :namespace="flowStore.flow?.namespace"
             :flowId="flowStore.flow?.id"

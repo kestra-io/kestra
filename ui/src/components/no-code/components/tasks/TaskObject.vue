@@ -102,9 +102,10 @@
     import TaskUnknownField from "./TaskUnknownField.vue"
     import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
-    import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
+    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
     import {hasErrorUnder} from "../../../../utils/validationErrors"
     import type {Schema} from "./getTaskComponent"
+    import type {FieldValue} from "../../utils/types"
 
     defineOptions({
         inheritAttrs: false,
@@ -236,11 +237,13 @@
         })
     }
 
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties)
         return propertiesProc
             ? Object.entries(propertiesProc).filter(([key, value]) => {
-                return value && !(props.filterType && key === "type") && !Array.isArray(value)
+                return value && !(props.filterType && key === "type") && !Array.isArray(value) && blockComponentOverride?.(key, props.modelValue) !== null
             })
             : []
     })
@@ -352,13 +355,15 @@
     }
 
     function fieldProps(key: string, schema: Schema) {
-        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] : undefined
+        // A single property read off the generic task/trigger record is always a schema-driven
+        // leaf or branch value, never anything an index signature couldn't already describe.
+        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] as FieldValue | undefined : undefined
         return {
             modelValue: mv,
             "onUpdate:modelValue": (value: unknown) => onObjectInput(key, value),
             root: props.root,
             fieldKey: key,
-            task: props.modelValue,
+            task: props.modelValue ?? undefined,
             schema: schema,
             required: props.modelValue == null ? undefined : props.schema?.required,
             siblingKeys: Object.keys(props.properties ?? props.schema?.properties ?? {}),

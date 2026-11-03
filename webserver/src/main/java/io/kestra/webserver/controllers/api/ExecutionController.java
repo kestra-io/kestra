@@ -14,6 +14,8 @@ import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -171,6 +173,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
     private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
+    private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
 
     @Nullable
     @Value("${micronaut.server.context-path}")
@@ -1311,6 +1314,10 @@ public class ExecutionController {
             return null;
         }
 
+        if (StorageContext.isInNamespaceFiles(execution.getNamespace(), path)) {
+            return null;
+        }
+
         // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
         // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
         String flowId = execution.getFlowId();
@@ -1365,8 +1372,9 @@ public class ExecutionController {
         }
 
         InputStream fileHandler = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME -> StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)
+                ? namespaceFileContent(execution.get(), path)
+                : storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1415,6 +1423,22 @@ public class ExecutionController {
         return namespace.get(Path.of(path.getPath())).uri();
     }
 
+    /**
+     * Reads a namespace file of the execution namespace from its internal storage URI through {@link Namespace},
+     * so a deleted file and the revisions it held before being deleted are not served.
+     */
+    private InputStream namespaceFileContent(Execution execution, URI path) throws IOException {
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
+        Path file = Path.of(StorageContext.namespaceFilePrefix(execution.getNamespace())).relativize(Path.of(path.getPath()));
+
+        Matcher revision = NAMESPACE_FILE_REVISION.matcher(file.toString());
+        if (revision.matches() && Integer.parseInt(revision.group(2)) > 1) {
+            return namespace.getFileContent(Path.of(revision.group(1)), Integer.parseInt(revision.group(2)));
+        }
+
+        return namespace.getFileContent(file, 1);
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/file/metas")
     @Operation(tags = { "Executions" }, summary = "Get file meta information for an execution")
@@ -1432,8 +1456,13 @@ public class ExecutionController {
         }
 
         long size = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case StorageContext.KESTRA_SCHEME -> {
+                if (StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)) {
+                    // Namespace has no metadata lookup for a given revision, opening its content is what refuses a deleted one
+                    namespaceFileContent(execution.get(), path).close();
+                }
+                yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            }
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -2819,8 +2848,9 @@ public class ExecutionController {
         FileRenderer renderer = fileRendererService.resolve(extension);
 
         InputStream fileStream = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME -> StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)
+                ? namespaceFileContent(execution.get(), path)
+                : storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());

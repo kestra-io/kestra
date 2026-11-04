@@ -128,9 +128,9 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_KILLED_COUNT = "executor.killed.count";
     public static final String METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
     public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT = "executor.sla.expired.count";
-    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION or AVG_DURATION that took longer than the SLA) evaluated by the Executor";
     public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT = "executor.sla.violation.count";
-    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of SLA violations evaluated by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT = "executor.execution.delay.created.count";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION = "The total number of execution delays created by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT = "executor.execution.delay.ended.count";

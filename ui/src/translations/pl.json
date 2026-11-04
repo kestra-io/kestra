@@ -758,7 +758,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit.",
+      "queued": "W kolejce",
+      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",

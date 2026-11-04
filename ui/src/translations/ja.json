@@ -758,7 +758,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
-      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
+      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。",
+      "queued": "キュー済み",
+      "save_error": "Concurrency limit の更新に失敗しました。以前の値が保持されます。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",

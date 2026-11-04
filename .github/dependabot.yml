@@ -63,7 +63,7 @@ updates:
       - dependency-name: "dev.langchain4j:*"
         versions: [ ">=1.19.0" ]
       # Ignore versions of Maven Resolver >= 2.0.11 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22235
-      - dependency-name: "dev.langchain4j:*"
+      - dependency-name: "org.apache.maven.resolver:*"
         versions: [ ">=2.0.11" ]
       # Ignore versions of Jetty >= 12.1.0 as Wiremock didn't work with it see https://github.com/kestra-io/kestra/issues/22238
       - dependency-name: "org.eclipse.jetty:*"

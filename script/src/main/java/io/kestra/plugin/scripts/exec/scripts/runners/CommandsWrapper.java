@@ -8,9 +8,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import io.kestra.core.checkpoint.Checkpoint;
 import org.apache.commons.lang3.SystemUtils;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.NamespaceFiles;
@@ -28,6 +28,7 @@ import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -286,10 +287,12 @@ public class CommandsWrapper implements TaskCommands {
 
         ScriptOutput.ScriptOutputBuilder<?, ?> scriptOutputBuilder = ScriptOutput.builder();
 
+        Map<String, URI> collectedFiles = new HashMap<>();
         try {
             TaskRunnerResult<T> taskRunnerResult = (TaskRunnerResult<T>) taskRunner.run(taskRunnerRunContext, this, this.outputFiles);
+            collectOutputFiles(taskRunnerRunContext, collectedFiles);
             scriptOutputBuilder.exitCode(taskRunnerResult.getExitCode())
-                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .outputFiles(collectedFiles)
                 .taskRunner(taskRunnerResult.getDetails());
 
             if (taskRunnerResult.getLogConsumer() != null) {
@@ -301,12 +304,20 @@ public class CommandsWrapper implements TaskCommands {
 
             return scriptOutputBuilder.build();
         } catch (TaskException e) {
+            try {
+                if (e.getOutputFilesException() == null) {
+                    collectOutputFiles(taskRunnerRunContext, collectedFiles);
+                }
+            } catch (IOException | IllegalVariableEvaluationException collectionFailure) {
+                e.addSuppressed(collectionFailure);
+                runContext.logger().warn("Unable to collect output files after the command failed", collectionFailure);
+            }
             var output = scriptOutputBuilder.exitCode(e.getExitCode())
                 .stdOutLineCount(e.getStdOutCount())
                 .stdErrLineCount(e.getStdErrCount())
                 .vars(e.getLogConsumer() != null ? e.getLogConsumer().getOutputs() : null)
                 .taskRunner(e.getDetails())
-                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .outputFiles(collectedFiles)
                 .build();
             throw new RunnableTaskException(e, output);
         } finally {
@@ -331,16 +342,21 @@ public class CommandsWrapper implements TaskCommands {
         }
     }
 
-    private Map<String, URI> getOutputFiles(RunContext taskRunnerRunContext) throws Exception {
-        Map<String, URI> outputFiles = new HashMap<>();
-        if (this.outputDirectoryEnabled()) {
-            outputFiles.putAll(ScriptService.uploadOutputFiles(taskRunnerRunContext, this.getOutputDirectory()));
+    private void collectOutputFiles(RunContext taskRunnerRunContext, Map<String, URI> uploaded) throws IOException, IllegalVariableEvaluationException {
+        if (!this.logConsumer.getOutputFiles().isEmpty()) {
+            // shortcut: only runners with verified dynamic file transfer are supported; extend after integration coverage.
+            boolean supported = taskRunner instanceof Process ||
+                taskRunner instanceof Docker docker &&
+                    taskRunnerRunContext.render(docker.getWait()).as(Boolean.class).orElse(false) &&
+                    taskRunnerRunContext.render(docker.getFileHandlingStrategy()).as(Docker.FileHandlingStrategy.class).orElse(null) == Docker.FileHandlingStrategy.VOLUME;
+            if (!supported) {
+                throw new IOException("Dynamic output files require the Process runner or a synchronous Docker runner using VOLUME file handling.");
+            }
         }
-
-        if (this.outputFiles != null) {
-            outputFiles.putAll(FilesService.outputFiles(taskRunnerRunContext, this.outputFiles));
-        }
-        return outputFiles;
+        FilesService.outputFiles(
+            taskRunnerRunContext, this.outputFiles, this.logConsumer.getOutputFiles(),
+            this.outputDirectoryEnabled() ? this.getOutputDirectory() : null, uploaded
+        );
     }
 
     public Path getOutputDirectory() {

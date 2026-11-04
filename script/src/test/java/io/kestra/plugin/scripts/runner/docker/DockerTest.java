@@ -15,12 +15,15 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import com.github.dockerjava.api.model.Container;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTaskException;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
 import io.kestra.core.models.tasks.runners.ScriptService;
 import io.kestra.core.models.tasks.runners.TaskException;
@@ -30,6 +33,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 
 import jakarta.inject.Inject;
@@ -62,6 +67,73 @@ class DockerTest extends AbstractTaskRunnerTest {
     @Override
     protected TaskRunner<?> taskRunner() {
         return Docker.builder().image("rockylinux:9.3-minimal").build();
+    }
+
+    @Test
+    void shouldCaptureAnnouncedFilesWithoutInitializingAFileVolume() throws Exception {
+        var task = Log.builder().id("test").type(Log.class.getName()).message("test").build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var commands = new CommandsWrapper(runContext)
+            .withTaskRunner(taskRunner())
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("""
+                printf '{id:1}\\n{id:2}\\n' > dynamic.ion
+                echo '::{"outputFiles":["dynamic.ion"],"outputs":{"kept":true}}::'
+                """)));
+        var withoutInputs = Mockito.spy(commands);
+        Mockito.doReturn(List.of()).when(withoutInputs).relativeWorkingDirectoryFilesPaths(true);
+        var output = withoutInputs.run();
+
+        Assertions.assertThat(output.getOutputFiles()).containsOnlyKeys("dynamic.ion");
+        Assertions.assertThat(output.getVars()).containsEntry("kept", true);
+        try (var input = runContext.storage().getFile(output.getOutputFiles().get("dynamic.ion"))) {
+            assertThat(new String(input.readAllBytes())).isEqualTo("{id:1}\n{id:2}\n");
+        }
+    }
+
+    @Test
+    void shouldRejectAnnouncedContainerSymlinkEscapes() {
+        var task = Log.builder().id("test").type(Log.class.getName()).message("test").build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var commands = new CommandsWrapper(runContext)
+            .withTaskRunner(taskRunner())
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("""
+                ln -s /etc/passwd escape.ion
+                echo '::{"outputFiles":["escape.ion"]}::'
+                """)));
+
+        assertThatThrownBy(commands::run).isInstanceOf(java.io.IOException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 7 })
+    void shouldNotPublishHostInputsDeletedInTheContainer(int exitCode) throws Exception {
+        var task = Log.builder().id("test").type(Log.class.getName()).message("test").build();
+        var context = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var commands = new CommandsWrapper(context)
+            .withTaskRunner(taskRunner())
+            .withInputFiles(Map.of("record.ion", "stale host input"))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("""
+                echo '::{"outputs":{"checkpoint":1}}::'
+                echo '::{"outputFiles":["record.ion"]}::'
+                rm record.ion
+                exit %d
+                """.formatted(exitCode))));
+
+        if (exitCode == 0) {
+            assertThatThrownBy(commands::run).isInstanceOf(java.io.IOException.class).hasMessageContaining("not returned by Docker");
+        } else {
+            assertThatThrownBy(commands::run).isInstanceOfSatisfying(RunnableTaskException.class, exception ->
+            {
+                var output = (ScriptOutput) exception.getOutput();
+                assertThat(output.getExitCode()).isEqualTo(7);
+                Assertions.assertThat(output.getVars()).containsEntry("checkpoint", 1);
+                Assertions.assertThat(output.getOutputFiles()).isEmpty();
+                Assertions.assertThat(exception.getCause().getSuppressed()).hasSize(1);
+            });
+        }
     }
 
     @Test

@@ -20,6 +20,18 @@ class DefaultLogConsumerTest {
     private TestRunContextFactory runContextFactory;
 
     @Test
+    void shouldAccumulateFileAnnouncementsAndPreserveOutputs() {
+        var runContext = runContextFactory.of("id", "namespace", IdUtils.create());
+        var consumer = new DefaultLogConsumer(runContext);
+
+        consumer.accept("::{\"outputFiles\":[\"first.ion\"]}::", false);
+        consumer.accept("::{\"outputFiles\":[\"first.ion\",\"second.ion\"],\"outputs\":{\"kept\":true}}::", true);
+
+        assertThat(consumer.getOutputFiles()).containsExactlyInAnyOrder("first.ion", "second.ion");
+        assertThat(consumer.getOutputs()).containsEntry("kept", true);
+    }
+
+    @Test
     void markerLinesAreSwallowedAndNotCounted() {
         var runContext = runContextFactory.of("id", "namespace", IdUtils.create());
         var consumer = new DefaultLogConsumer(runContext);

@@ -88,6 +88,17 @@ describe("setupKestraHttp router NProgress hooks", () => {
         )
     })
 
+    it("opts the generated sse methods out of NProgress", async () => {
+        const watch = vi.fn().mockResolvedValue(undefined)
+        Object.assign(fakeClient, {sse: {watch}})
+        setupKestraHttp({})
+
+        await Reflect.get(fakeClient, "sse").watch({id: 1})
+        Reflect.deleteProperty(fakeClient, "sse")
+
+        expect(watch).toHaveBeenCalledWith({id: 1, __kestraSkipProgress: true})
+    })
+
     it("does not start NProgress when a request opts out with __kestraSkipProgress", async () => {
         setupKestraHttp({})
         const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]

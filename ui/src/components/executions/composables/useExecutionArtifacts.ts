@@ -1,4 +1,4 @@
-import {computed, watch, type InjectionKey} from "vue"
+import {computed, ref, watch, type InjectionKey} from "vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useFlowStore} from "../../../stores/flow"
@@ -21,15 +21,28 @@ export function useExecutionArtifacts() {
     const {RemoteComponent, taskAdditionalInfoRemote, manifestReady, hasResolvedComponent, hasFailedComponent, resolveRemoteComponent, subtitleResolvers} = useFederatedModule("execution-artifact")
 
     const flowStore = useFlowStore()
+    const executedSource = ref<string>()
 
-    // The execution's flow comes without the properties an artifact needs, such as `taskRunner`. They are
-    // read back from the flow source, as the topology does, when it is the source of this execution's flow.
+    watch(() => {
+        const execution = executionsStore.execution
+        return execution ? `${execution.namespace}/${execution.flowId}/${execution.flowRevision}` : undefined
+    }, async (key) => {
+        executedSource.value = undefined
+        const execution = executionsStore.execution
+        if (!key || !execution) return
+        const flow = await flowStore.loadFlow({
+            namespace: execution.namespace,
+            id: execution.flowId,
+            revision: execution.flowRevision?.toString(),
+            store: false,
+            optional: true,
+        })
+        if (key === `${execution.namespace}/${execution.flowId}/${execution.flowRevision}`) executedSource.value = flow?.source
+    }, {immediate: true})
+
     const sourceTaskById = computed(() => {
-        const flow = executionsStore.flow
-        const source = flowStore.flow?.source
-        const sameFlow = flow && flowStore.flow?.id === flow.id && flowStore.flow?.namespace === flow.namespace
-        if (!source || !sameFlow) return {}
-        const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
+        if (!executedSource.value) return {}
+        const parsed = YAML_UTILS.parse<Record<string, unknown>>(executedSource.value, false)
         return Object.fromEntries(
             ["tasks", "errors", "finally", "afterExecution"]
                 .flatMap((section) => getAllTasks(parsed?.[section]))
@@ -39,7 +52,6 @@ export function useExecutionArtifacts() {
 
     const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks).map((task) => ({...sourceTaskById.value[task.id], ...task})))
 
-    // A task runner ships its own artifacts, so its type is resolved and matched like the task's own.
     const ownerTypesOf = (task: {type: string, taskRunner?: {type?: string}}) =>
         [...new Set([task.type, task.taskRunner?.type].filter((type): type is string => !!type))]
 

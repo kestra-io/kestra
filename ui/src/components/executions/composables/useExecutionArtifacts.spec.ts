@@ -1,8 +1,8 @@
 import {describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
 
-const executionsStore = vi.hoisted(() => ({flow: null as unknown}))
-const flowStore = vi.hoisted(() => ({flow: null as unknown}))
+const executionsStore = vi.hoisted(() => ({flow: null as unknown, execution: null as unknown}))
+const flowStore = vi.hoisted(() => ({loadFlow: vi.fn()}))
 const federated = vi.hoisted(() => ({
     resolveRemoteComponent: vi.fn(),
     taskAdditionalInfoRemote: {value: {} as Record<string, {title?: string}>},
@@ -24,6 +24,8 @@ vi.mock("../../../remoteComponents/useFederatedModule", () => ({
 
 import {useExecutionArtifacts} from "./useExecutionArtifacts"
 
+const flush = () => new Promise((resolve) => setTimeout(resolve))
+
 const SHELL = "io.kestra.plugin.scripts.shell.Commands"
 const RUNNER = "io.kestra.plugin.ee.aws.runner.Batch"
 
@@ -34,14 +36,19 @@ tasks:
     type: ${SHELL}
 ${runner ? `    taskRunner:\n      type: ${runner}\n` : ""}`
 
-// The execution's flow comes without the task runner: it is read back from the flow source.
 const strippedFlow = {id: "f", namespace: "ns", tasks: [{id: "shell", type: SHELL}]}
+const execution = {id: "e", flowId: "f", namespace: "ns", flowRevision: 3}
+
+const givenSource = (source: string) => {
+    executionsStore.flow = strippedFlow
+    executionsStore.execution = execution
+    flowStore.loadFlow.mockResolvedValue({source})
+}
 
 describe("useExecutionArtifacts", () => {
-    it("shouldListArtifactsOfTheTaskRunnerAndOfTheTask", () => {
+    it("shouldListArtifactsOfTheTaskRunnerAndOfTheTask", async () => {
         // Given
-        executionsStore.flow = strippedFlow
-        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf(RUNNER)}
+        givenSource(sourceOf(RUNNER))
         federated.taskAdditionalInfoRemote.value = {
             [`${SHELL}/logs`]: {},
             [`${RUNNER}/details`]: {title: "Runner details"},
@@ -49,6 +56,7 @@ describe("useExecutionArtifacts", () => {
 
         // When
         const {artifacts} = useExecutionArtifacts()
+        await flush()
 
         // Then
         expect(artifacts.value).toEqual([
@@ -57,42 +65,43 @@ describe("useExecutionArtifacts", () => {
         ])
     })
 
-    it("shouldResolveTheTaskRunnerTypeAlongsideTheTaskType", () => {
+    it("shouldResolveTheTaskRunnerTypeAlongsideTheTaskType", async () => {
         // Given
         federated.resolveRemoteComponent.mockClear()
-        executionsStore.flow = strippedFlow
-        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf(RUNNER)}
+        givenSource(sourceOf(RUNNER))
 
         // When
         useExecutionArtifacts()
+        await flush()
 
         // Then
         expect(federated.resolveRemoteComponent).toHaveBeenCalledWith([RUNNER, SHELL].map((cls) => ({cls, version: undefined})))
     })
 
-    it("shouldNotListTheRunnerArtifactsOfAnotherTask", () => {
+    it("shouldNotListTheRunnerArtifactsOfAnotherTask", async () => {
         // Given
-        executionsStore.flow = strippedFlow
-        flowStore.flow = {id: "f", namespace: "ns", source: sourceOf()}
+        givenSource(sourceOf())
         federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
 
         // When
         const {artifacts} = useExecutionArtifacts()
+        await flush()
 
         // Then
         expect(artifacts.value).toEqual([])
     })
 
-    it("shouldIgnoreTheSourceOfAnotherFlow", () => {
+    it("shouldLoadTheExecutedRevisionWhenNoFlowIsInTheStore", async () => {
         // Given
-        executionsStore.flow = strippedFlow
-        flowStore.flow = {id: "other", namespace: "ns", source: sourceOf(RUNNER)}
+        givenSource(sourceOf(RUNNER))
         federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
 
         // When
         const {artifacts} = useExecutionArtifacts()
+        await flush()
 
         // Then
-        expect(artifacts.value).toEqual([])
+        expect(flowStore.loadFlow).toHaveBeenCalledWith({namespace: "ns", id: "f", revision: "3", store: false, optional: true})
+        expect(artifacts.value).toHaveLength(1)
     })
 })

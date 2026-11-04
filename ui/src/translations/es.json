@@ -1925,6 +1925,11 @@
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
     "scheduleDateInPast": "La fecha de programación debe ser en el futuro",
+    "inputs_date_range": {
+      "between": "El valor más antiguo es {after}, el valor más reciente es {before}.",
+      "after": "El valor más temprano es {after}.",
+      "before": "El último valor es {before}."
+    },
     "warning": "Advertencia",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",

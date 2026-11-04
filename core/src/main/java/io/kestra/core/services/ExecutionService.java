@@ -651,8 +651,14 @@ public class ExecutionService {
 
     private void copySearchableData(Execution original, Execution replayed) {
         try {
+            // A replay with inputs indexes its new values first, so those ids keep them instead of the original's.
+            Set<String> alreadyIndexed = searchableDataRepository.findByExecutionId(replayed.getTenantId(), replayed.getId(), Pageable.UNPAGED)
+                .stream()
+                .map(SearchableData::dataId)
+                .collect(Collectors.toSet());
             List<SearchableData> copied = searchableDataRepository.findByExecutionId(original.getTenantId(), original.getId(), Pageable.UNPAGED)
                 .stream()
+                .filter(it -> !alreadyIndexed.contains(it.dataId()))
                 .map(it -> new SearchableData(it.tenantId(), replayed.getId(), it.dataId(), it.index(), it.value()))
                 .toList();
             searchableDataRepository.saveBatch(copied);

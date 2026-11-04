@@ -31,6 +31,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.FileInput;
@@ -327,36 +328,89 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
+        return storeExecutionInputs(validateExecutionInputs(inputs, flow, execution, data), true);
+    }
+
+    /**
+     * Same as {@link #readExecutionInputs(FlowInterface, String, List, Publisher)}, without storing the values yet, so the
+     * caller can evaluate the flow checks against them before {@link #storeExecutionInputs(ValidatedInputs, boolean)}
+     * writes the edits made to the assets of {@code ASSET} inputs.
+     */
+    public Mono<ValidatedInputs> validateExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        @Nullable final List<Label> contributed,
+        final Publisher<CompletedPart> data) {
+        Execution execution = minimalExecution(flow, executionId, contributed);
+        return readData(flow.getInputs(), execution, data, true)
+            .map(inputData -> validateExecutionInputs(flow.getInputs(), flow, execution, inputData));
+    }
+
+    /**
+     * Same as {@link #validateExecutionInputs(FlowInterface, String, List, Publisher)}, for the inputs given to an existing
+     * execution, such as the one being replayed.
+     */
+    public Mono<ValidatedInputs> validateExecutionInputs(final FlowInterface flow, final Execution execution, final Publisher<CompletedPart> data) {
+        return readData(flow.getInputs(), execution, data, true)
+            .map(inputData -> validateExecutionInputs(flow.getInputs(), flow, execution, inputData));
+    }
+
+    /**
+     * Reduces validated inputs to what the execution stores.
+     *
+     * @param write whether the edits made to the assets of {@code ASSET} inputs are persisted, see {@link AssetInputResolver#store}
+     */
+    public Map<String, Object> storeExecutionInputs(ValidatedInputs validated, boolean write) {
+        // A test or playground run must leave the assets it is given untouched.
+        ExecutionKind kind = validated.execution().getKind();
+        boolean writes = write && ExecutionKind.TEST != kind && ExecutionKind.PLAYGROUND != kind;
+        if (writes) {
+            validated.values().forEach(it -> {
+                if (it.input() instanceof AssetInput assetInput) {
+                    assetInputResolver.checkWrite(validated.execution(), assetInput, it.value());
+                }
+            });
+        }
+        Map<String, Object> stored = new HashMap<>();
+        validated.values().forEach(it -> stored.put(
+            it.input().getId(),
+            it.input() instanceof AssetInput assetInput ? assetInputResolver.store(validated.execution(), assetInput, it.value(), writes) : it.value()
+        ));
         List<SearchableData> searchableData = new ArrayList<>();
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
+        validated.values().stream().filter(it -> Boolean.TRUE.equals(it.input().getSearchable())).forEach(it -> {
+            RunContext runContext = runContextFactory.get().of(validated.flow(), validated.execution());
+            try {
+                searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), validated.execution(), it.input(), it.value()));
+            } catch (Exception e) {
+                runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), validated.execution().getId(), e.getMessage(), e);
+            }
+        });
+        // saved only once every input is valid and every asset edit is written, so a rejected execution leaves no orphan rows
+        saveSearchableData(validated.flow(), validated.execution(), searchableData);
+        return MapUtils.flattenToNestedMap(stored);
+    }
+
+    private ValidatedInputs validateExecutionInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data) {
+        List<InputAndValue> values = this.resolveInputs(inputs, flow, execution, data, true, false, true)
             .stream()
             .filter(InputAndValue::enabled)
-            .peek(it -> {
-                //TODO check to return all exception at-once.
-                if (it.exceptions() != null && !it.exceptions().isEmpty()) {
-                    throw InputOutputValidationException.merge(it.exceptions());
-                }
-            })
-            .map(it ->
-            {
-                if (Boolean.TRUE.equals(it.input().getSearchable())) {
-                    RunContext runContext = runContextFactory.get().of(flow, execution);
-                    try {
-                        searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), execution, it.input(), it.value()));
-                    } catch (Exception e) {
-                        runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), execution.getId(), e.getMessage(), e);
-                    }
-                }
-
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.input() instanceof AssetInput ? AssetInput.storedValue(it.value()) : it.value());
-            })
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
-        // saved only once every input is valid, so a rejected execution leaves no orphan rows
-        saveSearchableData(flow, execution, searchableData);
-        if (resolved.size() < data.size()) {
+            .toList();
+        //TODO check to return all exception at-once.
+        values.stream()
+            .filter(it -> it.exceptions() != null && !it.exceptions().isEmpty())
+            .findFirst()
+            .ifPresent(it -> {
+                throw InputOutputValidationException.merge(it.exceptions());
+            });
+        Set<String> declared = values.stream().map(it -> it.input().getId()).collect(Collectors.toSet());
+        if (declared.size() < data.size()) {
             RunContext runContext = runContextFactory.get().of(flow, execution);
             for (var inputKey : data.keySet()) {
-                if (!resolved.containsKey(inputKey)) {
+                if (!declared.contains(inputKey)) {
                     runContext.logger().warn(
                         "Input {} was provided for workflow {}.{} but isn't declared in the workflow inputs",
                         inputKey,
@@ -366,7 +420,7 @@ public class FlowInputOutput {
                 }
             }
         }
-        return MapUtils.flattenToNestedMap(resolved);
+        return new ValidatedInputs(flow, execution, values);
     }
 
     /**
@@ -992,6 +1046,27 @@ public class FlowInputOutput {
 
         public boolean isFromFileUpload() {
             return fromFileUpload;
+        }
+    }
+
+    /**
+     * Inputs of an execution being created, resolved and validated, whose edits to assets are not written yet.
+     */
+    public record ValidatedInputs(FlowInterface flow, Execution execution, List<InputAndValue> values) {
+        /**
+         * The same inputs, for another execution, such as a replay or a test run of the one they were validated for.
+         */
+        public ValidatedInputs withExecution(Execution execution) {
+            return new ValidatedInputs(flow, execution, values);
+        }
+
+        /**
+         * The typed values, as the flow checks see them: an {@code ASSET} input is the asset, edits included.
+         */
+        public Map<String, Object> typed() {
+            Map<String, Object> typed = new HashMap<>();
+            values.forEach(it -> typed.put(it.input().getId(), it.value()));
+            return MapUtils.flattenToNestedMap(typed);
         }
     }
 }

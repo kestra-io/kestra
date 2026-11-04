@@ -79,6 +79,8 @@ export interface InputMetaData {
     allowCustomValue?: boolean;
     min?: number;
     max?: number;
+    after?: string;
+    before?: string;
     allowedFileExtensions?: string[];
     accept?: string;
     prefill?: unknown;

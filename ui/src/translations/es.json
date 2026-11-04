@@ -1092,7 +1092,7 @@
       "heading": "Todo sobre Kestra.",
       "subheading": "Las últimas actualizaciones, guías e historias"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta ejecución aún está RUNNING, eliminarla no la detendrá.<br />Necesitas matar la ejecución para detenerla.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Esta execution sigue en ejecución, eliminarla no la detendrá.<br />Necesitas kill la execution para detenerla.</div>",
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
     "bulk delete": "¿Estás seguro de que quieres eliminar <code>{executionCount}</code> ejecución(es)?",
@@ -1925,6 +1925,11 @@
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
     "scheduleDateInPast": "La fecha de programación debe ser en el futuro",
+    "inputs_date_range": {
+      "between": "El valor más temprano es {after}, el valor más tardío es {before}.",
+      "after": "El valor más temprano es {after}.",
+      "before": "El valor más tardío es {before}."
+    },
     "warning": "Advertencia",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",

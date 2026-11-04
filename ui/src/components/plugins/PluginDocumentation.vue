@@ -11,7 +11,7 @@
                             onlyIcon
                             :loadIcon="pluginsStore.loadIcon"
                         />
-                        <span class="dp-name text-truncate">{{ pluginName }}</span>
+                        <KsText class="dp-name" truncated>{{ pluginName }}</KsText>
                         <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
                         <div class="dp-actions">
                             <KsButton
@@ -25,7 +25,7 @@
                         </div>
                     </div>
                     <div class="dp-type">
-                        <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
+                        <KsText class="dp-cls" truncated>{{ currentPlugin.cls }}</KsText>
                         <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
                             {{ currentPlugin.version }}
                         </KsTag>
@@ -89,10 +89,10 @@
             v-else-if="overrideIntro"
             :content="overrideIntro"
             class="dp-override-intro"
-            :class="{'position-absolute': absolute}"
+            :class="{'dp-absolute': absolute}"
         />
 
-        <div v-else-if="introContent" class="dp-intro" :class="{'position-absolute': absolute}">
+        <div v-else-if="introContent" class="dp-intro" :class="{'dp-absolute': absolute}">
             <div class="dp-intro-hero">
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
@@ -274,7 +274,7 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
-    import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
+    import {KsButton, KsInput, KsMarkdown, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
     import {buildHighlightHtml} from "../../utils/crossResourceSearch"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
@@ -580,6 +580,10 @@
   .dp-override-intro {
     width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-absolute {
+    position: absolute;
   }
 
   .dp-sticky {

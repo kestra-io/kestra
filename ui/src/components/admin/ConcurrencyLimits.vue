@@ -55,7 +55,7 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type ConcurrencyLimit} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrlWithTenant} from "override/utils/route"
     import {useAuthStore} from "override/stores/auth"
@@ -77,21 +77,13 @@
         }
     })
 
-    interface ConcurrencyLimit {
-        tenantId: string
-        namespace: string,
-        flowId: string,
-        running: number,
-        queued: number
-    }
+    type ConcurrencyLimitRow = ConcurrencyLimit & {queued?: number}
+    type ConcurrencyLimitPage = {results: ConcurrencyLimitRow[], total: number}
 
-    const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running", "queued"]
+    const KEYS: (keyof ConcurrencyLimitRow)[] = ["tenantId", "namespace", "flowId", "running", "queued"]
 
     const axios = useClient()
-    const data = ref<{
-        total: number;
-        results: ConcurrencyLimit[]
-    }>()
+    const data = ref<ConcurrencyLimitPage>()
 
     const dataTable = useTemplateRef("dataTable")
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -99,7 +91,7 @@
 
     async function loadData({page, size}: {page: number, size: number}){
         try {
-            const response = await axios.get(`${baseUrl.value}/concurrency-limit/search?page=${page}&size=${size}`)
+            const response = await axios.get<ConcurrencyLimitPage>(`${baseUrl.value}/concurrency-limit/search?page=${page}&size=${size}`)
             if(response?.status !== 200){
                 throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
             }
@@ -132,7 +124,7 @@
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
-        newRunningCount.value = row.running
+        newRunningCount.value = row.running ?? 0
         editingRow.value = row
     }
 

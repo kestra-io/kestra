@@ -736,7 +736,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
-      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
+      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können.",
+      "queued": "In Warteschlange",
+      "save_error": "Fehler beim Aktualisieren des Concurrency-Limits, der vorherige Wert wird beibehalten."
     },
     "flowConcurrency": {
       "loadError": "Das Concurrency-Limit dieses Flows konnte nicht geladen werden.",

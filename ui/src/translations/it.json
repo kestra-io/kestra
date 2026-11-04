@@ -736,7 +736,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limiti di Concorrenza",
-      "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito."
+      "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito.",
+      "queued": "In coda",
+      "save_error": "Impossibile aggiornare il limite di Concurrency, il valore precedente è stato mantenuto."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",

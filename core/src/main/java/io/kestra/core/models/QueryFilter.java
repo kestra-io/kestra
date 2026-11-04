@@ -946,6 +946,12 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.NAME);
             }
+        },
+        CONCURRENCY_LIMIT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.NAMESPACE);
+            }
         };
 
         public abstract List<Field> supportedField();

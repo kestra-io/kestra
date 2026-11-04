@@ -41,6 +41,7 @@ const meta: Meta<typeof TaskRunPopup> = {
             [`GET /metrics/${EXECUTION_ID}`]: {results: [], total: 5},
             "GET /logs/search": {results: [], total: 14, type: "OFFSET"},
             [`GET /outputs/tasks/${EXECUTION_ID}/popup-task-run`]: {runId: 512994, manifest: "kestra:///manifest.json"},
+            [`GET /executions/${EXECUTION_ID}/follow`]: {},
         })
     },
     args: {

@@ -736,7 +736,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
-      "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido."
+      "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido.",
+      "queued": "En cola",
+      "save_error": "No se pudo actualizar el límite de concurrency, se mantiene el valor anterior."
     },
     "flowConcurrency": {
       "loadError": "No se pudo cargar el límite de concurrencia de este flow.",

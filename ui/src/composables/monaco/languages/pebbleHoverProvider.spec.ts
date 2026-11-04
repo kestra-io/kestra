@@ -31,7 +31,7 @@ tasks:
 ${SCRIPT}
   - id: log
     type: io.kestra.plugin.core.log.Log
-    message: "{{ inputs.file }} {{ vars.bucket }} {{ outputs.extract.uri }} {{ outputs.extract.missing }} {{ trigger.date }}"
+    message: "{{ inputs.file }} {{ vars.bucket }} {{ outputs.extract.uri }} {{ outputs.extract.missing }} {{ trigger.date }} {{ trigger.nope }} {{ outputs.extract.uri.deep }}"
 
 triggers:
   - id: hook
@@ -91,6 +91,18 @@ describe("providePebbleHover", () => {
 
         expect(values).toEqual(["```yaml\ndate: string\n```", "The scheduled date.", "$(zap) `daily`"])
         expect(hover?.contents[2]).toMatchObject({supportThemeIcons: true})
+    })
+
+    it("shows nothing for a trigger variable no trigger declares, instead of every trigger", async () => {
+        const {hover} = await hoverOn("nope")
+
+        expect(hover).toBeNull()
+    })
+
+    it("documents an output property only on the property itself, not on a deeper segment", async () => {
+        const {values} = await hoverOn("deep")
+
+        expect(values.join("\n")).not.toContain("The downloaded file URI.")
     })
 
     it("falls back to the task's YAML, capped and fenced past its own backticks, for an output the schema does not declare", async () => {

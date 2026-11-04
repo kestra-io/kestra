@@ -48,9 +48,26 @@ errors:
   - id: on_error
     type: io.kestra.plugin.core.log.Log
     message: "{{ outputs.extract.uri }}"
+
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.log.Log
+    message: done
+
+afterExecution:
+  - id: notify
+    type: io.kestra.plugin.core.log.Log
+    message: sent
+
+triggers:
+  - id: hook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: abc
+  - id: daily
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * *"
 `
 
-/** 1-based column of the second character of `token`, so the cursor sits inside it. */
 const columnInside = (line: string, token: string): number => line.indexOf(token) + 2
 
 const referenceAt = (line: string, token: string): PebbleReference => {
@@ -128,8 +145,10 @@ describe("resolveFlowDefinition", () => {
         expect(resolvedTexts("{{ inputs.file.name }}", "name")).toEqual([])
     })
 
-    it("finds a task declared under errors", () => {
+    it("finds a task declared under errors, finally or afterExecution", () => {
         expect(resolvedTexts("{{ outputs.on_error.x }}", "on_error")).toEqual(["on_error"])
+        expect(resolvedTexts("{{ outputs.cleanup.x }}", "cleanup")).toEqual(["cleanup"])
+        expect(resolvedTexts("{{ outputs.notify.x }}", "notify")).toEqual(["notify"])
     })
 
     it("finds a task nested inside a flowable", () => {
@@ -155,10 +174,15 @@ describe("resolveFlowDefinition", () => {
         expect(resolvedTexts("{{ outputs.extract }}", "outputs")).toEqual([])
     })
 
+    it("resolves trigger.x to every trigger id, and nothing below it", () => {
+        expect(resolvedTexts("{{ trigger.date }}", "date")).toEqual(["hook", "daily"])
+        expect(resolvedTexts("{{ trigger.date.foo }}", "foo")).toEqual([])
+    })
+
     it("returns nothing for an unknown id or an unsupported root", () => {
         expect(resolvedTexts("{{ inputs.missing }}", "missing")).toEqual([])
         expect(resolvedTexts("{{ outputs.missing.x }}", "missing")).toEqual([])
-        expect(resolvedTexts("{{ trigger.date }}", "date")).toEqual([])
+        expect(resolvedTexts("{{ execution.id }}", "id")).toEqual([])
     })
 })
 

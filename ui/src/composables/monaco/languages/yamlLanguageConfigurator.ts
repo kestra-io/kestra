@@ -621,11 +621,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         this.registerSubflowLinks(autoCompletionProviders)
-        registerPebbleDefinitionProvider(autoCompletionProviders)
         const pluginsStore = usePluginsStore()
-        registerPebbleHoverProvider(autoCompletionProviders, async (cls) =>
-            (await pluginsStore.load({cls, commit: false}))?.schema?.outputs?.properties,
-        )
+        const loadOutputProperties = async (cls: string) =>
+            (await pluginsStore.load({cls, commit: false}))?.schema?.outputs?.properties
+        registerPebbleDefinitionProvider(autoCompletionProviders, loadOutputProperties)
+        registerPebbleHoverProvider(autoCompletionProviders, loadOutputProperties)
         this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders

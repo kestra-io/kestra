@@ -1,16 +1,18 @@
 import * as monaco from "monaco-editor/editor/editor.api.js"
 import {isMap, isNode, isPair, isScalar, isSeq, parseDocument, Scalar, visit, type Document, type Pair, type YAMLMap} from "yaml"
+import type {JSONProperty} from "../../../components/plugins/schema/utils/schemaUtils"
 
 export interface PebbleReference {
     root: string
     segments: string[]
-    /** Index into `segments` of the identifier under the cursor, -1 when the cursor is on the root word. */
     segmentIndex: number
     startColumn: number
     endColumn: number
 }
 
 export type OffsetRange = [number, number]
+
+export type OutputPropertiesLoader = (taskType: string) => Promise<Record<string, JSONProperty> | undefined>
 
 export interface FlowSymbol {
     id: OffsetRange
@@ -88,14 +90,12 @@ function valueRange(node: unknown): OffsetRange | undefined {
     return [start, end]
 }
 
-// yaml attaches the comment above a collection's first item to the collection itself.
 function leadingComment(parent: unknown, item: YAMLMap | Pair): string | undefined {
     const own = isPair(item) ? (isNode(item.key) ? item.key.commentBefore : undefined) : item.commentBefore
     const inherited = (isSeq(parent) || isMap(parent)) && parent.items[0] === item ? parent.commentBefore : undefined
     return docComment(own ?? inherited)
 }
 
-// A blank line ends a comment group, so only the group touching the key documents it.
 function docComment(raw: string | null | undefined): string | undefined {
     const lines = raw?.split("\n") ?? []
     const group = lines.slice(lines.lastIndexOf("") + 1)
@@ -198,7 +198,7 @@ export function resolveFlowSymbols(source: string, ref: PebbleReference): FlowSy
     case "labels":
         return ref.segmentIndex === 0 ? labelSymbols(root.get("labels", true), ref.segments[0]) : []
     case "trigger":
-        return triggerSymbols(root.get("triggers", true))
+        return ref.segmentIndex === 0 ? triggerSymbols(root.get("triggers", true)) : []
     default:
         return []
     }
@@ -224,19 +224,42 @@ export function flowSymbolsAtPosition(model: monaco.editor.ITextModel, position:
     return {ref, symbols}
 }
 
-export function providePebbleDefinition(model: monaco.editor.ITextModel, position: monaco.IPosition): monaco.languages.LocationLink[] | null {
+export async function symbolsDeclaring(
+    symbols: FlowSymbol[],
+    name: string,
+    loadOutputProperties: OutputPropertiesLoader,
+): Promise<{symbol: FlowSymbol; property: JSONProperty}[]> {
+    const types = [...new Set(symbols.flatMap((symbol) => symbol.taskType ?? []))]
+    const schemas = new Map(await Promise.all(types.map(async (type) => [type, await loadOutputProperties(type).catch(() => undefined)] as const)))
+    return symbols.flatMap((symbol) => {
+        const property = symbol.taskType ? schemas.get(symbol.taskType)?.[name] : undefined
+        return property ? [{symbol, property}] : []
+    })
+}
+
+export async function providePebbleDefinition(
+    model: monaco.editor.ITextModel,
+    position: monaco.IPosition,
+    loadOutputProperties: OutputPropertiesLoader,
+): Promise<monaco.languages.LocationLink[] | null> {
     const resolved = flowSymbolsAtPosition(model, position)
     if (!resolved || resolved.symbols.length === 0) {
         return null
     }
     const {ref} = resolved
+    const symbols = ref.root === "trigger"
+        ? (await symbolsDeclaring(resolved.symbols, ref.segments[0], loadOutputProperties)).map(({symbol}) => symbol)
+        : resolved.symbols
+    if (symbols.length === 0) {
+        return null
+    }
     const originSelectionRange: monaco.IRange = {
         startLineNumber: position.lineNumber,
         startColumn: ref.startColumn,
         endLineNumber: position.lineNumber,
         endColumn: ref.endColumn,
     }
-    return resolved.symbols.map(({id: [start, end]}) => {
+    return symbols.map(({id: [start, end]}) => {
         const from = model.getPositionAt(start)
         const to = model.getPositionAt(end)
         const range: monaco.IRange = {
@@ -249,6 +272,8 @@ export function providePebbleDefinition(model: monaco.editor.ITextModel, positio
     })
 }
 
-export function registerPebbleDefinitionProvider(disposables: monaco.IDisposable[]): void {
-    disposables.push(monaco.languages.registerDefinitionProvider("yaml", {provideDefinition: providePebbleDefinition}))
+export function registerPebbleDefinitionProvider(disposables: monaco.IDisposable[], loadOutputProperties: OutputPropertiesLoader): void {
+    disposables.push(monaco.languages.registerDefinitionProvider("yaml", {
+        provideDefinition: (model, position) => providePebbleDefinition(model, position, loadOutputProperties),
+    }))
 }

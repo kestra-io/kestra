@@ -1,9 +1,7 @@
 import * as monaco from "monaco-editor/editor/editor.api.js"
 import {isMap, isNode, isPair, isScalar, type Pair, type YAMLMap} from "yaml"
 import type {JSONProperty} from "../../../components/plugins/schema/utils/schemaUtils"
-import {flowSymbolsAtPosition, type FlowSymbol, type OffsetRange} from "./pebbleDefinitionProvider"
-
-export type OutputPropertiesLoader = (taskType: string) => Promise<Record<string, JSONProperty> | undefined>
+import {flowSymbolsAtPosition, symbolsDeclaring, type FlowSymbol, type OffsetRange, type OutputPropertiesLoader} from "./pebbleDefinitionProvider"
 
 const MAX_SNIPPET_LINES = 15
 
@@ -48,10 +46,20 @@ function symbolDoc(symbol: FlowSymbol): string | undefined {
     return doc || undefined
 }
 
-function codeBlock(code: string, language = "yaml"): string {
+function fenceFor(code: string, minimum: number): string {
     const longestRun = Math.max(0, ...(code.match(/`+/g) ?? []).map((run) => run.length))
-    const fence = "`".repeat(Math.max(3, longestRun + 1))
+    return "`".repeat(Math.max(minimum, longestRun + 1))
+}
+
+function codeBlock(code: string, language = "yaml"): string {
+    const fence = fenceFor(code, 3)
     return `${fence}${language}\n${code}\n${fence}`
+}
+
+function inlineCode(code: string): string {
+    const fence = fenceFor(code, 1)
+    const pad = code.startsWith("`") || code.endsWith("`") ? " " : ""
+    return `${fence}${pad}${code}${pad}${fence}`
 }
 
 function propertyType(property: JSONProperty): string | undefined {
@@ -79,19 +87,6 @@ function symbolHover(source: string, symbol: FlowSymbol): monaco.IMarkdownString
     ]
 }
 
-async function symbolsDeclaring(
-    symbols: FlowSymbol[],
-    name: string,
-    loadOutputProperties: OutputPropertiesLoader,
-): Promise<{symbol: FlowSymbol; property: JSONProperty}[]> {
-    const types = [...new Set(symbols.flatMap((symbol) => symbol.taskType ?? []))]
-    const schemas = new Map(await Promise.all(types.map(async (type) => [type, await loadOutputProperties(type).catch(() => undefined)] as const)))
-    return symbols.flatMap((symbol) => {
-        const property = symbol.taskType ? schemas.get(symbol.taskType)?.[name] : undefined
-        return property ? [{symbol, property}] : []
-    })
-}
-
 export async function providePebbleHover(
     model: monaco.editor.ITextModel,
     position: monaco.IPosition,
@@ -111,7 +106,7 @@ export async function providePebbleHover(
     }
 
     const source = model.getValue()
-    const outputName = ref.root === "trigger" ? ref.segments[0] : ref.root === "outputs" && ref.segmentIndex >= 1 ? ref.segments[1] : undefined
+    const outputName = ref.root === "trigger" ? ref.segments[0] : ref.root === "outputs" && ref.segmentIndex === 1 ? ref.segments[1] : undefined
     if (outputName !== undefined) {
         const declaring = await symbolsDeclaring(symbols, outputName, loadOutputProperties)
         if (token?.isCancellationRequested) {
@@ -120,10 +115,13 @@ export async function providePebbleHover(
         if (declaring.length > 0) {
             const contents = outputPropertyHover(outputName, declaring[0].property)
             if (ref.root === "trigger") {
-                const ids = declaring.map(({symbol}) => `$(zap) \`${source.slice(...symbol.id)}\``).join("  ")
+                const ids = declaring.map(({symbol}) => `$(zap) ${inlineCode(source.slice(...symbol.id))}`).join("  ")
                 contents.push({value: ids, supportThemeIcons: true})
             }
             return {range, contents}
+        }
+        if (ref.root === "trigger") {
+            return null
         }
     }
 

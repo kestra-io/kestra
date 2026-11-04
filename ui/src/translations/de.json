@@ -1414,7 +1414,6 @@
       "management": {
         "upload": "Hochladen",
         "addPlugin": "Plugin hinzufügen",
-        "enterpriseOnly": "Verfügbar in der Enterprise Edition",
         "lockedTitle": "Plugin-Versionsverwaltung",
         "lockedDescription": "Installiere Plugins, halte mehrere Versionen nebeneinander und upgrade sie ohne das Image neu zu erstellen, mit der Enterprise Edition.",
         "learnMore": "Erfahre mehr",

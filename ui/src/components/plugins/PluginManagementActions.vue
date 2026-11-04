@@ -2,22 +2,14 @@
     <div class="plugin-management">
         <ul class="plugin-management-actions">
             <li>
-                <KsTooltip :content="$t('pluginPage.management.enterpriseOnly')">
-                    <span data-test="plugin-upload-locked">
-                        <KsButton :icon="LockOutline" size="small" disabled>
-                            {{ $t("pluginPage.management.upload") }}
-                        </KsButton>
-                    </span>
-                </KsTooltip>
+                <KsButton :icon="LockOutline" size="small" disabled data-test="plugin-upload-locked">
+                    {{ $t("pluginPage.management.upload") }}
+                </KsButton>
             </li>
             <li>
-                <KsTooltip :content="$t('pluginPage.management.enterpriseOnly')">
-                    <span data-test="plugin-add-locked">
-                        <KsButton :icon="LockOutline" type="primary" size="small" disabled>
-                            {{ $t("pluginPage.management.addPlugin") }}
-                        </KsButton>
-                    </span>
-                </KsTooltip>
+                <KsButton :icon="LockOutline" type="primary" size="small" disabled data-test="plugin-add-locked">
+                    {{ $t("pluginPage.management.addPlugin") }}
+                </KsButton>
             </li>
         </ul>
         <KsText size="small" class="plugin-management-note" data-test="plugin-management-note">

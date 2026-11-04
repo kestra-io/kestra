@@ -1414,7 +1414,6 @@
       "management": {
         "upload": "上传",
         "addPlugin": "添加 plugin",
-        "enterpriseOnly": "企业版可用",
         "lockedTitle": "插件版本管理",
         "lockedDescription": "使用企业版安装插件，并排保留多个版本，无需重新构建镜像即可升级。",
         "learnMore": "了解更多",

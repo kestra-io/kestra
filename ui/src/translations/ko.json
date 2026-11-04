@@ -1414,7 +1414,6 @@
       "management": {
         "upload": "업로드",
         "addPlugin": "플러그인 추가",
-        "enterpriseOnly": "Enterprise Edition에서 사용 가능",
         "lockedTitle": "플러그인 버전 관리",
         "lockedDescription": "Enterprise Edition으로 플러그인을 설치하고 여러 버전을 나란히 유지하며 이미지를 다시 빌드하지 않고 업그레이드하세요.",
         "learnMore": "자세히 알아보기",

@@ -1414,7 +1414,6 @@
       "management": {
         "upload": "アップロード",
         "addPlugin": "プラグインを追加",
-        "enterpriseOnly": "Enterprise Editionで利用可能",
         "lockedTitle": "Pluginバージョン管理",
         "lockedDescription": "Enterprise Edition を使用すると、イメージを再構築することなく、複数のバージョンの plugin を並行してインストールおよびアップグレードできます。",
         "learnMore": "詳細はこちら",

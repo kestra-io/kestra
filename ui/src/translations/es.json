@@ -1414,7 +1414,6 @@
       "management": {
         "upload": "Subir",
         "addPlugin": "Añadir plugin",
-        "enterpriseOnly": "Disponible en la Enterprise Edition",
         "lockedTitle": "Gestión de versiones de Plugin",
         "lockedDescription": "Instala plugins, mantén varias versiones en paralelo y actualízalas sin reconstruir la imagen, con la Enterprise Edition.",
         "learnMore": "Aprender más",

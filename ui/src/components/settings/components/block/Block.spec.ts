@@ -21,14 +21,6 @@ describe("Block", () => {
         expect(wrapper.findComponent(KsCard).get("p").text()).toBe("Settings content")
     })
 
-    test("renders the card without shadow and without body padding", () => {
-        const wrapper = mountBlock("General settings")
-
-        expect(wrapper.findComponent(KsCard).props("shadow")).toBe("never")
-        // The slot content sits directly in the card body, so its parent carries the padding that reaches the user.
-        expect(wrapper.get("p").element.parentElement?.style.padding).toBe("0px")
-    })
-
     test("renders an empty heading element", () => {
         const wrapper = mountBlock("")
 

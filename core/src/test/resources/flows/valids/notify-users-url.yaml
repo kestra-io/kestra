@@ -1,0 +1,17 @@
+id: notify-users-url
+namespace: io.kestra.tests
+
+tasks:
+  - id: notify_relative
+    type: io.kestra.plugin.core.notification.Notify
+    users:
+      - alice
+    title: "Relative: {{ execution.id }}"
+    url: "/main/executions/{{ flow.namespace }}/{{ flow.id }}/{{ execution.id }}"
+
+  - id: notify_absolute
+    type: io.kestra.plugin.core.notification.Notify
+    users:
+      - alice
+    title: "Absolute: {{ execution.id }}"
+    url: "https://kestra.io/docs"

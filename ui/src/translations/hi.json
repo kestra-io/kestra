@@ -1092,7 +1092,7 @@
       "heading": "सभी चीजें Kestra।",
       "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">यह execution अभी भी चल रहा है, इसे हटाने से यह रुकेगा नहीं।<br />इसे रोकने के लिए आपको execution को समाप्त करना होगा।</div>",
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
@@ -1926,9 +1926,9 @@
     "scheduleDate": "अनुसूची तिथि",
     "scheduleDateInPast": "शेड्यूल की तारीख भविष्य में होनी चाहिए",
     "inputs_date_range": {
-      "between": "सबसे शुरुआती मान {after} है, सबसे नया मान {before} है।",
-      "after": "सबसे शुरुआती मान {after} है।",
-      "before": "नवीनतम मान {before} है।"
+      "between": "सबसे पहला मान {after} है, सबसे आखिरी मान {before} है।",
+      "after": "सबसे पहला मान {after} है।",
+      "before": "सबसे आखिरी मान {before} है।"
     },
     "warning": "चेतावनी",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",

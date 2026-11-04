@@ -1092,7 +1092,7 @@
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">此 execution 仍在运行，删除它不会停止它。<br />您需要 kill 该 execution 才能停止它。</div>",
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
@@ -1927,8 +1927,8 @@
     "scheduleDateInPast": "计划日期必须在未来",
     "inputs_date_range": {
       "between": "最早值为 {after}，最晚值为 {before}。",
-      "after": "最早的值是 {after}。",
-      "before": "最新值为 {before}。"
+      "after": "最早值为 {after}。",
+      "before": "最晚值为 {before}。"
     },
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",

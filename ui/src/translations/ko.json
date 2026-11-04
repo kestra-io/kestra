@@ -1928,7 +1928,7 @@
     "inputs_date_range": {
       "between": "가장 이른 값은 {after}이고, 가장 늦은 값은 {before}입니다.",
       "after": "가장 이른 값은 {after}입니다.",
-      "before": "최신 value는 {before}입니다."
+      "before": "가장 늦은 값은 {before}입니다."
     },
     "warning": "경고",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",

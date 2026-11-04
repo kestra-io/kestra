@@ -1926,9 +1926,9 @@
     "scheduleDate": "Data di pianificazione",
     "scheduleDateInPast": "La data di pianificazione deve essere nel futuro",
     "inputs_date_range": {
-      "between": "Il valore più vecchio è {after}, il valore più recente è {before}.",
-      "after": "Il valore più vecchio è {after}.",
-      "before": "L'ultimo valore è {before}."
+      "between": "Il valore minimo è {after}, il valore massimo è {before}.",
+      "after": "Il valore minimo è {after}.",
+      "before": "Il valore massimo è {before}."
     },
     "warning": "Avviso",
     "trigger_check_warning": "Utilizzare le variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza `??` per risolvere il problema. Ad esempio, invece di `trigger.date`, usa `trigger.date ?? execution.startDate`.",

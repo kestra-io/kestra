@@ -2031,7 +2031,6 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
-      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",

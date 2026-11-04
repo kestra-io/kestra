@@ -2031,7 +2031,6 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
-      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",

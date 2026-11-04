@@ -173,12 +173,6 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!failedModules[taskType]
     }
 
-    // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
-    function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
-        const runnerType = task?.taskRunner?.type
-        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
-    }
-
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
@@ -186,7 +180,6 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         resolveRemoteComponent,
         hasResolvedComponent,
         hasFailedComponent,
-        componentTypeFor,
         subtitleResolvers,
     }
 }

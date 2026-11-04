@@ -2,7 +2,6 @@
     <div ref="vueFlow" class="vueflow">
         <slot name="top-bar" />
         <Topology
-            v-if="manifestReady"
             :key="`topology-${!!executionsStore.execution?.id}`"
             :id="vueflowId"
             :isHorizontal="isHorizontal"
@@ -21,9 +20,6 @@
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :replayEnabled="replayEnabled"
-            :getNodeDimensions="getNodeDimensions"
-            :customActions="customActions"
-            :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
             :loopLanes="loopLanes"
@@ -45,31 +41,12 @@
             @replay-task="onReplayTask"
             @show-description="showDescription"
             @show-condition="showCondition"
-            @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @move-task="onMoveTask"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
-            <template #taskDetails="taskProps">
-                <slot name="taskDetails" v-bind="taskProps">
-                    <TopologyDetailsRemote
-                        v-if="isTask(taskProps.data.node?.task)"
-                        :taskType="detailsTypeFor(taskProps.data.node.task)"
-                        :task="taskWithSource(taskProps.data.node.task)"
-                        :execution="exec"
-                        :namespace="props.namespace"
-                        :flowId="props.flowId"
-                        :tenant="tenant"
-                        :source="flowSource"
-                        :progress="taskProgress(taskProps.data.node?.task?.id)"
-                        :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
-                        :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
-                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
-                    />
-                </slot>
-            </template>
             <template #loopScope="{uid, lane}">
                 <LoopIterationPicker
                     :lane="lane"
@@ -158,17 +135,6 @@
             @close="commandMenuOpen = false"
         />
 
-        <KsDialog
-            v-if="isTaskModalOpen && taskModalCtx?.task && taskModalCtx?.taskType"
-            v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? $t('no_code.task_details')"
-            :destroyOnClose="true"
-            :appendToBody="true"
-            scrollable
-        >
-            <TopologyTaskModalRemote v-bind="taskModalCtx" />
-        </KsDialog>
-
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
@@ -249,33 +215,6 @@
                     class="detail"
                 />
             </div>
-            <div v-if="isShowCustomActionOpen && customActionMeta">
-                <KsEditor
-                    :readOnly="true"
-                    :inline="true"
-                    :options="{fullHeight: false}"
-                    :navbar="false"
-                    :modelValue="customActionModelValue"
-                    :lang="customActionMeta.lang"
-                    class="detail"
-                />
-                <TaskDrawerRemote
-                    v-if="isTask(selectedTask)"
-                    :taskType="selectedTask.type"
-                    :task="taskWithSource(selectedTask)"
-                    :execution="exec"
-                    :namespace="props.namespace"
-                    :flowId="props.flowId"
-                    :tenant="tenant"
-                    :source="flowSource"
-                    :progress="taskProgress(selectedTask?.id)"
-                    :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
-                    :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
-                    :fetchEndpoint="fetchTaskEndpoint(selectedTask)"
-                    displayMode="full"
-                    class="detail"
-                />
-            </div>
         </KsDrawer>
 
         <TaskRunPopup
@@ -305,12 +244,12 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onBeforeUnmount, onMounted, ref, inject, provide, watch, computed} from "vue"
+    import {nextTick, onBeforeUnmount, onMounted, ref, inject, watch, computed} from "vue"
     import {useShownValidationErrors} from "../no-code/utils/useFieldValidationErrors"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRouter} from "vue-router"
     import {storageKeys, topologyOrientations} from "../../utils/constants"
     import {useVueFlow} from "@vue-flow/core"
 
@@ -321,13 +260,11 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
-    import type {CustomActionConfig, FlowGraph, NodeAction} from "@kestra-io/topology"
-    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
-    import type {Execution, TaskRun, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
-    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
+    import type {FlowGraph, NodeAction} from "@kestra-io/topology"
+    import {SECTIONS, State, KsMarkdown, KsEditor, vKsLoading} from "@kestra-io/design-system"
+    import type {Execution, TaskRun, Task} from "@kestra-io/kestra-sdk"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import type {AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
-    import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import TaskRunPopup, {type TaskRunPopupTab} from "../executions/TaskRunPopup.vue"
     import {EXECUTION_ARTIFACTS_KEY} from "../executions/composables/useExecutionArtifacts"
@@ -336,8 +273,7 @@
     import LoopScopeBar from "../executions/LoopScopeBar.vue"
     import {useLoopScoping} from "../../composables/useLoopScoping"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-    import {getAllTasks} from "../../utils/flowUtils"
+    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
@@ -396,7 +332,6 @@
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore, type ParsedFlow} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
-    import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
 
     interface FlowTask {
@@ -412,10 +347,6 @@
         };
         tasks?: FlowTask[];
         [key: string]: unknown;
-    }
-
-    type TaskModalContext = KnownSlotProps["topology-task-modal"] & {
-        title?: string;
     }
 
     interface DrawerTaskInspection {
@@ -441,7 +372,6 @@
     const POPUP_EXCLUDED_NODE_ACTIONS = [...EXCLUDED_NODE_ACTIONS, "logs", "description"]
 
     const router = useRouter()
-    const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
     const {fitView, getNodes} = useVueFlow(vueflowId.value)
@@ -501,8 +431,6 @@
 
     const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
 
-    const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
-
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
@@ -560,9 +488,9 @@
     })
 
     // forExecution() strips taskRunner from graph nodes. Re-inject the task's own runner, whole,
-    // from the source index so topology-details and the burger-menu "Show Details" item work in
-    // execution view too. Same object identity back when there is nothing to inject: the topology
-    // regenerates its whole graph on any change of this prop.
+    // from the source index so the runner label shows in execution view too. Same object identity
+    // back when there is nothing to inject: the topology regenerates its whole graph on any change
+    // of this prop.
     const augmentedFlowGraph = computed(() => {
         const graph = effectiveFlowGraph.value
         if (!graph) return graph
@@ -594,152 +522,6 @@
             taskRunner: fromSource.taskRunner ?? task.taskRunner,
         }
     }
-
-    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent, componentTypeFor: detailsTypeFor} = useFederatedModule("topology-details")
-    const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, componentTypeFor: modalTypeFor} = useFederatedModule("topology-task-modal")
-
-
-    const isCustomActionConfig = (value: unknown): value is CustomActionConfig =>
-        typeof value === "object" && value !== null && "label" in value && typeof value.label === "string"
-
-    const customActions = computed(() => {
-        const result: Record<string, CustomActionConfig> = {}
-        for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
-            const ca = info && "customAction" in info ? info.customAction : undefined
-            if (isCustomActionConfig(ca) && ca.label) {
-                result[type] = ca
-            }
-        }
-        return result
-    })
-
-    // progressEvents are never reset across execution navigations (taskRunId is globally
-    // unique so old entries are harmless in isolation) — but filtering on taskId alone lets a
-    // PREVIOUS taskRun's entries leak into a fresh run of the same task, or into a pre-execution
-    // view with no run at all. Resolve this task's CURRENT taskRun from the execution and filter
-    // on that instead: no current taskRun means nothing to show.
-    const currentTaskRunId = (taskId: string | undefined): string | undefined => {
-        const list = exec.value?.taskRunList
-        const filtered = list?.filter((r) => r.taskId === taskId) ?? []
-        return filtered[filtered.length - 1]?.id
-    }
-
-    const taskProgress = (taskId: string | undefined) => {
-        const taskRunId = currentTaskRunId(taskId)
-        if (!taskRunId) return []
-        return executionsStore.progressEvents.filter((p) => p.taskRunId === taskRunId)
-    }
-
-    // Both fetchers resolve the execution when CALLED, not when bound: an artifact is handed its
-    // props once, when the graph is generated, and the execution (or the task run it should read)
-    // may only come into existence later (a playground run, a replay).
-    const fetchTaskOutputs = (taskId: string | undefined) => ({taskRunId}: {taskRunId?: string} = {}) => {
-        const executionId = exec.value?.id
-        const runId = taskRunId ?? currentTaskRunId(taskId)
-        if (!executionId || !runId) return Promise.resolve({})
-        return loadTaskRunOutputs(executionId, runId)
-    }
-
-    const fetchTaskEndpoint = (task: FlowTask | undefined) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
-        const executionId = exec.value?.id
-        const runId = taskRunId ?? currentTaskRunId(task?.id)
-        if (!executionId || !runId || !task?.type) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
-        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
-    }
-
-    const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
-        const executionId = exec.value?.id
-        if (!executionId || !taskId) return Promise.resolve({results: [], total: 0})
-        return MetricsAPI.searchByExecution({
-            executionId,
-            taskId,
-            taskRunId,
-            page,
-            size,
-            sort: sort ? [sort] : undefined,
-        })
-    }
-
-    // Topology nodes only re-evaluate their taskDetails slot (where taskProgress is read) when the
-    // graph is regenerated — bump this so a live progress update (which isn't part of `execution`
-    // or `flowGraph`) still reaches an already-rendered node.
-    const taskDetailsVersion = ref(0)
-    watch(() => executionsStore.progressEvents, () => {
-        taskDetailsVersion.value++
-    })
-
-    const isTaskModalOpen = ref(false)
-    const taskModalCtx = ref<TaskModalContext | null>(null)
-
-    provide("kestra:openTaskModal", (ctx: TaskModalContext) => {
-        taskModalCtx.value = ctx
-        isTaskModalOpen.value = true
-    })
-
-    function getNodeDimensions(
-        node: FlowGraph["nodes"][number],
-        getNodeWidth: (node: FlowGraph["nodes"][number]) => number,
-        getNodeHeight: (node: FlowGraph["nodes"][number]) => number,
-    ) {
-        const taskType = node?.task?.type
-        const runnerType = runnerOf(node?.task)?.type
-        const addInfo = (taskType ? taskAdditionalInfoRemote.value[taskType] : undefined) ??
-            (runnerType ? taskAdditionalInfoRemote.value[runnerType] : undefined)
-        const hasExecution = !!executionsStore.execution?.id
-        const height = hasExecution
-            ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
-            : (addInfo?.height ?? getNodeHeight(node))
-        return {
-            width: getNodeWidth(node),
-            height,
-        }
-    }
-
-    const resolveTaskTopologyDetails = async (tasks: FlowTask[] = []) => {
-        const taskTypes = new Set<string>()
-        const runnerTypes = new Set<string>()
-        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
-        getAllTasks(tasks).forEach((task: FlowTask) => {
-            if (!task?.type) {
-                return
-            }
-            taskTypes.add(`${task.type}:${task.version ?? "null"}`)
-            if (task?.taskRunner?.type) {
-                runnerTypes.add(`${task.taskRunner.type}:${task.taskRunner.version ?? "null"}`)
-            }
-        })
-
-        const taskTypesReParsed: {cls: string, version: string | undefined}[] = []
-        const runnerTypesReParsed: {cls: string, version: string | undefined}[] = []
-
-        for (const tt of taskTypes) {
-            const [cls, version] = tt.split(":")
-            taskTypesReParsed.push({cls, version: version === "null" ? undefined : version})
-        }
-        for (const tt of runnerTypes) {
-            const [cls, version] = tt.split(":")
-            runnerTypesReParsed.push({cls, version: version === "null" ? undefined : version})
-        }
-
-        await Promise.all([
-            resolveRemoteComponent(taskTypesReParsed),
-            resolveDrawerComponent(taskTypesReParsed),
-            resolveTaskModalComponent(taskTypesReParsed),
-            ...(runnerTypesReParsed.length ? [
-                resolveTaskModalComponent(runnerTypesReParsed),
-                resolveRemoteComponent(runnerTypesReParsed),
-            ] : []),
-        ])
-    }
-
-    watch(
-        () => flowStore.flowParsed?.tasks,
-        async (tasks) => {
-            await resolveTaskTopologyDetails(tasks ?? [])
-        },
-        {immediate: true},
-    )
 
     const editorBindings = useEditorBindings()
 
@@ -786,36 +568,6 @@
         const uid = loopScoping.firstFailedLaneUid()
         if (uid) loopScoping.scopeFirstFailure(uid)
     }
-
-    watch(
-        () => props.flowGraph,
-        async (flowGraph) => {
-            if (flowStore.flowParsed?.tasks?.length) return
-            // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
-            const sourceParsed = props.source ? YAML_UTILS.parse<ParsedFlow>(props.source) : null
-            const tasks: FlowTask[] = sourceParsed?.tasks?.length
-                ? sourceParsed.tasks
-                : (flowGraph?.nodes ?? []).flatMap((n) => n.task?.type ? [n.task] : [])
-            await resolveTaskTopologyDetails(tasks)
-        },
-        {immediate: true},
-    )
-
-    // When props.source has runner types that flowParsed lacks (e.g. stale/absent flowYaml
-    // in execution view), re-resolve so the pluginUiManifest call includes runner types.
-    watch(
-        () => props.source,
-        async (source) => {
-            if (!source) return
-            const sourceTasks: FlowTask[] = YAML_UTILS.parse<ParsedFlow>(source)?.tasks ?? []
-            const flowParsedTasks: FlowTask[] = flowStore.flowParsed?.tasks ?? []
-            const hasRunner = (task: FlowTask) => Boolean(task.taskRunner?.type)
-            if (getAllTasks(sourceTasks).some(hasRunner) && !getAllTasks(flowParsedTasks).some(hasRunner)) {
-                await resolveTaskTopologyDetails(sourceTasks)
-            }
-        },
-        {immediate: true},
-    )
 
     const emit = defineEmits([
         "follow",
@@ -895,7 +647,6 @@
     const resetDrawerSections = () => {
         isShowDescriptionOpen.value = false
         isShowConditionOpen.value = false
-        isShowCustomActionOpen.value = false
         isInspectOpen.value = false
         isReplayPickerOpen.value = false
     }
@@ -1128,7 +879,6 @@
         || flowPropertiesOpen.value
         || taskPicker.taskPickerVisible.value
         || Boolean(modalTarget.value)
-        || isTaskModalOpen.value
         || isDrawerOpen.value
 
     /** The focus walk reaches every task-holding lane, so the action has to follow it there. */
@@ -1454,48 +1204,6 @@
         resetDrawerSections()
         selectedTask.value = event.task
         isShowConditionOpen.value = true
-        isDrawerOpen.value = true
-    }
-
-    const customActionMeta = ref<CustomActionConfig>()
-    const isShowCustomActionOpen = ref(false)
-
-    const customActionModelValue = computed(() => {
-        if (!selectedTask.value || !customActionMeta.value?.taskProp) return ""
-        const value = selectedTask.value[customActionMeta.value.taskProp]
-        if (typeof value === "string") return value
-        if (value == null) return ""
-        if (typeof value === "object") return YAML_UTILS.stringify(value)
-        return String(value)
-    })
-
-    const showCustomAction = (event: { task: FlowTask; customAction: CustomActionConfig }) => {
-        const fullTask = taskWithSource(event.task)
-        if (!event.customAction.taskProp) {
-            if (!isTask(fullTask)) return
-            const taskType = modalTypeFor(fullTask)
-            if (!taskType) return
-            taskModalCtx.value = {
-                taskType,
-                title: event.customAction.label,
-                task: fullTask,
-                execution: exec.value,
-                namespace: props.namespace,
-                flowId: props.flowId,
-                tenant: tenant.value,
-                source: flowSource.value,
-                progress: taskProgress(fullTask.id),
-                fetchOutputs: fetchTaskOutputs(fullTask.id),
-                fetchMetrics: fetchTaskMetrics(fullTask.id),
-                fetchEndpoint: fetchTaskEndpoint(fullTask),
-            }
-            isTaskModalOpen.value = true
-            return
-        }
-        resetDrawerSections()
-        selectedTask.value = fullTask
-        customActionMeta.value = event.customAction
-        isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
     }
 

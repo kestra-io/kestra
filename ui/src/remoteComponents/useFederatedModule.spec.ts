@@ -19,7 +19,6 @@ describe("useFederatedModule", () => {
                 "io.kestra.plugin.dbt.cli.DbtCLI": [
                     {uiModule: "execution-artifact/model-graph", group: "io.kestra.plugin.dbt", staticInfo: {title: "Model graph"}},
                     {uiModule: "execution-artifact/compiled-sql", group: "io.kestra.plugin.dbt", staticInfo: {title: "Compiled SQL"}},
-                    {uiModule: "topology-details", group: "io.kestra.plugin.dbt", staticInfo: {height: 80}},
                 ],
             },
         })

@@ -2031,7 +2031,6 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",

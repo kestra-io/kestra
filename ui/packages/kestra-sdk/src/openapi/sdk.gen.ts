@@ -1406,7 +1406,9 @@ export const _05978F079 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Resume a list of paused executions asynchronously
+ * Resume a list of paused or breakpoint-suspended executions asynchronously
+ *
+ * Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end
  */
 export const _028Ee38A7 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
@@ -1426,7 +1428,9 @@ export const _028Ee38A7 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Resume executions filter by query parameters asynchronously
+ * Resume paused or breakpoint-suspended executions filtered by query parameters asynchronously
+ *
+ * Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end
  */
 export const _5A35A529 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;

@@ -35,6 +35,7 @@ export type Schema = {
     $deprecated?: boolean;
     $group?: string;
     $index?: number;
+    $dynamic?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")

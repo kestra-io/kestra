@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
+import {useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -13,7 +13,7 @@ import {validationErrorLines, type ValidationError} from "../utils/validationErr
 import {routeFamily} from "../utils/routeFamily"
 import resource from "../models/resource"
 import action from "../models/action"
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
@@ -232,13 +232,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
+        const {data} = await axios.post<Dashboard>(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
@@ -264,7 +264,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const validation = ++latestValidation
         const isLatest = () => validation === latestValidation
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
                 setValidationErrors(data.errors)
             }
@@ -279,7 +279,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
@@ -288,7 +288,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateChart(source: string) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
         return data
     }

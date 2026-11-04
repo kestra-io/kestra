@@ -31,6 +31,7 @@ import io.kestra.core.validations.WebhookValidation;
 
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -49,10 +50,33 @@ import reactor.core.publisher.Mono;
 
         Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and configurable response status, headers, body, and content type. Conditions are allowed except `MultipleCondition`.
 
-        Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
+        Responses: 401 (invalid signature), 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
 @Plugin(
     examples = {
+        @Example(
+            title = "Verify a GitHub-style webhook signature before starting the flow.",
+            code = """
+                id: signed_webhook
+                namespace: company.team
+
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "Received a verified webhook"
+
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: "{{ secret('WEBHOOK_KEY') }}"
+                    signature:
+                      header: X-Hub-Signature-256
+                      algorithm: HMAC_SHA256
+                      secret: "{{ secret('GITHUB_WEBHOOK_SECRET') }}"
+                      prefix: "sha256="
+                """,
+            full = true
+        ),
         @Example(
             title = "Add a webhook trigger to the current flow with its key read from the `WEBHOOK_KEY` secret; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`, where `{key}` is the value of that secret.",
             code = """
@@ -250,6 +274,17 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         description = "Body returned to the webhook caller instead of the default execution metadata or flow outputs. The value can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs. The body is sent to anyone who calls the webhook, so it should not contain secrets."
     )
     private Property<String> responseBody;
+
+    @Valid
+    @PluginProperty
+    @Schema(
+        title = "Verify the HMAC signature of the raw request body.",
+        description = "When configured, missing or invalid hexadecimal signatures return 401 before an execution is created. " +
+            "Verification supports FETCH, STORE and NONE without buffering stored bodies. " +
+            "Signed multipart/form-data requests are rejected because their original bytes are unavailable after multipart parsing. " +
+            "This validates payload integrity, but does not prevent replay of a signed request."
+    )
+    private Signature signature;
 
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
@@ -461,6 +496,38 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     }
 
     private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
+
+    @SuperBuilder
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class Signature {
+        @NotNull
+        @Schema(title = "The request header containing the hexadecimal signature.")
+        private Property<String> header;
+
+        @NotNull
+        @Builder.Default
+        @Schema(title = "The HMAC algorithm used by the sender.")
+        private Property<SignatureAlgorithm> algorithm = Property.ofValue(SignatureAlgorithm.HMAC_SHA256);
+
+        @NotNull
+        @Schema(title = "The shared signing secret.", description = "Use a secret expression such as `{{ secret('GITHUB_WEBHOOK_SECRET') }}`.")
+        private Property<String> secret;
+
+        @Schema(title = "The optional required prefix before the hexadecimal signature.", description = "For GitHub SHA256 signatures, use `sha256=`.")
+        private Property<String> prefix;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum SignatureAlgorithm {
+        HMAC_SHA1("HmacSHA1"),
+        HMAC_SHA256("HmacSHA256"),
+        HMAC_SHA512("HmacSHA512");
+
+        private final String jcaName;
+    }
 
     @Builder
     @ToString

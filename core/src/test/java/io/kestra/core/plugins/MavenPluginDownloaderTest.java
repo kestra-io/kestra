@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.InvalidException;
@@ -58,20 +60,30 @@ class MavenPluginDownloaderTest {
         }
     }
 
-    @Test
-    void shouldRejectAsInvalidWhenNoVersionMatchesTheRange() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"[1,2)", "LATEST"})
+    void shouldRejectAsInvalidWhenNoVersionOfTheArtifactExists(String version) throws IOException {
         try (MavenPluginDownloader downloader = downloader()) {
-            assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:[1,2)"))
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:" + version))
                 .isInstanceOf(InvalidException.class);
         }
     }
 
     @Test
-    void shouldNotBlameTheRequestWhenARepositoryCannotBeReached() throws IOException {
+    void shouldRejectAsInvalidWhenTheVersionRangeCannotBeParsed() throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:[1,"))
+                .isInstanceOf(InvalidException.class);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1.0.0", "[1,2)", "LATEST"})
+    void shouldNotBlameTheRequestWhenARepositoryCannotBeReached(String version) throws IOException {
         try (MavenPluginDownloader downloader = downloader()) {
             List<MavenPluginRepositoryConfig> unreachable = List.of(new MavenPluginRepositoryConfig("unreachable", "http://127.0.0.1:1/maven", null));
 
-            assertThatThrownBy(() -> downloader.resolve(MISSING_ARTIFACT, unreachable))
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:" + version, unreachable))
                 .isInstanceOf(KestraRuntimeException.class)
                 .isNotInstanceOf(InvalidException.class);
         }

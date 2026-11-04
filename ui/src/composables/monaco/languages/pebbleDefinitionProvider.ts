@@ -102,7 +102,7 @@ function docComment(raw: string | null | undefined): string | undefined {
     return group.map((line) => line.replace(/^ /, "")).join("\n").trim() || undefined
 }
 
-function symbolsOf(node: YAMLMap | Pair, idNode: unknown, parent: unknown): FlowSymbol[] {
+export function symbolsOf(node: YAMLMap | Pair, idNode: unknown, parent: unknown): FlowSymbol[] {
     const id = valueRange(idNode)
     return id ? [{id, node, comment: leadingComment(parent, node)}] : []
 }
@@ -224,6 +224,10 @@ export function flowSymbolsAtPosition(model: monaco.editor.ITextModel, position:
     return {ref, symbols}
 }
 
+export function referenceRange(ref: PebbleReference, lineNumber: number): monaco.IRange {
+    return {startLineNumber: lineNumber, startColumn: ref.startColumn, endLineNumber: lineNumber, endColumn: ref.endColumn}
+}
+
 export async function symbolsDeclaring(
     symbols: FlowSymbol[],
     name: string,
@@ -253,22 +257,21 @@ export async function providePebbleDefinition(
     if (symbols.length === 0) {
         return null
     }
-    const originSelectionRange: monaco.IRange = {
-        startLineNumber: position.lineNumber,
-        startColumn: ref.startColumn,
-        endLineNumber: position.lineNumber,
-        endColumn: ref.endColumn,
-    }
+    return symbolLinks(model, symbols, referenceRange(ref, position.lineNumber))
+}
+
+/** Links to `symbols`, whose offsets are in `target`'s text, from `originSelectionRange` in the hovered model. */
+export function symbolLinks(target: monaco.editor.ITextModel, symbols: FlowSymbol[], originSelectionRange: monaco.IRange): monaco.languages.LocationLink[] {
     return symbols.map(({id: [start, end]}) => {
-        const from = model.getPositionAt(start)
-        const to = model.getPositionAt(end)
+        const from = target.getPositionAt(start)
+        const to = target.getPositionAt(end)
         const range: monaco.IRange = {
             startLineNumber: from.lineNumber,
             startColumn: from.column,
             endLineNumber: to.lineNumber,
             endColumn: to.column,
         }
-        return {uri: model.uri, range, targetSelectionRange: range, originSelectionRange}
+        return {uri: target.uri, range, targetSelectionRange: range, originSelectionRange}
     })
 }
 

@@ -2,7 +2,7 @@ import * as monaco from "monaco-editor/editor/editor.api.js"
 import {isMap, isNode, isPair, isScalar, type Pair, type YAMLMap} from "yaml"
 import type {JSONProperty} from "../../../components/plugins/schema/utils/schemaUtils"
 import {storageKeys} from "../../../utils/constants"
-import {flowSymbolsAtPosition, symbolsDeclaring, type FlowSymbol, type OffsetRange, type OutputPropertiesLoader} from "./pebbleDefinitionProvider"
+import {flowSymbolsAtPosition, referenceRange, symbolsDeclaring, type FlowSymbol, type OffsetRange, type OutputPropertiesLoader, type PebbleReference} from "./pebbleDefinitionProvider"
 
 const MAX_SNIPPET_LINES = 15
 
@@ -79,13 +79,48 @@ function outputPropertyHover(name: string, property: JSONProperty): monaco.IMark
     ]
 }
 
-function symbolHover(source: string, symbol: FlowSymbol): monaco.IMarkdownString[] {
+export function symbolHover(source: string, symbol: FlowSymbol): monaco.IMarkdownString[] {
     const snippet = symbolSnippet(source, symbol)
     const doc = symbolDoc(symbol)
     return [
         ...(snippet ? [{value: codeBlock(snippet)}] : []),
         ...(doc ? [{value: doc, isTrusted: false, supportHtml: false}] : []),
     ]
+}
+
+export function isPebbleHoverEnabled(): boolean {
+    return localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false"
+}
+
+/** Hover contents for `symbols`, resolved from `ref` against the flow `source`; null when there is nothing to show. */
+export async function pebbleHoverContents(
+    ref: PebbleReference,
+    symbols: FlowSymbol[],
+    source: string,
+    loadOutputProperties: OutputPropertiesLoader,
+    token?: monaco.CancellationToken,
+): Promise<monaco.IMarkdownString[] | null> {
+    const outputName = ref.root === "trigger" ? ref.segments[0] : ref.root === "outputs" && ref.segmentIndex === 1 ? ref.segments[1] : undefined
+    if (outputName !== undefined) {
+        const declaring = await symbolsDeclaring(symbols, outputName, loadOutputProperties)
+        if (token?.isCancellationRequested) {
+            return null
+        }
+        if (declaring.length > 0) {
+            const contents = outputPropertyHover(outputName, declaring[0].property)
+            if (ref.root === "trigger") {
+                const ids = declaring.map(({symbol}) => `$(zap) ${inlineCode(source.slice(...symbol.id))}`).join("  ")
+                contents.push({value: ids, supportThemeIcons: true})
+            }
+            return contents
+        }
+        if (ref.root === "trigger") {
+            return null
+        }
+    }
+
+    const contents = symbols.flatMap((symbol) => symbolHover(source, symbol))
+    return contents.length === 0 ? null : contents
 }
 
 export async function providePebbleHover(
@@ -99,35 +134,8 @@ export async function providePebbleHover(
         return null
     }
     const {ref, symbols} = resolved
-    const range: monaco.IRange = {
-        startLineNumber: position.lineNumber,
-        startColumn: ref.startColumn,
-        endLineNumber: position.lineNumber,
-        endColumn: ref.endColumn,
-    }
-
-    const source = model.getValue()
-    const outputName = ref.root === "trigger" ? ref.segments[0] : ref.root === "outputs" && ref.segmentIndex === 1 ? ref.segments[1] : undefined
-    if (outputName !== undefined) {
-        const declaring = await symbolsDeclaring(symbols, outputName, loadOutputProperties)
-        if (token?.isCancellationRequested) {
-            return null
-        }
-        if (declaring.length > 0) {
-            const contents = outputPropertyHover(outputName, declaring[0].property)
-            if (ref.root === "trigger") {
-                const ids = declaring.map(({symbol}) => `$(zap) ${inlineCode(source.slice(...symbol.id))}`).join("  ")
-                contents.push({value: ids, supportThemeIcons: true})
-            }
-            return {range, contents}
-        }
-        if (ref.root === "trigger") {
-            return null
-        }
-    }
-
-    const contents = symbols.flatMap((symbol) => symbolHover(source, symbol))
-    return contents.length === 0 ? null : {range, contents}
+    const contents = await pebbleHoverContents(ref, symbols, model.getValue(), loadOutputProperties, token)
+    return contents && {range: referenceRange(ref, position.lineNumber), contents}
 }
 
 export function togglePebbleHover(): boolean {
@@ -147,8 +155,8 @@ export function registerPebbleHoverToggle(disposables: monaco.IDisposable[], lab
 
 export function registerPebbleHoverProvider(disposables: monaco.IDisposable[], loadOutputProperties: OutputPropertiesLoader): void {
     disposables.push(monaco.languages.registerHoverProvider("yaml", {
-        provideHover: (model, position, token) => localStorage.getItem(storageKeys.PEBBLE_HOVER) === "false"
-            ? null
-            : providePebbleHover(model, position, loadOutputProperties, token),
+        provideHover: (model, position, token) => isPebbleHoverEnabled()
+            ? providePebbleHover(model, position, loadOutputProperties, token)
+            : null,
     }))
 }

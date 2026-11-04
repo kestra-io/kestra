@@ -2543,6 +2543,7 @@
       "history": "Last 10 runs",
       "clear_history": "Start the next run fresh",
       "tooltip_persistence": "Playground runs are kept on the server: after a reload or a tab change, the next run builds on the run you left. Turning Playground off ends the current run.",
+      "session_error": "Your previous Playground runs could not be loaded.",
       "context": {
         "title": "Context",
         "task_run": "Task run",

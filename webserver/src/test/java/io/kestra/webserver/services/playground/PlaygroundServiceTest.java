@@ -3,20 +3,26 @@ package io.kestra.webserver.services.playground;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.storages.StorageContext;
@@ -28,6 +34,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.webserver.services.playground.PlaygroundService.RETAINED_RUNS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @KestraTest
 class PlaygroundServiceTest {
@@ -45,6 +52,9 @@ class PlaygroundServiceTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Test
     void shouldKeepTheNewestTerminatedRunsOfTheSameUserWhenANewRunStarts() {
@@ -85,6 +95,30 @@ class PlaygroundServiceTest {
         assertThat(executionRepository.findById(tenantId, producer.getId())).isEmpty();
         assertThat(storageInterface.exists(tenantId, NAMESPACE, producerFile)).isTrue();
         assertThat(storageInterface.exists(tenantId, NAMESPACE, unreferencedFile)).isFalse();
+    }
+
+    @Test
+    void shouldOnlyKillTheRunsStartedBeforeTheNewOne() {
+        String tenantId = IdUtils.create().toLowerCase();
+        Execution earlier = save(run(tenantId, "alice", 0, State.Type.BREAKPOINT));
+        Execution later = save(run(tenantId, "alice", 2, State.Type.CREATED));
+        Execution newRun = save(run(tenantId, "alice", 1, State.Type.CREATED));
+        List<String> killed = new CopyOnWriteArrayList<>();
+        QueueSubscriber<ExecutionKilled> subscriber = killQueue.subscriber().subscribe(either ->
+        {
+            if (either.isLeft() && either.getLeft() instanceof ExecutionKilledExecution kill && tenantId.equals(kill.getTenantId())) {
+                killed.add(kill.getExecutionId());
+            }
+        });
+
+        try {
+            playgroundService.onNewRun(newRun);
+
+            await().atMost(Duration.ofSeconds(10)).until(() -> killed.contains(earlier.getId()));
+            assertThat(killed).as("a run started after the new one, by a second click or tab, is left alone").doesNotContain(later.getId());
+        } finally {
+            subscriber.close();
+        }
     }
 
     @Test

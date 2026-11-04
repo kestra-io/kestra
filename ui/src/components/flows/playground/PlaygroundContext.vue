@@ -15,9 +15,9 @@
                     :label="taskRun.value ? `${taskRun.taskId} (${taskRun.value})` : taskRun.taskId"
                 />
             </KsSelect>
-            <KsAlert v-if="failed" type="error" :title="$t('playground.context.error')" :closable="false" />
-            <div v-else v-ks-loading="loading" class="context-tree" data-test="playground-context-tree">
-                <KsJsonTree v-if="context" :value="context" />
+            <KsAlert v-if="playgroundStore.contextLoadFailed" type="error" :title="$t('playground.context.error')" :closable="false" />
+            <div v-else v-ks-loading="playgroundStore.contextLoading" class="context-tree" data-test="playground-context-tree">
+                <KsJsonTree v-if="playgroundStore.context" :value="playgroundStore.context" />
             </div>
         </template>
     </div>
@@ -26,15 +26,15 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {KsAlert, KsEmpty, KsJsonTree, KsOption, KsSelect, vKsLoading} from "@kestra-io/design-system"
-    import * as PlaygroundAPI from "@kestra-io/kestra-sdk/playground"
     import {useExecutionsStore} from "../../../stores/executions"
+    import {usePlaygroundStore} from "../../../stores/playground"
 
     const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
 
     const execution = computed(() => executionsStore.execution)
     const taskRuns = computed(() => execution.value?.taskRunList ?? [])
 
-    /** The task the run stopped before is the one whose context a debugging user wants first. */
     const defaultTaskRunId = computed(() => {
         const stopped = taskRuns.value.find(taskRun => taskRun.state.current === "BREAKPOINT")
         return (stopped ?? taskRuns.value[taskRuns.value.length - 1])?.id
@@ -50,33 +50,9 @@
         }
     })
 
-    const context = ref<Record<string, unknown>>()
-    const loading = ref(false)
-    const failed = ref(false)
-    let request = 0
-
-    async function loadContext() {
-        const current = execution.value
-        const taskRunId = selectedTaskRunId.value
-        context.value = undefined
-        failed.value = false
-        if (!current || !taskRunId) return
-
-        const sequence = ++request
-        loading.value = true
-        try {
-            const response = await PlaygroundAPI.taskRunContext({namespace: current.namespace, id: current.flowId, executionId: current.id, taskRunId})
-            if (sequence === request) context.value = response.variables ?? {}
-        } catch {
-            if (sequence === request) failed.value = true
-        } finally {
-            if (sequence === request) loading.value = false
-        }
-    }
-
     watch(
         () => [selectedTaskRunId.value, execution.value?.state.current, taskRuns.value.find(taskRun => taskRun.id === selectedTaskRunId.value)?.state.current],
-        loadContext,
+        () => playgroundStore.loadContext(execution.value, selectedTaskRunId.value),
         {immediate: true},
     )
 </script>

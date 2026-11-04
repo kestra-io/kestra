@@ -1,4 +1,4 @@
-import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {nextTick, reactive} from "vue"
 
@@ -41,10 +41,6 @@ async function panelShowing(state: string) {
 }
 
 describe("playground panel reports", () => {
-    afterAll(() => {
-        sessionStorage.removeItem("playgroundClientId")
-    })
-
     beforeEach(() => {
         vi.useFakeTimers()
         setActivePinia(createPinia())

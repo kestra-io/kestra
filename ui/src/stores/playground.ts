@@ -24,25 +24,12 @@ const forExecution = (flow: Flow): FlowForExecution => ({
     tasks: flow.tasks ?? [],
 })
 
-const CLIENT_ID_KEY = "playgroundClientId"
 const DEFAULT_REPORT_EVERY_MS = 20_000
 const SESSION_SIZE = 10
 
-let tabClientId: string | undefined
+// one id per page load: a duplicated tab copies sessionStorage, so an id kept there would be shared
+const CLIENT_ID = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("")
 
-/** One id per browser tab, kept across reloads so a reload reports as the same panel. */
-function clientId(): string {
-    if (tabClientId) return tabClientId
-    try {
-        tabClientId = sessionStorage.getItem(CLIENT_ID_KEY) ?? crypto.randomUUID()
-        sessionStorage.setItem(CLIENT_ID_KEY, tabClientId)
-    } catch {
-        tabClientId ??= crypto.randomUUID()
-    }
-    return tabClientId
-}
-
-/** What the next run builds on: the latest run, nothing, or one run by id. */
 export type BuildOn = "LATEST" | "NOTHING" | string
 
 export const usePlaygroundStore = defineStore("playground", () => {
@@ -83,17 +70,23 @@ export const usePlaygroundStore = defineStore("playground", () => {
         })
     }
 
-    /** Loads the session kept on the server: the caller's latest runs of this flow, the newest first. */
+    const sessionLoadFailed = ref(false)
+
     async function loadSession() {
         if (!flowStore.flow?.id || flowStore.isCreating) return
-        const page = await PlaygroundAPI.listPlaygroundRuns({...flowRef(), page: 1, size: SESSION_SIZE})
-        executions.value = (page.results ?? []) as unknown as Execution[]
+        sessionLoadFailed.value = false
+        try {
+            const page = await PlaygroundAPI.listPlaygroundRuns({...flowRef(), page: 1, size: SESSION_SIZE})
+            executions.value = (page.results ?? []) as unknown as Execution[]
+        } catch {
+            sessionLoadFailed.value = true
+            return
+        }
         if (latestExecution.value) {
             await showReusedTaskRuns(latestExecution.value)
         }
     }
 
-    /** Starts the next run fresh instead of building on the latest one, without deleting anything. */
     function clearExecutions() {
         executions.value = []
         buildOn.value = "NOTHING"
@@ -147,7 +140,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 breakpoints: plan.breakpoints,
             })
         } catch (error: unknown) {
-            // the run to build on can be purged or ended by another tab between the plan and the replay
             if ((error as KestraHttpError | undefined)?.response?.status !== 404) {
                 throw error
             }
@@ -302,7 +294,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     }
 
-    /** Marks the task runs a run reused and carries their logs over: those logs stay with the run that first produced them. */
     async function showReusedTaskRuns(execution: Execution) {
         const reused = await PlaygroundAPI.listReusedTaskRuns({...flowRef(), executionId: execution.id})
             .then(response => response.taskRuns)
@@ -312,7 +303,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         const producerRuns = [...new Set(producers.map(([, producer]) => producer.executionId))]
         const filters = routeQueryToQueryFilters({"filters[kind][IN]": "PLAYGROUND"})
-        // The run is already going, so a failed fetch only costs the carried-over logs, not the run.
         const logsByRun = await Promise.all(producerRuns.map(executionId =>
             executionsStore.loadLogs({executionId, filters, store: false}).catch(() => []),
         ))
@@ -350,14 +340,13 @@ export const usePlaygroundStore = defineStore("playground", () => {
         heartbeat = undefined
     }
 
-    /** Tells the server this panel still shows the run, so it keeps it alive at its breakpoint. */
     async function report(executionId: string) {
         let delay = DEFAULT_REPORT_EVERY_MS
         try {
-            const response = await PlaygroundAPI.reportPlaygroundClient({...flowRef(), executionId, clientId: clientId()})
+            const response = await PlaygroundAPI.reportPlaygroundClient({...flowRef(), executionId, clientId: CLIENT_ID})
             delay = (durationUtils.duration(response.reportEvery) * 1000) || DEFAULT_REPORT_EVERY_MS
         } catch {
-            // a missed report is covered by the next ones: the server only ends a run after several
+            delay = DEFAULT_REPORT_EVERY_MS
         }
         if (reportingRunId === executionId) {
             heartbeat = setTimeout(() => report(executionId), delay)
@@ -370,15 +359,13 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (executionId) report(executionId)
     }, {immediate: true})
 
-    // sync, so the run this panel reported is still known when it closes
     watch(enabled, (newValue) => {
         params.playground = newValue ? "on" : ""
         if (!newValue && !leavingEditor && reportingRunId) {
-            PlaygroundAPI.releasePlaygroundClient({...flowRef(), executionId: reportingRunId, clientId: clientId()}).catch(() => undefined)
+            PlaygroundAPI.releasePlaygroundClient({...flowRef(), executionId: reportingRunId, clientId: CLIENT_ID}).catch(() => undefined)
         }
     }, {flush: "sync"})
 
-    /** Leaving the editor stops reporting without ending the run: like a reload, it lets the server's timeout decide. */
     function leaveEditor() {
         leavingEditor = true
         enabled.value = false
@@ -388,6 +375,29 @@ export const usePlaygroundStore = defineStore("playground", () => {
         buildOn.value = "LATEST"
         executionsStore.execution = undefined
         executionsStore.clearReusedTaskRuns()
+    }
+
+    const context = ref<Record<string, unknown>>()
+    const contextLoading = ref(false)
+    const contextLoadFailed = ref(false)
+    let contextRequest = 0
+
+    async function loadContext(execution: Execution | undefined, taskRunId: string | undefined) {
+        const sequence = ++contextRequest
+        context.value = undefined
+        contextLoadFailed.value = false
+        contextLoading.value = false
+        if (!execution || !taskRunId) return
+
+        contextLoading.value = true
+        try {
+            const response = await PlaygroundAPI.taskRunContext({namespace: execution.namespace, id: execution.flowId, executionId: execution.id, taskRunId})
+            if (sequence === contextRequest) context.value = response.variables ?? {}
+        } catch {
+            if (sequence === contextRequest) contextLoadFailed.value = true
+        } finally {
+            if (sequence === contextRequest) contextLoading.value = false
+        }
     }
 
     const dropdownOpened = ref<boolean>(false)
@@ -402,6 +412,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         latestExecution,
         buildOn,
         loadSession,
+        sessionLoadFailed,
+        context,
+        contextLoading,
+        contextLoadFailed,
+        loadContext,
         clearExecutions,
         leaveEditor,
         runUntilTask,

@@ -32,6 +32,17 @@
                 />
             </div>
         </div>
+        <KsAlert
+            v-if="playgroundStore.sessionLoadFailed"
+            type="error"
+            :title="$t('playground.session_error')"
+            :closable="false"
+            data-test="playground-session-error"
+        >
+            <KsButton size="small" @click="playgroundStore.loadSession()">
+                {{ $t("retry") }}
+            </KsButton>
+        </KsAlert>
         <div class="content">
             <div class="current-run">
                 <div class="current-run-header">
@@ -156,7 +167,6 @@
     const playgroundStore = usePlaygroundStore()
     const executionsStore = useExecutionsStore()
 
-    // immediate: a panel reopened on the same run must refresh it, the server may have ended it meanwhile
     watch(() => playgroundStore.latestExecution?.id, (newValue, oldValue) => {
         if (newValue && newValue !== oldValue) {
             executionsStore.followExecution(playgroundStore.latestExecution, t)
@@ -166,7 +176,7 @@
     const activeTab = ref(tabs.value[0])
 
     onMounted(async () => {
-        await playgroundStore.loadSession().catch(() => undefined)
+        await playgroundStore.loadSession()
         playgroundStore.runFromQuery()
     })
 

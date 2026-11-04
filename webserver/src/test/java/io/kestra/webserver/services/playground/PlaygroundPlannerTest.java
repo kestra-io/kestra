@@ -16,6 +16,7 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class PlaygroundPlannerTest {
@@ -92,6 +93,13 @@ class PlaygroundPlannerTest {
 
         assertThat(plan.freshReason()).isEqualTo(PlaygroundFreshReason.NO_PREVIOUS_RUN);
         assertThat(plan.breakpoints()).containsExactly("b");
+    }
+
+    @Test
+    void shouldRejectAnUnknownTaskEvenWithoutARunToBuildOn() {
+        assertThatThrownBy(() -> PlaygroundPlanner.plan(flow("hello", "a"), "removed", PlaygroundRunMode.UP_TO, null, null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("'removed'");
     }
 
     @Test

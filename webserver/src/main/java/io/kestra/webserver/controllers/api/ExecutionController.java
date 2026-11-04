@@ -73,6 +73,7 @@ import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
+import io.kestra.core.security.InternalCallContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.CoreAsyncOperationType;
@@ -163,6 +164,7 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
@@ -1147,7 +1149,7 @@ public class ExecutionController {
                     try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
                         eventPublisher.publishEvent(CrudEvent.create(res.body()));
                     }
-                    playgroundService.onNewRun(res.body());
+                    endPreviousPlaygroundRuns(res.body());
 
                     var executionUrl = executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
@@ -1713,8 +1715,21 @@ public class ExecutionController {
 
         Execution replayed = executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
             .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"));
-        playgroundService.onNewRun(replayed);
+        endPreviousPlaygroundRuns(replayed);
         return HttpResponse.ok(replayed);
+    }
+
+    /** The purge blocks and may run on the polling thread, which has no principal, so it runs elsewhere as an internal call. */
+    private void endPreviousPlaygroundRuns(Execution run) {
+        if (ExecutionKind.PLAYGROUND == run.getKind()) {
+            Schedulers.boundedElastic().schedule(() ->
+            {
+                // the propagated context holds the request's database connection, closed by the time this runs
+                try (PropagatedContext.Scope ignored = PropagatedContext.empty().propagate()) {
+                    InternalCallContext.runAsInternalCall(() -> playgroundService.onNewRun(run));
+                }
+            });
+        }
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)

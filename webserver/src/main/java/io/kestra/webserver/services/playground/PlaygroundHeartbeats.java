@@ -20,6 +20,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.security.InternalCallContext;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.annotation.WebServerEnabled;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.data.model.Pageable;
@@ -36,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
+@WebServerEnabled
 public class PlaygroundHeartbeats {
     /** Stands for a run found by the periodic scan, so a run nobody reports about still gets one timeout of grace. */
     private static final String ADOPTED = "";
@@ -47,6 +49,7 @@ public class PlaygroundHeartbeats {
     private final Duration timeout;
     private final Map<String, Watched> watched = new ConcurrentHashMap<>();
     private QueueSubscriber<PlaygroundClientEvent> subscriber;
+    private Instant lastAdoption = Instant.MIN;
 
     @Inject
     public PlaygroundHeartbeats(
@@ -112,7 +115,11 @@ public class PlaygroundHeartbeats {
         // a scheduler thread has no user, so the scan runs as an internal call that no ACL applies to
         InternalCallContext.runAsInternalCall(() ->
         {
-            adoptUnwatchedRuns(now);
+            // runs nothing reports only matter once a timeout has passed, so one scan per timeout is enough
+            if (!now.isBefore(lastAdoption.plus(timeout))) {
+                adoptUnwatchedRuns(now);
+                lastAdoption = now;
+            }
             killUnreportedRuns(now);
         });
     }

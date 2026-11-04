@@ -1,4 +1,4 @@
-import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {reactive} from "vue"
 
@@ -46,10 +46,6 @@ async function store() {
 }
 
 describe("playground runs planned by the server", () => {
-    afterAll(() => {
-        sessionStorage.removeItem("playgroundClientId")
-    })
-
     beforeEach(() => {
         setActivePinia(createPinia())
         vi.clearAllMocks()
@@ -135,5 +131,17 @@ describe("playground runs planned by the server", () => {
 
         expect(playground.executions.map(execution => execution.id)).toEqual(["e2", "e1"])
         expect(playgroundApi.listReusedTaskRuns).toHaveBeenCalledWith(expect.objectContaining({executionId: "e2"}))
+    })
+
+    it("says the session failed to load until a retry succeeds", async () => {
+        playgroundApi.listPlaygroundRuns.mockRejectedValueOnce(new Error("unreachable"))
+        playgroundApi.listPlaygroundRuns.mockResolvedValueOnce({results: [], total: 0})
+        const playground = await store()
+
+        await playground.loadSession()
+        expect(playground.sessionLoadFailed).toBe(true)
+
+        await playground.loadSession()
+        expect(playground.sessionLoadFailed).toBe(false)
     })
 })

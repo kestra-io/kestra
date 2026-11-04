@@ -39,6 +39,10 @@ public final class PlaygroundPlanner {
      * @param taskId the task to run up to or from, null to run the whole flow
      */
     public static PlaygroundPlan plan(Flow flow, String taskId, PlaygroundRunMode mode, Execution buildOn, Flow buildOnFlow) {
+        if (taskId != null && flow.findTaskByTaskIdOrNull(taskId) == null) {
+            throw unknownTask(flow, taskId);
+        }
+
         List<String> breakpoints = taskId != null && PlaygroundRunMode.UP_TO == mode ? nextTaskIds(flow, taskId) : List.of();
 
         if (taskId == null) {
@@ -54,7 +58,7 @@ public final class PlaygroundPlanner {
 
         List<String> order = taskIdsInOrder(flow);
         if (!order.contains(taskId)) {
-            throw new IllegalArgumentException("Task '%s' does not exist in revision %s of flow '%s'.".formatted(taskId, flow.getRevision(), flow.getId()));
+            throw unknownTask(flow, taskId);
         }
 
         List<String> before = order.subList(0, order.indexOf(taskId));
@@ -72,6 +76,10 @@ public final class PlaygroundPlanner {
         List<String> reused = order.subList(0, order.indexOf(replayPoint)).stream().filter(ranTaskIds::contains).toList();
 
         return new PlaygroundPlan(buildOn.getId(), replayTaskRuns.getFirst().getId(), replayPoint, reused, breakpoints, PlaygroundFreshReason.NONE);
+    }
+
+    private static IllegalArgumentException unknownTask(Flow flow, String taskId) {
+        return new IllegalArgumentException("Task '%s' does not exist in revision %s of flow '%s'.".formatted(taskId, flow.getRevision(), flow.getId()));
     }
 
     private static Optional<PlaygroundFreshReason> flowLevelChange(Flow previous, Flow current) {

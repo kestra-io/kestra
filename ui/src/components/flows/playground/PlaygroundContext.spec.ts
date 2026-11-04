@@ -9,6 +9,8 @@ const playgroundApi = vi.hoisted(() => ({taskRunContext: vi.fn()}))
 
 vi.mock("@kestra-io/kestra-sdk/playground", () => playgroundApi)
 vi.mock("../../../stores/executions", () => ({useExecutionsStore: () => executionsStore}))
+vi.mock("../../../stores/flow", () => ({useFlowStore: () => reactive({flow: undefined})}))
+vi.mock("../../../stores/fileExplorer", () => ({useFileExplorerStore: () => ({loadNodes: vi.fn()})}))
 
 import PlaygroundContext from "./PlaygroundContext.vue"
 

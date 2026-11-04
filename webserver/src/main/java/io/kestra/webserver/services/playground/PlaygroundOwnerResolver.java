@@ -12,4 +12,9 @@ public class PlaygroundOwnerResolver {
     public Optional<String> owner() {
         return Optional.empty();
     }
+
+    /** Whether sessions are scoped to their owner; when they are, a caller with no resolved owner sees no run. */
+    public boolean isPerUser() {
+        return false;
+    }
 }

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -60,6 +63,7 @@ public class PlaygroundService {
     private static final Set<String> CONTEXT_KEYS = Set.of("flow", "task", "taskrun", "execution", "inputs", "outputs", "vars", "labels", "parents", "parent", "trigger", "item", "tasks");
 
     private static final int MAX_REUSE_DEPTH = RETAINED_RUNS * 2;
+    private static final Pattern EXECUTION_STORAGE_PATH = Pattern.compile("/executions/([^/]+)/");
 
     private final ExecutionRepositoryInterface executionRepository;
     private final FlowRepositoryInterface flowRepository;
@@ -101,6 +105,9 @@ public class PlaygroundService {
 
     /** The current caller's runs of the flow, newest first. */
     public ArrayListTotal<Execution> runs(String tenantId, String namespace, String flowId, int page, int size) {
+        if (ownerResolver.isPerUser() && ownerResolver.owner().isEmpty()) {
+            return new ArrayListTotal<>(List.of(), 0);
+        }
         List<Execution> session = session(tenantId, namespace, flowId, ownerResolver.owner());
         int from = Math.min((page - 1) * size, session.size());
         return new ArrayListTotal<>(session.subList(from, Math.min(from + size, session.size())), session.size());
@@ -115,7 +122,7 @@ public class PlaygroundService {
         return executionRepository.findById(tenantId, executionId)
             .filter(run -> ExecutionKind.PLAYGROUND == run.getKind())
             .filter(run -> namespace.equals(run.getNamespace()) && flowId.equals(run.getFlowId()))
-            .filter(run -> ownerResolver.owner().map(owner -> owner.equals(owner(run).orElse(null))).orElse(true))
+            .filter(this::isCallersRun)
             .orElseThrow(() -> new NoSuchElementException("Unable to find the Playground run '%s' of flow '%s.%s'.".formatted(executionId, namespace, flowId)));
     }
 
@@ -148,10 +155,16 @@ public class PlaygroundService {
             return;
         }
 
+        Optional<String> owner = owner(newRun);
+        if (ownerResolver.isPerUser() && owner.isEmpty()) {
+            return;
+        }
+
         try {
-            List<Execution> previousRuns = session(newRun.getTenantId(), newRun.getNamespace(), newRun.getFlowId(), owner(newRun))
+            Instant created = createdAt(newRun);
+            List<Execution> previousRuns = session(newRun.getTenantId(), newRun.getNamespace(), newRun.getFlowId(), owner)
                 .stream()
-                .filter(run -> !run.getId().equals(newRun.getId()))
+                .filter(run -> createdAt(run).isBefore(created))
                 .toList();
             previousRuns.stream().filter(PlaygroundService::isKillable).forEach(this::kill);
             purge(newRun, previousRuns);
@@ -255,7 +268,7 @@ public class PlaygroundService {
             return;
         }
 
-        String keptReferences = references(keptRuns);
+        Set<String> keptReferences = referencedExecutionIds(keptRuns);
         for (Execution expired : expiredRuns) {
             // a reused task keeps pointing at the files of the run that first produced them
             executionService.delete(expired, true, true, !keptReferences.contains(expired.getId()));
@@ -264,22 +277,36 @@ public class PlaygroundService {
         executionOutputService.purge(expiredRuns);
     }
 
-    /** Everything a kept run can point into another run's storage with: its inputs and its task outputs, inline or stored. */
-    private String references(List<Execution> keptRuns) throws IOException {
-        StringBuilder references = new StringBuilder();
+    /** The runs whose storage a kept run points into, through its inputs or its task outputs, inline or stored. */
+    private Set<String> referencedExecutionIds(List<Execution> keptRuns) throws IOException {
+        Set<String> ids = new HashSet<>();
         for (Execution kept : keptRuns) {
-            references.append(JacksonMapper.ofJson().writeValueAsString(kept.getInputs()));
+            collectExecutionIds(JacksonMapper.ofJson().writeValueAsString(kept.getInputs()), ids);
             for (TaskOutput output : taskOutputRepository.findByExecution(kept)) {
                 // ION stores strings as UTF-8, so a storage URI inside the binary value stays searchable as text
                 if (output.value() != null) {
-                    references.append(new String(output.value(), StandardCharsets.ISO_8859_1));
+                    collectExecutionIds(new String(output.value(), StandardCharsets.ISO_8859_1), ids);
                 }
                 if (output.uri() != null) {
-                    references.append(output.uri());
+                    collectExecutionIds(output.uri(), ids);
                 }
             }
         }
-        return references.toString();
+        return ids;
+    }
+
+    private static void collectExecutionIds(String text, Set<String> ids) {
+        Matcher matcher = EXECUTION_STORAGE_PATH.matcher(text);
+        while (matcher.find()) {
+            ids.add(matcher.group(1));
+        }
+    }
+
+    private boolean isCallersRun(Execution run) {
+        if (!ownerResolver.isPerUser()) {
+            return true;
+        }
+        return ownerResolver.owner().map(owner -> owner.equals(owner(run).orElse(null))).orElse(false);
     }
 
     /** The session's runs newest first; retention keeps it small enough to sort in memory. */

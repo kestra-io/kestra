@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.util.Map;
 import java.util.Objects;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -99,7 +98,7 @@ public class PlaygroundController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The Playground run id") @PathVariable String executionId,
-        @Parameter(description = "The task run id") @PathVariable String taskRunId) throws InternalException {
+        @Parameter(description = "The task run id") @PathVariable String taskRunId) {
         return new ContextResponse(playgroundService.context(run(namespace, id, executionId), taskRunId));
     }
 

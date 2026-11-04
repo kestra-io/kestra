@@ -728,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
-      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit."
+      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit.",
+      "queued": "В очереди",
+      "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение."
     },
     "flowConcurrency": {
       "loadError": "Не удалось загрузить ограничение параллелизма для этого flow.",
@@ -1090,7 +1092,7 @@
       "heading": "Все о Kestra.",
       "subheading": "Последние обновления, руководства и истории"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Это выполнение все еще выполняется, удаление его не остановит.<br />Вам нужно убить выполнение, чтобы остановить его.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Эта Execution все еще выполняется, ее удаление не остановит ее.<br />Вам нужно kill'нуть Execution, чтобы остановить ее.</div>",
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
@@ -1461,6 +1463,7 @@
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
             "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
+            "editor_pebble_hover": "Наведите курсор на ссылку Pebble, чтобы увидеть ее определение",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",
             "environment_name_tooltip": "Имя этой среды установлено из конфигурации, но может быть изменено.",
@@ -1483,6 +1486,7 @@
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_hover_description": "Показывать описания свойств при наведении в редакторе.",
+            "editor_pebble_hover": "Показать определение и документацию input, output, переменной, label или trigger переменной при наведении на ее Pebble ссылку в Flow-редакторе.",
             "environment_name": "Отображаемое имя для текущей среды, показанное в навигации.",
             "environment_color": "Цвет акцента, используемый для текущей среды в навигации.",
             "app_font_size": "Коэффициент масштабирования, применяемый ко всем размерам шрифта интерфейса."
@@ -1923,6 +1927,11 @@
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
     "scheduleDateInPast": "Дата расписания должна быть в будущем",
+    "inputs_date_range": {
+      "between": "Самое раннее значение: {after}, самое позднее значение: {before}.",
+      "after": "Самое раннее значение: {after}.",
+      "before": "Самое позднее значение: {before}."
+    },
     "warning": "Предупреждение",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "docs": "Документы",
@@ -2136,6 +2145,11 @@
       "decrease_fontsize": "Уменьшить размер шрифта редактора",
       "increase_fontsize": "Увеличить размер шрифта редактора",
       "reset_fontsize": "Сбросить размер шрифта редактора"
+    },
+    "pebble_hover": {
+      "toggle": "Переключить всплывающие docs Pebble",
+      "enabled": "Документация Pebble при наведении включена.",
+      "disabled": "Документация Pebble при наведении отключена."
     },
     "instance": "Экземпляр",
     "something_went_wrong": {

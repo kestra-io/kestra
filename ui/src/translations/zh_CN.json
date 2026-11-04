@@ -728,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "并发限制",
-      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"
+      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。",
+      "queued": "已排队",
+      "save_error": "更新并发限制失败，保留之前的值。"
     },
     "flowConcurrency": {
       "loadError": "无法加载此 flow 的并发限制。",
@@ -1090,7 +1092,7 @@
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">此 execution 仍在运行，删除它不会停止它。<br />您需要 kill 该 execution 才能停止它。</div>",
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
@@ -1461,6 +1463,7 @@
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
             "editor_hover_description": "将鼠标悬停在属性上查看描述",
+            "editor_pebble_hover": "将鼠标悬停在 Pebble 引用上以查看其定义",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
             "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
@@ -1483,6 +1486,7 @@
             "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
             "editor_hover_description": "在编辑器中悬停时显示属性描述。",
+            "editor_pebble_hover": "在 Flow 编辑器中，将鼠标悬停在 input、output、variable、label 或 trigger variable 的 Pebble 引用上时，显示其定义和文档。",
             "environment_name": "当前环境的显示名称，显示在导航中。",
             "environment_color": "用于导航中当前环境的强调颜色。",
             "app_font_size": "应用于所有界面字体大小的缩放系数。"
@@ -1923,6 +1927,11 @@
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
     "scheduleDateInPast": "计划日期必须在未来",
+    "inputs_date_range": {
+      "between": "最早值为 {after}，最晚值为 {before}。",
+      "after": "最早值为 {after}。",
+      "before": "最晚值为 {before}。"
+    },
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "docs": "文档",
@@ -2136,6 +2145,11 @@
       "decrease_fontsize": "减小编辑器字体大小",
       "increase_fontsize": "增加编辑器字体大小",
       "reset_fontsize": "重置编辑器字体大小"
+    },
+    "pebble_hover": {
+      "toggle": "切换 Pebble 悬停文档",
+      "enabled": "Pebble 悬停文档已开启。",
+      "disabled": "Pebble 悬停文档已关闭。"
     },
     "instance": "实例",
     "something_went_wrong": {

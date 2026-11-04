@@ -728,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
-      "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
+      "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée.",
+      "queued": "En file d'attente",
+      "save_error": "Échec de la mise à jour de la limite de Concurrency, la valeur précédente est conservée."
     },
     "flowConcurrency": {
       "loadError": "Impossible de charger la limite de concurrence de ce flow.",
@@ -1090,7 +1092,7 @@
       "heading": "Tout sur Kestra.",
       "subheading": "Les dernières mises à jour, guides et histoires"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Cette execution est toujours en cours, la supprimer ne l'arrêtera pas.<br />Vous devez killer l'execution pour l'arrêter.</div>",
     "restore": "Restaurer",
     "restore confirm": "Voulez-vous vraiment restaurer la révision <code>{revision}</code> ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
@@ -1461,6 +1463,7 @@
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
             "editor_hover_description": "Survolez la propriété pour voir la description",
+            "editor_pebble_hover": "Passez la souris sur la référence Pebble pour voir sa définition",
             "environment_color": "Couleur de l'Environnement",
             "environment_name": "Nom de l'Environnement",
             "environment_name_tooltip": "Ce nom d'environnement est défini à partir de la configuration mais peut être modifié.",
@@ -1483,6 +1486,7 @@
             "editor_font_size": "Taille de police utilisée dans les éditeurs YAML et sans code.",
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
             "editor_hover_description": "Afficher les descriptions des propriétés au survol dans l'éditeur.",
+            "editor_pebble_hover": "Affiche la définition et la documentation d'un input, output, variable, label ou d'une variable de trigger lorsque vous survolez sa référence Pebble dans l'éditeur de flow.",
             "environment_name": "Nom d'affichage pour l'environnement actuel, affiché dans la navigation.",
             "environment_color": "Couleur d'accent utilisée pour l'environnement actuel dans la navigation.",
             "app_font_size": "Facteur d'échelle appliqué à toutes les tailles de police de l'interface."
@@ -1923,6 +1927,11 @@
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
     "scheduleDateInPast": "La date de planification doit être future",
+    "inputs_date_range": {
+      "between": "La valeur la plus ancienne est {after}, la valeur la plus récente est {before}.",
+      "after": "La valeur la plus ancienne est {after}.",
+      "before": "La valeur la plus récente est {before}."
+    },
     "warning": "Avertissement",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "docs": "Documentation",
@@ -2136,6 +2145,11 @@
       "decrease_fontsize": "Diminuer la taille de la police de l'éditeur",
       "increase_fontsize": "Augmenter la taille de la police de l'éditeur",
       "reset_fontsize": "Réinitialiser la taille de police de l'éditeur"
+    },
+    "pebble_hover": {
+      "toggle": "Basculer la documentation flottante Pebble",
+      "enabled": "Les docs au survol de Pebble sont activées.",
+      "disabled": "Les docs Pebble au survol sont désactivées."
     },
     "instance": "Instance",
     "something_went_wrong": {

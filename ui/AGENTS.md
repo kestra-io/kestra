@@ -381,7 +381,7 @@ If your `<style>` block needs to exist:
 | `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
-| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
+| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
 | `KsContainer` / `KsHeader` / `KsMain` | Page layout shell |
 | `KsRow` / `KsCol` | Responsive grid |
@@ -486,6 +486,7 @@ If your `<style>` block needs to exist:
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
+- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
 
 ## Composables
 

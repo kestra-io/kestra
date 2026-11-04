@@ -11,7 +11,7 @@ type TaskComponent = Component & {
 
 const TasksComponents = import.meta.glob<{ default: TaskComponent }>("./Task*.vue", {eager: true})
 
-export interface Schema {
+export type Schema = {
     $ref?: string;
     $required?: boolean;
     type?: string | {const: string};
@@ -35,6 +35,7 @@ export interface Schema {
     $deprecated?: boolean;
     $group?: string;
     $index?: number;
+    $dynamic?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")

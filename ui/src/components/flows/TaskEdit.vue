@@ -168,7 +168,7 @@
                 <AlertCircleOutline class="task-edit-required-icon" />
                 <span v-if="unsetRequiredCount === 1">{{ $t("block_editor.required_unset_singular") }}</span>
                 <span v-else>{{ $t("block_editor.required_unset_plural", {count: unsetRequiredCount}) }}</span>
-                <KsButton type="text" size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
+                <KsButton link size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
                     {{ $t("block_editor.required_unset_jump") }}
                 </KsButton>
             </div>

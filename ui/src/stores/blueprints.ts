@@ -2,6 +2,7 @@ import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {handledIf} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 
@@ -70,14 +71,17 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return lines.length ? lines : undefined
     })
 
-    const getBlueprints = async (options: Options) => {
+    type BlueprintSearchResult = {results: FlowBlueprint[]; total: number}
+
+    const getBlueprints = async (options: Options): Promise<BlueprintSearchResult> => {
+        if (options.type === "community") {
+            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
+            const response = await axios.get<BlueprintSearchResult>(COMMUNITY, {params: options.params})
+            return response.data
+        }
+
         try {
-            if (options.type === "community") {
-                const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-                const response = await axios.get(COMMUNITY, {params: options.params})
-                return response.data
-            }
-            const {data} = await axios.get(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
+            const {data} = await axios.get<BlueprintSearchResult>(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: unknown) {
             // Either catalog answers 401 to a caller it does not serve, which is an empty catalog here.
@@ -104,7 +108,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         const load = ++latestBlueprintLoad
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<Blueprint>(COMMUNITY)
             if (load !== latestBlueprintLoad) {
                 return response.data
             }
@@ -127,22 +131,22 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return blueprintData
     }
 
-    const getBlueprintSource = async (options: Options) => {
+    const getBlueprintSource = async (options: Options): Promise<string> => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<string>(COMMUNITY)
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
+        const {data} = await axios.get<string>(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
         return data
     }
 
-    const getBlueprintGraph = async (options: Options) => {
+    const getBlueprintGraph = async (options: Options): Promise<FlowGraph> => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`
 
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
+        const response = await axios.get<FlowGraph>(options.type == "community" ? COMMUNITY : CUSTOM)
 
         return response.data
     }

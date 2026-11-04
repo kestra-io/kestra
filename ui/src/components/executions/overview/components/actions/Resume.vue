@@ -84,7 +84,7 @@
         }
 
         toast.confirm(t("resumed confirm", {id: props.execution.id}), () => {
-            return resume() as unknown as Promise<void>
+            return resume()
         })
     }
 

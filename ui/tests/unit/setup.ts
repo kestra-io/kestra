@@ -1,6 +1,6 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
-import {designSystemI18nReady} from "@kestra-io/design-system"
+import {designSystemAsyncComponentsReady, designSystemI18nReady} from "@kestra-io/design-system"
 import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
 
 // Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
@@ -17,9 +17,13 @@ vi.resetModules()
 disableAutoUnmount()
 enableAutoUnmount(afterEach)
 
-// Installing the design system starts a locale-module glob it does not await, so a spec that
-// finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
-afterEach(() => designSystemI18nReady())
+// Installing the design system starts a locale-module glob it does not await, and a mounted KsMarkdown, chart or
+// KsEditor starts a lazy import, so a spec that finishes first is torn down mid-import and the run reports unhandled
+// EnvironmentTeardownErrors.
+afterEach(async () => {
+    await designSystemI18nReady()
+    await designSystemAsyncComponentsReady()
+})
 
 // A Vue warning inlines the offending value twice over, in the trace serialising every prop and in
 // a prop type-check message, so a megabyte-sized value costs CI 10 to 24 minutes of log (#19566).

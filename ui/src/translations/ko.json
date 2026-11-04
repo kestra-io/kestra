@@ -1122,7 +1122,7 @@
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">이 Execution은 아직 실행 중이며, 삭제해도 중지되지 않습니다.<br />중지하려면 Execution을 kill해야 합니다.</div>",
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
@@ -1955,6 +1955,11 @@
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
     "scheduleDateInPast": "예약 날짜는 미래여야 합니다.",
+    "inputs_date_range": {
+      "between": "가장 이른 값은 {after}이고, 가장 늦은 값은 {before}입니다.",
+      "after": "가장 이른 값은 {after}입니다.",
+      "before": "가장 늦은 값은 {before}입니다."
+    },
     "warning": "경고",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "docs": "문서",

@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import resource from "../models/resource"
 import action from "../models/action"
-import {findApprovalTask, findApprovalTaskRun, type ApprovalTaskRun} from "../utils/approval"
+import {findApprovalTask, findApprovalTaskRun} from "../utils/approval"
 import {useExecutionsStore, type Execution} from "../stores/executions"
 import {useAuthStore} from "override/stores/auth"
 
@@ -16,7 +16,7 @@ export function useApprovalReviewer(execution: () => Execution, taskRunId?: () =
         }
         const taskRun = execution().taskRunList?.find(candidate => candidate.id === requestedId)
         const task = taskRun?.state.current === "PAUSED" ? findApprovalTask(executionsStore.flow, taskRun.taskId) : undefined
-        return taskRun && task ? {taskRun: taskRun as unknown as ApprovalTaskRun, task} : undefined
+        return taskRun && task ? {taskRun, task} : undefined
     })
     const permitted = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.REVIEW, execution().namespace) === true)
     const allowed = ref(false)

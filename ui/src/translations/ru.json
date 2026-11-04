@@ -1122,7 +1122,7 @@
       "heading": "Все о Kestra.",
       "subheading": "Последние обновления, руководства и истории"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Это выполнение все еще выполняется, удаление его не остановит.<br />Вам нужно убить выполнение, чтобы остановить его.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Эта Execution все еще выполняется, ее удаление не остановит ее.<br />Вам нужно kill'нуть Execution, чтобы остановить ее.</div>",
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
@@ -1955,6 +1955,11 @@
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
     "scheduleDateInPast": "Дата расписания должна быть в будущем",
+    "inputs_date_range": {
+      "between": "Самое раннее значение: {after}, самое позднее значение: {before}.",
+      "after": "Самое раннее значение: {after}.",
+      "before": "Самое позднее значение: {before}."
+    },
     "warning": "Предупреждение",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "docs": "Документы",

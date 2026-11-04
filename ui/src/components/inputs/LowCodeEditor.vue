@@ -499,7 +499,8 @@
         return counts
     })
 
-    const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
+    // The store relaxes ids the SDK Execution requires, and the topology-task-modal slot contract is typed with the SDK one.
+    const exec = computed(() => executionsStore.execution as Execution | undefined)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 

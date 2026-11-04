@@ -1,6 +1,5 @@
-import {afterEach, describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import type {VueWrapper} from "@vue/test-utils"
 import {i18nMount} from "../../tests/unit/i18nMount"
 import type {Execution} from "../stores/executions"
 import {useExecutionSummary} from "./useExecutionSummary"
@@ -18,93 +17,81 @@ function mountSummary(execution: Partial<Execution>) {
             return () => h("div")
         },
     })
-    const wrapper = i18nMount(host, {messages: {copied: "Copied"}})
+    i18nMount(host, {messages: {copied: "Copied"}})
 
-    return {summary, wrapper}
+    return summary
 }
 
 describe("useExecutionSummary", () => {
-    let wrapper: VueWrapper | undefined
-
-    afterEach(() => {
-        wrapper?.unmount()
-        wrapper = undefined
+    beforeEach(() => {
         vi.clearAllMocks()
     })
 
     it("capitalises the current status", () => {
-        const mounted = mountSummary({id: "execution-id", state: {current: "SUCCESS"} as Execution["state"]})
-        wrapper = mounted.wrapper
+        const summary = mountSummary({id: "execution-id", state: {current: "SUCCESS"} as Execution["state"]})
 
-        expect(mounted.summary.statusLabel.value).toBe("Success")
+        expect(summary.statusLabel.value).toBe("Success")
     })
 
-    it("recognises replay and replayed labels", () => {
-        const replay = mountSummary({labels: [{key: "system.replay", value: "true"}]} as Partial<Execution>)
-        wrapper = replay.wrapper
-        expect(replay.summary.replayed.value).toBe(true)
-        wrapper.unmount()
+    it.each(["system.replay", "system.replayed"])("treats %s as replayed", (key) => {
+        const summary = mountSummary({labels: [{key, value: "true"}]})
 
-        const replayed = mountSummary({labels: [{key: "system.replayed", value: "true"}]} as Partial<Execution>)
-        wrapper = replayed.wrapper
-        expect(replayed.summary.replayed.value).toBe(true)
+        expect(summary.replayed.value).toBe(true)
     })
 
-    it("recognises restarted labels only as restarted", () => {
-        const mounted = mountSummary({labels: [{key: "system.restarted", value: "true"}]})
-        wrapper = mounted.wrapper
+    it("treats system.restarted as restarted only", () => {
+        const summary = mountSummary({labels: [{key: "system.restarted", value: "true"}]})
 
-        expect(mounted.summary.restarted.value).toBe(true)
-        expect(mounted.summary.replayed.value).toBe(false)
+        expect(summary.restarted.value).toBe(true)
+        expect(summary.replayed.value).toBe(false)
     })
 
-    it("requires a true string label value and handles missing labels", () => {
-        const mounted = mountSummary({labels: [{key: "system.replay", value: "false"}, {key: "system.restarted", value: "false"}]})
-        wrapper = mounted.wrapper
-        expect(mounted.summary.replayed.value).toBe(false)
-        expect(mounted.summary.restarted.value).toBe(false)
-        wrapper.unmount()
+    it("ignores labels whose value is not \"true\"", () => {
+        const summary = mountSummary({labels: [{key: "system.replay", value: "false"}, {key: "system.restarted", value: "false"}]})
 
-        const withoutLabels = mountSummary({})
-        wrapper = withoutLabels.wrapper
-        expect(withoutLabels.summary.replayed.value).toBe(false)
-        expect(withoutLabels.summary.restarted.value).toBe(false)
+        expect(summary.replayed.value).toBe(false)
+        expect(summary.restarted.value).toBe(false)
+    })
+
+    it("is neither replayed nor restarted without labels", () => {
+        const summary = mountSummary({})
+
+        expect(summary.replayed.value).toBe(false)
+        expect(summary.restarted.value).toBe(false)
     })
 
     it("uses the first state history date", () => {
         const date = "2026-10-01T12:00:00Z"
-        const mounted = mountSummary({state: {histories: [{date}, {date: "2026-10-01T13:00:00Z"}]} as Execution["state"]})
-        wrapper = mounted.wrapper
+        const summary = mountSummary({state: {histories: [{date}, {date: "2026-10-01T13:00:00Z"}]} as Execution["state"]})
 
-        expect(mounted.summary.createdDate.value).toEqual(new Date(date))
+        expect(summary.createdDate.value).toEqual(new Date(date))
     })
 
-    it("filters replay links by parent id or falls back to the execution id", () => {
-        const replay = mountSummary({id: "replay-id", parentId: "parent-id", labels: [{key: "system.replay", value: "true"}]})
-        wrapper = replay.wrapper
-        expect(replay.summary.replaysLink.value.query["filters[parentId][EQUALS]"]).toBe("parent-id")
-        wrapper.unmount()
+    it("filters replay links by the parent id", () => {
+        const summary = mountSummary({id: "replay-id", parentId: "parent-id", labels: [{key: "system.replay", value: "true"}]})
 
-        const replayWithoutParent = mountSummary({id: "replay-id", labels: [{key: "system.replay", value: "true"}]})
-        wrapper = replayWithoutParent.wrapper
-        expect(replayWithoutParent.summary.replaysLink.value.query["filters[parentId][EQUALS]"]).toBe("replay-id")
+        expect(summary.replaysLink.value.query["filters[parentId][EQUALS]"]).toBe("parent-id")
+    })
+
+    it("falls back to the execution id when a replay has no parent id", () => {
+        const summary = mountSummary({id: "replay-id", labels: [{key: "system.replay", value: "true"}]})
+
+        expect(summary.replaysLink.value.query["filters[parentId][EQUALS]"]).toBe("replay-id")
     })
 
     it("filters non-replay links by the execution id", () => {
-        const mounted = mountSummary({id: "execution-id", parentId: "parent-id"})
-        wrapper = mounted.wrapper
+        const summary = mountSummary({id: "execution-id", parentId: "parent-id"})
 
-        expect(mounted.summary.replaysLink.value).toEqual({
+        expect(summary.replaysLink.value).toEqual({
             name: "executions/list",
             query: {"filters[parentId][EQUALS]": "execution-id", sort: "state.endDate:desc"},
         })
     })
 
     it("copies the execution id and shows a success toast", () => {
-        const mounted = mountSummary({id: "execution-id"})
-        wrapper = mounted.wrapper
+        const summary = mountSummary({id: "execution-id"})
 
-        mounted.summary.copyId()
+        summary.copyId()
 
         expect(copy).toHaveBeenCalledWith("execution-id")
         expect(success).toHaveBeenCalledWith("Copied")

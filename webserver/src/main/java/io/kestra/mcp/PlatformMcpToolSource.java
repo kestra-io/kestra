@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
@@ -58,20 +57,17 @@ public class PlatformMcpToolSource implements McpToolSource {
     private final AgentToolPermissionEvaluator permissionEvaluator;
     private final AgentPrincipalResolver principalResolver;
     private final PlatformMcpServerConfig config;
-    private final TenantService tenantService;
 
     @Inject
     public PlatformMcpToolSource(
         ToolCatalog toolCatalog,
         AgentToolPermissionEvaluator permissionEvaluator,
         AgentPrincipalResolver principalResolver,
-        PlatformMcpServerConfig config,
-        TenantService tenantService) {
+        PlatformMcpServerConfig config) {
         this.toolCatalog = toolCatalog;
         this.permissionEvaluator = permissionEvaluator;
         this.principalResolver = principalResolver;
         this.config = config;
-        this.tenantService = tenantService;
     }
 
     @Override
@@ -120,7 +116,7 @@ public class PlatformMcpToolSource implements McpToolSource {
                 .name(toolName)
                 .arguments(MAPPER.writeValueAsString(arguments))
                 .build();
-            ToolCatalog.DispatchResult result = tenantService.callInTenant(tenant, () -> toolCatalog.dispatch(execution, callContext));
+            ToolCatalog.DispatchResult result = toolCatalog.dispatch(execution, callContext);
             return McpSchema.CallToolResult.builder().addTextContent(result.text()).build();
         } catch (JsonProcessingException e) {
             return error("The arguments of tool '%s' could not be read.".formatted(toolName));

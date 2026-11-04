@@ -14,10 +14,6 @@
     display: none !important;
 }
 
-.position-absolute {
-    position: absolute !important;
-}
-
 .flex-column {
     flex-direction: column !important;
 }

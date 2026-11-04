@@ -388,8 +388,7 @@
     import Upload from "vue-material-design-icons/Upload.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
-    import type {TreeOptionProps} from "element-plus"
-    import {KsInput, KsTree} from "@kestra-io/design-system"
+    import {KsInput, KsTree, type KsTreeInstance, type TreeOptionProps} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -472,7 +471,7 @@
     const isRenaming = ref(false)
     const sidebar = ref<HTMLElement>()
     const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
-    const tree = ref<InstanceType<typeof KsTree>>()
+    const tree = ref<KsTreeInstance<TreeNode>>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
     type DropdownInstance = {handleClose: () => void; handleOpen: () => void}
@@ -616,7 +615,7 @@
             openTab?.({
                 name: data.fileName,
                 path,
-                extension: data.fileName.split(".").pop(),
+                extension: data.fileName.split(".").pop() ?? "",
                 flow: false,
                 dirty: false,
             })
@@ -1046,7 +1045,7 @@
         }
     }
 
-    function confirmRemove(nodes: (TreeNode | undefined)[]) {
+    function confirmRemove(nodes: (TreeNode | null | undefined)[]) {
         confirmation.value = {
             visible: true,
             nodes: nodes.filter((n): n is TreeNode => Boolean(n)),

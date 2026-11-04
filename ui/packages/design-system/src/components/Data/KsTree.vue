@@ -18,10 +18,20 @@
 </template>
 
 <script lang="ts">
-    import type {RenderContentContext, TreeNodeData} from "element-plus"
+    import type {RenderContentContext, TreeNodeData, TreeOptionProps, TreeKey} from "element-plus"
 
     /** A tree node, holding one of the items given through `data` or resolved by `load`. */
     export type KsTreeNode<T extends TreeNodeData = TreeNodeData> = RenderContentContext["node"] & {data: T}
+
+    export interface KsTreeInstance<T extends TreeNodeData = TreeNodeData> {
+        getNode: (data: TreeKey | T) => KsTreeNode<T> | undefined
+        remove: (data: T | KsTreeNode<T>) => void
+        append: (data: T, parent: T | TreeKey | KsTreeNode<T>) => void
+        getCheckedNodes: (leafOnly?: boolean, includeHalfChecked?: boolean) => T[] | undefined
+        setCheckedKeys: (keys: TreeKey[], leafOnly?: boolean) => void
+        getCurrentKey: () => TreeKey | undefined
+        setCurrentKey: (key?: TreeKey | null) => void
+    }
 </script>
 
 <script setup lang="ts" generic="T extends TreeNodeData">

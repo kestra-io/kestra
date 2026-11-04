@@ -6,7 +6,6 @@ import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../utils/types"
 import {setActivePinia, createPinia} from "pinia"
 import {mount} from "@vue/test-utils"
 import {useNamespacesStore} from "override/stores/namespaces"
-import type {AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 import type {EChartsType} from "echarts/core"
 import {useFlowStore} from "../../../stores/flow"
 import {RouteParams} from "vue-router"
@@ -198,7 +197,7 @@ describe("useDependencies composable", () => {
 
       vi.spyOn(nameSpacesStore, "loadDependencies").mockResolvedValue({
         data: mockData,
-      } as AxiosLikeResponse)
+      } as Awaited<ReturnType<typeof nameSpacesStore.loadDependencies>>)
 
       const {isLoading, getElements} = mountComponentWithUseDependencies("NAMESPACE", "test-id", {}, false)
 

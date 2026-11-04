@@ -317,3 +317,12 @@ export function setupKestraHttp(
 
     return client
 }
+
+/**
+ * The generated SSE endpoints declare their stream as `Event<T>` envelopes (`{data: T, id, name, ...}`), but the
+ * SDK client yields only the parsed `data` of each event. This is the one place that states the real shape, and
+ * the constraint on `stream` keeps the call sites checked against the declared envelope.
+ */
+export function sseData<T>(stream: AsyncIterable<{data: T}>): AsyncIterable<T> {
+    return stream as unknown as AsyncIterable<T>
+}

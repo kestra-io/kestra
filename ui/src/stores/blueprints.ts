@@ -2,6 +2,7 @@ import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {handledIf} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 
@@ -115,8 +116,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}`)
-        const blueprintData = data as unknown as Blueprint
+        const {data} = await axios.get<Blueprint>(`${apiUrl()}/blueprints/custom/${options.id!}`)
+        const blueprintData = data
         if (load !== latestBlueprintLoad) {
             return blueprintData
         }
@@ -142,7 +143,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`
 
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
+        const response = await axios.get<FlowGraph>(options.type == "community" ? COMMUNITY : CUSTOM)
 
         return response.data
     }

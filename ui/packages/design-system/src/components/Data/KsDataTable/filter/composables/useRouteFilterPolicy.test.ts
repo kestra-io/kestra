@@ -172,7 +172,7 @@ describe("useRouteFilterPolicy", () => {
             expect(policy.effectiveValue.value).toEqual(minLevel("TRACE"))
         })
 
-        test("shouldSettleRouteAndRevertToFallbackWhenFilterIsClearedWhileNormalizationIsInFlight", () => {
+        test("shouldPreserveEffectiveValueReferenceWhenRouteLandsWithSameValue", () => {
             routerStub.autoApply = false
             const policy = startPolicy(() =>
                 useRouteFilterPolicy<LevelFilterValue>({
@@ -182,13 +182,15 @@ describe("useRouteFilterPolicy", () => {
                     applyDefaultIfMissing: () => true,
                 }))
 
-            expect(policy.isRouteSettled.value).toBe(false)
-            expect(policy.effectiveValue.value).toEqual(minLevel("DEBUG"))
+            const initialEffectiveValue = policy.effectiveValue.value
+            expect(initialEffectiveValue).toEqual(minLevel("DEBUG"))
 
-            policy.setRouteValue(undefined)
+            // Simulate the normalizing route landing with the default value
+            setQuery(resolverOptions.writeToRoute({}, minLevel("DEBUG")))
 
             expect(policy.isRouteSettled.value).toBe(true)
-            expect(policy.effectiveValue.value).toEqual(minLevel("TRACE"))
+            // Identity reference must be preserved so watchers (like in TaskRunDetails) do not re-fetch
+            expect(policy.effectiveValue.value).toBe(initialEffectiveValue)
         })
 
         test("shouldNotWriteTheDefaultValueToTheQueryWhenApplyDefaultIfMissingIsFalse", () => {

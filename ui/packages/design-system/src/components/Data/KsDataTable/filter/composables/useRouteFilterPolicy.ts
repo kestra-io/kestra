@@ -48,7 +48,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         () => options.hasUnsupportedRouteValue?.(route.query) ?? false,
     )
 
-    const effectiveValue = computed(() => {
+    const resolveEffectiveValue = (): T | undefined => {
         if (!isEnabled()) {
             return options.fallbackValue?.()
         }
@@ -66,6 +66,11 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         }
 
         return options.fallbackValue?.()
+    }
+
+    const effectiveValue = computed<T | undefined>((previous) => {
+        const next = resolveEffectiveValue()
+        return isSameValue(previous, next) ? previous : next
     })
 
     /**
@@ -91,6 +96,12 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     }
 
     onScopeDispose(() => clearTimeout(settleTimer))
+
+    watch(routeValue, (value) => {
+        if (value !== undefined) {
+            settleNow()
+        }
+    }, {flush: "sync"})
 
     watch(
         [routeValue, explicitValue, hasUnsupportedRouteValue],
@@ -124,15 +135,9 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return
         }
 
-        if (
-            !normalizationPending.value &&
-            isSameValue(value, routeValue.value) &&
-            !hasUnsupportedRouteValue.value
-        ) {
+        if (isSameValue(value, routeValue.value) && !hasUnsupportedRouteValue.value) {
             return
         }
-
-        settleNow()
 
         router.replace({
             query: options.writeToRoute(route.query, value),
@@ -153,12 +158,6 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
 
         setRouteValue(options.readFromAppliedFilters(filters))
     }
-
-    watch(routeValue, (value) => {
-        if (value !== undefined) {
-            settleNow()
-        }
-    }, {flush: "sync"})
 
     const isRouteSettled = computed(() => !normalizationPending.value)
 

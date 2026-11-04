@@ -229,6 +229,17 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                :description="$t('settings.blocks.theme.descriptions.editor_pebble_hover')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                    :modelValue="settings.pebbleHover"
+                    @change="onPebbleHover"
+                />
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
                 :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
@@ -362,6 +373,7 @@
         [storageKeys.EDITOR_FONT_SIZE]: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
         [storageKeys.AUTOFOLD_TEXT_EDITOR]: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
         [storageKeys.HOVER_TEXT_EDITOR]: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.PEBBLE_HOVER]: [`${THEME}.fields.editor_pebble_hover`, `${THEME}.descriptions.editor_pebble_hover`],
         [storageKeys.TIMEZONE_STORAGE_KEY]: [`${LOCALE}.fields.time_zone`, `${LOCALE}.descriptions.time_zone`],
         [storageKeys.DATE_FORMAT_STORAGE_KEY]: [`${LOCALE}.fields.date_format`, `${LOCALE}.descriptions.date_format`],
     }
@@ -397,6 +409,7 @@
         editorFontFamily: editorFontFamily(),
         autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
         hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
+        pebbleHover: localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false",
         lang: Utils.getLang(),
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
@@ -724,6 +737,11 @@
     function onHover(value: boolean | string | number) {
         settings.hoverTextEditor = Boolean(value)
         persist(storageKeys.HOVER_TEXT_EDITOR, settings.hoverTextEditor)
+    }
+
+    function onPebbleHover(value: boolean | string | number) {
+        settings.pebbleHover = Boolean(value)
+        persist(storageKeys.PEBBLE_HOVER, settings.pebbleHover)
     }
 
     function onEditorPlayground(value: boolean | string | number) {

@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { mount } from "@vue/test-utils"
 import { defineComponent, h } from "vue"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 vi.mock("@kestra-io/design-system", () => ({
     KsMessageBox: { confirm: vi.fn(() => Promise.resolve()) },
@@ -57,6 +58,7 @@ const mountList = (pages: { label?: string; path: string }[]) => {
     wrapper = mount(BookmarkLinkList, {
         props: { pages },
         global: {
+            plugins: [memoryRouter()],
             stubs: { RouterLink: RouterLinkStub, KsInput },
             mocks: { $t: (key: string) => key },
         },

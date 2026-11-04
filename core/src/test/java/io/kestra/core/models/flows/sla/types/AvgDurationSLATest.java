@@ -28,7 +28,7 @@ class AvgDurationSLATest {
 
         // Then
         assertThat(violation).isPresent();
-        assertThat(violation.get().reason()).contains("exceed the average duration of PT0.05S.");
+        assertThat(violation.get().reason()).contains("exceed the deadline of PT0.05S.");
     }
 
     @Test

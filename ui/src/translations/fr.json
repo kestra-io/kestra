@@ -1092,7 +1092,7 @@
       "heading": "Tout sur Kestra.",
       "subheading": "Les dernières mises à jour, guides et histoires"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Cette execution est toujours en cours, la supprimer ne l'arrêtera pas.<br />Vous devez killer l'execution pour l'arrêter.</div>",
     "restore": "Restaurer",
     "restore confirm": "Voulez-vous vraiment restaurer la révision <code>{revision}</code> ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",

@@ -1092,7 +1092,7 @@
       "heading": "Все о Kestra.",
       "subheading": "Последние обновления, руководства и истории"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Это выполнение все еще выполняется, удаление его не остановит.<br />Вам нужно убить выполнение, чтобы остановить его.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Эта Execution все еще выполняется, ее удаление не остановит ее.<br />Вам нужно kill'нуть Execution, чтобы остановить ее.</div>",
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",

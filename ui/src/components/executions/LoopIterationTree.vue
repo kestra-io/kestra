@@ -1,137 +1,123 @@
 <template>
-    <div class="loop-iteration-tree">
-        <div
-            class="loop-toggle"
-            :style="{'--depth': depth}"
-            data-test="loop-iteration-toggle"
-            role="button"
-            tabindex="0"
-            :aria-expanded="expanded"
-            @click="onToggle"
-            @keydown.enter="onToggle"
-            @keydown.space.prevent="onToggle"
-        >
-            <ChevronDown v-if="expanded" />
-            <ChevronRight v-else />
-            <span class="loop-toggle-label">{{ $t("iterations") }}</span>
-            <span v-if="loaded" class="loop-toggle-count">{{ total }}</span>
-        </div>
+    <div class="loop-iteration-tree" data-test="loop-iteration-tree">
+        <GanttMessageRow v-if="loading && iterations.length === 0" :ancestors="ancestors" data-test="loop-loading">
+            <KsIcon class="is-loading" size="sm">
+                <Loading />
+            </KsIcon>
+            {{ $t("gantt_loop_loading") }}
+        </GanttMessageRow>
 
-        <template v-if="expanded">
-            <div v-if="loading && iterations.length === 0" class="loop-loading">
-                <KsIcon class="is-loading" :size="20">
-                    <Loading />
-                </KsIcon>
-            </div>
-
-            <KsAlert v-else-if="error" type="error">
+        <GanttMessageRow v-else-if="error" :ancestors="ancestors">
+            <KsAlert type="error" :closable="false">
                 {{ $t("loop_iterations_load_error") }}
                 <KsButton size="small" link @click="retry">{{ $t("retry") }}</KsButton>
             </KsAlert>
+        </GanttMessageRow>
 
-            <div v-else-if="loaded && iterations.length === 0" class="loop-empty">
-                {{ $t(failedOnly ? "no_failed_iterations" : "no_iterations") }}
-            </div>
+        <GanttMessageRow v-else-if="loaded && iterations.length === 0" :ancestors="ancestors" data-test="loop-empty">
+            {{ $t(failedOnly ? "no_failed_iterations" : "no_iterations") }}
+            <KsButton v-if="failedOnly && totalCount" size="small" link class="tree-link" @click="setFailedOnly(false)">
+                {{ $t("gantt_loop_show_all_iterations", {count: totalCount}) }}
+            </KsButton>
+        </GanttMessageRow>
 
-            <div
-                v-for="iteration in iterations"
-                :key="iteration.id"
-                class="loop-iteration-row"
+        <template v-for="iteration in iterationNodes" :key="iteration.key">
+            <GanttRow
+                :nodeKey="iteration.key"
+                :label="iterationLabel(iteration.row)"
+                :ancestors="ancestors"
+                :offset="offset(iteration.row.state.histories)"
+                :barStyle="barStyle(iteration.row.state.histories, iteration.row.state.current)"
+                :state="iteration.row.state.current"
+                :selected="tree.selected.value?.key === iteration.key"
+                expandable
+                :expanded="tree.isExpanded(iteration.key)"
                 data-test="loop-iteration-row"
+                @select="tree.select(iteration)"
+                @toggle="tree.toggleExpanded(iteration.key)"
             >
-                <div
-                    class="loop-iteration-row-main"
-                    :style="{'--depth': depth + 1}"
-                    role="button"
-                    tabindex="0"
-                    :aria-expanded="expandedRows.has(iteration.id)"
-                    @click="toggleRow(iteration.id)"
-                    @keydown.enter="toggleRow(iteration.id)"
-                    @keydown.space.prevent="toggleRow(iteration.id)"
-                >
-                    <ChevronDown v-if="expandedRows.has(iteration.id)" class="loop-iteration-row-chevron" />
-                    <ChevronRight v-else class="loop-iteration-row-chevron" />
-                    <KsExecutionStatus size="small" :status="iteration.state.current" />
-                    <span class="loop-iteration-row-value">{{ iteration.value }}</span>
-                    <Duration class="loop-iteration-row-duration" :histories="iteration.state.histories" />
+                <template #label>
+                    <span class="iteration-index">#{{ iteration.row.index + 1 }}</span>
+                    <code class="iteration-value" :title="iteration.row.value">{{ iteration.row.value }}</code>
+                </template>
+                <template #duration>
+                    <Duration :histories="iteration.row.state.histories" />
+                </template>
+                <template #actions>
                     <SubFlowLink
-                        :executionId="iteration.id"
-                        :namespace="namespace"
-                        :flowId="flowId"
+                        :executionId="iteration.row.id"
+                        :namespace="loopRef.namespace"
+                        :flowId="loopRef.flowId"
                         tabExecution="gantt"
-                        @click.stop
                     />
-                </div>
+                </template>
+            </GanttRow>
 
-                <IterationTaskRuns
-                    v-if="expandedRows.has(iteration.id)"
-                    :executionId="iteration.id"
-                    :namespace="namespace"
-                    :flowId="flowId"
-                    :depth="depth + 1"
-                />
-            </div>
-
-            <div v-if="needsPreview" class="loop-preview-footer">
-                <span class="loop-preview-footer__count">
-                    {{ $t("loop_iterations_shown", {shown: iterations.length, total}) }}
-                </span>
-                <KsButton
-                    v-if="hasMore"
-                    size="small"
-                    link
-                    :loading="loading"
-                    data-test="loop-load-more"
-                    @click="loadMore"
-                >
-                    {{ $t("load_10_more") }}
-                </KsButton>
-                <KsButton
-                    :tag="RouterLink"
-                    size="small"
-                    link
-                    :to="allExecutionsRoute"
-                >
-                    {{ $t("show_all_executions") }}
-                </KsButton>
-            </div>
-
-            <label class="loop-failed-filter">
-                <KsCheckbox
-                    :modelValue="failedOnly"
-                    @update:modelValue="onFailedOnlyChange"
-                />
-                {{ $t("failed_iterations_only") }}
-            </label>
+            <IterationTaskRuns
+                v-if="tree.isExpanded(iteration.key)"
+                :iteration="iteration"
+            />
         </template>
+
+        <GanttMessageRow v-if="needsPreview" :ancestors="ancestors" data-test="loop-preview-footer">
+            <span>{{ $t("loop_iterations_shown", {shown: iterations.length, total}) }}</span>
+            <KsButton
+                v-if="hasMore"
+                size="small"
+                link
+                class="tree-link"
+                :loading="loading"
+                data-test="loop-load-more"
+                @click="loadMore"
+            >
+                {{ $t("load_10_more") }}
+            </KsButton>
+            <KsButton
+                :tag="RouterLink"
+                size="small"
+                link
+                class="tree-link"
+                :to="allExecutionsRoute"
+            >
+                {{ $t("show_all_executions") }}
+            </KsButton>
+        </GanttMessageRow>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, reactive, computed} from "vue"
+    import {computed, onMounted} from "vue"
     import {RouterLink} from "vue-router"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import {Duration} from "@kestra-io/topology"
-    import {KsAlert, KsExecutionStatus, KsButton, KsCheckbox, KsIcon} from "@kestra-io/design-system"
+    import {KsAlert, KsButton, KsIcon} from "@kestra-io/design-system"
     import SubFlowLink from "../flows/SubFlowLink.vue"
+    import GanttRow from "./gantt/GanttRow.vue"
+    import GanttMessageRow from "./gantt/GanttMessageRow.vue"
     import IterationTaskRuns from "./IterationTaskRuns.vue"
-    import {useLoopIterations} from "../../composables/useLoopIterations"
+    import {
+        createIterationNode,
+        iterationLabel,
+        loopAncestors,
+        loopRefOf,
+        useGanttTree,
+        type TaskRunNode,
+    } from "./gantt/ganttTree"
+    import {useGanttTimeline} from "./ganttTimeline"
 
     const props = defineProps<{
-        executionId: string;
-        taskId: string;
-        namespace: string;
-        flowId: string;
-        depth?: number;
+        node: TaskRunNode;
     }>()
 
-    const depth = computed(() => props.depth ?? 0)
+    const tree = useGanttTree()
+    const {offset, barStyle} = useGanttTimeline()
 
+    const loopRef = computed(() => loopRefOf(props.node))
+    const ancestors = computed(() => loopAncestors(props.node))
     const {
         iterations,
         total,
+        totalCount,
         loading,
         error,
         loaded,
@@ -142,104 +128,49 @@
         loadMore,
         retry,
         setFailedOnly,
-    } = useLoopIterations(props.executionId, props.taskId)
+    } = tree.loopHandle(loopRef.value)
 
-    const expanded = ref(false)
-    const expandedRows = reactive(new Set<string>())
-
-    function onToggle() {
-        expanded.value = !expanded.value
-        if (expanded.value) ensureLoaded()
-    }
-
-    function toggleRow(iterationId: string) {
-        if (expandedRows.has(iterationId)) {
-            expandedRows.delete(iterationId)
-        } else {
-            expandedRows.add(iterationId)
-        }
-    }
-
-    function onFailedOnlyChange(value: boolean | undefined) {
-        setFailedOnly(value === true)
-    }
+    const iterationNodes = computed(() => iterations.value.map(row => createIterationNode(loopRef.value, row, ancestors.value)))
 
     const allExecutionsRoute = {
         name: "executions/list",
         query: {
-            "filters[parentId][EQUALS]": props.executionId,
+            "filters[parentId][EQUALS]": props.node.executionId,
             "filters[kind][EQUALS]": "LOOP",
-            "filters[taskId][EQUALS]": props.taskId,
+            "filters[taskId][EQUALS]": props.node.taskRun.taskId,
         },
     }
+
+    onMounted(ensureLoaded)
 </script>
 
 <style scoped>
-    .loop-toggle {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-1) var(--ks-spacing-4);
-        padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
-        cursor: pointer;
+    .tree-link {
+        color: var(--ks-text-link);
+    }
+
+    .iteration-index {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        min-width: 1.75rem;
+        height: 1.75rem;
+        padding: 0 var(--ks-spacing-1);
+        border: var(--ks-border-width-thin) dashed var(--ks-border-strong);
+        border-radius: var(--ks-radius-sm);
+        background: var(--ks-bg-base);
         color: var(--ks-text-secondary);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-2xs);
+    }
+
+    .iteration-value {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         font-size: var(--ks-font-size-sm);
-    }
-
-    .loop-toggle-count {
-        color: var(--ks-text-muted);
-    }
-
-    .loop-loading {
-        display: flex;
-        justify-content: center;
-        padding: var(--ks-spacing-2);
-    }
-
-    .loop-iteration-row-main {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-1) var(--ks-spacing-4);
-        padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
-        border-bottom: 1px solid var(--ks-border-default);
-        cursor: pointer;
-    }
-
-    .loop-iteration-row-value {
-        flex-grow: 1;
-        font-family: var(--kel-font-family-monospace);
-        font-size: var(--ks-font-size-sm);
-    }
-
-    .loop-iteration-row-chevron {
-        flex-shrink: 0;
-        color: var(--ks-icon-muted);
-    }
-
-    .loop-iteration-row-duration {
-        flex-shrink: 0;
-        font-family: var(--kel-font-family-monospace);
-        font-size: var(--ks-font-size-xs);
+        font-weight: var(--ks-font-weight-semibold);
         color: var(--ks-text-primary);
     }
-
-    .loop-preview-footer {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-sm);
-    }
-
-    .loop-failed-filter {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        padding: 0 var(--ks-spacing-4) var(--ks-spacing-2);
-        font-size: var(--ks-font-size-sm);
-        cursor: pointer;
-    }
-
 </style>

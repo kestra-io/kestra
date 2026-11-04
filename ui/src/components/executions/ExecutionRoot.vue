@@ -16,9 +16,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, provide} from "vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useExecutionRoot} from "./composables/useExecutionRoot"
+    import {EXECUTION_ARTIFACTS_KEY} from "./composables/useExecutionArtifacts"
     import {useActiveTab} from "../../composables/useActiveTab"
     import useRouteContext from "../../composables/useRouteContext"
     import Tabs from "../../components/Tabs.vue"
@@ -27,7 +28,8 @@
 
     const executionsStore = useExecutionsStore()
 
-    const {routeInfo, routeName, ready, tabs, setupLifecycle} = useExecutionRoot()
+    const {routeInfo, routeName, ready, tabs, executionArtifacts, setupLifecycle} = useExecutionRoot()
+    provide(EXECUTION_ARTIFACTS_KEY, executionArtifacts)
     const activeTab = useActiveTab()
     const secondaryAction = computed(() => activeTab.value ? secondaryActionComponents[activeTab.value] : undefined)
 

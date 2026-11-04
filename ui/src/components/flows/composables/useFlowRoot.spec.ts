@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {effectScope, nextTick} from "vue"
+import {defineComponent, effectScope, nextTick} from "vue"
+import {mount} from "@vue/test-utils"
 import type {Flow} from "../../../stores/flow"
 
 interface MockRoute {
@@ -58,11 +59,18 @@ vi.mock("override/stores/auth", () => ({
 }))
 
 vi.mock("override/stores/misc", () => ({
-    useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
+    useMiscStore: () => ({configs: {chartDefaultDuration: "P30D"}}),
 }))
 
 import {useFlowStore} from "../../../stores/flow"
 import {useFlowRoot} from "./useFlowRoot"
+
+const mountLifecycle = () => mount(defineComponent({
+    setup() {
+        useFlowRoot().setupLifecycle()
+        return () => null
+    },
+}))
 
 describe("useFlowRoot", () => {
     const flowStore = useFlowStore()
@@ -130,22 +138,18 @@ describe("useFlowRoot", () => {
 
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
         flowStore.flow = makeFlow("myflow")
-        const scope = effectScope()
 
-        scope.run(() => useFlowRoot().setupLifecycle())
+        mountLifecycle()
         await nextTick()
 
         expect(loadFlow).not.toHaveBeenCalled()
         expect(flowStore.loadGraph).toHaveBeenCalledWith({flow: flowStore.flow})
-
-        scope.stop()
     })
 
     it("fetches the flow when the store holds another one", async () => {
         flowStore.flow = makeFlow("otherflow")
-        const scope = effectScope()
 
-        scope.run(() => useFlowRoot().setupLifecycle())
+        mountLifecycle()
         await nextTick()
 
         expect(loadFlow).toHaveBeenCalledWith(expect.objectContaining({
@@ -153,8 +157,6 @@ describe("useFlowRoot", () => {
             id: "myflow",
             allowDeleted: true,
         }))
-
-        scope.stop()
     })
 
     it("does not reinsert PT24H when activeTab is executions with no time filter in query", async () => {
@@ -171,7 +173,7 @@ describe("useFlowRoot", () => {
         scope.stop()
     })
 
-    it("injects default duration when activeTab is overview with no time filter in query", async () => {
+    it("injects the default duration in its dropdown spelling when activeTab is overview with no time filter in query", async () => {
         currentRoute.meta = {tab: "overview"}
         currentRoute.name = "flows/update/overview"
         currentRoute.query = {}
@@ -184,7 +186,7 @@ describe("useFlowRoot", () => {
         expect(routerReplace).toHaveBeenCalledWith({
             name: "flows/update/overview",
             params: {namespace: "company.team", id: "myflow"},
-            query: {"filters[timeRange][EQUALS]": "PT24H"},
+            query: {"filters[timeRange][EQUALS]": "PT720H"},
         })
         scope.stop()
     })

@@ -4,7 +4,7 @@
         <NavBarAction :icon="StopCircleOutline" @click="kill(false)">{{ $t('kill only parents') }}</NavBarAction>
     </template>
     <KsDropdown v-else-if="enabled" placement="bottom-end" class="kill-dropdown">
-        <KsButton :icon="Circle" @click="kill(true)">
+        <KsButton :icon="StopCircleOutline" @click="kill(true)">
             {{ $t("kill") }}
         </KsButton>
         <template #dropdown>
@@ -31,7 +31,6 @@
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
-    import Circle from "vue-material-design-icons/Circle.vue"
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"

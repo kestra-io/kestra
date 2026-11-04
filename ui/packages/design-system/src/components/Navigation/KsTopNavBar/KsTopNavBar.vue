@@ -1,5 +1,5 @@
 <template>
-    <nav class="ks-topnavbar d-flex align-items-center w-100">
+    <nav class="ks-topnavbar">
         <KsIconButton
             v-if="sidebarCollapsed"
             class="icon-btn"
@@ -10,7 +10,7 @@
             <Menu />
         </KsIconButton>
         <div class="title-section">
-            <div class="d-flex align-items-center gap-2">
+            <div class="title-row">
                 <KsBreadcrumb
                     :items="breadcrumb ?? []"
                     :title="title ?? ''"
@@ -55,7 +55,7 @@
                 <slot name="description" />
             </div>
         </div>
-        <div class="side d-flex gap-2 flex-shrink-0 align-items-center">
+        <div class="side">
             <slot name="search" />
             <slot name="actions" />
             <slot name="panel-toggle" />
@@ -127,8 +127,11 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-topnavbar {
+        display: flex;
+        align-items: center;
+        width: 100%;
         height: 60px;
         flex-shrink: 0;
         padding: 0 var(--ks-spacing-4);
@@ -153,6 +156,12 @@
         flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 
     .description {
@@ -197,17 +206,22 @@
     }
 
     .dock-toggle {
-         &.is-open {
+        &.is-open {
             color: var(--ks-icon-default);
         }
-        
+
         @media (max-width: 767px) {
             display: none;
         }
     }
 
     .side {
-        :deep(ul) {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
+
+        & :deep(ul) {
             display: flex;
             list-style: none;
             padding: 0;

@@ -6,40 +6,96 @@ version: 2
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
+    target-branch: develop
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own actions are never delayed
+    cooldown:
+      default-days: 7
+      exclude: ["kestra-io/*"]
+    commit-message:
+      prefix: "build(deps)"
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/devops"]
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
+    target-branch: develop
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own artifacts are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["io.kestra*"]
+    commit-message:
+      prefix: "build(deps)"
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/backend"]
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      gradle-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+    ignore:
+      # Ignore versions of MCP protocol >= 2.0 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22234
+      - dependency-name: "io.modelcontextprotocol.sdk::*"
+        versions: [ ">=2.0.0" ]
+      # Ignore versions of Langchain4J >= 1.19 as it needs MCP protocol 2.0 (see above)
+      - dependency-name: "dev.langchain4j:*"
+        versions: [ ">=1.19.0" ]
+      # Ignore versions of Maven Resolver >= 2.0.11 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22235
+      - dependency-name: "dev.langchain4j:*"
+        versions: [ ">=2.0.11" ]
+      # Ignore versions of Jetty >= 12.1.0 as Wiremock didn't work with it see https://github.com/kestra-io/kestra/issues/22238
+      - dependency-name: "org.eclipse.jetty:*"
+        versions: [ ">=12.1.0" ]
+
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
+    target-branch: develop
     directory: "/ui"
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps)"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own packages are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
+      # must stay first: a dependency is assigned to the first group matching it
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+
       build:
         applies-to: version-updates
         patterns:
@@ -138,18 +194,30 @@ updates:
 
   # Maintain dependencies for ui/packages/design-system
   - package-ecosystem: "npm"
+    target-branch: develop
     directory: "/ui/packages/design-system"
     commit-message:
-      prefix: "build(design-system)"
-      prefix-development: "build(design-system)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own packages are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
+      # must stay first: a dependency is assigned to the first group matching it
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+
       build:
         applies-to: version-updates
         patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
@@ -226,18 +294,30 @@ updates:
 
   # Maintain dependencies for ui/packages/slot-contracts
   - package-ecosystem: "npm"
+    target-branch: develop
     directory: "/ui/packages/slot-contracts"
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps)"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own packages are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
+      # must stay first: a dependency is assigned to the first group matching it
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+
       build:
         applies-to: version-updates
         patterns: ["tsdown"]
@@ -259,18 +339,30 @@ updates:
 
   # Maintain dependencies for ui/packages/topology
   - package-ecosystem: "npm"
+    target-branch: develop
     directory: "/ui/packages/topology"
     commit-message:
-      prefix: "build(topology)"
-      prefix-development: "build(topology)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       timezone: "Europe/Paris"
-      time: "08:00"
-    open-pull-requests-limit: 50
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own packages are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
+      # must stay first: a dependency is assigned to the first group matching it
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+
       build:
         applies-to: version-updates
         patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
@@ -321,3 +413,30 @@ updates:
             "@types/*",
             "@vue-flow/*",
           ]
+
+  # Maintain dependencies for the end-to-end tests
+  - package-ecosystem: "npm"
+    target-branch: develop
+    directory: "/e2e"
+    schedule:
+      interval: "daily"
+      timezone: "Europe/Paris"
+      time: "06:00"
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    commit-message:
+      prefix: "build(deps)"
+    open-pull-requests-limit: 20
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      e2e-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]

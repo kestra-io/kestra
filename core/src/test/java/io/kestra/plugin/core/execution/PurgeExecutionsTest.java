@@ -5,12 +5,14 @@ import java.time.format.DateTimeFormatter;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
@@ -31,6 +33,9 @@ class PurgeExecutionsTest {
     @Inject
     private TaskOutputRepositoryInterface taskOutputRepository;
 
+    @Inject
+    private CheckpointRepositoryInterface checkpointRepository;
+
     @Test
     void run() throws Exception {
         // create an execution to delete
@@ -49,6 +54,8 @@ class PurgeExecutionsTest {
         var taskOutput = new TaskOutput(IdUtils.create(), MAIN_TENANT, executionId, "Hello World".getBytes(), null);
         taskOutputRepository.save(taskOutput);
 
+        checkpointRepository.save(new Checkpoint(MAIN_TENANT, executionId, IdUtils.create(), "offset", "42"));
+
         var purge = PurgeExecutions.builder()
             .flowId(Property.ofValue(flowId))
             .namespace(Property.ofValue(namespace))
@@ -59,6 +66,7 @@ class PurgeExecutionsTest {
 
         assertThat(output.getExecutionsCount()).isEqualTo(1);
         assertThat(output.getTaskOutputsCount()).isEqualTo(1);
+        assertThat(output.getCheckpointsCount()).isEqualTo(1);
     }
 
     @Test

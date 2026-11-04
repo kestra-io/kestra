@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -170,6 +171,21 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldServeEveryChartOfDefaultDashboardAfterValidation() {
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+
+        for (var chart : defaultDashboard.getCharts()) {
+            var response = client.toBlocking().exchange(
+                POST(DASHBOARD_PATH + "/_default/charts/" + chart.getId() + "/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build())
+            );
+            assertThat(response.getStatus().getCode()).as(chart.getId()).isEqualTo(200);
+        }
+    }
+
+    @Test
     void shouldTreatNullFiltersAsNoFiltersOnChartData() {
         // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
         // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)
@@ -312,6 +328,66 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isEqualTo(1);
         assertThat(chartData.getResults().get(0).get("trigger_id")).isEqualTo(enabledTriggerId);
+    }
+
+    @Test
+    void shouldSortRecentExecutionsOfDefaultDashboardByMostRecentStartDate() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndAge : List.of(Map.entry("middle", 2L), Map.entry("newest", 1L), Map.entry("oldest", 3L))) {
+            Instant startDate = now.minus(Duration.ofHours(flowAndAge.getValue()));
+            executionRepository.save(
+                Execution.builder()
+                    .tenantId(MAIN_TENANT)
+                    .id(IdUtils.create())
+                    .namespace(namespace)
+                    .flowId(flowAndAge.getKey())
+                    .state(State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, startDate), new State.History(State.Type.SUCCESS, startDate.plusSeconds(1)))))
+                    .build()
+            );
+        }
+
+        String csv = exportDefaultChart("recent_executions", namespace);
+
+        assertThat(csv.indexOf("newest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("oldest"));
+    }
+
+    @Test
+    void shouldSortNextExecutionsOfDefaultDashboardByUpcomingFirst() {
+        String namespace = TestsUtils.randomNamespace();
+        Instant now = Instant.now();
+        // saved out of order on purpose, so a result sorted by insertion cannot pass
+        for (var flowAndOffset : List.of(Map.entry("middle", 2L), Map.entry("last", 3L), Map.entry("soonest", 1L))) {
+            triggerStateStore.save(
+                TriggerState.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .flowId(flowAndOffset.getKey())
+                    .triggerId(IdUtils.create())
+                    .workerId("worker")
+                    .nextEvaluationDate(now.plus(Duration.ofHours(flowAndOffset.getValue())))
+                    .disabled(false)
+                    .build()
+            );
+        }
+
+        String csv = exportDefaultChart("next_executions", namespace);
+
+        assertThat(csv.indexOf("soonest")).isPositive().isLessThan(csv.indexOf("middle"));
+        assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("last"));
+    }
+
+    private String exportDefaultChart(String chartId, String namespace) {
+        var filters = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/" + chartId + "/export", filters),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
     }
 
     @Test

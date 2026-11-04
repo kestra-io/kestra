@@ -67,3 +67,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/table-column';
 </style>
+
+<style>
+</style>

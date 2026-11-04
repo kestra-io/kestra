@@ -62,8 +62,9 @@
     }, {immediate: true})
 </script>
 
-<style lang="scss">
-    // The popper is the first column's card; the design system already gives it the border and background.
+<style>
+    /* The popper is the first column's card; the design system already gives it the border and background. */
+
     .ks-breadcrumb-popper.kel-popover.kel-popper {
         min-width: 0;
         padding: 0;
@@ -72,7 +73,7 @@
     }
 </style>
 
-<style scoped lang="scss">
+<style scoped>
     .segment {
         display: inline-flex;
         align-items: center;

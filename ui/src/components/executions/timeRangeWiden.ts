@@ -1,7 +1,11 @@
-import {dayjs} from "@kestra-io/design-system"
+import {dayjs, normalizeRelativeDate} from "@kestra-io/design-system"
 import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
+
+// The timeRange select only matches the canonical spelling, so `P30D` has to become `PT720H`.
+export const defaultTimeRange = (configured: string | undefined): string =>
+    normalizeRelativeDate(configured ?? FALLBACK_TIME_RANGE)
 
 // The chip labels relative ranges by exact string (FilterChip.vue's RELATIVE_DATE), and the executions
 // `timeRange` key is a plain "select", so it skips the P30D -> PT720H aliasing filterChipFactory applies

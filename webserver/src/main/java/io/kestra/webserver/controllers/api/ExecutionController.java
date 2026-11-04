@@ -1653,6 +1653,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
 
         return new ReplayValues(replayOverrideService.values(flowRepository.findByExecution(execution), execution, taskRunId));
     }

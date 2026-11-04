@@ -17,6 +17,7 @@
     import {dayjs} from "@kestra-io/design-system"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
+    import {flattenInputs} from "../../utils/inputs"
 
     type DateInput = Parameters<typeof dayjs>[0]
 
@@ -43,10 +44,10 @@
         command.push("-H", `'${name}: ${value}'`)
     }
 
-    function addInputs(command: string[]) {
-        if (!props.flow.inputs) return
+    const leafInputs = computed(() => flattenInputs(props.flow.inputs))
 
-        props.flow.inputs.forEach((input) => {
+    function addInputs(command: string[]) {
+        leafInputs.value.forEach((input) => {
             let inputValue: string | undefined
             const value = props.inputs?.[input.id]
 
@@ -125,7 +126,7 @@
         addHeader(mainCommand, "Content-Type", "multipart/form-data")
         addInputs(mainCommand)
         mainCommand.push(`'${url.value}'`)
-        const hasFileInput = props.flow.inputs?.some((input) => input.type === "FILE")
+        const hasFileInput = leafInputs.value.some((input) => input.type === "FILE")
 
         if (hasFileInput) {
             return `${toShell(prefix.value)} && \\\n${toShell(mainCommand)}`

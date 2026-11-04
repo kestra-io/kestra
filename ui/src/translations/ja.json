@@ -1463,6 +1463,7 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
+            "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1485,6 +1486,7 @@
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
+            "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -2143,6 +2145,11 @@
       "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "increase_fontsize": "エディタのフォントサイズを大きくする",
       "reset_fontsize": "エディタのフォントサイズをリセット"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble ホバー docs を切り替える",
+      "enabled": "Pebble ホバー docs はオンです。",
+      "disabled": "Pebble ホバー docs はオフです。"
     },
     "instance": "インスタンス",
     "something_went_wrong": {

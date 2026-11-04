@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {ref} from "vue"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -18,7 +19,7 @@ const totals: Record<string, {all: number; failed: number}> = {
 let tree: GanttTree
 
 beforeEach(() => {
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     vi.spyOn(useExecutionsStore(), "findExecutions").mockImplementation((async (options: Record<string, unknown>) => {
         const total = totals[options["filters[taskId][EQUALS]"] as string]
         return options["filters[state][IN]"] ? total.failed : total.all

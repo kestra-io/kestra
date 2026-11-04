@@ -14,6 +14,8 @@ import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -171,6 +173,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
     private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
+    private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
 
     @Nullable
     @Value("${micronaut.server.context-path}")
@@ -746,7 +749,9 @@ public class ExecutionController {
         HttpRequest<?> request) {
         Flow flow;
         try {
-            flow = resolveWebhook(maybeFlow, key).flow();
+            ResolvedWebhook resolved = resolveWebhook(maybeFlow, key);
+            flow = resolved.flow();
+            webhookBodyService.validateMultipartSignature(processedForRuntime(flow, resolved.trigger()));
         } catch (RuntimeException e) {
             // The parts are already bound: unless they are read, their bytes stay in direct memory (GHSA-2355-646m-8m98).
             return MultipartUtils.discard(parts).then(Mono.error(e));
@@ -807,7 +812,7 @@ public class ExecutionController {
 
         // Minted before the body is read, so that a stored body lives under the execution that will carry it.
         String executionId = IdUtils.create();
-        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook, webhookService.runContext(flow, webhook));
 
         try {
             return this.webhook(
@@ -1303,6 +1308,10 @@ public class ExecutionController {
             return null;
         }
 
+        if (StorageContext.isInNamespaceFiles(execution.getNamespace(), path)) {
+            return null;
+        }
+
         // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
         // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
         String flowId = execution.getFlowId();
@@ -1357,8 +1366,9 @@ public class ExecutionController {
         }
 
         InputStream fileHandler = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME -> StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)
+                ? namespaceFileContent(execution.get(), path)
+                : storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1407,6 +1417,22 @@ public class ExecutionController {
         return namespace.get(Path.of(path.getPath())).uri();
     }
 
+    /**
+     * Reads a namespace file of the execution namespace from its internal storage URI through {@link Namespace},
+     * so a deleted file and the revisions it held before being deleted are not served.
+     */
+    private InputStream namespaceFileContent(Execution execution, URI path) throws IOException {
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
+        Path file = Path.of(StorageContext.namespaceFilePrefix(execution.getNamespace())).relativize(Path.of(path.getPath()));
+
+        Matcher revision = NAMESPACE_FILE_REVISION.matcher(file.toString());
+        if (revision.matches() && Integer.parseInt(revision.group(2)) > 1) {
+            return namespace.getFileContent(Path.of(revision.group(1)), Integer.parseInt(revision.group(2)));
+        }
+
+        return namespace.getFileContent(file, 1);
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/file/metas")
     @Operation(tags = { "Executions" }, summary = "Get file meta information for an execution")
@@ -1424,8 +1450,13 @@ public class ExecutionController {
         }
 
         long size = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case StorageContext.KESTRA_SCHEME -> {
+                if (StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)) {
+                    // Namespace has no metadata lookup for a given revision, opening its content is what refuses a deleted one
+                    namespaceFileContent(execution.get(), path).close();
+                }
+                yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            }
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -2360,7 +2391,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
+    @Operation(tags = { "Executions" }, summary = "Resume a list of paused or breakpoint-suspended executions asynchronously", description = "Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
@@ -2371,7 +2402,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-query")
-    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
+    @Operation(tags = { "Executions" }, summary = "Resume paused or breakpoint-suspended executions filtered by query parameters asynchronously", description = "Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
@@ -2389,11 +2420,15 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
 
         for (Execution execution : executions) {
-            if (!execution.getState().isPaused()) {
+            if (!execution.getState().isPaused() && !ExecutionService.isResumableFromBreakpoint(execution)) {
                 invalids.add(
-                    executionProblem(execution.getId(), "execution not in state PAUSED", ProblemTypes.CONFLICT)
+                    execution.getState().isBreakpoint()
+                        ? executionProblem(execution.getId(), "execution has no breakpoint defined", ProblemTypes.CONFLICT)
+                        : executionProblem(execution.getId(), "execution not in state PAUSED or BREAKPOINT", ProblemTypes.CONFLICT)
                 );
-            } else if (!validateExecutionACL(execution)) {
+                continue;
+            }
+            if (!validateExecutionACL(execution)) {
                 invalids.add(
                     executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
                 );
@@ -2408,12 +2443,20 @@ public class ExecutionController {
             throw new BulkValidationException("One or more executions could not be resumed.", invalids);
         }
 
-        this.resumeCounter.increment(executions.size());
+        long pausedCount = executions.stream().filter(execution -> execution.getState().isPaused()).count();
+        this.resumeCounter.increment(pausedCount);
+        this.resumeFromBreakpointCounter.increment(executions.size() - pausedCount);
 
         return submitNotifiedBatchAction(
             CoreAsyncOperationType.EXECUTION_RESUME,
             executions,
-            (execution, opId, actor) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId).withActor(actor))
+            (execution, opId, actor) -> {
+                if (execution.getState().isPaused()) {
+                    executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId).withActor(actor));
+                } else {
+                    executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, Optional.empty()).withOperationId(opId).withActor(actor));
+                }
+            }
         );
     }
 
@@ -2742,8 +2785,9 @@ public class ExecutionController {
         FileRenderer renderer = fileRendererService.resolve(extension);
 
         InputStream fileStream = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME -> StorageContext.isInNamespaceFiles(execution.get().getNamespace(), path)
+                ? namespaceFileContent(execution.get(), path)
+                : storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());

@@ -2,6 +2,7 @@ import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import type {LogEntry, State} from "@kestra-io/kestra-sdk";
 import {expect, userEvent, waitFor} from "storybook/test";
+import {mockStoryApiRoutes} from "../../../.storybook/apiMock";
 import {useExecutionsStore, type Execution} from "../../stores/executions";
 import type {Log} from "../../stores/logs";
 import TaskRunDetails from "./TaskRunDetails.vue";
@@ -99,6 +100,18 @@ const meta: Meta<typeof TaskRunDetails> = {
     component: TaskRunDetails,
     parameters: {layout: "fullscreen"},
     decorators,
+    beforeEach() {
+        mockStoryApiRoutes({
+            "GET /executions/flows/company.team/test-flow": {
+                id: "test-flow",
+                namespace: "company.team",
+                tasks: [
+                    {id: "my-task", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "my-longer-task", type: "io.kestra.plugin.core.log.Log"},
+                ],
+            },
+        });
+    },
     // Passing taskRunId renders this taskrun's logs directly, without first expanding an attempt.
     args: {taskRunId: TASK_RUN_ID, showProgressBar: false},
 };

@@ -48,20 +48,20 @@
                 </KsCheckTag>
             </div>
 
-            <span class="filter-toolbar-spacer" aria-hidden="true" />
+            <div class="filter-toolbar-end">
+                <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" :catalog="baseList" />
 
-            <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" :catalog="baseList" />
-
-            <div class="sort-by">
-                <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
-                <KsSelect v-model="sortBy" size="small" class="sort-select">
-                    <KsOption
-                        v-for="option in sortOptions"
-                        :key="option.value"
-                        :value="option.value"
-                        :label="option.label"
-                    />
-                </KsSelect>
+                <div class="sort-by">
+                    <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
+                    <KsSelect v-model="sortBy" size="small" class="sort-select">
+                        <KsOption
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            :value="option.value"
+                            :label="option.label"
+                        />
+                    </KsSelect>
+                </div>
             </div>
         </div>
 
@@ -402,8 +402,13 @@
         min-width: 12rem;
     }
 
-    .filter-toolbar-spacer {
-        flex: 1 1 auto;
+    .filter-toolbar-end {
+        flex: 1 1 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-3);
     }
 
     .filter-toolbar {

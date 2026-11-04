@@ -500,7 +500,7 @@ tasks.named('testCodeCoverageReport') {
 subprojects {
     plugins.withId('java') {
         dependencies {
-            testImplementation "io.qameta.allure:allure-junit5"
+            testImplementation "io.qameta.allure:allure-jupiter"
         }
 
         test {

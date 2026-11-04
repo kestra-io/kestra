@@ -64,7 +64,7 @@
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^6.4.299",
         "pinia": "^4.1.0",
-        "posthog-js": "^1.440.0",
+        "posthog-js": "^1.441.0",
         "rapidoc": "^11.0.1",
         "remark-directive": "^4.0.0",
         "remark-frontmatter": "^5.0.0",

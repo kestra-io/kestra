@@ -324,7 +324,7 @@
         onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
-    const timeout = ref<any>(null)
+    const timeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
     const editorContent = computed(() => source.value)
 

@@ -438,10 +438,10 @@
     const instance = getCurrentInstance()
     const editorBindings = useEditorBindings()
 
-    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
-    const previousInputsValues = ref<Record<string, any>>({})
+    const inputsValues = reactive<Record<string, unknown>>({...modelValue.value})
+    const previousInputsValues = ref<Record<string, unknown>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
-    const multiSelectInputs = reactive<Record<string, any>>({})
+    const multiSelectInputs = reactive<Record<string, unknown>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})

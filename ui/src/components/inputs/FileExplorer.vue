@@ -101,7 +101,7 @@
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
-            :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
+            :props="treeProps"
             class="file-tree"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
@@ -117,7 +117,7 @@
             </template>
             <template #default="{data, node}">
                 <KsDropdown
-                    :ref="(el: any) => dropdowns[data.id as string] = el"
+                    :ref="(el) => setDropdownRef(data.id as string, el)"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
                     class="tree-node-dropdown"
@@ -388,6 +388,8 @@
     import Upload from "vue-material-design-icons/Upload.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
+    import type {TreeOptionProps} from "element-plus"
+    import {KsInput, KsTree} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -470,18 +472,25 @@
     const isRenaming = ref(false)
     const sidebar = ref<HTMLElement>()
     const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
-    const tree = ref<any>()
+    const tree = ref<InstanceType<typeof KsTree>>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
-    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({})
+    type DropdownInstance = {handleClose: () => void; handleOpen: () => void}
+    const dropdowns = ref<Record<string, DropdownInstance>>({})
+
+    function setDropdownRef(id: string, el: unknown) {
+        if (el) {
+            dropdowns.value[id] = el as DropdownInstance
+        }
+    }
     const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []})
-    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}})
+    const confirmation = ref<{ visible: boolean; data?: TreeNode; nodes?: TreeNode[] }>({visible: false, nodes: []})
     const nodeBeforeDrag = ref<{
         parent: string;
         path: string;
     }>()
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0})
-    const selectedNodes = ref<any[]>([])
+    const selectedNodes = ref<string[]>([])
     const selectionMode = computed(() => selectedNodes.value.length > 1)
     const lastClickedIndex = ref<number | null>(null)
     const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
@@ -518,15 +527,26 @@
         return {keypath: "namespace files.dialog.deletion.files", params: {count: files.length}}
     })
 
-    function nodeClass(data: any) {
+    function nodeClass(data: TreeNode) {
         if (selectedNodes.value.includes(data.id)) {
             return "node selected-tree-node"
         }
         return "node"
     }
 
-    function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
-        const result: any[] = []
+    const treeProps: TreeOptionProps = {
+        class: (data) => nodeClass(data as TreeNode),
+        isLeaf: "leaf",
+    }
+
+    interface FlatTreeNode {
+        path: string
+        fileName: string
+        id: string
+    }
+
+    function flattenTree(itemsArr: TreeNode[], parentPath = ""): FlatTreeNode[] {
+        const result: FlatTreeNode[] = []
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`
             result.push({path: fullPath, fileName: item.fileName, id: item.id})
@@ -537,7 +557,7 @@
         return result.filter(i => i.path)
     }
 
-    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
+    function handleNodeClick(data: TreeNode, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? ""
         const flatList = flatTree.value
         const currentIndex = flatList.findIndex(item => item.path === path)
@@ -716,7 +736,7 @@
         }]
     }
 
-    async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+    async function removeSelectedFiles(_data?: unknown, node?: ElTreeNode) {
         // Guards the keyboard-delete path, which bypasses the disabled context-menu item
         if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
@@ -768,14 +788,14 @@
         }
     }
 
-    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
+    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: ElTreeNode | string) {
         if (isShown) {
             let folder
-            if (node?.data?.leaf === false) {
+            if (typeof node === "object" && node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
-                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
+                const selectedKey = tree.value?.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value?.getNode(selectedKey) : null
                 if (selectedNode?.data?.leaf === false) {
                     node = selectedNode.data.id
                     folder = filesStore.getPath(selectedNode.data.id)
@@ -836,7 +856,12 @@
             isRenaming.value = false
         }
 
-        tree.value.getNode(node).data.fileName = newName
+        if (node) {
+            const treeNode = tree.value?.getNode(node.data.id)
+            if (treeNode) {
+                treeNode.data.fileName = newName
+            }
+        }
         renameDialog.value = {...RENAME_DEFAULTS}
 
         // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
@@ -891,11 +916,11 @@
         return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
     }
 
-    async function nodeMoved(draggedNode: any) {
+    async function nodeMoved(draggedNode: ElTreeNode) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            tree.value?.remove(draggedNode)
+            tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
         const oldPath = nodeBeforeDrag.value?.path ?? ""
@@ -909,8 +934,8 @@
                     new: newPath,
                 })
             } catch {
-                tree.value.remove(draggedNode.data.id)
-                tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                tree.value?.remove(draggedNode)
+                tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
                 bulkDragSiblings.value = undefined
                 return
             }
@@ -947,15 +972,23 @@
         return toast.success(t("namespace files.move.bulk_success"))
     }
 
-    const creation_name = ref<any>()
-    const renaming_name = ref<any>()
+    const creation_name = ref<InstanceType<typeof KsInput>>()
+    const renaming_name = ref<InstanceType<typeof KsInput>>()
 
     function focusCreationInput() {
-        creation_name.value?.$el?.querySelector("input")?.focus()
+        if (creation_name.value?.focus) {
+            creation_name.value.focus()
+        } else {
+            (creation_name.value?.$el as HTMLElement | undefined)?.querySelector("input")?.focus()
+        }
     }
 
     function focusRenamingInput() {
-        renaming_name.value?.$el?.querySelector("input")?.focus()
+        if (renaming_name.value?.focus) {
+            renaming_name.value.focus()
+        } else {
+            (renaming_name.value?.$el as HTMLElement | undefined)?.querySelector("input")?.focus()
+        }
     }
 
     async function importFiles(event: Event) {
@@ -1013,10 +1046,10 @@
         }
     }
 
-    function confirmRemove(nodes: any[]) {
+    function confirmRemove(nodes: (TreeNode | undefined)[]) {
         confirmation.value = {
             visible: true,
-            nodes: Array.isArray(nodes) ? nodes : [nodes],
+            nodes: nodes.filter((n): n is TreeNode => Boolean(n)),
         }
     }
 
@@ -1029,7 +1062,7 @@
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path,
                 })
-                tree.value.remove(node.id)
+                tree.value?.remove(node)
                 closeTab?.({
                     path,
                 })

@@ -7,13 +7,15 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
-import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.plugin.core.trigger.WebhookNotFoundException;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.errors.ProblemFactory;
-
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
+import io.kestra.webserver.filter.ProblemResponseFilter;
+import io.kestra.webserver.services.MicronautHttpService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -159,6 +161,12 @@ public class ErrorController {
     @Error(global = true, status = HttpStatus.NOT_FOUND)
     public HttpResponse<ProblemDetail> notFound(HttpRequest<?> request) {
         return this.problems.response(request, null, ProblemTypes.NOT_FOUND, List.of());
+    }
+    
+    @Error(global = true, exception = WebhookNotFoundException.class)
+    public HttpResponse<?> webhookNotFound(HttpRequest<?> request, WebhookNotFoundException e) {
+        request.setAttribute(ProblemResponseFilter.CUSTOM_WEBHOOK_RESPONSE_ATTRIBUTE, true);
+        return MicronautHttpService.to(e.getResponse());
     }
 
     /**

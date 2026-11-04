@@ -38,6 +38,8 @@ import io.micronaut.http.filter.ServerFilterPhase;
  */
 @ServerFilter("/**")
 public class ProblemResponseFilter implements Ordered {
+    public static final String CUSTOM_WEBHOOK_RESPONSE_ATTRIBUTE = "io.kestra.customWebhookResponse";
+
     private final ProblemFactory problems;
     private final List<ProblemFormatExclusion> exclusions;
 
@@ -48,6 +50,9 @@ public class ProblemResponseFilter implements Ordered {
 
     @ResponseFilter
     public void fillProblemBody(@NonNull HttpRequest<?> request, @NonNull MutableHttpResponse<?> response) {
+        if (request.getAttribute(CUSTOM_WEBHOOK_RESPONSE_ATTRIBUTE, Boolean.class).orElse(false)) {
+            return;
+        }
         if (400 > response.status().getCode()) {
             return;
         }

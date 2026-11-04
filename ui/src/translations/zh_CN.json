@@ -1925,6 +1925,11 @@
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
     "scheduleDateInPast": "计划日期必须在未来",
+    "inputs_date_range": {
+      "between": "最早值为 {after}，最晚值为 {before}。",
+      "after": "最早值为 {after}。",
+      "before": "最晚值为 {before}。"
+    },
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "docs": "文档",

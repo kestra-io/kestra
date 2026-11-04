@@ -1092,7 +1092,7 @@
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ta egzekucja nadal trwa, a usunięcie jej nie zatrzyma procesu.<br />Aby ją zatrzymać, musisz zabić egzekucję.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Ta egzekucja nadal trwa, jej usunięcie jej nie zatrzyma.<br />Musisz zabić egzekucję, aby ją zatrzymać.</div>",
     "restore": "Przywróć",
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> egzekucji?",

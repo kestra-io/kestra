@@ -130,6 +130,21 @@ export async function providePebbleHover(
     return contents.length === 0 ? null : {range, contents}
 }
 
+export function togglePebbleHover(): boolean {
+    const enabled = localStorage.getItem(storageKeys.PEBBLE_HOVER) === "false"
+    localStorage.setItem(storageKeys.PEBBLE_HOVER, String(enabled))
+    return enabled
+}
+
+export function registerPebbleHoverToggle(disposables: monaco.IDisposable[], label: string, onToggled: (enabled: boolean) => void): void {
+    disposables.push(monaco.editor.addEditorAction({
+        id: "kestra.togglePebbleHover",
+        label,
+        precondition: "editorLangId == yaml",
+        run: () => onToggled(togglePebbleHover()),
+    }))
+}
+
 export function registerPebbleHoverProvider(disposables: monaco.IDisposable[], loadOutputProperties: OutputPropertiesLoader): void {
     disposables.push(monaco.languages.registerHoverProvider("yaml", {
         provideHover: (model, position, token) => localStorage.getItem(storageKeys.PEBBLE_HOVER) === "false"

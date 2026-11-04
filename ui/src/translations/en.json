@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Increase editor font size",
       "reset_fontsize": "Reset editor font size"
     },
+    "pebble_hover": {
+      "toggle": "Toggle Pebble hover docs",
+      "enabled": "Pebble hover docs are on.",
+      "disabled": "Pebble hover docs are off."
+    },
     "instance": "Instance",
     "something_went_wrong": {
       "loading_execution": "Something went wrong while loading the execution",

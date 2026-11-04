@@ -5,7 +5,7 @@ globalThis.MonacoEnvironment = {
 }
 
 import * as monaco from "monaco-editor/editor/editor.api.js"
-import {providePebbleHover, registerPebbleHoverProvider} from "./pebbleHoverProvider"
+import {providePebbleHover, registerPebbleHoverProvider, registerPebbleHoverToggle} from "./pebbleHoverProvider"
 import {storageKeys} from "../../../utils/constants"
 
 const SCRIPT = Array.from({length: 20}, (_, i) => `      echo ${i} \`\`\``).join("\n")
@@ -136,6 +136,30 @@ describe("registerPebbleHoverProvider", () => {
         expect(await hover()).not.toBeNull()
         localStorage.setItem(storageKeys.PEBBLE_HOVER, "false")
         expect(await hover()).toBeNull()
+
+        disposables.forEach((disposable) => disposable.dispose())
+    })
+
+    it("offers a YAML-only command palette action that turns the hover off and back on", async () => {
+        const registerHover = vi.spyOn(monaco.languages, "registerHoverProvider")
+        const addAction = vi.spyOn(monaco.editor, "addEditorAction")
+        const toggled = vi.fn()
+        const disposables: monaco.IDisposable[] = []
+        registerPebbleHoverProvider(disposables, (type) => Promise.resolve(SCHEMAS[type]))
+        registerPebbleHoverToggle(disposables, "Toggle Pebble hover docs", toggled)
+        const provider = registerHover.mock.calls[0][1]
+        const action = addAction.mock.calls[0][0]
+        const model = monaco.editor.createModel(FLOW, "yaml", monaco.Uri.parse("inmemory://model/flow-toggle.yaml"))
+        models.push(model)
+        const position = new monaco.Position(LOG_LINE, model.getLineContent(LOG_LINE).indexOf("file") + 2)
+        const hover = () => provider.provideHover(model, position, new monaco.CancellationTokenSource().token, {verbosityRequest: undefined})
+
+        expect(action.precondition).toBe("editorLangId == yaml")
+        await action.run({} as monaco.editor.ICodeEditor)
+        expect(await hover()).toBeNull()
+        await action.run({} as monaco.editor.ICodeEditor)
+        expect(await hover()).not.toBeNull()
+        expect(toggled.mock.calls).toEqual([[false], [true]])
 
         disposables.forEach((disposable) => disposable.dispose())
     })

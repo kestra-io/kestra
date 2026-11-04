@@ -41,7 +41,7 @@ import {
 import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import {registerIndentedBlockScalarTokenizer} from "./yamlBlockScalarTokenizer"
 import {registerPebbleDefinitionProvider} from "./pebbleDefinitionProvider"
-import {registerPebbleHoverProvider} from "./pebbleHoverProvider"
+import {registerPebbleHoverProvider, registerPebbleHoverToggle} from "./pebbleHoverProvider"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
@@ -626,6 +626,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             (await pluginsStore.load({cls, commit: false}))?.schema?.outputs?.properties
         registerPebbleDefinitionProvider(autoCompletionProviders, loadOutputProperties)
         registerPebbleHoverProvider(autoCompletionProviders, loadOutputProperties)
+        const toast = makeToast(t)
+        registerPebbleHoverToggle(autoCompletionProviders, t("pebble_hover.toggle"), (enabled) =>
+            toast.success(t(enabled ? "pebble_hover.enabled" : "pebble_hover.disabled")),
+        )
         this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders

@@ -19,7 +19,7 @@ export const POST_FINISH_REFRESH_DELAYS_MS = [1_000, 3_000, 6_000, 10_000, 15_00
 export type MergedLogsFailure = LoopIterationFailure
 
 export interface MergedLogsOptions {
-    root: Ref<(LoopRoot & {kind?: string}) | undefined>;
+    root: Ref<LoopRoot | undefined>;
     scope: Ref<LoopScopeEntry[]>;
     levelParams: Ref<Record<string, string>>;
     running: Ref<boolean>;
@@ -48,11 +48,8 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     const hasPreviousBatch = computed(() => batchHistory.value.length > 0)
     const hasNextBatch = computed(() => Boolean(targets.value) && targets.value!.end < targets.value!.total)
 
-    const kinds = () => [options.root.value?.kind ?? "NORMAL", "LOOP"].filter((kind, index, all) => all.indexOf(kind) === index)
-
     const search = (executionIds: string[], pageNumber: number, cursor?: string) => searchMergedLogs({
         executionIds,
-        kinds: kinds(),
         levelParams: options.levelParams.value,
         q: options.q?.value,
         page: pageNumber,
@@ -64,7 +61,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
             cache = createChainCache()
             cacheRootId = root.id
         }
-        const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache, offset}
+        const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, q: options.q?.value}), cache, offset}
         return options.scope.value.length
             ? collectScopedTargets(root, options.scope.value, undefined, collectOptions)
             : collectFailedTargets(root, undefined, collectOptions)

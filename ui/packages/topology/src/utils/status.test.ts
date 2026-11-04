@@ -111,4 +111,19 @@ describe("computeAggregateState (lane-header aggregate state)", () => {
 
         expect(computeAggregateState(childTaskIds, taskRunList)).toBe("FAILED")
     })
+
+    it("should not let a child skipped on purpose turn the lane skipped", () => {
+        // e.g. an approved Approval: its apply ran, its cleanup on deny was skipped.
+        const childTaskIds = ["apply", "settle"]
+        const taskRunList = runsOf({apply: "SUCCESS", settle: "SKIPPED"})
+
+        expect(computeAggregateState(childTaskIds, taskRunList)).toBe("SUCCESS")
+    })
+
+    it("should report skipped when every child was skipped", () => {
+        const childTaskIds = ["branch_a", "branch_b"]
+        const taskRunList = runsOf({branch_a: "SKIPPED", branch_b: "SKIPPED"})
+
+        expect(computeAggregateState(childTaskIds, taskRunList)).toBe("SKIPPED")
+    })
 })

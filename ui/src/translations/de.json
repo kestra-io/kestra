@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Editor-Schriftgröße erhöhen",
       "reset_fontsize": "Schriftgröße des Editors zurücksetzen"
     },
+    "pebble_hover": {
+      "toggle": "Pebble-Hover-Dokumentation umschalten",
+      "enabled": "Pebble-Hover-Dokumente sind aktiviert.",
+      "disabled": "Pebble-Hover-Dokumente sind deaktiviert."
+    },
     "instance": "Instanz",
     "something_went_wrong": {
       "loading_execution": "Beim Laden der Execution ist etwas schiefgelaufen",

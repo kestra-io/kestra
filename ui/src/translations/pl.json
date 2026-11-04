@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Zwiększ rozmiar czcionki edytora",
       "reset_fontsize": "Zresetuj rozmiar czcionki edytora"
     },
+    "pebble_hover": {
+      "toggle": "Przełącz dokumentację Pebble po najechaniu myszą",
+      "enabled": "Dokumentacja Pebble po najechaniu jest włączona.",
+      "disabled": "Dokumentacja Pebble po najechaniu kursorem jest wyłączona."
+    },
     "instance": "Instancja",
     "something_went_wrong": {
       "loading_execution": "Wystąpił problem podczas wczytywania egzekucji",

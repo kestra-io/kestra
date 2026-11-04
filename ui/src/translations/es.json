@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Aumentar el tamaño de fuente del editor",
       "reset_fontsize": "Restablecer el tamaño de fuente del editor"
     },
+    "pebble_hover": {
+      "toggle": "Alternar la documentación flotante de Pebble",
+      "enabled": "La documentación flotante de Pebble está activada.",
+      "disabled": "La documentación flotante de Pebble está desactivada."
+    },
     "instance": "Instancia",
     "something_went_wrong": {
       "loading_execution": "Algo salió mal al cargar la ejecución.",

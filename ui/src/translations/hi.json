@@ -2146,6 +2146,11 @@
       "increase_fontsize": "संपादक फ़ॉन्ट आकार बढ़ाएँ",
       "reset_fontsize": "संपादक फ़ॉन्ट आकार रीसेट करें"
     },
+    "pebble_hover": {
+      "toggle": "Pebble होवर डॉक्स टॉगल करें",
+      "enabled": "Pebble होवर डॉक्स चालू हैं।",
+      "disabled": "Pebble होवर डॉक्स बंद हैं।"
+    },
     "instance": "इंस्टेंस",
     "something_went_wrong": {
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।",

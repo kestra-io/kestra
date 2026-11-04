@@ -2146,6 +2146,11 @@
       "increase_fontsize": "에디터 글꼴 크기 증가",
       "reset_fontsize": "편집기 글꼴 크기 재설정"
     },
+    "pebble_hover": {
+      "toggle": "Pebble 호버 문서 토글",
+      "enabled": "Pebble 호버 문서가 켜져 있습니다.",
+      "disabled": "Pebble 호버 문서가 꺼져 있습니다."
+    },
     "instance": "인스턴스",
     "something_went_wrong": {
       "loading_execution": "실행을 로드하는 중 문제가 발생했습니다.",

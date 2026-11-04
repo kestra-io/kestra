@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Увеличить размер шрифта редактора",
       "reset_fontsize": "Сбросить размер шрифта редактора"
     },
+    "pebble_hover": {
+      "toggle": "Переключить всплывающие docs Pebble",
+      "enabled": "Документация Pebble при наведении включена.",
+      "disabled": "Документация Pebble при наведении отключена."
+    },
     "instance": "Экземпляр",
     "something_went_wrong": {
       "loading_execution": "Произошла ошибка при загрузке выполнения",

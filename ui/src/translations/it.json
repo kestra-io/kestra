@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Aumenta la dimensione del font dell'editor",
       "reset_fontsize": "Reimposta dimensione del carattere dell'editor"
     },
+    "pebble_hover": {
+      "toggle": "Attiva/disattiva la documentazione al passaggio del mouse di Pebble",
+      "enabled": "La documentazione di Pebble hover è attiva.",
+      "disabled": "La documentazione di Pebble hover è disattivata."
+    },
     "instance": "Istanza",
     "something_went_wrong": {
       "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione",

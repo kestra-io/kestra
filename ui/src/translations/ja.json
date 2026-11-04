@@ -2146,6 +2146,11 @@
       "increase_fontsize": "エディタのフォントサイズを大きくする",
       "reset_fontsize": "エディタのフォントサイズをリセット"
     },
+    "pebble_hover": {
+      "toggle": "Pebble ホバー docs を切り替える",
+      "enabled": "Pebble ホバー docs はオンです。",
+      "disabled": "Pebble ホバー docs はオフです。"
+    },
     "instance": "インスタンス",
     "something_went_wrong": {
       "loading_execution": "実行の読み込み中に問題が発生しました。",

@@ -2146,6 +2146,11 @@
       "increase_fontsize": "增加编辑器字体大小",
       "reset_fontsize": "重置编辑器字体大小"
     },
+    "pebble_hover": {
+      "toggle": "切换 Pebble 悬停文档",
+      "enabled": "Pebble 悬停文档已开启。",
+      "disabled": "Pebble 悬停文档已关闭。"
+    },
     "instance": "实例",
     "something_went_wrong": {
       "loading_execution": "加载执行时出现问题",

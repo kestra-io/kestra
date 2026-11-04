@@ -2146,6 +2146,11 @@
       "increase_fontsize": "Augmenter la taille de la police de l'éditeur",
       "reset_fontsize": "Réinitialiser la taille de police de l'éditeur"
     },
+    "pebble_hover": {
+      "toggle": "Basculer la documentation flottante Pebble",
+      "enabled": "Les docs au survol de Pebble sont activées.",
+      "disabled": "Les docs Pebble au survol sont désactivées."
+    },
     "instance": "Instance",
     "something_went_wrong": {
       "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution",

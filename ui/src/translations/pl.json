@@ -1925,6 +1925,11 @@
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
     "scheduleDateInPast": "Data harmonogramu musi być w przyszłości",
+    "inputs_date_range": {
+      "between": "Najwcześniejsza wartość to {after}, najpóźniejsza wartość to {before}.",
+      "after": "Najwcześniejsza wartość to {after}.",
+      "before": "Najpóźniejsza wartość to {before}."
+    },
     "warning": "Ostrzeżenie",
     "trigger_check_warning": "Zmienne Triggera nie zadziałają przy ręcznym uruchomieniu Flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład zamiast `trigger.date` użyj `trigger.date ?? execution.startDate`.",
     "docs": "Dokumentacja",

@@ -6,9 +6,9 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +28,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Schema(
     title = "Deduplicate a line-oriented file by key.",
@@ -104,41 +106,40 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
         final PebbleFieldExtractor keyExtractor = getKeyExtractor(runContext);
 
-        // Read all records into memory (needed for two-pass dedup)
-        var allRecords = new ArrayList<>();
-        try (var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)) {
-            FileSerde.read(input, allRecords::add);
-        }
-
         final Map<String, Long> index = new HashMap<>();
 
         // 1st pass: build a map of key->index (keeps last occurrence)
-        for (int i = 0; i < allRecords.size(); i++) {
-            String textIon = PebbleFieldExtractor.MAPPER.writeValueAsString(allRecords.get(i));
-            String key = keyExtractor.apply(textIon);
-            index.put(key, (long) i);
+        final AtomicLong offset = new AtomicLong();
+        try (var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)) {
+            FileSerde.read(input, throwConsumer(record ->
+            {
+                String key = keyExtractor.apply(PebbleFieldExtractor.MAPPER.writeValueAsString(record));
+                index.put(key, offset.getAndIncrement());
+            }));
         }
 
         // metrics
-        long processedItemsTotal = 0L;
-        long droppedItemsTotal = 0L;
+        final AtomicLong processedItemsTotal = new AtomicLong();
+        final AtomicLong droppedItemsTotal = new AtomicLong();
         long numKeys = index.size();
 
         final Path path = runContext.workingDir().createTempFile(".ion");
         // 2nd pass: write deduplicated records
-        try (final OutputStream output = new BufferedOutputStream(new FileOutputStream(path.toFile()), FileSerde.BUFFER_SIZE)) {
-            for (int i = 0; i < allRecords.size(); i++) {
-                Object record = allRecords.get(i);
-                String textIon = PebbleFieldExtractor.MAPPER.writeValueAsString(record);
-                String key = keyExtractor.apply(textIon);
+        try (
+            final OutputStream output = new BufferedOutputStream(new FileOutputStream(path.toFile()), FileSerde.BUFFER_SIZE);
+            final var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)
+        ) {
+            FileSerde.read(input, throwConsumer(record ->
+            {
+                String key = keyExtractor.apply(PebbleFieldExtractor.MAPPER.writeValueAsString(record));
                 Long lastIndex = index.get(key);
-                if (lastIndex != null && lastIndex == i) {
+                if (lastIndex != null && lastIndex == processedItemsTotal.get()) {
                     FileSerde.write(output, record);
                 } else {
-                    droppedItemsTotal++;
+                    droppedItemsTotal.incrementAndGet();
                 }
-                processedItemsTotal++;
-            }
+                processedItemsTotal.incrementAndGet();
+            }));
         }
         URI uri = runContext.storage().putFile(path.toFile());
         index.clear();
@@ -146,8 +147,8 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
             .builder()
             .uri(uri)
             .numKeys(numKeys)
-            .processedItemsTotal(processedItemsTotal)
-            .droppedItemsTotal(droppedItemsTotal)
+            .processedItemsTotal(processedItemsTotal.get())
+            .droppedItemsTotal(droppedItemsTotal.get())
             .build();
     }
 

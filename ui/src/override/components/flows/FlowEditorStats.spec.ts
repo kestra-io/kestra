@@ -1,5 +1,6 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import FlowEditorStats from "./FlowEditorStats.vue"
 import {useFlowStore} from "../../../stores/flow"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
@@ -24,7 +25,7 @@ function mountStats() {
 
 describe("FlowEditorStats.vue", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
         const flowStore = useFlowStore()
         vi.spyOn(flowStore, "loadFlowStats").mockResolvedValue([
             {status: "fulfilled", value: []},

@@ -9,7 +9,7 @@
             :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
-            ui/src/components/secrets/SecretsTable.vue            @page-changed="onPageChanged"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"

@@ -53,7 +53,6 @@
                     :key="item.id"
                     :item="item"
                     :active="active"
-                    :sizeDependencies="[item.title, item.read, item.referenceId, item.totalItems]"
                     :data-index="item.id"
                 >
                     <NotificationRow

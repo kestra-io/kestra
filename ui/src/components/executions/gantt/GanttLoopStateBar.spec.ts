@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {ref} from "vue"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import GanttLoopStateBar from "./GanttLoopStateBar.vue"
@@ -29,7 +30,7 @@ const initialOutputs = structuredClone(outputsByTaskRun)
 beforeEach(() => {
     Object.assign(outputsByTaskRun, structuredClone(initialOutputs))
     vi.useFakeTimers()
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     loadTaskRunOutputs.mockReset()
     requestedAt = []
     loadTaskRunOutputs.mockImplementation(async (_executionId: string, taskRunId: string) => {

@@ -5,7 +5,8 @@ globalThis.MonacoEnvironment = {
 }
 
 import * as monaco from "monaco-editor/editor/editor.api.js"
-import {providePebbleHover} from "./pebbleHoverProvider"
+import {providePebbleHover, registerPebbleHoverProvider} from "./pebbleHoverProvider"
+import {storageKeys} from "../../../utils/constants"
 
 const SCRIPT = Array.from({length: 20}, (_, i) => `      echo ${i} \`\`\``).join("\n")
 
@@ -113,5 +114,29 @@ describe("providePebbleHover", () => {
         expect(lines[1]).toBe("- id: extract")
         expect(lines.at(-2)).toBe("...")
         expect(lines).toHaveLength(15 + 3)
+    })
+})
+
+describe("registerPebbleHoverProvider", () => {
+    afterEach(() => {
+        localStorage.removeItem(storageKeys.PEBBLE_HOVER)
+        vi.restoreAllMocks()
+    })
+
+    it("hovers by default and stops as soon as the setting is turned off, without re-registering", async () => {
+        const register = vi.spyOn(monaco.languages, "registerHoverProvider")
+        const disposables: monaco.IDisposable[] = []
+        registerPebbleHoverProvider(disposables, (type) => Promise.resolve(SCHEMAS[type]))
+        const provider = register.mock.calls[0][1]
+        const model = monaco.editor.createModel(FLOW, "yaml", monaco.Uri.parse("inmemory://model/flow-setting.yaml"))
+        models.push(model)
+        const position = {lineNumber: LOG_LINE, column: model.getLineContent(LOG_LINE).indexOf("file") + 2}
+        const hover = () => provider.provideHover(model, new monaco.Position(position.lineNumber, position.column), new monaco.CancellationTokenSource().token, {verbosityRequest: undefined})
+
+        expect(await hover()).not.toBeNull()
+        localStorage.setItem(storageKeys.PEBBLE_HOVER, "false")
+        expect(await hover()).toBeNull()
+
+        disposables.forEach((disposable) => disposable.dispose())
     })
 })

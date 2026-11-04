@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor/editor/editor.api.js"
 import {isMap, isNode, isPair, isScalar, type Pair, type YAMLMap} from "yaml"
 import type {JSONProperty} from "../../../components/plugins/schema/utils/schemaUtils"
+import {storageKeys} from "../../../utils/constants"
 import {flowSymbolsAtPosition, symbolsDeclaring, type FlowSymbol, type OffsetRange, type OutputPropertiesLoader} from "./pebbleDefinitionProvider"
 
 const MAX_SNIPPET_LINES = 15
@@ -131,6 +132,8 @@ export async function providePebbleHover(
 
 export function registerPebbleHoverProvider(disposables: monaco.IDisposable[], loadOutputProperties: OutputPropertiesLoader): void {
     disposables.push(monaco.languages.registerHoverProvider("yaml", {
-        provideHover: (model, position, token) => providePebbleHover(model, position, loadOutputProperties, token),
+        provideHover: (model, position, token) => localStorage.getItem(storageKeys.PEBBLE_HOVER) === "false"
+            ? null
+            : providePebbleHover(model, position, loadOutputProperties, token),
     }))
 }

@@ -1463,6 +1463,7 @@
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
+            "editor_pebble_hover": "Hover on Pebble reference to see its definition",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1485,6 +1486,7 @@
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."

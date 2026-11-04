@@ -470,7 +470,9 @@
         "BLOCK": "Wewnątrz pętli for, zestawu lub makra, gdzie może odczytywać zmienne, które istnieją tylko tam. Zmień to nową wersją.",
         "CONSTANT": "Nie odczytuje niczego z egzekucji, więc jest częścią definicji. Zmień to, tworząc nową wersję.",
         "SECRET": "Odczytuje sekret lub kv store w czasie wykonania.",
-        "FILE": "Odczytuje lub renderuje plik z wewnętrznej pamięci masowej."
+        "FILE": "Odczytuje lub renderuje plik z wewnętrznej pamięci masowej.",
+        "CALL": "Wywołuje zewnętrzną usługę, która po wyświetleniu swojej wartości wywołałaby się ponownie.",
+        "VOLATILE": "Renderuje inną wartość za każdym razem, np. bieżącą godzinę lub losowe ID."
       },
       "error": {
         "number": "Wprowadź liczbę.",

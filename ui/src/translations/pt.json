@@ -470,7 +470,9 @@
         "BLOCK": "Dentro de um loop for, um conjunto ou uma macro, onde pode ler variáveis que só existem lá. Altere-o com uma nova revisão.",
         "CONSTANT": "Não lê nada da execução, então faz parte da definição. Altere-o com uma nova revisão.",
         "SECRET": "Lê um secret ou o kv store em tempo de execução.",
-        "FILE": "Lê ou renderiza um arquivo do armazenamento interno."
+        "FILE": "Lê ou renderiza um arquivo do armazenamento interno.",
+        "CALL": "Chama um serviço externo, que ao mostrar seu valor chamaria novamente.",
+        "VOLATILE": "Renderiza um valor diferente a cada vez, como a hora atual ou um id aleatório."
       },
       "error": {
         "number": "Insira um número.",

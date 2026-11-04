@@ -470,7 +470,9 @@
         "BLOCK": "À l'intérieur d'une boucle for, d'un set ou d'une macro, où il peut lire des variables qui n'existent que là. Modifiez-le avec une nouvelle révision.",
         "CONSTANT": "Ne lit rien de l'exécution, donc cela fait partie de la définition. Modifiez-le avec une nouvelle révision.",
         "SECRET": "Lit un secret ou le kv store au moment de l'exécution.",
-        "FILE": "Lit ou rend un fichier depuis le stockage interne."
+        "FILE": "Lit ou rend un fichier depuis le stockage interne.",
+        "CALL": "Appelle un service externe, dont l'affichage de la valeur appellerait à nouveau.",
+        "VOLATILE": "Rend une valeur différente à chaque fois, comme l'heure actuelle ou un id aléatoire."
       },
       "error": {
         "number": "Entrez un nombre.",

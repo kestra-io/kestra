@@ -470,7 +470,9 @@
         "BLOCK": "Dentro de un bucle for, un conjunto o una macro, donde puede leer variables que solo existen allí. Cámbialo con una nueva revisión.",
         "CONSTANT": "No lee nada de la ejecución, por lo que forma parte de la definición. Cámbialo con una nueva revisión.",
         "SECRET": "Lee un secret o el KV store en tiempo de ejecución.",
-        "FILE": "Lee o renderiza un archivo del almacenamiento interno."
+        "FILE": "Lee o renderiza un archivo del almacenamiento interno.",
+        "CALL": "Llama a un servicio externo, que al mostrar su valor volvería a llamar.",
+        "VOLATILE": "Renderiza un valor diferente cada vez, como la hora actual o un id aleatorio."
       },
       "error": {
         "number": "Introduce un número.",

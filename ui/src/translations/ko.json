@@ -2543,6 +2543,7 @@
       "history": "최근 10회 실행",
       "clear_history": "다음 실행을 새로 시작",
       "tooltip_persistence": "Playground 실행은 서버에 유지됩니다. 새로고침하거나 탭을 변경한 후에도 이전에 중단했던 실행을 기반으로 다음 실행이 빌드됩니다. Playground를 끄면 현재 실행이 종료됩니다.",
+      "session_error": "이전 Playground 실행을 로드할 수 없습니다.",
       "context": {
         "title": "컨텍스트",
         "task_run": "Task 실행",

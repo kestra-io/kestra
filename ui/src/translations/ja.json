@@ -2543,6 +2543,7 @@
       "history": "直近10回の実行",
       "clear_history": "次の実行を新たに開始する",
       "tooltip_persistence": "Playground の実行はサーバーに保持されます。リロードまたはタブの変更後、次回の実行は中断した実行から継続されます。Playground をオフにすると、現在の実行は終了します。",
+      "session_error": "以前のPlayground実行を読み込めませんでした。",
       "context": {
         "title": "コンテキスト",
         "task_run": "Task実行",

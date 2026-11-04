@@ -2543,6 +2543,7 @@
       "history": "Letzte 10 Runs",
       "clear_history": "Starte den nächsten Run neu",
       "tooltip_persistence": "Playground-Runs werden auf dem Server gespeichert: Nach einem Neuladen oder einem Tab-Wechsel baut der nächste Run auf dem Run auf, den du verlassen hast. Das Deaktivieren des Playground beendet den aktuellen Run.",
+      "session_error": "Deine vorherigen Playground-Runs konnten nicht geladen werden.",
       "context": {
         "title": "Kontext",
         "task_run": "Task Run",

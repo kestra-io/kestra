@@ -2543,6 +2543,7 @@
       "history": "Dernières 10 exécutions",
       "clear_history": "Démarrer la prochaine exécution à zéro",
       "tooltip_persistence": "Les exécutions Playground sont conservées sur le serveur : après un rechargement ou un changement d'onglet, la prochaine exécution se base sur celle que vous avez laissée. Désactiver Playground met fin à l'exécution actuelle.",
+      "session_error": "Vos précédentes exécutions Playground n'ont pas pu être chargées.",
       "context": {
         "title": "Contexte",
         "task_run": "Exécution de Task",

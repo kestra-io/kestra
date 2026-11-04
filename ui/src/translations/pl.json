@@ -2543,6 +2543,7 @@
       "history": "Ostatnie 10 uruchomień",
       "clear_history": "Rozpocznij następne uruchomienie od nowa",
       "tooltip_persistence": "Egzekucje Playground są przechowywane na serwerze: po przeładowaniu lub zmianie zakładki, następna egzekucja będzie kontynuacją tej, którą opuściłeś. Wyłączenie Playground kończy bieżącą egzekucję.",
+      "session_error": "Nie można było załadować poprzednich uruchomień Playground.",
       "context": {
         "title": "Kontekst",
         "task_run": "Task Run",

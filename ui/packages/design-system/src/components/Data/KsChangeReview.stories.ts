@@ -60,7 +60,7 @@ export const TerraformPlan: Story = {
                 <ks-change-review v-model:tab="tab" v-model:filter="filter" v-bind="review">
                     <template #resources>
                         <ks-table :data="shown" rowKey="address" size="small">
-                            <ks-table-column prop="glyph" width="56" />
+                            <ks-table-column prop="glyph" label="Action" width="80" />
                             <ks-table-column prop="address" label="Address" />
                         </ks-table>
                     </template>

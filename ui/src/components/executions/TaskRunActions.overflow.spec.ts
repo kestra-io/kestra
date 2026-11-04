@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../tests/unit/memoryRouter"
 import {createMemoryHistory, createRouter} from "vue-router"
 import {KsDropdownItem} from "@kestra-io/design-system"
 import type {State, StateType} from "@kestra-io/kestra-sdk"
@@ -16,7 +17,7 @@ function state(current: StateType): State {
 const execution = {id: "execution", namespace: "tests", flowId: "flow", flowRevision: 1, originalId: "execution", metadata: {originalCreatedDate: ""}, state: state("SUCCESS")} as Execution
 
 async function mountActions(overflow: boolean, extra: Record<string, unknown> = {}) {
-    setActivePinia(createPinia())
+    setActivePinia(routedPinia())
     vi.spyOn(useExecutionsStore(), "loadExecution").mockResolvedValue(execution)
     vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([])
     const router = createRouter({

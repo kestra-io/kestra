@@ -683,7 +683,7 @@
     "execute flow behaviour": "Flowを実行",
     "open in same tab": "同じタブで",
     "open in new tab": "新しいタブで",
-    "execute the flow": "Flow <code>{id}</code>を実行",
+    "execute the flow": "Flow {id}を実行",
     "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "discard changes confirmation": "保存されていない変更があります。本当に破棄しますか？",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",

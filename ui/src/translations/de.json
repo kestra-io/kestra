@@ -683,7 +683,7 @@
     "execute flow behaviour": "Den Flow ausführen",
     "open in same tab": "Im selben Tab",
     "open in new tab": "In einem neuen Tab",
-    "execute the flow": "Den Flow <code>{id}</code> ausführen",
+    "execute the flow": "Den Flow {id} ausführen",
     "discard execution confirmation": "Du hast ungespeicherte Inputs. Möchtest du diese Execution wirklich verwerfen?",
     "discard changes confirmation": "Du hast ungespeicherte Änderungen. Möchtest du sie wirklich verwerfen?",
     "unsaved changed ?": "Du hast ungespeicherte Änderungen. Möchtest du diese Seite verlassen?",

@@ -683,7 +683,7 @@
     "execute flow behaviour": "Executar o flow",
     "open in same tab": "Na mesma aba",
     "open in new tab": "Em uma nova aba",
-    "execute the flow": "Executar o flow <code>{id}</code>",
+    "execute the flow": "Executar o flow {id}",
     "discard execution confirmation": "Você tem inputs não salvos. Tem certeza de que deseja descartar esta execução?",
     "discard changes confirmation": "Você tem alterações não salvas. Tem certeza de que deseja descartá-las?",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",

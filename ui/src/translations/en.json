@@ -683,7 +683,7 @@
     "execute flow behaviour": "Execute the flow",
     "open in same tab": "In the same tab",
     "open in new tab": "In a new tab",
-    "execute the flow": "Execute the flow <code>{id}</code>",
+    "execute the flow": "Execute the flow {id}",
     "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
     "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",

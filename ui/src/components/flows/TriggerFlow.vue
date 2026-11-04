@@ -24,7 +24,9 @@
             large
         >
             <template #header>
-                <span v-html="$t('execute the flow', {id: flowId})" />
+                <i18n-t keypath="execute the flow" tag="span" scope="global">
+                    <template #id><code>{{ flowId }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>

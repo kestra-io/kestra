@@ -683,7 +683,7 @@
     "execute flow behaviour": "Выполнить flow",
     "open in same tab": "В той же вкладке",
     "open in new tab": "В новой вкладке",
-    "execute the flow": "Выполнить flow <code>{id}</code>",
+    "execute the flow": "Выполнить flow {id}",
     "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "discard changes confirmation": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
     "unsaved changed ?": "У вас есть несохраненные изменения, вы хотите покинуть эту страницу?",

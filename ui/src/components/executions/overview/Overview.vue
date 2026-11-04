@@ -15,11 +15,9 @@
         />
         <PrevNext :execution />
     </div>
-    <KsNoData
-        v-else
-        id="empty"
-        :description="$t('execution not found', {executionId: route.params.id})"
-    />
+    <KsNoData v-else id="empty">
+        {{ $t("execution not found", {executionId: route.params.id}) }}
+    </KsNoData>
 </template>
 
 <script setup lang="ts">

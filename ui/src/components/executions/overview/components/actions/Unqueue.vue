@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: execution.id})" />
+            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
 
             <el-select
                 :required="true"
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {computed, ref} from "vue";
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";

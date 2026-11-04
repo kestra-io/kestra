@@ -13,7 +13,7 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
+                <p v-html="$t('change state confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
 
                 <p>
                     {{ $t('change state current state') }} <Status size="small" class="me-1" :status="taskRun.state.current" />
@@ -67,6 +67,7 @@
 </template>
 
 <script>
+    import escape from "lodash/escape"
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -156,7 +157,8 @@
             return {
                 visible,
                 selectedStatus,
-                changeStatus
+                changeStatus,
+                escape
             }
         },
         computed: {

@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('change execution state confirm', {id: execution.id})" />
+            <p v-html="$t('change execution state confirm', {id: escape(execution.id)})" />
 
             <p>
                 {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
@@ -58,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {ref, computed} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";

@@ -1463,6 +1463,7 @@
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
+            "editor_pebble_hover": "Pebble संदर्भ पर होवर करें ताकि उसकी परिभाषा देखी जा सके",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
             "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
@@ -1485,6 +1486,7 @@
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
             "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
+            "editor_pebble_hover": "फ़्लो एडिटर में Pebble संदर्भ पर होवर करते समय किसी इनपुट, आउटपुट, वेरिएबल, label या trigger वेरिएबल की परिभाषा और डॉक्स दिखाएं।",
             "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
             "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
             "app_font_size": "इंटरफ़ेस के सभी फ़ॉन्ट आकारों पर लागू स्केल कारक।"
@@ -2143,6 +2145,11 @@
       "decrease_fontsize": "संपादक फ़ॉन्ट आकार घटाएं",
       "increase_fontsize": "संपादक फ़ॉन्ट आकार बढ़ाएँ",
       "reset_fontsize": "संपादक फ़ॉन्ट आकार रीसेट करें"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble होवर डॉक्स टॉगल करें",
+      "enabled": "Pebble होवर डॉक्स चालू हैं।",
+      "disabled": "Pebble होवर डॉक्स बंद हैं।"
     },
     "instance": "इंस्टेंस",
     "something_went_wrong": {

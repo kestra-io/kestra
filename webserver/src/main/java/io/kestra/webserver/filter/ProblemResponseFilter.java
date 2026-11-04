@@ -38,7 +38,6 @@ import io.micronaut.http.filter.ServerFilterPhase;
  */
 @ServerFilter("/**")
 public class ProblemResponseFilter implements Ordered {
-
     private final ProblemFactory problems;
     private final List<ProblemFormatExclusion> exclusions;
 

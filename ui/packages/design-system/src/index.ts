@@ -19,7 +19,9 @@ type InstalledApp = App & {
 // defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
-const pendingComponentLoads = new Set<Promise<unknown>>()
+// Shared through globalThis because unit tests reset the module registry per file, which leaves several copies of this module alive in one worker.
+const PENDING_LOADS_KEY = Symbol.for("kestra.designSystem.pendingComponentLoads")
+const pendingComponentLoads: Set<Promise<unknown>> = ((globalThis as Record<symbol, unknown>)[PENDING_LOADS_KEY] ??= new Set<Promise<unknown>>()) as Set<Promise<unknown>>
 const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
     Object.assign(defineAsyncComponent(() => {
         const load = loader()

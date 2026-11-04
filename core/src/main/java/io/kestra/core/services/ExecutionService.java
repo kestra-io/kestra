@@ -443,6 +443,7 @@ public class ExecutionService {
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
                         if (revision != null) {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
                             taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         }
                         return newTaskRun;
@@ -652,7 +653,6 @@ public class ExecutionService {
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
-
         }
 
         // Build and launch new execution

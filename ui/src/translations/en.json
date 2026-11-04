@@ -470,7 +470,9 @@
         "BLOCK": "Inside a for loop, a set or a macro, where it can read variables that only exist there. Change it with a new revision.",
         "CONSTANT": "Reads nothing from the execution, so it is part of the definition. Change it with a new revision.",
         "SECRET": "Reads a secret or the KV store at run time.",
-        "FILE": "Reads or renders a file from internal storage."
+        "FILE": "Reads or renders a file from internal storage.",
+        "CALL": "Calls an external service, which showing its value would call again.",
+        "VOLATILE": "Renders a different value every time, such as the current time or a random id."
       },
       "error": {
         "number": "Enter a number.",

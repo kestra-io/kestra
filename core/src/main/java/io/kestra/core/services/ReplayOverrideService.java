@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,17 +24,25 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.SecureVariableRendererFactory;
+import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.runners.pebble.OverridableExpression;
 import io.kestra.core.runners.pebble.PebbleExpressionPrinter;
 import io.kestra.core.runners.pebble.functions.FileExistsFunction;
 import io.kestra.core.runners.pebble.functions.FileSizeFunction;
 import io.kestra.core.runners.pebble.functions.FileURIFunction;
+import io.kestra.core.runners.pebble.functions.HttpFunction;
+import io.kestra.core.runners.pebble.functions.IDFunction;
 import io.kestra.core.runners.pebble.functions.IsFileEmptyFunction;
+import io.kestra.core.runners.pebble.functions.KSUIDFunction;
 import io.kestra.core.runners.pebble.functions.KvFunction;
+import io.kestra.core.runners.pebble.functions.NanoIDFunction;
+import io.kestra.core.runners.pebble.functions.NowFunction;
+import io.kestra.core.runners.pebble.functions.RandomIntFunction;
+import io.kestra.core.runners.pebble.functions.RandomPortFunction;
 import io.kestra.core.runners.pebble.functions.ReadFileFunction;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
+import io.kestra.core.runners.pebble.functions.UUIDFunction;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.PebbleUtil;
 
@@ -49,6 +58,7 @@ import io.pebbletemplates.pebble.node.expression.Expression;
 import io.pebbletemplates.pebble.node.expression.FunctionOrMacroInvocationExpression;
 import io.pebbletemplates.pebble.parser.ParserImpl;
 import io.pebbletemplates.pebble.parser.ParserOptions;
+import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +66,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Lists the {@code {{ }}} expressions a task renders in its own properties, and turns the values a user sets for them on
  * replay into {@link TaskRunOverride}s keyed by the expression. Only a top-level expression that reads the execution can be
- * overridden: one inside a {@code {% %}} block, a constant, or one reading a secret, the KV store or a file stays as it is.
+ * overridden: one inside a {@code {% %}} block, a constant, or one reading a secret, the KV store, a file, an external service or
+ * a value that changes on every render stays as it is.
  */
 @Slf4j
 @Singleton
@@ -67,22 +78,23 @@ public class ReplayOverrideService {
     private static final Set<String> FILE_FUNCTIONS = Set.of(
         ReadFileFunction.NAME, FileURIFunction.NAME, FileExistsFunction.NAME, FileSizeFunction.NAME, IsFileEmptyFunction.NAME
     );
+    private static final Set<String> VOLATILE_FUNCTIONS = Set.of(
+        NowFunction.NAME, UUIDFunction.NAME, IDFunction.NAME, KSUIDFunction.NAME, NanoIDFunction.NAME, RandomIntFunction.NAME, RandomPortFunction.NAME
+    );
 
     private final PebbleEngine pebbleEngine;
     private final PebbleExpressionPrinter printer;
     private final RunContextFactory runContextFactory;
-    private final SecureVariableRendererFactory secureVariableRendererFactory;
+    private final VariableRenderer renderer;
 
     @Inject
-    public ReplayOverrideService(
-        PebbleEngineFactory pebbleEngineFactory,
-        RunContextFactory runContextFactory,
-        SecureVariableRendererFactory secureVariableRendererFactory
-    ) {
+    public ReplayOverrideService(ApplicationContext applicationContext, PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory) {
         this.pebbleEngine = Objects.requireNonNull(pebbleEngineFactory).create();
         this.printer = new PebbleExpressionPrinter(pebbleEngine.getExtensionRegistry());
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
-        this.secureVariableRendererFactory = Objects.requireNonNull(secureVariableRendererFactory);
+        // created through the context so that a custom VariableRenderer is used, like SecureVariableRendererFactory does
+        this.renderer = applicationContext.createBean(VariableRenderer.class);
+        this.renderer.setPebbleEngine(pebbleEngineFactory.createWithMaskedFunctions(renderer, List.copyOf(SECRET_FUNCTIONS), List.of(HttpFunction.NAME)));
     }
 
     /**
@@ -96,15 +108,19 @@ public class ReplayOverrideService {
             )
         );
         Task task = flow.findTaskByTaskId(taskRun.getTaskId());
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false, secureVariableRendererFactory.createOrGet());
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false, renderer);
 
         Map<String, Kind> kinds = new LinkedHashMap<>();
-        templates(task).forEach(template -> parse(template).ifPresent(root -> collect(root, kinds)));
+        Set<String> inBlocks = new HashSet<>();
+        templates(task).forEach(template -> parse(template).ifPresent(root -> collect(root, kinds, inBlocks)));
+        // an override would only reach the top-level uses, so the ones inside a block would still render the real value
+        inBlocks.forEach(expression -> kinds.computeIfPresent(expression, (key, kind) -> Kind.BLOCK));
         return kinds.entrySet().stream().map(entry -> valueOf(entry.getKey(), entry.getValue(), runContext)).toList();
     }
 
     /**
-     * @throws IllegalArgumentException if a key is not an expression the task can have overridden in its own properties
+     * @throws IllegalArgumentException if a key is not an expression the task can have overridden in its own properties,
+     *         or if no value differs from what the expression rendered
      */
     public List<TaskRunOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
         Map<String, ReplayValue> values = values(flow, execution, taskRunId).stream()
@@ -130,19 +146,27 @@ public class ReplayOverrideService {
                 overrides.add(new TaskRunOverride(key, entry.getValue(), value.value()));
             }
         }
+        if (overrides.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Cannot replay task run '%s' with overrides: no value differs from what its expression rendered.".formatted(taskRunId)
+            );
+        }
         return overrides;
     }
 
-    private void collect(RootNode root, Map<String, Kind> kinds) {
+    private void collect(RootNode root, Map<String, Kind> kinds, Set<String> inBlocks) {
         List<PrintNode> prints = OverridableExpression.overridablePrints(root);
         Set<PrintNode> overridable = Collections.newSetFromMap(new IdentityHashMap<>());
         overridable.addAll(prints);
-        prints.forEach(print -> printer.print(print.getExpression()).ifPresent(expression -> kinds.put(expression, kindOf(print.getExpression()))));
+        prints.forEach(print -> printer.print(print.getExpression()).ifPresent(expression -> kinds.putIfAbsent(expression, kindOf(print.getExpression()))));
         root.accept(new AbstractNodeVisitor(null) {
             @Override
             public void visit(PrintNode print) {
                 if (!overridable.contains(print)) {
-                    printer.print(print.getExpression()).ifPresent(expression -> kinds.putIfAbsent(expression, Kind.BLOCK));
+                    printer.print(print.getExpression()).ifPresent(expression -> {
+                        kinds.putIfAbsent(expression, Kind.BLOCK);
+                        inBlocks.add(expression);
+                    });
                 }
             }
         });
@@ -152,8 +176,14 @@ public class ReplayOverrideService {
         if (uses(expression, function -> SECRET_FUNCTIONS.contains(function.getFunctionName()))) {
             return Kind.SECRET;
         }
+        if (uses(expression, function -> HttpFunction.NAME.equals(function.getFunctionName()))) {
+            return Kind.CALL;
+        }
         if (uses(expression, function -> FILE_FUNCTIONS.contains(function.getFunctionName()))) {
             return Kind.FILE;
+        }
+        if (uses(expression, function -> VOLATILE_FUNCTIONS.contains(function.getFunctionName()))) {
+            return Kind.VOLATILE;
         }
         if (!readsContext(expression)) {
             return Kind.CONSTANT;
@@ -172,7 +202,7 @@ public class ReplayOverrideService {
     }
 
     private ReplayValue valueOf(String expression, Kind kind, RunContext runContext) {
-        if (kind == Kind.SECRET || kind == Kind.BLOCK) {
+        if (kind != Kind.EXPRESSION && kind != Kind.CONSTANT) {
             return new ReplayValue(expression, kind, null);
         }
         Object value;
@@ -231,7 +261,9 @@ public class ReplayOverrideService {
         BLOCK("it is inside a loop, a set or a macro, where it can read variables that only exist there"),
         CONSTANT("it reads nothing from the execution, so it is part of the task's definition"),
         SECRET("it reads a secret or the KV store"),
-        FILE("it reads or renders a file");
+        FILE("it reads or renders a file"),
+        CALL("it calls an external service, which rendering it would call again"),
+        VOLATILE("it renders a different value every time, such as the current time or a random id");
 
         private final String reason;
 
@@ -246,7 +278,7 @@ public class ReplayOverrideService {
 
     /**
      * @param expression the expression as Pebble parses it, with its spacing and quotes normalized
-     * @param value what it rendered in the execution, {@code null} for a secret, an expression inside a block, or one that failed to render
+     * @param value what it rendered in the execution, {@code null} for a kind that is not rendered here or for one that failed to render
      */
     public record ReplayValue(String expression, Kind kind, Object value) {
     }

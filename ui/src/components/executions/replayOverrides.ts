@@ -8,6 +8,11 @@ export function isOverridable(value: ReplayValue): boolean {
     return value.kind === "EXPRESSION"
 }
 
+/** A file URI an expression rendered is shown, while a file function is never rendered. */
+export function isRendered(value: ReplayValue): boolean {
+    return value.kind === "EXPRESSION" || value.kind === "CONSTANT" || (value.kind === "FILE" && value.value != null)
+}
+
 export function asExpression(expression: string | undefined): string {
     return `{{ ${expression ?? ""} }}`
 }

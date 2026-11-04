@@ -32,7 +32,7 @@ tasks:
   - id: adjust
     type: io.kestra.plugin.core.execution.Fail
     condition: "{{ outputs.fetch.values.code != 'KR-0412' }}"
-    errorMessage: "store {{ outputs.fetch.values.code }} does not exist in {{ vars.schema }} on {{ inputs.day }}{% if outputs.fetch.values.delta < 0 %} ({{ outputs.fetch.values.delta }}){% endif %}{% for attempt in [1] %} #{{ attempt }}{% endfor %}"
+    errorMessage: "store {{ outputs.fetch.values.code }} does not exist in {{ vars.schema }} on {{ inputs.day }}{% if outputs.fetch.values.delta < 0 %} ({{ outputs.fetch.values.delta }}){% endif %}{% for attempt in [1] %} #{{ attempt }} in {{ vars.schema }}{% endfor %}"
 
   - id: notify
     type: io.kestra.plugin.core.debug.Return

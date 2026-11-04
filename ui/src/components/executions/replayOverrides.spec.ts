@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {parseOverride, type ReplayValue} from "./replayOverrides"
+import {isRendered, parseOverride, type ReplayValue} from "./replayOverrides"
 
 const rendered = (value: unknown): ReplayValue => ({expression: "outputs.fetch.value", kind: "EXPRESSION", value: value as ReplayValue["value"]})
 
@@ -20,5 +20,12 @@ describe("parseOverride", () => {
         [rendered({a: 1}), "{a: 2}", {error: "json"}],
     ])("follows the type of what the expression rendered: %j with %s", (value, text, expected) => {
         expect(parseOverride(value, text)).toEqual(expected)
+    })
+})
+
+describe("isRendered", () => {
+    it("shows the file URI an expression rendered, but nothing for a file function, which is never rendered", () => {
+        expect(isRendered({expression: "outputs.export.uri", kind: "FILE", value: "kestra:///io/kestra/report.csv"})).toBe(true)
+        expect(isRendered({expression: "read(outputs.export.uri)", kind: "FILE"})).toBe(false)
     })
 })

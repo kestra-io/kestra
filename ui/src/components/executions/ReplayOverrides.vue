@@ -23,7 +23,7 @@
             <div v-for="value in values" :key="value.expression" class="override-row" data-test="replay-override">
                 <div class="override-label">
                     <code>{{ asExpression(value.expression) }}</code>
-                    <KsText v-if="value.kind !== 'SECRET' && value.kind !== 'BLOCK'" size="small" type="info" data-test="replay-override-rendered">
+                    <KsText v-if="isRendered(value)" size="small" type="info" data-test="replay-override-rendered">
                         {{ $t("replayOverrides.rendered", {value: formatValue(value.value)}) }}
                     </KsText>
                 </div>
@@ -50,7 +50,7 @@
     import {computed, onMounted, reactive, ref, watch} from "vue"
     import {isDeepEqual} from "@kestra-io/design-system"
     import {useExecutionsStore} from "../../stores/executions"
-    import {asExpression, editableText, formatValue, isOverridable, parseOverride, type ParsedOverride, type ReplayValue} from "./replayOverrides"
+    import {asExpression, editableText, formatValue, isOverridable, isRendered, parseOverride, type ParsedOverride, type ReplayValue} from "./replayOverrides"
 
     const props = defineProps<{
         executionId: string

@@ -48,11 +48,6 @@ export function buildHighlightSegments(text: string, query: string, caseSensitiv
 }
 
 /**
- * Renders `buildHighlightSegments` as escaped HTML with matches wrapped in `<mark>` — the shared
- * rendering used by both the results list and the preview pane for files/KV/secrets rows, which
- * (unlike flows) have no server-provided `[mark]` markers to highlight against.
- */
-/**
  * The KV and namespace-file endpoints split the query into terms and require every term to occur as
  * a substring, in any order — so a query like `landing.bucket` matches `landing-bucket-us-east-1`
  * even though that literal string never appears. Highlighting the whole query would then mark

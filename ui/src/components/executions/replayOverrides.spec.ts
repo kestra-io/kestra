@@ -25,7 +25,7 @@ describe("parseOverride", () => {
 
 describe("isRendered", () => {
     it("shows the file URI an expression rendered, but nothing for a file function, which is never rendered", () => {
-        expect(isRendered({expression: "outputs.export.uri", kind: "FILE", value: "kestra:///io/kestra/report.csv"})).toBe(true)
+        expect(isRendered({...rendered("kestra:///io/kestra/report.csv"), kind: "FILE"})).toBe(true)
         expect(isRendered({expression: "read(outputs.export.uri)", kind: "FILE"})).toBe(false)
     })
 })

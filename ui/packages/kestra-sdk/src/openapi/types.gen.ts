@@ -2266,7 +2266,7 @@ export type Relation = {
 
 export type RelationType = 'SEQUENTIAL' | 'CHOICE' | 'ERROR' | 'FINALLY' | 'AFTER_EXECUTION' | 'PARALLEL' | 'DYNAMIC';
 
-export type ReplayOverrideServiceKind = 'EXPRESSION' | 'BLOCK' | 'CONSTANT' | 'SECRET' | 'FILE';
+export type ReplayOverrideServiceKind = 'EXPRESSION' | 'BLOCK' | 'CONSTANT' | 'SECRET' | 'FILE' | 'CALL' | 'VOLATILE';
 
 export type ReplayOverrideServiceReplayValue = {
     expression?: string;

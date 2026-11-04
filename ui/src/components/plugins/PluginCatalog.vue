@@ -74,7 +74,7 @@
             :categories="selectedCategories"
         />
 
-        <div v-else-if="pluginsList.length === 0" class="plugins-empty" data-test="plugins-empty">
+        <div v-else-if="pluginsList.length === 0 && extraCardCount === 0" class="plugins-empty" data-test="plugins-empty">
             <KsNoData :title="emptyCopy.title">
                 {{ emptyCopy.description }}
             </KsNoData>
@@ -128,6 +128,13 @@
                     </template>
                 </PluginCard>
             </KsTooltip>
+            <component
+                :is="catalogExtension.extraCards"
+                v-if="catalogExtension.extraCards"
+                :catalog="baseList"
+                :search="searchInput"
+                :categories="selectedCategories"
+            />
         </section>
     </template>
 </template>
@@ -279,6 +286,8 @@
             .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
             .sort(comparators[sortBy.value])
     })
+
+    const extraCardCount = computed(() => catalogExtension.extraCardCount?.(baseList.value, searchInput.value, selectedCategories.value) ?? 0)
 
     const isFiltered = computed(() => searchInput.value !== "" || selectedCategories.value.length > 0)
 

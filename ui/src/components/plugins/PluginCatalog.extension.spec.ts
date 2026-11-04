@@ -7,7 +7,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import type {Plugin} from "../../utils/pluginUtils"
 import "../../utils/global"
 
-const {showTable, scoped, reset} = vi.hoisted(() => ({showTable: {value: true}, scoped: {value: false}, reset: vi.fn()}))
+const {showTable, scoped, extra, reset} = vi.hoisted(() => ({showTable: {value: true}, scoped: {value: false}, extra: {value: [] as string[]}, reset: vi.fn()}))
 
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")
 
@@ -23,6 +23,8 @@ vi.mock("override/components/plugins/pluginCatalogExtension", async () => {
             toolbar: markRaw(PluginList("toolbar")),
             table: markRaw(PluginList("table")),
             showTable: () => showTable.value,
+            extraCards: markRaw({setup: () => () => extra.value.map(title => h("h5", {"data-test": "extra-card"}, title))}),
+            extraCardCount: () => extra.value.length,
             matches: () => !scoped.value,
             emptyCopy: (filtered: boolean) => scoped.value && !filtered ? {title: "Nothing added", description: "Add one"} : undefined,
             reset: () => {
@@ -62,6 +64,7 @@ describe("PluginCatalog extension", () => {
         setActivePinia(createPinia())
         showTable.value = true
         scoped.value = false
+        extra.value = []
         reset.mockClear()
     })
 
@@ -87,6 +90,20 @@ describe("PluginCatalog extension", () => {
 
         expect(wrapper.find("[data-test=table]").exists()).toBe(false)
         expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT"])
+    })
+
+    test("appends the extension cards after the catalog cards, and shows them instead of the empty state", async () => {
+        showTable.value = false
+        extra.value = ["storage-s3"]
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT", "storage-s3"])
+
+        scoped.value = true
+        await wrapper.find("input").setValue("aws")
+
+        expect(wrapper.find("[data-test=plugins-empty]").exists()).toBe(false)
+        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["storage-s3"])
     })
 
     test("lets the extension word an empty scope, and clears every filter on Show all plugins", async () => {

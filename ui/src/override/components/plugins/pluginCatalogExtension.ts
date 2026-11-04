@@ -23,6 +23,13 @@ export interface PluginCatalogExtension {
     showTable?: () => boolean;
     /** Narrows the catalog cards on top of search and categories. */
     matches?: (plugin: Plugin) => boolean;
+    /**
+     * Rendered after the catalog cards, in the same grid, for entries that have no catalog card. Receives every
+     * artifact entry as `catalog`, and the lowercased `search` and the selected `categories`.
+     */
+    extraCards?: Component;
+    /** How many cards `extraCards` renders for the same arguments, so that the empty state is not shown above them. */
+    extraCardCount?: (catalog: Plugin[], search: string, categories: string[]) => number;
     /** Rendered on each catalog card above its footer; receives the artifact entry as `plugin`. */
     cardStatus?: Component;
     /** Replaces the catalog's empty-state copy; `filtered` is true while a search or a category filter is active. */

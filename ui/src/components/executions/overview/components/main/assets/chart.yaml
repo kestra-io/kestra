@@ -3,6 +3,7 @@ id: single_flow_executions
 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
 
 chartOptions:
+  displayName: Recent Executions
   column: date
   colorByColumn: state
 

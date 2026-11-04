@@ -1463,6 +1463,7 @@
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
+            "editor_pebble_hover": "Passe o mouse sobre a referência do Pebble para ver sua definição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
@@ -1485,6 +1486,7 @@
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
+            "editor_pebble_hover": "Mostra a definição e a documentação de um input, output, variável, label ou variável de trigger ao passar o mouse sobre sua referência Pebble no editor de flow.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."

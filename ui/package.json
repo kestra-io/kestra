@@ -176,6 +176,7 @@
         "fsevents@2.3.2": true,
         "fsevents@2.3.3": true,
         "protobufjs@7.6.6": true,
-        "tree-sitter-json@0.24.8": true
+        "tree-sitter-json@0.24.8": true,
+        "libxmljs2@0.37.0": true
     }
 }

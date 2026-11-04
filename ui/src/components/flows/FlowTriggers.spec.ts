@@ -257,9 +257,10 @@ describe("FlowTriggers - execute backfill button", () => {
 
     const DatePickerStub = defineComponent({
         name: "KsDatePicker",
+        inheritAttrs: false,
         props: {modelValue: {type: Date, default: null}},
         emits: ["update:modelValue"],
-        setup: (_, {emit}) => () => h("button", {"data-test": "date-picker", onClick: () => emit("update:modelValue", new Date("2026-01-01T00:00:00Z"))}),
+        setup: (_, {emit}) => () => h("button", {type: "button", "data-test": "date-picker", onClick: () => emit("update:modelValue", new Date("2026-01-01T00:00:00Z"))}),
     })
 
     afterEach(() => {

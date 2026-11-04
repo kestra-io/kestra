@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
 import {reactive} from "vue"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
 import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
@@ -76,7 +77,7 @@ function mountBanner(execution = buildExecution()) {
 describe("Banner", () => {
     beforeEach(() => {
         vi.mocked(SearchableDataAPI.listSearchableData).mockResolvedValue({results: [], total: 0})
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
         logsAllowed.value = true

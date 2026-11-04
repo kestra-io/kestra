@@ -665,6 +665,20 @@ export type ConcurrencyLimit = {
     running?: number;
 };
 
+export type ConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    tenantId?: string;
+    namespace?: string;
+    flowId?: string;
+    running?: number;
+    queued?: number;
+};
+
+export type ConcurrencyLimitControllerConcurrencyLimitUpdateRequest = {
+    namespace?: string | null;
+    flowId?: string | null;
+    running: number;
+};
+
 /**
  * Paged response for stores that may not know their exact row count (e.g. an external log store): `total` is only present when the backing store can compute it. Kept as a separate type from PagedResults rather than a shared `total` field: only this path can legitimately omit `total`, so the OpenAPI schema (and generated SDK types) can still mark `total` as required on every other, always-countable, endpoint. When `total` is absent, pagination falls back to an opaque cursor (`type`/`nextCursor`) since there is no page count to offset from.
  */
@@ -1808,8 +1822,8 @@ export type PagedResultsBlueprintControllerApiBlueprintItem = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsConcurrencyLimit = {
-    results: Array<ConcurrencyLimit>;
+export type PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    results: Array<ConcurrencyLimitControllerConcurrencyLimitSearchResult>;
     total: number;
 };
 
@@ -4700,12 +4714,56 @@ export type GetServiceResponses = {
 
 export type GetServiceResponse = GetServiceResponses[keyof GetServiceResponses];
 
+export type UpdateConcurrencyLimitData = {
+    body: ConcurrencyLimitControllerConcurrencyLimitUpdateRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type UpdateConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
+
+export type UpdateConcurrencyLimitResponses = {
+    /**
+     * updateConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
+
 export type SearchConcurrencyLimitsData = {
     body?: never;
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
     url: '/api/v1/{tenant}/concurrency-limit/search';
 };
 
@@ -4730,7 +4788,7 @@ export type SearchConcurrencyLimitsResponses = {
     /**
      * searchConcurrencyLimits 200 response
      */
-    200: PagedResultsConcurrencyLimit;
+    200: PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult;
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
@@ -4771,43 +4829,6 @@ export type GetConcurrencyLimitResponses = {
 };
 
 export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
-
-export type UpdateConcurrencyLimitData = {
-    body: ConcurrencyLimit;
-    path: {
-        namespace: string;
-        flowId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
-};
-
-export type UpdateConcurrencyLimitErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
-
-export type UpdateConcurrencyLimitResponses = {
-    /**
-     * updateConcurrencyLimit 200 response
-     */
-    200: ConcurrencyLimit;
-};
-
-export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
 
 export type SearchDashboardsData = {
     body?: never;

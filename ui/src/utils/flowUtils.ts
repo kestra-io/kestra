@@ -22,8 +22,9 @@ export function loopOver<T>(
 
 export type FlowTask = {type?: string; id?: string; [key: string]: unknown}
 
+// A YAML `id: 123` parses as a number, and it is a valid task id.
 function isTaskObject(value: unknown): value is Task {
-    return value !== null && typeof value === "object" && "type" in value && "id" in value && typeof value.type === "string" && typeof value.id === "string"
+    return value !== null && typeof value === "object" && "type" in value && "id" in value && typeof value.type === "string" && (typeof value.id === "string" || typeof value.id === "number")
 }
 
 export function findTaskById(flow: unknown, taskId: string): FlowTask | undefined {

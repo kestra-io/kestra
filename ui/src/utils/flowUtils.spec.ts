@@ -122,10 +122,14 @@ tasks:
         expect(tasks.find((t) => t.id === "dbt")).toMatchObject({taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}})
     })
 
-    it("getAllTasks skips objects whose id or type is not a string", () => {
-        const tasks = [{id: "ok", type: "task"}, {id: 1, type: "task"}, {id: "no-type", type: null}]
+    it("getAllTasks keeps tasks whose id is a number, and skips objects without a usable id or type", () => {
+        const tasks = [{id: "ok", type: "task"}, {id: 123, type: "task"}, {id: "no-type", type: null}, {id: null, type: "task"}, {id: {}, type: "task"}]
 
-        expect(FlowUtils.getAllTasks(tasks).map((task) => task.id)).toEqual(["ok"])
+        expect(FlowUtils.getAllTasks(tasks).map((task) => task.id)).toEqual(["ok", 123])
+    })
+
+    it("getAllTaskIds returns a numeric task id as a string", () => {
+        expect(FlowUtils.getAllTaskIds(YAML_UTILS.parse("tasks:\n  - id: 123\n    type: io.kestra.plugin.core.log.Log"))).toEqual(["123"])
     })
 
     it("getAllTasks handles missing tasks", () => {

@@ -486,6 +486,7 @@ If your `<style>` block needs to exist:
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
+- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
 
 ## Composables
 

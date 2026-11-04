@@ -269,6 +269,11 @@ public class TriggerEventHandler {
      */
     private TriggerState updateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow,
             AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
+        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
+        // the backfill from the new date and silently drop or corrupt its remaining range.
+        if (state.getBackfill() != null) {
+            return state;
+        }
         return switch (resolveRecoverMissedSchedules(flow, trigger, recoverMissedSchedules)) {
             // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
             case ALL -> state.getNextEvaluationDate() != null
@@ -292,11 +297,6 @@ public class TriggerEventHandler {
     }
 
     private TriggerState updateForLastMissedSchedule(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
-        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
-        // the backfill from the new date and silently drop or corrupt its remaining range.
-        if (state.getBackfill() != null) {
-            return state;
-        }
         // Never evaluated (e.g. created disabled): there is no missed schedule to recover, and the last
         // cron tick before now could even predate the trigger's creation.
         if (state.getEvaluatedAt() == null) {
@@ -319,8 +319,7 @@ public class TriggerEventHandler {
 
     /**
      * Computes the next evaluation date of a re-enabled trigger so that missed schedules are skipped: the stale
-     * pre-disable evaluation date is dropped from the trigger context so the computation seeds from now, while a
-     * running backfill is preserved so it resumes from its current date.
+     * pre-disable evaluation date is dropped from the trigger context so the computation seeds from now.
      */
     private ZonedDateTime nextEvaluationDateSkippingMissed(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
         TriggerContext context = state.context().toBuilder().date(null).build();

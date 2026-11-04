@@ -1092,7 +1092,7 @@
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Execution läuft noch, durch das Löschen wird sie nicht gestoppt.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Diese Execution läuft noch. Das Löschen stoppt sie nicht.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
     "restore": "Wiederherstellen",
     "restore confirm": "Möchtest du die Revision <code>{revision}</code> wirklich wiederherstellen?",
     "bulk delete": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich löschen?",
@@ -1925,6 +1925,11 @@
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
     "scheduleDateInPast": "Das geplante Datum muss in der Zukunft liegen",
+    "inputs_date_range": {
+      "between": "Der früheste Wert ist {after}, der späteste Wert ist {before}.",
+      "after": "Der früheste Wert ist {after}.",
+      "before": "Der späteste Wert ist {before}."
+    },
     "warning": "Warnung",
     "trigger_check_warning": "Trigger-Variablen funktionieren nicht bei einer manuell gestarteten Execution. Füge den Coalesce-Operator `??` hinzu, um das Problem zu lösen. Verwende zum Beispiel statt `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "docs": "Docs",

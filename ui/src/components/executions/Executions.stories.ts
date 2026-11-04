@@ -22,6 +22,7 @@ function getDecorators(data: PagedResultsApiLightExecution) {
                         lastName: "Doe",
                         email: "john.doe@example.com",
                         isAllowed: () => true,
+                        hasAnyAction: () => true,
                         hasAnyActionOnAnyNamespace: () => true,
                     } as unknown as typeof authStore.user
                     miscStore.configs = {

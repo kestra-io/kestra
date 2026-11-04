@@ -165,6 +165,7 @@
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore, useScopedLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import Download from "vue-material-design-icons/Download.vue"
@@ -522,7 +523,9 @@
         })
     })
 
-    const showStatChart = () => props.withCharts && showChart.value && !logsStore.isCursorMode
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
+
+    const showStatChart = () => props.withCharts && canViewCharts.value && showChart.value && !logsStore.isCursorMode
 
     const onShowChartChange = (value: boolean) => {
         showChart.value = value
@@ -543,7 +546,7 @@
     // The chart toggle is hidden (not just inert) in cursor mode: cursor stores don't aggregate, so
     // the timeseries chart it controls can't be built — see `showStatChart` above.
     const logTableOptions = computed(() => ({
-        chart: {shown: !logsStore.isCursorMode, value: showChart.value, callback: onShowChartChange},
+        chart: {shown: !logsStore.isCursorMode && canViewCharts.value, value: showChart.value, callback: onShowChartChange},
         refresh: {shown: true, callback: refresh},
         columns: {shown: false},
     }))

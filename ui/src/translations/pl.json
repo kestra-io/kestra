@@ -467,6 +467,41 @@
     "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
     "resumed done": "Egzekucja została wznowiona",
     "resume from breakpoint title": "Wznów egzekucję {id} od Breakpointa",
+    "approval": {
+      "review": "Przegląd",
+      "title": "Przejrzyj {task} egzekucji {id}",
+      "approve": "Zatwierdź",
+      "deny": "Odmów",
+      "comment": "Komentarz",
+      "comment hint": {
+        "optional": "Opcjonalnie.",
+        "always": "Komentarz jest wymagany.",
+        "on approve": "Komentarz jest wymagany do zatwierdzenia.",
+        "on deny": "Komentarz jest wymagany, aby odrzucić."
+      },
+      "comment required": "Komentarz jest wymagany dla tej decyzji.",
+      "inputs invalid": "Niektóre Inputy są nieprawidłowe: {errors}",
+      "review done": "Twoja recenzja została zapisana",
+      "reviewed": {
+        "title": "Żądanie zatwierdzenia egzekucji {id}",
+        "explanation": "To żądanie zatwierdzenia nie czeka już na recenzję.",
+        "decision": "Decyzja",
+        "by": "Zdecydowano przez",
+        "on": "Zdecydowano na",
+        "decisions": {
+          "approved": "Zatwierdzono",
+          "denied": "Odmówiono",
+          "expired": "Wygasłe"
+        }
+      },
+      "cancel request": "Anuluj żądanie",
+      "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji {id}? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
+      "cancel done": "Żądanie zatwierdzenia zostało anulowane",
+      "banner": {
+        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
+      }
+    },
     "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",
     "pause": "Wstrzymaj",
@@ -506,6 +541,8 @@
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
     "topology-graph": {
+      "retried": "Ten Task został ponowiony",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
       "graph-orientation": "Orientacja grafu",
       "zoom-in": "Powiększ",
       "zoom-out": "Pomniejsz",
@@ -575,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "nie rozpoczęto"
       }
     },
     "show task logs": "Pokaż logi Taska",
@@ -634,6 +675,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "task_run_popup": {
+      "open": "Szczegóły Taska",
+      "count_error": "Nie można załadować liczby",
+      "load_error": "Nie można załadować tego widoku.",
+      "retry": "Ponów",
+      "child_runs_capped": "Wyświetlanie logów tylko pierwszych {count} podrzędnych Task Runów.",
+      "no_artifacts": "Ten Task nie dostarcza Artifactu.",
+      "task_source": "Źródło Taska",
+      "worker_info": "Informacje o Workerze"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
@@ -644,6 +695,7 @@
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "variable_explorer": {
+      "task_outputs": "Outputy Taska",
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
@@ -676,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit.",
+      "queued": "W kolejce",
+      "save_error": "Nie udało się zaktualizować limitu Concurrency, poprzednia wartość została zachowana."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -1146,6 +1200,7 @@
     "kestra": "Kestra",
     "error detected": "Wykryto błąd(y).",
     "warning detected": "Wykryto ostrzeżenie(-a).",
+    "schema warning": "Linia {line}: {message}",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
     "admin": "Administrator",
@@ -1285,6 +1340,7 @@
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
     "relative start date": "Względna data rozpoczęcia",
+    "now": "Teraz",
     "absolute": "Absolutny",
     "backfill": "Backfill",
     "Set labels": "Ustaw etykiety",
@@ -1913,12 +1969,45 @@
     "iterations": "Iteracje",
     "load_10_more": "Załaduj 10 więcej",
     "show_all_executions": "Pokaż wszystkie wykonania",
-    "failed_iterations_only": "Tylko nieudane iteracje",
     "loop_iterations_shown": "Pokazano {shown} z {total}",
     "loop_iterations_load_error": "Nie udało się załadować iteracji",
     "retry": "Ponów",
     "no_iterations": "Brak iteracji",
     "no_failed_iterations": "Brak nieudanych iteracji",
+    "gantt_tree_label": "Oś czasu egzekucji",
+    "gantt_row_expand": "Rozwiń {name}",
+    "gantt_row_collapse": "Zwiń {name}",
+    "gantt_failed_only": "Tylko nieudane",
+    "gantt_go_to_first_failure": "Przejdź do pierwszego błędu",
+    "gantt_loop_iterations_count": "{count} iteracja | {count} iteracje | {count} iteracji",
+    "gantt_loop_failed_count": "Nieudane: {count}",
+    "gantt_loop_show_failed": "Pokaż tylko nieudane iteracje",
+    "gantt_loop_show_all": "Pokaż wszystkie iteracje",
+    "gantt_loop_show_all_iterations": "Pokaż wszystkie iteracje ({count})",
+    "gantt_loop_loading": "Ładowanie iteracji…",
+    "gantt_iteration_no_tasks": "Brak jeszcze Task Runów w tej iteracji",
+    "gantt_iteration_no_failed_tasks": "Brak nieudanych Task Runów w tej iteracji",
+    "gantt_panel": {
+      "label": "Szczegóły Task Runa",
+      "lineage": "Położenie w Flow",
+      "previous_iteration": "Poprzednia iteracja",
+      "next_iteration": "Następna iteracja",
+      "open_iteration": "Otwórz iterację",
+      "iteration_position": "{position} z {total} w {loop}",
+      "first_failure": "Pierwszy błąd",
+      "go_to_failure": "Przejdź do błędu",
+      "task_runs": "Task Runy",
+      "iteration": "Iteracja",
+      "value": "Value",
+      "index": "Indeks",
+      "index_of": "#{index} z {total}",
+      "execution": "Egzekucja",
+      "filter_all": "Wszystkie {count}",
+      "filter_failed": "Nieudane {count}",
+      "filter_success": "Udane {count}",
+      "search_value": "Szukaj według dokładnego Value",
+      "range": "{from}–{to} z {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
       "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
@@ -2187,7 +2276,8 @@
       "close_all_panels": "Zamknij wszystkie panele",
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
       "fullscreen": "Pełny ekran",
-      "split_panel": "Podziel panel"
+      "split_panel": "Podziel panel",
+      "split_panel_no_room": "Za mało miejsca na kolejny panel"
     },
     "search_docs": "Szukaj",
     "no_results_found": "Nie znaleziono wyników",
@@ -2954,6 +3044,56 @@
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
     "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
-    "not started": "Nierozpoczęte"
+    "not started": "Nierozpoczęte",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Wszystkie",
+        "total": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failed": "{count} nieudanych"
+      },
+      "toolbar": {
+        "panBack": "Przewiń wstecz",
+        "panForward": "Przewiń do przodu",
+        "zoomIn": "Przybliż",
+        "zoomOut": "Oddal",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Otwórz tę stronę",
+        "runsCount": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failedCount": "{count} nieudanych"
+      },
+      "bucket": {
+        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Otwórz wykonanie",
+        "showOnlyFlow": "Pokaż tylko ten flow"
+      },
+      "empty": {
+        "description": "Brak wykonań w wybranym zakresie i filtrach.",
+        "resetFilters": "Zresetuj filtry",
+        "widenRange": "Rozszerz do 7 dni"
+      },
+      "error": {
+        "title": "Nie udało się załadować osi czasu",
+        "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
+      },
+      "truncated": {
+        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań. Zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
+      },
+      "scrubber": {
+        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres",
+        "ignoredFilters": "Pasek gęstości nie stosuje tych filtrów: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Liczniki",
+      "timeline": "Oś czasu"
+    }
   }
 }

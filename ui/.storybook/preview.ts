@@ -11,6 +11,7 @@ import "../src/styles/vendor.css"
 import "@kestra-io/design-system/src/assets/styles/index.scss"
 import "../src/styles/app.css"
 import en from "../src/translations/en.json"
+import {installLayoutSlots} from "./layoutSlots"
 
 window.KESTRA_BASE_PATH = "/ui/"
 window.KESTRA_UI_PATH = "./"
@@ -18,28 +19,7 @@ window.KESTRA_UI_PATH = "./"
 const unmockedClient = {...useClient()}
 let renderError: unknown
 
-// Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
-// TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
-// is mounted once at the layout root before any page's TopNavBar teleports
-// into it; Storybook has no such layout wrapper.
-//
-// These are appended directly to document.body — as plain DOM nodes, outside
-// Vue's own render tree — rather than rendered as template siblings in a
-// decorator. Teleport resolves its target via a synchronous
-// document.querySelector() call the instant it mounts; a decorator-rendered
-// sibling only reliably exists in time for components whose own mount is a
-// shallow, single synchronous pass. Components/Admin/Triggers renders
-// <TopNavBar> as a root element behind an extra layer of story/decorator
-// nesting, which raced the sibling into existing too late and printed
-// "Failed to locate Teleport target". Real, static body-level nodes created
-// once before any story ever mounts have no such race.
-for (const id of ["topnav-title-slot", "topnav-description-slot", "topnav-actions-slot"]) {
-  if (!document.getElementById(id)) {
-    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div")
-    el.id = id
-    document.body.appendChild(el)
-  }
-}
+installLayoutSlots()
 
 const preview: Preview = {
   parameters: {
@@ -77,6 +57,9 @@ const preview: Preview = {
     beginStoryScope(`${title} > ${name}`)
     setMockClient(unmockedClient)
     renderError = undefined
+    // Stories share one iframe, so a preference saved by one story would otherwise reach the next.
+    localStorage.clear()
+    sessionStorage.clear()
   },
   afterEach() {
     if (renderError) {

@@ -631,8 +631,8 @@
         lastRefreshDate.value = new Date();
 
         executionsStore.findExecutions(loadQuery({
-            size: parseInt(route.query?.size as string ?? "25"),
-            page: parseInt(route.query?.page as string ?? "1"),
+            size: props.embed ? internalPageSize.value : parseInt(route.query?.size as string ?? "25"),
+            page: props.embed ? internalPageNumber.value : parseInt(route.query?.page as string ?? "1"),
             sort: route.query?.sort as string ?? "state.startDate:desc",
             state: route.query?.state ? [route.query?.state] : props.statuses
         })).then(() => {
@@ -655,7 +655,9 @@
         onPageChanged,
         queryWithFilter,
         load,
-        onDataLoaded
+        onDataLoaded,
+        internalPageNumber,
+        internalPageSize
     } = useDataTableActions({
         dblClickRouteName: dblClickRouteName.value,
         embed: props.embed,

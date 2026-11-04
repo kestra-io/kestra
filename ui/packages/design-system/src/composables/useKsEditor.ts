@@ -108,6 +108,7 @@ export function useKsEditor(
 
     let lastTimeout: number | undefined
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
+    let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
     let placeholderWidget: PlaceholderContentWidget | undefined
     const disposeCompletions = ref<() => void>()
 
@@ -354,7 +355,9 @@ export function useKsEditor(
                 props.lang,
                 monaco.Uri.file(prefix.value + uid() + (props.lang ? `.${props.lang}` : "")),
             )
-            localDiffEditor.value.setModel({original: originalModel, modified: modifiedModel})
+            // setModel({original, modified}) never releases the view model it creates, which then diffs disposed models.
+            diffViewModel = localDiffEditor.value.createViewModel({original: originalModel, modified: modifiedModel})
+            localDiffEditor.value.setModel(diffViewModel)
 
             let modifiedBackspaceTimeout: number | null = null
             const modifiedEditor = localDiffEditor.value.getModifiedEditor()
@@ -606,6 +609,8 @@ export function useKsEditor(
         resizeObserver.value = undefined
         if (localDiffEditor.value) {
             localDiffEditor.value?.dispose()
+            diffViewModel?.dispose()
+            diffViewModel = undefined
             localDiffEditor.value?.getModel()?.modified?.dispose()
             localDiffEditor.value?.getModel()?.original?.dispose()
             localDiffEditor.value = undefined

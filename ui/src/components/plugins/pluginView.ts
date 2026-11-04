@@ -12,7 +12,7 @@ export function useQueryChoice<T extends string>(key: string, choices: readonly 
 
     return computed<T>({
         get: () => choices.find(choice => choice === route.query[key]) ?? fallback,
-        set: (choice) => router.push({query: {...route.query, [key]: choice === fallback ? undefined : choice}}),
+        set: (choice) => router.replace({query: {...route.query, [key]: choice === fallback ? undefined : choice}}),
     })
 }
 

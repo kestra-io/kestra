@@ -1,13 +1,17 @@
 import {describe, test, expect, beforeEach, afterEach, vi} from "vitest"
 import {defineComponent, h, ref, type PropType} from "vue"
 import {flushPromises} from "@vue/test-utils"
+import {useRoute, type LocationQuery} from "vue-router"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import type {Plugin} from "../../utils/pluginUtils"
 import "../../utils/global"
 
-const {showTable, scoped, extra, reset} = vi.hoisted(() => ({showTable: {value: true}, scoped: {value: false}, extra: {value: [] as string[]}, reset: vi.fn()}))
+const {showTable, scoped, extra, reset} = await vi.hoisted(async () => {
+    const {ref} = await import("vue")
+    return {showTable: ref(true), scoped: ref(false), extra: ref<string[]>([]), reset: vi.fn()}
+})
 
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")
 
@@ -45,7 +49,16 @@ vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
 }))
 vi.mock("override/utils/route", () => ({apiUrl: () => "/api/v1", apiUrlWithoutTenants: () => "/api/v1", baseUrl: "/"}))
 vi.mock("override/stores/misc", () => ({useMiscStore: () => ({theme: "light", loadConfigs: vi.fn()})}))
-vi.mock("vue-router", () => ({useRoute: () => ({params: {}, query: {}}), useRouter: () => ({push: vi.fn()})}))
+vi.mock("vue-router", async () => {
+    const {reactive} = await import("vue")
+    const route = reactive({params: {}, query: {} as LocationQuery})
+    return {
+        useRoute: () => route,
+        useRouter: () => ({push: vi.fn(), replace: vi.fn(async ({query}: {query: LocationQuery}) => {
+            route.query = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined)) as LocationQuery
+        })}),
+    }
+})
 vi.mock("../../composables/usePluginsCount", () => ({usePluginsCount: () => ({totalPlugins: ref(900)})}))
 vi.mock("../../stores/pluginsEnrichment", () => ({
     usePluginsEnrichmentStore: () => ({fetchEnrichment: vi.fn(), getEnrichment: () => undefined}),
@@ -62,6 +75,7 @@ async function mountCatalog() {
 describe("PluginCatalog extension", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+        useRoute().query = {}
         showTable.value = true
         scoped.value = false
         extra.value = []

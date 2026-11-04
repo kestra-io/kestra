@@ -1,6 +1,7 @@
 import {describe, test, expect, beforeEach, afterEach, vi} from "vitest"
 import {ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
+import {useRoute, type LocationQuery} from "vue-router"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
@@ -82,10 +83,16 @@ vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({theme: "light", loadConfigs: vi.fn()}),
 }))
 
-vi.mock("vue-router", () => ({
-    useRoute: () => ({params: {}, query: {}}),
-    useRouter: () => ({push: vi.fn()}),
-}))
+vi.mock("vue-router", async () => {
+    const {reactive} = await import("vue")
+    const route = reactive({params: {}, query: {} as LocationQuery})
+    return {
+        useRoute: () => route,
+        useRouter: () => ({push: vi.fn(), replace: vi.fn(async ({query}: {query: LocationQuery}) => {
+            route.query = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined)) as LocationQuery
+        })}),
+    }
+})
 
 vi.mock("../../composables/usePluginsCount", () => ({
     usePluginsCount: () => ({totalPlugins: ref(900)}),
@@ -109,6 +116,7 @@ async function mountCatalog() {
 describe("PluginCatalog", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+        useRoute().query = {}
     })
 
     afterEach(() => {
@@ -148,6 +156,15 @@ describe("PluginCatalog", () => {
         await wrapper.find("input").setValue("dbt cloud")
         await flushPromises()
 
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("restores the search and the sort from the URL when the catalog is opened again", async () => {
+        useRoute().query = {q: "dbt", sort: "nameDesc"}
+
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.find("input").element.value).toBe("dbt")
         expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
     })
 })

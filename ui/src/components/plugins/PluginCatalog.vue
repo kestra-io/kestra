@@ -145,6 +145,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
+    import {useQueryChoice} from "./pluginView"
     import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
@@ -184,11 +185,17 @@
         ...pluginsStore.icons,
         ...pluginsStore.groupIcons,
     }))
-    const searchText = ref("")
-    const selectedCategories = ref<string[]>([])
+    const searchText = computed<string>({
+        get: () => typeof route.query.q === "string" ? route.query.q : "",
+        set: (q) => router.replace({query: {...route.query, q: q || undefined}}),
+    })
+    const selectedCategories = computed<string[]>(() =>
+        [route.query.categories ?? []].flat().filter((category): category is string => typeof category === "string"),
+    )
 
-    type SortKey = "nameAsc" | "nameDesc" | "newest" | "mostUsed"
-    const sortBy = ref<SortKey>("nameAsc")
+    const SORT_KEYS = ["nameAsc", "nameDesc", "newest", "mostUsed"] as const
+    type SortKey = typeof SORT_KEYS[number]
+    const sortBy = useQueryChoice("sort", SORT_KEYS)
 
     const sortOptions = computed<{value: SortKey, label: string}[]>(() => [
         {value: "nameAsc", label: t("pluginPage.sort.nameAsc")},
@@ -235,12 +242,10 @@
         || (subGroupTitlesByName.value.get(plugin.name) ?? []).some(title => title.includes(searchInput.value))
 
     const toggleCategory = (category: string) => {
-        const idx = selectedCategories.value.indexOf(category)
-        if (idx === -1) {
-            selectedCategories.value.push(category)
-        } else {
-            selectedCategories.value.splice(idx, 1)
-        }
+        const categories = selectedCategories.value.includes(category)
+            ? selectedCategories.value.filter(selected => selected !== category)
+            : [...selectedCategories.value, category]
+        router.replace({query: {...route.query, categories: categories.length > 0 ? categories : undefined}})
     }
 
     const matchesSelectedCategories = (plugin: Plugin): boolean => {
@@ -296,9 +301,9 @@
         description: t("pluginPage.empty.description"),
     })
 
-    const showAllPlugins = () => {
-        searchText.value = ""
-        selectedCategories.value = []
+    const showAllPlugins = async () => {
+        // Awaited so that reset() writes its own query keys on top of this one instead of over a stale route.query.
+        await router.replace({query: {...route.query, q: undefined, categories: undefined}})
         catalogExtension.reset?.()
     }
 

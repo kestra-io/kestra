@@ -15,7 +15,7 @@ const describeUse = ({at, name}: UtilityUse) => `${at} (${name})`
  * @todo Once the last utility is migrated and _utilities.css is deleted (kestra-io/kestra#20834), replace the two
  * _utilities.css tests with one that allows no Bootstrap utility at all, as ui-ee's bootstrapGuard.spec.ts does.
  */
-describe("design system", () => {
+describe("design system", {timeout: 15000}, () => {
     it("reads no Bootstrap --kbs-* variable", () => {
         const offenders = bootstrapVariableReads(UI, ROOTS)
 

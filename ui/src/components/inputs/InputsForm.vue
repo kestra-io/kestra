@@ -105,7 +105,7 @@
                     v-if="input.type === 'MULTISELECT'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="multiSelectInputs[input.id]"
-                    @update:model-value="onMultiSelectChange(input, $event)"
+                    @update:model-value="onMultiSelectChange(input, $event ?? [])"
                     multiple
                     filterable
                     clearable

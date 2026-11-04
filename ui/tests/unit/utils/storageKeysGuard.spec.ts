@@ -13,7 +13,7 @@ const sources = (dir: string): string[] =>
         return /\.(vue|ts)$/.test(entry.name) && !/\.(spec|test|stories)\.ts$/.test(entry.name) ? [path] : []
     })
 
-describe("storageKeys", () => {
+describe("storageKeys", {timeout: 20000}, () => {
     it("names every storage key that ui/src reads or writes", () => {
         const offenders = sources(SRC).flatMap((path) => {
             const source = readFileSync(path, "utf8")

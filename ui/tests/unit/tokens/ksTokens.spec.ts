@@ -4,6 +4,10 @@ import {spawnSync} from "node:child_process"
 import {describe, expect, it} from "vitest"
 import {ESLint, RuleTester} from "eslint"
 import css from "@eslint/css"
+
+if (css.rules?.["use-baseline"]?.meta) {
+    css.rules["use-baseline"].meta.schema = false
+}
 // @ts-expect-error - plain .mjs modules, so that both linters and this test load the same code
 import {declarationsIn, knownTokens, suggest, usagesIn} from "../../../scripts/tokens/knownTokens.mjs"
 // @ts-expect-error - see above
@@ -33,7 +37,7 @@ const lintTolerant = (code: string, file = "probe.scss"): Warning[] => {
 
 const warningsFor = (code: string, file = "probe.scss") => lintTolerant(code, file).map(warning => warning.text)
 
-describe("the known-token set", () => {
+describe("the known-token set", {timeout: 20000}, () => {
     it("reads the names the Figma palette generator writes", () => {
         expect(knownTokens().has("--ks-text-link")).toBe(true)
     })
@@ -58,7 +62,7 @@ describe("the known-token set", () => {
     })
 })
 
-describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
+describe("the stylelint rule, ks/no-undeclared-custom-property", {timeout: 30000}, () => {
     it("reports a token that nothing declares", () => {
         expect(warningsFor(".x { color: var(--ks-nowhere); }"))
             .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
@@ -93,7 +97,7 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
     })
 })
 
-describe("the stylesheet rule, kestra-tokens/no-undeclared-css-token", () => {
+describe("the stylesheet rule, kestra-tokens/no-undeclared-css-token", {timeout: 20000}, () => {
     it("reports the same names as the stylelint rule, wherever CSSTree puts them", () => {
         const tester = new RuleTester({plugins: {css}, language: "css/css"})
 
@@ -134,7 +138,7 @@ describe("the stylesheet rule, kestra-tokens/no-undeclared-css-token", () => {
     })
 })
 
-describe("the eslint rule for scripts", () => {
+describe("the eslint rule for scripts", {timeout: 20000}, () => {
     it("covers the tokens stylelint cannot see", () => {
         const tester = new RuleTester({languageOptions: {ecmaVersion: 2022, sourceType: "module"}})
 

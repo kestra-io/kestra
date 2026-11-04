@@ -24,9 +24,9 @@
     export type KsTreeNode<T extends TreeNodeData = TreeNodeData> = RenderContentContext["node"] & {data: T}
 
     export interface KsTreeInstance<T extends TreeNodeData = TreeNodeData> {
-        getNode: (data: TreeKey | T) => KsTreeNode<T> | undefined
+        getNode: (data?: TreeKey | T | null) => KsTreeNode<T> | undefined
         remove: (data: T | KsTreeNode<T>) => void
-        append: (data: T, parent: T | TreeKey | KsTreeNode<T>) => void
+        append: (data: T, parent?: T | TreeKey | KsTreeNode<T> | null) => void
         getCheckedNodes: (leafOnly?: boolean, includeHalfChecked?: boolean) => T[] | undefined
         setCheckedKeys: (keys: TreeKey[], leafOnly?: boolean) => void
         getCurrentKey: () => TreeKey | undefined
@@ -42,8 +42,6 @@
         type AllowDropType,
         type LoadFunction,
         type NodeDropType,
-        type TreeKey,
-        type TreeOptionProps,
     } from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 

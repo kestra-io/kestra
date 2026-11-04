@@ -140,27 +140,35 @@ describe("registerPebbleHoverProvider", () => {
         disposables.forEach((disposable) => disposable.dispose())
     })
 
-    it("offers a YAML-only command palette action that turns the hover off and back on", async () => {
+    it("lists a palette action on YAML editors, created before or after registration, that turns the hover off and back on", async () => {
         const registerHover = vi.spyOn(monaco.languages, "registerHoverProvider")
-        const addAction = vi.spyOn(monaco.editor, "addEditorAction")
         const toggled = vi.fn()
         const disposables: monaco.IDisposable[] = []
-        registerPebbleHoverProvider(disposables, (type) => Promise.resolve(SCHEMAS[type]))
-        registerPebbleHoverToggle(disposables, "Toggle Pebble hover docs", toggled)
-        const provider = registerHover.mock.calls[0][1]
-        const action = addAction.mock.calls[0][0]
+        monaco.languages.register({id: "yaml"})
         const model = monaco.editor.createModel(FLOW, "yaml", monaco.Uri.parse("inmemory://model/flow-toggle.yaml"))
         models.push(model)
+        const before = monaco.editor.create(document.createElement("div"), {model})
+        registerPebbleHoverProvider(disposables, (type) => Promise.resolve(SCHEMAS[type]))
+        registerPebbleHoverToggle(disposables, "Toggle Pebble hover docs", toggled)
+        const after = monaco.editor.create(document.createElement("div"), {model})
+        await Promise.resolve()
+        const toggleOf = (editor: monaco.editor.IStandaloneCodeEditor) =>
+            editor.getSupportedActions().find((action) => action.id.endsWith("kestra.togglePebbleHover"))
+        const provider = registerHover.mock.calls[0][1]
         const position = new monaco.Position(LOG_LINE, model.getLineContent(LOG_LINE).indexOf("file") + 2)
         const hover = () => provider.provideHover(model, position, new monaco.CancellationTokenSource().token, {verbosityRequest: undefined})
 
-        expect(action.precondition).toBe("editorLangId == yaml")
-        await action.run({} as monaco.editor.ICodeEditor)
+        expect(toggleOf(before)?.label).toBe("Toggle Pebble hover docs")
+        await toggleOf(after)?.run()
         expect(await hover()).toBeNull()
-        await action.run({} as monaco.editor.ICodeEditor)
+        await toggleOf(before)?.run()
         expect(await hover()).not.toBeNull()
         expect(toggled.mock.calls).toEqual([[false], [true]])
 
+        before.dispose()
+        after.dispose()
         disposables.forEach((disposable) => disposable.dispose())
+        document.querySelectorAll("body > .context-view, body > .monaco-aria-container").forEach((node) => node.remove())
+        document.body.classList.remove("underline-links")
     })
 })

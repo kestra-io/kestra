@@ -144,13 +144,20 @@ export function togglePebbleHover(): boolean {
     return enabled
 }
 
+// The palette only lists an editor's own actions, so `monaco.editor.addEditorAction` would never show there.
 export function registerPebbleHoverToggle(disposables: monaco.IDisposable[], label: string, onToggled: (enabled: boolean) => void): void {
-    disposables.push(monaco.editor.addEditorAction({
-        id: "kestra.togglePebbleHover",
-        label,
-        precondition: "editorLangId == yaml",
-        run: () => onToggled(togglePebbleHover()),
-    }))
+    const addToggle = (editor: monaco.editor.ICodeEditor) => {
+        const standalone = editor as Partial<monaco.editor.IStandaloneCodeEditor>
+        standalone.addAction?.({
+            id: "kestra.togglePebbleHover",
+            label,
+            precondition: "editorLangId == yaml",
+            run: () => onToggled(togglePebbleHover()),
+        })
+    }
+    monaco.editor.getEditors().forEach(addToggle)
+    // Fired from the base constructor, before `addAction` exists on the standalone editor.
+    disposables.push(monaco.editor.onDidCreateEditor((editor) => queueMicrotask(() => addToggle(editor))))
 }
 
 export function registerPebbleHoverProvider(disposables: monaco.IDisposable[], loadOutputProperties: OutputPropertiesLoader): void {

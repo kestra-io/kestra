@@ -541,6 +541,8 @@
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
     "topology-graph": {
+      "retried": "Эта Task была повторена",
+      "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
       "graph-orientation": "Ориентация графика",
       "zoom-in": "Увеличить",
       "zoom-out": "Уменьшить",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "не запущено"
       }
     },
     "show task logs": "Показать логи задачи",
@@ -669,6 +675,16 @@
     "inputs": "Входные данные",
     "input": "Ввод",
     "variables": "Переменные",
+    "task_run_popup": {
+      "open": "Детали Task",
+      "count_error": "Не удалось загрузить количество",
+      "load_error": "Не удалось загрузить это представление.",
+      "retry": "Повторить",
+      "child_runs_capped": "Показаны log'и только первых {count} дочерних Task Run'ов.",
+      "no_artifacts": "Эта Task не предоставляет artifact.",
+      "task_source": "Исходный код Task",
+      "worker_info": "Информация о Worker"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Ни одна task этого flow не предоставляет artifact.",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "variable_explorer": {
+      "task_outputs": "Выводы Task'а",
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
-      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit."
+      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit.",
+      "queued": "В очереди",
+      "save_error": "Не удалось обновить лимит Concurrency, сохранено предыдущее значение."
     },
     "flowConcurrency": {
       "loadError": "Не удалось загрузить ограничение параллелизма для этого flow.",
@@ -1073,7 +1092,7 @@
       "heading": "Все о Kestra.",
       "subheading": "Последние обновления, руководства и истории"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Это выполнение все еще выполняется, удаление его не остановит.<br />Вам нужно убить выполнение, чтобы остановить его.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Эта Execution все еще выполняется, ее удаление не остановит ее.<br />Вам нужно kill'нуть Execution, чтобы остановить ее.</div>",
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
@@ -1444,6 +1463,7 @@
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
             "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
+            "editor_pebble_hover": "Наведите курсор на ссылку Pebble, чтобы увидеть ее определение",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",
             "environment_name_tooltip": "Имя этой среды установлено из конфигурации, но может быть изменено.",
@@ -1466,6 +1486,7 @@
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_hover_description": "Показывать описания свойств при наведении в редакторе.",
+            "editor_pebble_hover": "Показать определение и документацию input, output, переменной, label или trigger переменной при наведении на ее Pebble ссылку в Flow-редакторе.",
             "environment_name": "Отображаемое имя для текущей среды, показанное в навигации.",
             "environment_color": "Цвет акцента, используемый для текущей среды в навигации.",
             "app_font_size": "Коэффициент масштабирования, применяемый ко всем размерам шрифта интерфейса."
@@ -1906,6 +1927,11 @@
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
     "scheduleDateInPast": "Дата расписания должна быть в будущем",
+    "inputs_date_range": {
+      "between": "Самое раннее значение: {after}, самое позднее значение: {before}.",
+      "after": "Самое раннее значение: {after}.",
+      "before": "Самое позднее значение: {before}."
+    },
     "warning": "Предупреждение",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "docs": "Документы",
@@ -1950,12 +1976,45 @@
     "iterations": "Итерации",
     "load_10_more": "Загрузить ещё 10",
     "show_all_executions": "Показать все выполнения",
-    "failed_iterations_only": "Только неудачные итерации",
     "loop_iterations_shown": "Показано {shown} из {total}",
     "loop_iterations_load_error": "Не удалось загрузить итерации",
     "retry": "Повторите попытку",
     "no_iterations": "Пока нет итераций",
     "no_failed_iterations": "Нет неудачных итераций",
+    "gantt_tree_label": "Хронология выполнения",
+    "gantt_row_expand": "Развернуть {name}",
+    "gantt_row_collapse": "Свернуть {name}",
+    "gantt_failed_only": "Только неудачные",
+    "gantt_go_to_first_failure": "Перейти к первому сбою",
+    "gantt_loop_iterations_count": "{count} итерация | {count} итерации | {count} итераций",
+    "gantt_loop_failed_count": "Неудачных: {count}",
+    "gantt_loop_show_failed": "Показать только неудачные итерации",
+    "gantt_loop_show_all": "Показать все итерации",
+    "gantt_loop_show_all_iterations": "Показать все итерации ({count})",
+    "gantt_loop_loading": "Загрузка итераций…",
+    "gantt_iteration_no_tasks": "В этой итерации пока нет выполнений Task",
+    "gantt_iteration_no_failed_tasks": "В этой итерации нет неудачных выполнений Task",
+    "gantt_panel": {
+      "label": "Сведения о выполнении Task",
+      "lineage": "Расположение в flow",
+      "previous_iteration": "Предыдущая итерация",
+      "next_iteration": "Следующая итерация",
+      "open_iteration": "Открыть итерацию",
+      "iteration_position": "{position} из {total} в {loop}",
+      "first_failure": "Первый сбой",
+      "go_to_failure": "Перейти к сбою",
+      "task_runs": "Выполнения Task",
+      "iteration": "Итерация",
+      "value": "Значение",
+      "index": "Индекс",
+      "index_of": "#{index} из {total}",
+      "execution": "Выполнение",
+      "filter_all": "Все {count}",
+      "filter_failed": "Неудачные {count}",
+      "filter_success": "Успешные {count}",
+      "search_value": "Поиск по точному значению",
+      "range": "{from}–{to} из {total}"
+    },
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",
       "outputs": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их output не отображается здесь.",
@@ -2086,6 +2145,11 @@
       "decrease_fontsize": "Уменьшить размер шрифта редактора",
       "increase_fontsize": "Увеличить размер шрифта редактора",
       "reset_fontsize": "Сбросить размер шрифта редактора"
+    },
+    "pebble_hover": {
+      "toggle": "Переключить всплывающие docs Pebble",
+      "enabled": "Документация Pebble при наведении включена.",
+      "disabled": "Документация Pebble при наведении отключена."
     },
     "instance": "Экземпляр",
     "something_went_wrong": {
@@ -2224,7 +2288,8 @@
       "close_all_panels": "Закрыть все панели",
       "exit_fullscreen": "Выйти из полноэкранного режима",
       "fullscreen": "На весь экран",
-      "split_panel": "Разделить панель"
+      "split_panel": "Разделить панель",
+      "split_panel_no_room": "Недостаточно места для другой панели"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",

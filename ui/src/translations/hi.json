@@ -541,6 +541,8 @@
     "refresh": "ताज़ा करें",
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
     "topology-graph": {
+      "retried": "यह Task पुनः प्रयास किया गया था",
+      "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
       "zoom-out": "ज़ूम आउट करें",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "शुरू नहीं हुआ"
       }
     },
     "show task logs": "Task Logs दिखाएं",
@@ -669,6 +675,16 @@
     "inputs": "इनपुट्स",
     "input": "इनपुट",
     "variables": "वेरिएबल्स",
+    "task_run_popup": {
+      "open": "Task विवरण",
+      "count_error": "गिनती लोड नहीं की जा सकी",
+      "load_error": "इस दृश्य को लोड नहीं किया जा सका।",
+      "retry": "पुनः प्रयास करें",
+      "child_runs_capped": "केवल पहले {count} चाइल्ड Task रन के log दिखा रहा है।",
+      "no_artifacts": "यह Task कोई artifact प्रदान नहीं करता है।",
+      "task_source": "Task स्रोत",
+      "worker_info": "Worker जानकारी"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "इस Flow के किसी भी Task में कोई Artifact नहीं है।",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "पूर्णस्क्रीन से बाहर निकलें"
     },
     "variable_explorer": {
+      "task_outputs": "Task आउटपुट",
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "समानांतरता सीमाएँ",
-      "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।"
+      "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।",
+      "queued": "कतारबद्ध",
+      "save_error": "समवर्ती सीमा को अपडेट करने में विफल रहा, पिछला मान रखा गया है।"
     },
     "flowConcurrency": {
       "loadError": "इस flow की समवर्तीता सीमा लोड नहीं हो सकी।",
@@ -1073,7 +1092,7 @@
       "heading": "सभी चीजें Kestra।",
       "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">यह execution अभी भी चल रहा है, इसे हटाने से यह रुकेगा नहीं।<br />इसे रोकने के लिए आपको execution को समाप्त करना होगा।</div>",
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
@@ -1444,6 +1463,7 @@
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
+            "editor_pebble_hover": "Pebble संदर्भ पर होवर करें ताकि उसकी परिभाषा देखी जा सके",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
             "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
@@ -1466,6 +1486,7 @@
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
             "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
+            "editor_pebble_hover": "फ़्लो एडिटर में Pebble संदर्भ पर होवर करते समय किसी इनपुट, आउटपुट, वेरिएबल, label या trigger वेरिएबल की परिभाषा और डॉक्स दिखाएं।",
             "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
             "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
             "app_font_size": "इंटरफ़ेस के सभी फ़ॉन्ट आकारों पर लागू स्केल कारक।"
@@ -1906,6 +1927,11 @@
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
     "scheduleDateInPast": "शेड्यूल की तारीख भविष्य में होनी चाहिए",
+    "inputs_date_range": {
+      "between": "सबसे पहला मान {after} है, सबसे आखिरी मान {before} है।",
+      "after": "सबसे पहला मान {after} है।",
+      "before": "सबसे आखिरी मान {before} है।"
+    },
     "warning": "चेतावनी",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "docs": "डॉक्स",
@@ -1950,12 +1976,45 @@
     "iterations": "पुनरावृत्तियाँ",
     "load_10_more": "10 और लोड करें",
     "show_all_executions": "सभी निष्पादन दिखाएं",
-    "failed_iterations_only": "केवल विफल पुनरावृत्तियाँ",
     "loop_iterations_shown": "{total} में से {shown} दिखाए गए",
     "loop_iterations_load_error": "पुनरावृत्तियाँ लोड करने में विफल",
     "retry": "पुनः प्रयास करें",
     "no_iterations": "अभी तक कोई पुनरावृत्ति नहीं",
     "no_failed_iterations": "कोई विफल पुनरावृत्ति नहीं",
+    "gantt_tree_label": "निष्पादन टाइमलाइन",
+    "gantt_row_expand": "{name} विस्तारित करें",
+    "gantt_row_collapse": "{name} संक्षिप्त करें",
+    "gantt_failed_only": "केवल विफल",
+    "gantt_go_to_first_failure": "पहली विफलता पर जाएँ",
+    "gantt_loop_iterations_count": "{count} पुनरावृत्ति | {count} पुनरावृत्तियाँ",
+    "gantt_loop_failed_count": "{count} विफल",
+    "gantt_loop_show_failed": "केवल विफल पुनरावृत्तियाँ दिखाएँ",
+    "gantt_loop_show_all": "सभी पुनरावृत्तियाँ दिखाएँ",
+    "gantt_loop_show_all_iterations": "सभी {count} पुनरावृत्तियाँ दिखाएँ",
+    "gantt_loop_loading": "पुनरावृत्तियाँ लोड हो रही हैं…",
+    "gantt_iteration_no_tasks": "इस पुनरावृत्ति में अभी तक कोई Task रन नहीं",
+    "gantt_iteration_no_failed_tasks": "इस पुनरावृत्ति में कोई विफल Task रन नहीं",
+    "gantt_panel": {
+      "label": "Task रन विवरण",
+      "lineage": "flow में स्थान",
+      "previous_iteration": "पिछली पुनरावृत्ति",
+      "next_iteration": "अगली पुनरावृत्ति",
+      "open_iteration": "पुनरावृत्ति खोलें",
+      "iteration_position": "{loop} में {total} में से {position}",
+      "first_failure": "पहली विफलता",
+      "go_to_failure": "विफलता पर जाएँ",
+      "task_runs": "Task रन",
+      "iteration": "पुनरावृत्ति",
+      "value": "Value",
+      "index": "इंडेक्स",
+      "index_of": "{total} में से #{index}",
+      "execution": "निष्पादन",
+      "filter_all": "सभी {count}",
+      "filter_failed": "विफल {count}",
+      "filter_success": "सफल {count}",
+      "search_value": "सटीक value से खोजें",
+      "range": "{total} में से {from}–{to}"
+    },
     "loop_iterations_notice": {
       "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",
       "outputs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके आउटपुट यहाँ प्रदर्शित नहीं होते हैं।",
@@ -2086,6 +2145,11 @@
       "decrease_fontsize": "संपादक फ़ॉन्ट आकार घटाएं",
       "increase_fontsize": "संपादक फ़ॉन्ट आकार बढ़ाएँ",
       "reset_fontsize": "संपादक फ़ॉन्ट आकार रीसेट करें"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble होवर डॉक्स टॉगल करें",
+      "enabled": "Pebble होवर डॉक्स चालू हैं।",
+      "disabled": "Pebble होवर डॉक्स बंद हैं।"
     },
     "instance": "इंस्टेंस",
     "something_went_wrong": {
@@ -2224,7 +2288,8 @@
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
       "fullscreen": "पूर्णस्क्रीन",
-      "split_panel": "पैनल विभाजित करें"
+      "split_panel": "पैनल विभाजित करें",
+      "split_panel_no_room": "दूसरे पैनल के लिए पर्याप्त जगह नहीं है"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",

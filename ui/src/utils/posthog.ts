@@ -1,8 +1,14 @@
+import type {PostHog} from "posthog-js"
 import {ensureUid} from "./uid"
+
+export type PosthogConfig = {
+    isUiAnonymousUsageEnabled?: boolean
+    [key: string]: unknown
+}
 
 type PosthogCapturePayload = {
     event: string;
-    properties: Record<string, any>;
+    properties?: Record<string, unknown>;
     enqueuedAt: number;
 };
 
@@ -11,26 +17,33 @@ const POSTHOG_QUEUE_MAX_AGE_MS = 5 * 60 * 1000 // 5 minutes
 
 let posthogInitPromise: Promise<void> | undefined
 let posthogQueue: PosthogCapturePayload[] = []
-let posthogClient: any | undefined
-let posthogLoadPromise: Promise<any> | undefined
+let posthogClient: PostHog | undefined
+let posthogLoadPromise: Promise<PostHog | undefined> | undefined
 
-function isPosthogDisabled(configs: Record<string, any> | undefined) {
+function isPosthogDisabled(configs: PosthogConfig | undefined) {
     return configs?.isUiAnonymousUsageEnabled === false || import.meta.env.MODE === "development"
 }
 
-export function isPosthogEnabled(configs?: Record<string, any>) {
+export function isPosthogEnabled(configs?: PosthogConfig) {
     if (!configs) {
         return false
     }
     return !isPosthogDisabled(configs)
 }
 
-async function loadPosthogClient() {
+function isPostHog(value: unknown): value is PostHog {
+    return typeof value === "object" && value !== null && "capture" in value && typeof value.capture === "function"
+}
+
+async function loadPosthogClient(): Promise<PostHog | undefined> {
     if (posthogClient) return posthogClient
     if (posthogLoadPromise) return posthogLoadPromise
 
     posthogLoadPromise = import("posthog-js")
-        .then((mod) => mod.default ?? mod)
+        .then((mod) => {
+            const client: unknown = mod.default ?? mod
+            return isPostHog(client) ? client : undefined
+        })
         .then((client) => {
             posthogClient = client
             return client
@@ -65,14 +78,14 @@ function flushQueue() {
 
     for (const item of queued) {
         try {
-            posthogClient.capture(item.event, item.properties)
+            posthogClient?.capture(item.event, item.properties)
         } catch {
             // swallow
         }
     }
 }
 
-async function ensurePosthogClient(configs: Record<string, any> | undefined) {
+async function ensurePosthogClient(configs: PosthogConfig | undefined) {
     if (isLoaded()) return posthogClient
     if (configs === undefined) return undefined
     if (isPosthogDisabled(configs)) {
@@ -118,9 +131,9 @@ export function disablePosthog() {
 }
 
 export function capturePosthogEvent(
-    configs: Record<string, any> | undefined,
+    configs: PosthogConfig | undefined,
     eventName: string,
-    properties: Record<string, any>,
+    properties?: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
@@ -146,7 +159,7 @@ export function capturePosthogEvent(
     }
 
     try {
-        posthogClient.capture(eventName, properties)
+        posthogClient?.capture(eventName, properties)
     } catch {
         // swallow
     }
@@ -155,8 +168,8 @@ export function capturePosthogEvent(
 }
 
 export async function identifyPosthogUser(
-    configs: Record<string, any> | undefined,
-    properties: Record<string, any>,
+    configs: PosthogConfig | undefined,
+    properties: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
@@ -175,7 +188,7 @@ export async function identifyPosthogUser(
     }
 }
 
-export async function initPosthogIfEnabled(configs: Record<string, any> | undefined) {
+export async function initPosthogIfEnabled(configs: PosthogConfig | undefined) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
         return

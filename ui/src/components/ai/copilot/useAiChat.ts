@@ -222,7 +222,8 @@ export function useAiChat() {
                 toolCall: m.toolCall
                     ? {tool: m.toolCall.tool, kind: m.toolCall.kind, family: m.toolCall.family, arguments: m.toolCall.arguments}
                     : undefined,
-                toolResult: (m.toolResult as unknown as ToolResultEvent) ?? undefined,
+                // The backend persists the result as an open `Map<String, Object>`, so its shape is stated here.
+                toolResult: (m.toolResult as ToolResultEvent | null | undefined) ?? undefined,
                 draft: m.draft ?? undefined,
             }))
 

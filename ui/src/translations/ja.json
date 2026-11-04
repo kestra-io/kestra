@@ -541,6 +541,8 @@
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
     "topology-graph": {
+      "retried": "このTaskはリトライされました",
+      "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
       "zoom-out": "ズームアウト",
@@ -610,6 +612,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "未開始"
       }
     },
     "show task logs": "Task Logsを表示",
@@ -669,6 +675,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "変数",
+    "task_run_popup": {
+      "open": "Task詳細",
+      "count_error": "カウントを読み込めませんでした",
+      "load_error": "このビューを読み込めませんでした。",
+      "retry": "再試行",
+      "child_runs_capped": "最初の {count} 個の子 Task Run の log のみを表示しています。",
+      "no_artifacts": "このTaskはArtifactを提供しません。",
+      "task_source": "Taskソース",
+      "worker_info": "Worker情報"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "このFlowのTaskはartifactを提供していません。",
@@ -679,6 +695,7 @@
       "exit_fullscreen": "フルスクリーンを終了"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
-      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
+      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。",
+      "queued": "キュー済み",
+      "save_error": "Concurrency limit の更新に失敗しました。以前の値が保持されます。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",
@@ -1073,7 +1092,7 @@
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">このExecutionはまだ実行中です。削除しても停止しません。<br />停止するにはExecutionをkillする必要があります。</div>",
     "restore": "復元",
     "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
@@ -1444,6 +1463,7 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
+            "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1466,6 +1486,7 @@
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
+            "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -1906,6 +1927,11 @@
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
     "scheduleDateInPast": "スケジュール日は未来である必要があります",
+    "inputs_date_range": {
+      "between": "最も早い値は{after}、最も遅い値は{before}です。",
+      "after": "最も早い値は{after}です。",
+      "before": "最も遅い値は{before}です。"
+    },
     "warning": "警告",
     "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "docs": "ドキュメント",
@@ -1950,12 +1976,45 @@
     "iterations": "イテレーション",
     "load_10_more": "さらに10件読み込む",
     "show_all_executions": "すべての実行を表示",
-    "failed_iterations_only": "失敗した反復のみ",
     "loop_iterations_shown": "{total}件中{shown}件表示",
     "loop_iterations_load_error": "反復の読み込みに失敗しました",
     "retry": "再試行",
     "no_iterations": "まだ反復がありません",
     "no_failed_iterations": "失敗した反復はありません",
+    "gantt_tree_label": "実行タイムライン",
+    "gantt_row_expand": "{name} を展開",
+    "gantt_row_collapse": "{name} を折りたたむ",
+    "gantt_failed_only": "失敗のみ",
+    "gantt_go_to_first_failure": "最初の失敗へ移動",
+    "gantt_loop_iterations_count": "{count} 件のイテレーション",
+    "gantt_loop_failed_count": "{count} 件失敗",
+    "gantt_loop_show_failed": "失敗したイテレーションのみ表示",
+    "gantt_loop_show_all": "すべてのイテレーションを表示",
+    "gantt_loop_show_all_iterations": "{count} 件のイテレーションをすべて表示",
+    "gantt_loop_loading": "イテレーションを読み込み中…",
+    "gantt_iteration_no_tasks": "このイテレーションにはまだ Task 実行がありません",
+    "gantt_iteration_no_failed_tasks": "このイテレーションに失敗した Task 実行はありません",
+    "gantt_panel": {
+      "label": "Task 実行の詳細",
+      "lineage": "flow 内の位置",
+      "previous_iteration": "前のイテレーション",
+      "next_iteration": "次のイテレーション",
+      "open_iteration": "イテレーションを開く",
+      "iteration_position": "{loop} の {total} 件中 {position} 件目",
+      "first_failure": "最初の失敗",
+      "go_to_failure": "失敗へ移動",
+      "task_runs": "Task 実行",
+      "iteration": "イテレーション",
+      "value": "Value",
+      "index": "インデックス",
+      "index_of": "{total} 件中 #{index}",
+      "execution": "実行",
+      "filter_all": "すべて {count}",
+      "filter_failed": "失敗 {count}",
+      "filter_success": "成功 {count}",
+      "search_value": "完全一致する value で検索",
+      "range": "{total} 件中 {from}–{to}"
+    },
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",
       "outputs": "ループのイテレーションは個別のサブExecutionとして実行されるため、そのOutputはここに表示されません。",
@@ -2086,6 +2145,11 @@
       "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "increase_fontsize": "エディタのフォントサイズを大きくする",
       "reset_fontsize": "エディタのフォントサイズをリセット"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble ホバー docs を切り替える",
+      "enabled": "Pebble ホバー docs はオンです。",
+      "disabled": "Pebble ホバー docs はオフです。"
     },
     "instance": "インスタンス",
     "something_went_wrong": {
@@ -2224,7 +2288,8 @@
       "close_all_panels": "すべてのパネルを閉じる",
       "exit_fullscreen": "フルスクリーンを終了",
       "fullscreen": "全画面表示",
-      "split_panel": "パネルを分割"
+      "split_panel": "パネルを分割",
+      "split_panel_no_room": "別のパネルを配置するスペースがありません"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",

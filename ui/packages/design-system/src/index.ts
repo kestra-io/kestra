@@ -19,8 +19,17 @@ type InstalledApp = App & {
 // defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
+// Shared through globalThis because unit tests reset the module registry per file, which leaves several copies of this module alive in one worker.
+const PENDING_LOADS_KEY = Symbol.for("kestra.designSystem.pendingComponentLoads")
+const pendingComponentLoads: Set<Promise<unknown>> = ((globalThis as Record<symbol, unknown>)[PENDING_LOADS_KEY] ??= new Set<Promise<unknown>>()) as Set<Promise<unknown>>
 const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
-    Object.assign(defineAsyncComponent(loader), {name})
+    Object.assign(defineAsyncComponent(() => {
+        const load = loader()
+        const settled = () => void pendingComponentLoads.delete(load)
+        pendingComponentLoads.add(load)
+        load.then(settled, settled)
+        return load
+    }), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 // Async on purpose: every chart statically pulls ECharts, which the barrel would
@@ -212,6 +221,7 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem, KsBreadcrumbLoader} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export {ALL_TIME_RANGE} from "./components/Data/KsDataTable/filter/utils/constants"
+export {normalizeRelativeDate} from "./components/Data/KsDataTable/filter/utils/relativeDates"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
@@ -220,6 +230,11 @@ let i18nRegistration: Promise<void> = Promise.resolve()
 
 /** The registration `install` started, so a caller can await it rather than leave it in flight. */
 export const designSystemI18nReady = (): Promise<void> => i18nRegistration
+
+/** The lazy component imports (`KsMarkdown`, charts, `KsEditor`) still in flight, so a caller can await them rather than leave them in flight. */
+export const designSystemAsyncComponentsReady = async (): Promise<void> => {
+    await Promise.allSettled([...pendingComponentLoads])
+}
 export {useDiscardGuard} from "./composables/useDiscardGuard"
 export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"

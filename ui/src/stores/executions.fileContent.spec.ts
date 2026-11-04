@@ -36,6 +36,14 @@ describe("executions store fileContent", () => {
         expect(downloadFileFromExecution).toHaveBeenCalledWith({executionId: "exec-1", path: "kestra:///outputs/report.html"}, {parseAs: "text"})
     })
 
+    test("reads the text of a body the generated client hands back as a blob", async () => {
+        downloadFileFromExecution.mockResolvedValue(new Blob(["<html></html>"]))
+        const store = useExecutionsStore()
+
+        await expect(store.fileContent({executionId: "exec-1", path: "kestra:///outputs/report.html"}))
+            .resolves.toBe("<html></html>")
+    })
+
     test("propagates a request failure so callers can surface an error state", async () => {
         downloadFileFromExecution.mockRejectedValue(new Error("boom"))
         const store = useExecutionsStore()

@@ -61,7 +61,7 @@ class DockerTmpfsTest {
 
     @Test
     void shouldAcceptOptionValuesWhenWellFormed() {
-        var options = "rw,exec,size=50%,mode=01777,uid=1000,gid=0,nr_inodes=10k,nr_blocks=128,mpol=bind:0";
+        var options = "rw,exec,size=50%,mode=01777,uid=1000,gid=0,nr_inodes=1t,nr_blocks=10k,mpol=bind:0";
 
         assertThat(Docker.tmpfsMounts(Map.of("/scratch", options), WORKING_DIR, true, true)).containsEntry("/scratch", options);
     }

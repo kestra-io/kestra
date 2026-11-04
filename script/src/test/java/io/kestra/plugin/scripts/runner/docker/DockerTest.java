@@ -123,10 +123,11 @@ class DockerTest extends AbstractTaskRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var docker = Docker.builder()
             .image("rockylinux:9.3-minimal")
-            .tmpfs(Property.ofValue(Map.of("/scratch", "size=64m")))
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .tmpfs(Property.ofExpression("{\"{{ workingDir }}/scratch\": \"size=64m\"}"))
             .build();
         var taskCommands = new CommandsWrapper(runContext).withCommands(
-            Property.ofValue(List.of("/bin/sh", "-c", "grep -q ' /scratch tmpfs .*size=65536k' /proc/mounts"))
+            Property.ofValue(List.of("/bin/sh", "-c", "grep -qE ' /.+/scratch tmpfs .*size=65536k' /proc/mounts"))
         );
 
         var result = docker.run(runContext, taskCommands, Collections.emptyList());

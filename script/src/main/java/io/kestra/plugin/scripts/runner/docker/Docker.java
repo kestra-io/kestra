@@ -178,7 +178,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         "Cannot connect to the Docker daemon"
     );
 
-    // Mirrors moby's MergeTmpfsOptions, which Docker only applies when the container starts, after the image pull and the file upload.
+    // Options Docker accepts, which it only checks when the container starts, after the image pull and the file upload.
     private static final Set<String> TMPFS_FLAG_OPTIONS = Set.of(
         "defaults", "ro", "rw", "suid", "nosuid", "dev", "nodev", "exec", "noexec", "sync", "async", "dirsync",
         "mand", "nomand", "atime", "noatime", "diratime", "nodiratime", "unbindable", "runbindable",
@@ -186,8 +186,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     );
     private static final Map<String, TmpfsValueOption> TMPFS_VALUE_OPTIONS = Map.of(
         "size", new TmpfsValueOption("\\d+([kKmMgGtTpPeE]|%)?", "a number of bytes with an optional k, m or g suffix, or a percentage of the host memory, for example 512m"),
-        "nr_blocks", new TmpfsValueOption("\\d+[kKmMgG]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
-        "nr_inodes", new TmpfsValueOption("\\d+[kKmMgG]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
+        "nr_blocks", new TmpfsValueOption("\\d+[kKmMgGtTpPeE]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
+        "nr_inodes", new TmpfsValueOption("\\d+[kKmMgGtTpPeE]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
         "mode", new TmpfsValueOption("0*[0-7]{1,4}", "an octal file mode, for example 1777"),
         "uid", new TmpfsValueOption("\\d+", "a non-negative integer, for example 1000"),
         "gid", new TmpfsValueOption("\\d+", "a non-negative integer, for example 1000"),
@@ -291,6 +291,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             for example `/scratch: "rw,size=512m"`. Supported options are `size` (bytes with an optional k, m or g suffix, or a percentage),
             `mode` (octal), `uid`, `gid`, `nr_inodes` and `nr_blocks` (non-negative integers, the last two with an optional k, m or g suffix),
             `mpol` (`default`, `prefer`, `bind`, `interleave` or `local`), and the standard mount flags such as `ro`, `rw`, `exec` and `noexec`.
+            `mpol` needs a NUMA-enabled kernel, so the container fails to start with it on Docker Desktop.
             Docker mounts tmpfs with `noexec`, `nosuid` and `nodev` by default, so add `exec` to run scripts or binaries from the mount.
 
             The content lives in memory and is discarded when the container stops. Its size counts toward the container memory limit
@@ -491,7 +492,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             try {
                 // pull image only if we will create a new container
                 if (containerId == null) {
-                    Map<String, String> rTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class);
+                    var rTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class, additionalVars);
                     var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of() : tmpfsMounts(
                         rTmpfs,
                         windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),

@@ -54,6 +54,15 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
 
+    /** Slashes are allowed, leading ones too, so that a cloud resource name or a URL is an id as it is. */
+    public static final String ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
+
+    /** The audit log detail id embeds the asset id, so the asset id has to stay this short. */
+    public static final int ID_MAX_LENGTH = 150;
+
+    /** The id an asset was given, when it was longer than {@link #ID_MAX_LENGTH} and was shortened, see {@link #normalizeId(String)}. */
+    public static final String FULL_ID_METADATA_KEY = SYSTEM_METADATA_PREFIX + "fullId";
+
     @Hidden
     @TenantId
     protected String tenantId;
@@ -63,8 +72,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String namespace;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
-    @Size(min = 1, max = 150)
+    @Pattern(regexp = ID_PATTERN)
+    @Size(min = 1, max = ID_MAX_LENGTH)
     protected String id;
 
     @NotBlank
@@ -122,11 +131,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
-        this.id = id;
+        this.id = normalizeId(id);
         this.type = type;
         this.displayName = displayName;
         this.description = description;
         this.metadata = Optional.ofNullable(metadata).map(HashMap::new).orElse(new HashMap<>());
+        if (!Objects.equals(id, this.id)) {
+            this.metadata.put(FULL_ID_METADATA_KEY, id);
+        }
         Instant now = Instant.now();
         this.created = Optional.ofNullable(created).orElse(now);
         this.updated = Optional.ofNullable(updated).orElse(now);
@@ -264,7 +276,20 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     }
 
     public static String uid(String tenantId, String id) {
-        return IdUtils.fromParts(tenantId, id);
+        return IdUtils.fromParts(tenantId, normalizeId(id));
+    }
+
+    /**
+     * The id an asset is stored and looked up by. An id longer than {@link #ID_MAX_LENGTH} keeps its beginning and
+     * ends with a hash of the whole id, so that it fits, stays readable and is the same wherever it is computed. A
+     * normalized id is left as it is, so the function can be applied to an id whatever its origin.
+     */
+    public static String normalizeId(String id) {
+        if (id == null || id.length() <= ID_MAX_LENGTH) {
+            return id;
+        }
+        String hash = IdUtils.from(id);
+        return id.substring(0, ID_MAX_LENGTH - hash.length() - 1) + ":" + hash;
     }
 
     public Asset withTenantId(String tenantId) {

@@ -16,6 +16,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AssetTest {
+    private static final String LONG_ID = "/subscriptions/0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d/resourceGroups/" + "rg".repeat(45)
+        + "/providers/Microsoft.Compute/virtualMachines/vm-1";
+
     @Test
     void shouldDeserializeAssetWithoutTypeAsExternal() throws JsonProcessingException {
         Asset asset = JacksonMapper.ofYaml().readValue(
@@ -311,5 +314,46 @@ class AssetTest {
         String json = JacksonMapper.ofJson().writeValueAsString(asset);
 
         assertThat(json).doesNotContain("related");
+    }
+
+    @Test
+    void shouldShortenAnIdLongerThanTheLimitToTheSameIdEveryTime() {
+        String normalized = Asset.normalizeId(LONG_ID);
+
+        assertThat(LONG_ID).hasSizeGreaterThan(Asset.ID_MAX_LENGTH);
+        assertThat(normalized)
+            .hasSize(Asset.ID_MAX_LENGTH)
+            .startsWith("/subscriptions/0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d/resourceGroups/rgrg")
+            .isEqualTo(Asset.normalizeId(LONG_ID));
+        assertThat(Asset.normalizeId(normalized)).isEqualTo(normalized);
+        assertThat(Asset.normalizeId(LONG_ID.replace("vm-1", "vm-2"))).isNotEqualTo(normalized);
+    }
+
+    @Test
+    void shouldLeaveAnIdWithinTheLimitAsItIs() {
+        String id = "x".repeat(Asset.ID_MAX_LENGTH);
+
+        assertThat(Asset.normalizeId(id)).isSameAs(id);
+        assertThat(Asset.normalizeId(null)).isNull();
+    }
+
+    @Test
+    void shouldStoreAShortenedAssetByItsNormalizedIdAndKeepItsFullIdInTheMetadata() {
+        Asset asset = External.builder().id(LONG_ID).build();
+        Asset shortEnough = External.builder().id("vm-1").build();
+
+        assertThat(asset.getId()).isEqualTo(Asset.normalizeId(LONG_ID));
+        assertThat(asset.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, LONG_ID);
+        assertThat(asset.uid()).isEqualTo(Asset.uid(null, LONG_ID));
+        assertThat(shortEnough.getMetadata()).doesNotContainKey(Asset.FULL_ID_METADATA_KEY);
+    }
+
+    @Test
+    void shouldPointReferencesAndIdentifiersToTheNormalizedIdOfALongId() {
+        String normalized = Asset.normalizeId(LONG_ID);
+
+        assertThat(new AssetRelationRef(LONG_ID, null, null).id()).isEqualTo(normalized);
+        assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).id()).isEqualTo(normalized);
+        assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).uid()).isEqualTo(Asset.uid("tenant", LONG_ID));
     }
 }

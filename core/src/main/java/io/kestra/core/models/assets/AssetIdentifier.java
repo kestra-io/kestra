@@ -7,6 +7,10 @@ import jakarta.validation.constraints.NotBlank;
 
 public record AssetIdentifier(@Hidden String tenantId, @Hidden String namespace, @NotBlank String id, String type) {
 
+    public AssetIdentifier {
+        id = Asset.normalizeId(id);
+    }
+
     public AssetIdentifier withTenantId(String tenantId) {
         return new AssetIdentifier(tenantId, this.namespace, this.id, this.type);
     }

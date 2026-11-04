@@ -17,7 +17,7 @@ updates:
       default-days: 7
       exclude: ["kestra-io/*"]
     commit-message:
-      prefix: "chore(deps-gha)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/devops"]
     groups:
@@ -44,7 +44,7 @@ updates:
       semver-patch-days: 7
       exclude: ["io.kestra*"]
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/backend"]
     groups:
@@ -183,8 +183,8 @@ updates:
     target-branch: develop
     directory: "/ui/packages/design-system"
     commit-message:
-      prefix: "build(design-system)"
-      prefix-development: "build(design-system)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
       interval: "daily"
       timezone: "Europe/Paris"
@@ -328,8 +328,8 @@ updates:
     target-branch: develop
     directory: "/ui/packages/topology"
     commit-message:
-      prefix: "build(topology)"
-      prefix-development: "build(topology)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
       interval: "daily"
       timezone: "Europe/Paris"
@@ -415,7 +415,7 @@ updates:
       semver-patch-days: 7
       exclude: ["@kestra-io/*"]
     commit-message:
-      prefix: "chore(deps-e2e)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:

@@ -111,21 +111,6 @@ export const MONACO_SCOPES: [string, Mapping][] = [
     ["delimiter.handlebars", "pebble"],
 ]
 
-/** The scopes of MONACO_SCOPES in a fixed order, usable as a semantic tokens legend. */
-export const MONACO_SCOPE_NAMES = MONACO_SCOPES.map(([scope]) => scope)
-
-const SCOPE_INDEX = new Map(MONACO_SCOPE_NAMES.map((scope, index) => [scope, index]))
-
-/** The index in MONACO_SCOPE_NAMES of the scope a Monaco token type resolves to, picked the way Monaco's theme does. */
-export function monacoScopeIndex(tokenType: string): number | undefined {
-    const parts = tokenType.split(".")
-    for (let length = parts.length; length > 0; length--) {
-        const index = SCOPE_INDEX.get(parts.slice(0, length).join("."))
-        if (index !== undefined) return index
-    }
-    return undefined
-}
-
 const BASES = {
     dark: {regular: "vs-dark", highContrast: "hc-black"},
     light: {regular: "vs", highContrast: "hc-light"},

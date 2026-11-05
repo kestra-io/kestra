@@ -12,7 +12,6 @@ export default defineConfig({
         customExports: {
             "./monaco/*": {types: "./dist/monaco/*.d.ts", default: "./dist/monaco/*.js"},
             "./shiki/*": {types: "./dist/shiki/*.d.ts", default: "./dist/shiki/*.js"},
-            "./css/*": "./dist/css/*",
             "./vscode/*": "./dist/vscode/*",
         },
     },

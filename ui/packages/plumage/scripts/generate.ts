@@ -1,5 +1,5 @@
 import {mkdirSync, writeFileSync} from "node:fs"
-import {cssVariables, themes, toMonacoTheme, toTextMateTheme} from "../src/index.ts"
+import {themes, toMonacoTheme, toTextMateTheme} from "../src/index.ts"
 import {pebbleInjection} from "../src/pebble.ts"
 import pkg from "../package.json" with {type: "json"}
 
@@ -16,16 +16,12 @@ function writeModule(path: string, value: unknown, type: string) {
     write(`${path}.d.ts`, `declare const value: ${type}\nexport default value\n`)
 }
 
-const css: string[] = []
 for (const theme of themes) {
     const textMate = toTextMateTheme(theme)
     writeModule(`monaco/${theme.name}`, toMonacoTheme(theme), "import(\"../index.js\").MonacoThemeData")
     writeModule(`shiki/${theme.name}`, textMate, "import(\"../index.js\").TextMateTheme")
     write(`vscode/${theme.name}.json`, JSON.stringify(textMate, null, 4) + "\n")
-    const vars = Object.entries(cssVariables(theme)).map(([name, color]) => `    ${name}: ${color};`)
-    css.push(`[data-code-theme="${theme.name}"] {\n${vars.join("\n")}\n}\n`)
 }
-write("css/themes.css", css.join("\n"))
 
 write("vscode/pebble.tmLanguage.json", JSON.stringify(pebbleInjection, null, 4) + "\n")
 write("vscode/package.json", JSON.stringify({

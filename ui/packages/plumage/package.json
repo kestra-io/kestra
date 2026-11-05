@@ -25,7 +25,6 @@
             "types": "./dist/shiki/*.d.ts",
             "default": "./dist/shiki/*.js"
         },
-        "./css/*": "./dist/css/*",
         "./vscode/*": "./dist/vscode/*",
         "./package.json": "./package.json"
     },

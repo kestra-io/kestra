@@ -14,9 +14,8 @@
 ## What you get
 
 - Six themes built from the Kestra design system palette, including the Dark 2.0 editor design and two high contrast themes.
-- One theme definition, many targets: a Monaco theme for KsEditor, a TextMate theme for Shiki and Expressive Code, a VS Code extension and CSS custom properties.
+- One theme definition, many targets: a Monaco theme for KsEditor, a TextMate theme for Shiki and Expressive Code, and a VS Code extension.
 - Pebble `{{ }}` and `{% %}` blocks painted in their own color in YAML, in the app and on the docs site alike.
-- Python, SQL, shell, JSON and other code written under `script: |` or `sql: |` colored with its own grammar in KsEditor.
 - Tests that hold every color to WCAG contrast and keep function names and parameters visibly apart from plain text.
 - No runtime dependencies. Expressive Code is an optional peer, only needed for its plugin.
 
@@ -25,11 +24,10 @@
 - [Themes](#themes)
 - [Every language on kestra.io](#every-language-on-kestraio)
 - [Install](#install)
-- [Usage](#usage): [Monaco](#monaco) · [Pebble in Monaco](#pebble-in-monaco) · [Code inside YAML](#code-inside-yaml) · [Shiki](#shiki) · [Expressive Code](#expressive-code-astro) · [VS Code](#vs-code) · [CSS variables](#css-variables)
+- [Usage](#usage): [Monaco](#monaco) · [Pebble in Monaco](#pebble-in-monaco) · [Shiki](#shiki) · [Expressive Code](#expressive-code-astro) · [VS Code](#vs-code)
 - [API](#api)
 - [Syntax roles](#syntax-roles)
 - [How Pebble is found](#how-pebble-is-found)
-- [How code inside YAML is found](#how-code-inside-yaml-is-found)
 - [Where Kestra uses it](#where-kestra-uses-it)
 - [Adding or changing a theme](#adding-or-changing-a-theme)
 - [Performance](#performance)
@@ -118,7 +116,7 @@ The themes set `inherit: false` and map every token emitted by the 81 grammars b
 
 ### Pebble in Monaco
 
-Monaco does not tokenize Pebble. Paint it as decorations from `pebbleBlocks`, and color the class with the theme's `--code-pebble`:
+Monaco does not tokenize Pebble. Paint it as decorations from `pebbleBlocks`, and color the class with the theme's Pebble color (`kestraDark.syntax.pebble`), set as `--code-pebble`:
 
 ```ts
 import {pebbleBlocks} from "@kestra-io/plumage"
@@ -133,41 +131,6 @@ editor.createDecorationsCollection(decorations)
 ```css
 .highlight-pebble { color: var(--code-pebble) !important; }
 ```
-
-### Code inside YAML
-
-`embeddedBlocks(yaml, resolve?)` returns the block scalars that hold code and their language. Tokenize each one with that language's Monaco grammar and report the tokens as semantic tokens, using `MONACO_SCOPE_NAMES` as the legend, so they take the active theme's colors:
-
-```ts
-import {embeddedBlocks, MONACO_SCOPE_NAMES, monacoScopeIndex} from "@kestra-io/plumage"
-
-monaco.languages.registerDocumentRangeSemanticTokensProvider("yaml", {
-    getLegend: () => ({tokenTypes: MONACO_SCOPE_NAMES, tokenModifiers: []}),
-    provideDocumentRangeSemanticTokens(model, range) {
-        const lines = model.getLinesContent()
-        const data: number[] = []
-        let previousLine = 0, previousColumn = 0
-        for (const block of embeddedBlocks(lines.join("\n"))) {
-            const content = lines.slice(block.startLine, block.endLine + 1).map(line => line.slice(block.indent))
-            monaco.editor.tokenize(content.join("\n"), block.language).forEach((tokens, index) => {
-                const line = block.startLine + index
-                tokens.forEach((token, i) => {
-                    const end = tokens[i + 1]?.offset ?? content[index].length
-                    const scope = monacoScopeIndex(token.type)
-                    if (scope === undefined) return
-                    const column = block.indent + token.offset
-                    data.push(line - previousLine, line === previousLine ? column - previousColumn : column, end - token.offset, scope, 0)
-                    previousLine = line
-                    previousColumn = column
-                })
-            })
-        }
-        return {data: new Uint32Array(data)}
-    },
-})
-```
-
-Two things are easy to miss. The editor needs `"semanticHighlighting.enabled": true`, since Monaco's standalone themes leave semantic highlighting off. And the provider has to be a range provider, because monaco-editor only ships the viewport semantic tokens feature.
 
 ### Shiki
 
@@ -219,18 +182,6 @@ The themes also define the frame colors Expressive Code reads (`editorGroupHeade
 ln -s "$PWD/dist/vscode" ~/.vscode/extensions/kestra-plumage
 ```
 
-### CSS variables
-
-`cssVariables(theme)` returns `--code-background` and one `--code-<role>` property per syntax role, for styling decorations and anything drawn around the code:
-
-```ts
-import {cssVariables, kestraDark} from "@kestra-io/plumage"
-
-Object.assign(element.style, cssVariables(kestraDark))
-```
-
-The build also writes them to `@kestra-io/plumage/css/themes.css`, one block per theme keyed by `[data-code-theme="<name>"]`.
-
 ## API
 
 | Export | What it does |
@@ -244,12 +195,8 @@ The build also writes them to `@kestra-io/plumage/css/themes.css`, one block per
 | `paintPebble(code, lines, paint)` | Splits highlighted lines at Pebble blocks and passes the pieces inside through `paint`, for highlighters other than Shiki |
 | `pluginPebble()` | Expressive Code plugin that paints Pebble in YAML, from `@kestra-io/plumage/expressive-code` |
 | `yamlKeysInjection` | TextMate grammar injection that gives `on:`, `yes:` and `off:` keys the key color, loaded with the YAML grammar |
-| `embeddedBlocks(yaml, resolve?)` | The block scalars of a YAML document that hold code, with their lines, indentation and language |
-| `MONACO_SCOPE_NAMES` | Legend for Monaco semantic tokens, one entry per theme scope |
-| `monacoScopeIndex(tokenType)` | Index in `MONACO_SCOPE_NAMES` of the scope a Monaco token resolves to |
-| `cssVariables(theme)` | `--code-background` and `--code-<role>` custom properties |
 
-Types: `CodeTheme`, `SyntaxColors`, `SyntaxRole`, `EditorColors`, `ThemeKind`, `MonacoThemeData`, `TextMateTheme`, `EmbeddedBlock`, `LanguageResolver`.
+Types: `CodeTheme`, `SyntaxColors`, `SyntaxRole`, `EditorColors`, `ThemeKind`, `MonacoThemeData`, `TextMateTheme`.
 
 ### Entry points
 
@@ -259,7 +206,6 @@ Types: `CodeTheme`, `SyntaxColors`, `SyntaxRole`, `EditorColors`, `ThemeKind`, `
 | `@kestra-io/plumage/expressive-code` | `pluginPebble` |
 | `@kestra-io/plumage/monaco/<theme>` | Prebuilt Monaco theme data, as the default export |
 | `@kestra-io/plumage/shiki/<theme>` | Prebuilt TextMate theme, as the default export |
-| `@kestra-io/plumage/css/themes.css` | The CSS variables of every theme |
 | `@kestra-io/plumage/vscode/*` | The VS Code extension folder |
 
 `<theme>` is a theme name, such as `kestra-dark`. The prebuilt files come from `npm run build`. Inside the repository only the first two entries resolve without a build.
@@ -303,17 +249,6 @@ A theme is one color per role. Every adapter maps grammar scopes and Monaco toke
 
 Shiki and Expressive Code paint Pebble after highlighting instead of through a grammar injection. An injection runs at every tokenizer step and made Expressive Code's YAML rendering 48% slower.
 
-## How code inside YAML is found
-
-`embeddedBlocks` reads `key: |`, `key: >` and `- |` block scalars, finds the type of the task that holds them, and picks the first language that applies:
-
-1. The `resolve(taskType, key)` callback. KsEditor passes the `$language` each plugin declares in its schema.
-2. The file extension of the key, such as `main.py: |` under `inputFiles`.
-3. The key and the task family: `sql`, `afterSQL` and `statement` are SQL. `commands` and `beforeCommands` are shell, or PowerShell for PowerShell tasks. `script` follows the script plugin: Python, shell, Node.js or Bun (JavaScript), Deno (TypeScript), .NET (C#), PowerShell, Go, Julia, Lua, Perl, PHP, R or Ruby. A `dockerfile` key is a Dockerfile.
-4. JSON, for content that opens with `{"` or `[`.
-
-Blocks with no language are left as YAML strings. The scan is line based and linear in the size of the document.
-
 ## Where Kestra uses it
 
 | Repository | Where | How |
@@ -335,7 +270,7 @@ A new theme appears in KsEditor and in the Settings picker with no other change,
 ## Performance
 
 - Painting Pebble adds about 3 to 6% to Expressive Code's YAML rendering. The grammar injection it replaced added 48%.
-- `pebbleBlocks` and `embeddedBlocks` are linear in the size of the text.
+- `pebbleBlocks` is linear in the size of the text.
 - The package has no runtime dependencies and is side-effect free, so bundlers drop what a consumer does not import.
 
 ## What the tests check

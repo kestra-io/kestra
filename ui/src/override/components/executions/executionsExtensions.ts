@@ -26,6 +26,5 @@ export const bulkActionComponents: Component[] = []
 // destructive action stays last.
 export const overflowActionComponents: Component[] = []
 
-// Undefined in OSS, where Review opens the review dialog on the execution. EE replaces it to send the
-// reviewer to the approval's case instead. The component receives the `execution` prop.
+// Replaced by EE; the component receives the `execution` prop.
 export const reviewActionComponent: Component | undefined = undefined

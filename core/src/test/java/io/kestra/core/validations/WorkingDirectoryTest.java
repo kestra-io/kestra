@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -80,7 +80,7 @@ public class WorkingDirectoryTest {
                         .id("log")
                         .type(Log.class.getName())
                         .message("Hello World")
-                        .workerSelector(new WorkerSelector(List.of("toto"), null))
+                        .workerSelector(new FlowWorkerSelector(List.of("toto"), null))
                         .build()
                 )
             )

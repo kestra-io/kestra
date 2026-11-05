@@ -1367,8 +1367,13 @@
         "taskRunners": "Task-Runner",
         "charts": "Diagramm",
         "apps": "App",
+        "appBlocks": "App-Block",
+        "dataFilters": "Datenfilter",
+        "dataFiltersKPI": "KPI-Datenfilter",
         "logExporters": "Log-Exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset-Typ",
+        "additionalPlugins": "Zusätzliches Plugin"
       },
       "sortBy": "Sortieren nach",
       "sort": {

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -45,7 +46,7 @@ class McpToolServiceTest {
         .toolName("tool-one")
         .title("Tool One")
         .toolDescription("First test tool")
-        .annotations(new McpToolTrigger.Annotations(true, false, false, true, false))
+        .annotations(new McpToolAnnotations(true, false, false, true, false))
         .build();
 
     private static final McpToolTrigger MCP_TRIGGER_TWO = McpToolTrigger.builder()
@@ -54,7 +55,7 @@ class McpToolServiceTest {
         .toolName("tool-two")
         .title("Tool Two")
         .toolDescription("Second test tool")
-        .annotations(new McpToolTrigger.Annotations(false, true, false, false, false))
+        .annotations(new McpToolAnnotations(false, true, false, false, false))
         .build();
 
     private static final McpToolTrigger DISABLED_MCP_TRIGGER = McpToolTrigger.builder()
@@ -63,7 +64,7 @@ class McpToolServiceTest {
         .toolName("disabled-tool")
         .title("Disabled Tool")
         .toolDescription("A disabled test tool")
-        .annotations(new McpToolTrigger.Annotations(true, false, false, true, false))
+        .annotations(new McpToolAnnotations(true, false, false, true, false))
         .disabled(true)
         .build();
 

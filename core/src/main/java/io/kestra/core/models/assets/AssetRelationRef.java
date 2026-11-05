@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Size;
 @Schema(title = "A reference to another asset of the same tenant.")
 public record AssetRelationRef(
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
-    @Size(min = 1, max = 150)
+    @Pattern(regexp = Asset.ID_PATTERN)
+    @Size(min = 1, max = Asset.ID_MAX_LENGTH)
     @Schema(title = "The id of the referenced asset.") String id,
 
     @Nullable
@@ -21,4 +21,8 @@ public record AssetRelationRef(
     @Nullable
     @Size(max = 100)
     @Schema(title = "The role this asset plays in the relation, for example primary or backup.") String role) {
+
+    public AssetRelationRef {
+        id = Asset.normalizeId(id);
+    }
 }

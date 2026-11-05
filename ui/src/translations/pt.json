@@ -1378,8 +1378,13 @@
         "taskRunners": "Executor de task",
         "charts": "Gráfico",
         "apps": "Aplicativo",
+        "appBlocks": "Bloco de App",
+        "dataFilters": "Filtro de dados",
+        "dataFiltersKPI": "Filtro de dados de KPI",
         "logExporters": "Exportador de Log",
-        "secrets": "Secreto"
+        "secrets": "Secreto",
+        "assets": "Tipo de Asset",
+        "additionalPlugins": "Plugin adicional"
       },
       "sortBy": "Ordenar por",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
-      "task_details": "Detalhes da task",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",

@@ -1378,8 +1378,13 @@
         "taskRunners": "작업 실행기",
         "charts": "차트",
         "apps": "앱",
+        "appBlocks": "App 블록",
+        "dataFilters": "데이터 필터",
+        "dataFiltersKPI": "KPI 데이터 필터",
         "logExporters": "로그 익스포터",
-        "secrets": "비밀"
+        "secrets": "비밀",
+        "assets": "Asset 유형",
+        "additionalPlugins": "추가 plugin"
       },
       "sortBy": "정렬 기준",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
-      "task_details": "작업 세부 정보",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",

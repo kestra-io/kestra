@@ -36,6 +36,7 @@
                 :namespace="execution?.namespace"
                 :flowId="execution?.flowId"
                 :tenant="tenant"
+                :progress="progress"
                 v-bind="fetchers"
             />
             <KsAlert v-else-if="hasFailedComponent(artifact.taskType)" type="error" :closable="false" data-test="execution-artifact-error">
@@ -58,6 +59,8 @@
     import type {Execution} from "../../stores/executions"
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
     import {useArtifactFetchers} from "./composables/useArtifactFetchers"
+    import {useProgressStream} from "./composables/useProgressStream"
+    import {useExecutionsStore} from "../../stores/executions"
 
     const props = withDefaults(defineProps<{
         artifact: ExecutionArtifact
@@ -82,10 +85,16 @@
     pluginsStore.fetchIcons()
 
     const {RemoteComponent, tasks, hasResolvedComponent, hasFailedComponent} = inject(EXECUTION_ARTIFACTS_KEY)!
-    const {fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => props.execution, () => props.taskRunId)
+    const {runsOf, fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => props.execution, () => props.taskRunId)
+    const executionsStore = useExecutionsStore()
+    useProgressStream(() => props.execution)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
     const task = computed(() => tasks.value.find((candidate) => candidate.id === props.artifact.taskId))
+    const progress = computed(() => {
+        const runId = props.taskRunId ?? runsOf(props.artifact.taskId).at(-1)?.id
+        return runId ? executionsStore.progressEvents.filter((event) => event.taskRunId === runId) : []
+    })
     const siblingOptions = computed(() => props.siblings.map((sibling) => ({label: sibling.title, value: sibling.key})))
     const fullscreenLabel = computed(() => t(props.fullscreen ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
 

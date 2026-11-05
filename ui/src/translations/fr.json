@@ -1378,8 +1378,13 @@
         "taskRunners": "Exécuteur de task",
         "charts": "Graphique",
         "apps": "Application",
+        "appBlocks": "Bloc d'application",
+        "dataFilters": "Filtre de données",
+        "dataFiltersKPI": "Filtre de données KPI",
         "logExporters": "Exportateur de logs",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Type d'Asset",
+        "additionalPlugins": "Plugin additionnel"
       },
       "sortBy": "Trier par",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "no_code": {
-      "task_details": "Détails de la task",
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",

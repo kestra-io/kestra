@@ -1378,8 +1378,13 @@
         "taskRunners": "Task runner",
         "charts": "Chart",
         "apps": "App",
+        "appBlocks": "App block",
+        "dataFilters": "Data filter",
+        "dataFiltersKPI": "KPI data filter",
         "logExporters": "Log exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset type",
+        "additionalPlugins": "Additional plugin"
       },
       "sortBy": "Sort by",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",

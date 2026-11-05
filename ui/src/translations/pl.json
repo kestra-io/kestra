@@ -1378,8 +1378,13 @@
         "taskRunners": "Task Runner",
         "charts": "Wykres",
         "apps": "App",
+        "appBlocks": "Blok App",
+        "dataFilters": "Filtr danych",
+        "dataFiltersKPI": "Filtr danych KPI",
         "logExporters": "Eksporter logów",
-        "secrets": "Sekret"
+        "secrets": "Sekret",
+        "assets": "Typ Assetu",
+        "additionalPlugins": "Dodatkowy plugin"
       },
       "sortBy": "Sortuj według",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
-      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",

@@ -1378,8 +1378,13 @@
         "taskRunners": "Запуск задачи",
         "charts": "График",
         "apps": "Приложение",
+        "appBlocks": "Блок App",
+        "dataFilters": "Фильтр данных",
+        "dataFiltersKPI": "Фильтр данных KPI",
         "logExporters": "Экспортер логов",
-        "secrets": "Секрет"
+        "secrets": "Секрет",
+        "assets": "Тип Asset",
+        "additionalPlugins": "Дополнительный plugin"
       },
       "sortBy": "Сортировать по",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
-      "task_details": "Детали task",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",

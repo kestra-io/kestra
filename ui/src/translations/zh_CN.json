@@ -1378,8 +1378,13 @@
         "taskRunners": "任务运行器",
         "charts": "图表",
         "apps": "应用程序",
+        "appBlocks": "App 块",
+        "dataFilters": "数据筛选",
+        "dataFiltersKPI": "KPI 数据筛选",
         "logExporters": "日志导出器",
-        "secrets": "秘密"
+        "secrets": "秘密",
+        "assets": "Asset 类型",
+        "additionalPlugins": "额外 plugin"
       },
       "sortBy": "排序依据",
       "sort": {
@@ -2057,7 +2062,6 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
-      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",

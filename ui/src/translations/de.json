@@ -1092,7 +1092,7 @@
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Execution läuft noch, durch das Löschen wird sie nicht gestoppt.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Diese Execution läuft noch. Das Löschen stoppt sie nicht.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
     "restore": "Wiederherstellen",
     "restore confirm": "Möchtest du die Revision <code>{revision}</code> wirklich wiederherstellen?",
     "bulk delete": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich löschen?",
@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Der Trigger wurde entsperrt"
     },
+    "trigger blocked": "Blockiert",
+    "trigger blocked policy check failed": "Governance-Policies konnten nicht geprüft werden.",
+    "trigger blocked unknown": "Aus unbekanntem Grund blockiert.",
     "trigger disabled": "Der Trigger ist in der Flow-Quelle deaktiviert",
     "trigger enable dialog": {
       "title": "Trigger aktivieren",
@@ -1367,8 +1370,13 @@
         "taskRunners": "Task-Runner",
         "charts": "Diagramm",
         "apps": "App",
+        "appBlocks": "App-Block",
+        "dataFilters": "Datenfilter",
+        "dataFiltersKPI": "KPI-Datenfilter",
         "logExporters": "Log-Exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset-Typ",
+        "additionalPlugins": "Zusätzliches Plugin"
       },
       "sortBy": "Sortieren nach",
       "sort": {
@@ -1459,10 +1467,13 @@
           "fields": {
             "app_font_size": "App-Schriftgröße",
             "color_mode": "Farbmodus",
+            "editor_dark_theme": "Editor-Farbschema im dunklen Modus",
             "editor_folding_stratgy": "Automatisches Code-Folding im Editor",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
             "editor_hover_description": "Für die Beschreibung mit der Maus über die Eigenschaft fahren",
+            "editor_pebble_hover": "Fahre über die Pebble-Referenz, um ihre Definition zu sehen",
+            "editor_light_theme": "Editor-Farbschema im hellen Modus",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
             "environment_name_tooltip": "Dieser Umgebungsname wird aus der Konfiguration festgelegt, kann jedoch geändert werden.",
@@ -1485,6 +1496,9 @@
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
             "editor_folding_stratgy": "Lange YAML-Blöcke beim Öffnen eines Flows standardmäßig einklappen.",
             "editor_hover_description": "Eigenschaftsbeschreibungen im Editor beim Hovern anzeigen.",
+            "editor_pebble_hover": "Zeige die Definition und Docs eines Input, Output, einer Variable, eines Label oder einer Trigger-Variable an, wenn du mit der Maus über die Pebble-Referenz im Flow-Editor fährst.",
+            "editor_dark_theme": "Syntaxfarben des Code-Editors, wenn der Farbmodus Dunkel 1.0 oder Dunkel 2.0 ist.",
+            "editor_light_theme": "Syntaxfarben des Code-Editors, wenn der Farbmodus Hell ist.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
             "environment_color": "Akzentfarbe für die aktuelle Umgebung in der Navigation.",
             "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche."
@@ -1493,6 +1507,9 @@
             "small": "Klein",
             "medium": "Mittel",
             "large": "Groß"
+          },
+          "editor_theme_options": {
+            "match_app": "Dem Farbmodus der App folgen"
           }
         },
         "localization": {
@@ -2031,7 +2048,6 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
-      "task_details": "Task-Details",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
@@ -2143,6 +2159,11 @@
       "decrease_fontsize": "Editor-Schriftgröße verkleinern",
       "increase_fontsize": "Editor-Schriftgröße erhöhen",
       "reset_fontsize": "Schriftgröße des Editors zurücksetzen"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble-Hover-Dokumentation umschalten",
+      "enabled": "Pebble-Hover-Dokumente sind aktiviert.",
+      "disabled": "Pebble-Hover-Dokumente sind deaktiviert."
     },
     "instance": "Instanz",
     "something_went_wrong": {

@@ -1,0 +1,11 @@
+{{ "test" | base64encode }}
+{# output: dGVzdA== #}
+{{ "dGVzdA==" | base64decode }}
+{# output: test #}
+{{ "The string ü@foo-bar" | urlencode }}
+{# output: The+string+%C3%BC%40foo-bar #}
+{{ "The+string+%C3%BC%40foo-bar" | urldecode }}
+{# output: The string ü@foo-bar #}
+{{ "test" | sha1 }}
+{{ "test" | sha512 }}
+{{ "test" | md5 }}

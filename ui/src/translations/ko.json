@@ -1092,7 +1092,7 @@
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">이 Execution은 아직 실행 중이며, 삭제해도 중지되지 않습니다.<br />중지하려면 Execution을 kill해야 합니다.</div>",
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger가 잠금 해제되었습니다"
     },
+    "trigger blocked": "차단됨",
+    "trigger blocked policy check failed": "거버넌스 정책을 확인할 수 없습니다.",
+    "trigger blocked unknown": "알 수 없는 이유로 차단됨.",
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
@@ -1367,8 +1370,13 @@
         "taskRunners": "작업 실행기",
         "charts": "차트",
         "apps": "앱",
+        "appBlocks": "App 블록",
+        "dataFilters": "데이터 필터",
+        "dataFiltersKPI": "KPI 데이터 필터",
         "logExporters": "로그 익스포터",
-        "secrets": "비밀"
+        "secrets": "비밀",
+        "assets": "Asset 유형",
+        "additionalPlugins": "추가 plugin"
       },
       "sortBy": "정렬 기준",
       "sort": {
@@ -1459,10 +1467,13 @@
           "fields": {
             "app_font_size": "앱 글꼴 크기",
             "color_mode": "색상 모드",
+            "editor_dark_theme": "다크 모드 편집기 테마",
             "editor_folding_stratgy": "에디터에서 코드 자동 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
+            "editor_pebble_hover": "Pebble 참조에 마우스를 올리면 정의를 볼 수 있습니다.",
+            "editor_light_theme": "라이트 모드 편집기 테마",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "environment_name_tooltip": "이 환경 이름은 config에서 설정되었지만 변경할 수 있습니다.",
@@ -1485,6 +1496,9 @@
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
+            "editor_pebble_hover": "Flow 편집기에서 Pebble 참조에 마우스를 올리면 input, output, variable, label 또는 trigger variable의 정의와 문서를 표시합니다.",
+            "editor_dark_theme": "색상 모드가 다크 1.0 또는 다크 2.0일 때 코드 편집기의 구문 색상.",
+            "editor_light_theme": "색상 모드가 라이트일 때 코드 편집기의 구문 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다."
@@ -1493,6 +1507,9 @@
             "small": "작게",
             "medium": "보통",
             "large": "크게"
+          },
+          "editor_theme_options": {
+            "match_app": "앱 테마에 맞춤"
           }
         },
         "localization": {
@@ -2031,7 +2048,6 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
-      "task_details": "작업 세부 정보",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
@@ -2143,6 +2159,11 @@
       "decrease_fontsize": "편집기 글꼴 크기 줄이기",
       "increase_fontsize": "에디터 글꼴 크기 증가",
       "reset_fontsize": "편집기 글꼴 크기 재설정"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble 호버 문서 토글",
+      "enabled": "Pebble 호버 문서가 켜져 있습니다.",
+      "disabled": "Pebble 호버 문서가 꺼져 있습니다."
     },
     "instance": "인스턴스",
     "something_went_wrong": {

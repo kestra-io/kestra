@@ -41,6 +41,12 @@ export function isEntryAPluginElementPredicate(key: string, value: unknown): val
         value[0]?.cls !== undefined)
 }
 
+export function pluginElementType(plugin: Plugin | null | undefined, cls: string | null | undefined): string | undefined {
+    if (!plugin || !cls) return undefined
+    return Object.entries(plugin)
+        .find(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls || el?.aliases?.includes(cls)))?.[0]
+}
+
 export function countUniquePluginElements(plugins: Plugin[]): number {
     const classes = new Set<string>()
     for (const plugin of plugins) {

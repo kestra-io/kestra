@@ -56,8 +56,8 @@
                     :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     @confirm="onSubmit"
                 />
                 <KsSelect
@@ -87,14 +87,14 @@
                 <KsRadioGroup
                     v-if="input.type === 'SELECT' && input.isRadio"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                 >
                     <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
                     <KsInput
                         v-if="input.allowCustomValue"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as string | number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :placeholder="$t('custom value')"
                     />
                 </KsRadioGroup>
@@ -105,7 +105,7 @@
                     v-if="input.type === 'MULTISELECT'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="multiSelectInputs[input.id]"
-                    @update:model-value="onMultiSelectChange(input, $event)"
+                    @update:model-value="onMultiSelectChange(input, $event ?? [])"
                     multiple
                     filterable
                     clearable
@@ -128,15 +128,15 @@
                     type="password"
                     v-if="input.type === 'SECRET'"
                     :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | number | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     showPassword
                 />
                 <span v-if="input.type === 'INT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :min="numberMin(input)"
                         :max="numberMax(input)"
                         :step="1"
@@ -146,8 +146,8 @@
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
-                        v-model="inputsValues[input.id]"
-                        @update:model-value="onChange(input)"
+                        :modelValue="inputsValues[input.id] as number | undefined"
+                        @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                         :min="numberMin(input)"
                         :max="numberMax(input)"
                         :step="0.001"
@@ -157,8 +157,8 @@
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'BOOL'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChangeBool(input)"
+                    :modelValue="inputsValues[input.id] as string | number | boolean | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChangeBool(input); }"
                     class="boolean-inputs"
                 />
                 <KsDatePicker
@@ -182,8 +182,8 @@
                 <KsTimePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'TIME'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | Date | null | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                     type="time"
                 />
                 <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
@@ -282,13 +282,14 @@
                 />
                 <KsEditor
                     v-bind="editorBindings"
-                    :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                    :options="{fullHeight: false, showScroll: ((inputsValues[input.id] as string)?.length ?? 0) > 530}"
                     :inline="true"
                     :navbar="false"
                     v-if="(input.type === 'JSON' || input.type === 'ION') && !customInputs[input.id]"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
-                    v-model="inputsValues[input.id]"
+                    :modelValue="inputsValues[input.id] as string | undefined"
+                    @update:model-value="(val) => inputsValues[input.id] = val"
                 />
                 <KsEditor
                     v-bind="editorBindings"
@@ -298,13 +299,13 @@
                     v-if="input.type === 'YAML'"
                     :data-testid="`input-form-${input.id}`"
                     lang="yaml"
-                    :modelValue="inputsValues[input.id]"
+                    :modelValue="inputsValues[input.id] as string | undefined"
                     @change="onYamlChange(input, $event)"
                 />
                 <KsDurationPicker
                     v-if="input.type === 'DURATION'"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
+                    :modelValue="inputsValues[input.id] as string | null | undefined"
+                    @update:model-value="(val) => { inputsValues[input.id] = val; onChange(input); }"
                 />
             </KsFormItem>
         </template>
@@ -438,10 +439,10 @@
     const instance = getCurrentInstance()
     const editorBindings = useEditorBindings()
 
-    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
-    const previousInputsValues = ref<Record<string, any>>({})
+    const inputsValues = reactive<Record<string, unknown>>({...modelValue.value})
+    const previousInputsValues = ref<Record<string, unknown>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
-    const multiSelectInputs = reactive<Record<string, any>>({})
+    const multiSelectInputs = reactive<Record<string, unknown[]>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})

@@ -1370,8 +1370,13 @@
         "taskRunners": "टास्क रनर",
         "charts": "चार्ट",
         "apps": "ऐप",
+        "appBlocks": "ऐप ब्लॉक",
+        "dataFilters": "डेटा फ़िल्टर",
+        "dataFiltersKPI": "KPI डेटा फ़िल्टर",
         "logExporters": "लॉग एक्सपोर्टर",
-        "secrets": "गुप्त"
+        "secrets": "गुप्त",
+        "assets": "Asset प्रकार",
+        "additionalPlugins": "अतिरिक्त प्लगइन"
       },
       "sortBy": "क्रमबद्ध करें",
       "sort": {

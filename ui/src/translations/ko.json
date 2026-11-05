@@ -1370,8 +1370,13 @@
         "taskRunners": "작업 실행기",
         "charts": "차트",
         "apps": "앱",
+        "appBlocks": "App 블록",
+        "dataFilters": "데이터 필터",
+        "dataFiltersKPI": "KPI 데이터 필터",
         "logExporters": "로그 익스포터",
-        "secrets": "비밀"
+        "secrets": "비밀",
+        "assets": "Asset 유형",
+        "additionalPlugins": "추가 plugin"
       },
       "sortBy": "정렬 기준",
       "sort": {

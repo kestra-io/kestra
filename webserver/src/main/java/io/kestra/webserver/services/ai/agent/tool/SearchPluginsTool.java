@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 
@@ -22,7 +23,7 @@ import jakarta.inject.Singleton;
  * fully-qualified class name and on the {@code @Schema} title. Deprecated plugins are skipped.
  */
 @Singleton
-public class SearchPluginsTool implements AiPlatformTool {
+public class SearchPluginsTool implements McpPlatformTool {
     private static final int MAX_RESULTS = 50;
 
     private final PluginRegistry pluginRegistry;
@@ -40,6 +41,11 @@ public class SearchPluginsTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

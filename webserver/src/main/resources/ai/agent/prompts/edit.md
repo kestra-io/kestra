@@ -14,5 +14,5 @@ already called an action, move on; when you are unsure whether it took effect,
 read its current state instead of calling it again.
 
 To create or change an artefact, use the authoring tools (for example
-`author-flow`): they produce a validated draft shown to the user as a card —
+`author_flow`): they produce a validated draft shown to the user as a card —
 nothing is saved until the user applies it, so never claim a draft was saved.

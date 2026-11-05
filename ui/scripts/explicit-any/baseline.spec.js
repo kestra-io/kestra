@@ -89,7 +89,7 @@ describe("compare", () => {
     })
 })
 
-describe("knownRenames", {timeout: 30000}, () => {
+describe("knownRenames", () => {
     const git = (cwd, ...args) =>
         execFileSync("git", ["-c", "user.email=x@x", "-c", "user.name=x", "-c", "commit.gpgsign=false", ...args], {cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]})
 

@@ -37,10 +37,12 @@ export function useExecutionArtifacts(flow?: () => FlowForExecution | undefined)
     watch(() => {
         const executed = executedRevision()
         return executed ? `${executed.namespace}/${executed.id}/${executed.revision}` : undefined
-    }, async (key) => {
+    }, async (key, _previous, onCleanup) => {
         executedSource.value = undefined
         const executed = executedRevision()
         if (!key || !executed) return
+        let superseded = false
+        onCleanup(() => superseded = true)
         const loaded = await flowStore.loadFlow({
             namespace: executed.namespace,
             id: executed.id,
@@ -48,7 +50,7 @@ export function useExecutionArtifacts(flow?: () => FlowForExecution | undefined)
             store: false,
             optional: true,
         })
-        if (key === `${executed.namespace}/${executed.id}/${executed.revision}`) executedSource.value = loaded?.source
+        if (!superseded) executedSource.value = loaded?.source
     }, {immediate: true})
 
     const sourceTaskById = computed(() => {

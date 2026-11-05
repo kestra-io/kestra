@@ -121,4 +121,24 @@ describe("useExecutionArtifacts", () => {
         expect(flowStore.loadFlow).toHaveBeenLastCalledWith({namespace: "ns", id: "f", revision: "3", store: false, optional: true})
         expect(artifacts.value).toHaveLength(1)
     })
+
+    it("shouldKeepTheSourceOfTheLatestFlowWhenAnEarlierLoadAnswersLast", async () => {
+        // Given
+        let answerFirst: (value: {source: string}) => void = () => {}
+        flowStore.loadFlow
+            .mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve)))
+            .mockResolvedValueOnce({source: sourceOf()})
+        federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
+        const flow = ref({...strippedFlow, revision: 1})
+
+        // When
+        const {artifacts} = useExecutionArtifacts(() => flow.value as unknown as FlowForExecution)
+        flow.value = {...strippedFlow, revision: 2}
+        await flush()
+        answerFirst({source: sourceOf(RUNNER)})
+        await flush()
+
+        // Then
+        expect(artifacts.value).toEqual([])
+    })
 })

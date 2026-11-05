@@ -523,6 +523,21 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldMoveFileWhenUriEncodedPathContainsSpaces() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/Bart Pre-Approval/coc bongo.txt"), new ByteArrayInputStream("Hello".getBytes()));
+        namespaceStorage.createDirectory(Path.of("/Permis"));
+
+        client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=Bart%2520Pre-Approval%2Fcoc%2520bongo.txt&to=Permis%2Fcoc%2520bongo%2520v2.txt", null)
+        );
+
+        assertThat(namespaceStorage.exists(Path.of("/Permis/coc bongo v2.txt"))).isTrue();
+        assertThat(namespaceStorage.exists(Path.of("/Bart Pre-Approval/coc bongo.txt"))).isFalse();
+    }
+
+    @Test
     void deleteFileDirectory() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);

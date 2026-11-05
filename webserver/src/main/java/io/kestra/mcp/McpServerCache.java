@@ -40,6 +40,7 @@ public class McpServerCache {
 
     private final McpServerRepositoryInterface mcpServerRepository;
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
+    private final List<McpServerProvider> serverProviders;
 
     private final Cache<McpCacheKey, McpServer> cache;
     private final List<BiConsumer<String, String>> invalidationListeners = new CopyOnWriteArrayList<>();
@@ -49,9 +50,11 @@ public class McpServerCache {
     public McpServerCache(
         McpServerRepositoryInterface mcpServerRepository,
         BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
-        McpConfig mcpConfig) {
+        McpConfig mcpConfig,
+        List<McpServerProvider> serverProviders) {
         this.mcpServerRepository = Objects.requireNonNull(mcpServerRepository);
         this.clusterEventQueue = Objects.requireNonNull(clusterEventQueue);
+        this.serverProviders = Objects.requireNonNull(serverProviders);
         McpConfig.ServerCacheConfig serverCacheConfig = mcpConfig.serverCacheConfig();
         this.cache = Caffeine.newBuilder()
             .maximumSize(serverCacheConfig.maximumSize())
@@ -83,18 +86,26 @@ public class McpServerCache {
     }
 
     /**
-     * Returns the {@link McpServer} for the given tenant + server id, hitting the repository on a
-     * cache miss and caching the result if present.
+     * Returns the {@link McpServer} for the given tenant + server id, whether defined by a
+     * {@link McpServerProvider} or stored.
      */
     public Optional<McpServer> get(String tenantId, String serverId) {
-        McpCacheKey key = new McpCacheKey(tenantId, serverId);
-        McpServer cached = cache.getIfPresent(key);
-        if (cached != null) {
-            return Optional.of(cached);
+        return resolve(tenantId, serverId).map(ResolvedServer::server);
+    }
+
+    /**
+     * Returns the {@link McpServer} for the given tenant + server id along with the kind of tool source
+     * serving it. Provided servers come first; stored servers are always backed by flows, and are read from
+     * the repository on a cache miss and cached if present.
+     */
+    public Optional<ResolvedServer> resolve(String tenantId, String serverId) {
+        for (McpServerProvider provider : serverProviders) {
+            Optional<McpServer> provided = provider.get(tenantId, serverId);
+            if (provided.isPresent()) {
+                return Optional.of(new ResolvedServer(provided.get(), provider.toolSource()));
+            }
         }
-        Optional<McpServer> server = mcpServerRepository.get(tenantId, serverId);
-        server.ifPresent(s -> cache.put(key, s));
-        return server;
+        return stored(tenantId, serverId).map(server -> new ResolvedServer(server, McpToolSource.Kind.FLOWS));
     }
 
     /**
@@ -118,6 +129,20 @@ public class McpServerCache {
      */
     public void addInvalidationListener(BiConsumer<String, String> listener) {
         invalidationListeners.add(Objects.requireNonNull(listener));
+    }
+
+    private Optional<McpServer> stored(String tenantId, String serverId) {
+        McpCacheKey key = new McpCacheKey(tenantId, serverId);
+        McpServer cached = cache.getIfPresent(key);
+        if (cached != null) {
+            return Optional.of(cached);
+        }
+        Optional<McpServer> server = mcpServerRepository.get(tenantId, serverId);
+        server.ifPresent(s -> cache.put(key, s));
+        return server;
+    }
+
+    public record ResolvedServer(McpServer server, McpToolSource.Kind toolSource) {
     }
 
     private record McpCacheKey(String tenantId, String serverId) {

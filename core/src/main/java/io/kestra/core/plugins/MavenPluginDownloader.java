@@ -254,8 +254,9 @@ public class MavenPluginDownloader implements Closeable {
             DefaultArtifact artifact = new DefaultArtifact(dependency);
             VersionRangeResult version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));
             if (version.getHighestVersion() == null) {
-                if (isAbsentFromEveryRepository(version.getExceptions())) {
-                    throw notFound(dependency, repositories);
+                // A repository holding the artifact but no version in the range records no exception at all.
+                if (version.getExceptions().stream().allMatch(MavenPluginDownloader::isNotFound)) {
+                    throw notFound(dependency, repositories, "No version matching plugin artifact `%s` was found in the configured Maven repositories (%s).", version.getExceptions());
                 }
                 throw resolutionFailed(dependency, version.getExceptions());
             }
@@ -280,12 +281,12 @@ public class MavenPluginDownloader implements Closeable {
         } catch (ArtifactResolutionException e) {
             List<Exception> exceptions = e.getResults().stream().flatMap(result -> result.getExceptions().stream()).toList();
             if (isAbsentFromEveryRepository(exceptions)) {
-                throw notFound(dependency, repositories);
+                throw notFound(dependency, repositories, "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).", List.of(e));
             }
             throw resolutionFailed(dependency, e);
         } catch (VersionRangeResolutionException e) {
             // The Maven version range resolver only throws when the version constraint cannot be parsed.
-            throw new InvalidException(dependency, "Plugin artifact `%s` has an invalid version or version range.".formatted(dependency));
+            throw new InvalidException(dependency, "Plugin artifact `%s` has an invalid version or version range.".formatted(dependency), e);
         }
     }
 
@@ -297,16 +298,21 @@ public class MavenPluginDownloader implements Closeable {
         List<Exception> causes = exceptions.stream()
             .flatMap(e -> e instanceof VersionResolutionException versionException ? versionException.getResult().getExceptions().stream() : Stream.of(e))
             .toList();
-        return !causes.isEmpty() && causes.stream().allMatch(e -> e instanceof ArtifactNotFoundException || e instanceof MetadataNotFoundException);
+        return !causes.isEmpty() && causes.stream().allMatch(MavenPluginDownloader::isNotFound);
+    }
+
+    private static boolean isNotFound(final Exception exception) {
+        return exception instanceof ArtifactNotFoundException || exception instanceof MetadataNotFoundException;
     }
 
     // Names repositories by id only, since a configured URL may embed credentials.
-    private static InvalidException notFound(final String dependency, final List<RemoteRepository> repositories) {
-        String repositoryIds = repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", "));
-        String message = repositoryIds.isEmpty()
+    private static InvalidException notFound(final String dependency, final List<RemoteRepository> repositories, final String message, final List<Exception> causes) {
+        String fullMessage = repositories.isEmpty()
             ? "Plugin artifact `%s` was not found, since no Maven repository is configured.".formatted(dependency)
-            : "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).".formatted(dependency, repositoryIds);
-        return new InvalidException(dependency, message);
+            : message.formatted(dependency, repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", ")));
+        InvalidException exception = new InvalidException(dependency, fullMessage, causes.isEmpty() ? null : causes.getFirst());
+        causes.stream().skip(1).forEach(exception::addSuppressed);
+        return exception;
     }
 
     private static KestraRuntimeException resolutionFailed(final String dependency, final Exception cause) {
@@ -314,7 +320,7 @@ public class MavenPluginDownloader implements Closeable {
     }
 
     private static KestraRuntimeException resolutionFailed(final String dependency, final List<Exception> causes) {
-        KestraRuntimeException exception = resolutionFailed(dependency, causes.isEmpty() ? null : causes.getFirst());
+        KestraRuntimeException exception = resolutionFailed(dependency, causes.getFirst());
         causes.stream().skip(1).forEach(exception::addSuppressed);
         return exception;
     }

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,7 +57,8 @@ class MavenPluginDownloaderTest {
         try (MavenPluginDownloader downloader = downloader()) {
             assertThatThrownBy(() -> downloader.resolve(MISSING_ARTIFACT))
                 .isInstanceOf(InvalidException.class)
-                .hasMessage("Plugin artifact `%s` was not found in any of the configured Maven repositories (remote).".formatted(MISSING_ARTIFACT));
+                .hasMessage("Plugin artifact `%s` was not found in any of the configured Maven repositories (remote).".formatted(MISSING_ARTIFACT))
+                .hasCauseInstanceOf(ArtifactResolutionException.class);
         }
     }
 
@@ -66,6 +68,29 @@ class MavenPluginDownloaderTest {
         try (MavenPluginDownloader downloader = downloader()) {
             assertThatThrownBy(() -> downloader.resolve("io.kestra.plugin:plugin-that-does-not-exist:" + version))
                 .isInstanceOf(InvalidException.class);
+        }
+    }
+
+    @Test
+    void shouldRejectAsInvalidWhenNoPublishedVersionMatchesTheRange() throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            publishReleaseVersions("1.0.0");
+
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.test:plugin-test:[2,3)"))
+                .isInstanceOf(InvalidException.class)
+                .hasMessage("No version matching plugin artifact `io.kestra.test:plugin-test:[2,3)` was found in the configured Maven repositories (remote).");
+        }
+    }
+
+    @Test
+    void shouldRejectAsInvalidWhenNoPublishedVersionMatchesTheRangeAndAnotherRepositoryLacksTheArtifact(@TempDir Path empty) throws IOException {
+        try (MavenPluginDownloader downloader = downloader()) {
+            publishReleaseVersions("1.0.0");
+            List<MavenPluginRepositoryConfig> emptyRepository = List.of(new MavenPluginRepositoryConfig("empty", empty.toUri().toString(), null));
+
+            assertThatThrownBy(() -> downloader.resolve("io.kestra.test:plugin-test:[2,3)", emptyRepository))
+                .isInstanceOf(InvalidException.class)
+                .hasMessage("No version matching plugin artifact `io.kestra.test:plugin-test:[2,3)` was found in the configured Maven repositories (remote, empty).");
         }
     }
 

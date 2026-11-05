@@ -407,4 +407,17 @@ class AssetTest {
         assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).id()).isEqualTo(normalized);
         assertThat(new AssetIdentifier("tenant", null, LONG_ID, null).uid()).isEqualTo(Asset.uid("tenant", LONG_ID));
     }
+
+    @Test
+    void shouldKeepTheIdAsGivenOnAnIdentifierWhoseIdIsNormalized() throws JsonProcessingException {
+        AssetIdentifier withSlashes = JacksonMapper.ofYaml().readValue("id: //compute.googleapis.com/projects/p/zones/z/instances/vm-1", AssetIdentifier.class);
+        AssetIdentifier unchanged = JacksonMapper.ofYaml().readValue("id: vm-1", AssetIdentifier.class);
+        AssetIdentifier sent = withSlashes.withTenantId("tenant");
+        AssetIdentifier received = JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(sent), AssetIdentifier.class);
+
+        assertThat(withSlashes.id()).isEqualTo("compute.googleapis.com:projects:p:zones:z:instances:vm-1");
+        assertThat(withSlashes.fullId()).isEqualTo("//compute.googleapis.com/projects/p/zones/z/instances/vm-1");
+        assertThat(unchanged.fullId()).isNull();
+        assertThat(received).isEqualTo(sent);
+    }
 }

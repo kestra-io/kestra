@@ -445,6 +445,10 @@ export function useKsEditor(
             const triggerSuggestionsOnCursorSettle = debounce(() => {
                 if (!localEditor.value) return
                 const enteredPebble = pebbleEntryTracker.consumeEntered()
+                if (localEditor.value.getSelection()?.isEmpty() === false) {
+                    if (suggestController!.model.state !== 0) suggestController!.cancelSuggestWidget()
+                    return
+                }
                 if (suggestController!.model.state !== 0) {
                     suggestController!.cancelSuggestWidget()
                     localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {})

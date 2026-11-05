@@ -317,7 +317,7 @@ class AssetTest {
     }
 
     @Test
-    void shouldShortenAnIdLongerThanTheLimitToTheSameIdEveryTime() {
+    void shouldShortenTheIdTheSameWayEveryTimeWhenItIsLongerThanTheLimit() {
         String normalized = Asset.normalizeId(LONG_ID);
 
         assertThat(LONG_ID).hasSizeGreaterThan(Asset.ID_MAX_LENGTH);
@@ -330,7 +330,17 @@ class AssetTest {
     }
 
     @Test
-    void shouldLeaveAnIdWithinTheLimitAsItIs() {
+    void shouldNotCutACharacterInHalfWhenTheIdIsShortened() {
+        String id = "a".repeat(126) + "\uD83D\uDE00" + "b".repeat(30);
+
+        String normalized = Asset.normalizeId(id);
+
+        assertThat(normalized).startsWith("a".repeat(126) + ":");
+        assertThat(normalized).hasSizeLessThanOrEqualTo(Asset.ID_MAX_LENGTH);
+    }
+
+    @Test
+    void shouldLeaveTheIdAsItIsWhenItIsWithinTheLimit() {
         String id = "x".repeat(Asset.ID_MAX_LENGTH);
 
         assertThat(Asset.normalizeId(id)).isSameAs(id);
@@ -338,7 +348,7 @@ class AssetTest {
     }
 
     @Test
-    void shouldStoreAShortenedAssetByItsNormalizedIdAndKeepItsFullIdInTheMetadata() {
+    void shouldKeepTheFullIdInTheMetadataWhenTheIdIsShortened() {
         Asset asset = External.builder().id(LONG_ID).build();
         Asset shortEnough = External.builder().id("vm-1").build();
 
@@ -349,7 +359,7 @@ class AssetTest {
     }
 
     @Test
-    void shouldPointReferencesAndIdentifiersToTheNormalizedIdOfALongId() {
+    void shouldPointReferencesAndIdentifiersToTheNormalizedIdGivenALongId() {
         String normalized = Asset.normalizeId(LONG_ID);
 
         assertThat(new AssetRelationRef(LONG_ID, null, null).id()).isEqualTo(normalized);

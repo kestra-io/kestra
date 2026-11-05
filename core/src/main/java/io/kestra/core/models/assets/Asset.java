@@ -54,7 +54,6 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
 
-    /** Slashes are allowed, leading ones too, so that a cloud resource name or a URL is an id as it is. */
     public static final String ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
 
     /** The audit log detail id embeds the asset id, so the asset id has to stay this short. */
@@ -289,7 +288,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             return id;
         }
         String hash = IdUtils.from(id);
-        return id.substring(0, ID_MAX_LENGTH - hash.length() - 1) + ":" + hash;
+        int end = ID_MAX_LENGTH - hash.length() - 1;
+        if (Character.isHighSurrogate(id.charAt(end - 1))) {
+            end--;
+        }
+        return id.substring(0, end) + ":" + hash;
     }
 
     public Asset withTenantId(String tenantId) {
@@ -300,6 +303,13 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
         return this;
+    }
+
+    @AssertTrue(message = "the full id must match \"" + ID_PATTERN + "\"")
+    @JsonIgnore
+    public boolean isFullIdMatchingThePattern() {
+        Object fullId = metadata == null ? null : metadata.get(FULL_ID_METADATA_KEY);
+        return fullId == null || fullId.toString().matches(ID_PATTERN);
     }
 
     @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")

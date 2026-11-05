@@ -53,7 +53,7 @@ class AssetValidationTest {
             "https://example.com/orders/table"
         }
     )
-    void shouldAcceptACloudResourceNameOrAUrlAsItIs(String id) {
+    void shouldAcceptTheIdAsItIsGivenACloudResourceNameOrAUrl(String id) {
         Custom asset = Custom.builder()
             .namespace("io.kestra")
             .id(id)
@@ -65,7 +65,7 @@ class AssetValidationTest {
     }
 
     @Test
-    void shouldAcceptAnIdLongerThanTheLimitOnceNormalized() {
+    void shouldAcceptTheAssetWhenItsIdIsLongerThanTheLimit() {
         Custom asset = Custom.builder()
             .namespace("io.kestra")
             .id("/subscriptions/0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d/resourceGroups/" + "rg".repeat(45) + "/providers/Microsoft.Compute/virtualMachines/vm-1")
@@ -73,6 +73,19 @@ class AssetValidationTest {
             .build();
 
         assertThat(modelValidator.isValid(asset)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectTheAssetWhenTheEndOfAnIdLongerThanTheLimitHoldsAForbiddenCharacter() {
+        Custom asset = Custom.builder()
+            .namespace("io.kestra")
+            .id("/subscriptions/" + "rg".repeat(70) + "/virtual machines/vm-1")
+            .type("MY_OWN_ASSET_TYPE")
+            .build();
+
+        assertThat(modelValidator.isValid(asset))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
     }
 
     @Test

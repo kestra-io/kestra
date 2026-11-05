@@ -1367,8 +1367,13 @@
         "taskRunners": "任务运行器",
         "charts": "图表",
         "apps": "应用程序",
+        "appBlocks": "App 块",
+        "dataFilters": "数据筛选",
+        "dataFiltersKPI": "KPI 数据筛选",
         "logExporters": "日志导出器",
-        "secrets": "秘密"
+        "secrets": "秘密",
+        "assets": "Asset 类型",
+        "additionalPlugins": "额外 plugin"
       },
       "sortBy": "排序依据",
       "sort": {

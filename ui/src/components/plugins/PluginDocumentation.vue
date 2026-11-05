@@ -12,7 +12,7 @@
                             :loadIcon="pluginsStore.loadIcon"
                         />
                         <KsText class="dp-name" truncated>{{ pluginName }}</KsText>
-                        <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
+                        <KsTag v-if="pluginKind" size="small" class="dp-kind-chip" data-test="plugin-doc-kind">{{ pluginKind }}</KsTag>
                         <div class="dp-actions">
                             <KsButton
                                 v-if="releaseNotesUrl"
@@ -272,12 +272,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
     import {buildHighlightHtml} from "../../utils/crossResourceSearch"
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import {getPluginReleaseUrl, pluginElementType} from "../../utils/pluginUtils"
     import {copy} from "../../utils/utils"
     import {useTheme} from "../../composables/useTheme"
     import {usePluginsStore} from "../../stores/plugins"
@@ -310,7 +310,7 @@
         plugin: null,
     })
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
     const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
@@ -337,10 +337,14 @@
     })
 
     const pluginKind = computed(() => {
-        const cls = currentPlugin.value?.cls ?? ""
-        if (cls.includes(".trigger.")) return "Trigger"
-        if (cls.includes(".condition.")) return "Condition"
-        return "Task"
+        const cls = currentPlugin.value?.cls
+        const key = pluginElementType(pluginsStore.findPluginByCls(cls), cls)
+        const i18nKey = `pluginPage.elementType.${key}`
+        return key && te(i18nKey) ? t(i18nKey) : undefined
+    })
+
+    onMounted(() => {
+        pluginsStore.ensurePlugins()
     })
 
     const releaseNotesUrl = computed(() => {

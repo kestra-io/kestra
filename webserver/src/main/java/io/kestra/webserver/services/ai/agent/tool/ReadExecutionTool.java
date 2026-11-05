@@ -42,7 +42,7 @@ public class ReadExecutionTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "read-execution",
+        name = "read_execution",
         value = "Read a single Kestra execution: its state, duration and per-task-run breakdown (failed runs include their state history). Read-only; use this to diagnose or inspect a specific run when you already know its id. "
             + "Returns an object { id, namespace, flowId, state, startDate, duration, taskRuns } where each task run is { taskId, state, attempts, value, failedAttempts } and `failedAttempts` (only populated for FAILED runs) is an array of { attempt, stateHistory } whose `stateHistory` entries read \"STATE@date\"."
     )

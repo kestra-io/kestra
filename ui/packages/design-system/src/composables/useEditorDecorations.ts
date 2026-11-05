@@ -1,7 +1,6 @@
 import {getCurrentScope, onScopeDispose, watch, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-
-const PEBBLE_BLOCK_PATTERN = "\\{\\{([\\s\\S]*?)\\}\\}|\\{%([\\s\\S]*?)%\\}"
+import {pebbleBlocks} from "@kestra-io/plumage"
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
 
@@ -42,23 +41,10 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         const text = model?.getValue?.()
         if (!text || !model) return
 
-        const regex = new RegExp(PEBBLE_BLOCK_PATTERN, "g")
-        const found: monaco.editor.IModelDeltaDecoration[] = []
-        let match
-        while ((match = regex.exec(text)) !== null) {
-            const startPos = model.getPositionAt(match.index)
-            const endPos = model.getPositionAt(match.index + match[0].length)
-            found.push({
-                range: {
-                    startLineNumber: startPos.lineNumber,
-                    startColumn: startPos.column,
-                    endLineNumber: endPos.lineNumber,
-                    endColumn: endPos.column,
-                },
-                options: {inlineClassName: "highlight-pebble"},
-            })
-        }
-        lists.pebble = found
+        lists.pebble = pebbleBlocks(text).map(([start, end]) => ({
+            range: monaco.Range.fromPositions(model.getPositionAt(start), model.getPositionAt(end)),
+            options: {inlineClassName: "highlight-pebble"},
+        }))
         apply()
     }
 

@@ -725,14 +725,14 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null || fieldScope.getAnnotation(ServerOwned.class) != null)
+            .withIgnoreCheck(JsonSchemaGenerator::isHiddenFromSchema)
             .withDefaultResolver(this::defaults);
 
         // asset types expose the attributes they keep in metadata through getters, rendered with the whole declaration
         builder
             .with(Option.NONSTATIC_NONVOID_NONGETTER_METHODS, Option.FIELDS_DERIVED_FROM_ARGUMENTFREE_METHODS)
             .forMethods()
-            .withIgnoreCheck(methodScope -> !isAssetAttribute(methodScope))
+            .withIgnoreCheck(methodScope -> !isAssetAttribute(methodScope) || isHiddenFromSchema(methodScope))
             .withInstanceAttributeOverride((memberAttributes, methodScope, context) -> memberAttributes.put("$dynamic", true));
 
         // def name
@@ -1392,6 +1392,10 @@ public class JsonSchemaGenerator {
             }
         }
         return false;
+    }
+
+    private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
+        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
     }
 
     private static boolean isAssetAttribute(MethodScope methodScope) {

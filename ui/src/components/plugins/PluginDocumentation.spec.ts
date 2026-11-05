@@ -146,7 +146,7 @@ describe("PluginDocumentation", () => {
         ["io.kestra.plugin.ee.assets.VM", "Asset type"],
         ["io.kestra.plugin.ee.assets.EventTrigger", "Trigger"],
         ["io.kestra.plugin.ee.assets.AssetShipper", "Task"],
-    ])("shouldLabel %s with the kind of element its plugin declares it as", async (cls, label) => {
+    ])("shouldLabelKindFromDeclaredElementType(%s)", async (cls, label) => {
         usePluginsStore().plugins = [{
             name: "assets",
             title: "Assets",

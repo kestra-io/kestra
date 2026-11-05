@@ -519,15 +519,21 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function findPluginByCls(cls: string | null | undefined): Plugin | null {
         if (!cls || !plugins.value) return null
-        const all = latestPlugins.value
         // A declared class, then a declared alias, then the package-prefix guess: an alias such as
-        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
-        const declaring = all.filter(p => Object.entries(p)
+        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it. Older installed
+        // versions are searched last, for a class the latest version no longer declares.
+        return findDeclaringPlugin(latestPlugins.value, cls)
+            ?? findDeclaringPlugin(plugins.value, cls)
+            ?? latestPlugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
+            ?? null
+    }
+
+    function findDeclaringPlugin(candidates: Plugin[], cls: string): Plugin | undefined {
+        const declaring = candidates.filter(p => Object.entries(p)
             .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
         if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
-        const aliasing = all.filter(p => p.aliases?.includes(cls))
-        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
-        return all.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
+        const aliasing = candidates.filter(p => p.aliases?.includes(cls))
+        return aliasing.find(p => !p.subGroup) ?? aliasing[0]
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {

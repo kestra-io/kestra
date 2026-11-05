@@ -32,7 +32,7 @@ jobs:
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       with:
         client-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -66,8 +66,9 @@ jobs:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
+        # oss_base_branch picks the client-sdk spec EE diffs against: develop -> next/v2.1, releases/v2.0.x -> main.
         client-payload: >-
-          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}","oss_base_branch":"${{ github.event.pull_request.base.ref }}"}
 
       # ------------------------------------------------------------------------
       # LEGACY (DISABLED): EE CI used to be triggered by a repository dispatch
@@ -255,7 +256,7 @@ jobs:
       - name: Generate GitHub App token for kestra-ee
         id: ee-token
         if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -342,6 +343,97 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ui-ee imports OSS source through its `kestra/` alias, so a change can pass the OSS type check and still
+  # break EE's. Branches in this repository only: fork and Dependabot runs get no secrets to read kestra-ee,
+  # and are left to the EE build that the merge dispatches.
+  ee-frontend-types:
+    name: Frontend - EE type check
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.ui == 'true' && github.event.pull_request.head.repo.fork == false"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    # The `secrets` context is not allowed in `if:`, so the app id is mirrored into env for the guards below.
+    env:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+    steps:
+      - name: Generate GitHub App token for kestra-ee
+        id: ee-token
+        if: env.GH_BOT_APP_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra-ee
+          permission-contents: read
+
+      # EE reaches OSS as ../../kestra from ui-ee, so both repositories are checked out side by side.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - OSS sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          path: kestra
+          persist-credentials: false
+
+      - name: Resolve the EE branch
+        id: ee-branch
+        if: steps.ee-token.outputs.token != ''
+        env:
+          GH_TOKEN: ${{ steps.ee-token.outputs.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          for candidate in "$HEAD_REF" "$BASE_REF" develop; do
+            if gh api "repos/kestra-io/kestra-ee/branches/$candidate" --silent 2>/dev/null; then
+              echo "ref=$candidate" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No kestra-ee branch found for $HEAD_REF, $BASE_REF or develop."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - EE sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          repository: kestra-io/kestra-ee
+          ref: ${{ steps.ee-branch.outputs.ref }}
+          token: ${{ steps.ee-token.outputs.token }}
+          path: kestra-ee
+          # `npm ci` below runs third-party install scripts, so the token is not left in .git/config for them.
+          persist-credentials: false
+          sparse-checkout: |
+            ui-ee/
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        name: Setup Node
+        if: steps.ee-token.outputs.token != ''
+        with:
+          node-version-file: 'kestra/ui/.nvmrc'
+          cache: npm
+          cache-dependency-path: |
+            kestra/ui/package-lock.json
+            kestra-ee/ui-ee/package-lock.json
+
+      # EE resolves vue, pinia and the other shared libraries from kestra/ui/node_modules.
+      - name: Install OSS Node dependencies
+        if: steps.ee-token.outputs.token != ''
+        working-directory: kestra/ui
+        run: npm ci
+
+      - name: Install EE Node dependencies
+        if: steps.ee-token.outputs.token != ''
+        working-directory: kestra-ee/ui-ee
+        run: npm ci
+
+      - name: Type-check ui-ee
+        if: steps.ee-token.outputs.token != ''
+        working-directory: kestra-ee/ui-ee
+        run: npm run check:types
 
   e2e-checks:
     name: E2E - Checks
@@ -436,7 +528,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, ee-frontend-types, e2e-checks, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled

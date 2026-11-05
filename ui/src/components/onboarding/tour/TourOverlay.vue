@@ -149,11 +149,12 @@
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
     import {useEventListener, useResizeObserver} from "@vueuse/core"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
+    import {scrimClipPath, type Hole} from "./tourScrim"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
@@ -277,8 +278,6 @@
 
     const RING_PADDING = 6
 
-    type Hole = {top: number; left: number; bottom: number; right: number};
-
     const spotlight = ref<{
         scrim: Record<string, string> | null;
         rings: Record<string, string>[];
@@ -290,14 +289,8 @@
 
     const px = (value: number) => `${value}px`
 
-    const scrimClipPath = (hole: Hole) => [
-        "0 0", "100% 0", "100% 100%", "0 100%", "0 0",
-        `${px(hole.left)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.top)}`,
-    ].join(", ")
+    const scrimRadius = () => (parseFloat(cssVar("--ks-radius-lg")) || 0)
+        * parseFloat(getComputedStyle(document.documentElement).fontSize)
 
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
@@ -348,7 +341,7 @@
             right: Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING),
         }
 
-        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length].map(Math.round).join(":")
+        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length, window.innerWidth, window.innerHeight].map(Math.round).join(":")
         if (key === lastSpotlightKey) {
             return
         }
@@ -357,7 +350,7 @@
         spotlight.value = {
             // A ranked selector matches nested elements, so the scrim keeps one union hole:
             // overlapping holes cancel each other out and re-dim what the step points at.
-            scrim: scene.value?.dim === false ? null : {clipPath: `polygon(${scrimClipPath(hole)})`},
+            scrim: scene.value?.dim === false ? null : {clipPath: scrimClipPath(hole, scrimRadius(), {width: window.innerWidth, height: window.innerHeight})},
             rings: rects.map((rect) => ({
                 top: px(rect.top - RING_PADDING),
                 left: px(rect.left - RING_PADDING),
@@ -708,7 +701,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour-overlay {
         position: fixed;
         inset: 0;
@@ -736,7 +729,7 @@
         left: calc(var(--menu-width) + var(--ks-spacing-4));
     }
 
-    // Same list as SELECTABLE_TEXT in the script above.
+    /* Same list as SELECTABLE_TEXT in the script above. */
     .guide-title,
     .guide-body,
     .guide-plan,
@@ -872,7 +865,7 @@
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, var(--ks-white) 30%);
     }
 
-    // Position is set every frame; a transition would make the ring trail behind its target.
+    /* Position is set every frame; a transition would make the ring trail behind its target. */
     .tour-scrim {
         position: fixed;
         inset: 0;

@@ -11,8 +11,8 @@
                             onlyIcon
                             :loadIcon="pluginsStore.loadIcon"
                         />
-                        <span class="dp-name text-truncate">{{ pluginName }}</span>
-                        <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
+                        <KsText class="dp-name" truncated>{{ pluginName }}</KsText>
+                        <KsTag v-if="pluginKind" size="small" class="dp-kind-chip" data-test="plugin-doc-kind">{{ pluginKind }}</KsTag>
                         <div class="dp-actions">
                             <KsButton
                                 v-if="releaseNotesUrl"
@@ -25,7 +25,7 @@
                         </div>
                     </div>
                     <div class="dp-type">
-                        <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
+                        <KsText class="dp-cls" truncated>{{ currentPlugin.cls }}</KsText>
                         <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
                             {{ currentPlugin.version }}
                         </KsTag>
@@ -89,10 +89,10 @@
             v-else-if="overrideIntro"
             :content="overrideIntro"
             class="dp-override-intro"
-            :class="{'position-absolute': absolute}"
+            :class="{'dp-absolute': absolute}"
         />
 
-        <div v-else-if="introContent" class="dp-intro" :class="{'position-absolute': absolute}">
+        <div v-else-if="introContent" class="dp-intro" :class="{'dp-absolute': absolute}">
             <div class="dp-intro-hero">
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
@@ -272,14 +272,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
-    import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
+    import {KsButton, KsInput, KsMarkdown, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
     import {buildHighlightHtml} from "../../utils/crossResourceSearch"
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils"
-    import {getTheme, copy} from "../../utils/utils"
-    import {useMiscStore} from "override/stores/misc"
+    import {getPluginReleaseUrl, pluginElementType} from "../../utils/pluginUtils"
+    import {copy} from "../../utils/utils"
+    import {useTheme} from "../../composables/useTheme"
     import {usePluginsStore} from "../../stores/plugins"
     import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
@@ -310,18 +310,15 @@
         plugin: null,
     })
 
-    const {t} = useI18n()
-    const miscStore = useMiscStore()
+    const {t, te} = useI18n()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
     const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
     const introSection = ref("overview")
     const introSearch = ref("")
 
-    const isDarkTheme = computed(() => {
-        void miscStore.theme
-        return getTheme() === "dark"
-    })
+    const theme = useTheme()
+    const isDarkTheme = computed(() => theme.value === "dark")
 
     const currentPlugin = computed(() => {
         return props.plugin ?? pluginsStore.editorPlugin
@@ -340,10 +337,14 @@
     })
 
     const pluginKind = computed(() => {
-        const cls = currentPlugin.value?.cls ?? ""
-        if (cls.includes(".trigger.")) return "Trigger"
-        if (cls.includes(".condition.")) return "Condition"
-        return "Task"
+        const cls = currentPlugin.value?.cls
+        const key = pluginElementType(pluginsStore.findPluginByCls(cls), cls)
+        const i18nKey = `pluginPage.elementType.${key}`
+        return key && te(i18nKey) ? t(i18nKey) : undefined
+    })
+
+    onMounted(() => {
+        pluginsStore.ensurePlugins()
     })
 
     const releaseNotesUrl = computed(() => {
@@ -570,7 +571,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
   .plugin-doc {
     --ks-table-row-hover-bg: transparent;
   }
@@ -583,6 +584,10 @@
   .dp-override-intro {
     width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-absolute {
+    position: absolute;
   }
 
   .dp-sticky {

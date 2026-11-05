@@ -24,7 +24,7 @@
                 {{ $t("trigger enable dialog.options.skip") }}
             </KsRadio>
             <KsRadio value="FOLLOW_CONFIGURATION" class="radio-item">
-                <i18n-t keypath="trigger enable dialog.options.follow" tag="span">
+                <i18n-t keypath="trigger enable dialog.options.follow" tag="span" scope="global">
                     <template #property><code>recoverMissedSchedules</code></template>
                 </i18n-t>
             </KsRadio>
@@ -67,7 +67,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .description {
     margin-bottom: var(--ks-spacing-3);
 }

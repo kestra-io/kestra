@@ -27,6 +27,21 @@ export interface EchartsParams {
     percent?: number;
 }
 
+export function toEchartsParams(raw: unknown): EchartsParams {
+    const field = (key: string): unknown => typeof raw === "object" && raw !== null ? Reflect.get(raw, key) : undefined
+    const text = (key: string) => typeof field(key) === "string" ? String(field(key)) : undefined
+    const num = (key: string) => typeof field(key) === "number" ? Number(field(key)) : undefined
+
+    return {
+        name: text("name"),
+        seriesName: text("seriesName"),
+        seriesType: text("seriesType"),
+        dataIndex: num("dataIndex"),
+        value: field("value"),
+        percent: num("percent"),
+    }
+}
+
 export const DEFAULT_BAR_CATEGORY_LIMIT = 8
 
 /**
@@ -106,7 +121,7 @@ export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping
 
     if (parsed.length) {
         const max = dayjs.max(parsed)!
-        let cursor = dayjs.min(parsed)!.startOf(grouping.unit)
+        let cursor = dayjs.min(parsed)!.startOf(grouping.unit === "week" ? "isoWeek" : grouping.unit)
         for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
             labels.add(cursor.format(grouping.format))
             cursor = cursor.add(1, grouping.unit)

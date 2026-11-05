@@ -120,7 +120,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tag-label {
         max-width: 12.5rem;
         min-width: 5ch;

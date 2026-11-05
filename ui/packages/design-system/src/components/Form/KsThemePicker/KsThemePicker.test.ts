@@ -3,6 +3,7 @@ import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../index"
 import KsThemePicker from "./KsThemePicker.vue"
 import source from "./KsThemePicker.vue?raw"
+import themeTokens from "../../../../tests/storybook/Basic/Color-variables.json"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -78,12 +79,12 @@ describe("KsThemePicker", () => {
     })
 
     test("paints each preview from the palette, so it keeps its colours whatever theme the page is in", () => {
-        const previews = source.match(/&--(?:light|dark|dark-2) \{(?:[^{}]|\{[^}]*\})*\}/g) ?? []
+        const previews = source.match(/\.theme-picker__window--(?:light|dark|dark-2) \{[^}]*\}/g) ?? []
         expect(previews).toHaveLength(3)
         for (const preview of previews) {
-            const values = [...preview.matchAll(/--tp-[a-z]+:\s*([^;]+);/g)].map(([, value]) => value)
+            const values = [...preview.matchAll(/--tp-[a-z]+:\s*var\((--ks-[\w-]+)\);/g)].map(([, name]) => name)
             expect(values).toHaveLength(6)
-            expect(values.every((value) => value.startsWith("#{palette.$"))).toBe(true)
+            expect(values.filter((name) => themeTokens.includes(name) || !/^--ks-(?:white|black|[a-z-]+-\d+)$/.test(name))).toEqual([])
         }
     })
 })

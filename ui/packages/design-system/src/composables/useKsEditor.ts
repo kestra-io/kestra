@@ -29,6 +29,7 @@ import {useFlowYamlEditor} from "./useFlowYamlEditor"
 import {useSuggestWidgetIcons} from "./useSuggestWidgetIcons"
 import {registerEditorActions} from "./useEditorActions"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
+import {editorFontFamily} from "../utils/editorFont"
 type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
@@ -52,6 +53,7 @@ export function useKsEditor(
     emit: KsEditorEmit,
     refs: KsEditorTemplateRefs,
 ) {
+    let markerListenerDisposable: monaco.IDisposable | undefined
     const {editorRef, container, datePickerWrapper, datePicker} = refs
     const {t} = useI18n()
 
@@ -106,6 +108,7 @@ export function useKsEditor(
 
     let lastTimeout: number | undefined
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
+    let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
     let placeholderWidget: PlaceholderContentWidget | undefined
     const disposeCompletions = ref<() => void>()
 
@@ -251,7 +254,7 @@ export function useKsEditor(
             // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
             // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
             editContext: false,
-            fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
+            fontFamily: editorFontFamily(),
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
@@ -312,6 +315,20 @@ export function useKsEditor(
         initMonaco()
     }
 
+    function editorValidationListener() {
+        markerListenerDisposable?.dispose()
+        markerListenerDisposable = monaco.editor.onDidChangeMarkers((uris) => {
+            const model = localEditor.value?.getModel()
+            if (!model) return
+            if (!uris.some(uri => uri.toString() === model.uri.toString())) return
+            const markers = monaco.editor.getModelMarkers({resource: model.uri})
+            const warnings = markers
+                .filter(m => m.severity === monaco.MarkerSeverity.Warning && m.owner !== "backend-validation")
+                .map(m => ({line: m.startLineNumber, message: m.message}))
+            emit("editor-warnings", warnings)
+        })
+    }
+
     async function initMonaco() {
         const editorOpts: EditorOptions = {
             value: props.modelValue,
@@ -338,7 +355,9 @@ export function useKsEditor(
                 props.lang,
                 monaco.Uri.file(prefix.value + uid() + (props.lang ? `.${props.lang}` : "")),
             )
-            localDiffEditor.value.setModel({original: originalModel, modified: modifiedModel})
+            // setModel({original, modified}) never releases the view model it creates, which then diffs disposed models.
+            diffViewModel = localDiffEditor.value.createViewModel({original: originalModel, modified: modifiedModel})
+            localDiffEditor.value.setModel(diffViewModel)
 
             let modifiedBackspaceTimeout: number | null = null
             const modifiedEditor = localDiffEditor.value.getModifiedEditor()
@@ -583,12 +602,15 @@ export function useKsEditor(
     }
 
     function destroy() {
+        markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
         resizeObserver.value?.disconnect()
         resizeObserver.value = undefined
         if (localDiffEditor.value) {
             localDiffEditor.value?.dispose()
+            diffViewModel?.dispose()
+            diffViewModel = undefined
             localDiffEditor.value?.getModel()?.modified?.dispose()
             localDiffEditor.value?.getModel()?.original?.dispose()
             localDiffEditor.value = undefined
@@ -666,6 +688,7 @@ export function useKsEditor(
     onMounted(async () => {
         await document.fonts.ready
         await initMonaco()
+        editorValidationListener()
 
         if (props.lang !== undefined && props.configureLanguage) {
             await props.configureLanguage(

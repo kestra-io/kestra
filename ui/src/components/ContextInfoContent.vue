@@ -23,7 +23,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .wrapper {
         height: 100%;
         display: flex;

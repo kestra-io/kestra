@@ -229,6 +229,17 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                :description="$t('settings.blocks.theme.descriptions.editor_pebble_hover')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                    :modelValue="settings.pebbleHover"
+                    @change="onPebbleHover"
+                />
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
                 :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
@@ -307,9 +318,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
-    import {dateUtils, dayjs} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, editorFontFamily} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
@@ -362,6 +373,7 @@
         [storageKeys.EDITOR_FONT_SIZE]: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
         [storageKeys.AUTOFOLD_TEXT_EDITOR]: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
         [storageKeys.HOVER_TEXT_EDITOR]: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.PEBBLE_HOVER]: [`${THEME}.fields.editor_pebble_hover`, `${THEME}.descriptions.editor_pebble_hover`],
         [storageKeys.TIMEZONE_STORAGE_KEY]: [`${LOCALE}.fields.time_zone`, `${LOCALE}.descriptions.time_zone`],
         [storageKeys.DATE_FORMAT_STORAGE_KEY]: [`${LOCALE}.fields.date_format`, `${LOCALE}.descriptions.date_format`],
     }
@@ -394,9 +406,10 @@
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
         appFontSize: appFontSizeMode.value,
-        editorFontFamily: localStorage.getItem(storageKeys.EDITOR_FONT_FAMILY) || "'JetBrains Mono', monospace",
+        editorFontFamily: editorFontFamily(),
         autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
         hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
+        pebbleHover: localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false",
         lang: Utils.getLang(),
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
@@ -726,6 +739,11 @@
         persist(storageKeys.HOVER_TEXT_EDITOR, settings.hoverTextEditor)
     }
 
+    function onPebbleHover(value: boolean | string | number) {
+        settings.pebbleHover = Boolean(value)
+        persist(storageKeys.PEBBLE_HOVER, settings.pebbleHover)
+    }
+
     function onEditorPlayground(value: boolean | string | number) {
         settings.editorPlayground = Boolean(value)
         persist(storageKeys.EDITOR_PLAYGROUND, settings.editorPlayground)
@@ -771,24 +789,9 @@
         persist(storageKeys.DATE_FORMAT_STORAGE_KEY, value)
     }
 
-    function updateThemeBasedOnSystem() {
-        if (settings.theme === "syncWithSystem") {
-            Utils.switchTheme(miscStore, "syncWithSystem")
-        }
-    }
-
-    let mediaQuery: MediaQueryList | undefined
-
     onMounted(() => {
-        mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-        mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
-
         const validation = validateFlowTemplate(settings.flowTemplate)
         flowTemplateError.value = validation.errorCode ? validation : undefined
-    })
-
-    onBeforeUnmount(() => {
-        mediaQuery?.removeEventListener("change", updateThemeBasedOnSystem)
     })
 
     watch(() => miscStore.theme, () => {
@@ -796,7 +799,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-template {
     display: flex;
     flex-direction: column;

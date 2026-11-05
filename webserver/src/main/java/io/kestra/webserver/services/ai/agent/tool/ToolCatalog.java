@@ -59,6 +59,7 @@ public class ToolCatalog {
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
+    private final AgentToolCallScope callScope;
 
     private volatile Map<String, ToolEntry> registry;
 
@@ -67,11 +68,13 @@ public class ToolCatalog {
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
         final DocsMcpToolProvider docsMcpToolProvider,
-        final AgentToolPermissionEvaluator permissionEvaluator) {
+        final AgentToolPermissionEvaluator permissionEvaluator,
+        final AgentToolCallScope callScope) {
         this.platformTools = platformTools;
         this.authoringTools = authoringTools;
         this.docsMcpToolProvider = docsMcpToolProvider;
         this.permissionEvaluator = permissionEvaluator;
+        this.callScope = callScope;
     }
 
     public record ToolEntry(
@@ -186,7 +189,10 @@ public class ToolCatalog {
 
         // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
         // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
-        ToolExecutionResult executed = entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context));
+        ToolExecutionResult executed = callScope.call(
+            context,
+            () -> entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context))
+        );
         // A tool's single output is its return value; if that value is publishable, the caller (the
         // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
         ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;

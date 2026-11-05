@@ -61,7 +61,7 @@ export interface LogsDownloadResult {
 /** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
 export type Log = LogEntry & {index?: number}
 
-export const useLogsStore = defineStore("logs", () => {
+function setupLogsStore() {
     const logs = ref<Log[]>()
     const total = ref(0)
     const paginationType = ref<"OFFSET" | "CURSOR">("OFFSET")
@@ -80,7 +80,7 @@ export const useLogsStore = defineStore("logs", () => {
     let latestSearchId = 0
 
     function applyResponse(response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>) {
-        logs.value = response.results as unknown as Log[]
+        logs.value = response.results
         total.value = response.total ?? 0
         paginationType.value = response.type ?? "OFFSET"
         nextCursor.value = response.nextCursor
@@ -111,7 +111,7 @@ export const useLogsStore = defineStore("logs", () => {
             const isSuperseded = searchId !== latestSearchId
             if (isSuperseded) return
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             if (results.length === 0) {
                 nextCursor.value = undefined
                 return
@@ -172,7 +172,7 @@ export const useLogsStore = defineStore("logs", () => {
                 break
             }
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
 
@@ -251,4 +251,10 @@ export const useLogsStore = defineStore("logs", () => {
         downloadLogs,
         levelCounts,
     }
-})
+}
+
+export const useLogsStore = defineStore("logs", setupLogsStore)
+
+export function useScopedLogsStore(scope: string) {
+    return defineStore(`logs-${scope}`, setupLogsStore)()
+}

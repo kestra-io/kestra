@@ -5,7 +5,7 @@ vi.mock("override/stores/misc", () => ({
 }))
 
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "./chartDrillDown"
-import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars} from "./charts"
+import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -384,12 +384,20 @@ describe("fillTimeBucketLabels", () => {
         expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
     })
 
-    it("renders one distinct label per week for a weekly grouping", () => {
+    it("renders one distinct label per ISO week for a weekly grouping", () => {
         const labels = fillTimeBucketLabels(
-            ["2026-08-30 10:00:00", "2026-09-13 08:00:00"],
-            {format: "YYYY-[W]ww", unit: "week"},
+            ["2026-08-31 10:00:00", "2026-09-14 08:00:00"],
+            {format: "GGGG-[W]WW", unit: "week"},
         )
         expect(labels).toEqual(["2026-W36", "2026-W37", "2026-W38"])
+    })
+
+    it("keeps weeks in time order across New Year with the ISO week-year", () => {
+        const labels = fillTimeBucketLabels(
+            ["2025-12-15 00:00:00", "2025-12-22 00:00:00", "2025-12-29 00:00:00", "2026-01-05 00:00:00"],
+            {format: "GGGG-[W]WW", unit: "week"},
+        )
+        expect(labels).toEqual(["2025-W51", "2025-W52", "2026-W01", "2026-W02"])
     })
 
     it("keeps values that are not valid dates as labels verbatim", () => {
@@ -408,5 +416,21 @@ describe("fillTimeBucketLabels", () => {
         )
         expect(labels.length).toBe(MAX_FILLED_TIME_BUCKETS + 1)
         expect(labels).toContain("2026-08-19 20:00")
+    })
+})
+
+describe("toEchartsParams", () => {
+    it("keeps the fields of a well-formed click payload", () => {
+        expect(toEchartsParams({name: "a", seriesName: "s", seriesType: "bar", dataIndex: 2, value: 5, percent: 12.5, extra: true}))
+            .toEqual({name: "a", seriesName: "s", seriesType: "bar", dataIndex: 2, value: 5, percent: 12.5})
+    })
+
+    it("drops fields holding the wrong type instead of trusting them", () => {
+        expect(toEchartsParams({name: 1, seriesName: {}, seriesType: null, dataIndex: "2", percent: "10"}))
+            .toEqual({name: undefined, seriesName: undefined, seriesType: undefined, dataIndex: undefined, value: undefined, percent: undefined})
+    })
+
+    it.each([undefined, null, "bar", 3])("returns an empty payload for %s", (raw) => {
+        expect(toEchartsParams(raw)).toEqual({name: undefined, seriesName: undefined, seriesType: undefined, dataIndex: undefined, value: undefined, percent: undefined})
     })
 })

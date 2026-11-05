@@ -17,7 +17,7 @@
             :icons="pluginsStore.icons"
             :loadIcon="pluginsStore.loadIcon"
             :execution="executionsStore.execution"
-            :subflowsExecutions="executionsStore.subflowsExecutions"
+            :subflowsExecutions="executionsStore.graphExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :replayEnabled="replayEnabled"
@@ -26,6 +26,10 @@
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
+            :loopLanes="loopLanes"
+            :artifactCounts="artifactCounts"
+            @loop-step="({uid, delta}) => loopScoping.stepLane(uid, delta)"
+            @loop-scope-failed="({uid}) => loopScoping.scopeFirstFailure(uid)"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -37,6 +41,7 @@
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
+            @show-artifacts="onShowArtifacts"
             @replay-task="onReplayTask"
             @show-description="showDescription"
             @show-condition="showCondition"
@@ -61,13 +66,44 @@
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
+                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
                     />
                 </slot>
             </template>
+            <template #loopScope="{uid, lane}">
+                <LoopIterationPicker
+                    :lane="lane"
+                    :hostExecutionId="loopScoping.hostExecutionId(uid)"
+                    @select="loopScoping.scopeLane(uid, $event)"
+                    @clear="loopScoping.clearLane(uid)"
+                    @step="loopScoping.stepLane(uid, $event)"
+                />
+            </template>
+            <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed, collapsedLanes}">
+                <LoopScopeBar
+                    :entries="loopScoping.scopeTrail.value"
+                    :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
+                    :failuresOnly="isFailuresOnly(collapsedLanes)"
+                    :failure="loopScoping.scopeFailure.value"
+                    @clear="loopScoping.clearScope()"
+                    @retry="loopScoping.retryScope()"
+                    @jump-to-failure="jumpToFirstFailure"
+                    @toggle-failures-only="toggleFailuresOnly(setLanesCollapsed, collapsedLanes)"
+                />
+            </template>
             <template #taskActions="taskProps">
                 <template v-for="context in [taskActionsContext(taskProps.execution?.id, taskProps.taskRun?.id, taskProps.taskRuns.map(run => run.id))]" :key="taskProps.taskRun?.id">
+                    <KsIconButton
+                        v-if="isReadOnly && context && taskProps.variant === 'task'"
+                        class="node-action-button"
+                        :aria-label="$t('task_run_popup.open')"
+                        data-test="task-run-popup-trigger"
+                        @click.stop="openTaskPopup({execution: context.execution, taskId: taskProps.task?.id, task: taskProps.task, actions: taskProps.actions})"
+                    >
+                        <InformationOutline />
+                    </KsIconButton>
                     <TaskRunActions
-                        v-if="isReadOnly && context"
+                        v-else-if="isReadOnly && context"
                         class="node-action-button"
                         :taskRun="context.taskRun"
                         :taskType="taskProps.task?.type"
@@ -140,34 +176,9 @@
             <KsTabs v-if="isInspectOpen" v-model="inspectTab" type="box" class="inspect-tabs">
                 <KsTabPane :label="$t('logs')" name="logs">
                     <div class="tab-body">
-                        <Collapse>
-                            <KsFormItem>
-                                <SearchField
-                                    :router="false"
-                                    @search="onSearch"
-                                    class="me-2"
-                                />
-                            </KsFormItem>
-                            <KsFormItem>
-                                <LogLevelSelector
-                                    :value="logLevel"
-                                    @update:model-value="onLevelChange"
-                                />
-                            </KsFormItem>
-                        </Collapse>
-                        <TaskRunDetails
-                            v-for="taskRun in selectedTask.taskRuns"
-                            :key="taskRun.id"
-                            :targetExecutionId="selectedTask.execution?.id"
-                            :taskRunId="taskRun.id"
-                            :filter="logFilter"
-                            :excludeMetas="[
-                                'namespace',
-                                'flowId',
-                                'taskId',
-                                'executionId',
-                            ]"
-                            :level="logLevel"
+                        <TaskRunLogs
+                            :executionId="selectedTask.execution?.id"
+                            :taskRunIds="(selectedTask.taskRuns ?? []).map(taskRun => taskRun.id)"
                             @follow="emit('follow', $event)"
                         />
                     </div>
@@ -235,7 +246,7 @@
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
@@ -246,7 +257,7 @@
                     :navbar="false"
                     :modelValue="customActionModelValue"
                     :lang="customActionMeta.lang"
-                    class="mt-3"
+                    class="detail"
                 />
                 <TaskDrawerRemote
                     v-if="isTask(selectedTask)"
@@ -260,11 +271,26 @@
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
+                    :fetchEndpoint="fetchTaskEndpoint(selectedTask)"
                     displayMode="full"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
         </KsDrawer>
+
+        <TaskRunPopup
+            v-if="taskPopup && taskPopupExecution?.taskRunList?.some(run => run.taskId === taskPopup?.taskId)"
+            v-model="isTaskPopupOpen"
+            :execution="taskPopupExecution"
+            :taskId="taskPopup.taskId"
+            :taskType="taskPopup.task?.type"
+            :description="taskPopup.task ? taskWithSource(taskPopup.task).description : undefined"
+            :flow="flowStore.flow"
+            :nodeActions="taskPopup.actions"
+            :initialTab="taskPopup.tab"
+            @follow="emit('follow', $event)"
+            @closed="taskPopup = null"
+        />
 
         <Restart
             v-if="replayExecution && replayTaskRun"
@@ -286,28 +312,32 @@
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
     import {storageKeys, topologyOrientations} from "../../utils/constants"
+    import {useVueFlow} from "@vue-flow/core"
 
-    import SearchField from "../layout/SearchField.vue"
-    import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
-    import Collapse from "../layout/Collapse.vue"
+    import TaskRunLogs from "../executions/TaskRunLogs.vue"
     import Vars from "../executions/Vars.vue"
     import MetricsTable from "../executions/MetricsTable.vue"
     import Restart from "../executions/overview/components/actions/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
-    import type {CustomActionConfig, FlowGraph} from "@kestra-io/topology"
-    import {LOG_LEVELS, SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
-    import type {LevelKey} from "../../utils/logs"
+    import type {CustomActionConfig, FlowGraph, NodeAction} from "@kestra-io/topology"
+    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import type {Execution, TaskRun, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import type {AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
+    import TaskRunPopup, {type TaskRunPopupTab} from "../executions/TaskRunPopup.vue"
+    import {EXECUTION_ARTIFACTS_KEY} from "../executions/composables/useExecutionArtifacts"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import LoopIterationPicker from "../executions/LoopIterationPicker.vue"
+    import LoopScopeBar from "../executions/LoopScopeBar.vue"
+    import {useLoopScoping} from "../../composables/useLoopScoping"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
@@ -399,12 +429,22 @@
         [key: string]: unknown;
     }
 
+    interface TaskPopupTarget {
+        executionId: string;
+        taskId: string;
+        task?: FlowTask;
+        actions: NodeAction[];
+        tab: TaskRunPopupTab;
+    }
+
     const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
+    const POPUP_EXCLUDED_NODE_ACTIONS = [...EXCLUDED_NODE_ACTIONS, "logs", "description"]
 
     const router = useRouter()
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
+    const {fitView, getNodes} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -415,7 +455,7 @@
     function taskActionsContext(executionId: string | undefined, taskRunId: string | undefined, taskRunIds: string[]) {
         const execution = executionId === executionsStore.execution?.id
             ? executionsStore.execution
-            : Object.values(executionsStore.subflowsExecutions).find(execution => execution.id === executionId)
+            : executionId ? executionsStore.graphExecutions[executionId] : undefined
         const taskRuns = taskRunIds.flatMap(id => {
             const run = execution?.taskRunList?.find(run => run.id === id)
             return run ? [run] : []
@@ -423,14 +463,51 @@
         const taskRun = execution?.taskRunList?.find(run => run.id === taskRunId)
         return execution && taskRun ? {execution, taskRun, taskRuns} : undefined
     }
-    const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
+    const taskPopup = ref<TaskPopupTarget | null>(null)
+    const isTaskPopupOpen = ref(false)
+    const taskPopupExecution = computed(() => {
+        const executionId = taskPopup.value?.executionId
+        if (!executionId) return undefined
+        return executionId === executionsStore.execution?.id
+            ? executionsStore.execution
+            : executionsStore.graphExecutions[executionId]
+    })
+
+    function openTaskPopup(event: {execution?: {id?: string}; taskId?: string; task?: unknown; actions: NodeAction[]; tab?: TaskRunPopupTab}) {
+        if (!event.execution?.id || !event.taskId) return
+        taskPopup.value = {
+            executionId: event.execution.id,
+            taskId: event.taskId,
+            task: isTask(event.task) ? event.task : undefined,
+            actions: event.actions
+                .filter(a => !POPUP_EXCLUDED_NODE_ACTIONS.includes(a.key))
+                .map((a, i) => i === 0 ? {...a, divided: true} : a),
+            tab: event.tab ?? "logs",
+        }
+        isTaskPopupOpen.value = true
+    }
+
+    const onShowArtifacts = (event: {id?: string; task?: unknown; execution?: {id?: string}; actions: NodeAction[]}) =>
+        openTaskPopup({execution: event.execution, taskId: event.id, task: event.task, actions: event.actions, tab: "artifacts"})
+
+    const artifactsContext = inject(EXECUTION_ARTIFACTS_KEY, undefined)
+    const artifactCounts = computed(() => {
+        const counts: Record<string, number> = {}
+        for (const artifact of artifactsContext?.artifacts.value ?? []) {
+            counts[artifact.taskId] = (counts[artifact.taskId] ?? 0) + 1
+        }
+        return counts
+    })
+
+    // The store relaxes ids the SDK Execution requires, and the topology-task-modal slot contract is typed with the SDK one.
+    const exec = computed(() => executionsStore.execution as Execution | undefined)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
-        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+        playgroundStore.enabled ? (executionsStore.scopedFlowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
     const isTask = (value: unknown): value is FlowTask & Task =>
@@ -565,6 +642,13 @@
         return loadTaskRunOutputs(executionId, runId)
     }
 
+    const fetchTaskEndpoint = (task: FlowTask | undefined) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
+        const executionId = exec.value?.id
+        const runId = taskRunId ?? currentTaskRunId(task?.id)
+        if (!executionId || !runId || !task?.type) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
+        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
+    }
+
     const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
         const executionId = exec.value?.id
         if (!executionId || !taskId) return Promise.resolve({results: [], total: 0})
@@ -616,7 +700,8 @@
     const resolveTaskTopologyDetails = async (tasks: FlowTask[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: FlowTask) => {
             if (!task?.type) {
                 return
             }
@@ -682,6 +767,27 @@
             expandedSubflows: () => [],
         })
 
+    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value), computed(() => props.isReadOnly && Boolean(exec.value?.id)))
+    const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
+    const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
+
+    const isCollapsedLane = (collapsedLanes: Set<string>, uid: string) =>
+        [...collapsedLanes].some((collapsedUid) => uid === collapsedUid || uid.startsWith(`${collapsedUid}.`))
+
+    function isFailuresOnly(collapsedLanes: Set<string>) {
+        const uids = loopScoping.lanesWithoutFailures.value
+        return uids.length > 0 && uids.every((uid) => isCollapsedLane(collapsedLanes, uid))
+    }
+
+    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void, collapsedLanes: Set<string>) {
+        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, !isFailuresOnly(collapsedLanes))
+    }
+
+    function jumpToFirstFailure() {
+        const uid = loopScoping.firstFailedLaneUid()
+        if (uid) loopScoping.scopeFirstFailure(uid)
+    }
+
     watch(
         () => props.flowGraph,
         async (flowGraph) => {
@@ -705,7 +811,7 @@
             const sourceTasks: FlowTask[] = YAML_UTILS.parse<ParsedFlow>(source)?.tasks ?? []
             const flowParsedTasks: FlowTask[] = flowStore.flowParsed?.tasks ?? []
             const hasRunner = (task: FlowTask) => Boolean(task.taskRunner?.type)
-            if (sourceTasks.some(hasRunner) && !flowParsedTasks.some(hasRunner)) {
+            if (getAllTasks(sourceTasks).some(hasRunner) && !getAllTasks(flowParsedTasks).some(hasRunner)) {
                 await resolveTaskTopologyDetails(sourceTasks)
             }
         },
@@ -748,9 +854,6 @@
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const logFilter = ref("")
-    const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
-    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -1249,6 +1352,15 @@
         saveFlow: () => saveFlow(),
     })
 
+    const FOCUS_MAX_ZOOM = 1
+
+    function focusTask(taskId: string) {
+        const node = getNodes.value.find((candidate) => candidate.id.split(".").at(-1) === taskId)
+        if (node) fitView({nodes: [node.id], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
+    }
+
+    defineExpose({focusTask})
+
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value
         isHorizontalLS.value = isHorizontal.value
@@ -1332,14 +1444,6 @@
         isDrawerOpen.value = true
     }
 
-    const onSearch = (search: string) => {
-        logFilter.value = search
-    }
-
-    const onLevelChange = (level: string) => {
-        logLevel.value = toLevelKey(level)
-    }
-
     const showDescription = (event: FlowTask) => {
         resetDrawerSections()
         selectedTask.value = event
@@ -1384,6 +1488,7 @@
                 progress: taskProgress(fullTask.id),
                 fetchOutputs: fetchTaskOutputs(fullTask.id),
                 fetchMetrics: fetchTaskMetrics(fullTask.id),
+                fetchEndpoint: fetchTaskEndpoint(fullTask),
             }
             isTaskModalOpen.value = true
             return
@@ -1400,7 +1505,11 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+.detail {
+    margin-top: var(--ks-spacing-4);
+}
+
 .tab-body {
     padding-block: var(--ks-spacing-3) var(--ks-spacing-6);
 }
@@ -1411,29 +1520,27 @@
     gap: var(--ks-spacing-5);
 }
 
-.taskrun-card {
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        margin-bottom: var(--ks-spacing-2);
-    }
+.taskrun-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    margin-bottom: var(--ks-spacing-2);
+}
 
-    &__value {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+.taskrun-card__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-    &__empty {
-        display: block;
-        padding: var(--ks-spacing-3);
-        border: 1px dashed var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
-    }
+.taskrun-card__empty {
+    display: block;
+    padding: var(--ks-spacing-3);
+    border: 1px dashed var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
 }
 
 .replay-picker {
@@ -1441,33 +1548,33 @@
     flex-direction: column;
     gap: var(--ks-spacing-2);
     margin-top: var(--ks-spacing-4);
+}
 
-    &__hint {
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
+.replay-picker__hint {
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
+}
+
+.replay-picker__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-3);
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    background: var(--ks-bg-surface);
+    transition: background-color 0.1s ease;
+
+    &:hover {
+        background: var(--ks-bg-hover);
     }
+}
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        background: var(--ks-bg-surface);
-        transition: background-color 0.1s ease;
-
-        &:hover {
-            background: var(--ks-bg-hover);
-        }
-    }
-
-    &__value {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+.replay-picker__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .vueflow {
@@ -1475,9 +1582,9 @@
     width: 100%;
     position: relative;
 
-    // Anchor the state icon (playground-button) to the node header area, not
-    // the full VueFlow node element, so it doesn't overlap plugin UI details.
-    :deep(.main-content) {
+    /* Anchor the state icon (playground-button) to the node header area, not */
+    /* the full VueFlow node element, so it doesn't overlap plugin UI details. */
+    & :deep(.main-content) {
         position: relative;
     }
 }

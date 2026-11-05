@@ -2,6 +2,7 @@ import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { within, expect, waitFor } from "storybook/test";
 import { configureClient, type FlowForExecution, type StateType } from "@kestra-io/kestra-sdk";
+import { mockStoryApiRoutes } from "../../../.storybook/apiMock";
 import { useExecutionsStore, type Execution } from "../../stores/executions";
 import { useFlowStore, type Flow } from "../../stores/flow";
 import Gantt from "./Gantt.vue";
@@ -83,6 +84,11 @@ const meta = {
         },
     },
     args: { state: "CANCELLED" },
+    beforeEach() {
+        mockStoryApiRoutes({
+            [`GET /concurrency-limit/${NAMESPACE}/${FLOW_ID}`]: { tenantId: "main", namespace: NAMESPACE, flowId: FLOW_ID, running: 1 },
+        });
+    },
     render: () => ({ components: { Gantt }, template: "<Gantt />" }),
     decorators: [
         (_story: unknown, context: { args: GanttStoryArgs }) => ({

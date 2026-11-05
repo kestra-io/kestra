@@ -1,64 +1,73 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
 
-    <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
-    <section v-else class="full-container">
-        <KsDataTable :total="data?.total ?? 0" fitHeight>
-            <template #table>
-                <KsTable
-                    :data="data?.results"
-                    stripe
-                >
-                    <KsTableColumn
-                        v-for="k in KEYS"
-                        :key="k"
-                        :prop="k"
-                        :label="k"
-                    >
-                        <template #default="scope">
-                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
-                                {{ scope.row[k] }}
-                                <IconEdit />
-                            </button>
-                            <span v-else>
-                                {{ scope.row[k] }}
-                            </span>
-                        </template>
-                    </KsTableColumn>
-                </KsTable>
+    <KsDataTable
+        ref="dataTable"
+        :loadData="loadData"
+        :data="data?.results ?? []"
+        :total="data?.total ?? 0"
+        :currentPage="urlPage"
+        :pageSize="urlSize"
+        fitHeight
+        @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+    >
+        <template #empty>
+            <Empty v-if="data !== undefined" type="concurrency_limits" />
+        </template>
+        <KsTableColumn
+            v-for="k in KEYS"
+            :key="k"
+            :prop="k"
+            :label="k === 'queued' ? $t('concurrency_limit.queued') : k"
+        >
+            <template #default="scope">
+                <button v-if="k === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
+                    {{ scope.row[k] }}
+                    <IconEdit />
+                </button>
+                <span v-else>
+                    {{ scope.row[k] }}
+                </span>
             </template>
-        </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :dirty="isEditDirty">
-            <KsAlert type="warning" :closable="false">
-                {{ $t("concurrency_limit.warning") }}
-            </KsAlert>
-            <br>
-            <KsInputNumber v-model="newRunningCount" />
-            <template #footer>
-                <KsButton @click="editRunning = false">
-                    {{ $t("cancel") }}
-                </KsButton>
-                <KsButton type="primary" @click="saveEditRunning()">
-                    {{ $t("save") }}
-                </KsButton>
-            </template>
-        </KsDialog>
-    </section>
+        </KsTableColumn>
+    </KsDataTable>
+    <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :dirty="isEditDirty">
+        <KsAlert type="warning" :closable="false">
+            {{ $t("concurrency_limit.warning") }}
+        </KsAlert>
+        <br>
+        <KsInputNumber v-model="newRunningCount" />
+        <template #footer>
+            <KsButton @click="editRunning = false">
+                {{ $t("cancel") }}
+            </KsButton>
+            <KsButton type="primary" @click="saveEditRunning()">
+                {{ $t("save") }}
+            </KsButton>
+        </template>
+    </KsDialog>
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {computed, ref, useTemplateRef, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type ConcurrencyLimit} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
-    import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
+    import {apiUrlWithTenant} from "override/utils/route"
+    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     const {t} = useI18n()
     const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const toast = useToast()
 
     const baseUrl = computed(() => apiUrlWithTenant(route))
 
@@ -68,27 +77,33 @@
         }
     })
 
-    interface ConcurrencyLimit {
-        tenantId: string
-        namespace: string,
-        flowId: string,
-        running: number
-    }
+    type ConcurrencyLimitRow = ConcurrencyLimit & {queued?: number}
+    type ConcurrencyLimitPage = {results: ConcurrencyLimitRow[], total: number}
 
-    const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
+    const KEYS: (keyof ConcurrencyLimitRow)[] = ["tenantId", "namespace", "flowId", "running", "queued"]
 
     const axios = useClient()
-    const data = ref<{
-        total: number;
-        results: ConcurrencyLimit[]
-    }>()
+    const data = ref<ConcurrencyLimitPage>()
 
-    async function loadData(){
-        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
-        if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
+    const dataTable = useTemplateRef("dataTable")
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    async function loadData({page, size}: {page: number, size: number}){
+        try {
+            const response = await axios.get<ConcurrencyLimitPage>(`${baseUrl.value}/concurrency-limit/search?page=${page}&size=${size}`)
+            if(response?.status !== 200){
+                throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
+            }
+            if(page > 1 && response.data.results.length === 0 && response.data.total > 0){
+                await router.push({query: {...route.query, page: "1"}})
+                return
+            }
+            data.value = response.data
+        } catch (error) {
+            data.value = undefined
+            throw error
         }
-        data.value = response.data
     }
 
     const editRunning = ref(false)
@@ -97,26 +112,47 @@
 
     const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
 
+    function canReset(row: ConcurrencyLimit) {
+        const user = authStore.user
+        if (user?.instanceOwner) {
+            return true
+        }
+        return Boolean(row.namespace === ""
+            ? user?.isAllowedGlobal(resource.FLOW, action.UPDATE_CONCURRENCY_LIMIT)
+            : user?.isAllowed(resource.FLOW, action.UPDATE_CONCURRENCY_LIMIT, row.namespace))
+    }
+
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
-        newRunningCount.value = row.running
+        newRunningCount.value = row.running ?? 0
         editingRow.value = row
     }
 
     async function saveEditRunning(){
-        if(editingRow.value){
-            editingRow.value.running = newRunningCount.value
-            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value)
+        const row = editingRow.value
+        if(!row){
+            return
+        }
+        try {
+            await axios.put(`${baseUrl.value}/concurrency-limit`, {
+                namespace: row.namespace,
+                flowId: row.flowId,
+                running: newRunningCount.value,
+            })
+        } catch {
+            toast.error(t("concurrency_limit.save_error"))
+            return
         }
         editRunning.value = false
+        await dataTable.value?.reload()
     }
 
-    watch(baseUrl, () => loadData(), {immediate: true})
+    watch(baseUrl, () => dataTable.value?.resetAndReload())
 
     useRouteContext(routeInfo)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .edit-running {
         border: solid 1px transparent;
         background: none;

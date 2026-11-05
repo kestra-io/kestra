@@ -33,7 +33,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/avatar';
+</style>
 
+<style>
     .kel-avatar {
         --kel-avatar-bg-color: var(--ks-border-default);
         --kel-avatar-text-color: var(--ks-text-primary);

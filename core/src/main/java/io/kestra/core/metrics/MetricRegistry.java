@@ -128,9 +128,9 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_KILLED_COUNT = "executor.killed.count";
     public static final String METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
     public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT = "executor.sla.expired.count";
-    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION or AVG_DURATION that took longer than the SLA) evaluated by the Executor";
     public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT = "executor.sla.violation.count";
-    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of SLA violations evaluated by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT = "executor.execution.delay.created.count";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION = "The total number of execution delays created by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT = "executor.execution.delay.ended.count";
@@ -202,6 +202,8 @@ public class MetricRegistry {
     public static final String METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION = "The total number of execution resumed from a breakpoint from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL = "webserver.execution.forcerun.total";
     public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION = "The total number of execution force run from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL = "webserver.execution.reschedule.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL_DESCRIPTION = "The total number of execution rescheduled from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL = "webserver.execution.kill.total";
     public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL_DESCRIPTION = "The total number of execution kill from the API.";
     public static final String METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL = "webserver.execution.changestatus.total";

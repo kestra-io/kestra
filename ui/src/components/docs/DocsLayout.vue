@@ -70,9 +70,7 @@
 
 </script>
 
-<style scoped lang="scss">
-    @use '../../styles/responsive' as *;
-
+<style scoped>
     .docs-layout-container {
         display: flex;
     }
@@ -101,7 +99,7 @@
             font-size: var(--ks-font-size-xs);
         }
 
-        > div > ul > li > span:first-child {
+        & > div > ul > li > span:first-child {
             font-size: var(--ks-font-size-xs);
         }
     }
@@ -204,7 +202,7 @@
                     transform: scale(0.95);
                 }
 
-                :deep(.material-design-icon) {
+                & :deep(.material-design-icon) {
                     width: 24px;
                     height: 24px;
                 }
@@ -232,7 +230,7 @@
                 transform: scale(0.95);
             }
 
-            :deep(.material-design-icon) {
+            & :deep(.material-design-icon) {
                 width: 24px;
                 height: 24px;
             }
@@ -276,7 +274,7 @@
                 left: 0;
             }
 
-            > div {
+            & > div {
                 flex: 1;
                 overflow: hidden;
                 display: flex;
@@ -305,7 +303,7 @@
         }
     }
 
-    @include res(md) {
+    @media only screen and (min-width: 992px) {
         .mobile-menu-toggle {
             display: none;
         }
@@ -354,7 +352,7 @@
         }
     }
 
-    @include res(lg) {
+    @media only screen and (min-width: 1200px) {
         .content {
             padding: 2rem;
             padding-top: 1rem;

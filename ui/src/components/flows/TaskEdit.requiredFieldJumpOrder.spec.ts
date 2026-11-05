@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from "vitest"
+import {afterAll, describe, it, expect, vi} from "vitest"
 import {createPinia} from "pinia"
 import {computed, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
@@ -63,12 +63,18 @@ vi.mock("../../composables/playground/usePlaygroundRun", () => ({
     }),
 }))
 
+vi.mock("../../composables/useContextSections", async () => {
+    const {ref} = await import("vue")
+    return {useContextSections: () => ({sections: ref([])})}
+})
+
 vi.mock("./TaskEditData.vue", () => ({
     default: {name: "TaskEditData", props: ["kind", "title", "subtitle", "sections", "filterable", "collapsible", "isCollapsed", "side"], template: "<div />"},
 }))
 
 import TaskEdit from "./TaskEdit.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "../no-code/components/tasks/useBlockComponent"
 
 const taskSchema = {
     type: "object",
@@ -126,6 +132,8 @@ async function mountAndSettle(task: Record<string, unknown>) {
     await flushPromises()
     return wrapper
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("TaskEdit jump to first unset required field", () => {
     it("follows on-screen order rather than schema order", async () => {

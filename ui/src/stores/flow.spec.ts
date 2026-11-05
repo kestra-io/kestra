@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import type {ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
-import {validateFlows} from "@kestra-io/kestra-sdk/flows"
+import {generateFlowGraphFromSource, validateFlows} from "@kestra-io/kestra-sdk/flows"
 import {useFlowStore} from "./flow"
+import {useCoreStore} from "./core"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
@@ -13,6 +14,7 @@ vi.mock("override/stores/auth", () => ({
 }))
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     validateFlows: vi.fn(() => Promise.resolve([{}])),
+    generateFlowGraphFromSource: vi.fn(),
 }))
 
 describe("flow store", () => {
@@ -75,5 +77,18 @@ describe("flow store", () => {
         await old
 
         expect(store.flowErrors).toEqual(["new"])
+    })
+
+    it("should use a translated title when expanding a subflow fails", async () => {
+        const store = useFlowStore()
+        vi.mocked(generateFlowGraphFromSource).mockRejectedValueOnce(Object.assign(new Error("not found"), {status: 404}))
+
+        await expect(store.loadGraphFromSource({
+            flow: "id: parent\nnamespace: company.team\ntasks: []\n",
+            config: {params: {subflows: "child"}},
+        })).rejects.toThrow()
+
+        const title = useCoreStore().message?.title
+        expect(title).toBe("topology-graph.expand_subflow_error")
     })
 })

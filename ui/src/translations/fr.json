@@ -2038,7 +2038,6 @@
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "no_code": {
-      "task_details": "Détails de la task",
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",

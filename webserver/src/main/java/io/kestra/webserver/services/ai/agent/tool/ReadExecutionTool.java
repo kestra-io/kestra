@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -23,7 +24,7 @@ import jakarta.inject.Singleton;
  * overall state and duration plus one line per task run (with state histories for failed runs).
  */
 @Singleton
-public class ReadExecutionTool implements AiPlatformTool {
+public class ReadExecutionTool implements McpPlatformTool {
     private final ExecutionRepositoryInterface executionRepository;
 
     @Inject
@@ -39,6 +40,11 @@ public class ReadExecutionTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

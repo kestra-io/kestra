@@ -442,14 +442,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowId,
             this.flowRevision,
             null,
-            null, // we don't copy inputs to reduce the size, the RunVariables must get them from the parent execution
-            null, // same for the outputs, the RunVariables get them from the parent execution
+            null, // we don't copy inputs to reduce the size, the RunVariables must get them from the root execution
+            null, // same for the outputs, the RunVariables get them from the root execution
             this.labels,
             this.variables,
             this.state,
             this.id,
             null,
-            null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
+            null, // we don't copy triggers to reduce the size, the RunVariables must get them from the root execution
             this.deleted,
             this.metadata,
             null,
@@ -459,6 +459,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.breakpoints,
             new LoopRun(this, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents())
         );
+    }
+
+    /**
+     * Resolves the execution that contains the persisted flow context for a loop execution.
+     *
+     * @return the original execution, or this execution when it is not a loop execution
+     */
+    public Execution rootExecution() {
+        Execution root = this;
+        while (root.getLoopRun() != null) {
+            root = root.getLoopRun().parent();
+        }
+        return root;
     }
 
     /**

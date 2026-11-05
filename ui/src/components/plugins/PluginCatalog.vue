@@ -140,10 +140,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
+    import {ref, computed, markRaw, onBeforeUnmount, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsButton, KsSkeleton, debounce} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import {usePluginView, useQueryChoice} from "./pluginView"
     import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
@@ -186,10 +186,22 @@
         ...pluginsStore.icons,
         ...pluginsStore.groupIcons,
     }))
-    const searchText = computed<string>({
-        get: () => typeof route.query.q === "string" ? route.query.q : "",
-        set: (q) => router.replace({query: {...route.query, q: q || undefined}}),
+    const queryQ = (): string => typeof route.query.q === "string" ? route.query.q : ""
+    // The input keeps its own value: read back from the route, it dropped the keystrokes typed while a navigation was pending.
+    const searchText = ref(queryQ())
+    let writtenQ = searchText.value
+    const writeSearchToRoute = debounce((q: string) => {
+        writtenQ = q
+        if (q !== queryQ()) router.replace({query: {...route.query, q: q || undefined}})
+    }, 300)
+    watch(searchText, (q) => writeSearchToRoute(q))
+    watch(queryQ, (q) => {
+        if (q === writtenQ) return
+        writeSearchToRoute.cancel()
+        writtenQ = q
+        searchText.value = q
     })
+    onBeforeUnmount(() => writeSearchToRoute.cancel())
     const selectedCategories = computed<string[]>(() =>
         [route.query.categories ?? []].flat().filter((category): category is string => typeof category === "string"),
     )
@@ -303,6 +315,7 @@
     })
 
     const showAllPlugins = async () => {
+        searchText.value = ""
         // Awaited so that reset() writes its own query keys on top of this one instead of over a stale route.query.
         await router.replace({query: {...route.query, q: undefined, categories: undefined}})
         catalogExtension.reset?.()

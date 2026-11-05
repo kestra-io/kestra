@@ -9,6 +9,8 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import PluginCatalog from "./PluginCatalog.vue"
 import "../../utils/global"
 
+const navigation = vi.hoisted(() => ({delayMs: 0, replaces: 0}))
+
 vi.mock("../../utils/publicApi", () => ({
     publicFetchJson: vi.fn().mockResolvedValue([]),
 }))
@@ -89,6 +91,8 @@ vi.mock("vue-router", async () => {
     return {
         useRoute: () => route,
         useRouter: () => ({push: vi.fn(), replace: vi.fn(async ({query}: {query: LocationQuery}) => {
+            navigation.replaces++
+            await new Promise(resolve => setTimeout(resolve, navigation.delayMs))
             route.query = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined)) as LocationQuery
         })}),
     }
@@ -117,6 +121,8 @@ describe("PluginCatalog", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         useRoute().query = {}
+        navigation.delayMs = 0
+        navigation.replaces = 0
     })
 
     afterEach(() => {
@@ -157,6 +163,24 @@ describe("PluginCatalog", () => {
         await flushPromises()
 
         expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("keeps every character typed while a navigation is pending, and writes the search to the URL once typing pauses", async () => {
+        navigation.delayMs = 50
+        const wrapper = await mountCatalog()
+        const input = wrapper.find("input")
+
+        for (const text of ["d", "db", "dbt"]) {
+            (input.element as HTMLInputElement).value = text
+            await input.trigger("input")
+        }
+        await new Promise(resolve => setTimeout(resolve, 400))
+        await flushPromises()
+
+        expect((input.element as HTMLInputElement).value).toBe("dbt")
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+        expect(useRoute().query.q).toBe("dbt")
+        expect(navigation.replaces).toBe(1)
     })
 
     test("restores the search and the sort from the URL when the catalog is opened again", async () => {

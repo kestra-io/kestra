@@ -106,13 +106,19 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const chartsComponents = new Map<string, {
+    interface ChartComponent {
         refresh(): void;
         exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
-    }>()
+    }
+
+    const chartsComponents = new Map<string, ChartComponent>()
+
+    function isChartComponent(el: Element | ComponentPublicInstance | null): el is ComponentPublicInstance & ChartComponent {
+        return el !== null && typeof Reflect.get(el, "refresh") === "function"
+    }
 
     function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
-        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void})
+        if (isChartComponent(el)) chartsComponents.set(chartId, el)
         else chartsComponents.delete(chartId)
     }
 

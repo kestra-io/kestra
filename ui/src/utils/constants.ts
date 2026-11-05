@@ -64,6 +64,7 @@ export const storageKeys = {
     EDITOR_FONT_SIZE: "editorFontSize",
     AUTOFOLD_TEXT_EDITOR: "autofoldTextEditor",
     HOVER_TEXT_EDITOR: "hoverTextEditor",
+    PEBBLE_HOVER: "pebbleHover",
     EDITOR_PLAYGROUND: "editorPlayground",
     FLOW_DEFAULT_TAB: "flowDefaultTab",
     EXECUTION_DEFAULT_TAB: "executeDefaultTab",

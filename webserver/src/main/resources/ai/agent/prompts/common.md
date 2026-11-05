@@ -42,7 +42,7 @@ Yes I can do that
 
 Wrap content that is not a kestra resources or a code
 ```yaml
-# list-flows
+# list_flows
 name: mink_705361 (found in namespace: default)
 ```
 

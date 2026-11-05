@@ -50,7 +50,7 @@ class ChatMessageAdaptorTest {
     @Test
     void shouldFlagErrorToolResultsAsIsErrorWhenProjecting() {
         // Given — a persisted error tool result and a persisted ok tool result
-        AgentToolCall call = AgentToolCall.platform("c1", "read-execution", null, Map.of("executionId", "missing"));
+        AgentToolCall call = AgentToolCall.platform("c1", "read_execution", null, Map.of("executionId", "missing"));
         AgentMessage errorResult = toolResult(call, Map.of("outcome", "error", "error", "Execution not found"));
         AgentMessage okResult = toolResult(call, Map.of("outcome", "ok", "result", "done"));
 
@@ -67,7 +67,7 @@ class ChatMessageAdaptorTest {
     void shouldReattachReasoningStateWhenProjectingToolCall() {
         // Given — a persisted tool call carrying the provider's reasoning state (thinking text + opaque
         // signature); projection must rebuild the AiMessage with both so the cross-turn replay stays valid
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"),
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"),
             new AgentThinking("let me search the docs", "sig-abc", null));
         AgentMessage toolCallRow = AgentMessage.builder()
             .uid("tc-1")
@@ -89,7 +89,7 @@ class ChatMessageAdaptorTest {
         assertThat(projected).hasSize(2).first().isInstanceOf(AiMessage.class);
         AiMessage ai = (AiMessage) projected.getFirst();
         assertThat(ai.hasToolExecutionRequests()).isTrue();
-        assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search-docs");
+        assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search_docs");
         assertThat(ai.thinking()).isEqualTo("let me search the docs");
         assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isEqualTo("sig-abc");
         assertThat(ChatMessageAdaptor.thinkingOf(ai)).isEqualTo(new AgentThinking("let me search the docs", "sig-abc", null));
@@ -98,7 +98,7 @@ class ChatMessageAdaptorTest {
     @Test
     void shouldOmitReasoningStateWhenToolCallHasNone() {
         // Given — a legacy/non-thinking-provider tool call with no reasoning state
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"));
         AgentMessage toolCallRow = AgentMessage.builder()
             .uid("tc-2")
             .threadId("thread-1")
@@ -122,7 +122,7 @@ class ChatMessageAdaptorTest {
 
     @Test
     void shouldDropUnpairedToolCallWhenProjecting() {
-        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        AgentToolCall call = AgentToolCall.platform("c1", "search_docs", null, Map.of("q", "trigger"));
         List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(
             text(AgentMessageRole.USER, "search"),
             toolCall(call),

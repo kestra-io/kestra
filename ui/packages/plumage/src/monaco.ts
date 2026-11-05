@@ -37,7 +37,7 @@ export const MONACO_SCOPES: [string, Mapping][] = [
     ["wildcard", "operator"],
 
     ["delimiter", "punctuation"],
-    ["delimeter", "punctuation"],
+    ["delimeter", "punctuation"], // Monaco's Swift grammar emits this misspelling. codespell:ignore delimeter
     ["punctuation", "punctuation"],
     ["identifier.quote", "punctuation"],
     ["attribute.delimiter", "punctuation"],

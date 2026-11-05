@@ -10,7 +10,6 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn()}),
 }))
 
-
 const {i18nMount} = await import("../../../tests/unit/i18nMount")
 const {usePluginsStore} = await import("../../stores/plugins")
 const {default: LowCodeEditor} = await import("./LowCodeEditor.vue")

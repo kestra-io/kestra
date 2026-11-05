@@ -14,10 +14,6 @@
     display: none !important;
 }
 
-.position-absolute {
-    position: absolute !important;
-}
-
 .flex-column {
     flex-direction: column !important;
 }
@@ -40,10 +36,6 @@
 
 .mt-1 {
     margin-top: 0.25rem !important;
-}
-
-.mt-2 {
-    margin-top: 0.5rem !important;
 }
 
 .me-1 {

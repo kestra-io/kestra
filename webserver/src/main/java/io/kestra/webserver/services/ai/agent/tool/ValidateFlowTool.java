@@ -40,7 +40,7 @@ public class ValidateFlowTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "validate-flow",
+        name = "validate_flow",
         value = "Validate Kestra flow YAML without saving or executing anything, reporting validation errors, warnings and deprecations. Read-only; always use this to check flow YAML before proposing it. "
             + "Returns an object { valid, errors, warnings, deprecatedPaths, infos } where `valid` is true only when `errors` is empty; each of the other fields is an array of messages."
     )

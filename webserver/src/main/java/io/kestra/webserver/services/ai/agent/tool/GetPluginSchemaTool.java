@@ -40,7 +40,7 @@ public class GetPluginSchemaTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "get-plugin-schema",
+        name = "get_plugin_schema",
         value = "Get the JSON schema of a Kestra plugin type (its configuration properties and their types). Read-only; use this to learn how to configure a task, trigger or other plugin before authoring flow YAML. "
             + "Returns an object { pluginType, schema } where `schema` is the plugin's JSON schema (a nested object of properties and their types)."
     )

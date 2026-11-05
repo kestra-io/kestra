@@ -16,7 +16,7 @@
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
     import {dayjs} from "@kestra-io/design-system"
     import {Flow} from "../../stores/flow"
-    import {Label} from "../../stores/executions"
+    import {Execution, Label} from "../../stores/executions"
     import {flattenInputs} from "../../utils/inputs"
 
     type DateInput = Parameters<typeof dayjs>[0]
@@ -27,10 +27,12 @@
         flow: Flow;
         inputs?: Record<string, unknown>;
         executionLabels?: Label[];
+        replayExecution?: Execution;
         verbose?: boolean;
     }>(),{
         inputs: () => ({}),
         executionLabels: () => [],
+        replayExecution: undefined,
         verbose: true,
     })
 
@@ -95,6 +97,12 @@
     }
 
     const url = computed(() => {
+        // A replay targets the original execution and its endpoint takes no execution labels.
+        if (props.replayExecution) {
+            const replayOrigin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
+            return `${replayOrigin}/executions/${props.replayExecution.id}/actions/replay-with-inputs`
+        }
+
         const queryParams = (props.executionLabels || [])
             .filter((label) => label.key && label.value)
             .map((label) => generateExecutionLabel(label.key, label.value))

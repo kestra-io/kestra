@@ -12,7 +12,7 @@ on:
           - minor
           - major
       package:
-        description: What package to publish
+        description: What package to publish (publish plumage first when design-system relies on a plumage change not yet on npm)
         required: true
         type: choice
         options:

@@ -9,7 +9,7 @@ export interface SyntaxColors {
     key: string
     /** Plain and quoted scalars in data languages (YAML, JSON). Code strings use `string`. */
     value: string
-    /** Pebble `{{ }}`, `{% %}` and `{# #}` blocks. */
+    /** Pebble `{{ }}` and `{% %}` blocks. */
     pebble: string
     /** `true`, `false`, `null` and language constants. */
     constant: string

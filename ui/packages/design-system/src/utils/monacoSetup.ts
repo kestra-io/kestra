@@ -4,8 +4,8 @@ import {kestraDark, kestraLight, themes, toMonacoTheme, type CodeTheme} from "@k
 
 export const OVERFLOW_WIDGETS_ID = "ks-monaco-overflow-widgets"
 
-/** The names KsEditor took before `@kestra-io/plumage`, kept for callers that still pass `theme="dark"` or `"light"`. */
-const LEGACY_THEMES: Record<string, CodeTheme> = {light: kestraLight, dark: kestraDark}
+/** The names KsEditor took before `@kestra-io/plumage`, kept for callers that still pass `"dark"`, `"light"` or Monaco's `"vs"` / `"vs-dark"`. */
+const LEGACY_THEMES: Record<string, CodeTheme> = {light: kestraLight, dark: kestraDark, vs: kestraLight, "vs-dark": kestraDark}
 
 /** The code theme behind a KsEditor `theme` name, falling back to Kestra Dark like the prop default. */
 export function codeThemeOf(name: string): CodeTheme {

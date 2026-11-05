@@ -53,6 +53,7 @@ describe("monacoSetup", () => {
         test("resolves legacy and unknown theme names to Kestra Light and Kestra Dark", () => {
             expect(codeThemeOf("light")).toBe(kestraLight)
             expect(codeThemeOf("dark")).toBe(kestraDark)
+            expect(codeThemeOf("vs")).toBe(kestraLight)
             expect(codeThemeOf("kestra-dark-classic")).toBe(kestraDarkClassic)
             expect(codeThemeOf("unknown")).toBe(kestraDark)
         })

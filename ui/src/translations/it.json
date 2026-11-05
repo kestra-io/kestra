@@ -1367,8 +1367,13 @@
         "taskRunners": "Esecutore di task",
         "charts": "Grafico",
         "apps": "App",
+        "appBlocks": "Blocco App",
+        "dataFilters": "Filtro dati",
+        "dataFiltersKPI": "Filtro dati KPI",
         "logExporters": "Esportatore di log",
-        "secrets": "Segreto"
+        "secrets": "Segreto",
+        "assets": "Tipo di Asset",
+        "additionalPlugins": "Plugin aggiuntivo"
       },
       "sortBy": "Ordina per",
       "sort": {

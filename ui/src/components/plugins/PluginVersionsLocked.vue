@@ -21,11 +21,8 @@
 <script setup lang="ts">
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import {demoLink, links} from "../layout/empty/links"
-    import type {Plugin} from "../../utils/pluginUtils"
 
-    defineProps<{
-        plugin: Plugin
-    }>()
+    defineOptions({inheritAttrs: false})
 
     const DOCS_URL = links.versionPlugin
     const CONTACT_SALES_URL = demoLink("versionPlugin")

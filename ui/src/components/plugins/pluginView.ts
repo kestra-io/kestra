@@ -1,9 +1,6 @@
 import {computed} from "vue"
 import {useRoute, useRouter} from "vue-router"
 
-export const PLUGIN_VIEWS = ["cards", "table"] as const
-export type PluginView = typeof PLUGIN_VIEWS[number]
-
 /** A choice kept in the route query, which drops the key when the first choice, the default, is picked. */
 export function useQueryChoice<T extends string>(key: string, choices: readonly T[]) {
     const route = useRoute()
@@ -17,5 +14,5 @@ export function useQueryChoice<T extends string>(key: string, choices: readonly 
 }
 
 export function usePluginView() {
-    return useQueryChoice("view", PLUGIN_VIEWS)
+    return useQueryChoice("view", ["cards", "table"] as const)
 }

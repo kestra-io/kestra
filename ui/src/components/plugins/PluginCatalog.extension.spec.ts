@@ -8,9 +8,9 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import type {Plugin} from "../../utils/pluginUtils"
 import "../../utils/global"
 
-const {showTable, scoped, extra, reset} = await vi.hoisted(async () => {
+const {scoped, extra, reset} = await vi.hoisted(async () => {
     const {ref} = await import("vue")
-    return {showTable: ref(true), scoped: ref(false), extra: ref<string[]>([]), reset: vi.fn()}
+    return {scoped: ref(false), extra: ref<string[]>([]), reset: vi.fn()}
 })
 
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")
@@ -26,7 +26,6 @@ vi.mock("override/components/plugins/pluginCatalogExtension", async () => {
         usePluginCatalogExtension: () => ({
             toolbar: markRaw(PluginList("toolbar")),
             table: markRaw(PluginList("table")),
-            showTable: () => showTable.value,
             extraCards: markRaw({setup: () => () => extra.value.map(title => h("h5", {"data-test": "extra-card"}, title))}),
             extraCardCount: () => extra.value.length,
             matches: () => !scoped.value,
@@ -76,7 +75,6 @@ describe("PluginCatalog extension", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         useRoute().query = {}
-        showTable.value = true
         scoped.value = false
         extra.value = []
         reset.mockClear()
@@ -87,6 +85,7 @@ describe("PluginCatalog extension", () => {
     })
 
     test("hands the extension table the searched entries and the whole catalog, instead of the cards", async () => {
+        useRoute().query = {view: "table"}
         const wrapper = await mountCatalog()
 
         await wrapper.find("input").setValue("s3.upload")
@@ -98,8 +97,7 @@ describe("PluginCatalog extension", () => {
         expect(wrapper.find("article").exists()).toBe(false)
     })
 
-    test("shows the cards while the extension table is off", async () => {
-        showTable.value = false
+    test("shows the cards while the Cards view is selected", async () => {
         const wrapper = await mountCatalog()
 
         expect(wrapper.find("[data-test=table]").exists()).toBe(false)
@@ -107,7 +105,6 @@ describe("PluginCatalog extension", () => {
     })
 
     test("appends the extension cards after the catalog cards, and shows them instead of the empty state", async () => {
-        showTable.value = false
         extra.value = ["storage-s3"]
         const wrapper = await mountCatalog()
 
@@ -121,7 +118,6 @@ describe("PluginCatalog extension", () => {
     })
 
     test("lets the extension word an empty scope, and clears every filter on Show all plugins", async () => {
-        showTable.value = false
         scoped.value = true
         const wrapper = await mountCatalog()
 

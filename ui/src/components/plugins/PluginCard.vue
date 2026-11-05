@@ -113,7 +113,7 @@
     const hasTaskCount = computed(() => typeof props.taskCount === "number" && props.taskCount > 0)
     const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number" && props.blueprintCount > 0)
     const hasCounts = computed(() => hasTaskCount.value || hasBlueprintCount.value)
-    const hasDivider = computed(() => hasCounts.value || Boolean(slots["footer-content"]) || Boolean(slots.status))
+    const hasDivider = computed(() => hasCounts.value || Boolean(slots["footer-content"] || slots.status))
     const hasFooter = computed(() => hasDivider.value || props.clickable)
 
     function onClick(event: Event) {

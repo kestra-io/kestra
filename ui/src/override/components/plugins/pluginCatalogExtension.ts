@@ -5,7 +5,6 @@ import PluginVersioningUpsell from "../../../components/plugins/PluginVersioning
 import PluginIncludedStatus from "../../../components/plugins/PluginIncludedStatus.vue"
 import PluginViewToggle from "../../../components/plugins/PluginViewToggle.vue"
 import PluginCatalogTable from "../../../components/plugins/PluginCatalogTable.vue"
-import {usePluginView} from "../../../components/plugins/pluginView"
 import type {Plugin} from "../../../utils/pluginUtils"
 
 export interface PluginCatalogExtension {
@@ -16,11 +15,10 @@ export interface PluginCatalogExtension {
     /** Rendered in the catalog toolbar, next to the category filters; receives every artifact entry as `catalog`. */
     toolbar?: Component;
     /**
-     * Rendered instead of the cards while `showTable()` is true. Receives the filtered, sorted entries as `plugins`,
+     * Rendered instead of the cards while the Table view is selected. Receives the filtered, sorted entries as `plugins`,
      * every artifact entry as `catalog`, and the lowercased `search` and the selected `categories`.
      */
     table?: Component;
-    showTable?: () => boolean;
     /** Narrows the catalog cards on top of search and categories. */
     matches?: (plugin: Plugin) => boolean;
     /**
@@ -43,15 +41,12 @@ export interface PluginCatalogExtension {
 }
 
 export function usePluginCatalogExtension(): PluginCatalogExtension {
-    const view = usePluginView()
-
     return {
         pageActions: markRaw(PluginManagementActions),
         banner: markRaw(PluginVersioningUpsell),
         cardStatus: markRaw(PluginIncludedStatus),
         toolbar: markRaw(PluginViewToggle),
         table: markRaw(PluginCatalogTable),
-        showTable: () => view.value === "table",
         versions: markRaw(PluginVersionsLocked),
     }
 }

@@ -13,7 +13,7 @@ interface CachedCount {
 }
 
 const totalPlugins = ref<number>()
-let pending: Promise<void> | null = null
+let started = false
 
 function readCache(): CachedCount | undefined {
     try {
@@ -32,8 +32,8 @@ function writeCache(count: number) {
     }
 }
 
-function fetchCount(): Promise<void> {
-    return publicFetchJson<Plugin[]>(`${API_URL}/v1/plugins/subgroups`, {signal: AbortSignal.timeout(PUBLIC_API_TIMEOUT_MS)})
+function fetchCount() {
+    publicFetchJson<Plugin[]>(`${API_URL}/v1/plugins/subgroups`, {signal: AbortSignal.timeout(PUBLIC_API_TIMEOUT_MS)})
         .then(data => {
             const rounded = Math.floor(countUniquePluginElements(data ?? []) / 100) * 100
             if (rounded > 0) {
@@ -53,12 +53,15 @@ function fetchCount(): Promise<void> {
  * known, and for good when the public API cannot be reached and nothing is cached.
  */
 export function usePluginsCount(): {totalPlugins: Ref<number | undefined>} {
-    if (!pending) {
+    if (!started) {
+        started = true
         const cached = readCache()
         if (cached) {
             totalPlugins.value = cached.count
         }
-        pending = cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS ? Promise.resolve() : fetchCount()
+        if (!cached || Date.now() - cached.fetchedAt >= CACHE_TTL_MS) {
+            fetchCount()
+        }
     }
     return {totalPlugins}
 }

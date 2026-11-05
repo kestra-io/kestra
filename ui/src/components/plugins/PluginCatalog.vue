@@ -67,7 +67,7 @@
 
         <component
             :is="catalogExtension.table"
-            v-if="catalogExtension.table && catalogExtension.showTable?.()"
+            v-if="catalogExtension.table && view === 'table'"
             :plugins="pluginsList"
             :catalog="baseList"
             :search="searchInput"
@@ -145,7 +145,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {KsSearch, KsAlert, KsButton, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
-    import {useQueryChoice} from "./pluginView"
+    import {usePluginView, useQueryChoice} from "./pluginView"
     import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
@@ -173,6 +173,7 @@
     const enrichmentStore = usePluginsEnrichmentStore()
     const {totalPlugins} = usePluginsCount()
     const catalogExtension = usePluginCatalogExtension()
+    const view = usePluginView()
 
     const title = computed(() => t("plugins.names"))
     const routeInfo = computed(() => ({title: title.value, breadcrumb: undefined}))
@@ -328,9 +329,7 @@
         router.push({name: "plugins/group", params: {...route.params as Record<string, string>, name: plugin.name}})
     }
 
-    const isVisible = (plugin: Plugin) => {
-        return pluginElementClasses(plugin).length > 0
-    }
+    const isVisible = (plugin: Plugin) => taskCount(plugin) > 0
 
     const allElementsByTypeEntries = (plugin: Plugin): [string, string[]][] => {
         return Object.entries(plugin)

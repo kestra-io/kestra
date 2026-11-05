@@ -100,6 +100,38 @@ class ListFlowsToolTest {
         assertThat(((Number) result.get("total")).longValue()).isEqualTo(flowCount);
     }
 
+    @Test
+    void shouldMatchEveryListedNamespaceWhenInValueIsCommaSeparated() throws Exception {
+        // Given
+        String tenant = "listflowsin";
+        String first = createFlowIn(tenant, "io.kestra.test.ai.in.first", IdUtils.create());
+        String second = createFlowIn(tenant, "io.kestra.test.ai.in.second", IdUtils.create());
+        createFlowIn(tenant, "io.kestra.test.ai.in.other", IdUtils.create());
+
+        // When
+        String json = callListFlows(tenant, """
+            { "NAMESPACE": { "operator": "IN", "value": "io.kestra.test.ai.in.first, io.kestra.test.ai.in.second" } }""");
+
+        // Then
+        List<String> ids = ((List<?>) JacksonMapper.toMap(json).get("flows")).stream()
+            .map(flow -> String.valueOf(((Map<?, ?>) flow).get("id")))
+            .toList();
+        assertThat(ids).containsExactlyInAnyOrder(first, second);
+    }
+
+    private String callListFlows(final String tenant, final String arguments) throws Exception {
+        QueryFilterToolExecutor executor = new QueryFilterToolExecutor(
+            tool,
+            ListFlowsTool.class.getMethod("listFlows", List.class, AgentCallContext.Context.class)
+        );
+        ToolExecutionRequest request = ToolExecutionRequest.builder()
+            .id("call-1")
+            .name("list_flows")
+            .arguments(arguments)
+            .build();
+        return executor.executeWithContext(request, AgentCallContext.into(AgentCallContext.Context.ofTenant(tenant))).resultText();
+    }
+
     private void createFlow(final String flowId) {
         createFlowIn(NAMESPACE, flowId);
     }
@@ -108,7 +140,7 @@ class ListFlowsToolTest {
         createFlowIn(MAIN_TENANT, namespace, flowId);
     }
 
-    private void createFlowIn(final String tenant, final String namespace, final String flowId) {
+    private String createFlowIn(final String tenant, final String namespace, final String flowId) {
         flowRepository.create(
             GenericFlow.of(
                 Flow.builder()
@@ -119,5 +151,6 @@ class ListFlowsToolTest {
                     .build()
             )
         );
+        return flowId;
     }
 }

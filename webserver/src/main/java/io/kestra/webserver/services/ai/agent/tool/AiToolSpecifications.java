@@ -14,6 +14,7 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
+import dev.langchain4j.internal.JsonSchemaElementJsonUtils;
 import dev.langchain4j.model.chat.request.json.JsonEnumSchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
@@ -44,7 +45,8 @@ public final class AiToolSpecifications {
      */
     private static final String FILTER_VALUE_GUIDANCE = "Filter values: each field takes an { operator, value }. For date/time fields (e.g. START_DATE, "
         + "END_DATE) the value must be either an ISO-8601 date-time (e.g. 2026-07-05T14:30:00Z) or an "
-        + "ISO-8601 duration relative to now (e.g. PT5M, PT1H, P1D).";
+        + "ISO-8601 duration relative to now (e.g. PT5M, PT1H, P1D). For IN and NOT_IN, the value is a comma-separated list "
+        + "(e.g. io.kestra.a,io.kestra.b).";
 
     private AiToolSpecifications() {
     }
@@ -86,13 +88,19 @@ public final class AiToolSpecifications {
         JsonObjectSchema reshaped = JsonObjectSchema.builder()
             .addProperties(properties)
             .required(required)
-            .definitions(params.definitions())
+            .definitions(referencesDefinitions(properties) ? params.definitions() : null)
             .build();
 
         return base.toBuilder()
             .parameters(reshaped)
             .description(withFilterValueGuidance(base.description()))
             .build();
+    }
+
+    // The definitions langchain4j generated for the removed List<QueryFilter> are only referenced from that parameter.
+    private static boolean referencesDefinitions(final Map<String, JsonSchemaElement> properties) {
+        Map<String, Object> schema = JsonSchemaElementJsonUtils.toMap(JsonObjectSchema.builder().addProperties(properties).build());
+        return schema.toString().contains("$ref");
     }
 
     private static JsonObjectSchema fieldFilterSchema(final QueryFilter.Resource resource, final QueryFilter.Field field) {

@@ -39,6 +39,7 @@
         "postinstall": "npx patch-package"
     },
     "dependencies": {
+        "@kestra-io/plumage": "*",
         "@kestra-io/design-system": "*",
         "@kestra-io/kestra-sdk": "*",
         "@kestra-io/slot-contracts": "*",

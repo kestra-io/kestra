@@ -18,6 +18,7 @@ on:
         options:
           - design-system
           - topology
+          - plumage
 
       skip-test:
         description: "Skip test"

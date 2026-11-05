@@ -1,42 +1,24 @@
 import * as monaco from "monaco-editor/editor/editor.api"
 import {typescriptDefaults, ScriptTarget} from "monaco-editor/languages/features/typescript/register"
+import {kestraDark, kestraLight, themes, toMonacoTheme, type CodeTheme} from "@kestra-io/plumage"
 
 export const OVERFLOW_WIDGETS_ID = "ks-monaco-overflow-widgets"
 
-const THEMES: Record<string, monaco.editor.IStandaloneThemeData> = {
-    dark: {
-        base: "vs-dark",
-        inherit: true,
-        rules: [{token: "", background: "161822"}],
-        colors: {
-            "minimap.background": "#161822",
-            "diffEditor.insertedLineBackground": "#029E734D",
-            "diffEditor.insertedTextBackground": "#00000000",
-        },
-    },
-    light: {
-        base: "vs",
-        inherit: true,
-        rules: [
-            {token: "type", foreground: "#8405FF"},
-            {token: "string.yaml", foreground: "#001233"},
-            {token: "comment", foreground: "#8d99ae", fontStyle: "italic"},
-        ],
-        colors: {
-            "editor.lineHighlightBackground": "#fbfaff",
-            "editorLineNumber.foreground": "#444444",
-            "editor.selectionBackground": "#E8E5FF",
-            "editor.wordHighlightBackground": "#E8E5FF",
-            "diffEditor.insertedLineBackground": "#029E734D",
-            "diffEditor.insertedTextBackground": "#00000000",
-        },
-    },
+/** The names KsEditor took before `@kestra-io/plumage`, kept for callers that still pass `theme="dark"` or `"light"`. */
+const LEGACY_THEMES: Record<string, CodeTheme> = {light: kestraLight, dark: kestraDark}
+
+/** The code theme behind a KsEditor `theme` name, falling back to Kestra Dark like the prop default. */
+export function codeThemeOf(name: string): CodeTheme {
+    return themes.find(theme => theme.name === name) ?? LEGACY_THEMES[name] ?? kestraDark
 }
 
 export function registerMonacoThemes(): void {
-    Object.entries(THEMES).forEach(([themeKey, themeData]) => {
-        monaco.editor.defineTheme(themeKey, themeData)
-    })
+    for (const theme of themes) {
+        monaco.editor.defineTheme(theme.name, toMonacoTheme(theme))
+    }
+    for (const [name, theme] of Object.entries(LEGACY_THEMES)) {
+        monaco.editor.defineTheme(name, toMonacoTheme(theme))
+    }
 }
 
 export function configureMonacoTypescript(): void {

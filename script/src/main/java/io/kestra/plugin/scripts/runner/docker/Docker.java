@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
@@ -177,23 +176,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         "no such file or directory",
         "Cannot connect to the Docker daemon"
     );
-
-    // Options Docker accepts, which it only checks when the container starts, after the image pull and the file upload.
-    private static final Set<String> TMPFS_FLAG_OPTIONS = Set.of(
-        "defaults", "ro", "rw", "suid", "nosuid", "dev", "nodev", "exec", "noexec", "sync", "async", "dirsync",
-        "mand", "nomand", "atime", "noatime", "diratime", "nodiratime", "unbindable", "runbindable",
-        "private", "rprivate", "shared", "rshared", "slave", "rslave", "relatime", "norelatime", "strictatime", "nostrictatime"
-    );
-    private static final Map<String, TmpfsValueOption> TMPFS_VALUE_OPTIONS = Map.of(
-        "size", new TmpfsValueOption("\\d+([kKmMgGtTpPeE]|%)?", "a number of bytes with an optional k, m or g suffix, or a percentage of the host memory, for example 512m"),
-        "nr_blocks", new TmpfsValueOption("\\d+[kKmMgGtTpPeE]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
-        "nr_inodes", new TmpfsValueOption("\\d+[kKmMgGtTpPeE]?", "a non-negative integer with an optional k, m or g suffix, for example 10k"),
-        "mode", new TmpfsValueOption("0*[0-7]{1,4}", "an octal file mode, for example 1777"),
-        "uid", new TmpfsValueOption("\\d+", "a non-negative integer, for example 1000"),
-        "gid", new TmpfsValueOption("\\d+", "a non-negative integer, for example 1000"),
-        "mpol", new TmpfsValueOption("(default|prefer|bind|interleave|local)([=:].*)?", "a memory policy among default, prefer, bind, interleave and local, for example interleave")
-    );
-    private static final String TMPFS_SUPPORTED_OPTIONS = "Use size, mode, uid, gid, nr_inodes, nr_blocks, mpol or a mount flag such as ro or noexec.";
 
     @Schema(
         title = "Docker API URI."
@@ -493,11 +475,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 // pull image only if we will create a new container
                 if (containerId == null) {
                     var rTmpfs = runContext.render(this.tmpfs).asMap(String.class, String.class, additionalVars);
-                    var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of() : tmpfsMounts(
+                    var validatedTmpfs = rTmpfs.isEmpty() ? Map.<String, String> of() : Tmpfs.mounts(
                         rTmpfs,
                         windowsToUnixPath(taskCommands.getWorkingDirectory().toString()),
-                        FileHandlingStrategy.MOUNT.equals(strategy),
-                        needVolume && FileHandlingStrategy.VOLUME.equals(strategy)
+                        strategy,
+                        needVolume
                     );
 
                     var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
@@ -1090,69 +1072,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .withAttachStdout(true);
     }
 
-    /**
-     * Validates the rendered {@code tmpfs} property and returns it keyed by normalized container path.
-     *
-     * @param workingDirectoryBound whether the {@code MOUNT} strategy binds the working directory, which Docker refuses to also mount as a tmpfs
-     * @param filesCopiedIntoContainer whether the {@code VOLUME} strategy copies files in and out of the working directory,
-     *                                 which Docker cannot do through a tmpfs mount at, inside or above it
-     */
-    static Map<String, String> tmpfsMounts(Map<String, String> tmpfs, String workingDirectory, boolean workingDirectoryBound, boolean filesCopiedIntoContainer) {
-        var mounts = new LinkedHashMap<String, String>(tmpfs.size());
-        for (var entry : tmpfs.entrySet()) {
-            var path = FilenameUtils.normalizeNoEndSeparator(entry.getKey(), true);
-            if (path == null || !path.startsWith("/") || "/".equals(path)) {
-                throw new IllegalArgumentException("The tmpfs mount path '%s' is invalid: it must be an absolute path other than the root directory.".formatted(entry.getKey()));
-            }
-            if (mounts.containsKey(path)) {
-                throw new IllegalArgumentException("The tmpfs mount path '%s' is declared more than once.".formatted(path));
-            }
-            if (workingDirectoryBound && path.equals(workingDirectory)) {
-                throw new IllegalArgumentException(
-                    "The tmpfs mount path '%s' is the task working directory, which the MOUNT file handling strategy already binds. Mount it elsewhere, for example inside the working directory."
-                        .formatted(path)
-                );
-            }
-            if (filesCopiedIntoContainer && (path.equals(workingDirectory) || path.startsWith(workingDirectory + "/") || workingDirectory.startsWith(path + "/"))) {
-                throw new IllegalArgumentException(
-                    "The tmpfs mount path '%s' overlaps the task working directory '%s', so its files would be lost with the VOLUME file handling strategy. Mount it elsewhere, or use the MOUNT strategy."
-                        .formatted(path, workingDirectory)
-                );
-            }
-
-            var options = entry.getValue() == null ? "" : entry.getValue().strip();
-            if (!options.isEmpty()) {
-                for (var option : options.split(",", -1)) {
-                    validateTmpfsOption(path, option);
-                }
-            }
-            mounts.put(path, options);
-        }
-        return mounts;
-    }
-
-    private static void validateTmpfsOption(String path, String option) {
-        var separator = option.indexOf('=');
-        if (separator < 0) {
-            if (!TMPFS_FLAG_OPTIONS.contains(option)) {
-                throw new IllegalArgumentException("The tmpfs mount '%s' has an unsupported option '%s'. %s".formatted(path, option, TMPFS_SUPPORTED_OPTIONS));
-            }
-            return;
-        }
-
-        var name = option.substring(0, separator);
-        var valueOption = TMPFS_VALUE_OPTIONS.get(name);
-        if (valueOption == null) {
-            throw new IllegalArgumentException("The tmpfs mount '%s' has an unsupported option '%s'. %s".formatted(path, name, TMPFS_SUPPORTED_OPTIONS));
-        }
-        var value = option.substring(separator + 1);
-        if (!valueOption.pattern().matcher(value).matches()) {
-            throw new IllegalArgumentException(
-                "The tmpfs mount '%s' has an invalid value '%s' for the option '%s'. Use %s.".formatted(path, value, name, valueOption.format())
-            );
-        }
-    }
-
     private static Long convertBytes(String bytes) {
         return READABLE_BYTES_TYPE_CONVERTER.convert(bytes, Number.class)
             .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + bytes + "'"))
@@ -1210,11 +1129,5 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     public enum FileHandlingStrategy {
         MOUNT,
         VOLUME
-    }
-
-    private record TmpfsValueOption(Pattern pattern, String format) {
-        TmpfsValueOption(String regex, String format) {
-            this(Pattern.compile(regex), format);
-        }
     }
 }

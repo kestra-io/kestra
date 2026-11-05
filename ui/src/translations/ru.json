@@ -1367,9 +1367,13 @@
         "taskRunners": "Запуск задачи",
         "charts": "График",
         "apps": "Приложение",
+        "appBlocks": "Блок App",
+        "dataFilters": "Фильтр данных",
+        "dataFiltersKPI": "Фильтр данных KPI",
         "logExporters": "Экспортер логов",
         "secrets": "Секрет",
-        "assets": "Тип Asset"
+        "assets": "Тип Asset",
+        "additionalPlugins": "Дополнительный plugin"
       },
       "sortBy": "Сортировать по",
       "sort": {

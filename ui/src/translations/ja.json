@@ -1367,9 +1367,13 @@
         "taskRunners": "タスクランナー",
         "charts": "チャート",
         "apps": "アプリ",
+        "appBlocks": "Appブロック",
+        "dataFilters": "データフィルター",
+        "dataFiltersKPI": "KPIデータフィルター",
         "logExporters": "ログエクスポーター",
         "secrets": "シークレット",
-        "assets": "Assetタイプ"
+        "assets": "Assetタイプ",
+        "additionalPlugins": "追加のplugin"
       },
       "sortBy": "並び替え",
       "sort": {

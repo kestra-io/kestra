@@ -256,9 +256,9 @@ public class MavenPluginDownloader implements Closeable {
             if (version.getHighestVersion() == null) {
                 // A repository holding the artifact but no version in the range records no exception at all.
                 if (version.getExceptions().stream().allMatch(MavenPluginDownloader::isNotFound)) {
-                    throw notFound(dependency, repositories, "No version matching plugin artifact `%s` was found in the configured Maven repositories (%s).", version.getExceptions());
+                    throw withCauses(new InvalidException(dependency, "No version matching plugin artifact `%s` was found in the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories))), version.getExceptions());
                 }
-                throw resolutionFailed(dependency, version.getExceptions());
+                throw withCauses(resolutionFailed(dependency), version.getExceptions());
             }
 
             final String highestVersion = version.getHighestVersion().toString();
@@ -281,9 +281,9 @@ public class MavenPluginDownloader implements Closeable {
         } catch (ArtifactResolutionException e) {
             List<Exception> exceptions = e.getResults().stream().flatMap(result -> result.getExceptions().stream()).toList();
             if (isAbsentFromEveryRepository(exceptions)) {
-                throw notFound(dependency, repositories, "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).", List.of(e));
+                throw new InvalidException(dependency, "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories)), e);
             }
-            throw resolutionFailed(dependency, e);
+            throw withCauses(resolutionFailed(dependency), List.of(e));
         } catch (VersionRangeResolutionException e) {
             // The Maven version range resolver only throws when the version constraint cannot be parsed.
             throw new InvalidException(dependency, "Plugin artifact `%s` has an invalid version or version range.".formatted(dependency), e);
@@ -306,22 +306,21 @@ public class MavenPluginDownloader implements Closeable {
     }
 
     // Names repositories by id only, since a configured URL may embed credentials.
-    private static InvalidException notFound(final String dependency, final List<RemoteRepository> repositories, final String message, final List<Exception> causes) {
-        String fullMessage = repositories.isEmpty()
-            ? "Plugin artifact `%s` was not found, since no Maven repository is configured.".formatted(dependency)
-            : message.formatted(dependency, repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", ")));
-        InvalidException exception = new InvalidException(dependency, fullMessage, causes.isEmpty() ? null : causes.getFirst());
-        causes.stream().skip(1).forEach(exception::addSuppressed);
-        return exception;
+    private static String repositoryIds(final List<RemoteRepository> repositories) {
+        return repositories.isEmpty()
+            ? "none"
+            : repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", "));
     }
 
-    private static KestraRuntimeException resolutionFailed(final String dependency, final Exception cause) {
-        return new KestraRuntimeException("Failed to resolve dependency '%s'.".formatted(dependency), cause);
+    private static KestraRuntimeException resolutionFailed(final String dependency) {
+        return new KestraRuntimeException("Failed to resolve plugin artifact `%s`. Check that the configured Maven repositories are reachable and that their credentials are valid.".formatted(dependency));
     }
 
-    private static KestraRuntimeException resolutionFailed(final String dependency, final List<Exception> causes) {
-        KestraRuntimeException exception = resolutionFailed(dependency, causes.getFirst());
-        causes.stream().skip(1).forEach(exception::addSuppressed);
+    private static <T extends RuntimeException> T withCauses(final T exception, final List<Exception> causes) {
+        if (!causes.isEmpty()) {
+            exception.initCause(causes.getFirst());
+            causes.stream().skip(1).forEach(exception::addSuppressed);
+        }
         return exception;
     }
 

@@ -56,6 +56,7 @@
     "yaml": "^2.8.2"
   },
   "dependencies": {
+    "@kestra-io/plumage": "*",
     "dayjs": "^1.11.23",
     "echarts": ">=6.0.0",
     "element-plus": ">=2.13.5",

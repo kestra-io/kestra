@@ -1464,11 +1464,13 @@
           "fields": {
             "app_font_size": "App-Schriftgröße",
             "color_mode": "Farbmodus",
+            "editor_dark_theme": "Editor-Farbschema im dunklen Modus",
             "editor_folding_stratgy": "Automatisches Code-Folding im Editor",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
             "editor_hover_description": "Für die Beschreibung mit der Maus über die Eigenschaft fahren",
             "editor_pebble_hover": "Fahre über die Pebble-Referenz, um ihre Definition zu sehen",
+            "editor_light_theme": "Editor-Farbschema im hellen Modus",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
             "environment_name_tooltip": "Dieser Umgebungsname wird aus der Konfiguration festgelegt, kann jedoch geändert werden.",
@@ -1492,6 +1494,8 @@
             "editor_folding_stratgy": "Lange YAML-Blöcke beim Öffnen eines Flows standardmäßig einklappen.",
             "editor_hover_description": "Eigenschaftsbeschreibungen im Editor beim Hovern anzeigen.",
             "editor_pebble_hover": "Zeige die Definition und Docs eines Input, Output, einer Variable, eines Label oder einer Trigger-Variable an, wenn du mit der Maus über die Pebble-Referenz im Flow-Editor fährst.",
+            "editor_dark_theme": "Syntaxfarben des Code-Editors, wenn der Farbmodus Dunkel 1.0 oder Dunkel 2.0 ist.",
+            "editor_light_theme": "Syntaxfarben des Code-Editors, wenn der Farbmodus Hell ist.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
             "environment_color": "Akzentfarbe für die aktuelle Umgebung in der Navigation.",
             "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche."
@@ -1500,6 +1504,9 @@
             "small": "Klein",
             "medium": "Mittel",
             "large": "Groß"
+          },
+          "editor_theme_options": {
+            "match_app": "Dem Farbmodus der App folgen"
           }
         },
         "localization": {

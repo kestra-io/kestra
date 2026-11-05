@@ -3,7 +3,7 @@ import {useI18n} from "vue-i18n"
 import {useRouter} from "vue-router"
 import {usePluginsStore} from "../stores/plugins"
 import {useFlowStore} from "../stores/flow"
-import {useTheme} from "./useTheme"
+import {useCodeTheme} from "./useTheme"
 import type {editor as monacoEditor} from "monaco-editor/editor/editor.api"
 
 export function useEditorBindings() {
@@ -13,7 +13,7 @@ export function useEditorBindings() {
     const router = useRouter()
 
     return reactive({
-        theme: useTheme(),
+        theme: useCodeTheme(),
         loadTaskIcon: pluginsStore.loadIcon,
         // Imported here rather than at module scope: forty-odd components use
         // these bindings, and statically this put Monaco on all of their graphs.

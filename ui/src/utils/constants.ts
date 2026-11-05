@@ -62,6 +62,8 @@ export const storageKeys = {
     LOGS_FONT_SIZE: "logsFontSize",
     EDITOR_FONT_FAMILY: "editorFontFamily",
     EDITOR_FONT_SIZE: "editorFontSize",
+    EDITOR_DARK_THEME: "editorDarkTheme",
+    EDITOR_LIGHT_THEME: "editorLightTheme",
     AUTOFOLD_TEXT_EDITOR: "autofoldTextEditor",
     HOVER_TEXT_EDITOR: "hoverTextEditor",
     PEBBLE_HOVER: "pebbleHover",

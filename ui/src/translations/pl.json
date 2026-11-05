@@ -1464,11 +1464,13 @@
           "fields": {
             "app_font_size": "Rozmiar czcionki aplikacji",
             "color_mode": "Tryb kolorów",
+            "editor_dark_theme": "Motyw edytora w trybie ciemnym",
             "editor_folding_stratgy": "Automatyczne zwijanie kodu w edytorze",
             "editor_font_family": "Rodzina czcionki edytora",
             "editor_font_size": "Rozmiar czcionki edytora",
             "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
             "editor_pebble_hover": "Najedź kursorem na referencję Pebble, aby zobaczyć jej definicję",
+            "editor_light_theme": "Motyw edytora w trybie jasnym",
             "environment_color": "Kolor środowiska",
             "environment_name": "Nazwa środowiska",
             "environment_name_tooltip": "Nazwa tego środowiska jest ustawiona w konfiguracji, ale można ją zmienić.",
@@ -1492,6 +1494,8 @@
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML przy otwieraniu Flow.",
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
             "editor_pebble_hover": "Pokaż definicję i dokumentację Inputa, Outputa, zmiennej, etykiety lub zmiennej Triggera po najechaniu kursorem na jej odwołanie Pebble w edytorze Flow.",
+            "editor_dark_theme": "Kolory składni edytora kodu, gdy tryb kolorów to Dark 1.0 lub Dark 2.0.",
+            "editor_light_theme": "Kolory składni edytora kodu, gdy tryb kolorów to Jasny.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu."
@@ -1500,6 +1504,9 @@
             "small": "Mały",
             "medium": "Średni",
             "large": "Duży"
+          },
+          "editor_theme_options": {
+            "match_app": "Zgodnie z motywem aplikacji"
           }
         },
         "localization": {

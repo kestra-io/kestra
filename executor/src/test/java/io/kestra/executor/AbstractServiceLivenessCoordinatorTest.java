@@ -30,9 +30,9 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
@@ -485,8 +485,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerQueueId) {
-        WorkerSelector workerSelector = workerQueueId != null
-            ? new WorkerSelector(java.util.List.of(workerQueueId), null)
+        FlowWorkerSelector workerSelector = workerQueueId != null
+            ? new FlowWorkerSelector(java.util.List.of(workerQueueId), null)
             : null;
         // signalLatch satisfies the @NotNull countDownLatchKey constraint; not used in assertions.
         CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
@@ -577,7 +577,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .type(SleepTrigger.class.getName())
             .id("unit-test")
             .duration(sleep.toMillis())
-            .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.WorkerSelector(java.util.List.of(workerQueueId), null) : null)
+            .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.FlowWorkerSelector(java.util.List.of(workerQueueId), null) : null)
             .build();
 
         Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);

@@ -15,6 +15,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -1441,8 +1442,8 @@ public class ExecutorService {
                 // Resolve the target Worker Queue for this task
                 Optional<WorkerQueueRouting> routing;
                 try {
-                    routing = workerQueueService.resolveWorkerQueueForJob(executor.getFlow(), workerTask);
-                } catch (NoMatchingWorkerQueueException e) {
+                    routing = workerQueueService.resolveWorkerQueueForJob(executor.getFlow(), workerTask, runContext);
+                } catch (NoMatchingWorkerQueueException | IllegalVariableEvaluationException e) {
                     runContext.logger()
                         .error(e.getMessage(), workerTask.getTaskRun().getId(), e);
                     // fail the task-run because we cannot determine the target Worker Queue

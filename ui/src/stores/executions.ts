@@ -31,7 +31,8 @@ import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
-import {handled} from "../utils/kestraHttp"
+import {handled, sseData} from "../utils/kestraHttp"
+import {toFlowGraph} from "../utils/flowGraph"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
@@ -78,6 +79,8 @@ export interface InputMetaData {
     allowCustomValue?: boolean;
     min?: number;
     max?: number;
+    after?: string;
+    before?: string;
     allowedFileExtensions?: string[];
     accept?: string;
     prefill?: unknown;
@@ -146,6 +149,11 @@ type GraphOptions = {
 
 type FlowGraphNode = FlowGraph["nodes"][number]
 
+/** The generated downloads are typed as a `Blob` whatever `parseAs` asks for, while `parseAs: "text"` yields the string itself. */
+async function asText(body: Blob | string): Promise<string> {
+    return typeof body === "string" ? body : body.text()
+}
+
 /** Renders an ION preview of scalar rows as text, a workaround for https://github.com/kestra-io/plugin-aws/issues/456. */
 export function normalizeFilePreview(data: FilePreview): FilePreview {
     const rows = data?.content
@@ -210,8 +218,8 @@ export const useExecutionsStore = defineStore("executions", () => {
     const axios = useClient()
     const route = useRoute()
 
-    const restartExecution = (options: { executionId: string }) => {
-        return ExecutionsAPI.restartExecution({executionId: options.executionId}) as unknown as Promise<Execution>
+    const restartExecution = (options: { executionId: string }): Promise<Execution> => {
+        return ExecutionsAPI.restartExecution({executionId: options.executionId})
     }
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
@@ -246,13 +254,13 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(options), newStatus: options.newStatus})
     }
 
-    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
+    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }): Promise<Execution> => {
         return ExecutionsAPI.replayExecution({
             executionId: options.executionId,
             taskRunId: options.taskRunId,
             revision: options.revision,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-        }) as unknown as Promise<Execution>
+        })
     }
 
     const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
@@ -273,16 +281,16 @@ export const useExecutionsStore = defineStore("executions", () => {
             }).then(response => response.data)
     }
 
-    const changeExecutionStatus = (options: { executionId: string; state: string }) => {
-        return ExecutionsAPI.updateExecutionStatus({executionId: options.executionId, status: options.state as Parameters<typeof ExecutionsAPI.updateExecutionStatus>[0]["status"]}) as unknown as Promise<Execution>
+    const changeExecutionStatus = (options: { executionId: string; state: string }): Promise<Execution> => {
+        return ExecutionsAPI.updateExecutionStatus({executionId: options.executionId, status: options.state as Parameters<typeof ExecutionsAPI.updateExecutionStatus>[0]["status"]})
     }
 
-    const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
+    const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }): Promise<Execution> => {
         return ExecutionsAPI.updateTaskRunState({
             executionId: options.executionId,
             taskRunId: options.taskRunId!,
             state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
-        }) as unknown as Promise<Execution>
+        })
     }
 
     const interrupt = (options: { executionId: string; taskRunId: string; state: string }) => {
@@ -298,8 +306,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return updated
     }
 
-    const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return ExecutionsAPI.killExecution({executionId: options.id, isOnKillCascade: options.isOnKillCascade}) as unknown as Promise<Execution>
+    const kill = (options: { id: string; isOnKillCascade?: boolean }): Promise<Execution> => {
+        return ExecutionsAPI.killExecution({executionId: options.id, isOnKillCascade: options.isOnKillCascade})
     }
 
     const bulkKill = (options: { executionsId: string[] }) => {
@@ -367,15 +375,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         }).then(response => response.data)
     }
 
-    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }): Promise<Execution> => {
         return ExecutionsAPI.resumeExecutionFromBreakpoint({
             executionId: options.id,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-        }) as unknown as Promise<Execution>
+        })
     }
 
-    const pause = (options: { id: string }) => {
-        return ExecutionsAPI.pauseExecution({executionId: options.id}) as unknown as Promise<Execution>
+    const pause = (options: { id: string }): Promise<Execution> => {
+        return ExecutionsAPI.pauseExecution({executionId: options.id})
     }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
@@ -421,7 +429,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
             if (options.commit !== false && search === latestExecutionsSearch) {
-                executions.value = response.results as unknown as Execution[]
+                executions.value = response.results
                 total.value = response.total ?? 0
             }
 
@@ -471,6 +479,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.createExecution({
             namespace: options.namespace,
             id: options.id,
+            // The endpoint reads the inputs as multipart parts keyed by input id, which the generated body type (an array of blobs) cannot express.
             body: options.formData as unknown as Parameters<typeof ExecutionsAPI.createExecution>[0]["body"],
             labels: options.labels ?? [],
             scheduleDate: options.scheduleDate,
@@ -590,9 +599,8 @@ export const useExecutionsStore = defineStore("executions", () => {
             },
         )
             .then(async ({stream}) => {
-                for await (const event of stream) {
+                for await (const executionEvent of sseData(stream)) {
                     if (closed) break
-                    const executionEvent = event as unknown as Execution
                     if (!executionEvent.state) continue
                     handlers.onExecution(executionEvent)
                 }
@@ -694,7 +702,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** The whole file as text, unlike `filePreview` which caps rows and bytes, so an HTML preview gets a valid document. */
     const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
-        return ExecutionsAPI.downloadFileFromExecution(options, {parseAs: "text"}) as unknown as Promise<string>
+        return ExecutionsAPI.downloadFileFromExecution(options, {parseAs: "text"}).then(asText)
     }
 
     const setLabels = (options: { executionId: string; labels: Label[] }) => {
@@ -709,8 +717,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.setLabelsOnTerminatedExecutionsByIds(options)
     }
 
-    const unqueue = (options: { id: string; state: string }) => {
-        return ExecutionsAPI.unqueueExecution({executionId: options.id, state: options.state as Parameters<typeof ExecutionsAPI.unqueueExecution>[0]["state"]}) as unknown as Promise<Execution>
+    const unqueue = (options: { id: string; state: string }): Promise<Execution> => {
+        return ExecutionsAPI.unqueueExecution({executionId: options.id, state: options.state as Parameters<typeof ExecutionsAPI.unqueueExecution>[0]["state"]})
     }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: StateType }) => {
@@ -724,8 +732,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const forceRun = (options: { id: string }) => {
-        return ExecutionsAPI.forceRunExecution({executionId: options.id}) as unknown as Promise<Execution>
+    const forceRun = (options: { id: string }): Promise<Execution> => {
+        return ExecutionsAPI.forceRunExecution({executionId: options.id})
     }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
@@ -755,7 +763,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const fetchGraph = (options: GraphOptions): Promise<FlowGraph> => {
-        return ExecutionsAPI.executionFlowGraph({executionId: options.id, subflows: options.params?.subflows}, {withCredentials: true}) as unknown as Promise<FlowGraph>
+        return ExecutionsAPI.executionFlowGraph({executionId: options.id, subflows: options.params?.subflows}, {withCredentials: true}).then(toFlowGraph)
     }
 
     function loadGraph(options: GraphOptions) {
@@ -947,7 +955,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
         return ExecutionsAPI.searchExecutionsByFlowId({namespace, flowId}).then(data => {
-            executions.value = data.results as unknown as Execution[]
+            executions.value = data.results
             total.value = data.total ?? 0
             return data
         })

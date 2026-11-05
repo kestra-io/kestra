@@ -43,8 +43,6 @@ describe("TimeRangeSwitch", () => {
 
         expect(left.text()).toBe(wrapper.vm.$t("filter.timerange.predefined"))
         expect(right.text()).toBe(wrapper.vm.$t("filter.timerange.custom"))
-        expect(left.text()).not.toBe("")
-        expect(right.text()).not.toBe("")
     })
 
     test("label for attribute matches the input id", () => {

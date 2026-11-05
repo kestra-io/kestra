@@ -2038,7 +2038,6 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
-      "task_details": "Detalles de la task",
       "toggle_pebble": "Alternar editor de Pebble",
       "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition",
       "adding": "+ Agregar un {what}",

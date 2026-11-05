@@ -2038,7 +2038,6 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
-      "task_details": "작업 세부 정보",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",

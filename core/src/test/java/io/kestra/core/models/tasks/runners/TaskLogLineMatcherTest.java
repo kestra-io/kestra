@@ -449,12 +449,12 @@ class TaskLogLineMatcherTest {
     /**
      * The fixture is a verbatim {@code --log-dir} recording of the kotlp release this build embeds,
      * invoked as
-     * 
+     *
      * <pre>{@code
      * kotlp --log-dir . --interval 800 --service-name my-program -- \
      *   /bin/sh -c 'echo hello from file; dd if=/dev/zero of=payload.bin bs=1M count=64 2>/dev/null; sync; sleep 1; echo something went wrong >&2'
      * }</pre>
-     * 
+     *
      * with only {@code host.name} replaced, followed by three lines the parser must skip: a blank
      * one, one truncated mid-object as file rotation would leave it, and a well-formed JSON object
      * holding no OTLP section. Those three are appended rather than recorded — kotlp does not

@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.channels.Channels;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
@@ -13,6 +14,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
@@ -26,6 +28,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
@@ -818,12 +821,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     static void extractOutputFiles(TarArchiveInputStream tar, RunContext runContext, Set<Path> announcedFiles) throws IOException {
         Set<Path> pendingFiles = new HashSet<>(announcedFiles);
         Path staging = null;
-        try (var root = FilesService.openSecureDirectory(runContext.workingDir().path())) {
-            staging = Files.createTempDirectory(runContext.workingDir().path().toAbsolutePath().normalize().getParent(), "kestra-extract-");
-            try (var staged = FilesService.openSecureDirectory(staging)) {
+        boolean dynamic = !announcedFiles.isEmpty();
+        try (var root = dynamic ? FilesService.openSecureDirectory(runContext.workingDir().path()) : null) {
+            if (dynamic) {
+                staging = Files.createTempDirectory(runContext.workingDir().path().toAbsolutePath().normalize().getParent(), "kestra-extract-");
+            }
+            try (var staged = dynamic ? FilesService.openSecureDirectory(staging) : null) {
                 TarArchiveEntry entry;
                 while ((entry = tar.getNextEntry()) != null) {
-                    Path relative = Path.of(entry.getName().substring(runContext.workingDir().id().length() + 1));
+                    Path relative = runContext.workingDir().path().getFileSystem().getPath(entry.getName().substring(runContext.workingDir().id().length() + 1));
                     if (relative.isAbsolute()) {
                         throw new IOException("Container output paths must be relative.");
                     }
@@ -836,18 +842,35 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     if (relative.toString().isEmpty()) {
                         continue;
                     }
-                    if (entry.isSymbolicLink() || entry.isLink()) {
-                        Path link = relative;
-                        if (announcedFiles.stream().anyMatch(path -> path.startsWith(link))) {
-                            throw new IOException("Announced output files must not use archive links: '%s'.".formatted(relative));
+                    boolean directory = entry.isDirectory() && entry.getLinkFlag() == TarConstants.LF_DIR;
+                    boolean regular = entry.getLinkFlag() == TarConstants.LF_NORMAL || entry.getLinkFlag() == TarConstants.LF_OLDNORM ||
+                        entry.getLinkFlag() == TarConstants.LF_CONTIG || entry.isSparse();
+                    if (!directory && !regular) {
+                        Path unsupported = relative;
+                        if (announcedFiles.stream().anyMatch(path -> path.startsWith(unsupported))) {
+                            throw new IOException("Announced output files must not use non-regular archive entries: '%s'.".formatted(relative));
                         }
                         continue;
                     }
-                    boolean directory = entry.isDirectory();
-                    if (!directory && !entry.isFile()) {
-                        throw new IOException("Container output '%s' is not a regular file or directory.".formatted(relative));
+                    if (directory && announcedFiles.contains(relative)) {
+                        throw new IOException("Announced output file '%s' must be a regular archive file.".formatted(relative));
                     }
-                    extractEntry(tar, entry, directory, root, relative, staged, staging);
+                    if (dynamic) {
+                        extractEntry(tar, entry, directory, root, relative, staged, staging);
+                    } else {
+                        Path target = runContext.workingDir().path().resolve(relative);
+                        if (directory) {
+                            Files.createDirectories(target);
+                        } else {
+                            Files.createDirectories(target.getParent());
+                            Files.copy(tar, target, StandardCopyOption.REPLACE_EXISTING);
+                            try {
+                                Files.setPosixFilePermissions(target, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                            } catch (UnsupportedOperationException | IOException ignored) {
+                                // Preserve ordinary downloads on filesystems without POSIX permissions.
+                            }
+                        }
+                    }
                     if (!directory) {
                         pendingFiles.remove(relative);
                     }
@@ -862,7 +885,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
                         Files.delete(path);
                     }
-                } catch (IOException | java.io.UncheckedIOException e) {
+                } catch (IOException | UncheckedIOException e) {
                     runContext.logger().warn("Unable to remove output extraction staging directory '{}'", staging, e);
                 }
             }

@@ -84,6 +84,26 @@ public abstract class FilesService {
         return uploaded;
     }
 
+    /** Captures pre-command paths and physical identities, including files outside inputFiles declarations. */
+    public static Map<Path, Object> stagedFiles(Path workingDir) throws IOException {
+        Map<Path, Object> staged = new HashMap<>();
+        try (var paths = Files.walk(workingDir)) {
+            for (Path path : paths.toList()) {
+                var attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                if (!attributes.isDirectory()) {
+                    staged.put(
+                        path.toAbsolutePath().normalize(), attributes.isSymbolicLink() && Files.exists(path)
+                            ? Files.readAttributes(path, BasicFileAttributes.class).fileKey()
+                            : attributes.fileKey()
+                    );
+                }
+            }
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+        return staged;
+    }
+
     /**
      * Collects all output candidates before uploading; uploaded retains completed files if collection fails.
      * Output-directory keys are added first, then working-directory keys take precedence.
@@ -91,6 +111,12 @@ public abstract class FilesService {
      */
     public static void outputFiles(RunContext runContext, List<String> outputs, Collection<String> announced,
         Path outputDir, Map<String, URI> uploaded) throws IOException, IllegalVariableEvaluationException {
+        outputFiles(runContext, outputs, announced, outputDir, uploaded, Map.of());
+    }
+
+    /** Runtime announcements may not publish pre-command paths or aliases of their physical files. */
+    public static void outputFiles(RunContext runContext, List<String> outputs, Collection<String> announced,
+        Path outputDir, Map<String, URI> uploaded, Map<Path, Object> staged) throws IOException, IllegalVariableEvaluationException {
         Set<Path> dynamicFiles = new LinkedHashSet<>();
         Path workingDir = runContext.workingDir().path();
         for (String filename : announced) {
@@ -121,12 +147,22 @@ public abstract class FilesService {
         List<String> renderedOutputs = outputs != null ? runContext.render(outputs) : null;
         runContext.workingDir().findAllFilesMatching(renderedOutputs).forEach(path -> matchingFiles.add(path.normalize()));
         if (dynamicFiles.isEmpty()) {
-            uploadOutputFiles(runContext, directoryFiles, matchingFiles, dynamicFiles, null, uploaded);
+            uploadOutputFiles(runContext, directoryFiles, matchingFiles, dynamicFiles, null, uploaded, staged);
             return;
         }
 
         try (var directory = openSecureDirectory(workingDir)) {
-            uploadOutputFiles(runContext, directoryFiles, matchingFiles, dynamicFiles, directory, uploaded);
+            for (Path path : dynamicFiles) {
+                BasicFileAttributes attributes;
+                try {
+                    attributes = announcedAttributes(directory, workingDir.normalize().relativize(path));
+                } catch (IOException e) {
+                    // Preserve existing partial collection when an announced file is missing or invalid.
+                    continue;
+                }
+                rejectStagedFile(path, attributes, staged);
+            }
+            uploadOutputFiles(runContext, directoryFiles, matchingFiles, dynamicFiles, directory, uploaded, staged);
         }
     }
 
@@ -142,7 +178,7 @@ public abstract class FilesService {
     }
 
     private static void uploadOutputFiles(RunContext runContext, Map<String, Path> directoryFiles, Set<Path> matchingFiles,
-        Set<Path> dynamicFiles, SecureDirectoryStream<Path> directory, Map<String, URI> uploaded) throws IOException {
+        Set<Path> dynamicFiles, SecureDirectoryStream<Path> directory, Map<String, URI> uploaded, Map<Path, Object> staged) throws IOException {
         List<OutputFile> candidates = new ArrayList<>();
         directoryFiles.forEach((key, path) -> candidates.add(new OutputFile(path.normalize(), key, key)));
         matchingFiles.forEach(path -> candidates.add(new OutputFile(path, runContext.workingDir().path().normalize().relativize(path).toString(), resolveUniqueNameForFile(path))));
@@ -188,7 +224,7 @@ public abstract class FilesService {
             URI uri = persisted.get(identity);
             if (uri == null) {
                 Path source = sources.get(identity);
-                uri = uploadOutputFile(runContext, source, candidate.storageName(), dynamicFiles, directory);
+                uri = uploadOutputFile(runContext, source, candidate.storageName(), dynamicFiles, directory, staged);
                 persisted.put(identity, uri);
             }
             uploaded.put(candidate.key(), uri);
@@ -241,23 +277,25 @@ public abstract class FilesService {
     }
 
     private static URI uploadOutputFile(RunContext runContext, Path path, String storageName, Set<Path> dynamicFiles,
-        SecureDirectoryStream<Path> directory) throws IOException {
+        SecureDirectoryStream<Path> directory, Map<Path, Object> staged) throws IOException {
         if (!dynamicFiles.contains(path)) {
             return runContext.storage().putFile(path.toFile(), storageName);
         }
-        return uploadAnnouncedFile(runContext, directory, runContext.workingDir().path().normalize().relativize(path), storageName);
+        return uploadAnnouncedFile(runContext, directory, runContext.workingDir().path().normalize().relativize(path), storageName, staged, path);
     }
 
-    private static URI uploadAnnouncedFile(RunContext runContext, SecureDirectoryStream<Path> directory, Path relative, String storageName) throws IOException {
+    private static URI uploadAnnouncedFile(RunContext runContext, SecureDirectoryStream<Path> directory, Path relative, String storageName, Map<Path, Object> staged, Path path)
+        throws IOException {
         if (relative.getNameCount() > 1) {
             try (var child = directory.newDirectoryStream(relative.getName(0), LinkOption.NOFOLLOW_LINKS)) {
-                return uploadAnnouncedFile(runContext, child, relative.subpath(1, relative.getNameCount()), storageName);
+                return uploadAnnouncedFile(runContext, child, relative.subpath(1, relative.getNameCount()), storageName, staged, path);
             }
         }
         var attributes = directory.getFileAttributeView(relative, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
         if (!attributes.isRegularFile()) {
             throw new IOException("Announced output file '%s' must be a regular file and must not use symbolic links.".formatted(relative));
         }
+        rejectStagedFile(path, attributes, staged);
         URI uri;
         try (
             var channel = directory.newByteChannel(relative, Set.of(StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS));
@@ -271,6 +309,15 @@ public abstract class FilesService {
             runContext.logger().warn("Failed to delete temporary output file '{}'", relative, e);
         }
         return uri;
+    }
+
+    private static void rejectStagedFile(Path path, BasicFileAttributes attributes, Map<Path, Object> staged) throws IOException {
+        if (staged.containsKey(path.toAbsolutePath().normalize()) || attributes.fileKey() != null && staged.containsValue(attributes.fileKey())) {
+            throw new IOException("Announced output file '%s' was staged before command execution.".formatted(path.getFileName()));
+        }
+        if (!staged.isEmpty() && (attributes.fileKey() == null || staged.containsValue(null))) {
+            throw new IOException("Announced output files require filesystem identities to exclude staged files.");
+        }
     }
 
     private static String resolveUniqueNameForFile(final Path path) {

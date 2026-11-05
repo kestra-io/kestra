@@ -121,6 +121,21 @@ class FilesServiceTest {
     }
 
     @Test
+    void shouldRejectAnnouncementsWhenStagedFileIdentityIsUnavailable() throws Exception {
+        var context = Mockito.spy(runContextFactory.of());
+        Storage storage = Mockito.mock(Storage.class);
+        Mockito.doReturn(storage).when(context).storage();
+        var generated = Files.writeString(context.workingDir().path().resolve("generated.ion"), "{id:1}");
+        Map<Path, Object> staged = new java.util.HashMap<>();
+        staged.put(context.workingDir().path().resolve("credential.txt"), null);
+
+        assertThatThrownBy(() -> FilesService.outputFiles(context, List.of(), List.of("generated.ion"), null, new java.util.HashMap<>(), staged))
+            .isInstanceOf(IOException.class).hasMessageContaining("filesystem identities");
+        Mockito.verifyNoInteractions(storage);
+        assertThat(Files.exists(generated)).isTrue();
+    }
+
+    @Test
     void shouldCollectAnnouncedFilesWithAnUnnormalizedWorkingDirectory(@TempDir Path tempDir) throws Exception {
         Files.createDirectories(tempDir.resolve("nested"));
         var workingDir = new LocalWorkingDir(tempDir.resolve("nested/.."), "task");

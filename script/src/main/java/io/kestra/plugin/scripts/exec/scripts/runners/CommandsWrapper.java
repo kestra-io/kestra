@@ -287,10 +287,11 @@ public class CommandsWrapper implements TaskCommands {
 
         ScriptOutput.ScriptOutputBuilder<?, ?> scriptOutputBuilder = ScriptOutput.builder();
 
+        Map<Path, Object> stagedFiles = Map.of();
         Map<String, URI> collectedFiles = new HashMap<>();
         try {
+            stagedFiles = FilesService.stagedFiles(this.workingDirectory);
             TaskRunnerResult<T> taskRunnerResult = (TaskRunnerResult<T>) taskRunner.run(taskRunnerRunContext, this, this.outputFiles);
-            collectOutputFiles(taskRunnerRunContext, collectedFiles);
             scriptOutputBuilder.exitCode(taskRunnerResult.getExitCode())
                 .outputFiles(collectedFiles)
                 .taskRunner(taskRunnerResult.getDetails());
@@ -302,11 +303,20 @@ public class CommandsWrapper implements TaskCommands {
                     .vars(taskRunnerResult.getLogConsumer().getOutputs());
             }
 
+            try {
+                collectOutputFiles(taskRunnerRunContext, collectedFiles, stagedFiles);
+            } catch (IOException | IllegalVariableEvaluationException e) {
+                throw new RunnableTaskException(
+                    "Command completed with exit code %d, but output file collection failed: %s. Check the output paths and task runner configuration."
+                        .formatted(taskRunnerResult.getExitCode(), e.getMessage()),
+                    e, scriptOutputBuilder.build()
+                );
+            }
             return scriptOutputBuilder.build();
         } catch (TaskException e) {
             try {
                 if (e.getOutputFilesException() == null) {
-                    collectOutputFiles(taskRunnerRunContext, collectedFiles);
+                    collectOutputFiles(taskRunnerRunContext, collectedFiles, stagedFiles);
                 }
             } catch (IOException | IllegalVariableEvaluationException collectionFailure) {
                 e.addSuppressed(collectionFailure);
@@ -342,7 +352,7 @@ public class CommandsWrapper implements TaskCommands {
         }
     }
 
-    private void collectOutputFiles(RunContext taskRunnerRunContext, Map<String, URI> uploaded) throws IOException, IllegalVariableEvaluationException {
+    private void collectOutputFiles(RunContext taskRunnerRunContext, Map<String, URI> uploaded, Map<Path, Object> stagedFiles) throws IOException, IllegalVariableEvaluationException {
         if (!this.logConsumer.getOutputFiles().isEmpty()) {
             // shortcut: only runners with verified dynamic file transfer are supported; extend after integration coverage.
             boolean supported = taskRunner instanceof Process ||
@@ -355,7 +365,7 @@ public class CommandsWrapper implements TaskCommands {
         }
         FilesService.outputFiles(
             taskRunnerRunContext, this.outputFiles, this.logConsumer.getOutputFiles(),
-            this.outputDirectoryEnabled() ? this.getOutputDirectory() : null, uploaded
+            this.outputDirectoryEnabled() ? this.getOutputDirectory() : null, uploaded, stagedFiles
         );
     }
 

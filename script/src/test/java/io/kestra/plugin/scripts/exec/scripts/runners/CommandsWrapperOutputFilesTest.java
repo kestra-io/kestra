@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.exec.scripts.runners;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +58,60 @@ class CommandsWrapperOutputFilesTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @ParameterizedTest
+    @ValueSource(strings = { "direct", "normalized", "hardlink", "renamed", "case", "worker", "replaced" })
+    void shouldRejectAnnouncedStagedInputsWithoutUploadingOrDeletingThem(String alias) throws Exception {
+        var context = Mockito.spy(TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of()));
+        var storage = Mockito.mock(io.kestra.core.storages.Storage.class);
+        Mockito.doReturn(storage).when(context).storage();
+        String sensitive = java.util.UUID.randomUUID().toString();
+        String command = switch (alias) {
+            case "normalized" -> "echo '::{\"outputFiles\":[\"./credential.txt\"]}::'";
+            case "hardlink" -> "ln credential.txt alias.ion; echo '::{\"outputFiles\":[\"alias.ion\"]}::'";
+            case "renamed" -> "mv credential.txt alias.ion; echo '::{\"outputFiles\":[\"alias.ion\"]}::'";
+            case "replaced" -> "rm credential.txt; printf replacement > credential.txt; echo '::{\"outputFiles\":[\"credential.txt\"]}::'";
+            case "case" -> "mv credential.txt CREDENTIAL.TXT; echo '::{\"outputFiles\":[\"CREDENTIAL.TXT\"]}::'";
+            default -> "echo '::{\"outputFiles\":[\"credential.txt\"]}::'";
+        };
+        if (alias.equals("worker")) {
+            Files.writeString(context.workingDir().path().resolve("credential.txt"), sensitive);
+        }
+        var commands = new CommandsWrapper(context).withTaskRunner(Process.instance())
+            .withInputFiles(alias.equals("worker") ? null : Map.of("credential.txt", sensitive))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of(command)));
+
+        assertThatThrownBy(commands::run).isInstanceOf(RunnableTaskException.class).hasCauseInstanceOf(IOException.class).hasMessageContaining("staged before command execution");
+        Mockito.verifyNoInteractions(storage);
+        String remaining = alias.equals("renamed") ? "alias.ion" : alias.equals("case") ? "CREDENTIAL.TXT" : "credential.txt";
+        assertThat(Files.exists(context.workingDir().path().resolve(remaining))).isTrue();
+        assertThat(Files.readString(context.workingDir().path().resolve(remaining)).equals(alias.equals("replaced") ? "replacement" : sensitive)).isTrue();
+        if (alias.equals("hardlink")) {
+            assertThat(Files.exists(context.workingDir().path().resolve("alias.ion"))).isTrue();
+        }
+    }
+
+    @Test
+    void shouldAllowGeneratedFilesAndExplicitlyConfiguredStagedInputs() throws Exception {
+        var context = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        var output = new CommandsWrapper(context).withTaskRunner(Process.instance())
+            .withInputFiles(Map.of("input.txt", "explicit input"))
+            .withOutputFiles(List.of("input.txt"))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("""
+                filename=$(mktemp generated-XXXXXX.ion)
+                printf '{id:1}' > "$filename"
+                printf '::{"outputFiles":["%s"]}::\n' "$filename"
+                """)))
+            .run();
+        assertThat(output.getOutputFiles()).hasSize(2).containsKey("input.txt");
+        var generated = output.getOutputFiles().entrySet().stream().filter(entry -> !entry.getKey().equals("input.txt")).findFirst().orElseThrow();
+        try (var input = context.storage().getFile(generated.getValue())) {
+            assertThat(new String(input.readAllBytes())).isEqualTo("{id:1}");
+        }
+        assertThat(Files.exists(context.workingDir().path().resolve("input.txt"))).isFalse();
+    }
 
     @Test
     void shouldPersistAnnouncedAndConfiguredFilesWithoutMutatingConfiguration() throws Exception {
@@ -116,7 +171,6 @@ class CommandsWrapperOutputFilesTest {
     void shouldTreatAnnouncedPathsAsLiteralFiles() throws Exception {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         String filename = "{{1+1}}.ion";
-        Files.writeString(runContext.workingDir().path().resolve(filename), "{id:1}");
         var logConsumer = new DefaultLogConsumer(runContext);
         logConsumer.accept("::{\"outputFiles\":[\"" + filename + "\"]}::", false);
 
@@ -124,10 +178,39 @@ class CommandsWrapperOutputFilesTest {
             .withTaskRunner(Process.instance())
             .withLogConsumer(logConsumer)
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
-            .withCommands(Property.ofValue(List.of("true")))
+            .withCommands(Property.ofValue(List.of("filename='{''{1+1}''}.ion'; printf '{id:1}' > \"$filename\"")))
             .run();
 
         assertThat(output.getOutputFiles()).containsOnlyKeys(filename);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing.ion", "directory.ion" })
+    void shouldPreserveSuccessfulCommandMetadataWhenCollectionFails(String filename) throws Exception {
+        var context = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        var commands = new CommandsWrapper(context).withTaskRunner(Process.instance()).withEnableOutputDirectory(true)
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")));
+        String directory = commands.getOutputDirectory().getFileName().toString();
+        commands = commands.withCommands(Property.ofValue(List.of("""
+            mkdir directory.ion
+            printf '{id:1}' > '%s/persisted.ion'
+            echo stdout
+            echo diagnostic >&2
+            echo '::{"outputFiles":["%s"],"outputs":{"kept":true}}::'
+            """.formatted(directory, filename))));
+
+        assertThatThrownBy(commands::run).isInstanceOfSatisfying(RunnableTaskException.class, exception ->
+        {
+            assertThat(exception).hasMessageContaining("output file collection failed").hasMessageContaining(filename);
+            assertThat(exception.getCause()).isInstanceOf(IOException.class);
+            var output = (ScriptOutput) exception.getOutput();
+            assertThat(output.getExitCode()).isZero();
+            assertThat(output.getVars()).containsEntry("kept", true);
+            assertThat(output.getStdOutLineCount()).isEqualTo(2);
+            assertThat(output.getStdErrLineCount()).isEqualTo(1);
+            assertThat(output.getOutputFiles()).containsOnlyKeys("persisted.ion");
+            assertThat(context.storage().isFileExist(output.getOutputFiles().get("persisted.ion"))).isTrue();
+        });
     }
 
     @Test
@@ -232,7 +315,7 @@ class CommandsWrapperOutputFilesTest {
                         if (path.equals(directory)) {
                             visited.set(true);
                         } else {
-                            throw new java.io.UncheckedIOException(failure);
+                            throw new UncheckedIOException(failure);
                         }
                     })
             );
@@ -249,7 +332,16 @@ class CommandsWrapperOutputFilesTest {
                     assertThat(output.getOutputFiles()).isEmpty();
                 });
             } else {
-                assertThatThrownBy(commands::run).isSameAs(failure);
+                assertThatThrownBy(commands::run).isInstanceOfSatisfying(RunnableTaskException.class, exception ->
+                {
+                    assertThat(exception.getCause()).isSameAs(failure);
+                    var output = (ScriptOutput) exception.getOutput();
+                    assertThat(output.getExitCode()).isZero();
+                    assertThat(output.getVars()).containsEntry("checkpoint", 1);
+                    assertThat(output.getStdOutLineCount()).isEqualTo(2);
+                    assertThat(output.getStdErrLineCount()).isEqualTo(1);
+                    assertThat(output.getOutputFiles()).isEmpty();
+                });
             }
         }
         assertThat(visited).isTrue();
@@ -274,7 +366,7 @@ class CommandsWrapperOutputFilesTest {
             .withInputFiles(Map.of("record.ion", "stale host input"))
             .withCommands(Property.ofValue(List.of("remote command")));
 
-        assertThatThrownBy(commands::run).isInstanceOf(IOException.class).hasMessageContaining("Dynamic output files");
+        assertThatThrownBy(commands::run).isInstanceOf(RunnableTaskException.class).hasCauseInstanceOf(IOException.class).hasMessageContaining("Dynamic output files");
         assertThat(Files.readString(context.workingDir().path().resolve("record.ion"))).isEqualTo("stale host input");
         var configured = new CommandsWrapper(context).withTaskRunner(runner)
             .withOutputFiles(List.of("record.ion"))
@@ -293,14 +385,26 @@ class CommandsWrapperOutputFilesTest {
         Mockito.doAnswer(invocation ->
         {
             var commands = (CommandsWrapper) invocation.getArgument(1);
-            commands.getLogConsumer().accept("::{\"outputFiles\":[\"record.ion\"]}::", false);
+            commands.getLogConsumer().accept("::{\"outputFiles\":[\"record.ion\"],\"outputs\":{\"kept\":true}}::", false);
+            commands.getLogConsumer().accept("stdout", false);
+            commands.getLogConsumer().accept("diagnostic", true);
             return new TaskRunnerResult<TaskRunnerDetailResult>(0, commands.getLogConsumer());
         }).when(runner).run(Mockito.any(), Mockito.any(), Mockito.any());
         var commands = new CommandsWrapper(context).withTaskRunner(runner)
             .withInputFiles(Map.of("record.ion", "stale"))
             .withCommands(Property.ofValue(List.of("command")));
 
-        assertThatThrownBy(commands::run).isInstanceOf(IOException.class).hasMessageContaining("synchronous Docker runner using VOLUME");
+        assertThatThrownBy(commands::run).isInstanceOfSatisfying(RunnableTaskException.class, exception ->
+        {
+            assertThat(exception).hasMessageContaining("output file collection failed").hasMessageContaining("synchronous Docker runner using VOLUME");
+            assertThat(exception.getCause()).isInstanceOf(IOException.class);
+            var output = (ScriptOutput) exception.getOutput();
+            assertThat(output.getExitCode()).isZero();
+            assertThat(output.getVars()).containsEntry("kept", true);
+            assertThat(output.getStdOutLineCount()).isEqualTo(2);
+            assertThat(output.getStdErrLineCount()).isEqualTo(1);
+            assertThat(output.getOutputFiles()).isEmpty();
+        });
         assertThat(Files.readString(context.workingDir().path().resolve("record.ion"))).isEqualTo("stale");
     }
 
@@ -312,7 +416,7 @@ class CommandsWrapperOutputFilesTest {
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo '::{\"outputFiles\":[null]}::'")));
 
-        assertThatThrownBy(commands::run).isInstanceOf(java.io.IOException.class).hasMessageContaining("must not be null");
+        assertThatThrownBy(commands::run).isInstanceOf(RunnableTaskException.class).hasCauseInstanceOf(IOException.class).hasMessageContaining("must not be null");
     }
 
     @Test

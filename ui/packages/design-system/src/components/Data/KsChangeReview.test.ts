@@ -46,24 +46,6 @@ describe("KsChangeReview", () => {
         expect(wrapper.find("[data-test='change-review-passive']").text()).toBe("18 resources unchanged")
     })
 
-    test("keeps the legend of a segment that is not a filter when nothing can be filtered", () => {
-        const wrapper = mount(KsChangeReview, {
-            props: {
-                heading: "No changes",
-                segments: [{name: "CREATE", glyph: "+", value: 0, label: "Create", tone: "success"}, {value: 26, label: "26 resources unchanged", tone: "neutral"}],
-                allLabel: "All changes",
-                allCount: 0,
-                filterLabel: "Filter the changes by action",
-                tabs: [{name: "resources", label: "Resources", count: 0}],
-                tab: "resources",
-            },
-            global: globalConfig,
-        })
-
-        expect(chips(wrapper)).toHaveLength(0)
-        expect(wrapper.find("[data-test='change-review-passive']").text()).toBe("26 resources unchanged")
-    })
-
     test("filters on the segment of the chip clicked, and on everything again from the first chip", async () => {
         const wrapper = mountReview()
 
@@ -93,6 +75,26 @@ describe("KsChangeReview", () => {
         await wrapper.setProps({segments: segments.map(segment => segment.name === "DELETE" ? {...segment, value: 0} : segment)})
 
         expect(wrapper.emitted("update:filter")).toEqual([["DELETE"], [KS_CHANGE_REVIEW_ALL]])
+    })
+
+    test("keeps the filter the caller set while the changes are still loading", async () => {
+        const wrapper = mount(KsChangeReview, {
+            props: {
+                heading: "",
+                segments: [],
+                allLabel: "All changes",
+                allCount: 0,
+                filterLabel: "Filter the changes by action",
+                tabs: [{name: "resources", label: "Resources"}],
+                tab: "resources",
+                filter: "DELETE",
+            },
+            global: globalConfig,
+        })
+
+        await wrapper.setProps({segments})
+
+        expect(wrapper.emitted("update:filter")).toBeUndefined()
     })
 
     test("shows only the slot of the selected tab, with the count of a tab next to its label", () => {

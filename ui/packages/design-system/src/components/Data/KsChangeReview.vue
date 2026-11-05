@@ -114,6 +114,7 @@
     const passive = computed(() => shownSegments.value.filter(segment => segment.name === undefined))
 
     watch(filters, (shown) => {
+        if (!shownSegments.value.length) return
         if (filter.value !== KS_CHANGE_REVIEW_ALL && !shown.some(segment => segment.name === filter.value)) {
             filter.value = KS_CHANGE_REVIEW_ALL
         }

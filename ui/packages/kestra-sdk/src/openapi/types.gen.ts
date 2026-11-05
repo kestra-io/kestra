@@ -427,6 +427,7 @@ export type ApiTriggerState = {
     lastTriggeredDate?: string;
     executionId?: string;
     kind?: TriggerType;
+    blockedBy?: Blocker;
 };
 
 export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
@@ -575,6 +576,23 @@ export type BasicAuthCredentials = {
     password?: string;
     currentPassword?: string;
 };
+
+/**
+ * What blocks the trigger's flow from running.
+ */
+export type Blocker = {
+    reason?: BlockerReason;
+    /**
+     * The ids of what blocks the flow, such as the rejecting policies when the reason is POLICY.
+     */
+    ids?: Array<string>;
+    /**
+     * The message reported to the user.
+     */
+    message?: string;
+};
+
+export type BlockerReason = 'UNKNOWN' | 'POLICY' | 'POLICY_CHECK_FAILED';
 
 export type BlueprintControllerApiBlueprintItem = {
     id?: string;

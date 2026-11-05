@@ -1092,7 +1092,7 @@
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ta egzekucja nadal trwa, a usunięcie jej nie zatrzyma procesu.<br />Aby ją zatrzymać, musisz zabić egzekucję.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Ta egzekucja nadal trwa, jej usunięcie jej nie zatrzyma.<br />Musisz zabić egzekucję, aby ją zatrzymać.</div>",
     "restore": "Przywróć",
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> egzekucji?",
@@ -1487,6 +1487,7 @@
             "editor_font_family": "Rodzina czcionki edytora",
             "editor_font_size": "Rozmiar czcionki edytora",
             "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
+            "editor_pebble_hover": "Najedź kursorem na referencję Pebble, aby zobaczyć jej definicję",
             "environment_color": "Kolor środowiska",
             "environment_name": "Nazwa środowiska",
             "environment_name_tooltip": "Nazwa tego środowiska jest ustawiona w konfiguracji, ale można ją zmienić.",
@@ -1509,6 +1510,7 @@
             "editor_font_size": "Rozmiar czcionki używany w edytorach YAML i no-code.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML przy otwieraniu Flow.",
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
+            "editor_pebble_hover": "Pokaż definicję i dokumentację Inputa, Outputa, zmiennej, etykiety lub zmiennej Triggera po najechaniu kursorem na jej odwołanie Pebble w edytorze Flow.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu."
@@ -1949,6 +1951,11 @@
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
     "scheduleDateInPast": "Data harmonogramu musi być w przyszłości",
+    "inputs_date_range": {
+      "between": "Najwcześniejsza wartość to {after}, najpóźniejsza wartość to {before}.",
+      "after": "Najwcześniejsza wartość to {after}.",
+      "before": "Najpóźniejsza wartość to {before}."
+    },
     "warning": "Ostrzeżenie",
     "trigger_check_warning": "Zmienne Triggera nie zadziałają przy ręcznym uruchomieniu Flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład zamiast `trigger.date` użyj `trigger.date ?? execution.startDate`.",
     "docs": "Dokumentacja",
@@ -2162,6 +2169,11 @@
       "decrease_fontsize": "Zmniejsz rozmiar czcionki edytora",
       "increase_fontsize": "Zwiększ rozmiar czcionki edytora",
       "reset_fontsize": "Zresetuj rozmiar czcionki edytora"
+    },
+    "pebble_hover": {
+      "toggle": "Przełącz dokumentację Pebble po najechaniu myszą",
+      "enabled": "Dokumentacja Pebble po najechaniu jest włączona.",
+      "disabled": "Dokumentacja Pebble po najechaniu kursorem jest wyłączona."
     },
     "instance": "Instancja",
     "something_went_wrong": {

@@ -41,21 +41,23 @@ public class ListFlowsTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "list-flows",
-        value = "List Kestra flows matching the given per-field filters (at most 50). Read-only; use this to discover flows before reading one with read-flow. "
-            + "Returns an object { flows } where `flows` is an array of { namespace, id, description } (empty when nothing matches); long descriptions are truncated."
+        name = "list_flows",
+        value = "List Kestra flows matching the given per-field filters (at most " + MAX_RESULTS + " returned). Read-only; use this to discover flows before reading one with read_flow, or to count them. "
+            + "Returns an object { flows, total } where `flows` is an array of { namespace, id, description } (empty when nothing matches); long descriptions are truncated. "
+            + "`total` is the number of all matching flows, which can exceed the length of `flows`."
     )
     public Result listFlows(
         @QueryFilterFormat(QueryFilter.Resource.FLOW) List<QueryFilter> filters,
         final AgentCallContext.Context context) {
         String tenant = context.tenant();
 
-        List<Flow> flows = flowRepository.find(PageableUtils.from(1, MAX_RESULTS), tenant, filters);
+        var flows = flowRepository.find(PageableUtils.from(1, MAX_RESULTS), tenant, filters);
 
         return new Result(
             flows.stream()
                 .map(ListFlowsTool::toSummary)
-                .toList()
+                .toList(),
+            flows.getTotal()
         );
     }
 
@@ -70,7 +72,7 @@ public class ListFlowsTool implements AiPlatformTool {
         return text.length() <= MAX_DESCRIPTION_LENGTH ? text : text.substring(0, MAX_DESCRIPTION_LENGTH) + "…";
     }
 
-    public record Result(List<FlowSummary> flows) {
+    public record Result(List<FlowSummary> flows, long total) {
     }
 
     public record FlowSummary(String namespace, String id, String description) {

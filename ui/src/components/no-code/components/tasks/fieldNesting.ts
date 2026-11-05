@@ -1,7 +1,7 @@
-import {getType} from "./getTaskComponent"
+import {getType, Schema} from "./getTaskComponent"
 import {resolve$ref} from "../../../../utils/utils"
 
-type FieldSchema = Record<string, unknown>
+type FieldSchema = Partial<Schema>
 
 const OBJECT_LIKE_TYPES = new Set(["object", "complex"])
 
@@ -62,7 +62,7 @@ function resolvedProperties(
 }
 
 export function shouldDrillItem(
-    schema: FieldSchema,
+    schema: FieldSchema | undefined,
     definitions: Record<string, FieldSchema>,
     key?: string,
 ): boolean {

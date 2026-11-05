@@ -1092,7 +1092,7 @@
       "heading": "Tudo sobre Kestra.",
       "subheading": "As últimas atualizações, guias e histórias"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Esta execution ainda está em execução, excluí-la não a interromperá.<br />Você precisa killar a execution para pará-la.</div>",
     "restore": "Restaurar",
     "restore confirm": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
     "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
@@ -1487,6 +1487,7 @@
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
+            "editor_pebble_hover": "Passe o mouse sobre a referência do Pebble para ver sua definição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
@@ -1509,6 +1510,7 @@
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
+            "editor_pebble_hover": "Mostra a definição e a documentação de um input, output, variável, label ou variável de trigger ao passar o mouse sobre sua referência Pebble no editor de flow.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."
@@ -1949,6 +1951,11 @@
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
     "scheduleDateInPast": "A data de agendamento deve ser no futuro",
+    "inputs_date_range": {
+      "between": "O valor mais antigo é {after}, o valor mais recente é {before}.",
+      "after": "O valor mais antigo é {after}.",
+      "before": "O valor mais recente é {before}."
+    },
     "warning": "Aviso",
     "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",
@@ -2162,6 +2169,11 @@
       "decrease_fontsize": "Diminuir tamanho da fonte do editor",
       "increase_fontsize": "Aumentar o tamanho da fonte do editor",
       "reset_fontsize": "Redefinir tamanho da fonte do editor"
+    },
+    "pebble_hover": {
+      "toggle": "Alternar docs de Pebble ao passar o mouse",
+      "enabled": "A documentação flutuante do Pebble está ativada.",
+      "disabled": "A documentação flutuante do Pebble está desativada."
     },
     "instance": "Instância",
     "something_went_wrong": {

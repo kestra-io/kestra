@@ -1092,7 +1092,7 @@
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
@@ -1487,6 +1487,7 @@
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
+            "editor_pebble_hover": "Hover on Pebble reference to see its definition",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1509,6 +1510,7 @@
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."
@@ -1949,6 +1951,11 @@
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
     "scheduleDateInPast": "Schedule date must be in the future",
+    "inputs_date_range": {
+      "between": "Earliest value is {after}, latest value is {before}.",
+      "after": "Earliest value is {after}.",
+      "before": "Latest value is {before}."
+    },
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -2162,6 +2169,11 @@
       "decrease_fontsize": "Decrease editor font size",
       "increase_fontsize": "Increase editor font size",
       "reset_fontsize": "Reset editor font size"
+    },
+    "pebble_hover": {
+      "toggle": "Toggle Pebble hover docs",
+      "enabled": "Pebble hover docs are on.",
+      "disabled": "Pebble hover docs are off."
     },
     "instance": "Instance",
     "something_went_wrong": {

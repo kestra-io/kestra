@@ -1092,7 +1092,7 @@
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">このExecutionはまだ実行中です。削除しても停止しません。<br />停止するにはExecutionをkillする必要があります。</div>",
     "restore": "復元",
     "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
@@ -1487,6 +1487,7 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
+            "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1509,6 +1510,7 @@
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
+            "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -1949,6 +1951,11 @@
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
     "scheduleDateInPast": "スケジュール日は未来である必要があります",
+    "inputs_date_range": {
+      "between": "最も早い値は{after}、最も遅い値は{before}です。",
+      "after": "最も早い値は{after}です。",
+      "before": "最も遅い値は{before}です。"
+    },
     "warning": "警告",
     "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "docs": "ドキュメント",
@@ -2162,6 +2169,11 @@
       "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "increase_fontsize": "エディタのフォントサイズを大きくする",
       "reset_fontsize": "エディタのフォントサイズをリセット"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble ホバー docs を切り替える",
+      "enabled": "Pebble ホバー docs はオンです。",
+      "disabled": "Pebble ホバー docs はオフです。"
     },
     "instance": "インスタンス",
     "something_went_wrong": {

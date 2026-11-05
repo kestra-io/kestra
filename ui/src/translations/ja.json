@@ -1467,11 +1467,13 @@
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
             "color_mode": "カラーモード",
+            "editor_dark_theme": "ダークモードのエディタテーマ",
             "editor_folding_stratgy": "エディターでのコードの自動折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
+            "editor_light_theme": "ライトモードのエディタテーマ",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1495,6 +1497,8 @@
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
+            "editor_dark_theme": "カラーモードがダーク 1.0 またはダーク 2.0 のときのコードエディタの構文の色。",
+            "editor_light_theme": "カラーモードがライトのときのコードエディタの構文の色。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -1503,6 +1507,9 @@
             "small": "小",
             "medium": "中",
             "large": "大"
+          },
+          "editor_theme_options": {
+            "match_app": "アプリのテーマに合わせる"
           }
         },
         "localization": {
@@ -2041,7 +2048,6 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
-      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",

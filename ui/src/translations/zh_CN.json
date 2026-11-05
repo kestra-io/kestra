@@ -1467,11 +1467,13 @@
           "fields": {
             "app_font_size": "应用字体大小",
             "color_mode": "颜色模式",
+            "editor_dark_theme": "深色模式下的编辑器主题",
             "editor_folding_stratgy": "编辑器中的代码自动折叠",
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
             "editor_hover_description": "将鼠标悬停在属性上查看描述",
             "editor_pebble_hover": "将鼠标悬停在 Pebble 引用上以查看其定义",
+            "editor_light_theme": "浅色模式下的编辑器主题",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
             "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
@@ -1495,6 +1497,8 @@
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
             "editor_hover_description": "在编辑器中悬停时显示属性描述。",
             "editor_pebble_hover": "在 Flow 编辑器中，将鼠标悬停在 input、output、variable、label 或 trigger variable 的 Pebble 引用上时，显示其定义和文档。",
+            "editor_dark_theme": "颜色模式为深色 1.0 或深色模式 2.0 时代码编辑器的语法颜色。",
+            "editor_light_theme": "颜色模式为浅色模式时代码编辑器的语法颜色。",
             "environment_name": "当前环境的显示名称，显示在导航中。",
             "environment_color": "用于导航中当前环境的强调颜色。",
             "app_font_size": "应用于所有界面字体大小的缩放系数。"
@@ -1503,6 +1507,9 @@
             "small": "小",
             "medium": "中",
             "large": "大"
+          },
+          "editor_theme_options": {
+            "match_app": "跟随应用主题"
           }
         },
         "localization": {
@@ -2041,7 +2048,6 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
-      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",

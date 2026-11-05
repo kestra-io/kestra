@@ -1467,11 +1467,13 @@
           "fields": {
             "app_font_size": "ऐप फ़ॉन्ट आकार",
             "color_mode": "रंग मोड",
+            "editor_dark_theme": "डार्क मोड में संपादक थीम",
             "editor_folding_stratgy": "एडिटर में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
             "editor_pebble_hover": "Pebble संदर्भ पर होवर करें ताकि उसकी परिभाषा देखी जा सके",
+            "editor_light_theme": "लाइट मोड में संपादक थीम",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
             "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
@@ -1495,6 +1497,8 @@
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
             "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
             "editor_pebble_hover": "फ़्लो एडिटर में Pebble संदर्भ पर होवर करते समय किसी इनपुट, आउटपुट, वेरिएबल, label या trigger वेरिएबल की परिभाषा और डॉक्स दिखाएं।",
+            "editor_dark_theme": "जब रंग मोड डार्क 1.0 या डार्क 2.0 हो, तब कोड संपादक के सिंटैक्स रंग।",
+            "editor_light_theme": "जब रंग मोड लाइट हो, तब कोड संपादक के सिंटैक्स रंग।",
             "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
             "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
             "app_font_size": "इंटरफ़ेस के सभी फ़ॉन्ट आकारों पर लागू स्केल कारक।"
@@ -1503,6 +1507,9 @@
             "small": "छोटा",
             "medium": "मध्यम",
             "large": "बड़ा"
+          },
+          "editor_theme_options": {
+            "match_app": "ऐप थीम के अनुसार"
           }
         },
         "localization": {
@@ -2041,7 +2048,6 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
-      "task_details": "Task विवरण",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",

@@ -26,6 +26,7 @@
     import {computed, ref, watchEffect} from "vue"
     import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
     import {isSpecialLang, loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
+    import {pebbleTransformer} from "@kestra-io/plumage"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -39,7 +40,7 @@
     }>(), {
         code: "",
         language: null,
-        theme: "github-dark",
+        theme: "kestra-dark",
     })
 
     const isHoveringCode = ref(false)
@@ -69,6 +70,7 @@
     const codeData = computed(() => props.highlighter.codeToHtml(props.code, {
         lang: resolvedLanguage.value,
         theme: props.theme,
+        transformers: [pebbleTransformer()],
     }))
 
     function copyToClipboard() {

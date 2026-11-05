@@ -1467,11 +1467,13 @@
           "fields": {
             "app_font_size": "App Font Size",
             "color_mode": "Color mode",
+            "editor_dark_theme": "Editor Theme in Dark Mode",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
             "editor_pebble_hover": "Hover on Pebble reference to see its definition",
+            "editor_light_theme": "Editor Theme in Light Mode",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1495,6 +1497,8 @@
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
             "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
+            "editor_dark_theme": "Syntax colors of the code editor when the color mode is Dark 1.0 or Dark 2.0.",
+            "editor_light_theme": "Syntax colors of the code editor when the color mode is Light.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."
@@ -1503,6 +1507,9 @@
             "small": "Small",
             "medium": "Medium",
             "large": "Large"
+          },
+          "editor_theme_options": {
+            "match_app": "Match the app theme"
           }
         },
         "localization": {
@@ -2041,7 +2048,6 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",

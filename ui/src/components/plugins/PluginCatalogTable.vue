@@ -10,23 +10,7 @@
         >
             <KsTableColumn :label="$t('pluginPage.view.plugin')" minWidth="200">
                 <template #default="{row}">
-                    <div class="plugin-catalog-table-plugin">
-                        <div class="plugin-catalog-table-logo">
-                            <TaskIcon
-                                :cls="row.group"
-                                :icons
-                                :loadIcon="pluginsStore.loadIcon"
-                                variable="--ks-black"
-                                onlyIcon
-                            />
-                        </div>
-                        <div class="plugin-catalog-table-name" data-test="plugin-catalog-table-name">
-                            <router-link :to="row.route">
-                                {{ row.title }}
-                            </router-link>
-                            <span class="plugin-catalog-table-artifact">{{ row.name }}</span>
-                        </div>
-                    </div>
+                    <PluginCatalogTableName :title="row.title" :name="row.name" :group="row.group" :route="row.route" />
                 </template>
             </KsTableColumn>
 
@@ -60,8 +44,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import {compareVersionsDesc, getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
-    import {usePluginsStore} from "../../stores/plugins"
-    import TaskIcon from "./TaskIcon.vue"
+    import PluginCatalogTableName from "./PluginCatalogTableName.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -71,13 +54,6 @@
 
     const route = useRoute()
     const enrichmentStore = usePluginsEnrichmentStore()
-    const pluginsStore = usePluginsStore()
-
-    const icons = computed(() => ({
-        ...pluginsStore.icons,
-        ...pluginsStore.groupIcons,
-    }))
-
     const currentPage = ref(1)
     const pageSize = ref(25)
 
@@ -120,36 +96,6 @@
 <style scoped>
     .plugin-catalog-table {
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-6);
-    }
-
-    .plugin-catalog-table-plugin {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-    }
-
-    .plugin-catalog-table-logo {
-        flex-shrink: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        padding: var(--ks-spacing-1);
-        background-color: var(--ks-bg-plugin-icon);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-    }
-
-    .plugin-catalog-table-name {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .plugin-catalog-table-artifact {
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-secondary);
     }
 
     .plugin-catalog-table-link {

@@ -111,7 +111,8 @@
         }
     }, {immediate: true})
 
-    watch(() => props.plugins.map(plugin => plugin.name).join(), () => {
+    // Keyed on the set of names, so that a reorder (enrichment arriving under a usage sort) keeps the page.
+    watch(() => props.plugins.map(plugin => plugin.name).sort().join(), () => {
         currentPage.value = 1
     })
 </script>

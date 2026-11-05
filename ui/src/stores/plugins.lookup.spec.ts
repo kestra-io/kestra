@@ -134,6 +134,11 @@ describe("plugins store lookups", () => {
             expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER_CLI))
         })
 
+        it("returns the latest installed version when several versions declare the cls", () => {
+            store.plugins = [{...SUBGROUP_BQ, title: "BigQuery 1", version: "1.2.4"}, {...SUBGROUP_BQ, title: "BigQuery 2", version: "2.5.4"}]
+            expect(store.findPluginByCls("io.kestra.plugin.gcp.bigquery.Query")?.title).toBe("BigQuery 2")
+        })
+
         it("returns null when cls is unknown", () => {
             expect(store.findPluginByCls("does.not.exist.Task")).toBeNull()
         })

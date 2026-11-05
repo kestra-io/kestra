@@ -58,4 +58,16 @@ describe("PluginCatalogTable", () => {
         expect(links.map(link => link.attributes("href"))).toEqual(["https://github.com/kestra-io/plugin-aws/releases", EE_RELEASE_NOTES])
         expect(fetchVersions.mock.calls).toEqual([["io.kestra.plugin.ee.secrets.Get"]])
     })
+
+    it("keeps the current page when the same plugins come back in another order", async () => {
+        const plugins = Array.from({length: 30}, (_, i) => ({...aws, name: `plugin-${String(i).padStart(2, "0")}`}) as Plugin)
+        const wrapper = await mountTable(plugins)
+
+        wrapper.findComponent({name: "KsDataTable"}).vm.$emit("update:currentPage", 2)
+        await flushPromises()
+        await wrapper.setProps({plugins: [...plugins].reverse()})
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test=plugin-catalog-table-name]")).toHaveLength(5)
+    })
 })

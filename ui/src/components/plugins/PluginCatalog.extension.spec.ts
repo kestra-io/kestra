@@ -97,6 +97,17 @@ describe("PluginCatalog extension", () => {
         expect(wrapper.find("article").exists()).toBe(false)
     })
 
+    test("shows the empty state with Show all plugins instead of an empty table", async () => {
+        useRoute().query = {view: "table"}
+        const wrapper = await mountCatalog()
+
+        await wrapper.find("input").setValue("nothing-matches")
+        await flushPromises()
+
+        expect(wrapper.find("[data-test=table]").exists()).toBe(false)
+        expect(wrapper.find("[data-test=plugins-show-all]").exists()).toBe(true)
+    })
+
     test("shows the cards while the Cards view is selected", async () => {
         const wrapper = await mountCatalog()
 

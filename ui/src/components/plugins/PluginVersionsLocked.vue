@@ -41,7 +41,7 @@
         gap: var(--ks-spacing-1);
         margin: 0;
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
         color: var(--ks-text-primary);
     }
 

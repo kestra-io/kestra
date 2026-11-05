@@ -65,16 +65,7 @@
             </div>
         </div>
 
-        <component
-            :is="catalogExtension.table"
-            v-if="catalogExtension.table && view === 'table'"
-            :plugins="pluginsList"
-            :catalog="baseList"
-            :search="searchInput"
-            :categories="selectedCategories"
-        />
-
-        <div v-else-if="pluginsList.length === 0 && extraCardCount === 0" class="plugins-empty" data-test="plugins-empty">
+        <div v-if="pluginsList.length === 0 && extraCardCount === 0" class="plugins-empty" data-test="plugins-empty">
             <KsNoData :title="emptyCopy.title">
                 {{ emptyCopy.description }}
             </KsNoData>
@@ -82,6 +73,15 @@
                 {{ $t("pluginPage.showAll") }}
             </KsButton>
         </div>
+
+        <component
+            :is="catalogExtension.table"
+            v-else-if="catalogExtension.table && view === 'table'"
+            :plugins="pluginsList"
+            :catalog="baseList"
+            :search="searchInput"
+            :categories="selectedCategories"
+        />
 
         <section v-else class="plugins-container">
             <KsTooltip

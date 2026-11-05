@@ -73,6 +73,9 @@ import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
 export type {SortItem} from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
+import KsChangeReview from "./components/Data/KsChangeReview.vue"
+export type {KsChangeReviewTone, KsChangeReviewSegment, KsChangeReviewTab} from "./components/Data/KsChangeReview.vue"
+export {KS_CHANGE_REVIEW_ALL} from "./components/Data/KsChangeReview.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
 import KsCheckboxGroup from "./components/Form/KsCheckbox/KsCheckboxGroup.vue"
@@ -145,9 +148,6 @@ import KsRadioGroup from "./components/Form/KsRadio/KsRadioGroup.vue"
 import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
 import KsSegmented from "./components/Data/KsSegmented.vue"
-import KsChangeReview from "./components/Data/KsChangeReview.vue"
-export type {KsChangeReviewTone, KsChangeReviewSegment, KsChangeReviewTab} from "./components/Data/KsChangeReview.vue"
-export {KS_CHANGE_REVIEW_ALL, KS_CHANGE_REVIEW_TONES} from "./components/Data/KsChangeReview.vue"
 import KsSelect from "./components/Form/KsSelect/KsSelect.vue"
 import KsSideBar from "./components/Navigation/KsSideBar/KsSideBar.vue"
 import KsSideBarItem from "./components/Navigation/KsSideBar/KsSideBarItem.vue"
@@ -347,6 +347,7 @@ const components: Record<string, Component> = {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -402,7 +403,6 @@ const components: Record<string, Component> = {
     KsScrollbar,
     KsSearch,
     KsSegmented,
-    KsChangeReview,
     KsSelect,
     KsSideBar,
     KsSideBarItem,
@@ -461,6 +461,7 @@ export {
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
+    KsChangeReview,
     KsCheckbox,
     KsCheckboxButton,
     KsCheckboxGroup,
@@ -516,7 +517,6 @@ export {
     KsScrollbar,
     KsSearch,
     KsSegmented,
-    KsChangeReview,
     KsSelect,
     KsSideBar,
     KsSideBarItem,
@@ -610,6 +610,7 @@ declare module "vue" {
         KsDateAgo: typeof KsDateAgo
         KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel
+        KsChangeReview: typeof KsChangeReview
         KsCheckbox: typeof KsCheckbox
         KsCheckboxButton: typeof KsCheckboxButton
         KsCheckboxGroup: typeof KsCheckboxGroup
@@ -664,7 +665,6 @@ declare module "vue" {
         KsScrollbar: typeof KsScrollbar
         KsSearch: typeof KsSearch
         KsSegmented: typeof KsSegmented
-        KsChangeReview: typeof KsChangeReview
         KsSelect: typeof KsSelect
         KsSideBar: typeof KsSideBar
         KsSideBarItem: typeof KsSideBarItem

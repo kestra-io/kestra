@@ -2,7 +2,7 @@
     <div class="ks-change-review">
         <div class="ks-change-review__head">
             <KsText tag="h3" size="large" class="ks-change-review__heading">{{ heading }}</KsText>
-            <KsText v-if="meta.length" size="small" class="ks-change-review__muted">{{ meta.join(" · ") }}</KsText>
+            <KsText v-if="meta.length" size="small" type="secondary">{{ meta.join(" · ") }}</KsText>
         </div>
 
         <div v-if="shownSegments.length" class="ks-change-review__bar" aria-hidden="true" data-test="change-review-bar">
@@ -11,15 +11,27 @@
 
         <div v-if="filters.length || passive.length" class="ks-change-review__summary">
             <div v-if="filters.length" class="ks-change-review__filters" role="group" :aria-label="filterLabel">
-                <KsCheckTag :checked="filter === KS_CHANGE_REVIEW_ALL" data-test="change-review-filter" @change="filter = KS_CHANGE_REVIEW_ALL">
+                <KsCheckTag
+                    :checked="filter === KS_CHANGE_REVIEW_ALL"
+                    role="button"
+                    tabindex="0"
+                    :aria-pressed="filter === KS_CHANGE_REVIEW_ALL"
+                    data-test="change-review-filter"
+                    @change="filter = KS_CHANGE_REVIEW_ALL"
+                    @keydown.enter.space.prevent="filter = KS_CHANGE_REVIEW_ALL"
+                >
                     {{ allLabel }} <span class="ks-change-review__filter-count">{{ allCount }}</span>
                 </KsCheckTag>
                 <KsCheckTag
                     v-for="segment in filters"
                     :key="segment.name"
                     :checked="filter === segment.name"
+                    role="button"
+                    tabindex="0"
+                    :aria-pressed="filter === segment.name"
                     data-test="change-review-filter"
                     @change="filter = segment.name"
+                    @keydown.enter.space.prevent="filter = segment.name"
                 >
                     <template v-if="segment.glyph" #icon>
                         <span class="ks-change-review__glyph" :style="{color: KS_CHANGE_REVIEW_TONES[segment.tone].color}">{{ segment.glyph }}</span>
@@ -27,7 +39,7 @@
                     {{ segment.label }} <span class="ks-change-review__filter-count">{{ segment.value }}</span>
                 </KsCheckTag>
             </div>
-            <KsText v-for="segment in passive" :key="segment.label" size="small" class="ks-change-review__muted ks-change-review__passive" data-test="change-review-passive">
+            <KsText v-for="segment in passive" :key="segment.label" size="small" type="secondary" class="ks-change-review__passive" data-test="change-review-passive">
                 <i :style="{background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />{{ segment.label }}
             </KsText>
         </div>
@@ -52,7 +64,6 @@
     export type KsChangeReviewTone = "success" | "warning" | "danger" | "info" | "neutral"
 
     export interface KsChangeReviewSegment {
-        /** Makes the segment a filter; the label of a segment without one is the whole text of its legend. */
         name?: string
         glyph?: string
         value: number
@@ -67,18 +78,10 @@
     }
 
     export const KS_CHANGE_REVIEW_ALL = "all"
-
-    export const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string}> = {
-        success: {color: "var(--ks-status-success)"},
-        warning: {color: "var(--ks-status-warning)"},
-        danger: {color: "var(--ks-status-error)"},
-        info: {color: "var(--ks-status-running)"},
-        neutral: {color: "var(--ks-border-strong)"},
-    }
 </script>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, watch} from "vue"
     import KsText from "../Basic/KsText.vue"
     import KsTabPane from "../Navigation/KsTabs/KsTabPane.vue"
     import KsTabs from "../Navigation/KsTabs/KsTabs.vue"
@@ -98,9 +101,23 @@
     const tab = defineModel<string>("tab", {required: true})
     const filter = defineModel<string>("filter", {default: KS_CHANGE_REVIEW_ALL})
 
+    const KS_CHANGE_REVIEW_TONES: Record<KsChangeReviewTone, {color: string}> = {
+        success: {color: "var(--ks-status-success)"},
+        warning: {color: "var(--ks-status-warning)"},
+        danger: {color: "var(--ks-status-error)"},
+        info: {color: "var(--ks-status-running)"},
+        neutral: {color: "var(--ks-border-strong)"},
+    }
+
     const shownSegments = computed(() => props.segments.filter(segment => segment.value > 0))
     const filters = computed(() => shownSegments.value.filter((segment): segment is KsChangeReviewSegment & {name: string} => segment.name !== undefined))
     const passive = computed(() => shownSegments.value.filter(segment => segment.name === undefined))
+
+    watch(filters, (shown) => {
+        if (filter.value !== KS_CHANGE_REVIEW_ALL && !shown.some(segment => segment.name === filter.value)) {
+            filter.value = KS_CHANGE_REVIEW_ALL
+        }
+    }, {immediate: true})
 </script>
 
 <style scoped>
@@ -124,16 +141,16 @@
         font-weight: var(--ks-font-weight-semibold);
     }
 
-    .ks-change-review__muted {
-        color: var(--ks-text-secondary);
-    }
-
     .ks-change-review__bar {
         display: flex;
-        gap: 0.125rem;
-        height: 0.375rem;
+        gap: var(--ks-spacing-px);
+        height: var(--ks-spacing-2);
         border-radius: var(--ks-radius-xs);
         overflow: hidden;
+    }
+
+    .ks-change-review__bar span {
+        min-width: var(--ks-spacing-1);
     }
 
     .ks-change-review__summary,

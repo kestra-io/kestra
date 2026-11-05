@@ -73,6 +73,28 @@ describe("KsChangeReview", () => {
         expect(wrapper.emitted("update:filter")).toEqual([["DELETE"], [KS_CHANGE_REVIEW_ALL]])
     })
 
+    test("lets the keyboard reach and press a filter, each chip telling whether it is pressed", async () => {
+        const wrapper = mountReview()
+
+        expect(chips(wrapper).map(chip => [chip.attributes("role"), chip.attributes("tabindex"), chip.attributes("aria-pressed")]))
+            .toEqual([["button", "0", "true"], ["button", "0", "false"], ["button", "0", "false"]])
+
+        await chips(wrapper)[1].trigger("keydown", {key: "Enter"})
+        await chips(wrapper)[2].trigger("keydown", {key: " "})
+
+        expect(wrapper.emitted("update:filter")).toEqual([["CREATE"], ["DELETE"]])
+        expect(chips(wrapper).map(chip => chip.attributes("aria-pressed"))).toEqual(["false", "false", "true"])
+    })
+
+    test("filters on every change again when the kind of change filtered on no longer has any", async () => {
+        const wrapper = mountReview()
+
+        await chips(wrapper)[2].trigger("click")
+        await wrapper.setProps({segments: segments.map(segment => segment.name === "DELETE" ? {...segment, value: 0} : segment)})
+
+        expect(wrapper.emitted("update:filter")).toEqual([["DELETE"], [KS_CHANGE_REVIEW_ALL]])
+    })
+
     test("shows only the slot of the selected tab, with the count of a tab next to its label", () => {
         const wrapper = mountReview("outputs")
 

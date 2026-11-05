@@ -10,7 +10,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sha: [a65bcad4b6786b7829cab1b173e4080d41369bef, 32b7b031f689513bf8d6578d971c5729c00e3223, ${{ github.sha }}]
+        sha:
+          - a65bcad4b6786b7829cab1b173e4080d41369bef
+          - 32b7b031f689513bf8d6578d971c5729c00e3223
+          - ${{ github.sha }}
     permissions:
       checks: read
     outputs:

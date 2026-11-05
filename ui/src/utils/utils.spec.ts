@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize, splitFirst, getParentNamespaces, isFile, isIon} from "./utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize, splitFirst, getParentNamespaces, isFile, isIon, resolve$ref} from "./utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -101,6 +101,27 @@ describe("theme utils", () => {
             switchTheme(newStore(), "dark-2")
             expect(localStorage.getItem("theme")).toBe("dark-2")
             expect(getSelectedTheme()).toBe("dark-2")
+        })
+
+        it("starts a first visit on Sync with system instead of saving the OS theme of that moment", () => {
+            mockSystemPrefersDark(true)
+            const store = newStore()
+
+            switchTheme(store)
+
+            expect(store.theme).toBe("syncWithSystem")
+            expect(localStorage.getItem("theme")).toBe("syncWithSystem")
+            expect(document.documentElement.classList.contains("dark")).toBe(true)
+        })
+
+        it("keeps a saved choice when no theme is passed", () => {
+            localStorage.setItem("theme", "light")
+            mockSystemPrefersDark(true)
+
+            switchTheme(newStore())
+
+            expect(localStorage.getItem("theme")).toBe("light")
+            expect(document.documentElement.classList.contains("dark")).toBe(false)
         })
     })
 })
@@ -310,5 +331,27 @@ describe("isIon()", () => {
         expect(isIon(null)).toBe(false)
         expect(isIon(undefined)).toBe(false)
         expect(isIon({uri: "kestra:///data/output.ion"})).toBe(false)
+    })
+})
+
+describe("resolve$ref", () => {
+    const schema = {definitions: {name: {type: "string"}, wrapper: {$ref: "#/definitions/name"}}}
+
+    it("follows a $ref to its definition, through chained refs", () => {
+        expect(resolve$ref(schema, {$ref: "#/definitions/name"})).toEqual({type: "string"})
+        expect(resolve$ref(schema, {$ref: "#/definitions/wrapper"})).toEqual({type: "string"})
+    })
+
+    it.each([
+        ["an object without a $ref", {type: "number"}],
+        ["an empty $ref", {$ref: ""}],
+        ["a non-string $ref", {$ref: 3}],
+    ])("returns %s unchanged", (_label, node) => {
+        expect(resolve$ref(schema, node)).toBe(node)
+    })
+
+    it("returns null and undefined as they are", () => {
+        expect(resolve$ref(schema, null)).toBeNull()
+        expect(resolve$ref(schema, undefined)).toBeUndefined()
     })
 })

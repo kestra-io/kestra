@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
@@ -37,6 +37,7 @@
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
     import {inputsToFormData} from "../../../../../utils/submitTask"
+    import {flattenInputs} from "../../../../../utils/inputs"
     import {Execution, InputMetaData, useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
@@ -77,12 +78,6 @@
 
     const needInputs = computed(() => inputsList.value?.length > 0)
 
-    onMounted(() => {
-        if (enabled.value) {
-            loadDefinition()
-        }
-    })
-
     function click() {
         if (needInputs.value) {
             isDrawerOpen.value = true
@@ -90,7 +85,7 @@
         }
 
         toast.confirm(t("resumed confirm", {id: props.execution.id}), () => {
-            return resume() as unknown as Promise<void>
+            return resume()
         })
     }
 
@@ -101,7 +96,7 @@
                     return
                 }
 
-                const formData = inputsToFormData(inputsList.value, inputs.value)
+                const formData = inputsToFormData(flattenInputs(inputsList.value), inputs.value)
                 resume(formData)
             })
         }
@@ -117,13 +112,5 @@
                 isDrawerOpen.value = false
                 toast.success(t("resumed done"))
             })
-    }
-
-    function loadDefinition() {
-        executionsStore.loadFlowForExecution({
-            flowId: props.execution.flowId,
-            namespace: props.execution.namespace,
-            store: true,
-        })
     }
 </script>

@@ -429,6 +429,13 @@ export type ApiTriggerState = {
     kind?: TriggerType;
 };
 
+export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
+
+export type ApprovalDecisions = {
+    approve?: PropertyString;
+    deny?: PropertyString;
+};
+
 export type ArtefactDraft = {
     draftId?: string;
     kind?: ArtefactKind;
@@ -658,6 +665,20 @@ export type ConcurrencyLimit = {
     running?: number;
 };
 
+export type ConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    tenantId?: string;
+    namespace?: string;
+    flowId?: string;
+    running?: number;
+    queued?: number;
+};
+
+export type ConcurrencyLimitControllerConcurrencyLimitUpdateRequest = {
+    namespace?: string | null;
+    flowId?: string | null;
+    running: number;
+};
+
 /**
  * Paged response for stores that may not know their exact row count (e.g. an external log store): `total` is only present when the backing store can compute it. Kept as a separate type from PagedResults rather than a shared `total` field: only this path can legitimately omit `total`, so the OpenAPI schema (and generated SDK types) can still mark `total` as required on every other, always-countable, endpoint. When `total` is absent, pagination falls back to an opaque cursor (`type`/`nextCursor`) since there is no page count to offset from.
  */
@@ -685,6 +706,7 @@ export type DailyExecutionStatistics = {
         CREATED?: number;
         SUBMITTED?: number;
         RUNNING?: number;
+        PAUSING?: number;
         PAUSED?: number;
         RESTARTED?: number;
         KILLING?: number;
@@ -829,6 +851,13 @@ export type Execution = {
     loopRun?: LoopRun | null;
 };
 
+export type ExecutionControllerApiReviewAllowed = {
+    /**
+     * Whether the current user may review or cancel the Approval task run
+     */
+    allowed?: boolean;
+};
+
 export type ExecutionControllerApiValidateExecutionInputsResponse = {
     id: string;
     namespace: string;
@@ -856,6 +885,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
     message: string;
     renderError?: boolean;
     path?: string;
+    detail?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -889,6 +919,8 @@ export type ExecutionControllerLastExecutionResponse = {
     startDate: string;
     status: StateType;
 };
+
+export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
@@ -1415,6 +1447,14 @@ export type InputObject = {
      */
     defaults?: PropertyObject;
     /**
+     * Whether the input is searchable.
+     *
+     * A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.
+     * By default, an input is not searchable.
+     *
+     */
+    searchable?: boolean;
+    /**
      * The suggested value for the input.
      *
      * Optional UI hint for pre-filling the input. Cannot be used together with a default value.
@@ -1722,11 +1762,6 @@ export type Output = {
     searchable?: boolean;
 };
 
-export type OutputControllerSearchableOutputInformation = {
-    outputId?: string;
-    value?: string;
-};
-
 export type OutputControllerTaskOutputInformation = {
     taskId?: string;
     taskRunId?: string;
@@ -1787,8 +1822,8 @@ export type PagedResultsBlueprintControllerApiBlueprintItem = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsConcurrencyLimit = {
-    results: Array<ConcurrencyLimit>;
+export type PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    results: Array<ConcurrencyLimitControllerConcurrencyLimitSearchResult>;
     total: number;
 };
 
@@ -1835,14 +1870,6 @@ export type PagedResultsNamespace = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsOutputControllerSearchableOutputInformation = {
-    results: Array<OutputControllerSearchableOutputInformation>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
 export type PagedResultsPluginControllerApiTicketingSystem = {
     results: Array<PluginControllerApiTicketingSystem>;
     total: number;
@@ -1861,6 +1888,14 @@ export type PagedResultsPluginControllerApiTriggerPlugin = {
  */
 export type PagedResultsPlugin = {
     results: Array<Plugin>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsSearchableDataControllerSearchableDataInformation = {
+    results: Array<SearchableDataControllerSearchableDataInformation>;
     total: number;
 };
 
@@ -2127,6 +2162,13 @@ export type ProblemError = {
     type?: string;
 };
 
+export type PropertyApprovalCommentRequired = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: ApprovalCommentRequired;
+};
+
 export type PropertyAssetFailureBehavior = ({
     [key: string]: unknown;
 } | string) & {
@@ -2186,7 +2228,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'searchableData' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2216,9 +2258,14 @@ export type Sla = {
 
 export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 
-export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
+export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
+
+export type SearchableDataControllerSearchableDataInformation = {
+    dataId?: string;
+    value?: string;
+};
 
 export type ServerInstance = {
     id: string;
@@ -2373,7 +2420,7 @@ export type StateHistory = {
     date: string;
 };
 
-export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
+export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
 
 export type Task = {
     id: string;
@@ -2460,6 +2507,8 @@ export type TaskForExecution = {
     tasks?: Array<TaskForExecution>;
     inputs?: Array<InputObject>;
     subflowId?: ExecutableTaskSubflowId;
+    decisions?: ApprovalDecisions;
+    commentRequired?: PropertyApprovalCommentRequired;
 };
 
 export type TaskRun = {
@@ -4665,12 +4714,56 @@ export type GetServiceResponses = {
 
 export type GetServiceResponse = GetServiceResponses[keyof GetServiceResponses];
 
+export type UpdateConcurrencyLimitData = {
+    body: ConcurrencyLimitControllerConcurrencyLimitUpdateRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type UpdateConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
+
+export type UpdateConcurrencyLimitResponses = {
+    /**
+     * updateConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
+
 export type SearchConcurrencyLimitsData = {
     body?: never;
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
     url: '/api/v1/{tenant}/concurrency-limit/search';
 };
 
@@ -4695,7 +4788,7 @@ export type SearchConcurrencyLimitsResponses = {
     /**
      * searchConcurrencyLimits 200 response
      */
-    200: PagedResultsConcurrencyLimit;
+    200: PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult;
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
@@ -4736,43 +4829,6 @@ export type GetConcurrencyLimitResponses = {
 };
 
 export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
-
-export type UpdateConcurrencyLimitData = {
-    body: ConcurrencyLimit;
-    path: {
-        namespace: string;
-        flowId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
-};
-
-export type UpdateConcurrencyLimitErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
-
-export type UpdateConcurrencyLimitResponses = {
-    /**
-     * updateConcurrencyLimit 200 response
-     */
-    200: ConcurrencyLimit;
-};
-
-export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
 
 export type SearchDashboardsData = {
     body?: never;
@@ -6757,6 +6813,62 @@ export type GetExecutionResponses = {
 
 export type GetExecutionResponse = GetExecutionResponses[keyof GetExecutionResponses];
 
+export type CancelApprovalData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/cancel-approval';
+};
+
+export type CancelApprovalErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CancelApprovalError = CancelApprovalErrors[keyof CancelApprovalErrors];
+
+export type CancelApprovalResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type CancelApprovalResponse = CancelApprovalResponses[keyof CancelApprovalResponses];
+
 export type UpdateExecutionStatusData = {
     body?: never;
     path: {
@@ -7539,6 +7651,180 @@ export type ValidateResumeExecutionInputsResponses = {
 };
 
 export type ValidateResumeExecutionInputsResponse = ValidateResumeExecutionInputsResponses[keyof ValidateResumeExecutionInputsResponses];
+
+export type ReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review';
+};
+
+export type ReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReviewExecutionError = ReviewExecutionErrors[keyof ReviewExecutionErrors];
+
+export type ReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReviewExecutionResponse = ReviewExecutionResponses[keyof ReviewExecutionResponses];
+
+export type IsReviewAllowedData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/allowed';
+};
+
+export type IsReviewAllowedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution does not exist
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type IsReviewAllowedError = IsReviewAllowedErrors[keyof IsReviewAllowedErrors];
+
+export type IsReviewAllowedResponses = {
+    /**
+     * On success
+     */
+    200: ExecutionControllerApiReviewAllowed;
+};
+
+export type IsReviewAllowedResponse = IsReviewAllowedResponses[keyof IsReviewAllowedResponses];
+
+export type ValidateReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/validate';
+};
+
+export type ValidateReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReviewExecutionError = ValidateReviewExecutionErrors[keyof ValidateReviewExecutionErrors];
+
+export type ValidateReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Array<ExecutionControllerApiValidateExecutionInputsResponse>;
+};
+
+export type ValidateReviewExecutionResponse = ValidateReviewExecutionResponses[keyof ValidateReviewExecutionResponses];
 
 export type UpdateTaskRunStateData = {
     /**
@@ -11466,6 +11752,16 @@ export type SetKeyValueData = {
      * The value of the key
      */
     body: string;
+    headers?: {
+        /**
+         * The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)
+         */
+        ttl?: string | null;
+        /**
+         * The description of the key
+         */
+        description?: string | null;
+    };
     path: {
         /**
          * The namespace id
@@ -11545,54 +11841,6 @@ export type GetExecutionOutputsResponses = {
 };
 
 export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
-
-export type ListSearchableOutputsData = {
-    body?: never;
-    path: {
-        /**
-         * The execution id
-         */
-        executionId: string;
-        tenant: string;
-    };
-    query?: {
-        /**
-         * The current page
-         */
-        page?: number;
-        /**
-         * The current page size
-         */
-        size?: number;
-    };
-    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
-};
-
-export type ListSearchableOutputsErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
-
-export type ListSearchableOutputsResponses = {
-    /**
-     * listSearchableOutputs 200 response
-     */
-    200: PagedResultsOutputControllerSearchableOutputInformation;
-};
-
-export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
 
 export type GetTaskOutputsInformationData = {
     body?: never;
@@ -11759,6 +12007,54 @@ export type PostResponses = {
 };
 
 export type PostResponse = PostResponses[keyof PostResponses];
+
+export type ListSearchableDataData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/searchable_data/{executionId}';
+};
+
+export type ListSearchableDataErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableDataError = ListSearchableDataErrors[keyof ListSearchableDataErrors];
+
+export type ListSearchableDataResponses = {
+    /**
+     * listSearchableData 200 response
+     */
+    200: PagedResultsSearchableDataControllerSearchableDataInformation;
+};
+
+export type ListSearchableDataResponse = ListSearchableDataResponses[keyof ListSearchableDataResponses];
 
 export type ListSecretsData = {
     body?: never;

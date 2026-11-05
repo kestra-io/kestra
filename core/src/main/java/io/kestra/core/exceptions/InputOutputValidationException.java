@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.input.TableInput;
 
 /**
  * Exception that can be thrown when Inputs/Outputs have validation problems.
@@ -39,6 +40,10 @@ public class InputOutputValidationException extends KestraRuntimeException {
     }
 
     public InputOutputValidationException(String message, boolean renderError, String path) {
+        this(message, renderError, path, null);
+    }
+
+    public InputOutputValidationException(String message, boolean renderError, String path, String detail) {
         super(message);
         this.renderError = renderError;
         this.path = path;
@@ -86,7 +91,10 @@ public class InputOutputValidationException extends KestraRuntimeException {
         return new InputOutputValidationException(inputMessage, false, input.getId());
     }
 
-    /** As {@link #of(String, Input)}, but records where inside the value the error sits. */
+    /**
+     * As {@link #of(String, Input)}, but records where inside the value the error sits. The message names that place,
+     * e.g. the row and column of a {@code TABLE} cell, while the detail leaves it to the path.
+     */
     public static InputOutputValidationException of(String message, Input<?> input, String path) {
         String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
         return new InputOutputValidationException(inputMessage, false, path != null ? path : input.getId());

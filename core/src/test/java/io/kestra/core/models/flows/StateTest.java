@@ -254,4 +254,22 @@ class StateTest {
         // When / Then
         assertThat(state.isResumingFromBreakpoint()).isFalse();
     }
+
+    @Test
+    void shouldClassifyPausingAsRunningButNotOnlyRunningNorTerminatedNorPaused() {
+        // Given / When / Then: an execution running its Approval onWait tasks is still schedulable
+        // like RUNNING, but must not be picked up by anything gated on onlyRunning() (e.g. a plain
+        // "is actively executing a task" check) nor mistaken for the terminal PAUSED state.
+        assertThat(State.Type.PAUSING.isRunning()).isTrue();
+        assertThat(State.Type.PAUSING.onlyRunning()).isFalse();
+        assertThat(State.Type.PAUSING.isTerminated()).isFalse();
+        assertThat(State.Type.PAUSING.isPaused()).isFalse();
+        assertThat(State.Type.PAUSING.isCreated()).isFalse();
+    }
+
+    @Test
+    void shouldIncludePausingInRunningTypes() {
+        // Given / When / Then
+        assertThat(State.runningTypes()).contains(State.Type.PAUSING);
+    }
 }

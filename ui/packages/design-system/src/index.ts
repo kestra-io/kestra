@@ -1,4 +1,4 @@
-import {defineAsyncComponent} from "vue"
+import {defineAsyncComponent, nextTick} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
 import {
     INSTALLED_KEY,
@@ -19,8 +19,20 @@ type InstalledApp = App & {
 // defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
-const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
-    Object.assign(defineAsyncComponent(loader), {name})
+// Shared through globalThis because unit tests reset the module registry per file, which leaves several copies of this module alive in one worker.
+// Holds the wrappers whose import has started (a bounded set, one entry per lazy component), not the import promises: a promise dropped from a
+// set once it settled would let `designSystemAsyncComponentsReady` miss the few microtasks Vue still needs to render the loaded component.
+const ASYNC_LOADER = "__asyncLoader"
+type AsyncWrapper = Component & {[ASYNC_LOADER]?: () => Promise<unknown>}
+const STARTED_LOADS_KEY = Symbol.for("kestra.designSystem.startedAsyncComponents")
+const startedAsyncComponents: Set<AsyncWrapper> = ((globalThis as Record<symbol, unknown>)[STARTED_LOADS_KEY] ??= new Set<AsyncWrapper>()) as Set<AsyncWrapper>
+const asyncComponent = (name: string, loader: AsyncComponentLoader) => {
+    const wrapper: AsyncWrapper = defineAsyncComponent(() => {
+        startedAsyncComponents.add(wrapper)
+        return loader()
+    })
+    return Object.assign(wrapper, {name})
+}
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 // Async on purpose: every chart statically pulls ECharts, which the barrel would
@@ -161,7 +173,8 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
 import KsTree from "./components/Data/KsTree.vue"
-export type {KsTreeNode} from "./components/Data/KsTree.vue"
+export type {KsTreeNode, KsTreeInstance} from "./components/Data/KsTree.vue"
+export type {TreeOptionProps} from "element-plus"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
@@ -212,6 +225,7 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem, KsBreadcrumbLoader} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export {ALL_TIME_RANGE} from "./components/Data/KsDataTable/filter/utils/constants"
+export {normalizeRelativeDate} from "./components/Data/KsDataTable/filter/utils/relativeDates"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
@@ -220,6 +234,21 @@ let i18nRegistration: Promise<void> = Promise.resolve()
 
 /** The registration `install` started, so a caller can await it rather than leave it in flight. */
 export const designSystemI18nReady = (): Promise<void> => i18nRegistration
+
+/**
+ * The lazy component imports (`KsMarkdown`, charts, `KsEditor`) still in flight, and the render of what they loaded, so a caller can await them
+ * rather than leave them in flight. `ASYNC_LOADER` is Vue's own handle on the wrapper's load: it returns the same promise Vue chained its
+ * `loaded` flag on, so once it settles the re-render is already queued and `nextTick` waits for it. A component the load itself mounts can start
+ * a further lazy import, hence the loop.
+ */
+export const designSystemAsyncComponentsReady = async (): Promise<void> => {
+    let started: number
+    do {
+        started = startedAsyncComponents.size
+        await Promise.allSettled([...startedAsyncComponents].map(component => component[ASYNC_LOADER]?.()))
+        await nextTick()
+    } while (startedAsyncComponents.size !== started)
+}
 export {useDiscardGuard} from "./composables/useDiscardGuard"
 export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"

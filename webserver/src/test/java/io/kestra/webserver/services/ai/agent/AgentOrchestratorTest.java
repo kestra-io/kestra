@@ -209,7 +209,7 @@ class AgentOrchestratorTest {
 
     @Test
     void shouldExecuteReadToolWithoutConfirmationWhenRunningApprovedPlan() {
-        // Given — an approved plan; the model then calls the real AUTO read-execution-logs tool and answers.
+        // Given — an approved plan; the model then calls the real AUTO read_execution_logs tool and answers.
         // (In Plan mode a read+answer must run *after* approval — pre-approval, any tool-free response
         // is taken as the plan card, so the AUTO path is only reachable once approved.)
         AgentThread thread = newThread(AgentMode.PLAN);
@@ -217,7 +217,7 @@ class AgentOrchestratorTest {
         CollectingSink first = new CollectingSink();
         orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
-        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read_execution_logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
         CollectingSink sink = new CollectingSink();
 
@@ -354,8 +354,8 @@ class AgentOrchestratorTest {
         // Given — Ask mode; the caller lacks the logs permission, so the tool is not advertised —
         // and even when the model calls it anyway, it is rejected without running
         AgentThread thread = newThread(AgentMode.ASK);
-        deniedTools.add("read-execution-logs");
-        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
+        deniedTools.add("read_execution_logs");
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read_execution_logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("I don't have access to execution logs."));
         CollectingSink sink = new CollectingSink();
 
@@ -442,7 +442,7 @@ class AgentOrchestratorTest {
     void shouldRejectDisallowedToolAndContinueWhenToolNotInMode() {
         // Given — Ask mode exposes no act tools; the model still tries to restart
         AgentThread thread = newThread(AgentMode.ASK);
-        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "restart-execution", "exec-1"))));
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "restart_execution", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("I can only answer questions here."));
         CollectingSink sink = new CollectingSink();
 
@@ -490,7 +490,7 @@ class AgentOrchestratorTest {
     void shouldRecordErrorResultAndContinueWhenToolThrows() {
         // Given — Ask mode; the model reads an execution that does not exist, so the READ tool throws
         AgentThread thread = newThread(AgentMode.ASK);
-        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution", "missing"))));
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read_execution", "missing"))));
         scriptedModel.enqueue(AiMessage.from("That execution does not exist."));
         CollectingSink sink = new CollectingSink();
 
@@ -528,8 +528,8 @@ class AgentOrchestratorTest {
         scriptedModel.enqueue(
             AiMessage.from(
                 "", List.of(
-                    toolCall("c1", "read-execution-logs", "exec-1"),
-                    toolCall("c2", "read-execution-logs", "exec-2")
+                    toolCall("c1", "read_execution_logs", "exec-1"),
+                    toolCall("c2", "read_execution_logs", "exec-2")
                 )
             )
         );
@@ -626,8 +626,8 @@ class AgentOrchestratorTest {
     void shouldNotDispatchRemainingToolsWhenClientDisconnects() {
         AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("", List.of(
-            toolCall("c1", "read-execution-logs", "exec-1"),
-            toolCall("c2", "read-execution", "exec-1")
+            toolCall("c1", "read_execution_logs", "exec-1"),
+            toolCall("c2", "read_execution", "exec-1")
         )));
         CollectingSink sink = new CollectingSink();
         sink.cancelOnFirstEmit();
@@ -702,7 +702,7 @@ class AgentOrchestratorTest {
         // not an exhausted script.
         AgentThread thread = newThread(AgentMode.ASK);
         for (int i = 0; i <= 25; i++) {
-            scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c" + i, "read-execution-logs", "exec-" + i))));
+            scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c" + i, "read_execution_logs", "exec-" + i))));
         }
         CollectingSink sink = new CollectingSink();
 

@@ -98,7 +98,7 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
@@ -127,10 +127,10 @@
                     <div class="list">
                         <span
                             v-for="(output, index) in searchableOutputs"
-                            :key="`${output.outputId}-${index}`"
+                            :key="`${output.dataId}-${index}`"
                             class="label-tag searchable-tag"
-                            :title="`${output.outputId}: ${output.value}`"
-                        >{{ output.outputId }}: {{ output.value }}</span>
+                            :title="`${output.dataId}: ${output.value}`"
+                        >{{ output.dataId }}: {{ output.value }}</span>
                         <span v-if="remainingSearchableOutputs > 0" class="more-searchable" data-test="more-searchable-outputs">
                             {{ $t("execution_banner.more_searchable_values", {count: $n(remainingSearchableOutputs)}) }}
                         </span>
@@ -157,6 +157,14 @@
                 </span>
             </div>
         </div>
+
+        <KsAlert
+            v-if="approvalBanner"
+            type="info"
+            :title="$t(approvalBanner)"
+            :closable="false"
+            data-test="approval-banner"
+        />
     </div>
 </template>
 
@@ -165,12 +173,16 @@
     import {useI18n} from "vue-i18n"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
-    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
-    import type {OutputControllerSearchableOutputInformation} from "@kestra-io/kestra-sdk"
+    import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
+    import type {SearchableDataControllerSearchableDataInformation} from "@kestra-io/kestra-sdk"
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
+    import {findApprovalTaskRun} from "../../../utils/approval"
     import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../models/resource"
+    import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -206,6 +218,15 @@
     const executionsStore = useExecutionsStore()
     const toast = useToast()
 
+    const approvalBanner = computed(() => {
+        // the generated SDK StateType does not list PAUSING until the SDK is regenerated
+        if ((props.execution.state.current as string) === State.PAUSING) {
+            return "approval.banner.pausing"
+        }
+
+        return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
+    })
+
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
@@ -237,7 +258,7 @@
 
     const SEARCHABLE_OUTPUTS_LIMIT = 10
 
-    const searchableOutputs = ref<OutputControllerSearchableOutputInformation[]>([])
+    const searchableOutputs = ref<SearchableDataControllerSearchableDataInformation[]>([])
     const searchableOutputsTotal = ref(0)
     const remainingSearchableOutputs = computed(() => searchableOutputsTotal.value - searchableOutputs.value.length)
 
@@ -255,7 +276,7 @@
                 superseded = true
             })
 
-            const page = await OutputsAPI.listSearchableOutputs({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
+            const page = await SearchableDataAPI.listSearchableData({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
                 .catch((e: unknown) => {
                     handledIf(e, [403, 404])
                     return undefined
@@ -267,6 +288,9 @@
         },
         {immediate: true},
     )
+
+    const authStore = useAuthStore()
+    const canAccessLogs = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.ACCESS_LOGS, props.execution.namespace) ?? true)
 
     const copyLogs = () => {
         executionsStore

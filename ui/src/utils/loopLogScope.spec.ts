@@ -224,6 +224,53 @@ describe("multi-run loops", () => {
 
         expect(targets.chains["amer"][0]).not.toHaveProperty("multiRun")
     })
+
+    it("shouldFlagACachedChainOnceTheRootStartsASecondRunOfItsLoop", async () => {
+        const deps = depsFor([iteration("amer", "root", "per_region", 1)])
+        const cache = createChainCache()
+
+        await collectFailedTargets({...root, taskRunList: runs("per_region", 1)}, deps, {cache})
+        const targets = await collectFailedTargets({...root, taskRunList: runs("per_region", 2)}, deps, {cache})
+
+        expect(targets.chains["amer"][0].multiRun).toBe(true)
+    })
+
+    it("shouldRefetchARunningParentSoASecondRunOfItsLoopIsFlagged", async () => {
+        const parent = (state: string, count: number) => ({
+            ...customers(12)["customer-13"],
+            state: {current: state},
+            taskRunList: runs("per_invoice", count),
+        })
+        const deps = depsFor([nestedFailure("f13", 12)])
+        deps.fetchIteration
+            .mockResolvedValueOnce(parent("RUNNING", 1))
+            .mockResolvedValueOnce(parent("SUCCESS", 2))
+        const cache = createChainCache()
+        const rootRun = {...root, taskRunList: runs("per_customer", 1)}
+
+        const first = await collectFailedTargets(rootRun, deps, {cache})
+        const second = await collectFailedTargets(rootRun, deps, {cache})
+        await collectFailedTargets(rootRun, deps, {cache})
+
+        expect(first.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, undefined])
+        expect(second.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(2)
+    })
+
+    it("shouldKeepTheLastKnownRunsWhenARunningParentRefetchFails", async () => {
+        const deps = depsFor([nestedFailure("f13", 12)])
+        deps.fetchIteration
+            .mockResolvedValueOnce({...customers(12)["customer-13"], state: {current: "RUNNING"}, taskRunList: runs("per_invoice", 2)})
+            .mockRejectedValueOnce(new Error("Service unavailable"))
+        const cache = createChainCache()
+        const rootRun = {...root, taskRunList: runs("per_customer", 1)}
+
+        await collectFailedTargets(rootRun, deps, {cache})
+        const refreshed = await collectFailedTargets(rootRun, deps, {cache})
+
+        expect(refreshed.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(2)
+    })
 })
 
 describe("collectScopedTargets", () => {
@@ -357,7 +404,7 @@ describe("logUrlReserve", () => {
     const queryOf = (url: string) => url.slice(url.indexOf("?") + 1)
 
     it("shouldGrowWithTheLevelFilterAndTheTextSearch", () => {
-        const base = {levelParams, kinds: ["NORMAL", "LOOP"]}
+        const base = {levelParams}
 
         expect(logUrlReserve({...base, q: "a long search text"})).toBeGreaterThan(logUrlReserve(base))
     })
@@ -370,17 +417,18 @@ describe("logUrlReserve", () => {
 
     it("shouldAccountForExactlyTheQueryTheSdkSendsForALogSearch", async () => {
         const ids = ["root", ...Array.from({length: 40}, (_, index) => `${"x".repeat(22)}${index}`)]
-        const search = {executionIds: ids, kinds: ["NORMAL", "LOOP"], levelParams, q: "needle é", page: 1}
+        const search = {executionIds: ids, levelParams, q: "needle é", page: 1}
 
         await searchMergedLogs(search)
 
+        expect(decodeURIComponent(sentUrls[0])).not.toContain("kind")
         expect(logUrlReserve(search) + executionIdsUrlLength(ids)).toBe(LOG_URL_MARGIN + queryOf(sentUrls[0]).length)
     })
 
     it("shouldKeepTheFullUrlUnderTheLimitWithTheCursorMargin", async () => {
         const failures = Array.from({length: 300}, (_, index) => iteration(`${"x".repeat(22)}${index}`, "root", "per_region", index))
         const deps = depsFor(failures)
-        const search = {kinds: ["NORMAL", "LOOP"], levelParams, q: "needle", page: 1, cursor: "c".repeat(300)}
+        const search = {levelParams, q: "needle", page: 1, cursor: "c".repeat(300)}
         const reserve = logUrlReserve(search)
 
         const targets = await collectFailedTargets(root, deps, {reserve})

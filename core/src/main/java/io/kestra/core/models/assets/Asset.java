@@ -54,12 +54,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
 
-    public static final String ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
+    public static final String ID_PATTERN = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*";
+
+    private static final String FULL_ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
 
     /** The audit log detail id embeds the asset id, so the asset id has to stay this short. */
     public static final int ID_MAX_LENGTH = 150;
 
-    /** The id an asset was given, when it was longer than {@link #ID_MAX_LENGTH} and was shortened, see {@link #normalizeId(String)}. */
+    /** The id an asset was given, when {@link #normalizeId(String)} changed it. */
     public static final String FULL_ID_METADATA_KEY = SYSTEM_METADATA_PREFIX + "fullId";
 
     @Hidden
@@ -279,20 +281,27 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     }
 
     /**
-     * The id an asset is stored and looked up by. An id longer than {@link #ID_MAX_LENGTH} keeps its beginning and
-     * ends with a hash of the whole id, so that it fits, stays readable and is the same wherever it is computed. A
-     * normalized id is left as it is, so the function can be applied to an id whatever its origin.
+     * The id an asset is stored and looked up by. Reverse proxies refuse or decode a slash in a URL path, so slashes
+     * become colons: those at either end are dropped, and a run of slashes with the colons around it becomes one
+     * colon, which leaves the colons of an id without slashes alone, such as the empty fields of an ARN. An id still
+     * longer than {@link #ID_MAX_LENGTH} keeps its beginning and ends with a hash of the whole id, so that it fits,
+     * stays readable and is the same wherever it is computed. A normalized id is left as it is, so the function can be
+     * applied to an id whatever its origin.
      */
     public static String normalizeId(String id) {
-        if (id == null || id.length() <= ID_MAX_LENGTH) {
-            return id;
+        if (id == null) {
+            return null;
         }
-        String hash = IdUtils.from(id);
+        String converted = id.contains("/") ? id.replaceAll("^/+|/+$", "").replaceAll(":?/+:?", ":") : id;
+        if (converted.length() <= ID_MAX_LENGTH) {
+            return converted;
+        }
+        String hash = IdUtils.from(converted);
         int end = ID_MAX_LENGTH - hash.length() - 1;
-        if (Character.isHighSurrogate(id.charAt(end - 1))) {
+        if (Character.isHighSurrogate(converted.charAt(end - 1))) {
             end--;
         }
-        return id.substring(0, end) + ":" + hash;
+        return converted.substring(0, end) + ":" + hash;
     }
 
     public Asset withTenantId(String tenantId) {
@@ -305,11 +314,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return this;
     }
 
-    @AssertTrue(message = "the full id must match \"" + ID_PATTERN + "\"")
+    @AssertTrue(message = "the full id must match \"" + FULL_ID_PATTERN + "\"")
     @JsonIgnore
     public boolean isFullIdMatchingThePattern() {
         Object fullId = metadata == null ? null : metadata.get(FULL_ID_METADATA_KEY);
-        return fullId == null || fullId.toString().matches(ID_PATTERN);
+        return fullId == null || fullId.toString().matches(FULL_ID_PATTERN);
     }
 
     @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")

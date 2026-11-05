@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.dashboards.filters.AbstractFilter.FilterType;
@@ -45,22 +45,23 @@ class AssetValidationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(
-        strings = {
-            "//compute.googleapis.com/projects/my-project/zones/europe-west1-b/instances/vm-1",
-            "/subscriptions/0b9a2e4c-1f3d-4a5b-9c8d-7e6f5a4b3c2d/resourceGroups/rg-orders/providers/Microsoft.Compute/virtualMachines/vm-1",
-            "arn:aws:ec2:eu-west-1:123456789012:instance/i-0abc1234def567890",
-            "https://example.com/orders/table"
+    @CsvSource(
+        {
+            "//compute.googleapis.com/projects/my-project/zones/europe-west1-b/instances/vm-1, compute.googleapis.com:projects:my-project:zones:europe-west1-b:instances:vm-1",
+            "/subscriptions/0b9a2e4c/resourceGroups/rg-orders/providers/Microsoft.Compute/virtualMachines/vm-1, subscriptions:0b9a2e4c:resourceGroups:rg-orders:providers:Microsoft.Compute:virtualMachines:vm-1",
+            "arn:aws:ec2:eu-west-1:123456789012:instance/i-0abc1234def567890, arn:aws:ec2:eu-west-1:123456789012:instance:i-0abc1234def567890",
+            "https://example.com/orders/table, https:example.com:orders:table"
         }
     )
-    void shouldAcceptTheIdAsItIsGivenACloudResourceNameOrAUrl(String id) {
+    void shouldAcceptACloudResourceNameOrAUrlAsAnIdWithItsSlashesTurnedIntoColons(String id, String converted) {
         Custom asset = Custom.builder()
             .namespace("io.kestra")
             .id(id)
             .type("MY_OWN_ASSET_TYPE")
             .build();
 
-        assertThat(asset.getId()).isEqualTo(id);
+        assertThat(asset.getId()).isEqualTo(converted);
+        assertThat(asset.getMetadata()).containsEntry(Asset.FULL_ID_METADATA_KEY, id);
         assertThat(modelValidator.isValid(asset)).isEmpty();
     }
 

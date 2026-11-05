@@ -2,6 +2,13 @@ import type {Execution, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-s
 import {z} from "zod"
 import {defineArtifactSlot} from "./define-artifact-slot"
 
+export const progressEventSchema = z.object({
+    taskId: z.string(),
+    taskRunId: z.string(),
+    step: z.string(),
+    timestamp: z.string(),
+})
+
 export const propsSchema = z.object({
     taskType: z.string(),
     // The graph node's task, merged with the same task parsed out of `source`: an execution graph
@@ -12,8 +19,8 @@ export const propsSchema = z.object({
     flowId: z.string().optional(),
     // Current tenant, so an artifact bundling its own SDK copy doesn't have to guess it.
     tenant: z.string().optional(),
-    // Current (possibly unsaved) flow source, so plugins can resolve draft expressions for display.
-    source: z.string().optional(),
+    // Live lifecycle steps this task's current task run reported, empty once there is none.
+    progress: progressEventSchema.array(),
     // Outputs of this task's current task run, fetched on call so an artifact that doesn't render
     // them costs no request. A looped task has one run per iteration; pass `taskRunId` to read
     // another. Resolves to `{}` outside an execution.

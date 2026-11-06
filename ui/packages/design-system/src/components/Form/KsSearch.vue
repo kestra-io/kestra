@@ -33,7 +33,7 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const model = defineModel<string>()
+    const model = defineModel<string>({default: ""})
 
     const props = defineProps<{
         placeholder?: string

@@ -90,7 +90,12 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     const localStorageValue = computed(() => {
         const raw = window.sessionStorage.getItem(localStorageName.value)
-        return raw ? JSON.parse(raw) : null
+        if (!raw) return null
+        try {
+        return JSON.parse(raw)
+        } catch {
+        return null
+        }
     })
 
     let restoring = false

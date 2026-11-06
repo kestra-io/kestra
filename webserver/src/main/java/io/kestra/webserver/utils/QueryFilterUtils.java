@@ -1,5 +1,6 @@
 package io.kestra.webserver.utils;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Predicate;
@@ -137,6 +138,14 @@ public class QueryFilterUtils {
     }
 
     /**
+     * Same as {@link #replaceTimeRangeWithComputedStartDateFilter(List)}, with {@code defaultTimeRange} in place of the
+     * 8-day default when the filters have no start date or time range.
+     */
+    public static List<QueryFilter> replaceTimeRangeWithComputedStartDateFilter(List<QueryFilter> filters, Duration defaultTimeRange) {
+        return replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE, false, defaultTimeRange);
+    }
+
+    /**
      * Resolves {@link QueryFilter.Field#TIME_RANGE} into a concrete date boundary filter targeting
      * the date column(s) selected by {@code dateFilter}.
      * <ul>
@@ -154,10 +163,14 @@ public class QueryFilterUtils {
      * {@code timeRange} of {@value TimeLineSearch#ALL_TIME} is dropped instead of bounded by the 8-day default.
      */
     public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter, boolean allowAllTime) {
+        return replaceTimeRangeWithComputedDateFilter(filters, dateFilter, allowAllTime, TimeLineSearch.DEFAULT_TIME_RANGE);
+    }
+
+    private static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter, boolean allowAllTime, Duration defaultTimeRange) {
         if (dateFilter == null) {
             dateFilter = DateFilter.START_DATE;
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters, allowAllTime);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters, allowAllTime, defaultTimeRange);
         DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
         List<QueryFilter> boundedFilters = allowAllTime ? removeAllTimeFilters(filters) : filters;

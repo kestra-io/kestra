@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -1169,6 +1171,31 @@ class ExecutionControllerTest {
             .build();
         executionRepository.save(execution);
         return execution;
+    }
+
+    @Test
+    void shouldOnlyMatchTheLast30DaysWhenBulkActionByQueryHasNoTimeRange() {
+        String namespace = "io.kestra.tests.bulk-default-time-range";
+        Instant now = Instant.now();
+        Stream.of(now, now.minus(10, ChronoUnit.DAYS), now.minus(40, ChronoUnit.DAYS))
+            .forEach(startDate -> executionRepository.save(
+                Execution.builder()
+                    .id(IdUtils.create())
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .flowId("minimal")
+                    .flowRevision(1)
+                    .state(State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, startDate), new State.History(State.Type.SUCCESS, startDate.plusSeconds(1)))))
+                    .build()
+            ));
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST("/api/v1/main/executions/labels/by-query?filters[namespace][EQUALS]=" + namespace, List.of(new Label("bulk", "true"))),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
     }
 
     @Test

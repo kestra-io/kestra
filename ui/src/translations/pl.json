@@ -1361,7 +1361,18 @@
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
       "noResults": "Brak pluginów pasujących do wyszukiwania.",
-      "loadError": "Nie można wczytać pluginów. Spróbuj ponownie.",
+      "loadErrorTitle": "Nie można załadować listy Pluginów",
+      "loadErrorDescription": "Twoje Flowy działają dalej. Ta strona odczytuje tylko listę pluginów.",
+      "showAll": "Pokaż wszystkie Pluginy",
+      "view": {
+        "cards": "Karty",
+        "table": "Tabela",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Żaden plugin nie pasuje do Twoich filtrów",
+        "description": "Spróbuj innego terminu wyszukiwania lub wyczyść filtry kategorii."
+      },
       "notFound": "Nie znaleziono tego pluginu.",
       "elementType": {
         "tasks": "Task",
@@ -1407,6 +1418,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certyfikowany",
         "back": "Wróć do pluginów"
+      },
+      "management": {
+        "upload": "Prześlij",
+        "addPlugin": "Dodaj Plugin",
+        "lockedTitle": "Zarządzanie wersjami Pluginu",
+        "lockedDescription": "Zainstaluj pluginy, przechowuj kilka wersji obok siebie i aktualizuj je bez przebudowywania obrazu, dzięki Enterprise Edition.",
+        "learnMore": "Dowiedz się więcej",
+        "includedWithKestra": "Dołączone do Kestra",
+        "gateNote": "Instalowanie i aktualizowanie pluginów jest dostępne w wersji Enterprise Edition.",
+        "upsellTitle": "Wersjonowanie Pluginów to funkcja Enterprise",
+        "upsellDescription": "Każdy Plugin poniżej jest dostarczany z tym obrazem Kestra i jest gotowy do użycia w Flow. W Enterprise Edition możesz również zainstalować Plugin, który nie jest dołączony, przypiąć wersję dla każdego Pluginu i uaktualnić bez przebudowy obrazu.",
+        "talkToUs": "Porozmawiaj z nami",
+        "readTheDocs": "Przeczytaj dokumentację"
       }
     },
     "no inputs": "Ten Flow nie ma Inputów.",

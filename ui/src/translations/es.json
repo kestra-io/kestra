@@ -1361,7 +1361,18 @@
       "search": "Buscar entre {count}+ plugins",
       "searchTasks": "Buscar {count} tasks",
       "noResults": "No hay plugins que coincidan con tu búsqueda.",
-      "loadError": "No se pudieron cargar los plugins. Por favor, inténtelo de nuevo.",
+      "loadErrorTitle": "No se pudo cargar la lista de plugins",
+      "loadErrorDescription": "Tus Flows siguen ejecutándose. Esta página solo lee la lista de plugins.",
+      "showAll": "Mostrar todos los plugins",
+      "view": {
+        "cards": "Tarjetas",
+        "table": "Tabla",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Ningún plugin coincide con tus filtros",
+        "description": "Prueba un término de búsqueda diferente o borra los filtros de categoría."
+      },
       "notFound": "Este plugin no pudo ser encontrado.",
       "elementType": {
         "tasks": "Tarea",
@@ -1407,6 +1418,19 @@
         "enterpriseEdition": "Edición Enterprise",
         "certified": "Certificado",
         "back": "Volver a plugins"
+      },
+      "management": {
+        "upload": "Subir",
+        "addPlugin": "Añadir plugin",
+        "lockedTitle": "Gestión de versiones de Plugin",
+        "lockedDescription": "Instala plugins, mantén varias versiones en paralelo y actualízalas sin reconstruir la imagen, con la Enterprise Edition.",
+        "learnMore": "Aprender más",
+        "includedWithKestra": "Incluido con Kestra",
+        "gateNote": "La instalación y actualización de plugins está disponible en la Enterprise Edition.",
+        "upsellTitle": "El versionado de Plugins es una característica Enterprise",
+        "upsellDescription": "Cada plugin a continuación se envía con esta imagen de Kestra y está listo para usar en un Flow. En la Enterprise Edition también puedes instalar un plugin que no esté incluido, fijar una versión por plugin y actualizar sin reconstruir la imagen.",
+        "talkToUs": "Habla con nosotros",
+        "readTheDocs": "Leer la documentación"
       }
     },
     "no inputs": "Este flow no tiene inputs.",

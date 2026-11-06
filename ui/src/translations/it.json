@@ -1361,7 +1361,18 @@
       "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
       "noResults": "Nessun plugin corrisponde alla tua ricerca.",
-      "loadError": "Impossibile caricare i plugin. Per favore riprova.",
+      "loadErrorTitle": "Impossibile caricare l'elenco dei plugin",
+      "loadErrorDescription": "I tuoi flow continuano a essere eseguiti. Questa pagina legge solo l'elenco dei plugin.",
+      "showAll": "Mostra tutti i plugin",
+      "view": {
+        "cards": "Schede",
+        "table": "Tabella",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Nessun plugin corrisponde ai tuoi filtri",
+        "description": "Prova un termine di ricerca diverso o cancella i filtri di categoria."
+      },
       "notFound": "Questo plugin non è stato trovato.",
       "elementType": {
         "tasks": "Compito",
@@ -1407,6 +1418,19 @@
         "enterpriseEdition": "Edizione Enterprise",
         "certified": "Certificato",
         "back": "Torna ai plugin"
+      },
+      "management": {
+        "upload": "Carica",
+        "addPlugin": "Aggiungi plugin",
+        "lockedTitle": "Gestione della versione del Plugin",
+        "lockedDescription": "Installa plugin, mantieni diverse versioni affiancate e aggiornale senza ricostruire l'immagine, con l'Enterprise Edition.",
+        "learnMore": "Scopri di più",
+        "includedWithKestra": "Incluso con Kestra",
+        "gateNote": "L'installazione e l'aggiornamento dei plugin sono disponibili nell'Enterprise Edition.",
+        "upsellTitle": "Il versioning dei Plugin è una funzionalità Enterprise",
+        "upsellDescription": "Ogni plugin sottostante viene fornito con questa immagine Kestra ed è pronto per essere utilizzato in un Flow. Sull'Enterprise Edition puoi anche installare un plugin non incluso, bloccare una versione per plugin e aggiornare senza ricostruire l'immagine.",
+        "talkToUs": "Parlaci",
+        "readTheDocs": "Leggi la documentazione"
       }
     },
     "no inputs": "Questo flow non ha inputs.",

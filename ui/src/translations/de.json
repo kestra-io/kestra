@@ -1361,7 +1361,18 @@
       "search": "{count}+ Plugins durchsuchen",
       "searchTasks": "{count} Tasks durchsuchen",
       "noResults": "Keine Plugins entsprechen deiner Suche.",
-      "loadError": "Plugins konnten nicht geladen werden. Bitte versuche es erneut.",
+      "loadErrorTitle": "Die Plugin-Liste konnte nicht geladen werden",
+      "loadErrorDescription": "Deine Flows laufen weiter. Diese Seite liest nur die Liste der Plugins.",
+      "showAll": "Alle Plugins anzeigen",
+      "view": {
+        "cards": "Karten",
+        "table": "Tabelle",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Kein Plugin entspricht deinen Filtern",
+        "description": "Versuche einen anderen Suchbegriff oder lösche die Kategorie-Filter."
+      },
       "notFound": "Dieses Plugin konnte nicht gefunden werden.",
       "elementType": {
         "tasks": "Task",
@@ -1407,6 +1418,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Zertifiziert",
         "back": "Zurück zu Plugins"
+      },
+      "management": {
+        "upload": "Hochladen",
+        "addPlugin": "Plugin hinzufügen",
+        "lockedTitle": "Plugin-Versionsverwaltung",
+        "lockedDescription": "Installiere Plugins, halte mehrere Versionen nebeneinander und upgrade sie ohne das Image neu zu erstellen, mit der Enterprise Edition.",
+        "learnMore": "Erfahre mehr",
+        "includedWithKestra": "In Kestra enthalten",
+        "gateNote": "Die Installation und das Upgrade von Plugins ist in der Enterprise Edition verfügbar.",
+        "upsellTitle": "Plugin-Versionierung ist eine Enterprise-Funktion",
+        "upsellDescription": "Jedes Plugin unten wird mit diesem Kestra-Image ausgeliefert und ist bereit zur Verwendung in einem Flow. In der Enterprise Edition kannst du auch ein Plugin installieren, das nicht gebündelt ist, eine Version pro Plugin festlegen und upgraden, ohne das Image neu zu erstellen.",
+        "talkToUs": "Sprich mit uns",
+        "readTheDocs": "Lies die Docs"
       }
     },
     "no inputs": "Dieser Flow hat keine Inputs.",

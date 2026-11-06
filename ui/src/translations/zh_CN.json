@@ -1361,7 +1361,18 @@
       "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
       "noResults": "没有插件符合您的搜索。",
-      "loadError": "无法加载插件。请重试。",
+      "loadErrorTitle": "无法加载 plugin 列表",
+      "loadErrorDescription": "您的flow将继续运行。此页面仅读取插件列表。",
+      "showAll": "显示所有插件",
+      "view": {
+        "cards": "卡片",
+        "table": "表格",
+        "plugin": "插件"
+      },
+      "empty": {
+        "title": "没有插件符合您的筛选条件",
+        "description": "尝试不同的搜索词，或清除类别筛选器。"
+      },
       "notFound": "未找到此插件。",
       "elementType": {
         "tasks": "任务",
@@ -1407,6 +1418,19 @@
         "enterpriseEdition": "企业版",
         "certified": "认证",
         "back": "返回插件"
+      },
+      "management": {
+        "upload": "上传",
+        "addPlugin": "添加 plugin",
+        "lockedTitle": "插件版本管理",
+        "lockedDescription": "使用企业版安装插件，并排保留多个版本，无需重新构建镜像即可升级。",
+        "learnMore": "了解更多",
+        "includedWithKestra": "Kestra 内置",
+        "gateNote": "企业版支持安装和升级 plugin。",
+        "upsellTitle": "Plugin 版本控制是 Enterprise 功能",
+        "upsellDescription": "以下每个 plugin 都随此 Kestra 镜像一起提供，并可在 flow 中使用。在 Enterprise Edition 中，您还可以安装未捆绑的 plugin，为每个 plugin 锁定版本，以及在不重新构建镜像的情况下进行升级。",
+        "talkToUs": "联系我们",
+        "readTheDocs": "阅读文档"
       }
     },
     "no inputs": "此流程没有输入。",

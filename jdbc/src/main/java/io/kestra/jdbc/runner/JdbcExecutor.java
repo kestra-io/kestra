@@ -462,6 +462,11 @@ public class JdbcExecutor implements ExecutorInterface {
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
+    // reset under the row lock: writing back a copy read earlier would overwrite a concurrent evaluation result
+    private void resetTrigger(FlowWithSource flow, Execution execution) {
+        triggerRepository.lock(Trigger.uid(execution), trigger -> executionService.resetExecution(flow, execution, trigger));
+    }
+
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
         if (either.isRight()) {
             log.error("Unable to deserialize a multiple condition event: {}", either.getRight().getMessage());
@@ -1250,7 +1255,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             execution.getTrigger().getId()
                         );
                     } else {
-                        triggerRepository.findByUid(Trigger.uid(execution)).ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
+                        resetTrigger(flow, execution);
                     }
                 }
 
@@ -1362,7 +1367,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 // purge the trigger: reset scheduler trigger at end
                 if (execution.getTrigger() != null) {
                     FlowWithSource flow = executor.getFlow();
-                    triggerRepository.findByUid(Trigger.uid(execution)).ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
+                    resetTrigger(flow, execution);
                 }
 
                 // Purge the workerTaskResultQueue and the workerJobQueue

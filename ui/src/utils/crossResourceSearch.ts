@@ -1,5 +1,3 @@
-import {escapeHtml} from "@kestra-io/design-system"
-
 export type SearchResourceType = "flows" | "files" | "kv" | "secrets"
 
 export const SEARCH_RESOURCE_TYPES: SearchResourceType[] = ["flows", "files", "kv", "secrets"]
@@ -50,17 +48,6 @@ export function buildHighlightSegments(text: string, query: string, caseSensitiv
 }
 
 /**
- * Renders `buildHighlightSegments` as escaped HTML with matches wrapped in `<mark>` — the shared
- * rendering used by both the results list and the preview pane for files/KV/secrets rows, which
- * (unlike flows) have no server-provided `[mark]` markers to highlight against.
- */
-export function buildHighlightHtml(text: string, query: string, caseSensitive = false): string {
-    return buildHighlightSegments(text, query, caseSensitive)
-        .map((segment) => segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text))
-        .join("")
-}
-
-/**
  * The KV and namespace-file endpoints split the query into terms and require every term to occur as
  * a substring, in any order — so a query like `landing.bucket` matches `landing-bucket-us-east-1`
  * even though that literal string never appears. Highlighting the whole query would then mark
@@ -100,12 +87,6 @@ export function buildTermHighlightSegments(text: string, query: string, caseSens
     }
 
     return segments.length > 0 ? segments : [{text, matched: false}]
-}
-
-export function buildTermHighlightHtml(text: string, query: string, caseSensitive = false): string {
-    return buildTermHighlightSegments(text, query, caseSensitive)
-        .map((segment) => segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text))
-        .join("")
 }
 
 export interface PathSegment extends HighlightSegment {

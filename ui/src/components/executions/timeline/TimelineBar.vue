@@ -372,6 +372,10 @@
         flex-direction: column;
         gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-3);
+
+        & > * {
+            margin-left: 0;
+        }
     }
 }
 </style>

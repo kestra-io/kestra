@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger został odblokowany"
     },
+    "trigger blocked": "Zablokowane",
+    "trigger blocked policy check failed": "Nie można było sprawdzić polityk zarządzania.",
+    "trigger blocked unknown": "Zablokowano z nieznanego powodu.",
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
     "trigger enable dialog": {
       "title": "Włącz Trigger",
@@ -1357,8 +1360,18 @@
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
-      "noResults": "Brak pluginów pasujących do wyszukiwania.",
-      "loadError": "Nie można wczytać pluginów. Spróbuj ponownie.",
+      "loadErrorTitle": "Nie można załadować listy Pluginów",
+      "loadErrorDescription": "Twoje Flowy działają dalej. Ta strona odczytuje tylko listę pluginów.",
+      "showAll": "Pokaż wszystkie Pluginy",
+      "view": {
+        "cards": "Karty",
+        "table": "Tabela",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Żaden plugin nie pasuje do Twoich filtrów",
+        "description": "Spróbuj innego terminu wyszukiwania lub wyczyść filtry kategorii."
+      },
       "notFound": "Nie znaleziono tego pluginu.",
       "elementType": {
         "tasks": "Task",
@@ -1367,8 +1380,13 @@
         "taskRunners": "Task Runner",
         "charts": "Wykres",
         "apps": "App",
+        "appBlocks": "Blok App",
+        "dataFilters": "Filtr danych",
+        "dataFiltersKPI": "Filtr danych KPI",
         "logExporters": "Eksporter logów",
-        "secrets": "Sekret"
+        "secrets": "Sekret",
+        "assets": "Typ Assetu",
+        "additionalPlugins": "Dodatkowy plugin"
       },
       "sortBy": "Sortuj według",
       "sort": {
@@ -1399,6 +1417,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certyfikowany",
         "back": "Wróć do pluginów"
+      },
+      "management": {
+        "upload": "Prześlij",
+        "addPlugin": "Dodaj Plugin",
+        "lockedTitle": "Zarządzanie wersjami Pluginu",
+        "lockedDescription": "Zainstaluj pluginy, przechowuj kilka wersji obok siebie i aktualizuj je bez przebudowywania obrazu, dzięki Enterprise Edition.",
+        "learnMore": "Dowiedz się więcej",
+        "includedWithKestra": "Dołączone do Kestra",
+        "gateNote": "Instalowanie i aktualizowanie pluginów jest dostępne w wersji Enterprise Edition.",
+        "upsellTitle": "Wersjonowanie Pluginów to funkcja Enterprise",
+        "upsellDescription": "Każdy Plugin poniżej jest dostarczany z tym obrazem Kestra i jest gotowy do użycia w Flow. W Enterprise Edition możesz również zainstalować Plugin, który nie jest dołączony, przypiąć wersję dla każdego Pluginu i uaktualnić bez przebudowy obrazu.",
+        "talkToUs": "Porozmawiaj z nami",
+        "readTheDocs": "Przeczytaj dokumentację"
       }
     },
     "no inputs": "Ten Flow nie ma Inputów.",
@@ -1459,10 +1490,13 @@
           "fields": {
             "app_font_size": "Rozmiar czcionki aplikacji",
             "color_mode": "Tryb kolorów",
+            "editor_dark_theme": "Motyw edytora w trybie ciemnym",
             "editor_folding_stratgy": "Automatyczne zwijanie kodu w edytorze",
             "editor_font_family": "Rodzina czcionki edytora",
             "editor_font_size": "Rozmiar czcionki edytora",
             "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
+            "editor_pebble_hover": "Najedź kursorem na referencję Pebble, aby zobaczyć jej definicję",
+            "editor_light_theme": "Motyw edytora w trybie jasnym",
             "environment_color": "Kolor środowiska",
             "environment_name": "Nazwa środowiska",
             "environment_name_tooltip": "Nazwa tego środowiska jest ustawiona w konfiguracji, ale można ją zmienić.",
@@ -1485,6 +1519,9 @@
             "editor_font_size": "Rozmiar czcionki używany w edytorach YAML i no-code.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML przy otwieraniu Flow.",
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
+            "editor_pebble_hover": "Pokaż definicję i dokumentację Inputa, Outputa, zmiennej, etykiety lub zmiennej Triggera po najechaniu kursorem na jej odwołanie Pebble w edytorze Flow.",
+            "editor_dark_theme": "Kolory składni edytora kodu, gdy tryb kolorów to Dark 1.0 lub Dark 2.0.",
+            "editor_light_theme": "Kolory składni edytora kodu, gdy tryb kolorów to Jasny.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu."
@@ -1493,6 +1530,9 @@
             "small": "Mały",
             "medium": "Średni",
             "large": "Duży"
+          },
+          "editor_theme_options": {
+            "match_app": "Zgodnie z motywem aplikacji"
           }
         },
         "localization": {
@@ -1800,9 +1840,9 @@
         },
         "errors": {
           "first_execution": "Pierwsza egzekucja zakończyła się statusem {state}, zamiast sukcesem. Otwórz logi na tej stronie, aby zobaczyć dlaczego, a potem spróbuj ponownie.",
-          "expected_failure": "Ta egzekucja zakończyła się statusem {state}, więc nie ma jeszcze błędu do naprawienia. Sprawdź, czy Flow nadal ma Taska <code>notify</code>, a potem spróbuj ponownie.",
+          "expected_failure": "Ta egzekucja zakończyła się jako {state}, więc nie ma jeszcze żadnej awarii do naprawienia. Sprawdź, czy Flow nadal ma Task {task}, a następnie spróbuj ponownie.",
           "no_execution_to_replay": "Nie ma jeszcze egzekucji, dla której można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
-          "replay": "Replay zakończył się statusem {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił <code>notify</code>, a potem spróbuj ponownie.",
+          "replay": "Replay zakończył się jako {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił {task}, a następnie spróbuj ponownie.",
           "save_flow": "Nie udało się zapisać Flow przewodnika. {reason}",
           "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie."
         },
@@ -2031,7 +2071,6 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
-      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
@@ -2143,6 +2182,11 @@
       "decrease_fontsize": "Zmniejsz rozmiar czcionki edytora",
       "increase_fontsize": "Zwiększ rozmiar czcionki edytora",
       "reset_fontsize": "Zresetuj rozmiar czcionki edytora"
+    },
+    "pebble_hover": {
+      "toggle": "Przełącz dokumentację Pebble po najechaniu myszą",
+      "enabled": "Dokumentacja Pebble po najechaniu jest włączona.",
+      "disabled": "Dokumentacja Pebble po najechaniu kursorem jest wyłączona."
     },
     "instance": "Instancja",
     "something_went_wrong": {
@@ -2549,7 +2593,7 @@
     "reject": "Odrzuć",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
-    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: {name}",
     "no_file_choosen": "Nie wybrano pliku",
     "dependency": {
       "controls": {

@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "triggerのロックが解除されました"
     },
+    "trigger blocked": "ブロック済み",
+    "trigger blocked policy check failed": "ガバナンスポリシーを確認できませんでした。",
+    "trigger blocked unknown": "不明な理由によりブロックされました。",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger enable dialog": {
       "title": "trigger を有効化",
@@ -1357,8 +1360,18 @@
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
-      "noResults": "検索に一致するプラグインがありません。",
-      "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",
+      "loadErrorTitle": "プラグインリストを読み込めませんでした",
+      "loadErrorDescription": "Flowは引き続き実行されます。このページはプラグインのリストのみを読み取ります。",
+      "showAll": "すべてのPluginを表示",
+      "view": {
+        "cards": "カード",
+        "table": "テーブル",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "フィルターに一致するpluginがありません",
+        "description": "別の検索語を試すか、カテゴリフィルターをクリアしてください。"
+      },
       "notFound": "このプラグインが見つかりませんでした。",
       "elementType": {
         "tasks": "タスク",
@@ -1367,8 +1380,13 @@
         "taskRunners": "タスクランナー",
         "charts": "チャート",
         "apps": "アプリ",
+        "appBlocks": "Appブロック",
+        "dataFilters": "データフィルター",
+        "dataFiltersKPI": "KPIデータフィルター",
         "logExporters": "ログエクスポーター",
-        "secrets": "シークレット"
+        "secrets": "シークレット",
+        "assets": "Assetタイプ",
+        "additionalPlugins": "追加のplugin"
       },
       "sortBy": "並び替え",
       "sort": {
@@ -1399,6 +1417,19 @@
         "enterpriseEdition": "エンタープライズエディション",
         "certified": "認定済み",
         "back": "プラグインに戻る"
+      },
+      "management": {
+        "upload": "アップロード",
+        "addPlugin": "プラグインを追加",
+        "lockedTitle": "Pluginバージョン管理",
+        "lockedDescription": "Enterprise Edition を使用すると、イメージを再構築することなく、複数のバージョンの plugin を並行してインストールおよびアップグレードできます。",
+        "learnMore": "詳細はこちら",
+        "includedWithKestra": "Kestraに同梱",
+        "gateNote": "プラグインのインストールとアップグレードはEnterprise Editionで利用できます。",
+        "upsellTitle": "Pluginのバージョン管理はEnterprise機能です",
+        "upsellDescription": "以下のすべてのpluginは、このKestraイメージに同梱されており、Flowですぐに使用できます。Enterprise Editionでは、バンドルされていないpluginをインストールしたり、pluginごとにバージョンを固定したり、イメージを再構築せずにアップグレードしたりすることもできます。",
+        "talkToUs": "お問い合わせ",
+        "readTheDocs": "ドキュメントを読む"
       }
     },
     "no inputs": "このflowにはinputがありません。",
@@ -1459,10 +1490,13 @@
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
             "color_mode": "カラーモード",
+            "editor_dark_theme": "ダークモードのエディタテーマ",
             "editor_folding_stratgy": "エディターでのコードの自動折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
+            "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
+            "editor_light_theme": "ライトモードのエディタテーマ",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1485,6 +1519,9 @@
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
+            "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
+            "editor_dark_theme": "カラーモードがダーク 1.0 またはダーク 2.0 のときのコードエディタの構文の色。",
+            "editor_light_theme": "カラーモードがライトのときのコードエディタの構文の色。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -1493,6 +1530,9 @@
             "small": "小",
             "medium": "中",
             "large": "大"
+          },
+          "editor_theme_options": {
+            "match_app": "アプリのテーマに合わせる"
           }
         },
         "localization": {
@@ -1800,9 +1840,9 @@
         },
         "errors": {
           "first_execution": "最初の実行は成功せず、{state}として終了しました。理由を確認するには、このページのlogsを開き、もう一度お試しください。",
-          "expected_failure": "この実行は{state}で終了したため、まだ修正すべき失敗はありません。flowにまだ<code>notify</code> taskがあることを確認し、もう一度お試しください。",
+          "expected_failure": "このExecutionは{state}で終了したため、まだ修正すべき失敗はありません。Flowに{task} Taskがあることを確認してから、もう一度お試しください。",
           "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
-          "replay": "リプレイは {state} で終了しました。このページで log を開いて `notify` の報告内容を確認し、もう一度お試しください。",
+          "replay": "リプレイは{state}として終了しました。このページのlogを開いて{task}が報告した内容を確認し、もう一度試してください。",
           "save_flow": "ツアー flow は保存できませんでした。{reason}",
           "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
         },
@@ -2031,7 +2071,6 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
-      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -2143,6 +2182,11 @@
       "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "increase_fontsize": "エディタのフォントサイズを大きくする",
       "reset_fontsize": "エディタのフォントサイズをリセット"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble ホバー docs を切り替える",
+      "enabled": "Pebble ホバー docs はオンです。",
+      "disabled": "Pebble ホバー docs はオフです。"
     },
     "instance": "インスタンス",
     "something_went_wrong": {
@@ -2549,7 +2593,7 @@
     "reject": "拒否",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
-    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: {name}",
     "no_file_choosen": "ファイルが選択されていません",
     "dependency": {
       "controls": {

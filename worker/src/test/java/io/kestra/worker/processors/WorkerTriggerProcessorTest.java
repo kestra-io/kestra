@@ -29,6 +29,7 @@ import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.tasks.test.SleepTrigger;
+import io.kestra.core.tasks.test.StoppableRealtimeTrigger;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.models.WorkerTriggerResult;
@@ -137,6 +138,25 @@ class WorkerTriggerProcessorTest {
 
         // Then it does not start an evaluation nobody is waiting for any more
         assertThat(RecordingTrigger.EVALUATED.get()).isFalse();
+    }
+
+    @Test
+    void shouldEndRealtimeTriggerWhenStoppedBeforeTheEvaluationStarted() throws Exception {
+        // Given a worker stopping after it picked up a realtime trigger, but before the evaluation started
+        WorkerTrigger workerTrigger = workerTrigger(
+            StoppableRealtimeTrigger.builder().id("realtime").type(StoppableRealtimeTrigger.class.getName()).build()
+        );
+        WorkerQueue<WorkerTriggerResult> results = new InMemoryWorkerQueue<>(10);
+        WorkerTriggerProcessor processor = processor(results);
+        processor.stop();
+
+        // When the job finally runs
+        submit(() -> processor.process(workerTrigger)).get(10, TimeUnit.SECONDS);
+
+        // Then the stream ends at once with a terminal result, instead of running until the worker is forced down
+        WorkerTriggerResult result = results.poll(Duration.ofSeconds(1));
+        assertThat(result).isNotNull();
+        assertThat(result.evaluation()).isNull();
     }
 
     @Test

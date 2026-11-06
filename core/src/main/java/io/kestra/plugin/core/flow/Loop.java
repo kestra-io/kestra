@@ -380,7 +380,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public Map<String, Object> computeIterationOutput(RunContext runContext, Execution execution) throws IllegalVariableEvaluationException, IOException {
         var inputAndOutput = runContext.inputAndOutput();
         Map<String, Object> iterationOutputs = inputAndOutput.renderOutputs(this.getOutputs());
-        iterationOutputs = inputAndOutput.typedOutputs(this.getOutputs(), execution, iterationOutputs);
+        iterationOutputs = io.kestra.core.models.flows.Output.storedValues(this.getOutputs(), inputAndOutput.typedOutputs(this.getOutputs(), execution, iterationOutputs));
 
         var finalOutputMode = this.getFetchType() == FetchType.AUTO ? guessOutputMode(runContext) : this.getFetchType();
         if (finalOutputMode == FetchType.STORE) {

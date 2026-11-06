@@ -210,7 +210,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                     Map<String, Object> rOutputs = inputAndOutput.renderOutputs(subflowOutputs);
 
                     if (flow.getOutputs() != null) {
-                        rOutputs = inputAndOutput.typedOutputs(flow, execution, rOutputs);
+                        rOutputs = io.kestra.core.models.flows.Output.storedValues(flow.getOutputs(), inputAndOutput.typedOutputs(flow, execution, rOutputs));
                     }
                     builder.outputs(rOutputs);
                 } catch (Exception e) {

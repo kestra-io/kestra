@@ -93,14 +93,12 @@
     const levelLower = computed(() => (props.log?.level ?? "info").toLowerCase())
 
     const rowStyle = computed(() => {
-        const tinted = levelLower.value === "error" || levelLower.value === "warn"
         const pad = DENSITY_PADDING[logsDensity.value]
         return {
             fontSize: `${logsFontSize.value}px`,
             paddingTop: pad,
             paddingBottom: pad,
             borderLeftColor: `var(--ks-log-border-${levelLower.value})`,
-            ...(tinted ? {background: `color-mix(in srgb, var(--ks-log-${levelLower.value}) 6%, transparent)`} : {}),
         }
     })
 
@@ -228,6 +226,14 @@ div.line {
         background: var(--ks-bg-hover);
     }
 
+    &.log-row-error:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-error) 6%, transparent);
+    }
+
+    &.log-row-warn:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-warn) 6%, transparent);
+    }
+
     &.selected {
         background: var(--ks-bg-tag-hover);
     }
@@ -238,13 +244,6 @@ div.line {
 
     &[class*="-0"] {
         border-top: 0;
-    }
-
-    .icon_container {
-        position: absolute;
-        left: -0.6rem;
-        top: 0.5rem;
-        z-index: 1;
     }
 
     .log-level {
@@ -266,6 +265,14 @@ div.line {
         &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .icon_container {
+        position: absolute;
+        top: 50%;
+        left: -0.6rem;
+        transform: translateY(-50%);
+        z-index: 1;
     }
 
     .log-time {

@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "tsdown": "^0.23.4",
     "typescript": "^6",
     "unrun": "^0.3.1"

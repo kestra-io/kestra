@@ -488,17 +488,21 @@
         "decision": "Decyzja",
         "by": "Zdecydowano przez",
         "on": "Zdecydowano na",
+        "cancelled by": "Anulowane przez",
+        "cancelled on": "Anulowano dnia",
         "decisions": {
           "approved": "Zatwierdzono",
           "denied": "Odmówiono",
-          "expired": "Wygasłe"
+          "expired": "Wygasłe",
+          "cancelled": "Anulowano",
+          "killed": "Zabito"
         }
       },
       "cancel request": "Anuluj żądanie",
       "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji {id}? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
       "cancel done": "Żądanie zatwierdzenia zostało anulowane",
       "banner": {
-        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "pausing": "Ta egzekucja jest wstrzymywana. Żądanie zatwierdzenia będzie można przejrzeć, gdy wszystkie Taski onWait zostaną zakończone.",
         "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
       }
     },

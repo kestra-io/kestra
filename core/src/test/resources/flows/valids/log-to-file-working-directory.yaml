@@ -1,0 +1,16 @@
+id: log-to-file-working-directory
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    logToFile: true
+    cache:
+      patterns:
+        - "*.txt"
+    tasks:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: Hello World!
+        logToFile: true
+        runIf: "{{ missingVar.x }}"

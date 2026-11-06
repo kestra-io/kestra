@@ -445,6 +445,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
+| `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |

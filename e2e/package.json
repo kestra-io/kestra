@@ -15,10 +15,10 @@
     },
     "devDependencies": {
         "@playwright/test": "^1.64.1",
-        "@types/node": "^26.1.1",
-        "dotenv": "^18.0.8",
-        "oxlint": "^1.73.0",
+        "@types/node": "^26.6.6",
+        "dotenv": "^18.0.9",
+        "oxlint": "^1.90.0",
         "typescript": "^6.0.3",
-        "uuid": "^14.0.1"
+        "uuid": "^14.0.3"
     }
 }

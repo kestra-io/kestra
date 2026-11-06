@@ -635,7 +635,6 @@ export const useExecutionsStore = defineStore("executions", () => {
                 if (closed) break
                 if (!executionEvent.state) continue
                 receivedExecution = true
-                consecutiveFailures = 0
                 handlers.onExecution(executionEvent)
             }
             return receivedEnd
@@ -643,8 +642,11 @@ export const useExecutionsStore = defineStore("executions", () => {
 
         const connect = async () => {
             connection = new AbortController()
+            const connectedAt = Date.now()
             const receivedEnd = await follow(connection).catch(() => false)
             clearTimeout(idleTimer)
+            // the server sends progress on every connect, so only a connection that held resets the backoff
+            if (Date.now() - connectedAt > FOLLOW_MAX_RETRY_DELAY_MS) consecutiveFailures = 0
             if (closed) return
             if (receivedEnd) finish(false)
             // no execution ever received is most likely a 404, which a retry cannot fix

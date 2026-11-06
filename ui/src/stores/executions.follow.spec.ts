@@ -215,6 +215,30 @@ describe("executions store follow stream", () => {
         expect(followExecutionMock).toHaveBeenCalledTimes(2)
     })
 
+    it("keeps a quiet stream open while heartbeats arrive", async () => {
+        vi.useFakeTimers()
+        followExecutionMock.mockImplementation((_params: unknown, options: {signal: AbortSignal; onSseEvent?: (e: {id?: string}) => void}) =>
+            Promise.resolve({
+                stream: (async function* () {
+                    options.onSseEvent?.({id: "progress"})
+                    yield {id: "exec-1", state: {current: "RUNNING"}}
+                    await new Promise((resolve) => setTimeout(resolve, 60_000))
+                    options.onSseEvent?.({id: "heartbeat"})
+                    yield {id: "exec-1"}
+                    await new Promise((resolve) => options.signal.addEventListener("abort", resolve))
+                })(),
+            }),
+        )
+        const store = useExecutionsStore()
+
+        store.subscribeToExecution("exec-1", {onExecution: vi.fn()})
+        await vi.advanceTimersByTimeAsync(130_000)
+
+        const {signal} = followExecutionMock.mock.calls[0][1] as {signal: AbortSignal}
+        expect(signal.aborted).toBe(false)
+        expect(followExecutionMock).toHaveBeenCalledTimes(1)
+    })
+
     it("gives up once a stream keeps dropping right after delivering an execution", async () => {
         vi.useFakeTimers()
         scriptedConnections([{events: [start, running()]}])
@@ -222,8 +246,11 @@ describe("executions store follow stream", () => {
         const onError = vi.fn()
 
         store.subscribeToExecution("exec-1", {onExecution: vi.fn(), onError})
-        await vi.advanceTimersByTimeAsync(60_000)
+        await vi.advanceTimersByTimeAsync(30_000)
+        // backing off 1 + 2 + 4 + 8s, even though every connection delivered an execution
+        expect(followExecutionMock).toHaveBeenCalledTimes(5)
 
+        await vi.advanceTimersByTimeAsync(40_000)
         // 1 initial connection + 6 reconnects (FOLLOW_MAX_RECONNECTS) within the 2 minute window
         expect(followExecutionMock).toHaveBeenCalledTimes(7)
         expect(onError).toHaveBeenCalledTimes(1)

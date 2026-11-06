@@ -2749,7 +2749,7 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+            .take(Duration.ofHours(1)); // heartbeats stop a between-item timeout from firing, so cap the lifetime instead
 
         return sseConnectionMetrics.track(
             flux, "execution",

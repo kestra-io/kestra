@@ -114,21 +114,19 @@ public class TimeWindow {
         return switch (resolvedType) {
             case DURATION_WINDOW -> {
                 Duration windowDuration = window == null ? Duration.ofDays(1) : window;
+                ZonedDateTime reference = now;
                 if (windowDuration.toDays() > 0) {
-                    now = now.withHour(0);
-                }
-
-                if (windowDuration.toHours() > 0) {
-                    now = now.withMinute(0);
-                }
-
-                if (windowDuration.toMinutes() > 0) {
-                    now = now.withSecond(0)
-                        .withMinute(0)
-                        .plusMinutes(windowDuration.toMinutes() * (now.getMinute() / windowDuration.toMinutes()));
+                    now = now.withHour(0).withMinute(0).withSecond(0);
+                } else if (windowDuration.toMinutes() > 0) {
+                    ZonedDateTime startOfDay = now.truncatedTo(ChronoUnit.DAYS);
+                    long elapsedMinutes = Duration.between(startOfDay, now).toMinutes();
+                    now = startOfDay.plusMinutes(elapsedMinutes - elapsedMinutes % windowDuration.toMinutes());
                 }
 
                 ZonedDateTime startWindow = windowAdvance == null ? now : now.plus(windowAdvance).truncatedTo(ChronoUnit.MILLIS);
+                while (startWindow.isAfter(reference)) {
+                    startWindow = startWindow.minus(windowDuration);
+                }
                 yield Pair.of(
                     startWindow,
                     startWindow.plus(windowDuration).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS)

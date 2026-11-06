@@ -2,7 +2,7 @@ import {h, markRaw, onScopeDispose, provide, ref, Ref, watchEffect} from "vue"
 import FlowFileEditorTab, {EditorTabProps, FILES_REFRESH_CONTENT_INJECTION_KEY, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/FlowFileEditorTab.vue"
 import TypeIcon from "../utils/icons/Type.vue"
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
-import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_MOVE_TABS_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
 import {useFlowStore} from "../../stores/flow"
@@ -101,12 +101,12 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         let closed = false
         for(const panel of panels.value){
             // Exact match: uids are `code-<path>`, so a prefix test picks `a.python` when asked
-            // for `a.py`, whenever the longer path is listed first.
-            const tabIndex = panel.tabs.findIndex(e => e.uid === uid)
-
-            if (tabIndex > -1) {
+            // for `a.py`, whenever the longer path is listed first. A folder also matches what is
+            // under `<path>/`.
+            let tabIndex
+            while ((tabIndex = panel.tabs.findIndex(e => e.uid === uid || (tab.folder && e.uid.startsWith(`${uid}/`)))) > -1) {
                 closed = true
-                const wasActive = panel.activeTab?.uid === uid
+                const wasActive = panel.activeTab?.uid === panel.tabs[tabIndex].uid
                 panel.tabs.splice(tabIndex, 1)
                 // Only move the active tab when the one just closed was active; closing a
                 // background tab must leave the user's current tab in place.
@@ -121,6 +121,30 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
             }
         }
         return closed
+    })
+
+    provide(FILES_MOVE_TABS_INJECTION_KEY, ({from, to}) => {
+        const prefix = generateUid({path: from})
+        for(const panel of panels.value){
+            panel.tabs.forEach((tab, index) => {
+                if (tab.uid !== prefix && !tab.uid.startsWith(`${prefix}/`)) {
+                    return
+                }
+                const live = tab as TabLiveWithContent
+                const props = getTabPropsFromFilePath(to + tab.uid.substring(prefix.length))
+                if (live.dirty) {
+                    props.content = live.content
+                }
+                const moved: TabLiveWithContent = getTabFromFilesTab(props)
+                moved.dirty = live.dirty
+                moved.content = live.content
+                moved.path = props.path
+                panel.tabs[index] = moved
+                if (panel.activeTab?.uid === tab.uid) {
+                    panel.activeTab = moved
+                }
+            })
+        }
     })
 
     provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {

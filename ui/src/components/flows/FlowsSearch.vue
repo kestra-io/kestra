@@ -249,8 +249,10 @@
         <div v-else-if="showEmptyResultsState" class="source-search__states">
             <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <h3 class="source-search__no-results-title" v-html="noResultsMessage" />
+                    <i18n-t keypath="source_search.no_results_in_types" tag="h3" scope="global" class="source-search__no-results-title">
+                        <template #query><code>{{ query }}</code></template>
+                        <template #types>{{ selectedTypesLabel }}</template>
+                    </i18n-t>
                     <p v-if="hiddenTypeHint" class="source-search__no-results-hint">{{ hiddenTypeHint }}</p>
                 </template>
                 <div class="source-search__examples">
@@ -528,11 +530,6 @@
         .join(" "))
 
     const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
-    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
-        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
-        types: selectedTypesLabel.value,
-    }))
-
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
         .filter((group) => !group.editable)

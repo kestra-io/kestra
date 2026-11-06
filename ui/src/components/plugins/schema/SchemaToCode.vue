@@ -17,6 +17,7 @@
                 @click="copyToClipboard"
             />
         </KsTooltip>
+        <!-- nosemgrep: kestra-vue-avoid-v-html -- Shiki's codeToHtml escapes the source and only adds its own span markup. -->
         <div v-html="codeData" />
     </div>
 </template>

@@ -246,8 +246,8 @@
                                     :key="row.name"
                                     class="dp-intro-fn"
                                 >
-                                    <span class="dp-intro-fn-name" v-html="row.nameHtml" />
-                                    <div class="dp-intro-fn-desc" v-html="row.descHtml" />
+                                    <span class="dp-intro-fn-name"><HighlightedText :segments="row.nameSegments" /></span>
+                                    <div class="dp-intro-fn-desc"><HighlightedText :segments="row.descSegments" /></div>
                                     <code v-if="row.example" class="dp-intro-fn-ex">{{ row.example }}</code>
                                 </div>
                             </div>
@@ -276,7 +276,8 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
-    import {buildHighlightHtml} from "../../utils/crossResourceSearch"
+    import {buildHighlightSegments, type HighlightSegment} from "../../utils/crossResourceSearch"
+    import HighlightedText from "../layout/HighlightedText.vue"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
@@ -468,9 +469,9 @@
 
     interface PebbleRow {
         name: string;
-        nameHtml: string;
+        nameSegments: HighlightSegment[];
         desc: string;
-        descHtml: string;
+        descSegments: HighlightSegment[];
         example: string;
     }
 
@@ -485,7 +486,7 @@
             const exMatch = rest.match(/`([^`]+)`\s*(?:—|-)/)
             const example = exMatch ? exMatch[1] : ""
             const desc = rest.replace(/`[^`]+`\s*(?:—|-)\s*/, "").replace(/\\\|/g, "|").trim()
-            rows.push({name, nameHtml: buildHighlightHtml(name, ""), desc, descHtml: buildHighlightHtml(desc, ""), example})
+            rows.push({name, nameSegments: buildHighlightSegments(name, ""), desc, descSegments: buildHighlightSegments(desc, ""), example})
         }
         return rows
     })
@@ -497,8 +498,8 @@
             .filter(r => r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.example.toLowerCase().includes(q))
             .map(r => ({
                 ...r,
-                nameHtml: buildHighlightHtml(r.name, q),
-                descHtml: buildHighlightHtml(r.desc, q),
+                nameSegments: buildHighlightSegments(r.name, q),
+                descSegments: buildHighlightSegments(r.desc, q),
             }))
     })
 

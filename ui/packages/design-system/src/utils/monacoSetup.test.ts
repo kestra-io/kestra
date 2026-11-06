@@ -1,7 +1,9 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {typescriptDefaults, ScriptTarget} from "monaco-editor/languages/features/typescript/register"
+import {kestraDark, kestraDarkClassic, kestraLight, themes} from "@kestra-io/plumage"
 import {
+    codeThemeOf,
     configureMonacoTypescript,
     editorModelUid,
     getOrCreateOverflowWidgetsDomNode,
@@ -39,18 +41,21 @@ describe("monacoSetup", () => {
     })
 
     describe("registerMonacoThemes", () => {
-        test("registers the dark and light themes", () => {
+        test("registers every code theme, plus light and dark for callers still passing those", () => {
             registerMonacoThemes()
 
-            expect(monaco.editor.defineTheme).toHaveBeenCalledTimes(2)
-            expect(monaco.editor.defineTheme).toHaveBeenCalledWith(
-                "dark",
-                expect.objectContaining({base: "vs-dark"}),
-            )
-            expect(monaco.editor.defineTheme).toHaveBeenCalledWith(
-                "light",
-                expect.objectContaining({base: "vs"}),
-            )
+            const names = vi.mocked(monaco.editor.defineTheme).mock.calls.map(([name]) => name)
+            expect(names).toEqual(expect.arrayContaining([...themes.map(theme => theme.name), "light", "dark"]))
+            expect(monaco.editor.defineTheme).toHaveBeenCalledWith("dark", expect.objectContaining({base: "vs-dark"}))
+            expect(monaco.editor.defineTheme).toHaveBeenCalledWith("light", expect.objectContaining({base: "vs"}))
+        })
+
+        test("resolves legacy and unknown theme names to Kestra Light and Kestra Dark", () => {
+            expect(codeThemeOf("light")).toBe(kestraLight)
+            expect(codeThemeOf("dark")).toBe(kestraDark)
+            expect(codeThemeOf("vs")).toBe(kestraLight)
+            expect(codeThemeOf("kestra-dark-classic")).toBe(kestraDarkClassic)
+            expect(codeThemeOf("unknown")).toBe(kestraDark)
         })
 
         test("does not throw when registering themes twice", () => {

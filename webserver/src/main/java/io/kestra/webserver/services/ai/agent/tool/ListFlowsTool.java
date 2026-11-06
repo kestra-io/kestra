@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -19,7 +20,7 @@ import jakarta.inject.Singleton;
  * Read-only agent tool listing flows matching per-field query filters, one compact line per flow.
  */
 @Singleton
-public class ListFlowsTool implements AiPlatformTool {
+public class ListFlowsTool implements McpPlatformTool {
     private static final int MAX_RESULTS = 50;
     private static final int MAX_DESCRIPTION_LENGTH = 120;
 
@@ -38,6 +39,11 @@ public class ListFlowsTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

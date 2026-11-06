@@ -36,7 +36,7 @@ public class DeleteFlowTool implements McpPlatformTool {
 
     @Override
     public McpToolAnnotations annotations() {
-        return McpToolAnnotations.IDEMPOTENT_DELETE;
+        return McpToolAnnotations.IDEMPOTENT_DESTRUCTIVE;
     }
 
     @Tool(

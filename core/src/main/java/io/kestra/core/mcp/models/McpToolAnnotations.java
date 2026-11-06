@@ -45,6 +45,6 @@ public record McpToolAnnotations(
     /** Changes state inside Kestra without losing any, and repeating the call changes nothing more. */
     public static final McpToolAnnotations IDEMPOTENT_UPDATE = new McpToolAnnotations(false, false, false, true, false);
 
-    /** Removes state inside Kestra, and repeating the call removes nothing more. */
-    public static final McpToolAnnotations IDEMPOTENT_DELETE = new McpToolAnnotations(false, false, true, true, false);
+    /** Overwrites or removes state inside Kestra, and repeating the call changes nothing more. */
+    public static final McpToolAnnotations IDEMPOTENT_DESTRUCTIVE = new McpToolAnnotations(false, false, true, true, false);
 }

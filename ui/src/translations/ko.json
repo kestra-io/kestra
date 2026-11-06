@@ -1841,9 +1841,9 @@
         },
         "errors": {
           "first_execution": "첫 번째 실행이 성공하는 대신 {state} 상태로 완료되었습니다. 이유를 확인하려면 이 페이지에서 log를 열고 다시 시도하세요.",
-          "expected_failure": "이 실행은 {state}로 완료되었으므로, 아직 수정할 실패가 없습니다. flow에 여전히 <code>notify</code> task가 있는지 확인한 다음 다시 시도하세요.",
+          "expected_failure": "이 Execution은 {state}로 완료되었으므로 아직 수정할 실패가 없습니다. Flow에 {task} Task가 있는지 확인한 다음 다시 시도하세요.",
           "no_execution_to_replay": "아직 재실행할 실행 내역이 없습니다. 이전 단계에서 flow를 실행한 다음 다시 시도하세요.",
-          "replay": "재실행이 {state} 상태로 완료되었습니다. <code>notify</code>가 무엇을 보고했는지 확인하려면 이 페이지에서 log를 열고 다시 시도하십시오.",
+          "replay": "Replay가 {state}로 완료되었습니다. 이 페이지에서 log를 열어 {task}가 보고한 내용을 확인한 다음 다시 시도하세요.",
           "save_flow": "투어 flow를 저장할 수 없습니다. {reason}",
           "test_event": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인한 다음, 다시 시도하세요."
         },
@@ -2594,7 +2594,7 @@
     "reject": "거부",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
-    "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
+    "defaultsToNamespaceFile": "기본값은 namespace 파일: {name}",
     "no_file_choosen": "파일이 선택되지 않음",
     "dependency": {
       "controls": {

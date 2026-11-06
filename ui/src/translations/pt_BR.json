@@ -1841,9 +1841,9 @@
         },
         "errors": {
           "first_execution": "A primeira execução terminou como {state} em vez de ter sucesso. Abra os logs nesta página para ver o porquê, depois tente novamente.",
-          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o flow ainda tem a task <code>notify</code>, então tente novamente.",
+          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o Flow ainda tem a Task {task}, então tente novamente.",
           "no_execution_to_replay": "Não há execução para reproduzir ainda. Execute o flow na etapa anterior e tente novamente.",
-          "replay": "A reprodução foi concluída como {state}. Abra os logs nesta página para ver o que <code>notify</code> relatou e tente novamente.",
+          "replay": "O replay terminou como {state}. Abra os logs nesta página para ver o que a {task} relatou e tente novamente.",
           "save_flow": "O flow do tour não pôde ser salvo. {reason}",
           "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente."
         },
@@ -2594,7 +2594,7 @@
     "reject": "Rejeitar",
     "last modified": "Última modificação",
     "run task in playground": "Executar task no playground",
-    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Padrões para o arquivo do namespace: {name}",
     "no_file_choosen": "Nenhum arquivo selecionado",
     "dependency": {
       "controls": {

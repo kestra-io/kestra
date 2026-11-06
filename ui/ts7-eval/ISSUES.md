@@ -10,18 +10,24 @@ node node_modules/typescript7/bin/tsc -p repros --runExternalCode
 node_modules/.bin/tsrs -p repros --runExternalCode
 node node_modules/typescript7/bin/tsc -p repros/ts5088
 node node_modules/typescript7/bin/tsc -p repros/ts5088-min
+bash repros/ts2883-min/repro.sh node_modules/typescript7/bin/tsc
 ```
 
-## 1. microsoft/typescript-go: TS5088 regression in 7.1 (new)
+## 1. microsoft/typescript-go: two declaration-emit regressions in 7.1 (new)
 
-No existing issue was found for `TS5088` or "cyclic structure" in microsoft/typescript-go.
-Dependency-free repro: `repros/ts5088-min/`; the Vue shape that found it: `repros/ts5088/`.
+No open issue matches `TS5088`, `TS2883`, "cyclic structure" or "likely not portable" in microsoft/typescript-go.
+Closed and possibly related: microsoft/typescript-go#3596 (a TS2883 regression with project references, closed
+2026-04-24) and microsoft/typescript-go#4147 (`-b` emitting a different subpath in declarations, closed 2026-06-01).
+Both compile on 6.0.3 and 7.0.2 and fail on 7.1.0-beta and 7.1.0-dev.20261106.1, both are declaration-emit errors on
+an inferred return type, and annotating the return type works around both. They may share a cause; split them into two
+issues if the maintainers prefer. Repros: `repros/ts5088-min/` and `repros/ts2883-min/repro.sh`.
 
-> **Title:** 7.1 regression: TS5088 on an inferred return type through a recursive mapped type (7.0 emitted it)
+> **Title:** 7.1 regressions in declaration emit: TS5088 on recursive mapped types, TS2883 on deduplicated packages
 >
-> With `declaration: true`, an exported function whose inferred return type maps a self-referencing type through a
-> recursive mapped type now fails with TS5088. 7.0.2 and 6.0.3 compile the same code and emit the cycle as
-> `/*elided*/ any`.
+> Two inferred return types that 7.0.2 (and 6.0.3) emit fine fail in 7.1.0-beta and in `7.1.0-dev.20261106.1`, with
+> `declaration: true`.
+>
+> ### TS5088 on a recursive mapped type
 >
 > ```ts
 > type Deep<T> = T extends object ? { [K in keyof T]: Deep<T[K]> } : T;
@@ -36,19 +42,47 @@ Dependency-free repro: `repros/ts5088-min/`; the Vue shape that found it: `repro
 >
 > `tsconfig.json`: `{"compilerOptions": {"strict": true, "declaration": true, "emitDeclarationOnly": true, "target": "es2022", "module": "esnext", "moduleResolution": "bundler"}}`
 >
-> | Version | Result |
-> |---|---|
-> | 6.0.3 | OK, emits `child?: /*elided*/ any \| undefined` |
-> | 7.0.2 | OK, same output |
-> | 7.1.0-beta | `index.ts(6,17): error TS5088: The inferred type of 'make' references a type with a cyclic structure which cannot be trivially serialized. A type annotation is necessary.` |
-> | 7.1.0-dev.20261106.1 | same as 7.1.0-beta |
+> - 6.0.3, 7.0.2: OK, the cycle is emitted as `child?: /*elided*/ any | undefined`.
+> - 7.1: `index.ts(6,17): error TS5088: The inferred type of 'make' references a type with a cyclic structure which cannot be trivially serialized. A type annotation is necessary.`
 >
-> **Expected:** the 7.0 behaviour, or an entry in the 7.1 breaking-changes notes if the error is now intended.
+> This is the shape of Vue's `ref<T>()` (`UnwrapRef` is a recursive mapped type) on any recursive data type.
 >
-> **Why it matters:** this is the shape of Vue's `ref<T>()` (`UnwrapRef` is a recursive mapped type) on any recursive
-> data type, such as a JSON Schema. In a `composite` project the error also suppresses that file's declaration, so
-> every downstream project reports TS6305 / TS7016 against it: 6 of these produced 136 follow-up errors in our UI.
-> Annotating the return type works around it.
+> ### TS2883 on a subpath of a deduplicated package
+>
+> Two identical copies of a package (same name and version) are in the program: `app/node_modules/pkg` and
+> `lib/node_modules/pkg`. `pkg` only exposes `Arrayable` through a wildcard subpath export
+> (`"./es/*.mjs": {"types": "./es/*.d.ts"}`), as element-plus does. `app` compiles a file of `lib`:
+>
+> ```ts
+> // app/src/types.ts, listed first so that app's copy of pkg is the one kept
+> export type { Rules } from "pkg";
+>
+> // lib/src/rules.ts
+> import type { Rules } from "pkg"; // Rules = Record<string, Arrayable<Rule>>
+>
+> export function useRules(rules: Rules) {
+>     return { first: Object.values(rules)[0] };
+> }
+> ```
+>
+> A script that builds the whole layout in a temp dir is attached (`repro.sh <path to tsc>`).
+>
+> - 6.0.3, 7.0.2: OK, `lib/src/rules.d.ts` references `import("pkg/es/utils/typescript.mjs").Arrayable`.
+> - 7.1: `lib/src/rules.ts(3,17): error TS2883: The inferred type of 'useRules' cannot be named without a reference to 'Arrayable' from '../../app/node_modules/pkg/es/utils/typescript'. This is likely not portable. A type annotation is necessary.`
+>
+> 7.1 resolves the deduplicated file to app's copy and then finds no specifier for it from `lib`, where 7.0.2 used
+> `pkg/es/utils/typescript.mjs`, which `lib` can resolve. If `pkg` re-exports `Arrayable` from its root, 7.1 emits
+> `import("pkg")` and passes, so the subpath export is part of the trigger. Two checkouts sharing a UI library
+> (here an app and its enterprise layer, with the same element-plus, vue-router and SDK versions) hit this layout.
+>
+> Possibly related, both closed before 7.0.2 shipped: #3596 and #4147. This layout passes on 7.0.2, so it is either
+> a new path or a reintroduction.
+>
+> **Expected:** the 7.0 behaviour for both, or entries in the 7.1 breaking-changes notes if either error is intended.
+>
+> **Why it matters:** in a `composite` project both errors also suppress the file's declaration, so every downstream
+> project reports TS6305 / TS7016 against it. In our UI, 6 TS5088 led to 136 follow-up errors in one build, and
+> 12 TS2883 (with the same TS5088) led to 69 in another.
 
 ## 2. vuejs/language-tools#6334: comment draft (known)
 

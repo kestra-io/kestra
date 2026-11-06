@@ -5,7 +5,7 @@
 | mapper bug (known, vuejs/language-tools#6334): native listener on a component without emits | 262 |
 | mapper bug (known, vuejs/language-tools#6306): v-else-if narrowing over a v-for local | 12 |
 | TS 7.1 regression: TS5088 on a recursive mapped type (repros/ts5088-min, ISSUES.md #1) | 6 |
-| TS 7 vs TS 6: TS2883 non-portable inferred type across the OSS checkout (EE only) | 0 |
+| TS 7.1 regression: TS2883 on a subpath of a deduplicated package (repros/ts2883-min, ISSUES.md #1) | 0 |
 | unconfirmed (EE only): GlobalComponents augmented twice with different types | 0 |
 | unconfirmed (EE only): SDK key-parity type assertions | 0 |
 | cascade of TS5088/TS2883 (declaration not emitted for a referenced file) | 136 |

@@ -10,6 +10,7 @@ export interface FlowYamlEditorContext {
     duplicateTaskIdMarkers: MaybeRefOrGetter<boolean | undefined>
     value: MaybeRefOrGetter<string>
     codeEditor: MaybeRefOrGetter<CodeEditor | undefined>
+    duplicateTaskIdMessage?: (ids: string) => string
 }
 
 function hasVisibleInlineGhostText(editor: CodeEditor): boolean {
@@ -77,7 +78,7 @@ export function useFlowYamlEditor(ctx: FlowYamlEditorContext) {
                 startColumn: m.startColumn,
                 endLineNumber: m.endLineNumber,
                 endColumn: m.endColumn,
-                message: m.message,
+                message: ctx.duplicateTaskIdMessage?.(`"${m.taskId}"`) ?? m.message,
                 severity: monaco.MarkerSeverity.Error,
             })),
         )

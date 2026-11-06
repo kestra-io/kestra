@@ -52,6 +52,7 @@ const config: PlaywrightTestConfig = {
         ["html", {open: "never"}],
         ["list"],
         (process.env.CI ? ["github"] : ["null"]),
+        ["./flakiness-reporter.ts"],
     ],
     /* Shared settings for all the projects below. */
     use: {

@@ -11,7 +11,8 @@
         "test:e2e-without-starting-backend": "playwright test",
         "check:types": "tsc --noEmit",
         "test:lint": "oxlint",
-        "lint": "oxlint --fix"
+        "lint": "oxlint --fix",
+        "test:flakiness-reporter": "node --experimental-strip-types --test test-flakiness-reporter.mjs"
     },
     "devDependencies": {
         "@playwright/test": "^1.64.1",

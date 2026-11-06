@@ -5,10 +5,14 @@ import {relative, resolve} from "node:path";
 
 const [runCwd = ".", root = runCwd] = process.argv.slice(2);
 const HEAD = /^(.+?)\((\d+),(\d+)\): (error|warning) (TS\d+): (.*)$/;
+const GLOBAL = /^(error|warning) (TS\d+): (.*)$/;
 const real = (p) => { try { return realpathSync(p); } catch { return p; } };
 const keys = new Set();
 for (const raw of readFileSync(0, "utf8").split("\n")) {
-    const m = HEAD.exec(raw.replace(/\x1b\[[0-9;]*m/g, ""));
+    const line = raw.replace(/\x1b\[[0-9;]*m/g, "");
+    const g = GLOBAL.exec(line);
+    if (g) { keys.add(`<global>:0:${g[2]} ${g[3].replaceAll(real(resolve(root)) + "/", "")}`); continue; }
+    const m = HEAD.exec(line);
     if (!m) continue;
     const file = relative(real(resolve(root)), real(resolve(runCwd, m[1]))).replace(/\\/g, "/");
     keys.add(`${file}:${m[2]}:${m[5]} ${m[6]}`);

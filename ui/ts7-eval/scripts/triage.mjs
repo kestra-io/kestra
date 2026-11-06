@@ -2,13 +2,17 @@
 import {readFileSync, writeFileSync} from "node:fs";
 
 const RULES = [
-    ["expected v4 (config): data-* attribute not in dataAttributes", (c, m) => /^TS(2353|2561)$/.test(c) && /'data[A-Z]\w*' does not exist|'data-[^']*'' does not exist/.test(m)],
+    ["expected v4 (config): data-* attribute not in dataAttributes", (c, m) => /^TS(2353|2561)$/.test(c) && /'data-[^']*'' does not exist/.test(m)],
     ["mapper bug (known, vuejs/language-tools#6318): aria-* / role on a component", (c, m) => c === "TS2353" && /'(role|'aria-[^']*')' does not exist/.test(m) && !/HTMLAttributes/.test(m)],
     ["mapper bug (known, vuejs/language-tools#6334): native listener on a component without emits", (c, m) => c === "TS2353" && /'on[A-Z]\w*' does not exist/.test(m)],
     ["mapper bug (known, vuejs/language-tools#6306): v-else-if narrowing over a v-for local", (c) => c === "TS2367"],
-    ["TS 7 vs TS 6: TS5088 on inferred exported types (unconfirmed, needs repro)", (c) => c === "TS5088"],
-    ["cascade of TS5088 (declaration not emitted for a referenced file)", (c) => ["TS6305", "TS7016", "TS7006", "TS7031"].includes(c)],
+    ["TS 7 vs TS 6: TS5088 on a recursive type through ref<T>() (repros/ts5088, ISSUES.md #1)", (c) => c === "TS5088"],
+    ["TS 7 vs TS 6: TS2883 non-portable inferred type across the OSS checkout (EE only)", (c) => c === "TS2883"],
+    ["unconfirmed (EE only): GlobalComponents augmented twice with different types", (c) => c === "TS2717"],
+    ["unconfirmed (EE only): SDK key-parity type assertions", (c) => c === "TS2344"],
+    ["cascade of TS5088/TS2883 (declaration not emitted for a referenced file)", (c) => ["TS6305", "TS7016", "TS7006", "TS7031"].includes(c)],
     ["genuine (our code): v-model on a read-only computed", (c) => c === "TS2540"],
+    ["genuine (our code): camelCase data attribute renders without its dash", (c, m) => c === "TS2353" && /'data[A-Z]\w*' does not exist/.test(m)],
     ["genuine (our code): global directive missing from GlobalDirectives", (c, m) => c === "TS2339" && /GlobalDirectives/.test(m)],
     ["expected v4: unknown custom element / component", (c, m) => c === "TS2339"],
     ["expected v4: v-model write-back of defineModel<T>() (T | undefined)", (c) => c === "TS2322"],

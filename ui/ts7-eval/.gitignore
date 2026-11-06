@@ -1,3 +1,4 @@
 node_modules/
 .tmp/
 results/raw/
+results/tsrs*.diagnostics.txt

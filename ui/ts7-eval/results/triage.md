@@ -1,12 +1,16 @@
 | Bucket | Count |
 |---|---|
-| expected v4 (config): data-* attribute not in dataAttributes | 1 |
+| expected v4 (config): data-* attribute not in dataAttributes | 0 |
 | mapper bug (known, vuejs/language-tools#6318): aria-* / role on a component | 151 |
 | mapper bug (known, vuejs/language-tools#6334): native listener on a component without emits | 262 |
 | mapper bug (known, vuejs/language-tools#6306): v-else-if narrowing over a v-for local | 12 |
-| TS 7 vs TS 6: TS5088 on inferred exported types (unconfirmed, needs repro) | 6 |
-| cascade of TS5088 (declaration not emitted for a referenced file) | 136 |
+| TS 7 vs TS 6: TS5088 on a recursive type through ref<T>() (repros/ts5088, ISSUES.md #1) | 6 |
+| TS 7 vs TS 6: TS2883 non-portable inferred type across the OSS checkout (EE only) | 0 |
+| unconfirmed (EE only): GlobalComponents augmented twice with different types | 0 |
+| unconfirmed (EE only): SDK key-parity type assertions | 0 |
+| cascade of TS5088/TS2883 (declaration not emitted for a referenced file) | 136 |
 | genuine (our code): v-model on a read-only computed | 1 |
+| genuine (our code): camelCase data attribute renders without its dash | 1 |
 | genuine (our code): global directive missing from GlobalDirectives | 14 |
 | expected v4: unknown custom element / component | 10 |
 | expected v4: v-model write-back of defineModel<T>() (T | undefined) | 229 |

@@ -15,7 +15,7 @@ const ORDER = RUNS.map(([n]) => n);
 const CWD = Object.fromEntries(RUNS);
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : NaN; };
 const normalize = (name) => execFileSync("node", [NORMALIZE, CWD[name], ROOT], {input: readFileSync(`${RAW}/${name}.txt`)}).toString().split("\n").filter(Boolean);
-const rawCount = (name) => readFileSync(`${RAW}/${name}.txt`, "utf8").split("\n").filter((l) => /\): error TS\d+:/.test(l)).length;
+const rawCount = (name) => readFileSync(`${RAW}/${name}.txt`, "utf8").split("\n").filter((l) => /\): error TS\d+:|^error TS\d+:/.test(l)).length;
 
 const mem = readFileSync(`${RAW}/mem.jsonl`, "utf8").trim().split("\n").map((l) => JSON.parse(l));
 const failedBase = mem.filter((m) => m.name === "vue-tsc" && m.exitCode !== 0);
@@ -45,7 +45,7 @@ for (const r of rows) {
     lines.push(`| \`${r.name}\` | ${r.meanS.toFixed(1)} s ± ${r.stddevS.toFixed(1)} | ${(base.meanS / r.meanS).toFixed(1)}x | ${(r.treeRssMb / 1024).toFixed(2)} GB | ${fmtPct(r.treeRssMb / base.treeRssMb - 1)} | ${(r.maxProcRssMb / 1024).toFixed(2)} GB | ${r.diagnostics} / ${r.diagnosticsFolded} | +${added} / -${removed} |`);
 }
 const sameAs = (a, b) => a.keys.length === b.keys.length && a.keys.every((k, i) => k === b.keys[i]);
-const pairs = [["tsgo", "tsrs"], ["tsgo", "tsrs-fast"], ["tsgo-flat", "tsrs-flat-4g"], ["tsgo-flat", "tsrs-flat-go"]]
+const pairs = [["tsgo", "tsrs"], ["tsgo", "tsrs-fast"], ["tsgo-flat", "tsrs-flat-4g"], ["tsgo-flat", "tsrs-flat-384m"], ["tsgo-flat", "tsrs-flat-go"]]
     .filter(([a, b]) => byName(a) && byName(b));
 lines.push("", ...pairs.map(([a, b]) => `- \`${b}\` vs \`${a}\`: ${sameAs(byName(a), byName(b)) ? "identical diagnostics" : "DIFFERENT diagnostics"}`));
 writeFileSync("results/summary.json", JSON.stringify(rows.map(({keys, ...r}) => r), null, 2) + "\n");

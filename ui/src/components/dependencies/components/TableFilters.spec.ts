@@ -1,4 +1,5 @@
 import {describe, expect, test} from "vitest"
+import {DOMWrapper, flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import TableFilters from "./TableFilters.vue"
 
@@ -8,6 +9,7 @@ const namespaces = [
 ]
 
 const mountFilters = (props: Partial<InstanceType<typeof TableFilters>["$props"]> = {}) => i18nMount(TableFilters, {
+    attachTo: document.body,
     props: {
         assetView: false,
         namespaces,
@@ -20,6 +22,14 @@ const mountFilters = (props: Partial<InstanceType<typeof TableFilters>["$props"]
     },
 })
 
+const openNamespaces = async (wrapper: ReturnType<typeof mountFilters>) => {
+    const select = wrapper.get("[role=combobox]")
+    await select.trigger("click")
+    await flushPromises()
+
+    return new DOMWrapper(document.body).get(`[id="${select.attributes("aria-controls")}"]`)
+}
+
 describe("TableFilters", () => {
     test.each([
         {assetView: true, key: "dependency.search.placeholders.asset"},
@@ -27,27 +37,37 @@ describe("TableFilters", () => {
     ])("uses $key as the search placeholder when assetView is $assetView", ({assetView, key}) => {
         const wrapper = mountFilters({assetView})
 
-        expect(wrapper.findComponent({name: "KsSearch"}).props("placeholder")).toBe(key)
+        expect(wrapper.get("input[placeholder]:not([role=combobox])").attributes("placeholder")).toBe(key)
     })
 
     test.each([true, false])("renders the flow switch only in asset view (assetView=%s)", (assetView) => {
         const wrapper = mountFilters({assetView})
 
-        expect(wrapper.findComponent({name: "KsSwitch"}).exists()).toBe(assetView)
+        expect(wrapper.find("[role=switch]").exists()).toBe(assetView)
     })
 
-    test("renders one option per namespace with its label and value", () => {
-        const wrapper = mountFilters()
-        const options = wrapper.findAllComponents({name: "KsOption"})
+    test("renders one option per namespace and selects its value by label", async () => {
+        const wrapper = mountFilters({namespace: undefined})
 
-        expect(options).toHaveLength(namespaces.length)
-        expect(options.map(option => ({label: option.props("label"), value: option.props("value")}))).toEqual(namespaces)
+        for (const [index, namespace] of namespaces.entries()) {
+            const listbox = await openNamespaces(wrapper)
+            const options = listbox.findAll("[role=option]")
+
+            expect(listbox.isVisible()).toBe(true)
+            expect(options.map(option => option.text())).toEqual(namespaces.map(item => item.label))
+
+            await options[index].trigger("click")
+
+            expect(wrapper.emitted("update:namespace")?.at(-1)).toEqual([namespace.value])
+        }
     })
 
-    test("renders no namespace options when the namespace list is empty", () => {
-        const wrapper = mountFilters({namespaces: []})
+    test("renders no namespace options when the namespace list is empty", async () => {
+        const wrapper = mountFilters({namespaces: [], namespace: undefined})
+        await wrapper.get("[role=combobox]").trigger("click")
+        await flushPromises()
 
-        expect(wrapper.findAllComponents({name: "KsOption"})).toHaveLength(0)
+        expect(document.querySelectorAll("[role=option]")).toHaveLength(0)
     })
 
     test.each([
@@ -56,26 +76,56 @@ describe("TableFilters", () => {
     ])("renders the result count as $shown / $total", ({shown, total}) => {
         const wrapper = mountFilters({shown, total})
 
-        expect(wrapper.findComponent({name: "KsText"}).text()).toBe(`${shown} / ${total}`)
+        expect(wrapper.text()).toContain(`${shown} / ${total}`)
     })
 
-    test.each([
-        {model: "search", component: "KsSearch", initial: "customers", updated: "orders", cleared: ""},
-        {model: "namespace", component: "KsSelect", initial: "company.analytics", updated: "company.operations", cleared: undefined},
-        {model: "flow", component: "KsSwitch", initial: true, updated: false, cleared: false},
-    ])("keeps the $model model bound in both directions", async ({model, component, initial, updated, cleared}) => {
+    test("keeps the search model bound in both directions", async () => {
+        const wrapper = mountFilters()
+        const search = wrapper.get<HTMLInputElement>("input[placeholder]:not([role=combobox])")
+
+        expect(search.element.value).toBe("customers")
+
+        await wrapper.setProps({search: "orders"})
+
+        expect(search.element.value).toBe("orders")
+
+        await search.setValue("invoices")
+        await search.setValue("")
+
+        expect(wrapper.emitted("update:search")).toEqual([["invoices"], [""]])
+    })
+
+    test("keeps the namespace model bound in both directions", async () => {
+        const wrapper = mountFilters()
+        const listbox = await openNamespaces(wrapper)
+        const options = listbox.findAll("[role=option]")
+
+        expect(options[0].attributes("aria-selected")).toBe("true")
+        expect(wrapper.text()).toContain("Analytics")
+
+        await wrapper.setProps({namespace: "company.operations"})
+
+        expect(options[1].attributes("aria-selected")).toBe("true")
+        expect(wrapper.text()).toContain("Operations")
+
+        await options[0].trigger("click")
+
+        expect(wrapper.emitted("update:namespace")).toEqual([["company.analytics"]])
+    })
+
+    test("keeps the flow model bound in both directions", async () => {
         const wrapper = mountFilters({assetView: true})
-        const control = wrapper.findComponent({name: component})
+        const flow = wrapper.get("[role=switch]")
 
-        expect(control.props("modelValue")).toBe(initial)
+        expect(flow.attributes("aria-checked")).toBe("true")
 
-        await wrapper.setProps({[model]: updated})
+        await wrapper.setProps({flow: false})
 
-        expect(control.props("modelValue")).toBe(updated)
+        expect(flow.attributes("aria-checked")).toBe("false")
 
-        control.vm.$emit("update:modelValue", initial)
-        control.vm.$emit("update:modelValue", cleared)
+        await flow.trigger("click")
+        await flow.trigger("click")
 
-        expect(wrapper.emitted(`update:${model}`)).toEqual([[initial], [cleared]])
+        expect(wrapper.emitted("update:flow")).toEqual([[true], [false]])
     })
 })

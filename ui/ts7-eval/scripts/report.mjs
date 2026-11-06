@@ -47,7 +47,14 @@ for (const r of rows) {
 const sameAs = (a, b) => a.keys.length === b.keys.length && a.keys.every((k, i) => k === b.keys[i]);
 const pairs = [["tsgo", "tsrs"], ["tsgo", "tsrs-fast"], ["tsgo-flat", "tsrs-flat-4g"], ["tsgo-flat", "tsrs-flat-384m"], ["tsgo-flat", "tsrs-flat-go"]]
     .filter(([a, b]) => byName(a) && byName(b));
-lines.push("", ...pairs.map(([a, b]) => `- \`${b}\` vs \`${a}\`: ${sameAs(byName(a), byName(b)) ? "identical diagnostics" : "DIFFERENT diagnostics"}`));
+const where = (r) => r.keys.map((k) => k.split(" ")[0]);
+const compare = (a, b) => {
+    if (sameAs(a, b)) return "identical diagnostics";
+    const wa = where(a), wb = where(b);
+    if (wa.length !== wb.length || wa.some((k, i) => k !== wb[i])) return "DIFFERENT diagnostics";
+    return `same file:line:code, ${a.keys.filter((k, i) => k !== b.keys[i]).length} message texts differ`;
+};
+lines.push("", ...pairs.map(([a, b]) => `- \`${b}\` vs \`${a}\`: ${compare(byName(a), byName(b))}`));
 writeFileSync("results/summary.json", JSON.stringify(rows.map(({keys, ...r}) => r), null, 2) + "\n");
 writeFileSync("results/results.md", lines.join("\n") + "\n");
 for (const r of rows) writeFileSync(`results/${r.name}.diagnostics.txt`, r.keys.join("\n") + "\n");

@@ -43,14 +43,14 @@ No existing issue was found for `TS5088` or "cyclic structure" in microsoft/type
 
 ## 2. vuejs/language-tools#6334: comment draft (known)
 
-> Same failure at scale: 262 of 1,095 diagnostics in a ~1,900-file Vue 3.5 app are `onX` listeners (`@click`,
+> Same failure at scale: 262 of 1,095 diagnostics in the Kestra UI (Vue 3.5), and 166 more in its EE layer, are `onX` listeners (`@click`,
 > `@keydown`, and component events forwarded through `$attrs` such as `@closed` / `@visible-change`) on components that
 > declare no matching emit. Minimal repro: `repros/NativeListener.vue` (`<Child @click="() => {}" />` gives TS2353 on
 > `onClick`). The `emits: ["click"]` workaround does not apply to wrappers that forward a third-party component's events.
 
 ## 3. vuejs/language-tools#6318: comment draft (known)
 
-> Another data point: 151 `aria-*` / `role` diagnostics, all on design-system wrappers. `htmlAttributes` defaults to
+> Another data point: 151 `aria-*` / `role` diagnostics in the Kestra UI (55 more in its EE layer), mostly on design-system wrappers. `htmlAttributes` defaults to
 > `['aria-*']` yet the attribute is still rejected on a component, whatever its root is: `repros/AriaOnComponent.vue`
 > errors both on `<Child>` (root `<button>`) and on `<Wrapper>` (root is another component). Native elements are fine.
 
@@ -66,3 +66,9 @@ No existing issue was found for `TS5088` or "cyclic structure" in microsoft/type
   diagnostic is a suggestion and never reaches the CLI output.
 - `data-*` attributes are rejected by default in v4 (`dataAttributes: []`). That is configuration rather than a bug,
   so the eval sets `"dataAttributes": ["data-*"]`, which removes 517 diagnostics.
+- tsrs vs tsgo: on the EE graph, 4 messages print the properties of an inferred object type in a different order
+  (same file, line and code). It survives `--singleThreaded` in build mode and disappears with
+  `-p --checkerAssignment go --noLazyMembers`, and tsgo itself prints the other order under `-p`, so it follows
+  type creation order rather than being a tsrs bug.
+- TypeScript 7 defaults `rootDir` to the tsconfig directory. `ui-ee/tsconfig.app.json` sets none and includes
+  `../../kestra/ui` files, so it fails with TS6059 until `rootDir` is set: a migration item, not a bug.

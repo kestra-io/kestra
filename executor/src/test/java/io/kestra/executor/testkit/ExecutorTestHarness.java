@@ -478,7 +478,7 @@ public final class ExecutorTestHarness {
             loopExecutionEventQueue,
             executionStatisticQueue,
             triggerEventQueue,
-            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution))),
             workerJobRunningStateStore,
             executionCommandMessageHandler,
             executionEventMessageHandler,

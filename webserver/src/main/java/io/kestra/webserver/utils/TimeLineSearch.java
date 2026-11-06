@@ -14,6 +14,7 @@ import lombok.Data;
 @Builder
 public class TimeLineSearch {
     public static final String ALL_TIME = "ALL";
+    static final Duration DEFAULT_TIME_RANGE = Duration.ofDays(8);
 
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;
@@ -42,6 +43,13 @@ public class TimeLineSearch {
      *                     otherwise it is ignored and the 8-day default applies.
      */
     public static TimeLineSearch extractFrom(List<QueryFilter> filters, boolean allowAllTime) {
+        return extractFrom(filters, allowAllTime, DEFAULT_TIME_RANGE);
+    }
+
+    /**
+     * Same as {@link #extractFrom(List, boolean)}, with {@code defaultTimeRange} in place of the 8-day default.
+     */
+    public static TimeLineSearch extractFrom(List<QueryFilter> filters, boolean allowAllTime, Duration defaultTimeRange) {
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
         Duration timeRange = null;
@@ -74,7 +82,7 @@ public class TimeLineSearch {
 
         if (startDate == null && !(allTime && allowAllTime)) {
             // this default startDate filter is there to avoid flooding the database in case of failure on our side
-            startDate = ZonedDateTime.now().minusDays(8);
+            startDate = ZonedDateTime.now().minus(defaultTimeRange);
         }
 
         return new TimeLineSearch(startDate, endDate, timeRange);

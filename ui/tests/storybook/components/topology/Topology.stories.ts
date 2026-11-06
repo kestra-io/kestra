@@ -1,5 +1,5 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
-import {expect, waitFor} from "storybook/test"
+import {expect, userEvent, waitFor} from "storybook/test"
 import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
@@ -307,16 +307,119 @@ LevelOfDetailDefault.args = {
     defaultViewport: {x: 0, y: 0, zoom: 1},
 }
 
-export const LevelOfDetailExpanded = LodTemplate.bind({})
-LevelOfDetailExpanded.storyName = "Level of Detail — Expanded (> 130% zoom)"
-LevelOfDetailExpanded.args = {
-    id: "story-lod-expanded",
-    source: STATUS_SHOWCASE_SOURCE,
-    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
-    isReadOnly: true,
-    isHorizontal: true,
-    execution: MIXED_LANE_EXECUTION,
-    defaultViewport: {x: 0, y: 0, zoom: 1.5},
+const PEEK = "[data-test=\"node-details-peek\"]"
+
+const peeksIn = (canvasElement: HTMLElement) => Array.from(canvasElement.querySelectorAll<HTMLElement>(PEEK))
+
+const taskCardIn = (canvasElement: HTMLElement, uid: string) =>
+    canvasElement.querySelector<HTMLElement>(`[data-id="${uid}"] .node-core`)
+
+function expectClearOfEveryOtherTask(canvasElement: HTMLElement, hoveredUid: string) {
+    const box = peeksIn(canvasElement)[0].getBoundingClientRect()
+    const others = Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-id] .node-core"))
+        .filter((card) => card.closest("[data-id]")?.getAttribute("data-id") !== hoveredUid)
+
+    expect(others.length).toBeGreaterThan(0)
+    for (const card of others) {
+        const other = card.getBoundingClientRect()
+        const clear = box.right <= other.left || box.left >= other.right || box.bottom <= other.top || box.top >= other.bottom
+        expect(clear, `peek overlaps ${card.closest("[data-id]")?.getAttribute("data-id")}`).toBe(true)
+    }
+}
+
+export const LevelOfDetailExpanded: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Expanded (> 130% zoom), nothing open until a task is pointed at",
+    render: LodTemplate,
+    args: {
+        id: "story-lod-expanded",
+        source: STATUS_SHOWCASE_SOURCE,
+        flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: MIXED_LANE_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: 1.5},
+    },
+    play: async ({canvasElement}) => {
+        await waitFor(() => expect(taskCardIn(canvasElement, "root.log_start")).not.toBeNull())
+
+        expect(peeksIn(canvasElement)).toHaveLength(0)
+    },
+}
+
+export const DetailsPeekOnHoverVertical: StoryObj<typeof Topology> = {
+    name: "Details Peek — Hover, Vertical Flow",
+    render: LodTemplate,
+    args: {
+        id: "story-details-peek-vertical",
+        source: STATUS_SHOWCASE_SOURCE,
+        flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: false,
+        execution: MIXED_LANE_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: 1.5},
+    },
+    play: async ({canvasElement}) => {
+        await waitFor(() => expect(taskCardIn(canvasElement, "root.log_start")).not.toBeNull())
+        await userEvent.hover(taskCardIn(canvasElement, "root.log_start")!)
+
+        await waitFor(() => expect(peeksIn(canvasElement)).toHaveLength(1))
+        const peek = peeksIn(canvasElement)[0]
+        expect(peek.querySelector("[data-test=\"node-details-peek-title\"]")!.textContent).toBe("log_start")
+
+        const box = peek.getBoundingClientRect()
+        const elementPaintedAtThePeekCentre = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+        expect(peek.contains(elementPaintedAtThePeekCentre)).toBe(true)
+
+        expectClearOfEveryOtherTask(canvasElement, "root.log_start")
+    },
+}
+
+export const DetailsPeekHorizontalParallel: StoryObj<typeof Topology> = {
+    name: "Details Peek — Hover, Horizontal Parallel",
+    render: LodTemplate,
+    args: {
+        id: "story-details-peek-horizontal",
+        source: STATUS_SHOWCASE_SOURCE,
+        flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: MIXED_LANE_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: 1.5},
+    },
+    play: async ({canvasElement}) => {
+        const branch = "root.parallel_status_showcase.branch_success"
+        await waitFor(() => expect(taskCardIn(canvasElement, branch)).not.toBeNull())
+        await userEvent.hover(taskCardIn(canvasElement, branch)!)
+
+        await waitFor(() => expect(peeksIn(canvasElement)).toHaveLength(1))
+
+        expectClearOfEveryOtherTask(canvasElement, branch)
+    },
+}
+
+export const DetailsPeekPinnedByClick: StoryObj<typeof Topology> = {
+    name: "Details Peek — Pinned By A Click",
+    render: LodTemplate,
+    args: {
+        id: "story-details-peek-pinned",
+        source: STATUS_SHOWCASE_SOURCE,
+        flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: false,
+        execution: MIXED_LANE_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: 1.5},
+    },
+    play: async ({canvasElement}) => {
+        await waitFor(() => expect(taskCardIn(canvasElement, "root.log_start")).not.toBeNull())
+        await userEvent.click(taskCardIn(canvasElement, "root.log_start")!)
+        await userEvent.unhover(taskCardIn(canvasElement, "root.log_start")!)
+
+        await waitFor(() => expect(peeksIn(canvasElement)).toHaveLength(1))
+        expect(peeksIn(canvasElement)[0].querySelector("[data-test=\"node-details-peek-title\"]")!.textContent).toBe("log_start")
+
+        await userEvent.click(taskCardIn(canvasElement, "root.log_start")!)
+        await waitFor(() => expect(peeksIn(canvasElement)).toHaveLength(0))
+    },
 }
 
 export const LevelOfDetailExpandedWithoutDetails: StoryObj<typeof Topology> = {
@@ -334,13 +437,11 @@ export const LevelOfDetailExpandedWithoutDetails: StoryObj<typeof Topology> = {
     }),
     args: {...LevelOfDetailExpanded.args, id: "story-lod-expanded-empty"},
     play: async ({canvasElement}) => {
-        const overlays = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"node-details-overlay\"]"))
+        await waitFor(() => expect(taskCardIn(canvasElement, "root.log_start")).not.toBeNull())
+        await userEvent.hover(taskCardIn(canvasElement, "root.log_start")!)
 
-        await waitFor(() => expect(overlays().length).toBeGreaterThan(0))
-
-        for (const overlay of overlays()) {
-            expect(getComputedStyle(overlay).display).toBe("none")
-        }
+        await waitFor(() => expect(peeksIn(canvasElement)).toHaveLength(1))
+        expect(getComputedStyle(peeksIn(canvasElement)[0]).display).toBe("none")
     },
 }
 

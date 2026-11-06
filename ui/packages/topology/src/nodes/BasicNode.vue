@@ -56,11 +56,6 @@
             <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
                 <slot name="status-row" />
             </div>
-            <Transition name="node-details-overlay">
-                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
-                    <slot name="details" />
-                </div>
-            </Transition>
         </template>
     </div>
 </template>
@@ -493,39 +488,4 @@
         flex-grow: 1;
     }
 
-    .node-details-overlay {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: var(--ks-z-dropdown);
-        margin-top: var(--ks-spacing-1);
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
-        max-height: 20rem;
-        overflow: auto;
-    }
-
-    .node-details-overlay:empty {
-        display: none;
-    }
-
-    .node-details-overlay-enter-active,
-    .node-details-overlay-leave-active {
-        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
-    }
-
-    .node-details-overlay-enter-from,
-    .node-details-overlay-leave-to {
-        opacity: 0;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .node-details-overlay-enter-active,
-        .node-details-overlay-leave-active {
-            transition: none;
-        }
-    }
 </style>

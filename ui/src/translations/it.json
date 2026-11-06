@@ -542,6 +542,7 @@
     "filter by status": "Filtra le esecuzioni per stato {status}",
     "topology-graph": {
       "retried": "Questo Task è stato ritentato",
+      "task-details": "Dettagli di {task}",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientamento del grafico",
       "zoom-in": "Zoom avanti",

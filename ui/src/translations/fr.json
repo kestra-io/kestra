@@ -542,6 +542,7 @@
     "filter by status": "Filtrer les exécutions par statut {status}",
     "topology-graph": {
       "retried": "Cette tâche a été relancée",
+      "task-details": "Détails de {task}",
       "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",

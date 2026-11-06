@@ -45,6 +45,7 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyRequest;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceLineRequest;
@@ -1646,6 +1647,41 @@ class FlowControllerTest {
     }
 
     @Test
+    void disableEnableFlowsByIdsShouldNotChangeAnyFlowWhenOneIdIsMissing() {
+        String namespace = "io.kestra.unittest.disablebyidspartial";
+        postFlow("first", namespace, "a");
+        postFlow("last", namespace, "b");
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace(namespace, "first"),
+            new IdWithNamespace(namespace, "doesNotExist"),
+            new IdWithNamespace(namespace, "last")
+        );
+
+        HttpClientResponseException disableException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(POST("/api/v1/main/flows/disable/by-ids", ids), BulkResponse.class)
+        );
+
+        assertThat(disableException.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Problems.assertProblem(disableException, ProblemTypes.BULK_VALIDATION_FAILED);
+        Problems.assertErrors(disableException)
+            .extracting(ProblemError::path)
+            .containsExactly("flows[" + namespace + ".doesNotExist]");
+        assertThat(isFlowDisabled(namespace, "first")).isFalse();
+        assertThat(isFlowDisabled(namespace, "last")).isFalse();
+
+        client.toBlocking().exchange(POST("/api/v1/main/flows/disable/by-ids", List.of(ids.getFirst(), ids.getLast())), BulkResponse.class);
+
+        HttpClientResponseException enableException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(POST("/api/v1/main/flows/enable/by-ids", ids), BulkResponse.class)
+        );
+
+        assertThat(enableException.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Problems.assertProblem(enableException, ProblemTypes.BULK_VALIDATION_FAILED);
+        assertThat(isFlowDisabled(namespace, "first")).isTrue();
+        assertThat(isFlowDisabled(namespace, "last")).isTrue();
+    }
+
+    @Test
     void validateShouldRejectASearchableOutputOfAnUnsupportedType() {
         String flow = """
             id: searchable_outputs_validation
@@ -2435,6 +2471,10 @@ class FlowControllerTest {
             POST("/api/v1/main/flows", generateFlow(friendlyId, namespace, format).sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML),
             String.class
         );
+    }
+
+    private boolean isFlowDisabled(String namespace, String id) {
+        return parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + namespace + "/" + id), String.class)).isDisabled();
     }
 
     protected FlowTopology createSimpleFlowTopology(String flowA, String flowB) {

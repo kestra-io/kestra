@@ -47,6 +47,8 @@ public class KestraDocsContextTool implements AutoCloseable {
                         .build()
                 )
                 .clientName("Kestra/" + versionProvider.getVersion())
+                // The docs server does not speak 2026-07-28, so skip the server/discover round trip on connect.
+                .protocolVersion("2025-11-25")
                 .toolExecutionTimeout(MCP_TIMEOUT)
                 .autoHealthCheck(false)
                 .build();

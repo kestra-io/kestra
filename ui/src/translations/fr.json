@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Le déclencheur est débloqué"
     },
+    "trigger blocked": "Bloqué",
+    "trigger blocked policy check failed": "Les politiques de gouvernance n'ont pas pu être vérifiées.",
+    "trigger blocked unknown": "Bloqué pour une raison inconnue.",
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
     "trigger enable dialog": {
       "title": "Activer le trigger",
@@ -1464,11 +1467,13 @@
           "fields": {
             "app_font_size": "Taille de police de l'application",
             "color_mode": "Mode couleur",
+            "editor_dark_theme": "Thème de l'éditeur en mode sombre",
             "editor_folding_stratgy": "Repliement automatique du code dans l'éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
             "editor_hover_description": "Survolez la propriété pour voir la description",
             "editor_pebble_hover": "Passez la souris sur la référence Pebble pour voir sa définition",
+            "editor_light_theme": "Thème de l'éditeur en mode clair",
             "environment_color": "Couleur de l'Environnement",
             "environment_name": "Nom de l'Environnement",
             "environment_name_tooltip": "Ce nom d'environnement est défini à partir de la configuration mais peut être modifié.",
@@ -1492,6 +1497,8 @@
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
             "editor_hover_description": "Afficher les descriptions des propriétés au survol dans l'éditeur.",
             "editor_pebble_hover": "Affiche la définition et la documentation d'un input, output, variable, label ou d'une variable de trigger lorsque vous survolez sa référence Pebble dans l'éditeur de flow.",
+            "editor_dark_theme": "Couleurs syntaxiques de l'éditeur de code lorsque le mode couleur est Sombre 1.0 ou Sombre 2.0.",
+            "editor_light_theme": "Couleurs syntaxiques de l'éditeur de code lorsque le mode couleur est Lumière.",
             "environment_name": "Nom d'affichage pour l'environnement actuel, affiché dans la navigation.",
             "environment_color": "Couleur d'accent utilisée pour l'environnement actuel dans la navigation.",
             "app_font_size": "Facteur d'échelle appliqué à toutes les tailles de police de l'interface."
@@ -1500,6 +1507,9 @@
             "small": "Petite",
             "medium": "Moyenne",
             "large": "Grande"
+          },
+          "editor_theme_options": {
+            "match_app": "Suivre le thème de l'application"
           }
         },
         "localization": {

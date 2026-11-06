@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger desbloqueado"
     },
+    "trigger blocked": "Bloqueado",
+    "trigger blocked policy check failed": "No se pudieron verificar las políticas de gobernanza.",
+    "trigger blocked unknown": "Bloqueado por una razón desconocida.",
     "trigger disabled": "El trigger está deshabilitado dentro del Flow source",
     "trigger enable dialog": {
       "title": "Habilitar trigger",
@@ -1464,11 +1467,13 @@
           "fields": {
             "app_font_size": "Tamaño de fuente de la aplicación",
             "color_mode": "Modo de color",
+            "editor_dark_theme": "Tema del editor en modo oscuro",
             "editor_folding_stratgy": "Plegado automático de código en el Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
             "editor_hover_description": "Pasa el cursor sobre la propiedad para ver la descripción",
             "editor_pebble_hover": "Pasa el ratón sobre la referencia de Pebble para ver su definición",
+            "editor_light_theme": "Tema del editor en modo claro",
             "environment_color": "Color del Entorno",
             "environment_name": "Nombre del Entorno",
             "environment_name_tooltip": "Este nombre de entorno se establece desde la configuración, pero se puede cambiar.",
@@ -1492,6 +1497,8 @@
             "editor_folding_stratgy": "Colapsar bloques largos de YAML por defecto al abrir un flow.",
             "editor_hover_description": "Mostrar descripciones de propiedades al pasar el cursor en el editor.",
             "editor_pebble_hover": "Muestra la definición y la documentación de un input, output, variable, label o variable de trigger al pasar el ratón sobre su referencia Pebble en el editor de Flow.",
+            "editor_dark_theme": "Colores de sintaxis del editor de código cuando el modo de color es Oscuro 1.0 u Oscuro 2.0.",
+            "editor_light_theme": "Colores de sintaxis del editor de código cuando el modo de color es Claro.",
             "environment_name": "Nombre para mostrar del entorno actual, mostrado en la navegación.",
             "environment_color": "Color de acento utilizado para el entorno actual en la navegación.",
             "app_font_size": "Factor de escala aplicado a todos los tamaños de fuente de la interfaz."
@@ -1500,6 +1507,9 @@
             "small": "Pequeño",
             "medium": "Mediano",
             "large": "Grande"
+          },
+          "editor_theme_options": {
+            "match_app": "Seguir el tema de la aplicación"
           }
         },
         "localization": {

@@ -27,6 +27,7 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
@@ -262,7 +263,7 @@ class FlowTriggerServiceTest {
         // Given a flow whose trigger matches but which governance blocks at runtime
         FlowWithSource raw = flowWithFlowTriggerSource();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy")))));
+            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy", List.of(), null)))));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When

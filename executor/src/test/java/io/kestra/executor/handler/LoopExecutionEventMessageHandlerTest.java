@@ -21,6 +21,8 @@ import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
@@ -91,7 +93,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "nonExistingExecution", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "nonExistingExecution", State.Type.SUCCESS, null, null, null, null);
 
         // When
         var maybeExecutor = handler.handle(message);
@@ -119,7 +121,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null ,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -150,7 +152,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — one iteration fails, loop should terminate immediately
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.FAILED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -190,7 +192,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — handler emits next loop execution and returns empty (null from inner lambda)
@@ -215,7 +217,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null, false);
-        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.KILLED, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.KILLED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -242,7 +244,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null, false);
-        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.KILLED, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.KILLED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -270,7 +272,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null, false);
-        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.SUCCESS, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -299,7 +301,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — the second iteration fails
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the loop keeps running (emits the last iteration) and records both terminal states
@@ -313,7 +315,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given — sub execution is kill-switched
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null, null, null);
         when(killSwitchService.evaluate("sub-exec-1")).thenReturn(EvaluationType.IGNORE);
 
         // When
@@ -328,7 +330,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given — sub execution passes but parent is kill-switched
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null, null, null);
         when(killSwitchService.evaluate(execution.getId())).thenReturn(EvaluationType.IGNORE);
 
         // When
@@ -367,7 +369,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — fails only this execution, does not throw and crash the whole instance
@@ -387,7 +389,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.RESTARTED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.RESTARTED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the execution is failed instead of being resumed
@@ -417,7 +419,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — fails only this execution, does not throw and crash the whole instance
@@ -445,7 +447,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — the first iteration fails
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the loop ends in SUCCESS: 1 sub-execution ran (and failed), the 2 remaining iterations are skipped
@@ -475,7 +477,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When: the first iteration succeeds and triggers the break while the second one is still running
         var firstRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var firstResult = handler.handle(new LoopExecutionEvent(firstRun, "sub-execution-0", State.Type.SUCCESS, null, null));
+        var firstResult = handler.handle(new LoopExecutionEvent(firstRun, "sub-execution-0", State.Type.SUCCESS, null, null, null, null));
 
         // Then: the loop is not terminated and the never-started iteration is skipped
         assertThat(firstResult).isEmpty();
@@ -485,7 +487,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When: the running iteration fails
         var secondRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null,false);
-        var secondResult = handler.handle(new LoopExecutionEvent(secondRun, "sub-execution-1", State.Type.FAILED, null, null));
+        var secondResult = handler.handle(new LoopExecutionEvent(secondRun, "sub-execution-1", State.Type.FAILED, null, null, null, null));
 
         // Then: the loop ends once, in FAILED, without evaluating breakWhen again
         assertThat(secondResult).isPresent();
@@ -511,7 +513,7 @@ class LoopExecutionEventMessageHandlerTest {
         );
 
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null,false);
-        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.SUCCESS, null, null));
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.SUCCESS, null, null, null, null));
 
         assertThat(maybeExecutor).isEmpty();
         assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
@@ -537,7 +539,7 @@ class LoopExecutionEventMessageHandlerTest {
         );
 
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null,false);
-        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-1", State.Type.SUCCESS, null, null));
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-1", State.Type.SUCCESS, null, null, null, null));
 
         assertThat(maybeExecutor).isEmpty();
         assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
@@ -565,7 +567,7 @@ class LoopExecutionEventMessageHandlerTest {
         logQueue.addListener(logs::add);
 
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null,false);
-        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.FAILED, null, null));
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.FAILED, null, null, null, null));
 
         assertThat(maybeExecutor).isEmpty();
         assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
@@ -573,6 +575,136 @@ class LoopExecutionEventMessageHandlerTest {
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 2, "SUCCESS", 1));
         assertThat(TestsUtils.awaitLogs(logs, 1).getFirst().getMessage()).contains("sub-execution-2").contains("FAILED");
+    }
+
+    @Test
+    void shouldFoldCountsIntoOutputsAndParentMetadataWhenLoopTerminates() throws InternalException {
+        // Given
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 2),
+                Loop.TASK_RUN_STATE_COUNTS_OUTPUT, Map.of("log", Map.of("SUCCESS", 2)),
+                Loop.LOOP_ITERATION_COUNTS_OUTPUT, Map.of("nested", Map.of("SUCCESS", 4))
+            )
+        );
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null, false);
+        var maybeExecutor = handler.handle(lastEvent(loopRun, State.Type.SUCCESS));
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TASK_RUN_STATE_COUNTS_OUTPUT, Map.of("log", Map.of("SUCCESS", 3)))
+            .containsEntry(Loop.LOOP_ITERATION_COUNTS_OUTPUT, Map.of("nested", Map.of("SUCCESS", 8)));
+        var metadata = maybeExecutor.get().getExecution().getMetadata();
+        assertThat(metadata.getTaskRunStateCounts()).isEqualTo(TaskRunStateCounts.fromMap(Map.of("log", Map.of("SUCCESS", 3))));
+        assertThat(metadata.getLoopIterationCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(Map.of("nested", Map.of("SUCCESS", 8), "loop", Map.of("SUCCESS", 3)))
+        );
+    }
+
+    @Test
+    void shouldFoldCountsWhenTransmitFailedTerminatesEarly() throws InternalException {
+        // Given
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null, false);
+        var maybeExecutor = handler.handle(lastEvent(loopRun, State.Type.FAILED));
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TASK_RUN_STATE_COUNTS_OUTPUT, Map.of("log", Map.of("SUCCESS", 1)));
+        var metadata = maybeExecutor.get().getExecution().getMetadata();
+        assertThat(metadata.getTaskRunStateCounts()).isEqualTo(TaskRunStateCounts.fromMap(Map.of("log", Map.of("SUCCESS", 1))));
+        assertThat(metadata.getLoopIterationCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(Map.of("nested", Map.of("SUCCESS", 4), "loop", Map.of("FAILED", 1)))
+        );
+    }
+
+    @Test
+    void shouldFoldCountsWhenBreakWhenTerminatesLoop() throws InternalException {
+        // Given
+        var logTask = Log.builder().id("log").type(Log.class.getName()).message("Hello").build();
+        var flow = flowRepository.create(GenericFlow.of(loopFlowWithBreakWhen(logTask, true, "{{ item.index == 0 }}")));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null, false);
+        var maybeExecutor = handler.handle(lastEvent(loopRun, State.Type.SUCCESS));
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TASK_RUN_STATE_COUNTS_OUTPUT, Map.of("log", Map.of("SUCCESS", 1)))
+            .containsEntry(Loop.LOOP_ITERATION_COUNTS_OUTPUT, Map.of("nested", Map.of("SUCCESS", 4)));
+        var metadata = maybeExecutor.get().getExecution().getMetadata();
+        assertThat(metadata.getLoopIterationCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(Map.of("nested", Map.of("SUCCESS", 4), "loop", Map.of("SUCCESS", 1, "SKIPPED", 2)))
+        );
+    }
+
+    @Test
+    void shouldNotFoldCountsAgainWhenLateEventArrivesAfterLoopTerminated() throws InternalException {
+        // Given — a concurrent loop already terminated in FAILED because of an earlier failed iteration
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var terminatedLoopTaskRun = loopTaskRun(loopTaskRunId, execution).withState(State.Type.FAILED);
+        executionRepository.save(execution.withTaskRunList(List.of(terminatedLoopTaskRun)));
+        taskOutputService.saveOutputs(
+            terminatedLoopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1)
+            )
+        );
+
+        // When — a second iteration fails afterwards
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null, false);
+        var maybeExecutor = handler.handle(lastEvent(loopRun, State.Type.FAILED));
+
+        // Then
+        assertThat(maybeExecutor).isEmpty();
+    }
+
+    private LoopExecutionEvent lastEvent(LoopRun loopRun, State.Type state) {
+        return new LoopExecutionEvent(
+            loopRun, "sub-execution-id", state, null,
+            new TaskRunStatistic(1, 10, 10L, 10L),
+            TaskRunStateCounts.fromMap(Map.of("log", Map.of("SUCCESS", 1))),
+            TaskRunStateCounts.fromMap(Map.of("nested", Map.of("SUCCESS", 4)))
+        );
     }
 
     private Flow loopFlow() {

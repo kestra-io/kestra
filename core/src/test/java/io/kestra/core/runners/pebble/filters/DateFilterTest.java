@@ -234,6 +234,34 @@ class DateFilterTest {
     }
 
     @Test
+    void shouldConvertIntegerEpoch() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            """
+                {{ integer | date(format="iso_sec", timeZone="Europe/Paris") }}
+                {{ fromJson('{"epoch": 1378653552}').epoch | date(format="iso_sec", timeZone="Europe/Paris") }}
+                {{ integer | dateAdd(1, "DAYS", timeZone="Europe/Paris") }}
+                {{ integer | timestamp }}
+                {{ integer | timestampMilli }}
+                {{ integer | timestampMicro }}
+                {{ integer | timestampNano }}
+                {{ short | date(format="iso_sec", timeZone="UTC") }}
+                """,
+            Map.of("integer", 1378653552, "short", (short) 3600)
+        );
+
+        assertThat(render).isEqualTo("""
+            2013-09-08T17:19:12+02:00
+            2013-09-08T17:19:12+02:00
+            2013-09-09T17:19:12.000000+02:00
+            1378653552
+            1378653552000
+            1378653552000000
+            1378653552000000000
+            1970-01-01T01:00:00Z
+            """);
+    }
+
+    @Test
     void shouldRenderNegativeMillisTimestamp() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             """

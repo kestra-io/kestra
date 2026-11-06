@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.hc.client5.http.utils.Base64;
@@ -202,5 +203,19 @@ class HttpFunctionTest {
         );
 
         Assertions.assertEquals("{\"successfully\":\"authenticated\"}", rendered);
+    }
+
+    @Test
+    void shouldSendOptionsMethodUnderTurkishLocale() throws IllegalVariableEvaluationException {
+        stubFor(options(urlMatching("/optionsApi")).willReturn(okJson("{\"allowed\":true}")));
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            String rendered = variableRenderer.render("{{ http(url, 'options').allowed }}", Map.of("url", "http://localhost:28182/optionsApi"));
+            assertThat(rendered).isEqualTo("true");
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 }

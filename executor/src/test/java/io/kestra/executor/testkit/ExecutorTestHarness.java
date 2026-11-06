@@ -468,6 +468,7 @@ public final class ExecutorTestHarness {
             executionDelayProcessor,
             slaMonitorProcessor,
             runContextFactory,
+            taskOutputService,
             killSwitchService,
             killSwitchActionService,
             metricRegistry,

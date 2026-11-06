@@ -1,0 +1,28 @@
+id: loop-nested-outputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: outer
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
+    values: '[{"children":[1,2]},{"children":[3]}]'
+    outputs:
+      - id: batch
+        type: JSON
+        value: "{{ loopOutputs(outputs.inner.outputs, 'r') | toJson }}"
+    tasks:
+      - id: inner
+        type: io.kestra.plugin.core.flow.Loop
+        concurrencyLimit: 1
+        values: "{{ fromJson(item.value).children | toJson }}"
+        outputs:
+          - id: r
+            type: STRING
+            value: "{{ outputs.ret.value }}"
+        tasks:
+          - id: ret
+            type: io.kestra.plugin.core.debug.Return
+            format: "c{{ item.value }}"
+  - id: end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ loopOutputs(outputs.outer.outputs, 'batch') | toJson }}"

@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from "vitest"
 import {i18nMount} from "../../../tests/unit/i18nMount"
+import type {Execution} from "../../stores/executions"
 import type {Flow} from "../../stores/flow"
 
 vi.mock("override/utils/route", () => ({
@@ -20,9 +21,9 @@ const flow = {
     ],
 } as unknown as Flow
 
-function curlFor(inputs: Record<string, unknown>, curlFlow: Flow = flow) {
+function curlFor(inputs: Record<string, unknown>, curlFlow: Flow = flow, opts: {replayExecution?: Execution, executionLabels?: {key: string, value: string}[]} = {}) {
     const wrapper = i18nMount(Curl, {
-        props: {flow: curlFlow, inputs, verbose: false},
+        props: {flow: curlFlow, inputs, verbose: false, ...opts},
         global: {stubs: {CopyToClipboard: true}},
     })
     const command = wrapper.find("code").text()
@@ -82,5 +83,23 @@ describe("Curl", () => {
             "curl -O 'https://huggingface.co/datasets/kestra/datasets/resolve/main/json/kestra.json' && \\\n" +
             `curl -X POST -H 'Content-Type: multipart/form-data' -F 'upload.data=@kestra.json;filename=kestra.json' ${URL}`,
         )
+    })
+
+    it("targets the replay-with-inputs endpoint of the replayed execution when replaying", () => {
+        const replayFlow = {
+            ...flow,
+            inputs: [
+                {id: "env", type: "FORM", inputs: [{id: "region", type: "STRING"}]},
+                {id: "top", type: "STRING"},
+            ],
+        } as unknown as Flow
+
+        expect(curlFor({"env.region": "eu-west-1", top: "custom"}, replayFlow, {replayExecution: {id: "7xkQabcdef"} as Execution}))
+            .toBe("curl -X POST -H 'Content-Type: multipart/form-data' -F 'env.region=eu-west-1' -F 'top=custom' 'http://localhost:8080/api/v1/main/executions/7xkQabcdef/actions/replay-with-inputs'")
+    })
+
+    it("does not append execution labels to a replay command as the replay endpoint takes none", () => {
+        expect(curlFor({}, flow, {replayExecution: {id: "7xkQabcdef"} as Execution, executionLabels: [{key: "system", value: "from_labels"}]}))
+            .toBe("curl -X POST -H 'Content-Type: multipart/form-data' 'http://localhost:8080/api/v1/main/executions/7xkQabcdef/actions/replay-with-inputs'")
     })
 })

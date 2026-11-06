@@ -77,7 +77,7 @@
                     </KsFormItem>
                 </KsTabPane>
                 <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
-                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" :replayExecution="replayExecution" />
                 </KsTabPane>
                 <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook.curl_command')" class="execution-pane">
                     <WebhookCurl :flow="flow" />
@@ -179,6 +179,7 @@
         buttonTestId?: string
         autoPrefill?: boolean
         renderLabels?: string[]
+        replayExecution?: Execution
     }>(), {
         redirect: true,
         embed: false,
@@ -189,6 +190,7 @@
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
         renderLabels: undefined,
+        replayExecution: undefined,
     })
 
     const emit = defineEmits<{

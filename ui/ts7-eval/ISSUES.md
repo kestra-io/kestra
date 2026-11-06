@@ -66,9 +66,8 @@ No existing issue was found for `TS5088` or "cyclic structure" in microsoft/type
   diagnostic is a suggestion and never reaches the CLI output.
 - `data-*` attributes are rejected by default in v4 (`dataAttributes: []`). That is configuration rather than a bug,
   so the eval sets `"dataAttributes": ["data-*"]`, which removes 517 diagnostics.
-- tsrs vs tsgo: on the EE graph, 4 messages print the properties of an inferred object type in a different order
-  (same file, line and code). It survives `--singleThreaded` in build mode and disappears with
-  `-p --checkerAssignment go --noLazyMembers`, and tsgo itself prints the other order under `-p`, so it follows
-  type creation order rather than being a tsrs bug.
+- tsrs vs tsgo: 4 EE messages once listed an inferred type's properties in a different order (same file, line and
+  code). That run had stray `.d.vue.ts` files in `ui-ee/src`; the clean rerun is identical, and
+  `-p --checkerAssignment go --noLazyMembers` matched tsgo even before. Not a tsrs bug.
 - TypeScript 7 defaults `rootDir` to the tsconfig directory. `ui-ee/tsconfig.app.json` sets none and includes
   `../../kestra/ui` files, so it fails with TS6059 until `rootDir` is set: a migration item, not a bug.

@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "{count}+ Plugins durchsuchen",
       "searchTasks": "{count} Tasks durchsuchen",
-      "noResults": "Keine Plugins entsprechen deiner Suche.",
       "loadErrorTitle": "Die Plugin-Liste konnte nicht geladen werden",
       "loadErrorDescription": "Deine Flows laufen weiter. Diese Seite liest nur die Liste der Plugins.",
       "showAll": "Alle Plugins anzeigen",

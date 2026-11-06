@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
-      "noResults": "검색어와 일치하는 플러그인이 없습니다.",
       "loadErrorTitle": "플러그인 목록을 로드할 수 없습니다.",
       "loadErrorDescription": "Flow는 계속 실행됩니다. 이 페이지는 플러그인 목록만 읽습니다.",
       "showAll": "모든 plugin 표시",

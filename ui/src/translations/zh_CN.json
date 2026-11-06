@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
-      "noResults": "没有插件符合您的搜索。",
       "loadErrorTitle": "无法加载 plugin 列表",
       "loadErrorDescription": "您的flow将继续运行。此页面仅读取插件列表。",
       "showAll": "显示所有插件",

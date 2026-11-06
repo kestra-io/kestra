@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
-      "noResults": "No plugins match your search.",
       "loadErrorTitle": "Could not load the plugin list",
       "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
       "showAll": "Show all plugins",

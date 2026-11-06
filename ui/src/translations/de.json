@@ -454,6 +454,38 @@
       "confirm_from_task": "Replay ab Task",
       "confirm_whole": "Ganze Execution wiederholen"
     },
+    "replayOverrides": {
+      "action": "Replay mit Overrides",
+      "dialog_title": "Replay {taskId} mit Overrides",
+      "revision_note": "Das Replay läuft auf Revision {revision}, der Revision, auf der diese Execution lief.",
+      "task_code": "Definition von {taskId}",
+      "code_error": "Die Definition von {taskId} konnte nicht geladen werden.",
+      "title": "Ausdrücke überschreiben",
+      "description": "Was die Ausdrücke von Task {taskId} in dieser Execution gerendert haben. Setze einen, um den Task stattdessen mit diesem Wert auszuführen: seine Definition bleibt wie sie ist, die Tasks davor werden wiederverwendet und jeder andere Task rendert echte Daten.",
+      "load_error": "Die Ausdrücke des Tasks {taskId} konnten nicht geladen werden.",
+      "empty": "Task {taskId} rendert keinen Ausdruck in seinen eigenen Eigenschaften.",
+      "rendered": "Gerendert {value}",
+      "confirm": "Replay mit {count} Override | Replay mit {count} Overrides",
+      "locked": {
+        "BLOCK": "Innerhalb einer for-Schleife, eines Sets oder eines Makros, wo es Variablen lesen kann, die nur dort existieren. Ändere es mit einer neuen Revision.",
+        "CONSTANT": "Liest nichts aus der Execution, daher ist es Teil der Definition. Ändere es mit einer neuen Revision.",
+        "SECRET": "Liest ein Secret oder den KV Store zur Laufzeit.",
+        "FILE": "Liest oder rendert eine Datei aus dem internen Storage.",
+        "CALL": "Ruft einen externen Dienst auf, der bei Anzeige seines Werts erneut aufgerufen würde.",
+        "VOLATILE": "Rendert jedes Mal einen anderen Wert, z. B. die aktuelle Zeit oder eine zufällige ID."
+      },
+      "error": {
+        "number": "Gib eine Zahl ein.",
+        "boolean": "Gib true oder false ein.",
+        "json": "Gib gültiges JSON ein."
+      },
+      "recorded": "{count} überschriebener Ausdruck | {count} überschriebene Ausdrücke",
+      "recorded_title": "Ausdrücke, die beim Replay gesetzt wurden",
+      "recorded_original": "Gerendert",
+      "recorded_value": "Wiederholt mit",
+      "recorded_by": "Festgelegt von {user} am {date}",
+      "recorded_hidden": "Das Lesen der Werte erfordert die Berechtigung zum Lesen von Outputs."
+    },
     "change execution state done": "Execution-Status aktualisiert",
     "mark as": "Als {status} markieren",
     "unqueue as": "Als {status} aus der Warteschlange entfernen",

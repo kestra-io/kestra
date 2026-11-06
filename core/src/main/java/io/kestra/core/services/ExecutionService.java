@@ -443,6 +443,7 @@ public class ExecutionService {
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
                         if (revision != null) {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
                             taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         }
                         return newTaskRun;
@@ -566,6 +567,20 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, List.of(), null);
+    }
+
+    /**
+     * @param overrides the values the replayed task run reads in its own properties instead of the real ones;
+     *        any override it had in the source execution is dropped
+     * @param editedBy the user who requested the overrides, recorded with them
+     */
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
+        String newExecutionId, List<TaskRunOverride> overrides, @Nullable String editedBy) throws Exception {
+        if (taskRunId == null && !overrides.isEmpty()) {
+            throw new IllegalArgumentException("Cannot replay execution '%s' with overridden values: values can only be overridden on a replay from a task run.".formatted(execution.getId()));
+        }
+
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -593,6 +608,12 @@ public class ExecutionService {
 
             originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
 
+            // an overridden flowable decides its children again, so the ones it chose before are not reused
+            boolean redecidesChildren = !overrides.isEmpty() && flow.findTaskByTaskId(replayedTaskRun.getTaskId()) instanceof FlowableTask<?>;
+            if (redecidesChildren) {
+                originalTaskRunToRemove.addAll(this.descendantTaskRunIds(execution, taskRunId));
+            }
+
             Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
             execution.getTaskRunList()
                 .stream()
@@ -616,7 +637,14 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        if (originalTaskRun.getId().equals(taskRunId)) {
+                            newTaskRun = newTaskRun.withOverrides(overrides.isEmpty() ? null : taskOutputService.saveOverrides(newTaskRun, overrides, editedBy));
+                        } else {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
+                        }
+                        if (!redecidesChildren || !originalTaskRun.getId().equals(taskRunId)) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        }
                         return newTaskRun;
                     }))
                     .toList()
@@ -647,6 +675,24 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Set<String> descendantTaskRunIds(Execution execution, String taskRunId) {
+        Map<String, String> parentIds = execution.getTaskRunList().stream()
+            .filter(taskRun -> taskRun.getParentTaskRunId() != null)
+            .collect(Collectors.toMap(TaskRun::getId, TaskRun::getParentTaskRunId));
+
+        return parentIds.keySet().stream()
+            .filter(id ->
+            {
+                for (String parentId = parentIds.get(id); parentId != null; parentId = parentIds.get(parentId)) {
+                    if (parentId.equals(taskRunId)) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .collect(Collectors.toSet());
     }
 
     private void copySearchableData(Execution original, Execution replayed) {

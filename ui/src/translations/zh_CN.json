@@ -454,6 +454,38 @@
       "confirm_from_task": "从 Task 重放",
       "confirm_whole": "重放整个 Execution"
     },
+    "replayOverrides": {
+      "action": "使用覆盖重放",
+      "dialog_title": "使用覆盖重放 {taskId}",
+      "revision_note": "重放运行在修订版 {revision} 上，即此 execution 运行的修订版。",
+      "task_code": "{taskId} 的定义",
+      "code_error": "无法加载 {taskId} 的定义。",
+      "title": "覆盖表达式",
+      "description": "此 execution 中 task {taskId} 的表达式渲染结果。设置一个值以使用该值运行 task：其定义保持不变，之前的 task 被重用，并且所有其他 task 渲染真实数据。",
+      "load_error": "无法加载 Task {taskId} 的表达式。",
+      "empty": "Task {taskId} 在其自身属性中未渲染任何 expression。",
+      "rendered": "渲染 {value}",
+      "confirm": "使用 {count} 个覆盖重放",
+      "locked": {
+        "BLOCK": "在 for 循环、集合或宏中，它可以读取仅存在于那里的变量。使用新版本进行更改。",
+        "CONSTANT": "不读取 Execution 中的任何内容，因此它是定义的一部分。请使用新版本进行更改。",
+        "SECRET": "在运行时读取 Secret 或 KV store。",
+        "FILE": "从内部存储读取或渲染文件。",
+        "CALL": "调用外部服务，显示其值将再次调用。",
+        "VOLATILE": "每次渲染不同的值，例如当前时间或随机 id。"
+      },
+      "error": {
+        "number": "输入一个数字。",
+        "boolean": "输入 true 或 false。",
+        "json": "输入有效的 JSON。"
+      },
+      "recorded": "{count} 覆盖表达式",
+      "recorded_title": "在重放时设置的表达式",
+      "recorded_original": "已渲染",
+      "recorded_value": "已重放，使用",
+      "recorded_by": "由 {user} 在 {date} 设置",
+      "recorded_hidden": "读取值需要读取 output 的权限。"
+    },
     "change execution state done": "执行状态已更新",
     "mark as": "标记为 {status}",
     "unqueue as": "取消排队为{status}",

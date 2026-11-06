@@ -454,6 +454,38 @@
       "confirm_from_task": "Replay da Task",
       "confirm_whole": "Reproduzir toda a execução"
     },
+    "replayOverrides": {
+      "action": "Replay com overrides",
+      "dialog_title": "Replay {taskId} com substituições",
+      "revision_note": "O replay é executado na revisão {revision}, a mesma em que esta execução foi executada.",
+      "task_code": "Definição de {taskId}",
+      "code_error": "Não foi possível carregar a definição de {taskId}.",
+      "title": "Substituir expressões",
+      "description": "O que as expressões da task {taskId} renderizaram nesta execução. Defina uma para executar a task com esse valor: sua definição permanece como está, as tasks anteriores são reutilizadas e todas as outras tasks renderizam dados reais.",
+      "load_error": "Não foi possível carregar as expressões da task {taskId}.",
+      "empty": "A Task {taskId} não renderiza nenhuma expressão em suas próprias propriedades.",
+      "rendered": "Renderizado {value}",
+      "confirm": "Replay com {count} substituição | Replay com {count} substituições",
+      "locked": {
+        "BLOCK": "Dentro de um loop for, um conjunto ou uma macro, onde pode ler variáveis que só existem lá. Altere-o com uma nova revisão.",
+        "CONSTANT": "Não lê nada da execução, então faz parte da definição. Altere-o com uma nova revisão.",
+        "SECRET": "Lê um secret ou o kv store em tempo de execução.",
+        "FILE": "Lê ou renderiza um arquivo do armazenamento interno.",
+        "CALL": "Chama um serviço externo, que ao mostrar seu valor chamaria novamente.",
+        "VOLATILE": "Renderiza um valor diferente a cada vez, como a hora atual ou um id aleatório."
+      },
+      "error": {
+        "number": "Insira um número.",
+        "boolean": "Insira verdadeiro ou falso.",
+        "json": "Insira um JSON válido."
+      },
+      "recorded": "{count} expressão substituída | {count} expressões substituídas",
+      "recorded_title": "Expressões definidas na repetição",
+      "recorded_original": "Renderizado",
+      "recorded_value": "Reproduzido com",
+      "recorded_by": "Definido por {user} em {date}",
+      "recorded_hidden": "A leitura dos valores requer permissão para ler os outputs."
+    },
     "change execution state done": "Estado de execução atualizado",
     "mark as": "Marcar como {status}",
     "unqueue as": "Desenfileirar como {status}",

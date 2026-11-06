@@ -454,6 +454,38 @@
       "confirm_from_task": "Replay à partir de la tâche",
       "confirm_whole": "Rejouer l'exécution entière"
     },
+    "replayOverrides": {
+      "action": "Rejouer avec des remplacements",
+      "dialog_title": "Rejouer {taskId} avec des remplacements",
+      "revision_note": "Le replay s'exécute sur la révision {revision}, celle sur laquelle cette exécution a été exécutée.",
+      "task_code": "Définition de {taskId}",
+      "code_error": "Impossible de charger la définition de {taskId}.",
+      "title": "Expressions de remplacement",
+      "description": "Ce que les expressions de la task {taskId} ont rendu dans cette exécution. Définissez-en une pour exécuter la task avec cette valeur à la place : sa définition reste telle quelle, les tasks précédentes sont réutilisées, et toutes les autres tasks rendent des données réelles.",
+      "load_error": "Impossible de charger les expressions de la task {taskId}.",
+      "empty": "La Task {taskId} ne rend aucune expression dans ses propres propriétés.",
+      "rendered": "Rendu {value}",
+      "confirm": "Rejouer avec {count} remplacement | Rejouer avec {count} remplacements",
+      "locked": {
+        "BLOCK": "À l'intérieur d'une boucle for, d'un set ou d'une macro, où il peut lire des variables qui n'existent que là. Modifiez-le avec une nouvelle révision.",
+        "CONSTANT": "Ne lit rien de l'exécution, donc cela fait partie de la définition. Modifiez-le avec une nouvelle révision.",
+        "SECRET": "Lit un secret ou le kv store au moment de l'exécution.",
+        "FILE": "Lit ou rend un fichier depuis le stockage interne.",
+        "CALL": "Appelle un service externe, dont l'affichage de la valeur appellerait à nouveau.",
+        "VOLATILE": "Rend une valeur différente à chaque fois, comme l'heure actuelle ou un id aléatoire."
+      },
+      "error": {
+        "number": "Entrez un nombre.",
+        "boolean": "Entrez vrai ou faux.",
+        "json": "Entrez un JSON valide."
+      },
+      "recorded": "{count} expression surchargée | {count} expressions surchargées",
+      "recorded_title": "Expressions définies sur le replay",
+      "recorded_original": "Rendu",
+      "recorded_value": "Rejoué avec",
+      "recorded_by": "Défini par {user} le {date}",
+      "recorded_hidden": "La lecture des valeurs nécessite la permission de lire les outputs."
+    },
     "change execution state done": "État d'exécution mis à jour",
     "mark as": "Marquer comme {status}",
     "unqueue as": "Se désenfile en tant que {status}",

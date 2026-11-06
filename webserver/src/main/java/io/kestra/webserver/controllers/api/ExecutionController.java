@@ -285,6 +285,12 @@ public class ExecutionController {
     private ActorResolver actorResolver;
 
     @Inject
+    private ReplayOverrideService replayOverrideService;
+
+    @Inject
+    private TaskOutputService taskOutputService;
+
+    @Inject
     private ModelValidator modelValidator;
 
     @Inject
@@ -1638,6 +1644,68 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/replay-values")
+    @Operation(
+        tags = { "Executions" },
+        summary = "List the {{ }} expressions a task run renders in its own properties, with what they rendered in the execution. A top-level expression that reads the execution can be overridden on a replay from this task run."
+    )
+    public ReplayValues replayValues(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
+
+        return new ReplayValues(replayOverrideService.values(flowRepository.findByExecution(execution), execution, taskRunId));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the expressions a replay overrode for a task run, with what they rendered before. They are read with the same permission as outputs."
+    )
+    public OverriddenValues getTaskRunOverrides(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
+
+        return new OverriddenValues(taskOutputService.getOverrides(taskRun));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/replay-with-overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for what some of its expressions render"
+    )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    public HttpResponse<Execution> replayExecutionWithOverrides(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @QueryValue String taskRunId,
+        @RequestBody(description = "The values to render, by expression") @Valid @Body ReplayWithOverridesRequest request) throws Exception {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        controlReplayable(execution, taskRunId, null);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()));
+        controlDraftExecutableAs(flow, execution.getKind());
+
+        List<TaskRunOverride> overrides = replayOverrideService.overrides(flow, execution, taskRunId, request.overrides());
+        return blockingReplay(execution, taskRunId, null, Optional.empty(), overrides);
+    }
+
+    public record ReplayValues(List<ReplayOverrideService.ReplayValue> values) {
+    }
+
+    public record OverriddenValues(List<TaskRunOverride> values) {
+    }
+
+    public record ReplayWithOverridesRequest(@NotNull Map<String, Object> overrides) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay/validate")
     @Operation(
         tags = { "Executions" },
@@ -1661,6 +1729,11 @@ public class ExecutionController {
     }
 
     private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        return blockingReplay(execution, taskRunId, revision, breakpoints, List.of());
+    }
+
+    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
+        List<TaskRunOverride> overrides) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1682,6 +1755,7 @@ public class ExecutionController {
                         // emit Replay command; signals completion via operationId when new execution is created
                         executionCommandQueue.emit(
                             Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
+                                .withOverrides(overrides.isEmpty() ? null : overrides)
                                 .withOperationId(operationId)
                                 .withActor(actor)
                         );

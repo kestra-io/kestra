@@ -1015,14 +1015,15 @@ public class ExecutorService {
             iterationCount = init.totalCount();
 
             // save the iteration information in outputs to know how many loop iterations we already triggered
-            taskOutputService.saveOutputs(
-                taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
-                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
-                    Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
-                )
-            );
+            Map<String, Object> outputs = HashMap.newHashMap(5);
+            outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
+            outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, init.limit());
+            outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6));
+            outputs.put(Loop.NEXT_OFFSET_OUTPUT, init.nextOffset());
+            Optional.ofNullable(loop.getOutputs())
+                .filter(o -> o.size() > 0)
+                .ifPresent(o -> outputs.put(Loop.OUTPUTS_OUTPUT, Collections.emptyList()));
+            taskOutputService.saveOutputs(taskRun, outputs);
             for (int i = 0; i < init.values().size(); i++) {
                 var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i), loop.getParseValues());
                 executor.withLoopExecution(loopExecution, "handleLoopExecution");
@@ -1031,13 +1032,14 @@ public class ExecutorService {
             var init = loop.initFromValues(runContext);
             iterationCount = init.totalCount();
             // save the iteration information in outputs to know how many loop iterations we already triggered
-            taskOutputService.saveOutputs(
-                taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
-                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
-                )
-            );
+            Map<String, Object> outputs = HashMap.newHashMap(4);
+            outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
+            outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, init.limit());
+            outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6));
+            Optional.ofNullable(loop.getOutputs())
+                .filter(o -> o.size() > 0)
+                .ifPresent(o -> outputs.put(Loop.OUTPUTS_OUTPUT, Collections.emptyList()));
+            taskOutputService.saveOutputs(taskRun, outputs);
 
             if (iterationCount > 0) {
                 if (init.values().isLeft()) {

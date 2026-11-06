@@ -664,6 +664,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-outputs-empty.yaml")
+    protected void loopOutputsEmpty(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsEmpty(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-null.yaml")
     protected void loopWithNull(Execution execution) {
         loopCaseTest.loopWithNull(execution);

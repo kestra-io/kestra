@@ -6,6 +6,7 @@
         buttonText="replay"
         :buttonIcon="PlayBoxMultiple"
         :replaySubmit="handleReplaySubmit"
+        :replay="{executionId: execution.id, taskRunId: taskRun?.id, revision}"
         buttonTestId="replay-dialog-button"
         @execution-trigger="$emit('executionTrigger')"
     />

@@ -1241,6 +1241,9 @@
     "unlock trigger": {
       "success": "Trigger desbloqueado"
     },
+    "trigger blocked": "Bloqueado",
+    "trigger blocked policy check failed": "As políticas de governança não puderam ser verificadas.",
+    "trigger blocked unknown": "Bloqueado por um motivo desconhecido.",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
     "trigger enable dialog": {
       "title": "Ativar trigger",
@@ -1389,8 +1392,18 @@
     "pluginPage": {
       "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
-      "noResults": "Nenhum plugin corresponde à sua pesquisa.",
-      "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",
+      "loadErrorTitle": "Não foi possível carregar a lista de plugins",
+      "loadErrorDescription": "Seus flows continuam em execução. Esta página apenas lê a lista de plugins.",
+      "showAll": "Mostrar todos os plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Tabela",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Nenhum plugin corresponde aos seus filtros",
+        "description": "Tente um termo de pesquisa diferente ou limpe os filtros de categoria."
+      },
       "notFound": "Este plugin não pôde ser encontrado.",
       "elementType": {
         "tasks": "Tarefa",
@@ -1399,8 +1412,13 @@
         "taskRunners": "Executor de task",
         "charts": "Gráfico",
         "apps": "Aplicativo",
+        "appBlocks": "Bloco de App",
+        "dataFilters": "Filtro de dados",
+        "dataFiltersKPI": "Filtro de dados de KPI",
         "logExporters": "Exportador de Log",
-        "secrets": "Secreto"
+        "secrets": "Secreto",
+        "assets": "Tipo de Asset",
+        "additionalPlugins": "Plugin adicional"
       },
       "sortBy": "Ordenar por",
       "sort": {
@@ -1431,6 +1449,19 @@
         "enterpriseEdition": "Edição Enterprise",
         "certified": "Certificado",
         "back": "Voltar para plugins"
+      },
+      "management": {
+        "upload": "Carregar",
+        "addPlugin": "Adicionar plugin",
+        "lockedTitle": "Gerenciamento de versão de Plugin",
+        "lockedDescription": "Instale plugins, mantenha várias versões lado a lado e atualize-as sem reconstruir a imagem, com a Enterprise Edition.",
+        "learnMore": "Saiba mais",
+        "includedWithKestra": "Incluído com o Kestra",
+        "gateNote": "A instalação e atualização de plugins está disponível na Enterprise Edition.",
+        "upsellTitle": "O versionamento de Plugin é um recurso Enterprise",
+        "upsellDescription": "Cada plugin abaixo é fornecido com esta imagem do Kestra e está pronto para ser usado em um flow. Na Enterprise Edition, você também pode instalar um plugin que não está incluído, fixar uma versão por plugin e fazer upgrade sem reconstruir a imagem.",
+        "talkToUs": "Fale conosco",
+        "readTheDocs": "Leia a documentação"
       }
     },
     "no inputs": "Este flow não tem inputs.",
@@ -1491,10 +1522,13 @@
           "fields": {
             "app_font_size": "Tamanho da fonte da aplicação",
             "color_mode": "Modo de cor",
+            "editor_dark_theme": "Tema do editor no modo escuro",
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
+            "editor_pebble_hover": "Passe o mouse sobre a referência do Pebble para ver sua definição",
+            "editor_light_theme": "Tema do editor no modo claro",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
@@ -1517,6 +1551,9 @@
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
+            "editor_pebble_hover": "Mostra a definição e a documentação de um input, output, variável, label ou variável de trigger ao passar o mouse sobre sua referência Pebble no editor de flow.",
+            "editor_dark_theme": "Cores de sintaxe do editor de código quando o modo de cor é Escuro 1.0 ou Escuro 2.0.",
+            "editor_light_theme": "Cores de sintaxe do editor de código quando o modo de cor é Claro.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."
@@ -1525,6 +1562,9 @@
             "small": "Pequeno",
             "medium": "Médio",
             "large": "Grande"
+          },
+          "editor_theme_options": {
+            "match_app": "Seguir o tema da aplicação"
           }
         },
         "localization": {
@@ -1832,9 +1872,9 @@
         },
         "errors": {
           "first_execution": "A primeira execução terminou como {state} em vez de ter sucesso. Abra os logs nesta página para ver o porquê e tente novamente.",
-          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o flow ainda tem a task <code>notify</code>, então tente novamente.",
+          "expected_failure": "Esta execução terminou como {state}, então ainda não há falha para corrigir. Verifique se o flow ainda tem a task {task} e tente novamente.",
           "no_execution_to_replay": "Não há execuções para reproduzir ainda. Execute o flow na etapa anterior e tente novamente.",
-          "replay": "A repetição terminou como {state}. Abra os logs nesta página para ver o que <code>notify</code> relatou, então tente novamente.",
+          "replay": "A repetição terminou como {state}. Abra os logs nesta página para ver o que a {task} relatou e tente novamente.",
           "save_flow": "O flow do tour não pôde ser salvo. {reason}",
           "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente."
         },
@@ -2063,7 +2103,6 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
-      "task_details": "Detalhes da task",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",
@@ -2175,6 +2214,11 @@
       "decrease_fontsize": "Diminuir tamanho da fonte do editor",
       "increase_fontsize": "Aumentar o tamanho da fonte do editor",
       "reset_fontsize": "Redefinir tamanho da fonte do editor"
+    },
+    "pebble_hover": {
+      "toggle": "Alternar docs de Pebble ao passar o mouse",
+      "enabled": "A documentação flutuante do Pebble está ativada.",
+      "disabled": "A documentação flutuante do Pebble está desativada."
     },
     "instance": "Instância",
     "something_went_wrong": {
@@ -2581,7 +2625,7 @@
     "reject": "Rejeitar",
     "last modified": "Última modificação",
     "run task in playground": "Executar task no playground",
-    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Padrões para o arquivo do namespace: {name}",
     "no_file_choosen": "Nenhum arquivo selecionado",
     "dependency": {
       "controls": {

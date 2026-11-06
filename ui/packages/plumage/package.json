@@ -1,0 +1,65 @@
+{
+    "name": "@kestra-io/plumage",
+    "version": "0.0.0-dev",
+    "description": "Kestra syntax themes for Monaco, Shiki, Expressive Code and VS Code, with Pebble highlighting for YAML.",
+    "type": "module",
+    "sideEffects": false,
+    "homepage": "https://github.com/kestra-io/kestra/tree/develop/ui/packages/plumage#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kestra-io/kestra.git",
+        "directory": "ui/packages/plumage"
+    },
+    "bugs": {
+        "url": "https://github.com/kestra-io/kestra/issues"
+    },
+    "main": "./dist/index.js",
+    "exports": {
+        ".": "./src/index.ts",
+        "./expressive-code": "./src/expressive-code.ts",
+        "./monaco/*": {
+            "types": "./dist/monaco/*.d.ts",
+            "default": "./dist/monaco/*.js"
+        },
+        "./shiki/*": {
+            "types": "./dist/shiki/*.d.ts",
+            "default": "./dist/shiki/*.js"
+        },
+        "./vscode/*": "./dist/vscode/*",
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "prepublishOnly": "npm run build",
+        "test": "npm run test:lint && npm run check:types && npm run test:unit",
+        "check:types": "tsc --noEmit",
+        "lint": "oxlint --fix && eslint --fix",
+        "test:lint": "oxlint && eslint",
+        "test:unit": "vitest run --config vitest.unit.config.ts",
+        "test:unit:watch": "vitest --config vitest.unit.config.ts"
+    },
+    "peerDependencies": {
+        "@expressive-code/core": ">=0.40"
+    },
+    "peerDependenciesMeta": {
+        "@expressive-code/core": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.5",
+        "expressive-code": "0.44.2",
+        "monaco-editor": "^0.57.0",
+        "shiki": "^4.5.0",
+        "tsdown": "^0.23.4",
+        "typescript": "^6",
+        "vitest": "^5.0.5"
+    }
+}

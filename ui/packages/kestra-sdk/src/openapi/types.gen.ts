@@ -428,6 +428,7 @@ export type ApiTriggerState = {
     lastTriggeredDate?: string;
     executionId?: string;
     kind?: TriggerType;
+    blockedBy?: Blocker;
 };
 
 export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
@@ -576,6 +577,23 @@ export type BasicAuthCredentials = {
     password?: string;
     currentPassword?: string;
 };
+
+/**
+ * What blocks the trigger's flow from running.
+ */
+export type Blocker = {
+    reason?: BlockerReason;
+    /**
+     * The ids of what blocks the flow, such as the rejecting policies when the reason is POLICY.
+     */
+    ids?: Array<string>;
+    /**
+     * The message reported to the user.
+     */
+    message?: string;
+};
+
+export type BlockerReason = 'UNKNOWN' | 'POLICY' | 'POLICY_CHECK_FAILED';
 
 export type BlueprintControllerApiBlueprintItem = {
     id?: string;
@@ -3188,6 +3206,111 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type HandleDeleteRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleDeleteRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleDeleteRequestError = HandleDeleteRequestErrors[keyof HandleDeleteRequestErrors];
+
+export type HandleDeleteRequestResponses = {
+    /**
+     * handleDeleteRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+
+export type HandleGetRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleGetRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleGetRequestError = HandleGetRequestErrors[keyof HandleGetRequestErrors];
+
+export type HandleGetRequestResponses = {
+    /**
+     * handleGetRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+
+export type HandleRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleRequestError = HandleRequestErrors[keyof HandleRequestErrors];
+
+export type HandleRequestResponses = {
+    /**
+     * handleRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
 
 export type ListenUserNotificationsData = {
     body?: never;
@@ -10729,7 +10852,7 @@ export type ListToolsResponses = {
 
 export type ListToolsResponse = ListToolsResponses[keyof ListToolsResponses];
 
-export type HandleDeleteRequestData = {
+export type HandleDeleteRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10739,18 +10862,18 @@ export type HandleDeleteRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleDeleteRequestResponses = {
+export type HandleDeleteRequest1Responses = {
     /**
-     * handleDeleteRequest 200 response
+     * handleDeleteRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+export type HandleDeleteRequest1Response = HandleDeleteRequest1Responses[keyof HandleDeleteRequest1Responses];
 
-export type HandleGetRequestData = {
+export type HandleGetRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10760,18 +10883,18 @@ export type HandleGetRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleGetRequestResponses = {
+export type HandleGetRequest1Responses = {
     /**
-     * handleGetRequest 200 response
+     * handleGetRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+export type HandleGetRequest1Response = HandleGetRequest1Responses[keyof HandleGetRequest1Responses];
 
-export type HandleRequestData = {
+export type HandleRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10781,16 +10904,16 @@ export type HandleRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleRequestResponses = {
+export type HandleRequest1Responses = {
     /**
-     * handleRequest 200 response
+     * handleRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
+export type HandleRequest1Response = HandleRequest1Responses[keyof HandleRequest1Responses];
 
 export type AggregateMetricsFromFlowData = {
     body?: never;

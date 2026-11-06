@@ -22,7 +22,7 @@ class QueryFilterToolTest {
         List<QueryFilter> capturedFilters;
         String capturedExecutionId;
 
-        @Tool(name = "read-execution-logs", value = "Read execution logs, optionally filtered.")
+        @Tool(name = "read_execution_logs", value = "Read execution logs, optionally filtered.")
         public String read(
             @P("The execution id") String executionId,
             @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters) {
@@ -36,7 +36,7 @@ class QueryFilterToolTest {
         record Result(String executionId, int matched) {
         }
 
-        @Tool(name = "read-execution-logs", value = "Read execution logs, optionally filtered.")
+        @Tool(name = "read_execution_logs", value = "Read execution logs, optionally filtered.")
         public Result read(
             @P("The execution id") String executionId,
             @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters) {
@@ -91,7 +91,7 @@ class QueryFilterToolTest {
         QueryFilterToolExecutor executor = new QueryFilterToolExecutor(tool, readMethod());
         ToolExecutionRequest request = ToolExecutionRequest.builder()
             .id("call-1")
-            .name("read-execution-logs")
+            .name("read_execution_logs")
             .arguments("""
                 {
                   "executionId": "exec-1",
@@ -118,7 +118,7 @@ class QueryFilterToolTest {
         QueryFilterToolExecutor executor = new QueryFilterToolExecutor(tool, toolMethodOf(TypedLogsTool.class));
         ToolExecutionRequest request = ToolExecutionRequest.builder()
             .id("call-3")
-            .name("read-execution-logs")
+            .name("read_execution_logs")
             .arguments("""
                 {
                   "executionId": "exec-1",
@@ -139,7 +139,7 @@ class QueryFilterToolTest {
         SampleLogsTool tool = new SampleLogsTool();
         QueryFilterToolExecutor executor = new QueryFilterToolExecutor(tool, readMethod());
         ToolExecutionRequest request = ToolExecutionRequest.builder()
-            .id("call-2").name("read-execution-logs")
+            .id("call-2").name("read_execution_logs")
             .arguments("{ \"LEVEL\": { \"operator\": \"EQUALS\", \"value\": \"WARN\" } }")
             .build();
 

@@ -61,13 +61,13 @@
         }
     },
     "devDependencies": {
-        "@tsdown/css": "^0.23.1",
+        "@tsdown/css": "^0.23.4",
         "@types/dagre": "^0.7.54",
         "@types/js-yaml": "^4.0.9",
         "@types/node": "^26.6.5",
         "@vitejs/plugin-vue": "^6.0.10",
         "sass-embedded": "^1.105.2",
-        "tsdown": "^0.23.1",
+        "tsdown": "^0.23.4",
         "typescript": "^6",
         "unrun": "^0.3.1",
         "vite": "^8.3.4",

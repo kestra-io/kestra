@@ -6,6 +6,8 @@ import java.util.function.BiConsumer;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 
+import io.micronaut.core.annotation.Nullable;
+
 /**
  * This state store is used by the {@link Executor} to handle execution queued by flow concurrency limit.
  */
@@ -28,6 +30,13 @@ public interface ExecutionQueuedStateStore {
      * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.
      */
     int count(TransactionContext txContext, String tenantId, String namespace, String flowId);
+
+    /**
+     * Count queued executions within a scope, outside of any transaction: a single flow when {@code flowId} is set,
+     * a namespace and its descendants when only {@code namespace} is set, the whole tenant when both are null.
+     * A {@code flowId} requires its {@code namespace}.
+     */
+    int count(String tenantId, @Nullable String namespace, @Nullable String flowId);
 
     /**
      * Pop the next queued execution.

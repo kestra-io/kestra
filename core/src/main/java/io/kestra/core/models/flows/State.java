@@ -46,7 +46,7 @@ public class State {
 
     public State(State state, Type type) {
         this.current = type;
-        this.histories = state.histories;
+        this.histories = new ArrayList<>(state.histories);
         this.histories.add(new History(this.current, Instant.now()));
     }
 
@@ -286,6 +286,7 @@ public class State {
         CREATED,
         SUBMITTED,
         RUNNING,
+        PAUSING,
         PAUSED,
         RESTARTED,
         KILLING,
@@ -319,7 +320,7 @@ public class State {
         }
 
         public boolean isRunning() {
-            return this == Type.RUNNING || this == Type.KILLING;
+            return this == Type.RUNNING || this == Type.KILLING || this == Type.PAUSING;
         }
 
         public boolean onlyRunning() {

@@ -237,8 +237,8 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
-        @JsonProperty("outputs")
-        OUTPUTS("outputs") {
+        @JsonProperty("searchableData")
+        SEARCHABLE_DATA("searchableData") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
@@ -663,7 +663,7 @@ public record QueryFilter(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
-                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.OUTPUTS
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.SEARCHABLE_DATA
                 );
             }
         },
@@ -933,6 +933,7 @@ public record QueryFilter(
                     Field.STATUS,
                     Field.SEVERITY,
                     Field.ASSIGNEE,
+                    Field.KIND,
                     Field.START_DATE,
                     Field.END_DATE,
                     Field.CREATED,
@@ -944,6 +945,12 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.NAME);
+            }
+        },
+        CONCURRENCY_LIMIT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.NAMESPACE);
             }
         };
 

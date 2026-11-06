@@ -72,7 +72,7 @@ test.describe("AI Copilot", () => {
                 contentType: "text/event-stream",
                 body: sse([
                     ["token", {text: "I'll restart the failed execution."}],
-                    ["proposed_action", {confirmationId: "cf1", tool: "restart-execution", family: "MUTATE", summary: "Run restart-execution on exec-1"}],
+                    ["proposed_action", {confirmationId: "cf1", tool: "restart_execution", family: "MUTATE", summary: "Run restart_execution on exec-1"}],
                     ["done", {status: "AWAITING_CONFIRMATION"}],
                 ]),
             })
@@ -82,8 +82,8 @@ test.describe("AI Copilot", () => {
                 status: 200,
                 contentType: "text/event-stream",
                 body: sse([
-                    ["tool_call", {tool: "restart-execution", family: "MUTATE", arguments: {id: "exec-1"}}],
-                    ["tool_result", {tool: "restart-execution", outcome: "ok"}],
+                    ["tool_call", {tool: "restart_execution", family: "MUTATE", arguments: {id: "exec-1"}}],
+                    ["tool_result", {tool: "restart_execution", outcome: "ok"}],
                     ["token", {text: "Done — it's running again."}],
                     ["done", {status: "IDLE"}],
                 ]),
@@ -96,7 +96,7 @@ test.describe("AI Copilot", () => {
 
         const card = page.locator(D.card)
         await expect(card).toBeVisible()
-        await expect(card).toContainText("Run restart-execution on exec-1")
+        await expect(card).toContainText("Run restart_execution on exec-1")
         await expect(page.locator(D.input)).toBeDisabled()
 
         await page.locator(D.approve).click()
@@ -230,7 +230,7 @@ test.describe("AI Copilot", () => {
         await page.locator(D.draftOpen).click()
         // Hands the drafted YAML to the flow create editor through sessionStorage, keeping it out of the
         // URL (a refresh of a URL carrying raw `|` characters made the server answer with a 500).
-        await page.waitForURL(/\/flows\/new\?copilotDraft=true$/)
+        await page.waitForURL(/\/flows\/new\?copilotDraft=\d+$/)
         expect(new URL(page.url()).searchParams.has("blueprintSourceYaml")).toBe(false)
         await expect(page.getByTestId("monaco-editor").getByText("id: demo")).toBeVisible()
     })

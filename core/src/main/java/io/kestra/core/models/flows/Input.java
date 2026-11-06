@@ -97,6 +97,15 @@ public abstract class Input<T> implements Data {
     Property<T> defaults;
 
     @Schema(
+        title = "Whether the input is searchable.",
+        description = """
+            A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.
+            By default, an input is not searchable.
+            """
+    )
+    Boolean searchable;
+
+    @Schema(
         title = "The suggested value for the input.",
         description = "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
     )

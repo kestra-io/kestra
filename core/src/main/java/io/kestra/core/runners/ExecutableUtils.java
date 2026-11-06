@@ -45,9 +45,10 @@ public final class ExecutableUtils {
         if (
             transmitFailed &&
                 (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED
+                    || execution.getState().getCurrent() == State.Type.CANCELLED
                     || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED)) ? State.Type.WARNING : execution.getState().getCurrent();
+            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.CANCELLED)) ? State.Type.WARNING : execution.getState().getCurrent();
             return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
         } else {
             return State.Type.SUCCESS;
@@ -248,21 +249,21 @@ public final class ExecutableUtils {
                     kindSource = kindSource.getLoopRun().parent();
                 }
                 ExecutionKind subflowKind = kindSource.getKind();
+                ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
+                    .id(currentTask.getId())
+                    .type(currentTask.getType())
+                    .variables(variables.build())
+                    .build();
+                // the trigger must be on the execution when inputs are rendered, so subflow() is rejected instead of blocking the executor
                 Execution execution = Execution
                     .newExecution(
                         flow,
-                        (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
+                        (f, e) -> runContext.inputAndOutput().readInputs(f, e.withTrigger(executionTrigger), inputs),
                         newLabels,
                         runContext.render(scheduleDate).as(ZonedDateTime.class),
                         subflowKind
                     )
-                    .withTrigger(
-                        ExecutionTrigger.builder()
-                            .id(currentTask.getId())
-                            .type(currentTask.getType())
-                            .variables(variables.build())
-                            .build()
-                    );
+                    .withTrigger(executionTrigger);
                 execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(executionDepth));
                 final Execution executionWithDepth = execution;
 

@@ -35,6 +35,6 @@ describe("getShiki", () => {
     test("pre-registers only the grammars the app renders itself, so the rest stay out of the chunk", async () => {
         const shiki = await getShiki()
 
-        expect(shiki.getLoadedLanguages().sort()).toEqual(["json", "py", "python", "yaml", "yml"])
+        expect(shiki.getLoadedLanguages().sort()).toEqual(["json", "kestra-yaml-keys", "py", "python", "yaml", "yml"])
     })
 })

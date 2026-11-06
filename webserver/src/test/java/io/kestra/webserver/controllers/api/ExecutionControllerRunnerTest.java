@@ -4020,6 +4020,43 @@ class ExecutionControllerRunnerTest {
         assertThat(terminatedEvents.getLast().getId()).isEqualTo("end-all");
     }
 
+    @Test
+    @LoadFlows(
+        value = { "flows/valids/follow-dependencies-loop-parent.yaml",
+            "flows/valids/follow-dependencies-partial-child.yaml" },
+        tenantId = "followdependenciesloopiterations"
+    )
+    void shouldIgnoreLoopIterationsWhenFollowingDependencies() {
+        // Given: a parent that is paused after its subflow and all its Loop iterations terminated.
+        // The iterations share the parent's flow and correlation id but are not the parent.
+        String tenantId = "followdependenciesloopiterations";
+        String parentFlowId = "follow-dependencies-loop-parent";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution parent = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, parentFlowId, null, false);
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isPaused());
+
+        // When: following the dependencies of the still-paused parent
+        List<Event<ExecutionStatusEvent>> events = new CopyOnWriteArrayList<>();
+        Disposable subscription = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .subscribe(events::add);
+
+        try {
+            await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(250))
+                .untilAsserted(() -> assertThat(eventsForFlow(events, parentFlowId)).isNotEmpty());
+
+            // Then: only the parent reports for its flow, and the stream stays open since it is still paused.
+            assertThat(eventsForFlow(events, parentFlowId)).extracting(event -> event.getData().executionId()).containsOnly(parent.getId());
+            assertThat(eventsForFlow(events, parentFlowId).getFirst().getId()).isEqualTo("progress");
+            assertThat(events).extracting(Event::getId).doesNotContain("end-all");
+        } finally {
+            subscription.dispose();
+        }
+    }
+
     private static List<Event<ExecutionStatusEvent>> eventsForFlow(List<Event<ExecutionStatusEvent>> events, String flowId) {
         return events.stream().filter(event -> flowId.equals(event.getData().flowId())).toList();
     }

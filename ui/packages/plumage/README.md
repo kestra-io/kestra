@@ -15,7 +15,7 @@
 
 - Six themes built from the Kestra design system palette, including the Dark 2.0 editor design and two high contrast themes.
 - One theme definition, many targets: a Monaco theme for KsEditor, a TextMate theme for Shiki and Expressive Code, and a VS Code extension.
-- Pebble `{{ }}` and `{% %}` blocks painted in their own color in YAML, in the app and on the docs site alike.
+- Pebble `{{ }}` and `{% %}` blocks painted in YAML, in the app and on the docs site alike: the block in its own color, with keywords, strings, numbers, functions and filters inside it in the theme's code colors.
 - Tests that hold every color to WCAG contrast and keep function names and parameters visibly apart from plain text.
 - No runtime dependencies. Expressive Code is an optional peer, only needed for its plugin.
 
@@ -116,20 +116,24 @@ The themes set `inherit: false` and map every token emitted by the 81 grammars b
 
 ### Pebble in Monaco
 
-Monaco does not tokenize Pebble. Paint it as decorations from `pebbleBlocks`, and color the class with the theme's Pebble color (`kestraDark.syntax.pebble`), set as `--code-pebble`:
+Monaco does not tokenize Pebble. Paint it as decorations from `pebbleTokens`, one class per role, and color each class with the theme's color for that role (`kestraDark.syntax[role]`), set as `--code-<role>`:
 
 ```ts
-import {pebbleBlocks} from "@kestra-io/plumage"
+import {PEBBLE_ROLES, pebbleTokens} from "@kestra-io/plumage"
 
-const decorations = pebbleBlocks(model.getValue()).map(([start, end]) => ({
+const decorations = pebbleTokens(model.getValue()).map(([start, end, role]) => ({
     range: monaco.Range.fromPositions(model.getPositionAt(start), model.getPositionAt(end)),
-    options: {inlineClassName: "highlight-pebble"},
+    options: {inlineClassName: `highlight-pebble-${role}`},
 }))
 editor.createDecorationsCollection(decorations)
+
+for (const role of PEBBLE_ROLES) container.style.setProperty(`--code-${role}`, kestraDark.syntax[role])
 ```
 
 ```css
-.highlight-pebble { color: var(--code-pebble) !important; }
+.highlight-pebble-pebble { color: var(--code-pebble) !important; }
+.highlight-pebble-keyword { color: var(--code-keyword) !important; }
+/* and so on for constant, string, number, function, operator and punctuation */
 ```
 
 ### Shiki
@@ -152,7 +156,7 @@ highlighter.codeToHtml(code, {
 })
 ```
 
-The transformer writes the same `color` and `--shiki-<variant>` styles Shiki does, for a single theme, dual themes, `defaultColor: false` and `light-dark()`. Other languages and non-Kestra themes pass through untouched. To build the theme yourself, `toTextMateTheme(kestraDark)` returns the same object.
+The transformer writes the same `color` and `--shiki-<variant>` styles Shiki does, for a single theme, dual themes, `defaultColor: false` and `light-dark()`, with the theme's color for each role a block holds. Other languages and non-Kestra themes pass through untouched. To build the theme yourself, `toTextMateTheme(kestraDark)` returns the same object.
 
 `yamlKeysInjection` makes a key that reads as a YAML 1.1 boolean (`on:`, `yes:`, `y:`, `off:`) take the key color, as it does in the editor, where the YAML grammar would color it as a boolean. Load it together with the YAML grammar: a grammar that has already highlighted a block ignores an injection loaded after it.
 
@@ -191,12 +195,13 @@ ln -s "$PWD/dist/vscode" ~/.vscode/extensions/kestra-plumage
 | `toMonacoTheme(theme)` | Monaco theme data, with a rule for every token of the bundled grammars |
 | `toTextMateTheme(theme)` | TextMate theme for Shiki, Expressive Code and VS Code |
 | `pebbleBlocks(text)` | The Pebble blocks of a text as `[start, end)` offsets |
+| `pebbleTokens(text)` | The same blocks cut into `[start, end, role]` runs, one role each; `PEBBLE_ROLES` lists the roles a run can take |
 | `pebbleTransformer()` | Shiki transformer that paints Pebble in YAML |
-| `paintPebble(code, lines, paint)` | Splits highlighted lines at Pebble blocks and passes the pieces inside through `paint`, for highlighters other than Shiki |
+| `paintPebble(code, lines, paint)` | Splits highlighted lines at Pebble tokens and passes the pieces inside through `paint(token, role)`, for highlighters other than Shiki |
 | `pluginPebble()` | Expressive Code plugin that paints Pebble in YAML, from `@kestra-io/plumage/expressive-code` |
 | `yamlKeysInjection` | TextMate grammar injection that gives `on:`, `yes:` and `off:` keys the key color, loaded with the YAML grammar |
 
-Types: `CodeTheme`, `SyntaxColors`, `SyntaxRole`, `EditorColors`, `ThemeKind`, `MonacoThemeData`, `TextMateTheme`.
+Types: `CodeTheme`, `SyntaxColors`, `SyntaxRole`, `EditorColors`, `ThemeKind`, `MonacoThemeData`, `TextMateTheme`, `PebbleRole`, `PebbleToken`.
 
 ### Entry points
 
@@ -219,7 +224,7 @@ A theme is one color per role. Every adapter maps grammar scopes and Monaco toke
 | `text` | Plain text with no other role |
 | `key` | Mapping keys in YAML, JSON, TOML, INI and properties files, and object keys in JavaScript and TypeScript |
 | `value` | Plain and quoted scalars in data languages such as YAML and JSON |
-| `pebble` | Pebble `{{ }}` and `{% %}` blocks |
+| `pebble` | Pebble `{{ }}` and `{% %}` blocks: the delimiters, the variables and whatever else is not one of the roles below |
 | `keyword` | Language keywords, such as `import`, `def`, `SELECT` or `FROM` |
 | `string` | Strings in code |
 | `escape` | Escape sequences and string interpolation, such as `{name}` in a Python f-string |
@@ -244,8 +249,23 @@ A theme is one color per role. Every adapter maps grammar scopes and Monaco toke
 `pebbleBlocks`, the Shiki transformer, the Expressive Code plugin and the VS Code grammar all follow the same rules:
 
 - A block is `{{ … }}`, or `{% … %}` opening on a tag name of two or more characters, so a shell `printf '{%s'` is left alone.
-- A block runs to its first closer, across lines, but never past a line that starts at column 0, so an unclosed block cannot color the rest of a file.
+- A block runs to its first closer, across lines, but never past a line that starts at column 0, so an unclosed block cannot color the rest of a file. A string holding a closer is cut there too, the way the engine would have no say in it once YAML is done escaping.
 - The scan is linear, however many blocks are left unclosed.
+
+Inside a block, `pebbleTokens` and the VS Code grammar give the same role to every character:
+
+| Role | What |
+|---|---|
+| `keyword` | `if`, `elseif`, `else`, `endif`, `for`, `endfor`, `in`, `set`, `macro`, `block`, `filter`, `verbatim` and their `end` tags, `is`, `not`, `and`, `or`, `contains`, `equals`, `isIn`, when not part of a path such as `inputs.if` |
+| `constant` | `true`, `false`, `null`, `none` |
+| `string` | `'…'` and `"…"` on one line, with `\` escapes |
+| `number` | `42`, `1.5`, `1e3` |
+| `function` | A name followed by `(`, such as `now()` or `x.toUpperCase()`, and the name after a `\|` filter pipe, such as `\| date(…)` or `\| json` |
+| `operator` | `\|`, `??`, `???`, `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%`, `~`, `=`, `!`, `?`, `..` |
+| `punctuation` | `(`, `)`, `[`, `]`, `{`, `}`, `,`, `:` |
+| `pebble` | The delimiters, including `{{-` and `-}}`, variables and paths such as `outputs.task.value`, whitespace, and anything else |
+
+Filters and functions are told by position rather than by a list, so a new filter needs no change here.
 
 Shiki and Expressive Code paint Pebble after highlighting instead of through a grammar injection. An injection runs at every tokenizer step and made Expressive Code's YAML rendering 48% slower.
 
@@ -253,7 +273,7 @@ Shiki and Expressive Code paint Pebble after highlighting instead of through a g
 
 | Repository | Where | How |
 |---|---|---|
-| [kestra](https://github.com/kestra-io/kestra) | `KsEditor` in the design system | Registers every theme, paints Pebble with `pebbleBlocks` and sets the `--code-*` variables. This covers every code editor in the app: flows, namespace files, task forms, executions, revisions, blueprints and more |
+| [kestra](https://github.com/kestra-io/kestra) | `KsEditor` in the design system | Registers every theme, paints Pebble with `pebbleTokens` and sets the `--code-*` variables. This covers every code editor in the app: flows, namespace files, task forms, executions, revisions, blueprints and more |
 | | `KsMarkdown` in the design system | Shiki with Kestra Dark and Kestra Light plus Pebble, for the in-app docs, plugin docs and markdown in the app |
 | | Settings, **Appearance** | **Editor Theme in Dark Mode** and **Editor Theme in Light Mode**. **Match the app theme**, the default, uses Kestra Dark and Kestra Light |
 | [kestra-ee](https://github.com/kestra-io/kestra-ee) | Every Enterprise editor | Through the open-source design system, with no extra code |
@@ -279,7 +299,8 @@ A new theme appears in KsEditor and in the Settings picker with no other change,
 - Function names and parameters stay at least 25 ΔE (CIE76) from plain text in every theme.
 - Every token emitted by the 81 Monaco grammars resolves to a role through Monaco's own matcher.
 - No docs language leaves a meaningful scope uncolored.
-- The Shiki transformer and the Expressive Code plugin paint exactly the `pebbleBlocks` ranges.
+- `pebbleTokens` covers exactly the `pebbleBlocks` ranges, the VS Code grammar gives every character the role `pebbleTokens` gives it, and the Shiki transformer and the Expressive Code plugin paint exactly those tokens.
+- Keywords, strings, numbers and functions inside a block stay at least 25 ΔE from the block color in every theme.
 - KsEditor and the docs give the same role to more than 99% of YAML characters.
 - Pebble painting stays within its time budget: under 5% of the render time, under 15% end to end, and linear on pathological input.
 

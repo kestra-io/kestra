@@ -47,7 +47,7 @@ export const TEXTMATE_SCOPES: [string[], SyntaxRole, FontStyle?][] = [
     [["string.unquoted.plain.out.yaml", "string.unquoted.plain.in.yaml", "string.quoted.single.yaml", "string.quoted.double.yaml", "string.unquoted.block.yaml", "string.quoted.double.json", "punctuation.definition.string.begin.yaml", "punctuation.definition.string.end.yaml", "punctuation.definition.string.begin.json", "punctuation.definition.string.end.json"], "value"],
     [["constant.language.boolean.yaml", "constant.language.null.yaml", "constant.language.json"], "constant"],
 
-    [["meta.embedded.expression.pebble", "meta.embedded.statement.pebble", "punctuation.section.tag.twig"], "pebble"],
+    [["meta.embedded.expression.pebble", "meta.embedded.statement.pebble", "variable.other.pebble", "punctuation.section.tag.twig"], "pebble"],
 ]
 
 const FONT_STYLES: [string[], FontStyle][] = [

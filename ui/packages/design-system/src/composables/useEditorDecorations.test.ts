@@ -92,7 +92,7 @@ function createHarnessContext(harness: MockEditorHarness, overrides: Partial<Edi
 }
 
 describe("useEditorDecorations", () => {
-    test("applying decorations creates a collection with one entry per range", () => {
+    test("applying decorations creates a collection with one entry per Pebble token", () => {
         const text = "tasks:\n  - id: {{ task.id }}\n    message: {% if enabled %}yes{% endif %}"
         const harness = createEditorHarness(text)
         const dec = useEditorDecorations(createHarnessContext(harness))
@@ -100,28 +100,15 @@ describe("useEditorDecorations", () => {
         dec.attach(harness.editor)
         dec.highlightPebble()
 
-        expect(harness.collection.length).toBe(3)
-        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[0].range).toEqual({
-            startLineNumber: 2,
-            startColumn: 9,
-            endLineNumber: 2,
-            endColumn: 22,
-        })
-        expect(harness.collection.decorations[1].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[1].range).toEqual({
-            startLineNumber: 3,
-            startColumn: 14,
-            endLineNumber: 3,
-            endColumn: 30,
-        })
-        expect(harness.collection.decorations[2].options.inlineClassName).toBe("highlight-pebble")
-        expect(harness.collection.decorations[2].range).toEqual({
-            startLineNumber: 3,
-            startColumn: 33,
-            endLineNumber: 3,
-            endColumn: 44,
-        })
+        expect(harness.collection.decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endColumn])).toEqual([
+            ["highlight-pebble", 2, 9, 22],
+            ["highlight-pebble", 3, 14, 17],
+            ["highlight-pebble-keyword", 3, 17, 19],
+            ["highlight-pebble", 3, 19, 30],
+            ["highlight-pebble", 3, 33, 36],
+            ["highlight-pebble-keyword", 3, 36, 41],
+            ["highlight-pebble", 3, 41, 44],
+        ])
     })
 
     test("applying lines range creates a collection entry for the specified range", () => {
@@ -173,7 +160,7 @@ describe("useEditorDecorations", () => {
     })
 
     test("clearing removes everything", () => {
-        const harness = createEditorHarness("{{ block }}")
+        const harness = createEditorHarness("{{ value }}")
         const pebbleEnabled = ref(true)
         const dec = useEditorDecorations(createHarnessContext(harness, {pebbleEnabled}))
 

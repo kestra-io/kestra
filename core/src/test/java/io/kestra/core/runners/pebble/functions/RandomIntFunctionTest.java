@@ -71,6 +71,21 @@ class RandomIntFunctionTest {
     }
 
     @Test
+    void shouldStayWithinBoundsWhenBoundsExceedIntRange() throws IllegalVariableEvaluationException {
+        long lower = 3_000_000_000L;
+        long upper = 3_000_000_010L;
+        String rendered = variableRenderer.render(
+            "{{ randomInt(lower, upper) }}", Map.of("lower", lower, "upper", upper)
+        );
+        assertThat(Long.parseLong(rendered)).isGreaterThanOrEqualTo(lower).isLessThan(upper);
+
+        String fullRange = variableRenderer.render(
+            "{{ randomInt(lower, upper) }}", Map.of("lower", Long.MIN_VALUE, "upper", Long.MAX_VALUE)
+        );
+        assertThat(Long.parseLong(fullRange)).isLessThan(Long.MAX_VALUE);
+    }
+
+    @Test
     void testGenerateNumberSame() throws IllegalVariableEvaluationException {
         String rendered = variableRenderer.render(
             "{{ randomInt(lower, upper) }}", Map.of("lower", 10L, "upper", 10L)

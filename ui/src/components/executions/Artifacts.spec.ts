@@ -3,7 +3,7 @@ import {flushPromises} from "@vue/test-utils"
 import {defineComponent, reactive, ref} from "vue"
 
 const {executionsStore, routerState, loadTaskRunOutputsMock} = vi.hoisted(() => ({
-    executionsStore: {execution: null as unknown},
+    executionsStore: {execution: null as unknown, progressEvents: [] as unknown[]},
     routerState: {
         route: {params: {}, query: {}} as {params: Record<string, string>, query: Record<string, unknown>},
         replace: vi.fn(),

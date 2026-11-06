@@ -1825,4 +1825,54 @@ class FlowServiceTest {
             );
         }
     }
+
+    @Test
+    void shouldRetainFullHierarchicalPathWhenTraversingNestedCollections() {
+        DeprecatedChildTask child1 = DeprecatedChildTask.builder()
+            .id("child1")
+            .build();
+        DeprecatedChildTask child2 = DeprecatedChildTask.builder()
+            .id("child2")
+            .build();
+        ParentTask middle = ParentTask.builder()
+            .id("middle")
+            .tasks(List.of(child1, child2))
+            .build();
+        ParentTask root = ParentTask.builder()
+            .id("root")
+            .tasks(List.of(middle))
+            .build();
+        Flow flow = Flow.builder()
+            .id("flow")
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(root))
+            .build();
+
+        List<String> paths = flowService.deprecationPaths(flow);
+
+        assertThat(paths).containsExactlyInAnyOrder(
+            "tasks[0].tasks[0].tasks[0]",
+            "tasks[0].tasks[0].tasks[0].deprecatedProperty",
+            "tasks[0].tasks[0].tasks[1]",
+            "tasks[0].tasks[0].tasks[1].deprecatedProperty"
+        );
+    }
+
+    @Deprecated
+    @lombok.experimental.SuperBuilder
+    @lombok.Getter
+    @lombok.NoArgsConstructor
+    public static class DeprecatedChildTask extends io.kestra.core.models.tasks.Task {
+        @Deprecated
+        public String getDeprecatedProperty() {
+            return "deprecatedValue";
+        }
+    }
+
+    @lombok.experimental.SuperBuilder
+    @lombok.Getter
+    @lombok.NoArgsConstructor
+    public static class ParentTask extends io.kestra.core.models.tasks.Task {
+        private List<io.kestra.core.models.tasks.Task> tasks;
+    }
 }

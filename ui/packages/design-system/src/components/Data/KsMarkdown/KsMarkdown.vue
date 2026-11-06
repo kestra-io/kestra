@@ -14,6 +14,7 @@
     import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
     import type {ThemedTokenWithVariants} from "@shikijs/types"
+    import {kestraDark, kestraLight, paintPebble} from "@kestra-io/plumage"
     import xss, {escapeAttrValue} from "xss"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -495,6 +496,16 @@
         }
     }
 
+    function paintPebbleVariants(token: ThemedTokenWithVariants): ThemedTokenWithVariants {
+        return {
+            ...token,
+            variants: {
+                light: {...token.variants.light, color: kestraLight.syntax.pebble},
+                dark: {...token.variants.dark, color: kestraDark.syntax.pebble},
+            },
+        }
+    }
+
     async function highlight(codeBlocks: CodeBlock[]) {
         if (!codeBlocks.length) {
             return
@@ -518,10 +529,11 @@
             }
 
             try {
-                result.set(key, highlighter.codeToTokensWithThemes(value, {
+                const tokens = highlighter.codeToTokensWithThemes(value, {
                     lang: !lang || unavailable.has(lang) ? "text" : lang,
-                    themes: {light: "github-light", dark: "github-dark"},
-                }))
+                    themes: {light: "kestra-light", dark: "kestra-dark"},
+                })
+                result.set(key, ["yaml", "yml"].includes(lang) ? paintPebble(value, tokens, paintPebbleVariants) : tokens)
             } catch {
                 continue
             }

@@ -2792,7 +2792,8 @@
         "tooltip": "flow 테스트 보기"
       },
       "errors": {
-        "label": "{count} 오류"
+        "label": "{count} 오류",
+        "action": "{count}개의 오류, 다음 오류로 이동"
       }
     },
     "invalid_source_code": "잘못된 소스 코드",

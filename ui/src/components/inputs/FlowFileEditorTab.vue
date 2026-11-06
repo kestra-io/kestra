@@ -312,9 +312,19 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
-    useViolationMarkers({
+    const {markers: violationMarkerList, revealNext: revealNextViolation} = useViolationMarkers({
         editor: monacoEditor,
         errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
+    // Guard needed because keep-alive keeps a FlowFileEditorTab instance per namespace file alive alongside the flow tab's.
+    watch(violationMarkerList, resolved => {
+        if (!props.flow) return
+        flowStore.errorNavigation = resolved.length ? {count: resolved.length, revealNext: revealNextViolation} : null
+    }, {immediate: true})
+
+    onBeforeUnmount(() => {
+        if (props.flow) flowStore.errorNavigation = null
     })
 
     useReadOnlyYamlKeys({

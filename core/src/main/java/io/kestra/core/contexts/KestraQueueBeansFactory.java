@@ -244,6 +244,11 @@ public class KestraQueueBeansFactory {
     }
 
     @QueueBean
+    public BroadcastQueueInterface<PlaygroundClientEvent> playgroundClientQueue(QueueFactoryInterface queueFactoryInterface) {
+        return queueFactoryInterface.broadcastQueue(PlaygroundClientEvent.class);
+    }
+
+    @QueueBean
     public BroadcastQueueInterface<NotificationEvent> notificationQueue(QueueFactoryInterface queueFactoryInterface) {
         return queueFactoryInterface.broadcastQueue(NotificationEvent.class);
     }

@@ -2585,8 +2585,15 @@
       "run_task_and_downstream": "运行 task 和下游",
       "run_all_tasks": "运行所有Tasks",
       "history": "最近10次运行",
-      "clear_history": "清除历史记录",
-      "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
+      "clear_history": "重新开始下一次运行",
+      "tooltip_persistence": "Playground 运行保留在服务器上：重新加载或切换选项卡后，下一次运行将基于您离开的运行。关闭 Playground 将结束当前运行。",
+      "session_error": "无法加载您之前的 Playground 运行。",
+      "context": {
+        "title": "上下文",
+        "task_run": "Task 运行",
+        "empty": "运行一个 Task 以查看每个 Task 所见的变量。",
+        "error": "无法加载此 Task run 的上下文。"
+      }
     },
     "submit": "提交",
     "accept": "接受",

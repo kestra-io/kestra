@@ -2585,8 +2585,15 @@
       "run_task_and_downstream": "Task & Downstream ausführen",
       "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
-      "clear_history": "Verlauf löschen",
-      "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
+      "clear_history": "Starte den nächsten Run neu",
+      "tooltip_persistence": "Playground-Runs werden auf dem Server gespeichert: Nach einem Neuladen oder einem Tab-Wechsel baut der nächste Run auf dem Run auf, den du verlassen hast. Das Deaktivieren des Playground beendet den aktuellen Run.",
+      "session_error": "Deine vorherigen Playground-Runs konnten nicht geladen werden.",
+      "context": {
+        "title": "Kontext",
+        "task_run": "Task Run",
+        "empty": "Führe einen Task aus, um die Variablen zu sehen, die jeder Task sieht.",
+        "error": "Der Kontext dieses Task Runs konnte nicht geladen werden."
+      }
     },
     "submit": "Absenden",
     "accept": "Akzeptieren",

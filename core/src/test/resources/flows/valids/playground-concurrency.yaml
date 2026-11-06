@@ -1,0 +1,13 @@
+id: playground-concurrency
+namespace: io.kestra.tests
+
+concurrency:
+  limit: 1
+
+tasks:
+  - id: a
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"
+  - id: b
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"

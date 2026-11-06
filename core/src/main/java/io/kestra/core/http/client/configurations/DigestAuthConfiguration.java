@@ -1,6 +1,7 @@
 package io.kestra.core.http.client.configurations;
 
 import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,6 +38,11 @@ public class DigestAuthConfiguration extends AbstractAuthConfiguration {
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
+        builder.setTargetAuthenticationStrategy(new DefaultAuthenticationStrategy());
+    }
+
+    @Override
+    public void configure(HttpAsyncClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
         builder.setTargetAuthenticationStrategy(new DefaultAuthenticationStrategy());
     }
 

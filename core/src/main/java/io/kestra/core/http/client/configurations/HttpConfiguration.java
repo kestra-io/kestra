@@ -56,6 +56,18 @@ public class HttpConfiguration {
     @Builder.Default
     private Property<Boolean> enabledTcpExtendedKeepAlive = Property.ofValue(true);
 
+    @Schema(
+        title = "The HTTP protocol version to use.",
+        description = "`HTTP_1_1` (default) keeps the existing behavior. " +
+            "`HTTP_2` forces HTTP/2: over TLS the server must support it (ALPN `h2`), and over plain HTTP it connects with prior knowledge. " +
+            "`NEGOTIATE` uses HTTP/2 when the server supports it through ALPN over TLS and falls back to HTTP/1.1 otherwise. " +
+            "HTTP/2 can keep long-running requests alive through intermediaries that close idle connections, " +
+            "when the server or a proxy in between sends PING frames, as the client sends none itself. " +
+            "With `HTTP_2` or `NEGOTIATE`, the `REQUEST_BODY` and `RESPONSE_BODY` logs are not available."
+    )
+    @Builder.Default
+    private Property<HttpVersion> httpVersion = Property.ofValue(HttpVersion.HTTP_1_1);
+
     @Schema(title = "The default charset for the request.")
     @Builder.Default
     private final Property<Charset> defaultCharset = Property.ofValue(StandardCharsets.UTF_8);
@@ -103,6 +115,12 @@ public class HttpConfiguration {
     @Schema(title = "The enabled log.")
     @PluginProperty
     private LoggingType[] logs;
+
+    public enum HttpVersion {
+        HTTP_1_1,
+        HTTP_2,
+        NEGOTIATE
+    }
 
     public enum LoggingType {
         REQUEST_HEADERS,

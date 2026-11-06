@@ -16,11 +16,13 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.tasks.test.ApprovalAfterTask;
 import io.kestra.core.utils.ListUtils;
 
 import jakarta.inject.Inject;
@@ -519,6 +521,65 @@ public class ApprovalTest {
         Execution second = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-auto-approve-conditional", null,
             (flow, execution) -> Map.of("autoApprove", false), Duration.ofSeconds(30));
         assertThat(second.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+    }
+
+    @Test
+    void shouldMarkATaskExtendingApprovalAsAnApprovalForTheExecutionPage() {
+        ApprovalAfterTask task = ApprovalAfterTask.builder().id("approval").type(ApprovalAfterTask.class.getName()).build();
+
+        assertThat(TaskForExecution.of(task).getApproval()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
+    void shouldOpenTheRequestOnlyOnceTheTasksBeforeTheDecisionSucceeded() throws Exception {
+        Execution paused = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null, null, Duration.ofSeconds(30));
+
+        assertThat(paused.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+        assertThat(paused.findTaskRunsByTaskId("approval_prepare").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(paused.findTaskRunsByTaskId("approved")).isEmpty();
+
+        Execution decided = executionService.decide(
+            paused,
+            flowRepository.findByExecution(paused),
+            paused.findTaskRunsByTaskId("approval").getFirst().getId(),
+            new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null),
+            Map.of()
+        );
+        Execution done = runnerUtils.emitAndAwaitExecution(e -> e.getId().equals(paused.getId()) && e.getState().isTerminated(), decided);
+
+        assertThat(done.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(done.findTaskRunsByTaskId("approved")).hasSize(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
+    void shouldApproveAutomaticallyFromTheOutputsOfTheTasksBeforeTheDecision() throws Exception {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null,
+            (flow, e) -> Map.of("auto", true)
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getHistories().stream().map(State.History::getState)).doesNotContain(State.Type.PAUSED);
+        assertThat(execution.findTaskRunsByTaskId("approved")).hasSize(1);
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst()))
+            .containsEntry("decision", "APPROVED")
+            .containsEntry("auto", true);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-before-decision.yaml" })
+    void shouldFailWithoutAskingForADecisionWhenATaskBeforeTheDecisionFails() throws Exception {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "approval-before-decision", null,
+            (flow, e) -> Map.of("fail", true, "auto", true)
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getState().getHistories().stream().map(State.History::getState)).doesNotContain(State.Type.PAUSED);
+        assertThat(execution.findTaskRunsByTaskId("approval_prepare")).isEmpty();
+        assertThat(execution.findTaskRunsByTaskId("approved")).isEmpty();
     }
 
     @Test

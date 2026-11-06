@@ -99,7 +99,7 @@ updates:
       build:
         applies-to: version-updates
         patterns:
-          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
+          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*", "tsdown", "@tsdown/*"]
 
       types:
         applies-to: version-updates
@@ -127,6 +127,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -145,6 +147,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -166,6 +170,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -220,7 +226,7 @@ updates:
 
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
@@ -244,6 +250,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -262,6 +269,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -280,6 +288,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -365,7 +374,7 @@ updates:
 
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
@@ -381,6 +390,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -394,6 +404,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -407,6 +418,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",

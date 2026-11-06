@@ -10,7 +10,7 @@
                 <p v-if="description || $slots.description" class="ks-empty-state__description">
                     <slot name="description">
                         <!-- eslint-disable-next-line vue/no-v-html -->
-                        <span v-html="description" />
+                        <span v-html="description" /> <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
                     </slot>
                 </p>
             </div>

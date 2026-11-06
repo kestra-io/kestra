@@ -56,6 +56,8 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
+    // METRICS
+    private static final Map<Long, AtomicInteger> METRIC_RUNNING_COUNT = new ConcurrentHashMap<>();
 
     private final String workerId;
     private final String workerGroup;
@@ -64,9 +66,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
-
-    // METRICS
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
     // QUEUEs
     private final WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
@@ -601,11 +600,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         long index = Hashing.hashToLong(String.join("-", tags));
 
-        return this.metricRunningCount
+        return METRIC_RUNNING_COUNT
             .computeIfAbsent(
-                index, l -> metricRegistry.gauge(
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
+                index, _ -> metricRegistry.gauge(
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT,
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT_DESCRIPTION,
                     new AtomicInteger(0),
                     tags
                 )

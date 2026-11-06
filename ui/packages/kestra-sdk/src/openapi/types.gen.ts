@@ -36,7 +36,7 @@ export type AbstractFlow = {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
 };
 
@@ -81,7 +81,7 @@ export type AbstractTrigger = {
     /**
      * Routing requirements (tags + fallback) for this trigger.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this trigger and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -1099,7 +1099,7 @@ export type Flow = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
     /**
@@ -1205,7 +1205,7 @@ export type FlowForExecution = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     /**
      * Output values available and exposes to other flows.
@@ -1268,7 +1268,7 @@ export type FlowInterface = FlowId & SoftDeletableFlowInterface & TenantInterfac
             [key: string]: unknown;
         };
     };
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     concurrency?: Concurrency;
     quotas?: Array<Quota>;
     sla?: Array<Sla>;
@@ -1378,7 +1378,7 @@ export type FlowWithSource = Flow & AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     /**
      * Output values available and exposes to other flows.
@@ -1404,6 +1404,21 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     quotas?: Array<Quota>;
     source?: string;
+};
+
+export type FlowWorkerSelector = {
+    /**
+     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 63 chars per tag, max 20 tags. The list, or any of its tags, can be a Pebble expression, rendered when the job is routed; a tag rendering to an empty value is ignored, and when no tag is left the selector is treated as unset.
+     */
+    tags?: PropertyListString;
+    /**
+     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
+     */
+    match?: WorkerSelectorMatch;
+    /**
+     * Strategy when no worker is available. Defaults to FAIL when null.
+     */
+    fallback?: WorkerQueueFallback;
 };
 
 export type FollowLogEvent = {
@@ -2289,6 +2304,13 @@ export type PropertyListAsset = ({
     value?: Array<Asset>;
 };
 
+export type PropertyListString = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: Array<string>;
+};
+
 export type PropertyObject = ({
     [key: string]: unknown;
 } | string) & {
@@ -2540,7 +2562,7 @@ export type Task = {
     /**
      * Routing requirements (tags + fallback) for this task.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -2755,21 +2777,6 @@ export type WebhookResponse = {
  * Strategy when no worker is available. Defaults to FAIL when null.
  */
 export type WorkerQueueFallback = 'FAIL' | 'WAIT' | 'CANCEL' | 'IGNORE';
-
-export type WorkerSelector = {
-    /**
-     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 64 chars per tag, max 20 tags.
-     */
-    tags?: Array<string>;
-    /**
-     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
-     */
-    match?: WorkerSelectorMatch;
-    /**
-     * Strategy when no worker is available. Defaults to FAIL when null.
-     */
-    fallback?: WorkerQueueFallback;
-};
 
 /**
  * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.

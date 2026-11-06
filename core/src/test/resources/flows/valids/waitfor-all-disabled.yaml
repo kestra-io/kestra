@@ -1,0 +1,16 @@
+id: waitfor-all-disabled
+namespace: io.kestra.tests
+
+tasks:
+  - id: waitfor
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ false }}"
+    checkFrequency:
+      maxIterations: 3
+      interval: PT0.2S
+    failOnMaxReached: true
+    tasks:
+      - id: disabled
+        type: io.kestra.plugin.core.log.Log
+        message: "never runs"
+        disabled: true

@@ -1,0 +1,6 @@
+{
+  "extends": ["../tsconfig.test.json", "./tsconfig.mapper.json"],
+  "compilerOptions": {"noEmit": true, "composite": false, "incremental": false, "declaration": false, "emitDeclarationOnly": false},
+  "include": ["../src/**/*.ts", "../src/**/*.tsx", "../src/**/*.vue", "../tests/unit/**/*.ts", "../tests/unit/**/*.vue", "../tests/storybook/**/*.ts", "../tests/storybook/**/*.tsx", "../tests/storybook/**/*.vue", "../tests/fixtures/**/*.ts", "../scripts/**/*.ts", "../.storybook/preview.*"],
+  "references": []
+}

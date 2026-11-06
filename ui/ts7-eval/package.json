@@ -1,0 +1,19 @@
+{
+    "name": "kestra-ts7-eval",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Experimental TS 7.1 + @vue/content-mapper typecheck. vue-tsc stays the source of truth.",
+    "scripts": {
+        "typecheck:ts7": "node node_modules/typescript7/bin/tsc --build tsconfig.test.json --runExternalCode --pretty false",
+        "typecheck:tsrs": "tsrs --build tsconfig.test.json --runExternalCode --pretty false",
+        "typecheck:tsrs:capped": "tsrs -p tsconfig.flat.json --runExternalCode --fast --noEmit --maxMemory 4g --pretty false",
+        "bench": "bash scripts/bench.sh",
+        "triage": "node scripts/triage.mjs tsgo"
+    },
+    "devDependencies": {
+        "@vue/content-mapper": "4.0.0-alpha.3",
+        "tsrs": "0.22.0-ts7.1.0-beta",
+        "typescript": "7.1.0-beta",
+        "typescript7": "npm:typescript@7.1.0-beta"
+    }
+}

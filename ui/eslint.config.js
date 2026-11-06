@@ -10,7 +10,7 @@ import kestraI18n from "./scripts/translations/eslintPlugin.mjs"
 import {vueWithStyles} from "./scripts/css-lint/vueStyleProcessor.mjs"
 
 export default defineConfig([
-    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*", "ts7-eval/*"]),
     ...pluginVue.configs["flat/base"],
     {
         files: ["**/*.vue"],

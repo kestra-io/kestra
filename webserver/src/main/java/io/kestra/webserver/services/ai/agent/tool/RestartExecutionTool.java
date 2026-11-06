@@ -8,6 +8,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.Restart;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -21,7 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class RestartExecutionTool implements AiPlatformTool {
+public class RestartExecutionTool implements McpPlatformTool {
     private final ExecutionRepositoryInterface executionRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
@@ -49,8 +50,13 @@ public class RestartExecutionTool implements AiPlatformTool {
         return AgentWritePolicy.CONFIRM;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.DESTRUCTIVE;
+    }
+
     @Tool(
-        name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks. The execution must be in a terminated or paused state. "
+        name = "restart_execution", value = "Restart a failed or paused Kestra execution from its failed tasks. The execution must be in a terminated or paused state. "
             + "Blocks until the executor accepts the restart, then returns an object { executionId }. A successful return means the restart was accepted and the execution is re-running; "
             + "its state then changes asynchronously, so do NOT assume the final state from this call — tell the user to watch the execution page for progress."
     )

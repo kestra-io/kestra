@@ -25,6 +25,8 @@
         "preview": "vite preview",
         "precheck:types": "node scripts/ensure-sdk.mjs",
         "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
+        "typecheck:ts7": "npm --prefix ts7-eval run typecheck:ts7",
+        "typecheck:tsrs": "npm --prefix ts7-eval run typecheck:tsrs",
         "test:lint": "oxlint src packages tests && eslint && stylelint \"{src,packages,tests}/**/*.{vue,scss}\"",
         "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",
         "test:all": "vitest run --coverage",

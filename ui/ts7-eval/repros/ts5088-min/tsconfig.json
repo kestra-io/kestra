@@ -1,0 +1,1 @@
+{"compilerOptions": {"strict": true, "declaration": true, "emitDeclarationOnly": true, "outDir": "../../.tmp/ts5088-min", "target": "es2022", "module": "esnext", "moduleResolution": "bundler", "types": []}, "files": ["index.ts"]}

@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,8 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class ChunkFilter implements Filter {
+    private static final String INVALID_SIZE_MESSAGE = "'chunk' filter argument 'size' must be an integer between 1 and %d, inclusive.".formatted(Integer.MAX_VALUE);
+
     @Override
     public List<String> getArgumentNames() {
         return List.of("size");
@@ -35,6 +38,18 @@ public class ChunkFilter implements Filter {
         if (!(sizeObj instanceof Number)) {
             throw new PebbleException(null, "'chunk' filter argument 'size' must be a number. Actual type was: " + sizeObj.getClass().getName(), lineNumber, self.getName());
         }
-        return Lists.partition((List) input, ((Number) sizeObj).intValue());
+
+        int size;
+        try {
+            size = new BigDecimal(sizeObj.toString()).intValueExact();
+        } catch (ArithmeticException | NumberFormatException exception) {
+            throw new PebbleException(exception, INVALID_SIZE_MESSAGE, lineNumber, self.getName());
+        }
+
+        if (size <= 0) {
+            throw new PebbleException(null, INVALID_SIZE_MESSAGE, lineNumber, self.getName());
+        }
+
+        return Lists.partition((List) input, size);
     }
 }

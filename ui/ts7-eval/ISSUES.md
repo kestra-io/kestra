@@ -9,37 +9,46 @@ cd ui/ts7-eval && npm ci
 node node_modules/typescript7/bin/tsc -p repros --runExternalCode
 node_modules/.bin/tsrs -p repros --runExternalCode
 node node_modules/typescript7/bin/tsc -p repros/ts5088
+node node_modules/typescript7/bin/tsc -p repros/ts5088-min
 ```
 
-## 1. microsoft/typescript-go: TS5088 where TypeScript 6 emitted an elided type (new)
+## 1. microsoft/typescript-go: TS5088 regression in 7.1 (new)
 
 No existing issue was found for `TS5088` or "cyclic structure" in microsoft/typescript-go.
+Dependency-free repro: `repros/ts5088-min/`; the Vue shape that found it: `repros/ts5088/`.
 
-> **Title:** TS5088 "cannot be trivially serialized" on a recursive type reached through `ref<T>()`, which 6.0 emitted with `/*elided*/ any`
+> **Title:** 7.1 regression: TS5088 on an inferred return type through a recursive mapped type (7.0 emitted it)
 >
-> With `declaration: true`, an exported function whose inferred return type contains a recursive type alias mapped by
-> Vue's `UnwrapRef` fails in 7.1.0-beta and compiles in 6.0.3.
+> With `declaration: true`, an exported function whose inferred return type maps a self-referencing type through a
+> recursive mapped type now fails with TS5088. 7.0.2 and 6.0.3 compile the same code and emit the cycle as
+> `/*elided*/ any`.
 >
 > ```ts
-> import {ref} from "vue" // vue@3.5.44
+> type Deep<T> = T extends object ? { [K in keyof T]: Deep<T[K]> } : T;
+> declare function wrap<T>(value: T): { value: Deep<T> };
 >
-> export type Schema = {
->     properties?: Record<string, Schema>;
->     items?: Schema;
-> }
+> export type Node = { child?: Node };
 >
-> export function useStack() {
->     const stack = ref<{schema: Schema}[]>([])
->     return {stack}
+> export function make() {
+>     return wrap<Node>({});
 > }
 > ```
 >
-> - 7.1.0-beta: `index.ts(8,17): error TS5088: The inferred type of 'useStack' references a type with a cyclic structure which cannot be trivially serialized. A type annotation is necessary.`
-> - 6.0.3: no error; the emitted `.d.ts` contains `items?: /*elided*/ any | undefined;`.
+> `tsconfig.json`: `{"compilerOptions": {"strict": true, "declaration": true, "emitDeclarationOnly": true, "target": "es2022", "module": "esnext", "moduleResolution": "bundler"}}`
 >
-> If the error is the intended replacement for the lossy elision, a note in the 7.0 breaking-changes list would help:
-> in a `composite` project the error also suppresses the file's declaration, and every downstream project then
-> reports TS6305/TS7016 against it (136 follow-up diagnostics from 6 of these in our codebase).
+> | Version | Result |
+> |---|---|
+> | 6.0.3 | OK, emits `child?: /*elided*/ any \| undefined` |
+> | 7.0.2 | OK, same output |
+> | 7.1.0-beta | `index.ts(6,17): error TS5088: The inferred type of 'make' references a type with a cyclic structure which cannot be trivially serialized. A type annotation is necessary.` |
+> | 7.1.0-dev.20261106.1 | same as 7.1.0-beta |
+>
+> **Expected:** the 7.0 behaviour, or an entry in the 7.1 breaking-changes notes if the error is now intended.
+>
+> **Why it matters:** this is the shape of Vue's `ref<T>()` (`UnwrapRef` is a recursive mapped type) on any recursive
+> data type, such as a JSON Schema. In a `composite` project the error also suppresses that file's declaration, so
+> every downstream project reports TS6305 / TS7016 against it: 6 of these produced 136 follow-up errors in our UI.
+> Annotating the return type works around it.
 
 ## 2. vuejs/language-tools#6334: comment draft (known)
 

@@ -4,7 +4,7 @@
 | mapper bug (known, vuejs/language-tools#6318): aria-* / role on a component | 151 |
 | mapper bug (known, vuejs/language-tools#6334): native listener on a component without emits | 262 |
 | mapper bug (known, vuejs/language-tools#6306): v-else-if narrowing over a v-for local | 12 |
-| TS 7 vs TS 6: TS5088 on a recursive type through ref<T>() (repros/ts5088, ISSUES.md #1) | 6 |
+| TS 7.1 regression: TS5088 on a recursive mapped type (repros/ts5088-min, ISSUES.md #1) | 6 |
 | TS 7 vs TS 6: TS2883 non-portable inferred type across the OSS checkout (EE only) | 0 |
 | unconfirmed (EE only): GlobalComponents augmented twice with different types | 0 |
 | unconfirmed (EE only): SDK key-parity type assertions | 0 |

@@ -840,11 +840,9 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return false;
         }
 
-        // failedExecutionFromExecutor call before, so the workerTaskResult
-        // don't have changed to failed but taskRunList will contain a failed
-        // same for restart, the CREATED status is directly on execution taskrun
-        // so we don't changed if current execution is terminated
-        if (current.getState().isTerminated() && !taskRun.getState().isTerminated()) {
+        // the executor already ended this taskrun (failedExecutionFromExecutor, an SLA, a kill), so a result that is not
+        // a new attempt is stale, e.g. a forced afterExecution job the worker ran late (kestra-io/kestra#21337)
+        if (current.getState().isTerminated()) {
             return false;
         }
 

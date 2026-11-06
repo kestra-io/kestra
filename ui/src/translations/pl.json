@@ -1360,8 +1360,18 @@
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
-      "noResults": "Brak pluginów pasujących do wyszukiwania.",
-      "loadError": "Nie można wczytać pluginów. Spróbuj ponownie.",
+      "loadErrorTitle": "Nie można załadować listy Pluginów",
+      "loadErrorDescription": "Twoje Flowy działają dalej. Ta strona odczytuje tylko listę pluginów.",
+      "showAll": "Pokaż wszystkie Pluginy",
+      "view": {
+        "cards": "Karty",
+        "table": "Tabela",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Żaden plugin nie pasuje do Twoich filtrów",
+        "description": "Spróbuj innego terminu wyszukiwania lub wyczyść filtry kategorii."
+      },
       "notFound": "Nie znaleziono tego pluginu.",
       "elementType": {
         "tasks": "Task",
@@ -1407,6 +1417,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certyfikowany",
         "back": "Wróć do pluginów"
+      },
+      "management": {
+        "upload": "Prześlij",
+        "addPlugin": "Dodaj Plugin",
+        "lockedTitle": "Zarządzanie wersjami Pluginu",
+        "lockedDescription": "Zainstaluj pluginy, przechowuj kilka wersji obok siebie i aktualizuj je bez przebudowywania obrazu, dzięki Enterprise Edition.",
+        "learnMore": "Dowiedz się więcej",
+        "includedWithKestra": "Dołączone do Kestra",
+        "gateNote": "Instalowanie i aktualizowanie pluginów jest dostępne w wersji Enterprise Edition.",
+        "upsellTitle": "Wersjonowanie Pluginów to funkcja Enterprise",
+        "upsellDescription": "Każdy Plugin poniżej jest dostarczany z tym obrazem Kestra i jest gotowy do użycia w Flow. W Enterprise Edition możesz również zainstalować Plugin, który nie jest dołączony, przypiąć wersję dla każdego Pluginu i uaktualnić bez przebudowy obrazu.",
+        "talkToUs": "Porozmawiaj z nami",
+        "readTheDocs": "Przeczytaj dokumentację"
       }
     },
     "no inputs": "Ten Flow nie ma Inputów.",
@@ -1817,9 +1840,9 @@
         },
         "errors": {
           "first_execution": "Pierwsza egzekucja zakończyła się statusem {state}, zamiast sukcesem. Otwórz logi na tej stronie, aby zobaczyć dlaczego, a potem spróbuj ponownie.",
-          "expected_failure": "Ta egzekucja zakończyła się statusem {state}, więc nie ma jeszcze błędu do naprawienia. Sprawdź, czy Flow nadal ma Taska <code>notify</code>, a potem spróbuj ponownie.",
+          "expected_failure": "Ta egzekucja zakończyła się jako {state}, więc nie ma jeszcze żadnej awarii do naprawienia. Sprawdź, czy Flow nadal ma Task {task}, a następnie spróbuj ponownie.",
           "no_execution_to_replay": "Nie ma jeszcze egzekucji, dla której można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
-          "replay": "Replay zakończył się statusem {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił <code>notify</code>, a potem spróbuj ponownie.",
+          "replay": "Replay zakończył się jako {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił {task}, a następnie spróbuj ponownie.",
           "save_flow": "Nie udało się zapisać Flow przewodnika. {reason}",
           "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie."
         },
@@ -2570,7 +2593,7 @@
     "reject": "Odrzuć",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
-    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: {name}",
     "no_file_choosen": "Nie wybrano pliku",
     "dependency": {
       "controls": {

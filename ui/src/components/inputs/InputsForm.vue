@@ -543,31 +543,143 @@
         }
     }
 
-    function inputError(id: string): string | undefined {
-        if (isLoadingInput(id)) {
-            return undefined
+    function hasInputValue(input: InputMetaData): boolean {
+        const id = input.id
+        if (input.type === "MULTISELECT") {
+            const multi = multiSelectInputs[id]
+            if (Array.isArray(multi)) {
+                return multi.length > 0
+            }
+            const val = inputsValues[id]
+            if (Array.isArray(val)) {
+                return val.length > 0
+            }
+            if (typeof val === "string") {
+                const trimmed = val.trim()
+                if (trimmed === "" || trimmed === "[]") {
+                    return false
+                }
+                try {
+                    const parsed = JSON.parse(trimmed)
+                    return Array.isArray(parsed) && parsed.length > 0
+                } catch {
+                    return false
+                }
+            }
+            return false
         }
-        const meta = inputsMetaData.value.find((it) => it.id === id && it.errors && it.errors.length > 0)
-        if (!meta) {
-            return undefined
-        }
-        const message = meta.errors!.map(err => err.message).join("\n")
 
-        const isRenderError = meta.errors!.some(err => err.renderError)
+        if (input.type === "ARRAY") {
+            const val = inputsValues[id]
+            if (Array.isArray(val)) {
+                return true
+            }
+            if (typeof val === "string") {
+                const trimmed = val.trim()
+                if (trimmed === "") {
+                    return false
+                }
+                try {
+                    const parsed = JSON.parse(trimmed)
+                    return Array.isArray(parsed)
+                } catch {
+                    return false
+                }
+            }
+            return false
+        }
+
+        if (input.type === "BOOL") {
+            const val = inputsValues[id]
+            return typeof val !== "undefined" && val !== null
+        }
+
+        const val = inputsValues[id]
+        if (val === undefined || val === null || val === "") {
+            return false
+        }
+        if (Array.isArray(val)) {
+            return val.length > 0
+        }
+        return true
+    }
+
+    function isRequiredError(err: InputError, input: InputMetaData): boolean {
+        if (err.renderError) {
+            return false
+        }
+        const message = err.message
+        if (!message) {
+            return false
+        }
+        if (message.includes(`Missing required input:${input.id}`) ||
+            message.includes("Missing required input")) {
+            return true
+        }
+        const requiredPattern = t("is required", {field: inputLabel(input)})
+        if (message === requiredPattern || message.includes(requiredPattern)) {
+            return true
+        }
+        const label = inputLabel(input)
+        if (message === `${label} is required` || message === `${input.id} is required`) {
+            return true
+        }
+        return false
+    }
+
+    function activeInputErrors(id: string): InputError[] {
+        if (isLoadingInput(id)) {
+            return []
+        }
+        const meta = inputsMetaData.value.find((it) => it.id === id)
+        if (!meta) {
+            return []
+        }
+
+        const errors = meta.errors ?? []
+        const isRenderError = errors.some(err => err.renderError)
 
         if (!isRenderError && !inputsValidated.value.has(id)) {
-            return undefined
+            return []
         }
 
-        return message
+        const valuePresent = hasInputValue(meta)
+        const isUntouchedDynamicSettled = !userEditedInputs.has(id) && dynamicInputIds.value.has(id)
+
+        const result: InputError[] = []
+        let hasRequiredError = false
+
+        for (const err of errors) {
+            if (err.renderError) {
+                result.push(err)
+            } else if (isRequiredError(err, meta)) {
+                hasRequiredError = true
+                if (!valuePresent || isUntouchedDynamicSettled) {
+                    result.push(err)
+                }
+            } else {
+                result.push(err)
+            }
+        }
+
+        if (meta.required !== false && !meta.isDefault && !valuePresent && inputsValidated.value.has(id) && !hasRequiredError && !isRenderError) {
+            result.push({message: t("is required", {field: inputLabel(meta)})})
+        }
+
+        return result
+    }
+
+    function inputError(id: string): string | undefined {
+        const errors = activeInputErrors(id)
+        if (errors.length === 0) {
+            return undefined
+        }
+        return errors.map(err => err.message).join("\n")
     }
 
     /** The errors `inputError` joins into one message, for a control that anchors each of them itself. */
     function valueErrors(id: string): InputError[] {
-        if (!inputError(id)) {
-            return []
-        }
-        return inputsMetaData.value.find((it) => it.id === id)?.errors ?? []
+        return activeInputErrors(id)
     }
 
     function updateDefaults(): void {

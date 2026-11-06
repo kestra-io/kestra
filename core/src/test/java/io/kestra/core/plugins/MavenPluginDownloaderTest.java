@@ -1,15 +1,23 @@
 package io.kestra.core.plugins;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import com.sun.net.httpserver.HttpServer;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.InvalidException;
@@ -18,6 +26,7 @@ import io.kestra.core.plugins.configuration.PluginsConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 class MavenPluginDownloaderTest {
 
@@ -114,10 +123,43 @@ class MavenPluginDownloaderTest {
         }
     }
 
+    @Test
+    void shouldFailTheDownloadWhenTheRepositoryStopsSendingBytes() throws IOException {
+        CountDownLatch releaseStalledDownload = new CountDownLatch(1);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            exchange.sendResponseHeaders(200, 1000);
+            try (OutputStream body = exchange.getResponseBody()) {
+                body.write(new byte[10]);
+                body.flush();
+                releaseStalledDownload.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        server.setExecutor(Executors.newCachedThreadPool());
+        server.start();
+        String url = "http://127.0.0.1:%d/".formatted(server.getAddress().getPort());
+
+        try (MavenPluginDownloader downloader = new MavenPluginDownloader(
+            List.of(new MavenPluginRepositoryConfig("stalled", url, null)),
+            new PluginsConfiguration(local.toString(), Duration.ofSeconds(1))
+        )) {
+            // The server stops before the downloader closes, so a resolve left blocked by a regression is released first.
+            try {
+                assertTimeoutPreemptively(Duration.ofSeconds(30), () -> assertThatThrownBy(() -> downloader.resolve("io.kestra.test:plugin-stalled:1.0.0"))
+                    .hasRootCauseInstanceOf(SocketTimeoutException.class));
+            } finally {
+                releaseStalledDownload.countDown();
+                server.stop(0);
+            }
+        }
+    }
+
     private MavenPluginDownloader downloader() {
         return new MavenPluginDownloader(
             List.of(new MavenPluginRepositoryConfig("remote", remote.toUri().toString(), null)),
-            new PluginsConfiguration(local.toString())
+            new PluginsConfiguration(local.toString(), null)
         );
     }
 

@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
-      "noResults": "Brak pluginów pasujących do wyszukiwania.",
       "loadErrorTitle": "Nie można załadować listy Pluginów",
       "loadErrorDescription": "Twoje Flowy działają dalej. Ta strona odczytuje tylko listę pluginów.",
       "showAll": "Pokaż wszystkie Pluginy",

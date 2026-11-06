@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
-      "noResults": "検索に一致するプラグインがありません。",
       "loadErrorTitle": "プラグインリストを読み込めませんでした",
       "loadErrorDescription": "Flowは引き続き実行されます。このページはプラグインのリストのみを読み取ります。",
       "showAll": "すべてのPluginを表示",

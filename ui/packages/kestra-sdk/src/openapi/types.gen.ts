@@ -271,12 +271,15 @@ export type ApiLoopRun = {
     key?: string | null;
     value: string;
     parents?: Array<ApiLoopRunParent>;
+    rootExecutionId?: string | null;
 };
 
 export type ApiLoopRunParent = {
     index?: number;
     key?: string | null;
     value: string;
+    executionId?: string | null;
+    taskId?: string | null;
 };
 
 /**
@@ -1568,10 +1571,13 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
     parseValues?: boolean;
 };
 
 export type LoopRunParent = {
+    executionId?: string | null;
+    taskId?: string | null;
     index?: number;
     key?: string | null;
     value?: string;
@@ -2867,6 +2873,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
     parseValues?: boolean;
 };
 

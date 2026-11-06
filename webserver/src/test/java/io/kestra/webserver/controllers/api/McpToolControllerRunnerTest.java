@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.events.Actor;
+import io.kestra.core.events.CrudEventType;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
@@ -30,11 +33,14 @@ import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.execution.Fail;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+import io.kestra.webserver.services.ActorResolver;
+import io.kestra.webserver.services.DefaultActorResolver;
 
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.annotation.MockBean;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.HttpHeaders;
@@ -46,6 +52,7 @@ import tools.jackson.databind.json.JsonMapper;
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Integration tests for MCP tool invocation that require a running executor.
@@ -65,6 +72,7 @@ class McpToolControllerRunnerTest {
 
     private static final McpJsonMapper MCP_MAPPER = new JacksonMcpJsonMapper(JsonMapper.builder().build());
 
+    private static final Actor ACTOR = new Actor("actor-id", "10.0.0.1", null);
     private static final McpSchema.JSONRPCRequest INITIALIZE_REQUEST = new McpSchema.JSONRPCRequest(
         McpSchema.JSONRPC_VERSION,
         McpSchema.METHOD_INITIALIZE,
@@ -79,6 +87,11 @@ class McpToolControllerRunnerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
+
+    @MockBean(DefaultActorResolver.class)
+    ActorResolver actorResolver() {
+        return () -> ACTOR;
+    }
 
     @Inject
     McpServerRepositoryInterface mcpServerRepository;
@@ -180,7 +193,7 @@ class McpToolControllerRunnerTest {
     }
 
     @Test
-    void shouldSetMcpServerAndSessionLabelsWhenExecutionCreated() throws InterruptedException {
+    void shouldLabelAndAttributeExecutionToCallerWhenToolCreatesIt() throws InterruptedException {
         // Given
         String serverId = saveServer(false, null);
         String flowId = IdUtils.create();
@@ -232,9 +245,18 @@ class McpToolControllerRunnerTest {
         assertThat(executions.getFirst().getLabels())
             .extracting(Label::key, Label::value)
             .contains(
+                tuple(Label.FROM, Label.FromLabel.MCP.value),
                 tuple(Label.MCP_SERVER_ID, serverId),
                 tuple(Label.MCP_SESSION_ID, sessionId)
             );
+        String executionId = executions.getFirst().getId();
+        Actor creator = await().atMost(Duration.ofSeconds(10)).until(
+            () -> ExecutionControllerRunnerTest.ExecutionCrudEventListener.events().stream()
+                .filter(event -> CrudEventType.CREATE.equals(event.getType()) && executionId.equals(event.getModel().getId()))
+                .findFirst(),
+            Optional::isPresent
+        ).orElseThrow().getActor();
+        assertThat(creator).isEqualTo(ACTOR);
     }
 
     @Test

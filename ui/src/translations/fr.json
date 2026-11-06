@@ -2792,7 +2792,8 @@
         "tooltip": "Voir les tests de flow"
       },
       "errors": {
-        "label": "{count} Erreur(s)"
+        "label": "{count} Erreur(s)",
+        "action": "{count} erreur(s), aller à l'erreur suivante"
       }
     },
     "invalid_source_code": "Code source invalide",

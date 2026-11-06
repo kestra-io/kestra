@@ -2792,7 +2792,8 @@
         "tooltip": "フローテストを表示"
       },
       "errors": {
-        "label": "{count} エラー"
+        "label": "{count} エラー",
+        "action": "{count} 件のエラー、次のエラーに移動"
       }
     },
     "invalid_source_code": "無効なソースコード",

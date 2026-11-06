@@ -2792,7 +2792,8 @@
         "tooltip": "Visualizza i test del flow"
       },
       "errors": {
-        "label": "{count} Errore/i"
+        "label": "{count} Errore/i",
+        "action": "{count} errore/i, vai all'errore successivo"
       }
     },
     "invalid_source_code": "Codice sorgente non valido",

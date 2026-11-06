@@ -260,7 +260,6 @@ export async function providePebbleDefinition(
     return symbolLinks(model, symbols, referenceRange(ref, position.lineNumber))
 }
 
-/** Links to `symbols`, whose offsets are in `target`'s text, from `originSelectionRange` in the hovered model. */
 export function symbolLinks(target: monaco.editor.ITextModel, symbols: FlowSymbol[], originSelectionRange: monaco.IRange): monaco.languages.LocationLink[] {
     return symbols.map(({id: [start, end]}) => {
         const from = target.getPositionAt(start)

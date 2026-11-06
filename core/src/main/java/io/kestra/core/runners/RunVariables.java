@@ -388,7 +388,7 @@ public final class RunVariables {
             // Execution
             if (execution != null) {
                 // The real execution will be used to retrieve the execution context, including triggers and inputs as they are omitted by the Execution.loopExecution method for performance reasons
-                var realExecution = execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
+                var realExecution = execution.rootExecution();
 
                 // Parents
                 if (taskRun != null) {

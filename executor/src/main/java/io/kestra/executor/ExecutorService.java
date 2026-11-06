@@ -684,23 +684,27 @@ public class ExecutorService {
                         }
                         case Pause pause when pause.getOnPause() != null -> {
                             // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
+                            // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
                             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                            WorkerTask pauseWorkerTask = WorkerTask.builder()
-                                .data(WorkerTaskData.from(runContext))
-                                .taskRun(
-                                    TaskRun.of(
-                                        executor.getExecution(),
-                                        ResolvedTask.of(pause.getOnPause())
+                            if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                                WorkerTask pauseWorkerTask = WorkerTask.builder()
+                                    .data(WorkerTaskData.from(runContext))
+                                    .taskRun(
+                                        TaskRun.of(
+                                            executor.getExecution(),
+                                            ResolvedTask.of(pause.getOnPause())
+                                        )
                                     )
-                                )
-                                .task(pause.getOnPause())
-                                .executionKind(executor.getExecution().getKind())
-                                .build();
-                            onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
+                                    .task(pause.getOnPause())
+                                    .executionKind(executor.getExecution().getKind())
+                                    .build();
+                                onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
+                            }
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
-                                if (taskRun.getState().getCurrent() == State.Type.CREATED) {
+                                // a Loop whose runIf is false is skipped when its worker task is handled: don't start any iteration
+                                if (taskRun.getState().getCurrent() == State.Type.CREATED && TruthUtils.isTruthy(runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun).render(loop.getRunIf()))) {
                                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                                     var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
                                     int iterationCount;

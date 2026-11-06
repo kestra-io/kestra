@@ -113,7 +113,7 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: parallel
                     type: io.kestra.plugin.core.flow.Parallel
-                    onChildFailure: CANCELLED
+                    onChildFailure: CANCEL
                     tasks:
                       - id: fails_fast
                         type: io.kestra.plugin.core.execution.Fail

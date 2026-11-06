@@ -43,7 +43,7 @@ export interface GraphTaskRun {
 /** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
 export interface GraphExecution {
     id?: string;
-    state?: {current?: string};
+    state?: {current?: string; histories?: {date: string; state: string}[]};
     taskRunList?: GraphTaskRun[];
 }
 
@@ -350,7 +350,7 @@ export function buildEffectiveGetNodeDimensions(
         }
 
         if (hasExecution && (isTaskNode(node) || isCollapsedLane(node))) {
-            dimensions.height = NODE_SIZES.TASK_HEIGHT_EXECUTION
+            dimensions.height = NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT
         }
 
         return dimensions
@@ -510,6 +510,32 @@ export function getFlowableGateAliases(
     return aliases
 }
 
+export function getTriggersJoinAlias(
+    clusters: FlowGraph["clusters"],
+    nodes: MinimalNode[],
+    edges: FlowGraphEdge[],
+    collapsed: Set<string> = new Set(),
+    edgeReplacer: EdgeReplacer = {},
+): Record<string, string> {
+    const triggers = clusters.find((entry) => entry.cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID)
+    if (!triggers?.end || collapsed.has(TRIGGERS_NODE_UID)) return {}
+    if (edgeReplacer[triggers.cluster.uid] || edgeReplacer[triggers.end]) return {}
+
+    const flowRoot = edges.find(
+        (edge) =>
+            edge.source === triggers.end &&
+            nodes.find((node) => node.uid === edge.target)?.type.endsWith("GraphClusterRoot"),
+    )?.target
+    if (!flowRoot) return {}
+
+    // The lane's end feeds it and the first task leaves it; a third edge means something branches
+    // there, so the dot carries meaning and stays.
+    const touching = edges.filter((edge) => edge.source === flowRoot || edge.target === flowRoot)
+    if (touching.length > 2) return {}
+
+    return {[flowRoot]: triggers.end}
+}
+
 /** The task ids of a lane's direct children — real tasks and nested lanes alike, each counted
  *  once — for the lane header's child count and aggregate state. Excludes the lane's own gate
  *  node and the structural root/end/finally/afterExecution markers. */
@@ -550,12 +576,7 @@ export function haveAdd(
         return undefined
     }
     if (clustersRootTaskUids.includes(edge.target)) return undefined
-    if (
-        edge.source.startsWith(TRIGGERS_NODE_UID) ||
-        edge.target.startsWith(TRIGGERS_NODE_UID)
-    ) {
-        return undefined
-    }
+    if (edge.target.startsWith(TRIGGERS_NODE_UID)) return undefined
 
     const dotSplitTarget = edge.target.split(".")
     dotSplitTarget.pop()
@@ -563,6 +584,13 @@ export function haveAdd(
     const clusterRootTaskId = Utils.afterLastDot(targetNodeClusterUid)
     const targetNode = nodeByUid[edge.target]
 
+    if (
+        edge.source.startsWith(TRIGGERS_NODE_UID) &&
+        targetNodeClusterUid === "root" &&
+        isClusterRootOrEnd(targetNode)
+    ) {
+        return undefined
+    }
     if (
         targetNode.type.endsWith("GraphClusterEnd") &&
         nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith("Parallel")
@@ -591,6 +619,7 @@ export function haveAdd(
         return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
+        && !edge.source.startsWith(TRIGGERS_NODE_UID)
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
         const refId = Utils.afterLastDot(edge.source)
         return refId ? withDag({refId, position: "after"}) : undefined
@@ -829,15 +858,18 @@ export function generateGraph(
     }
 
     const clusters = withSyntheticErrorsLane(flowGraph)
-    const gateAliases = getFlowableGateAliases(clusters, collapsed, edgeReplacer)
-    const hiddenOrAliased = Object.keys(gateAliases).length
-        ? hiddenNodes.concat(Object.keys(gateAliases))
+    const nodeAliases = {
+        ...getFlowableGateAliases(clusters, collapsed, edgeReplacer),
+        ...getTriggersJoinAlias(clusters, flowGraph.nodes, flowGraph.edges ?? [], collapsed, edgeReplacer),
+    }
+    const hiddenOrAliased = Object.keys(nodeAliases).length
+        ? hiddenNodes.concat(Object.keys(nodeAliases))
         : hiddenNodes
     const edges = (flowGraph.edges ?? [])
         .map((edge) => ({
             ...edge,
-            source: gateAliases[edge.source] ?? edge.source,
-            target: gateAliases[edge.target] ?? edge.target,
+            source: nodeAliases[edge.source] ?? edge.source,
+            target: nodeAliases[edge.target] ?? edge.target,
         }))
         .filter((edge) => edge.source !== edge.target)
 

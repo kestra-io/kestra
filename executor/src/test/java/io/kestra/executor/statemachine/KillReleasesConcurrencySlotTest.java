@@ -158,6 +158,22 @@ class KillReleasesConcurrencySlotTest {
         assertThat(harness).as("the slot stays free and no delay is left").hasRunning(flow, 0).hasPendingDelays(0);
     }
 
+    @Test
+    void killingTheSlotHolderPausedOnTwoParallelPausesReleasesTheSlotAndPopsTheQueue() {
+        FlowWithSource flow = singleSlotFlowWithTwoParallelPauses();
+        Execution slotHolder = Executions.created(flow);
+        Execution queued = Executions.created(flow);
+        harness.run(List.of(slotHolder, queued), ScriptedWorker.succeeding(T0));
+        assertThat(harness).as("before the kill: both pauses of the holder wait, on no worker").hasExecutionInState(slotHolder, State.Type.PAUSED).hasQueuedExactly(queued);
+
+        harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
+
+        assertThat(harness).as("the kill ended the holder").hasExecutionInState(slotHolder, State.Type.KILLED);
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList()).as("both pauses are killed, not only the first one").allMatch(t -> t.getState().getCurrent() == State.Type.KILLED);
+        assertThat(harness).as("the kill freed the slot: the queued execution was popped").hasNothingQueued();
+        assertThat(harness).as("the popped execution reached its pauses").hasExecutionInState(queued, State.Type.PAUSED).hasRunning(flow, 1);
+    }
+
     private void assertKilledAndQueueDrained(FlowWithSource flow, Execution slotHolder, Execution queued) {
         assertThat(harness).as("the kill ended the holder").hasExecutionInState(slotHolder, State.Type.KILLED);
         assertThat(harness).as("the kill freed the slot: the queued execution was popped").hasNothingQueued();
@@ -209,6 +225,26 @@ class KillReleasesConcurrencySlotTest {
                   - id: a
                     type: io.kestra.plugin.core.log.Log
                     message: hello
+            """.formatted(IdUtils.create().toLowerCase(), Flows.NAMESPACE));
+        harness.registerFlow(flow);
+        return flow;
+    }
+
+    private FlowWithSource singleSlotFlowWithTwoParallelPauses() {
+        FlowWithSource flow = Flows.yaml("""
+            id: parallel-pauses-%s
+            namespace: %s
+            concurrency:
+              behavior: QUEUE
+              limit: 1
+            tasks:
+              - id: parallel
+                type: io.kestra.plugin.core.flow.Parallel
+                tasks:
+                  - id: pause_1
+                    type: io.kestra.plugin.core.flow.Pause
+                  - id: pause_2
+                    type: io.kestra.plugin.core.flow.Pause
             """.formatted(IdUtils.create().toLowerCase(), Flows.NAMESPACE));
         harness.registerFlow(flow);
         return flow;

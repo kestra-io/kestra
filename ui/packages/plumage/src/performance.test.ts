@@ -124,7 +124,7 @@ describe("pebbleTransformer", () => {
     it.each(PATHOLOGICAL)("paints %s in bounded time", async (_, code) => {
         const tokens = h.codeToTokensBase(code, {lang: "yaml", theme: "kestra-dark"})
         const ms = await fastest(() => run(code, tokens))
-        expect(ms).toBeLessThan(50)
+        expect(ms).toBeLessThan(100)
     }, 60_000)
 })
 

@@ -8,7 +8,8 @@ import io.kestra.core.runners.WorkerTaskResult;
 
 /**
  * Stands in for the worker in a closed-loop run: the executor emitted a {@link WorkerTask}, the
- * script decides what result comes back. No task actually runs.
+ * script decides what result comes back, or {@code null} for a job no worker answers (a worker that
+ * is down). No task actually runs.
  */
 @FunctionalInterface
 public interface ScriptedWorker {

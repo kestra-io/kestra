@@ -714,6 +714,26 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void findWithNegatedFiltersKeepsExecutionsWithoutTrigger() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        // a manual run has no trigger, so its trigger_id is NULL
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, null)
+                .trigger(ExecutionTrigger.builder().id("webhook").type("io.kestra.plugin.core.trigger.Webhook").build())
+                .build()
+        );
+
+        var notAMissingTrigger = QueryFilter.builder().field(Field.TRIGGER_ID).operation(Op.NOT_EQUALS).value("does-not-exist").build();
+        var notTheWebhook = QueryFilter.builder().field(Field.TRIGGER_ID).operation(Op.NOT_IN).value(List.of("webhook")).build();
+
+        assertThat(executionRepository.find(Pageable.UNPAGED, tenant, List.of(notAMissingTrigger))).hasSize(2);
+        assertThat(executionRepository.find(Pageable.UNPAGED, tenant, List.of(notTheWebhook)))
+            .singleElement()
+            .satisfies(execution -> assertThat(execution.getTrigger()).isNull());
+    }
+
+    @Test
     protected void findTriggerExecutionId() {
         String executionTriggerId = IdUtils.create();
 
@@ -2176,7 +2196,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("kindFilterExpectedTotals")
-    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(ExecutionKind kind, long expectedTotal) throws IOException {
+    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(Op operation, ExecutionKind kind, long expectedTotal) throws IOException {
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Stream.of(
             Collections.nCopies(14, (ExecutionKind) null),
@@ -2187,7 +2207,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .forEach(executionKind -> executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(executionKind).build()));
 
         List<QueryFilter> filters = kind == null ? List.of()
-            : List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(kind).build());
+            : List.of(QueryFilter.builder().field(Field.KIND).operation(operation).value(kind).build());
         var startDate = ZonedDateTime.now().minusHours(1);
         var endDate = ZonedDateTime.now().plusMinutes(1);
         var chart = Executions.builder()
@@ -2213,11 +2233,13 @@ public abstract class AbstractExecutionRepositoryTest {
 
     static Stream<Arguments> kindFilterExpectedTotals() {
         return Stream.of(
-            Arguments.of(null, 14L),
+            Arguments.of(null, null, 14L),
             // NORMAL currently matches 0 because normal executions have a null kind: https://github.com/kestra-io/kestra/issues/21536
-            Arguments.of(ExecutionKind.NORMAL, 0L),
-            Arguments.of(ExecutionKind.PLAYGROUND, 29L),
-            Arguments.of(ExecutionKind.TEST, 3L)
+            Arguments.of(Op.EQUALS, ExecutionKind.NORMAL, 0L),
+            Arguments.of(Op.EQUALS, ExecutionKind.PLAYGROUND, 29L),
+            Arguments.of(Op.EQUALS, ExecutionKind.TEST, 3L),
+            // NOT_EQUALS keeps the normal executions, whose kind is null
+            Arguments.of(Op.NOT_EQUALS, ExecutionKind.PLAYGROUND, 17L)
         );
     }
 

@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -162,6 +163,8 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.retry.Retry;
 import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
@@ -172,6 +175,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
+    private static final Duration EXECUTION_LOOKUP_DELAY = Duration.ofMillis(500);
+    private static final long EXECUTION_LOOKUP_RETRIES = 20;
     private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
     private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
 
@@ -2681,20 +2686,11 @@ public class ExecutionController {
     public Flux<Event<Execution>> followExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         String subscriberId = UUID.randomUUID().toString();
-        Flux<Event<Execution>> flux = Flux.<Event<Execution>> create(emitter ->
+        String tenant = tenantService.resolveTenant();
+        Flux<Event<Execution>> flux = awaitExecution(tenant, executionId).flatMapMany(found -> Flux.<Event<Execution>> create(emitter ->
         {
-            // Send initial event
-            emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
-
-            // Check if execution exists
             try {
-                Execution execution = Await.await()
-                    .atMost(Duration.ofSeconds(10))
-                    .pollInterval(Duration.ofMillis(500))
-                    .until(
-                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                        Objects::nonNull
-                    );
+                Execution execution = found;
 
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
@@ -2713,7 +2709,7 @@ public class ExecutionController {
 
                 // Fetch again the execution to avoid race when execution is ended before we are subscribed
                 Execution finalExecution = execution;
-                execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseGet(() ->
+                execution = executionRepository.findById(tenant, executionId).orElseGet(() ->
                 {
                     log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
                     // return the old execution fallback
@@ -2744,7 +2740,9 @@ public class ExecutionController {
                     )
                 );
             }
-        }, FluxSink.OverflowStrategy.BUFFER)
+        }, FluxSink.OverflowStrategy.BUFFER))
+            // emitted on subscription, before the lazy execution lookup, so the SSE connection is established immediately
+            .startWith(Event.of(Execution.builder().id(executionId).build()).id("start"))
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(
@@ -3259,25 +3257,16 @@ public class ExecutionController {
         @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) {
         String subscriberId = UUID.randomUUID().toString();
 
-        // NOTE: ideally, we should load the execution inside the Flux.
-        //  But as we need the correlationId to unsubscribe, we have no choice but to do it eagerly.
-        //  This should not be an issue as long as it executes on an IO thread.
+        AtomicReference<String> followedCorrelationId = new AtomicReference<>();
 
-        // Check if execution exists
-        Execution current = Await.await()
-            .atMost(Duration.ofSeconds(10))
-            .pollInterval(Duration.ofMillis(500))
-            .until(
-                () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                Objects::nonNull
-            );
-
-        String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
-
-        Flux<Event<ExecutionStatusEvent>> flux = Flux.<Event<ExecutionStatusEvent>> create(emitter ->
+        Flux<Event<ExecutionStatusEvent>> flux = awaitExecution(tenantService.resolveTenant(), executionId).flatMapMany(current -> Flux.<Event<ExecutionStatusEvent>> create(emitter ->
         {
-            // Send initial event
-            emitter.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("start"));
+            String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElse(null);
+            if (correlationId == null) {
+                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the correlation id of execution " + executionId));
+                return;
+            }
+            followedCorrelationId.set(correlationId);
 
             try {
                 Stream<FlowTopology> flowTopologyStream = flowService.findDependencies(current.getTenantId(), current.getNamespace(), current.getFlowId(), destinationOnly, expandAll);
@@ -3345,13 +3334,44 @@ public class ExecutionController {
                     )
                 );
             }
-        }, FluxSink.OverflowStrategy.BUFFER)
+        }, FluxSink.OverflowStrategy.BUFFER))
+            // emitted on subscription, before the lazy execution lookup, so the SSE connection is established immediately
+            .startWith(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("start"))
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(
             flux, "dependencies",
-            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId)
+            () ->
+            {
+                String correlationId = followedCorrelationId.get();
+                if (correlationId != null) {
+                    executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId);
+                }
+            }
         );
+    }
+
+    /**
+     * Looks the execution up without blocking a thread, retrying for up to 10 seconds as it may not be indexed yet.
+     * Emits a 404 {@link HttpStatusException} when it never shows up.
+     */
+    private Mono<Execution> awaitExecution(String tenant, String executionId) {
+        return Mono.defer(() -> Mono.justOrEmpty(executionRepository.findById(tenant, executionId)))
+            .subscribeOn(Schedulers.boundedElastic())
+            .switchIfEmpty(Mono.error(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId)))
+            .retryWhen(
+                Retry.fixedDelay(EXECUTION_LOOKUP_RETRIES, EXECUTION_LOOKUP_DELAY)
+                    .filter(HttpStatusException.class::isInstance)
+                    .onRetryExhaustedThrow((spec, signal) -> signal.failure())
+            )
+            .onErrorMap(
+                e -> !(e instanceof HttpStatusException),
+                e ->
+                {
+                    log.error("Unable to look up execution '{}'", executionId, e);
+                    return new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId);
+                }
+            );
     }
 
     public String getTenant() {

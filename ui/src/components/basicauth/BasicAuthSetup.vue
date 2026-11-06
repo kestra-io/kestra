@@ -322,6 +322,8 @@
                 password: userFormData.value.password,
             })
 
+            localStorage.setItem(storageKeys.BASIC_AUTH_USERNAME, normalizedEmail)
+
             await identifyPosthogUser(miscStore.configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {

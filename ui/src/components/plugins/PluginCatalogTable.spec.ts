@@ -7,14 +7,12 @@ import "../../utils/global"
 
 vi.mock("vue-router", () => ({useRoute: () => ({params: {tenant: "main"}})}))
 const EE_RELEASE_NOTES = "https://api.kestra.io/v1/plugins/artifacts/ee/release-notes/plugin-ee-secrets?version=1.2.0"
-const fetchVersions = vi.fn()
 vi.mock("../../stores/pluginsEnrichment", () => ({
     usePluginsEnrichmentStore: () => ({
-        getEnrichment: (plugin: Plugin) => plugin.name === "plugin-aws" ? {title: "Amazon Web Services", blueprintCount: 18} : null,
-        fetchVersions,
-        getVersions: (cls: string | undefined) => cls === "io.kestra.plugin.ee.secrets.Get"
-            ? [{version: "1.1.0", releaseNotesUrl: "older"}, {version: "1.2.0", releaseNotesUrl: EE_RELEASE_NOTES}]
-            : [],
+        getEnrichment: (plugin: Plugin) => ({
+            "plugin-aws": {title: "Amazon Web Services", blueprintCount: 18},
+            "plugin-ee-secrets": {releaseNotesUrl: EE_RELEASE_NOTES},
+        })[plugin.name] ?? null,
     }),
 }))
 
@@ -41,7 +39,6 @@ const texts = (wrapper: Awaited<ReturnType<typeof mountTable>>, test: string) =>
 describe("PluginCatalogTable", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
-        fetchVersions.mockClear()
     })
 
     it("counts the non-deprecated elements and the blueprints of each plugin", async () => {
@@ -56,7 +53,6 @@ describe("PluginCatalogTable", () => {
 
         const links = wrapper.findAll("[data-test=plugin-catalog-table-release-notes]")
         expect(links.map(link => link.attributes("href"))).toEqual(["https://github.com/kestra-io/plugin-aws/releases", EE_RELEASE_NOTES])
-        expect(fetchVersions.mock.calls).toEqual([["io.kestra.plugin.ee.secrets.Get"]])
     })
 
     it("keeps the current page when the same plugins come back in another order", async () => {

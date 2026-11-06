@@ -42,7 +42,7 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import {compareVersionsDesc, getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
+    import {getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import PluginCatalogTableName from "./PluginCatalogTableName.vue"
 
@@ -57,34 +57,20 @@
     const currentPage = ref(1)
     const pageSize = ref(25)
 
-    const latestReleaseNotesUrl = (cls: string): string | undefined =>
-        [...enrichmentStore.getVersions(cls)]
-            .sort((a, b) => compareVersionsDesc(a.version, b.version))[0]?.releaseNotesUrl ?? undefined
-
     const pageRows = computed(() => props.plugins
         .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
         .map(plugin => {
-            const elementClasses = pluginElementClasses(plugin)
-            const repositoryReleaseUrl = getPluginReleaseUrl(plugin.group)
-            const versionsCls = repositoryReleaseUrl ? undefined : elementClasses[0]
             const enrichment = enrichmentStore.getEnrichment(plugin)
             return {
                 name: plugin.name,
                 group: plugin.group,
                 title: enrichment?.title ?? plugin.title.capitalize(),
                 route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
-                taskCount: elementClasses.length,
+                taskCount: pluginElementClasses(plugin).length,
                 blueprintCount: enrichment?.blueprintCount ?? 0,
-                versionsCls,
-                releaseNotesUrl: repositoryReleaseUrl ?? (versionsCls ? latestReleaseNotesUrl(versionsCls) : undefined),
+                releaseNotesUrl: getPluginReleaseUrl(plugin.group) ?? enrichment?.releaseNotesUrl,
             }
         }))
-
-    watch(() => pageRows.value.map(row => row.versionsCls).filter(Boolean).join(), () => {
-        for (const row of pageRows.value) {
-            if (row.versionsCls) enrichmentStore.fetchVersions(row.versionsCls)
-        }
-    }, {immediate: true})
 
     watch(() => props.plugins.map(plugin => plugin.name).sort().join(), () => {
         currentPage.value = 1

@@ -1,7 +1,6 @@
 import {computed} from "vue"
 import {useRoute, useRouter} from "vue-router"
 
-/** A choice kept in the route query, which drops the key when the first choice, the default, is picked. */
 export function useQueryChoice<T extends string>(key: string, choices: readonly T[]) {
     const route = useRoute()
     const router = useRouter()

@@ -520,8 +520,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     function findPluginByCls(cls: string | null | undefined): Plugin | null {
         if (!cls || !plugins.value) return null
         // A declared class, then a declared alias, then the package-prefix guess: an alias such as
-        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it. Older installed
-        // versions are searched last, for a class the latest version no longer declares.
+        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
         return findDeclaringPlugin(latestPlugins.value, cls)
             ?? findDeclaringPlugin(plugins.value, cls)
             ?? latestPlugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))

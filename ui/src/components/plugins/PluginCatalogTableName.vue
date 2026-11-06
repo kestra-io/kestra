@@ -29,7 +29,6 @@
         title: string
         name?: string
         group?: string
-        /** Absent for an artifact that has no plugin page. */
         route?: RouteLocationRaw
     }>()
 

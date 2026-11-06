@@ -28,7 +28,6 @@ function writeCache(count: number) {
     try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({count, fetchedAt: Date.now()} satisfies CachedCount))
     } catch {
-        // Storage can be unavailable (private window, blocked site data); the count is then fetched on each load.
     }
 }
 
@@ -46,12 +45,6 @@ function fetchCount() {
         })
 }
 
-/**
- * Catalog-wide plugin element count as shown on kestra.io, rounded down to the nearest hundred
- * (e.g. 1800). Fetched from the public API at most once every two hours per browser: a cached count
- * shows immediately, and a stale one is refreshed in the background. Undefined until a count is
- * known, and for good when the public API cannot be reached and nothing is cached.
- */
 export function usePluginsCount(): {totalPlugins: Ref<number | undefined>} {
     if (!started) {
         started = true

@@ -187,7 +187,6 @@
         ...pluginsStore.groupIcons,
     }))
     const queryQ = (): string => typeof route.query.q === "string" ? route.query.q : ""
-    // The input keeps its own value: read back from the route, it dropped the keystrokes typed while a navigation was pending.
     const searchText = ref(queryQ())
     let writtenQ = searchText.value
     const writeSearchToRoute = debounce((q: string) => {
@@ -316,7 +315,6 @@
 
     const showAllPlugins = async () => {
         searchText.value = ""
-        // Awaited so that reset() writes its own query keys on top of this one instead of over a stale route.query.
         await router.replace({query: {...route.query, q: undefined, categories: undefined}})
         catalogExtension.reset?.()
     }

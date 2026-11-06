@@ -92,7 +92,6 @@ export function compareVersionsDesc(a: string, b: string): number {
     return va && vb ? semver.rcompare(va, vb) : b.localeCompare(a)
 }
 
-/** One entry per artifact and subgroup: an instance with several versions of an artifact lists each of them. */
 export function latestVersionEntries(plugins: Plugin[]): Plugin[] {
     const latest = new Map<string, Plugin>()
     for (const plugin of plugins) {

@@ -66,7 +66,6 @@
         .map(plugin => {
             const elementClasses = pluginElementClasses(plugin)
             const repositoryReleaseUrl = getPluginReleaseUrl(plugin.group)
-            // EE repositories are private, so their release notes come from the public API, one version at a time.
             const versionsCls = repositoryReleaseUrl ? undefined : elementClasses[0]
             const enrichment = enrichmentStore.getEnrichment(plugin)
             return {
@@ -87,7 +86,6 @@
         }
     }, {immediate: true})
 
-    // Keyed on the set of names, so that a reorder (enrichment arriving under a usage sort) keeps the page.
     watch(() => props.plugins.map(plugin => plugin.name).sort().join(), () => {
         currentPage.value = 1
     })

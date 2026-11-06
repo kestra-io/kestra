@@ -3,6 +3,7 @@ package io.kestra.core.server;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -310,9 +311,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             }
 
             // Get an updated view of the local instance.
-            final ServiceInstance localInstance = localServiceState.instance()
+            ServiceInstance localInstance = localServiceState.instance()
                 .metrics(localServiceState.service().getMetrics())
                 .server(serverInstanceFactory.newServerInstance());
+            Map<String, Object> props = localServiceState.service().getProps();
+            if (props != null) {
+                localInstance = localInstance.props(props);
+            }
 
             ServiceStateTransition.Response response = serviceLivenessUpdater.update(localInstance, newState);
             ServiceInstance remoteInstance = response.instance();

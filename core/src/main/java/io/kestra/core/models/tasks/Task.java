@@ -19,7 +19,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.Subflow;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -175,7 +174,7 @@ abstract public class Task implements TaskInterface {
 
     @JsonIgnore
     public boolean isSendToWorkerTask() {
-        return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
+        return !(this instanceof FlowableTask);
     }
 
     // a flowable's own retry is spent on its failed children or, with RETRY_FLOWABLE, restarts it before it can stay FAILED

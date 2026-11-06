@@ -130,6 +130,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         reschedule(execution, rescheduleCommand);
                     case ForceRun ignored ->
                         executionService.forceRun(execution, executorContext.getFlow());
+                    case RestartWorkingDirectory restartWorkingDirectoryCommand ->
+                        executionService.restartWorkingDirectory(execution, flow, restartWorkingDirectoryCommand.workingDirectoryTaskRunId(), restartWorkingDirectoryCommand.lostTaskRunId())
+                            .orElse(null);
                     case ChangeTaskRunState changeTaskRunStateCommand ->
                         executionService.changeTaskRunState(execution, flow, changeTaskRunStateCommand.taskRunId(), changeTaskRunStateCommand.state());
                     case UpdateLabels updateLabels ->

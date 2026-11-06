@@ -78,6 +78,13 @@ class QueryFilterToolTest {
     }
 
     @Test
+    void shouldDropFilterDefinitionsWhenFilterParamIsExpanded() {
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod());
+
+        assertThat(spec.parameters().definitions()).isNullOrEmpty();
+    }
+
+    @Test
     void shouldNotExposeTimeRangeField() {
         // When / Then — TIME_RANGE is filtered out; ordinary fields are exposed
         assertThat(AiToolSpecifications.isExposedFilterField(QueryFilter.Field.TIME_RANGE)).isFalse();

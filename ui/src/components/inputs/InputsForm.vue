@@ -373,7 +373,7 @@
     import {KsMessage, KsEditor, State, debounce, dateUtils, dayjs} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, type Ref, getCurrentInstance, nextTick} from "vue"
     import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -446,7 +446,7 @@
 
     const inputsValues = reactive<Record<string, unknown>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, unknown>>({})
-    const inputsMetaData = ref<InputMetaData[]>([])
+    const inputsMetaData: Ref<InputMetaData[]> = ref([])
     const multiSelectInputs = reactive<Record<string, unknown[]>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)

@@ -38,4 +38,13 @@ public record McpToolAnnotations(
 
     /** May change or delete state, including outside Kestra: the MCP specification's defaults for an unannotated tool. */
     public static final McpToolAnnotations DESTRUCTIVE = new McpToolAnnotations(false, true, true, false, false);
+
+    /** Adds new state inside Kestra, so repeating the call adds it again. */
+    public static final McpToolAnnotations ADDITIVE = new McpToolAnnotations(false, false, false, false, false);
+
+    /** Changes state inside Kestra without losing any, and repeating the call changes nothing more. */
+    public static final McpToolAnnotations IDEMPOTENT_UPDATE = new McpToolAnnotations(false, false, false, true, false);
+
+    /** Removes state inside Kestra, and repeating the call removes nothing more. */
+    public static final McpToolAnnotations IDEMPOTENT_DELETE = new McpToolAnnotations(false, false, true, true, false);
 }

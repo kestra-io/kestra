@@ -872,7 +872,7 @@ public class JdbcExecutor implements ExecutorInterface {
         Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair ->
         {
             Execution execution = pair.getLeft();
-            Executor current = new Executor(execution, null);
+            Executor current = new Executor(execution, null).withJoinedWorkerTaskResult(message);
 
             if (execution == null) {
                 throw new IllegalStateException("Execution state don't exist for " + message.getTaskRun().getExecutionId() + ", receive " + message);
@@ -1325,7 +1325,9 @@ public class JdbcExecutor implements ExecutorInterface {
                             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
                     // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
-                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+                    // with afterExecution, the KILLING to KILLED pass is not terminal yet, so the slot is freed by the afterExecution task result that terminates the execution
+                    boolean killedThenAfterExecutionEnded = execution.getState().getCurrent().isKilled() && isAfterExecutionTaskResult(executor);
+                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled || killedThenAfterExecutionEnded)) {
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 
@@ -1411,6 +1413,15 @@ public class JdbcExecutor implements ExecutorInterface {
             .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
             .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
+    }
+
+    private boolean isAfterExecutionTaskResult(Executor executor) {
+        if (executor.getJoinedWorkerTaskResult() == null) {
+            return false;
+        }
+
+        String taskId = executor.getJoinedWorkerTaskResult().getTaskRun().getTaskId();
+        return ListUtils.emptyOnNull(executor.getFlow().getAfterExecution()).stream().anyMatch(task -> task.getId().equals(taskId));
     }
 
     private FlowWithSource findFlowOrThrow(Execution execution) throws FlowNotFoundException {

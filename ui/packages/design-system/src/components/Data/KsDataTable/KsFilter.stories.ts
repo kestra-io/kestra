@@ -524,6 +524,54 @@ export const WithWrappedRows: Story = {
  * The same filters on a bar wide enough to keep the conditional and the global chip on one row,
  * which is the only case where the rule between the two groups is drawn.
  */
+const collectReducedMotionRules = (rules: CSSRuleList, selector: string): {rule: CSSMediaRule, selector: string}[] =>
+    [...rules].flatMap((rule) => {
+        if (rule instanceof CSSMediaRule && rule.conditionText.includes("prefers-reduced-motion")) {
+            return [{rule, selector: `${selector} ${rule.cssText}`}]
+        }
+        if (rule instanceof CSSStyleRule) {
+            return collectReducedMotionRules(rule.cssRules, `${selector} ${rule.selectorText}`)
+        }
+        return []
+    })
+
+const reducedMotionRules = () => [...document.styleSheets]
+    .flatMap((sheet) => {
+        try {
+            return collectReducedMotionRules(sheet.cssRules, "")
+        } catch {
+            return []
+        }
+    })
+
+export const TimeRangePopoverReducedMotion: Story = {
+    render: WithWrappedRows.render,
+    async play({canvasElement}) {
+        await userEvent.click(await within(canvasElement).findByText(/last24hours/))
+        const overlay = await waitFor(() => {
+            const element = document.querySelector<HTMLElement>(".edit-overlay")
+            if (!element || element.classList.contains("filter-popup-enter-active")) throw new Error("popover not settled")
+            return element
+        })
+        const slider = overlay.querySelector<HTMLElement>(".switch-slider")!
+        const rules = reducedMotionRules()
+            .filter(({selector}) => /filter-popup|switch-slider/.test(selector))
+            .map(({rule}) => rule)
+        expect(rules.length).toBeGreaterThanOrEqual(2)
+        const conditions = rules.map((rule) => rule.media.mediaText)
+        try {
+            rules.forEach((rule) => { rule.media.mediaText = "all" })
+            overlay.classList.add("filter-popup-leave-active", "filter-popup-leave-to")
+            expect(getComputedStyle(overlay).transitionProperty).toBe("opacity")
+            expect(getComputedStyle(overlay).transform).toBe("none")
+            expect(getComputedStyle(slider).transitionProperty).toBe("none")
+        } finally {
+            overlay.classList.remove("filter-popup-leave-active", "filter-popup-leave-to")
+            rules.forEach((rule, index) => { rule.media.mediaText = conditions[index] })
+        }
+    },
+}
+
 export const WithGlobalSeparator: Story = {
     render: () => ({
         components: {KsFilter},

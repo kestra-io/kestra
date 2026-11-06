@@ -254,7 +254,12 @@
         border-left: 1px solid transparent;
         width: 0;
         overflow: hidden;
-        transition: all .2s ease-in-out;
+        transition: width var(--ks-duration-base) var(--ks-ease-standard), border-color var(--ks-duration-base) var(--ks-ease-standard);
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+
         h3{
             display: flex;
             align-items: center;

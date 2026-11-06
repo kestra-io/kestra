@@ -70,7 +70,7 @@
 
         & .kel-tabs__item {
             padding: 1rem 1.5rem !important;
-            transition: color 0.3s ease;
+            transition: color var(--ks-duration-fast) var(--ks-ease-standard);
             color: var(--ks-text-secondary);
 
             &:hover {

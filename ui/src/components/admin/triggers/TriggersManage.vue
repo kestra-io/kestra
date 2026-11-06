@@ -73,7 +73,7 @@
                     />
                     <LogsWrapper
                         v-if="hasLogsContent(props.row as TriggerRow)"
-                        class="m-3"
+                        class="row-logs"
                         :filters="{
                             'filters[namespace][EQUALS]': props.row.namespace,
                             'filters[flowId][EQUALS]': props.row.flowId,
@@ -93,8 +93,13 @@
                 :label="$t('id')"
             >
                 <template #default="scope">
-                    <div class="text-nowrap">
+                    <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
+                        <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                            <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                                <AlertCircle />
+                            </KsIcon>
+                        </KsTooltip>
                     </div>
                 </template>
             </KsTableColumn>
@@ -163,8 +168,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -242,24 +256,23 @@
                         />
                         <template #dropdown>
                             <KsDropdownMenu>
-                                <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                    <TextSearch class="mr-1" />
+                                <KsDropdownItem :icon="TextSearch" @click="openDetails(scope.row as TriggerRow)">
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
+                                    :icon="Restart"
                                     @click="restart(scope.row as TriggerRow)"
                                 >
-                                    <Restart class="mr-1" />
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
+                                    :icon="LockOff"
                                     @click="unlock(scope.row as TriggerRow)"
                                 >
-                                    <LockOff class="mr-1" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsTooltip
@@ -267,8 +280,7 @@
                                     :content="$t('delete trigger still declared')"
                                     effect="light"
                                 >
-                                    <KsDropdownItem divided class="danger" disabled>
-                                        <Delete class="mr-1" />
+                                    <KsDropdownItem divided class="danger" disabled :icon="Delete">
                                         {{ $t("delete") }}
                                     </KsDropdownItem>
                                 </KsTooltip>
@@ -276,9 +288,9 @@
                                     v-else-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
+                                    :icon="Delete"
                                     @click="confirmDeleteTrigger(scope.row as TriggerDeleteOptions)"
                                 >
-                                    <Delete class="mr-1" />
                                     {{ $t("delete") }}
                                 </KsDropdownItem>
                             </KsDropdownMenu>
@@ -385,8 +397,9 @@
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../../utils/inputs"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
+    import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
@@ -999,20 +1012,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input?.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))
@@ -1037,6 +1038,17 @@
         & :deep(.kel-table) a {
             color: var(--ks-text-link);
         }
+    }
+
+    .row-logs {
+        margin: var(--ks-spacing-4);
+    }
+
+    .trigger-id-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        white-space: nowrap;
     }
 
     .backfill-tag {

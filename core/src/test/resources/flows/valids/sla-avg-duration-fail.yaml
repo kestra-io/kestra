@@ -1,0 +1,20 @@
+id: sla-avg-duration-fail
+namespace: io.kestra.tests
+
+inputs:
+  - id: sleep
+    type: DURATION
+    defaults: PT0.1S
+
+sla:
+  - id: avgDuration
+    type: AVG_DURATION
+    behavior: FAIL
+    lookbackPeriod: P1D
+    minExecutions: 3
+    durationThreshold: PT0.5S
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: "{{ inputs.sleep }}"

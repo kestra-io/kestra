@@ -1,0 +1,600 @@
+id: postgres-meilisearch-index-drift-repair
+namespace: company.team
+description: |
+  Keep a Meilisearch index identical to the Postgres table or view it is built
+  from. Pages through every document, compares it with its row, re-indexes
+  missing and stale documents in batches, deletes orphans (with approval when
+  there are many), waits for the Meilisearch tasks and reports any that failed.
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+triggers:
+  - id: after_bulk_change
+    type: io.kestra.plugin.core.trigger.Webhook
+    description: |
+      Call this after anything that writes to the table without going through the app's
+      indexing code: a bulk import, a restore, a backfill or a manual fix.
+      curl -X POST http://localhost:8080/api/v1/main/executions/webhook/company.team/postgres-meilisearch-index-drift-repair/$KEY
+    key: "{{ secret('MEILI_DRIFT_WEBHOOK_KEY') }}"
+  - id: nightly
+    type: io.kestra.plugin.core.trigger.Schedule
+    description: Nightly backstop for drift nobody announced (a failed indexing job,
+      a crashed worker, a manual edit in Meilisearch).
+    cron: "40 2 * * *"
+    disabled: true
+
+inputs:
+  - id: source_table
+    type: STRING
+    defaults: public.products
+    description: Table or view whose rows are the documents, one column per field.
+      Point it at a view to choose, rename or shape fields exactly as your app
+      indexes them.
+  - id: primary_key
+    type: STRING
+    defaults: id
+    description: Column that holds the document id. It must match the index's primary key.
+  - id: index_uid
+    type: STRING
+    defaults: products
+    description: Meilisearch index to check and repair. It is created on the first
+      batch if it does not exist.
+  - id: meilisearch_url
+    type: STRING
+    defaults: http://localhost:7700
+    description: Base URL of the Meilisearch server.
+  - id: page_size
+    type: INT
+    defaults: 1000
+    description: Documents read per page while scanning the index. Lower it for wide
+      documents.
+  - id: batch_size
+    type: INT
+    defaults: 500
+    description: Documents sent per re-index request. Each batch is one Meilisearch
+      task, and Meilisearch rejects a whole task if one document in it is
+      invalid.
+  - id: max_deletes_without_approval
+    type: INT
+    defaults: 100
+    description: Above this many orphan documents, on-call must approve the delete.
+      A large number usually means a wrong source or a truncated table, not
+      drift.
+  - id: dry_run
+    type: BOOL
+    defaults: false
+    description: Only report the drift. Use it for the first run on an index your
+      app also writes to, to check that the source produces the same documents.
+  - id: kestra_url
+    type: STRING
+    defaults: http://localhost:8080
+    description: Base URL of your Kestra UI, used for links in Slack messages.
+
+tasks:
+  - id: ensure_tables
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    description: Two working tables, keyed by execution so overlapping runs never
+      mix. Leftovers of crashed runs are removed after a day.
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      CREATE TABLE IF NOT EXISTS meili_sync_snapshot (
+        run_id     TEXT NOT NULL,
+        doc_id     TEXT NOT NULL,
+        doc        JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (run_id, doc_id)
+      );
+      CREATE TABLE IF NOT EXISTS meili_sync_diff (
+        run_id     TEXT NOT NULL,
+        doc_id     TEXT NOT NULL,
+        kind       TEXT NOT NULL,
+        fields     TEXT,
+        valid_id   BOOLEAN NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (run_id, doc_id)
+      );
+      DELETE FROM meili_sync_snapshot WHERE created_at < now() - interval '1 day';
+      DELETE FROM meili_sync_diff WHERE created_at < now() - interval '1 day';
+
+  - id: check_source
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    description: Resolve the source to a quoted relation name and list its columns,
+      which become the document fields.
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    fetchType: FETCH_ONE
+    parameters:
+      source: "{{ inputs.source_table }}"
+      pk: "{{ inputs.primary_key }}"
+    sql: |
+      SELECT CAST(to_regclass(CAST(:source AS text)) AS TEXT) AS relation,
+             (SELECT quote_ident(attname) FROM pg_attribute
+              WHERE attrelid = to_regclass(CAST(:source AS text)) AND attname = CAST(:pk AS text) AND attnum > 0 AND NOT attisdropped) AS pk_column,
+             (SELECT string_agg(attname, ',' ORDER BY attnum) FROM pg_attribute
+              WHERE attrelid = to_regclass(CAST(:source AS text)) AND attnum > 0 AND NOT attisdropped) AS fields
+    retry:
+      type: exponential
+      interval: PT2S
+      maxInterval: PT30S
+      maxAttempts: 3
+
+  - id: source_guard
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ (outputs.check_source.row.relation ?? '') == '' or
+      (outputs.check_source.row.pk_column ?? '') == '' }}"
+    then:
+      - id: unknown_source
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "{% if (outputs.check_source.row.relation ?? '') == '' %}Table or
+          view {{ inputs.source_table }} does not exist or is not visible to
+          this role.{% else %}{{ inputs.source_table }} has no column {{
+          inputs.primary_key }}.{% endif %}"
+
+  - id: source_stats
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    fetchType: FETCH_ONE
+    sql: |
+      SELECT count(*) AS source_rows,
+             count({{ outputs.check_source.row.pk_column }}) - count(DISTINCT {{ outputs.check_source.row.pk_column }}) AS duplicate_ids,
+             count(*) FILTER (WHERE {{ outputs.check_source.row.pk_column }} IS NULL) AS null_ids
+      FROM {{ outputs.check_source.row.relation }}
+
+  - id: id_guard
+    type: io.kestra.plugin.core.flow.If
+    description: A view that repeats or drops ids would make documents overwrite each other.
+    condition: "{{ outputs.source_stats.row.duplicate_ids > 0 or
+      outputs.source_stats.row.null_ids > 0 }}"
+    then:
+      - id: ambiguous_ids
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "{{ inputs.source_table }}.{{ inputs.primary_key }} is not a
+          usable document id: {{ outputs.source_stats.row.duplicate_ids }}
+          duplicated and {{ outputs.source_stats.row.null_ids }} null values.
+          Fix the view so each row has one unique id."
+
+  - id: check_meilisearch
+    type: io.kestra.plugin.core.http.Request
+    description: Fail fast if Meilisearch is down. /health needs no key.
+    uri: "{{ inputs.meilisearch_url }}/health"
+    retry:
+      type: exponential
+      interval: PT2S
+      maxInterval: PT30S
+      maxAttempts: 4
+
+  - id: index_info
+    type: io.kestra.plugin.core.http.Request
+    description: Read the index's primary key. 404 means the index does not exist yet.
+    uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid }}"
+    headers:
+      Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+    options:
+      allowFailed: true
+    retry:
+      type: exponential
+      interval: PT2S
+      maxInterval: PT30S
+      maxAttempts: 3
+
+  - id: check_index
+    type: io.kestra.plugin.core.flow.Switch
+    description: Stop on an API error (a wrong key, for example) or a primary key
+      that does not match the source.
+    value: >-
+      {% if outputs.index_info.code == 404 %}missing{% elseif
+      outputs.index_info.code != 200 %}error{% elseif not (['',
+      inputs.primary_key] contains (outputs.index_info.body | jq('.primaryKey //
+      ""') | first)) %}wrong_key{% else %}ok{% endif %}
+    cases:
+      error:
+        - id: api_error
+          type: io.kestra.plugin.core.execution.Fail
+          errorMessage: "Meilisearch returned HTTP {{ outputs.index_info.code }} for index
+            {{ inputs.index_uid }}: {{ outputs.index_info.body | jq('.message //
+            .') | first }}"
+      wrong_key:
+        - id: wrong_primary_key
+          type: io.kestra.plugin.core.execution.Fail
+          errorMessage: "Index {{ inputs.index_uid }} uses the primary key `{{
+            outputs.index_info.body | jq('.primaryKey') | first }}` but the
+            source column is `{{ inputs.primary_key }}`. Ids would never match,
+            so nothing was compared. Set primary_key to that column, or rebuild
+            the index with the right key."
+      missing:
+        - id: index_missing
+          type: io.kestra.plugin.core.log.Log
+          message: "Index {{ inputs.index_uid }} does not exist: every row is missing, and
+            the first batch creates it with primary key {{ inputs.primary_key
+            }}."
+    defaults:
+      - id: index_found
+        type: io.kestra.plugin.core.log.Log
+        message: "Index {{ inputs.index_uid }} found with primary key {{
+          outputs.index_info.body | jq('.primaryKey // \"(not set yet)\"') |
+          first }}."
+
+  - id: index_stats
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.index_info.code == 200 }}"
+    then:
+      - id: get_stats
+        type: io.kestra.plugin.core.http.Request
+        uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid }}/stats"
+        headers:
+          Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+        retry:
+          type: exponential
+          interval: PT2S
+          maxInterval: PT30S
+          maxAttempts: 3
+
+      - id: read_index
+        type: io.kestra.plugin.core.flow.Loop
+        description: |
+          One page per iteration, four at a time. Only the source's columns are fetched.
+          Each page is staged in Postgres, where the comparison runs.
+        values: "{{ range(0, outputs.get_stats.body | jq('.numberOfDocuments') | first,
+          inputs.page_size) | toJson }}"
+        concurrencyLimit: 4
+        tasks:
+          - id: fetch_page
+            type: io.kestra.plugin.core.http.Request
+            uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid
+              }}/documents?offset={{ item.value }}&limit={{ inputs.page_size
+              }}&fields={{ outputs.check_source.row.fields | urlencode }}"
+            headers:
+              Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+            retry:
+              type: exponential
+              interval: PT2S
+              maxInterval: PT30S
+              maxAttempts: 3
+          - id: stage_page
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ secret('POSTGRES_URL') }}"
+            username: "{{ secret('POSTGRES_USERNAME') }}"
+            password: "{{ secret('POSTGRES_PASSWORD') }}"
+            parameters:
+              run: "{{ execution.id }}"
+              pk: "{{ inputs.primary_key }}"
+              page: "{{ outputs.fetch_page.body }}"
+            sql: |
+              INSERT INTO meili_sync_snapshot (run_id, doc_id, doc)
+              SELECT CAST(:run AS text), d ->> CAST(:pk AS text), d
+              FROM jsonb_array_elements(CAST(:page AS jsonb) -> 'results') d
+              ON CONFLICT DO NOTHING
+
+  - id: compare
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    description: |
+      Full outer join of rows and documents. A document is stale when any field differs, compared as JSON values,
+      so 19.90 in Postgres equals 19.9 in Meilisearch. Ids Meilisearch would reject are set aside.
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    fetchType: FETCH_ONE
+    parameters:
+      run: "{{ execution.id }}"
+      batch: "{{ inputs.batch_size }}"
+    sql: |
+      WITH src AS (
+        SELECT CAST(t.{{ outputs.check_source.row.pk_column }} AS TEXT) AS doc_id, CAST(row_to_json(t) AS JSONB) AS doc
+        FROM {{ outputs.check_source.row.relation }} t
+      ), idx AS (
+        SELECT doc_id, doc FROM meili_sync_snapshot WHERE run_id = CAST(:run AS text)
+      ), diff AS (
+        SELECT coalesce(s.doc_id, i.doc_id) AS doc_id,
+               CASE WHEN i.doc_id IS NULL THEN 'missing' WHEN s.doc_id IS NULL THEN 'orphan' ELSE 'stale' END AS kind,
+               CASE WHEN s.doc_id IS NOT NULL AND i.doc_id IS NOT NULL THEN
+                 (SELECT string_agg(e.key, '+' ORDER BY e.key) FROM jsonb_each(s.doc) e
+                  WHERE e.value IS DISTINCT FROM i.doc -> e.key) END AS fields,
+               coalesce(s.doc_id, i.doc_id) ~ '^[A-Za-z0-9_-]+$' AND octet_length(coalesce(s.doc_id, i.doc_id)) <= 511 AS valid_id
+        FROM src s FULL JOIN idx i USING (doc_id)
+        WHERE i.doc_id IS NULL OR s.doc_id IS NULL OR s.doc <> i.doc
+      ), ins AS (
+        INSERT INTO meili_sync_diff (run_id, doc_id, kind, fields, valid_id)
+        SELECT CAST(:run AS text), doc_id, kind, fields, valid_id FROM diff
+        RETURNING doc_id, kind, fields, valid_id
+      )
+      SELECT (SELECT count(*) FROM src) AS source_rows,
+             (SELECT count(*) FROM idx) AS index_documents,
+             count(*) FILTER (WHERE kind = 'missing' AND valid_id) AS missing,
+             count(*) FILTER (WHERE kind = 'stale' AND valid_id) AS stale,
+             count(*) FILTER (WHERE kind = 'orphan') AS orphans,
+             count(*) FILTER (WHERE NOT valid_id) AS invalid_ids,
+             coalesce((SELECT string_agg(doc_id, ', ' ORDER BY length(doc_id), doc_id) FROM (SELECT doc_id FROM ins WHERE kind = 'missing' AND valid_id ORDER BY length(doc_id), doc_id LIMIT 10) x), '') AS missing_sample,
+             coalesce((SELECT string_agg(doc_id || ' (' || fields || ')', ', ' ORDER BY length(doc_id), doc_id) FROM (SELECT doc_id, fields FROM ins WHERE kind = 'stale' AND valid_id ORDER BY length(doc_id), doc_id LIMIT 5) x), '') AS stale_sample,
+             coalesce((SELECT string_agg(doc_id, ', ' ORDER BY length(doc_id), doc_id) FROM (SELECT doc_id FROM ins WHERE kind = 'orphan' ORDER BY length(doc_id), doc_id LIMIT 10) x), '') AS orphan_sample,
+             coalesce((SELECT string_agg(quote_literal(doc_id), ', ') FROM (SELECT doc_id FROM ins WHERE NOT valid_id ORDER BY doc_id LIMIT 10) x), '') AS invalid_sample,
+             (SELECT CAST(coalesce(jsonb_agg(ids ORDER BY b), '[]') AS TEXT) FROM (
+                SELECT b, jsonb_agg(doc_id) AS ids FROM (
+                  SELECT doc_id, (row_number() OVER (ORDER BY doc_id) - 1) / CAST(:batch AS int) AS b
+                  FROM ins WHERE kind <> 'orphan' AND valid_id) n
+                GROUP BY b) g) AS batches
+      FROM ins
+
+  - id: repair
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ not inputs.dry_run and (outputs.compare.row.missing +
+      outputs.compare.row.stale) > 0 }}"
+    then:
+      - id: reindex
+        type: io.kestra.plugin.core.flow.Loop
+        description: Re-index missing and stale documents from the current rows, one
+          Meilisearch task per batch.
+        values: "{{ outputs.compare.row.batches }}"
+        concurrencyLimit: 2
+        outputs:
+          - id: task_uid
+            type: STRING
+            value: "{% if outputs.add_documents is defined and outputs.add_documents.code <
+              400 %}{{ outputs.add_documents.body | jq('.taskUid') | first }}{%
+              else %}rejected{% endif %}"
+          - id: reason
+            type: STRING
+            value: "{% if outputs.add_documents is defined and outputs.add_documents.code >=
+              400 %}HTTP {{ outputs.add_documents.code }}: {{
+              (outputs.add_documents.body | jq('.message') | first) ?? 'no error
+              body' }}{% else %}-{% endif %}"
+          - id: documents
+            type: STRING
+            value: "{{ fromJson(item.value) | length }}"
+        tasks:
+          - id: send_batch
+            type: io.kestra.plugin.core.flow.Sequential
+            description: A rejected batch is reported and the other batches still run.
+            allowFailure: true
+            tasks:
+              - id: load_batch
+                type: io.kestra.plugin.jdbc.postgresql.Query
+                url: "{{ secret('POSTGRES_URL') }}"
+                username: "{{ secret('POSTGRES_USERNAME') }}"
+                password: "{{ secret('POSTGRES_PASSWORD') }}"
+                fetchType: FETCH_ONE
+                parameters:
+                  ids: "{{ item.value }}"
+                sql: |
+                  SELECT CAST(coalesce(jsonb_agg(row_to_json(t)), '[]') AS TEXT) AS docs
+                  FROM {{ outputs.check_source.row.relation }} t
+                  WHERE CAST(t.{{ outputs.check_source.row.pk_column }} AS TEXT) IN (SELECT jsonb_array_elements_text(CAST(:ids AS jsonb)))
+              - id: add_documents
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid
+                  }}/documents?primaryKey={{ inputs.primary_key }}"
+                headers:
+                  Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+                contentType: application/json
+                body: "{{ outputs.load_batch.row.docs }}"
+                options:
+                  # a batch Meilisearch refuses (4xx, for example a payload over its size limit) is reported as
+                  # rejected by the Loop output instead of failing the iteration; connection errors are still retried
+                  allowFailed: true
+                retry:
+                  type: exponential
+                  interval: PT2S
+                  maxInterval: PT30S
+                  maxAttempts: 3
+
+  - id: handle_orphans
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ not inputs.dry_run and outputs.compare.row.orphans > 0 }}"
+    then:
+      - id: large_drift
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs.compare.row.orphans > inputs.max_deletes_without_approval
+          }}"
+        then:
+          - id: ask_approval
+            type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+            url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+            messageText: |
+              Meilisearch index {{ inputs.index_uid }} has {{ outputs.compare.row.orphans }} documents whose row is gone from {{ inputs.source_table }} (more than {{ inputs.max_deletes_without_approval }}), out of {{ outputs.compare.row.index_documents }} documents for {{ outputs.compare.row.source_rows }} rows.
+              First ids: {{ outputs.compare.row.orphan_sample }}
+              If the table was truncated or the wrong source is configured, do not approve. Approve or decline within 24 hours (nothing is deleted otherwise): {{ inputs.kestra_url }}/ui/main/executions/{{ flow.namespace }}/{{ flow.id }}/{{ execution.id }}
+          - id: wait_for_approval
+            type: io.kestra.plugin.core.flow.Pause
+            description: No answer within 24 hours means nothing is deleted.
+            pauseDuration: PT24H
+            behavior: RESUME
+            onResume:
+              - id: delete_orphans
+                type: BOOL
+                defaults: false
+                description: Delete the orphan documents. Each one is checked again against the
+                  table first.
+              - id: note
+                type: STRING
+                required: false
+                description: Optional note for the report.
+
+      - id: delete_allowed
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs.compare.row.orphans <=
+          inputs.max_deletes_without_approval or
+          (outputs.wait_for_approval.onResume.delete_orphans ?? false) }}"
+        then:
+          - id: confirm_orphans
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            description: Keep only the orphans that still have no row, so a row restored
+              during the approval is never deleted.
+            url: "{{ secret('POSTGRES_URL') }}"
+            username: "{{ secret('POSTGRES_USERNAME') }}"
+            password: "{{ secret('POSTGRES_PASSWORD') }}"
+            fetchType: FETCH_ONE
+            parameters:
+              run: "{{ execution.id }}"
+            sql: |
+              SELECT CAST(coalesce(jsonb_agg(d.doc_id), '[]') AS TEXT) AS ids, count(*) AS confirmed
+              FROM meili_sync_diff d
+              WHERE d.run_id = CAST(:run AS text) AND d.kind = 'orphan'
+                AND NOT EXISTS (SELECT 1 FROM {{ outputs.check_source.row.relation }} t
+                                WHERE CAST(t.{{ outputs.check_source.row.pk_column }} AS TEXT) = d.doc_id)
+          - id: delete_documents
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid
+              }}/documents/delete-batch"
+            headers:
+              Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+            contentType: application/json
+            body: "{{ outputs.confirm_orphans.row.ids }}"
+            retry:
+              type: exponential
+              interval: PT2S
+              maxInterval: PT30S
+              maxAttempts: 3
+
+  - id: collect_tasks
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      # the reindex task uids (rejected batches have none) plus the delete task uid, without empty entries
+      uids: >-
+        {% set added = ((outputs.reindex.outputs ?? []) |
+        jq('[.[].outputs.task_uid | select(. != "rejected")]') | first) |
+        join(',') %}{{ added }}{% if outputs.delete_documents is defined %}{% if
+        added != '' %},{% endif %}{{ outputs.delete_documents.body |
+        jq('.taskUid') | first }}{% endif %}
+      rejected: "{{ (outputs.reindex.outputs ?? []) | jq('[.[] |
+        select(.outputs.task_uid == \"rejected\") | .outputs.documents |
+        tonumber] | add // 0') | first }}"
+      rejected_reason: "{{ (outputs.reindex.outputs ?? []) | jq('[.[] |
+        select(.outputs.task_uid == \"rejected\") | .outputs.reason] | first //
+        \"\"') | first }}"
+
+  - id: wait
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.collect_tasks.values.uids | trim != '' }}"
+    then:
+      - id: wait_for_tasks
+        type: io.kestra.plugin.core.flow.LoopUntil
+        description: Meilisearch applies writes asynchronously. Poll the tasks until
+          none is enqueued or processing.
+        condition: "{{ outputs.poll_tasks.body | jq('[.results[] | select(.status ==
+          \"enqueued\" or .status == \"processing\")] | length') | first == 0
+          }}"
+        failOnMaxReached: true
+        checkFrequency:
+          interval: PT2S
+          maxDuration: PT30M
+        tasks:
+          - id: poll_tasks
+            type: io.kestra.plugin.core.http.Request
+            uri: "{{ inputs.meilisearch_url }}/tasks?uids={{
+              outputs.collect_tasks.values.uids }}&limit=1000"
+            headers:
+              Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+            retry:
+              type: exponential
+              interval: PT2S
+              maxInterval: PT30S
+              maxAttempts: 3
+
+      - id: index_after
+        type: io.kestra.plugin.core.http.Request
+        uri: "{{ inputs.meilisearch_url }}/indexes/{{ inputs.index_uid }}/stats"
+        headers:
+          Authorization: "Bearer {{ secret('MEILISEARCH_API_KEY') }}"
+        retry:
+          type: exponential
+          interval: PT2S
+          maxInterval: PT30S
+          maxAttempts: 3
+
+  - id: summarize
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      failed_tasks: >-
+        {{ (outputs.poll_tasks.body ?? '{"results": []}') | jq('[.results[] |
+        select(.status == "failed" or .status == "canceled") | "task \(.uid)
+        (\(.type), \(.details.receivedDocuments // .details.providedIds // 0)
+        documents): \(.status), \(.error.message // "canceled")"] | join("\n")')
+        | first }}
+      drift: "{{ outputs.compare.row.missing + outputs.compare.row.stale +
+        outputs.compare.row.orphans + outputs.compare.row.invalid_ids }}"
+
+  - id: report
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.summarize.values.drift != '0' }}"
+    then:
+      - id: notify
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+        messageText: |
+          Meilisearch index {{ inputs.index_uid }} vs {{ inputs.source_table }}{% if inputs.dry_run %} (dry run, nothing changed){% endif %}: {{ outputs.compare.row.source_rows }} rows, {{ outputs.compare.row.index_documents }} documents{% if outputs.index_info.code == 404 %} (the index did not exist){% endif %}.
+          {% if outputs.compare.row.missing > 0 %}- Missing: {{ outputs.compare.row.missing }} ({{ outputs.compare.row.missing_sample }}{% if outputs.compare.row.missing > 10 %}, ...{% endif %}){% if not inputs.dry_run %}, re-sent from the table{% endif %}
+          {% endif %}{% if outputs.compare.row.stale > 0 %}- Stale: {{ outputs.compare.row.stale }} ({{ outputs.compare.row.stale_sample }}{% if outputs.compare.row.stale > 5 %}, ...{% endif %}){% if not inputs.dry_run %}, re-sent from the table{% endif %}
+          {% endif %}{% if outputs.compare.row.orphans > 0 %}- Orphans (no row): {{ outputs.compare.row.orphans }} ({{ outputs.compare.row.orphan_sample }}{% if outputs.compare.row.orphans > 10 %}, ...{% endif %}){% if outputs.confirm_orphans is defined %}, {{ outputs.confirm_orphans.row.confirmed }} deleted{% if outputs.confirm_orphans.row.confirmed < outputs.compare.row.orphans %} ({{ outputs.compare.row.orphans - outputs.confirm_orphans.row.confirmed }} came back in the table and were kept){% endif %}{% elseif outputs.wait_for_approval is defined %}, NOT deleted: approval {% if outputs.wait_for_approval.onResume is defined %}declined{% else %}not given{% endif %}{% endif %}
+          {% endif %}{% if outputs.compare.row.invalid_ids > 0 %}- Not indexable: {{ outputs.compare.row.invalid_ids }} with an id Meilisearch rejects (only a-z A-Z 0-9 - _, at most 511 bytes): {{ outputs.compare.row.invalid_sample }}. Fix these ids or map them in the view.
+          {% endif %}{% if outputs.collect_tasks.values.rejected != '0' %}- {{ outputs.collect_tasks.values.rejected }} documents in batches Meilisearch refused to accept ({{ outputs.collect_tasks.values.rejected_reason }}). They are sent again on the next run.
+          {% endif %}{% if outputs.summarize.values.failed_tasks | trim != '' %}Failed Meilisearch tasks (every document in a failed task is left unchanged):
+          {{ outputs.summarize.values.failed_tasks }}
+          {% endif %}{% if (outputs.wait_for_approval.onResume.note ?? '') != '' %}Approver note: {{ outputs.wait_for_approval.onResume.note }}
+          {% endif %}{% if outputs.index_after is defined %}The index now has {{ outputs.index_after.body | jq('.numberOfDocuments') | first }} documents; the table had {{ outputs.compare.row.source_rows }} rows when compared.{% endif %}
+
+  - id: cleanup
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    parameters:
+      run: "{{ execution.id }}"
+    sql: |
+      DELETE FROM meili_sync_snapshot WHERE run_id = CAST(:run AS text);
+      DELETE FROM meili_sync_diff WHERE run_id = CAST(:run AS text);
+
+  - id: any_failed
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.summarize.values.failed_tasks | trim != '' or
+      outputs.collect_tasks.values.rejected != '0' }}"
+    then:
+      - id: partial
+        type: io.kestra.plugin.core.execution.Exit
+        state: WARNING
+
+errors:
+  - id: alert_failure
+    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    messageText: |
+      Meilisearch drift repair for index {{ inputs.index_uid }} failed in execution {{ execution.id }}{% if errorLogs() | length > 0 %} at `{{ errorLogs()[0]['taskId'] }}`:
+      {{ errorLogs()[0]['message'] | split(' \[\[') | first }}{% else %} without an error message (a timeout or a killed task).{% endif %}
+      Batches sent before the failure are complete Meilisearch tasks; the next run compares again and repairs the rest.
+      {{ inputs.kestra_url }}/ui/main/executions/{{ flow.namespace }}/{{ flow.id }}/{{ execution.id }}
+  - id: cleanup_after_failure
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    allowFailure: true
+    url: "{{ secret('POSTGRES_URL') }}"
+    username: "{{ secret('POSTGRES_USERNAME') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    parameters:
+      run: "{{ execution.id }}"
+    sql: |
+      DELETE FROM meili_sync_snapshot WHERE run_id = CAST(:run AS text);
+      DELETE FROM meili_sync_diff WHERE run_id = CAST(:run AS text);
+
+outputs:
+  - id: drift
+    type: JSON
+    description: Rows, documents and the count of missing, stale, orphan and
+      unindexable documents found by this run.
+    value: >-
+      {{ {'source_rows': outputs.compare.row.source_rows ?? 0,
+      'index_documents': outputs.compare.row.index_documents ?? 0, 'missing':
+      outputs.compare.row.missing ?? 0, 'stale': outputs.compare.row.stale ?? 0,
+      'orphans': outputs.compare.row.orphans ?? 0, 'invalid_ids':
+      outputs.compare.row.invalid_ids ?? 0, 'dry_run': inputs.dry_run} | toJson
+      }}
+  - id: failed_tasks
+    type: STRING
+    description: One line per Meilisearch task that failed or was canceled, empty
+      when all succeeded.
+    value: "{{ outputs.summarize.values.failed_tasks ?? '' }}"

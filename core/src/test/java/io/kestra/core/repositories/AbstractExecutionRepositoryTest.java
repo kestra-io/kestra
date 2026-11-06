@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
@@ -90,7 +89,7 @@ public abstract class AbstractExecutionRepositoryTest {
         State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(namespace)
             .tenantId(tenantId)
             .flowId(flowId == null ? FLOW : flowId)
@@ -277,6 +276,24 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.NOT_EQUALS).build(), 0)
         );
+    }
+
+    @Test
+    void should_find_executions_by_id_filter() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution first = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        Execution second = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        Execution third = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        var in = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.IN).value(List.of(first.getId(), second.getId())).build()));
+        var notIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.NOT_IN).value(List.of(first.getId(), second.getId())).build()));
+        var emptyIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.IN).value(List.of()).build()));
+        var emptyNotIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.NOT_IN).value(List.of()).build()));
+
+        assertThat(in).extracting(Execution::getId).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(notIn).extracting(Execution::getId).containsExactly(third.getId());
+        assertThat(emptyIn).isEmpty();
+        assertThat(emptyNotIn).hasSize(3);
     }
 
     @ParameterizedTest
@@ -1593,7 +1610,7 @@ public abstract class AbstractExecutionRepositoryTest {
             var ten = 10;
 
             var createdExecution = Execution.builder()
-                .id("createdExecution__" + FriendlyId.createFriendlyId())
+                .id("createdExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1609,7 +1626,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(createdExecution);
 
             var successExecution = Execution.builder()
-                .id("successExecution__" + FriendlyId.createFriendlyId())
+                .id("successExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1630,7 +1647,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(successExecution);
 
             var runningExecution = Execution.builder()
-                .id("runningExecution__" + FriendlyId.createFriendlyId())
+                .id("runningExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1648,7 +1665,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(runningExecution);
 
             var failedExecution = Execution.builder()
-                .id("failedExecution__" + FriendlyId.createFriendlyId())
+                .id("failedExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1736,7 +1753,7 @@ public abstract class AbstractExecutionRepositoryTest {
         final Instant clock = Instant.now();
 
         var longExecution = Execution.builder()
-            .id("longExecution__" + FriendlyId.createFriendlyId())
+            .id("longExecution__" + IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -1753,7 +1770,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(longExecution);
 
         var shortExecution = Execution.builder()
-            .id("shortExecution__" + FriendlyId.createFriendlyId())
+            .id("shortExecution__" + IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -2259,7 +2276,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execA = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -2277,7 +2294,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execB = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)

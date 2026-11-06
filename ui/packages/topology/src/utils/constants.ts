@@ -27,6 +27,7 @@ export const EVENTS = {
     EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
+    SHOW_ARTIFACTS: "showArtifacts",
     REPLAY_TASK: "replayTask",
     MOUSE_OVER: "mouseover",
     MOUSE_LEAVE: "mouseleave",
@@ -40,6 +41,8 @@ export const EVENTS = {
     MOVE_TASK: "moveTask",
     TASK_DRAG_START: "taskDragStart",
     TASK_DRAG_END: "taskDragEnd",
+    LOOP_STEP: "loopStep",
+    LOOP_SCOPE_FAILED: "loopScopeFailed",
 } as const
 
 export interface CustomActionConfig {
@@ -56,9 +59,10 @@ export interface ShowDetailsConfig {
 
 export const NODE_SIZES = {
     TASK_WIDTH: 218,
-    TASK_WIDTH_EXECUTION: 273,
+    TASK_WIDTH_EXECUTION: 251,
     TASK_HEIGHT: 56,
-    TASK_HEIGHT_EXECUTION: 80,
+    TASK_HEIGHT_EXECUTION: 64,
+    TASK_STATUS_ROW_HEIGHT: 21,
     TRIGGER_WIDTH: 218,
     TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,
@@ -99,6 +103,18 @@ export const ZOOM_LOD = {
     PILL: 0.5,
     EXPANDED: 1.3,
 } as const
+
+export const PILL_COMPENSATION = {
+    STEP: 1,
+    RING_MAX: 4,
+    GLYPH_MAX: 2.5,
+} as const
+
+export function pillZoomCompensation(zoom: number): number {
+    if (!Number.isFinite(zoom) || zoom <= 0) return 1
+    const bounded = Math.min(1 / zoom, PILL_COMPENSATION.RING_MAX)
+    return Math.max(1, Math.round(bounded / PILL_COMPENSATION.STEP) * PILL_COMPENSATION.STEP)
+}
 
 export type LodLevel = "pill" | "default" | "expanded"
 

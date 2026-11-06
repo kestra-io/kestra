@@ -672,7 +672,7 @@
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log) =>
+        [...executionsStore.reusedLogsOf(followedExecution.value?.id, props.levelFilter), ...rawLogs.value].filter((log) =>
             log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )
@@ -766,7 +766,8 @@
                     if (parentScroller) {
                         const scrollerStyles =
                             window.getComputedStyle(parentScroller)
-                        scrollerElement.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px`
+                        const availableHeight = parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight
+                        if (availableHeight > 0) scrollerElement.style.maxHeight = `${availableHeight}px`
                     }
                 })
             }
@@ -1185,6 +1186,9 @@
                 rawLogs.value = logs
                 // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
                 logsBuffer.value = []
+                nextTick(() => {
+                    scrollToBottomFailedTask()
+                })
             })
     }
 

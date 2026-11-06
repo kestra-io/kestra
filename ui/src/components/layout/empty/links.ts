@@ -5,6 +5,9 @@
  * not the current route, since routes carry namespace and flow names. Add them to
  * every new entry, and keep them ahead of any `#fragment`.
  */
+export const demoLink = (campaign: string): string =>
+    `https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${campaign}`
+
 export const links: Record<string, string> = {
     namespaceFiles: "https://kestra.io/docs/concepts/namespace-files?utm_source=app&utm_medium=referral&utm_campaign=namespace-files",
     versionPlugin: "https://kestra.io/docs/enterprise/instance/versioned-plugins?utm_source=app&utm_medium=referral&utm_campaign=version-plugin",

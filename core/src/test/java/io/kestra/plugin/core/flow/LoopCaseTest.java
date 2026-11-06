@@ -148,6 +148,14 @@ public class LoopCaseTest {
         assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    public void loopRunIfFalse(Execution execution) {
+        // Then — the Loop is skipped like any other task whose runIf is false: no iteration runs
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("loop").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null)).isEmpty();
+    }
+
     public void loopTransmitFailedFalse(Execution execution) throws InternalException {
         // Then — all iterations run but failures are not propagated, loop ends with SUCCESS
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -627,6 +635,27 @@ public class LoopCaseTest {
         var subflowExecution2 = findSubflowExecution(subExecutions.get(1));
         assertThat(subflowExecution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subflowExecution2.getTaskRunList()).hasSize(1);
+    }
+
+    public void loopNestedWithSubflow(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subflowExecutions = executionRepository.find(
+            Pageable.UNPAGED,
+            execution.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("minimal")
+                    .build()
+            )
+        );
+        assertThat(subflowExecutions).hasSize(4);
+        assertThat(subflowExecutions).allSatisfy(e -> {
+            assertThat(e.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(ExecutionKind.isNormal(e)).isTrue();
+        });
     }
 
     public void loopWithPause(Execution execution) {

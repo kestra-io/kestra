@@ -117,7 +117,7 @@ function legacyData(error: KestraHttpError): Record<string, unknown> {
     const data: Record<string, unknown> = {message: error.message}
     for (const key of Object.keys(error)) {
         if (key !== "status" && key !== "message" && key !== "problem") {
-            data[key] = (error as unknown as Record<string, unknown>)[key]
+            data[key] = Reflect.get(error, key)
         }
     }
     return data
@@ -131,6 +131,10 @@ export interface KestraHttpOptions {
     onError?: (error: unknown) => void
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
 }
+
+type AsyncMethod = (...args: never[]) => Promise<unknown>
+type StreamMethod = (url: string, data?: unknown, config?: Record<string, unknown>) => Promise<unknown>
+type WithAuthRetryParams<Args extends unknown[], Return> = (...args: Args) => Promise<Return>;
 
 export function setupKestraHttp(
     clientConfig: Record<string, unknown> = {},
@@ -185,8 +189,8 @@ export function setupKestraHttp(
         return error
     }
 
-    function withAuthRetry<F extends (...args: any[]) => Promise<any>>(fn: F): F {
-        return (async (...args: Parameters<F>) => {
+    function withAuthRetry<Args extends unknown[], Return>(fn: WithAuthRetryParams<Args, Return>): WithAuthRetryParams<Args, Return> {
+        return async (...args: Args) => {
             const wasLoggedIn = isLoggedIn()
             try {
                 return await fn(...args)
@@ -202,15 +206,19 @@ export function setupKestraHttp(
                 }
                 throw error
             }
-        }) as F
+        }
     }
 
     const client = configureClient(clientConfig)
 
-    const sse = (client as unknown as {sse?: Record<string, (streamOptions: Record<string, unknown>) => unknown>}).sse
-    for (const method of Object.keys(sse ?? {})) {
-        const streamFn = sse![method].bind(sse)
-        sse![method] = (streamOptions) => streamFn({...streamOptions, [SKIP_PROGRESS]: true})
+    const sse: unknown = Reflect.get(client, "sse")
+    if (typeof sse === "object" && sse !== null) {
+        for (const method of Object.keys(sse)) {
+            const streamFn: unknown = Reflect.get(sse, method)
+            if (typeof streamFn !== "function") continue
+            const bound = streamFn.bind(sse)
+            Reflect.set(sse, method, (streamOptions: Record<string, unknown>) => bound({...streamOptions, [SKIP_PROGRESS]: true}))
+        }
     }
 
     client.interceptors.request.use((request, opts: unknown) => {
@@ -248,9 +256,7 @@ export function setupKestraHttp(
         // came from outside the API surface (Micronaut's own responses, the Apps error layout, plain text);
         // keep reconstructing those from the flattened Error so they still reach their call sites.
         const problem = asProblem(kestraError)
-        const data: Record<string, unknown> = problem
-            ? (problem as unknown as Record<string, unknown>)
-            : legacyData(kestraError)
+        const data: unknown = problem ?? legacyData(kestraError)
 
         const responseHeaders: Record<string, string> = {}
         response.headers.forEach((value, key) => {responseHeaders[key] = value})
@@ -275,18 +281,18 @@ export function setupKestraHttp(
         return handleErrorCentrally(kestraError)
     })
 
-    for (const target of [client, useClient()] as const) {
-        const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
+    for (const target of [client, useClient()]) {
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
-            if (typeof targetAny[method] !== "function") continue
-            let fn = targetAny[method].bind(target)
+            const original: unknown = Reflect.get(target, method)
+            if (typeof original !== "function") continue
+            let fn: AsyncMethod = original.bind(target)
             // stream() reads an open body (SSE and similar). Opt it out of the page loader, same as generated `sse` methods.
             if (method === "stream") {
-                const inner = fn
+                const inner: StreamMethod = original.bind(target)
                 fn = (url: string, data?: unknown, config: Record<string, unknown> = {}) =>
                     inner(url, data, {...config, [SKIP_PROGRESS]: true})
             }
-            targetAny[method] = withAuthRetry(fn)
+            Reflect.set(target, method, withAuthRetry(fn))
         }
     }
 
@@ -312,4 +318,13 @@ export function setupKestraHttp(
     })
 
     return client
+}
+
+/**
+ * The generated SSE endpoints declare their stream as `Event<T>` envelopes (`{data: T, id, name, ...}`), but the
+ * SDK client yields only the parsed `data` of each event. This is the one place that states the real shape, and
+ * the constraint on `stream` keeps the call sites checked against the declared envelope.
+ */
+export function sseData<T>(stream: AsyncIterable<{data: T}>): AsyncIterable<T> {
+    return stream as unknown as AsyncIterable<T>
 }

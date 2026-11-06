@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -18,17 +20,22 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
+import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.MetadataNotFoundException;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.configuration.PluginsConfiguration;
 import io.kestra.core.utils.Version;
@@ -135,9 +142,17 @@ public class MavenPluginDownloader implements Closeable {
     }
 
     private PluginArtifact doResolve(List<RemoteRepository> repositories, String dependency, RepositorySystemSession session) {
-        PluginArtifact result = resolveArtifact(repositories, dependency, session);
+        PluginArtifact result = resolveArtifact(repositories, dependency, new DefaultArtifact(dependency).isSnapshot() ? alwaysUpdated(session) : session);
         log.debug("Resolved Plugin '{}' with '{}'", dependency, result.uri());
         return result;
+    }
+
+    /** A snapshot is republished in place: check the remote on every resolution, not once a day and per (server-long) session. */
+    private static RepositorySystemSession alwaysUpdated(RepositorySystemSession session) {
+        DefaultRepositorySystemSession copy = new DefaultRepositorySystemSession(session);
+        copy.setUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+        copy.setConfigProperty("aether.updateCheckManager.sessionState", "bypass");
+        return copy;
     }
 
     /** Returns the base session or a shallow copy with the given listener attached. */
@@ -238,6 +253,13 @@ public class MavenPluginDownloader implements Closeable {
         try {
             DefaultArtifact artifact = new DefaultArtifact(dependency);
             VersionRangeResult version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));
+            if (version.getHighestVersion() == null) {
+                // A repository holding the artifact but no version in the range records no exception at all.
+                if (version.getExceptions().stream().allMatch(MavenPluginDownloader::isNotFound)) {
+                    throw withCauses(new InvalidException(dependency, "No version matching plugin artifact `%s` was found in the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories))), version.getExceptions());
+                }
+                throw withCauses(resolutionFailed(dependency), version.getExceptions());
+            }
 
             final String highestVersion = version.getHighestVersion().toString();
             ArtifactRequest artifactRequest = new ArtifactRequest(
@@ -256,9 +278,50 @@ public class MavenPluginDownloader implements Closeable {
                 highestVersion.endsWith("-SNAPSHOT") ? highestVersion : result.getArtifact().getVersion(),
                 result.getArtifact().getPath().toUri()
             );
-        } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
-            throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
+        } catch (ArtifactResolutionException e) {
+            List<Exception> exceptions = e.getResults().stream().flatMap(result -> result.getExceptions().stream()).toList();
+            if (isAbsentFromEveryRepository(exceptions)) {
+                throw new InvalidException(dependency, "Plugin artifact `%s` was not found in any of the configured Maven repositories (%s).".formatted(dependency, repositoryIds(repositories)), e);
+            }
+            throw withCauses(resolutionFailed(dependency), List.of(e));
+        } catch (VersionRangeResolutionException e) {
+            // The Maven version range resolver only throws when the version constraint cannot be parsed.
+            throw new InvalidException(dependency, "Plugin artifact `%s` has an invalid version or version range.".formatted(dependency), e);
         }
+    }
+
+    /**
+     * True only when every repository answered that the artifact does not exist: a repository that could not be
+     * reached or refused the credentials leaves the artifact's existence unknown, which is a server-side failure.
+     */
+    private static boolean isAbsentFromEveryRepository(final List<Exception> exceptions) {
+        List<Exception> causes = exceptions.stream()
+            .flatMap(e -> e instanceof VersionResolutionException versionException ? versionException.getResult().getExceptions().stream() : Stream.of(e))
+            .toList();
+        return !causes.isEmpty() && causes.stream().allMatch(MavenPluginDownloader::isNotFound);
+    }
+
+    private static boolean isNotFound(final Exception exception) {
+        return exception instanceof ArtifactNotFoundException || exception instanceof MetadataNotFoundException;
+    }
+
+    // Names repositories by id only, since a configured URL may embed credentials.
+    private static String repositoryIds(final List<RemoteRepository> repositories) {
+        return repositories.isEmpty()
+            ? "none"
+            : repositories.stream().map(RemoteRepository::getId).distinct().collect(Collectors.joining(", "));
+    }
+
+    private static KestraRuntimeException resolutionFailed(final String dependency) {
+        return new KestraRuntimeException("Failed to resolve plugin artifact `%s`. Check that the configured Maven repositories are reachable and that their credentials are valid.".formatted(dependency));
+    }
+
+    private static <T extends RuntimeException> T withCauses(final T exception, final List<Exception> causes) {
+        if (!causes.isEmpty()) {
+            exception.initCause(causes.getFirst());
+            causes.stream().skip(1).forEach(exception::addSuppressed);
+        }
+        return exception;
     }
 
     /**

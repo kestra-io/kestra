@@ -421,7 +421,44 @@ class FlowServiceTest {
 
         assertThat(results.getFirst().getErrors())
             .singleElement()
-            .isEqualTo(new ValidationError("Invalid type: io.kestra.plugin.core.debug.UnknownTask", "/tasks/0/type", "tasks[0].type"));
+            .satisfies(error ->
+            {
+                assertThat(error.detail())
+                    .startsWith("Invalid type: io.kestra.plugin.core.debug.UnknownTask\n")
+                    .contains("No plugin registered for the defined type: 'io.kestra.plugin.core.debug.UnknownTask'");
+                assertThat(error.pointer()).isEqualTo("/tasks/0/type");
+                assertThat(error.path()).isEqualTo("tasks[0].type");
+            });
+    }
+
+    @Test
+    void shouldKeepInvalidTypeDetailsIndependentOfRecoveredListIndices() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            inputs:
+              - id: first
+                type: BOOLEAN
+              - id: second
+                type: BOOLEAN
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: Hello
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer, ValidationError::path)
+            .containsExactly(tuple("/inputs/0/type", "inputs[0].type"), tuple("/inputs/1/type", "inputs[1].type"));
+        assertThat(results.getFirst().getErrors()).allSatisfy(error ->
+        {
+            assertThat(error.detail())
+                .startsWith("Invalid type: BOOLEAN\nCould not resolve type id 'BOOLEAN'")
+                .contains("known type ids = [", "BOOL,");
+        });
+        assertThat(results.getFirst().getErrors().get(1).detail()).doesNotContain("ArrayList[0]");
     }
 
     @Test

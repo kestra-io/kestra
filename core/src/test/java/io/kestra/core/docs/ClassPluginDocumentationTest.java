@@ -3,13 +3,21 @@ package io.kestra.core.docs;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.Helpers;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.ServerOwned;
+import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.property.DynamicPropertyExampleTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -19,6 +27,11 @@ import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.core.trigger.Schedule;
+
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -176,6 +189,45 @@ class ClassPluginDocumentationTest {
         }));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldDocumentAssetAttributesWhenDeclaredAsJsonPropertyGetters() throws URISyntaxException {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+            RegisteredPlugin scan = pluginScanner.scan();
+
+            PluginClassAndMetadata<Asset> metadata = PluginClassAndMetadata.create(scan, Server.class, Asset.class, null);
+            ClassPluginDocumentation<? extends Asset> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
+
+            assertThat(doc.getDocDescription()).isEqualTo("A server.");
+            assertThat(doc.getDocExamples()).hasSize(1);
+            Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getPropertiesSchema().get("properties");
+            assertThat(properties).containsOnlyKeys("region");
+            assertThat(properties.get("region")).containsEntry("type", "string").containsEntry("title", "Region hosting the server.").containsEntry("$dynamic", true);
+        }));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotDocumentJsonPropertyGettersWhenClassIsNotAnAsset() throws URISyntaxException {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+            RegisteredPlugin scan = pluginScanner.scan();
+
+            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, TaskWithJsonPropertyGetter.class, Task.class, null);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
+
+            Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getPropertiesSchema().get("properties");
+            assertThat(properties).containsKey("message").doesNotContainKey("computed");
+        }));
+    }
+
     // The cache key is (class + version + allProperties): same key must return the cached
     // instance, while a different version must generate a distinct documentation object.
     // Bounding/eviction itself is Caffeine's contract (see #16983) and is not re-tested here.
@@ -202,5 +254,47 @@ class ClassPluginDocumentationTest {
             assertThat(otherVersion).isNotSameAs(first);
             assertThat(otherProperties).isNotSameAs(first);
         }));
+    }
+
+    @Hidden
+    @NoArgsConstructor
+    @Schema(title = "A server.")
+    @Plugin(examples = @Example(title = "Declare a server.", code = "id: web"))
+    public static class Server extends Asset {
+        public Server(String id, String region) {
+            super(null, null, id, Server.class.getName(), null, null, region == null ? null : Map.of("region", region), Instant.now(), Instant.now(), false);
+        }
+
+        @JsonProperty("region")
+        @Schema(title = "Region hosting the server.")
+        public String getRegion() {
+            return Optional.ofNullable(metadata.get("region")).map(Object::toString).orElse(null);
+        }
+
+        @Hidden
+        @JsonProperty("internalNotes")
+        public String getInternalNotes() {
+            return Optional.ofNullable(metadata.get("internalNotes")).map(Object::toString).orElse(null);
+        }
+
+        @ServerOwned
+        @JsonProperty("provisionedBy")
+        public String getProvisionedBy() {
+            return Optional.ofNullable(metadata.get("provisionedBy")).map(Object::toString).orElse(null);
+        }
+    }
+
+    @Hidden
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithJsonPropertyGetter extends Task {
+        @Schema(title = "A message.")
+        private String message;
+
+        @JsonProperty("computed")
+        public String getComputed() {
+            return "computed";
+        }
     }
 }

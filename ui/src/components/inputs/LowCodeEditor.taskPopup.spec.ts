@@ -33,15 +33,6 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn(), replace: vi.fn()}),
 }))
 vi.mock("../../composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
-vi.mock("../../remoteComponents/useFederatedModule", () => ({
-    useFederatedModule: () => ({
-        RemoteComponent: defineComponent({render: () => null}),
-        taskAdditionalInfoRemote: ref({}),
-        manifestReady: ref(true),
-        componentTypeFor: () => "",
-        resolveRemoteComponent: () => Promise.resolve(),
-    }),
-}))
 vi.mock("../executions/TaskRunPopup.vue", () => ({
     default: defineComponent({
         name: "TaskRunPopup",

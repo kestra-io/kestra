@@ -2,12 +2,14 @@ package io.kestra.executor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.executor.testkit.Executions;
@@ -63,24 +65,34 @@ class FlowTriggerInvalidWhenCycleTest {
         harness.registerFlow(upstream);
         harness.registerFlow(listener);
 
-        // When the upstream runs to SUCCESS through the whole executor machine
-        Execution created = Executions.created(upstream);
-        Trace trace = harness.run(created, ScriptedWorker.succeeding(T0));
-        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+        // When the upstream runs to SUCCESS twice through the whole executor machine
+        Execution first = Executions.created(upstream);
+        Execution second = Executions.created(upstream);
+        Trace firstTrace = harness.run(first, ScriptedWorker.succeeding(T0));
+        Trace secondTrace = harness.run(second, ScriptedWorker.succeeding(T0));
+        assertThat(harness).hasExecutionInState(first, State.Type.SUCCESS);
+        assertThat(harness).hasExecutionInState(second, State.Type.SUCCESS);
 
         // Then the trigger does not fire: no execution is created for the listener
-        List<Execution> triggered = trace.emitted("execution")
+        List<Execution> triggered = Stream.of(firstTrace, secondTrace)
+            .flatMap(trace -> trace.emitted("execution"))
             .map(emission -> emission.as(Execution.class))
             .filter(execution -> "invalid-when-listener".equals(execution.getFlowId()))
             .toList();
         assertThat(triggered).isEmpty();
 
-        // and it is logged on both sides: an ERROR on the flow that owns the trigger (its misconfiguration)
+        // and each upstream execution gets a WARN saying the downstream flow will not be started
         assertThat(harness.logs())
-            .anyMatch(log -> log.getLevel() == Level.ERROR && "invalid-when-listener".equals(log.getFlowId()));
-        // and a WARN on the evaluated upstream execution (not its error, but it surfaces something went wrong)
+            .filteredOn(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()))
+            .extracting(LogEntry::getExecutionId)
+            .containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(harness.logs())
-            .anyMatch(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()));
+            .filteredOn(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()))
+            .allMatch(log -> log.getMessage().contains("the downstream flow will not be started"));
+        // while the flow that owns the trigger gets a single ERROR, not one per upstream execution
+        assertThat(harness.logs())
+            .filteredOn(log -> log.getLevel() == Level.ERROR && "invalid-when-listener".equals(log.getFlowId()))
+            .hasSize(1);
     }
 
     @Test
@@ -121,5 +133,12 @@ class FlowTriggerInvalidWhenCycleTest {
         // and the unrenderable dependsOn `when` is logged as an ERROR on the flow that owns the trigger
         assertThat(harness.logs())
             .anyMatch(log -> log.getLevel() == Level.ERROR && "invalid-dependson-when-listener".equals(log.getFlowId()));
+        // and the upstream WARN says the execution does not count towards the dependsOn, not that the flow will never start
+        assertThat(harness.logs())
+            .filteredOn(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()))
+            .singleElement()
+            .satisfies(log -> assertThat(log.getMessage())
+                .contains("this execution does not count towards its `dependsOn`")
+                .doesNotContain("will not be started"));
     }
 }

@@ -61,8 +61,8 @@ public class HttpConfiguration {
         description = "`HTTP_1_1` (default) keeps the existing behavior. " +
             "`HTTP_2` forces HTTP/2: over TLS the server must support it (ALPN `h2`), and over plain HTTP it connects with prior knowledge. " +
             "`NEGOTIATE` uses HTTP/2 when the server supports it through ALPN over TLS and falls back to HTTP/1.1 otherwise. " +
-            "HTTP/2 keeps long-running requests alive through intermediaries that close idle HTTP/1.1 connections, " +
-            "as the PING frames they send count as traffic. " +
+            "HTTP/2 can keep long-running requests alive through intermediaries that close idle connections, " +
+            "when the server or a proxy in between sends PING frames, as the client sends none itself. " +
             "With `HTTP_2` or `NEGOTIATE`, the `REQUEST_BODY` and `RESPONSE_BODY` logs are not available."
     )
     @Builder.Default

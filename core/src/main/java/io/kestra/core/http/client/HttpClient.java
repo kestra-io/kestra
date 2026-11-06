@@ -106,6 +106,9 @@ public class HttpClient implements Closeable {
     private ObservationRegistry observationRegistry;
     private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD");
 
+    // The read timeout the classic client gets from Apache when none is configured, which the async client lacks.
+    private static final Timeout DEFAULT_READ_IDLE_TIMEOUT = Timeout.ofMinutes(3);
+
     // Offers only gzip/deflate so httpclient5 never negotiates Brotli, whose native brotli4j library may be missing.
     private static final HttpRequestInterceptor ACCEPT_ENCODING_INTERCEPTOR = (request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
 
@@ -419,26 +422,28 @@ public class HttpClient implements Closeable {
 
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
 
+        // A client serves a single task, so one I/O thread is enough instead of one per CPU core.
+        IOReactorConfig.Builder ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(1);
+
         // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
         if (!this.tcpExtendedKeepAliveEnabled()) {
-            builder.setIOReactorConfig(
-                IOReactorConfig.custom()
-                    .setTcpKeepIdle(0)
-                    .setTcpKeepInterval(0)
-                    .setTcpKeepCount(0)
-                    .build()
-            );
+            ioReactorConfig
+                .setTcpKeepIdle(0)
+                .setTcpKeepInterval(0)
+                .setTcpKeepCount(0);
         }
 
-        connectionManagerBuilder.setDefaultConnectionConfig(this.connectionConfig());
+        builder.setIOReactorConfig(ioReactorConfig.build());
+
+        ConnectionConfig connectionConfig = this.connectionConfig();
+        Timeout readIdleTimeout = connectionConfig.getSocketTimeout() == null ? DEFAULT_READ_IDLE_TIMEOUT : connectionConfig.getSocketTimeout();
+
+        connectionManagerBuilder.setDefaultConnectionConfig(ConnectionConfig.copy(connectionConfig).setSocketTimeout(readIdleTimeout).build());
         builder.setConnectionManager(connectionManagerBuilder.build());
         builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
 
         CloseableHttpAsyncClient asyncClient = builder.build();
         asyncClient.start();
-
-        Timeout readIdleTimeout = this.configuration.getTimeout() == null ? null
-            : runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class).map(Timeout::of).orElse(null);
 
         return HttpAsyncClients.classic(asyncClient, readIdleTimeout);
     }

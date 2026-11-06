@@ -7,10 +7,10 @@ const mountBar = (props: Partial<InstanceType<typeof LoopScopeBar>["$props"]> = 
     i18nMount(LoopScopeBar, {locales: en, props: {entries: [], canJumpToFailure: false, failuresOnly: false, ...props}})
 
 describe("LoopScopeBar", () => {
-    it("shouldShowTheWholeExecutionWhenNothingIsScoped", () => {
+    it("shouldShowAllIterationsWhenNothingIsScoped", () => {
         const wrapper = mountBar()
 
-        expect(wrapper.find("[data-test='loop-scope-trail']").text()).toBe("Whole execution")
+        expect(wrapper.find("[data-test='loop-scope-trail']").text()).toBe("All iterations")
         expect(wrapper.find("[data-test='loop-scope-clear']").exists()).toBe(false)
     })
 

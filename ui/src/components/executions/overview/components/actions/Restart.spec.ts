@@ -144,11 +144,11 @@ describe("Restart (replay revision check)", () => {
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(true))
 
         expect(executionsStore.validateReplay).toHaveBeenCalledWith({executionId: "exec1", taskRunId: "tr1", revision: 2})
-        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from transform")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
     })
 
-    it("shouldBlockTheReplayAndOfferTheWholeExecutionWhenTheRevisionIsRefused", async () => {
+    it("shouldBlockTheReplayAndOfferToReplayFromStartWhenTheRevisionIsRefused", async () => {
         const refusal = {problem: {type: "about:blank", status: 409, title: "Conflict", detail: "Input 'name' has been removed."}}
         const {wrapper, executionsStore} = await openReplayDialog(() => Promise.reject(Object.assign(new Error("Conflict"), refusal)))
 
@@ -158,7 +158,7 @@ describe("Restart (replay revision check)", () => {
 
         await wrapper.find("[data-test='replay-whole-instead']").trigger("click")
 
-        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay whole execution")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from start")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
 
         await wrapper.find("[data-test='replay-confirm']").trigger("click")
@@ -172,7 +172,7 @@ describe("Restart (replay revision check)", () => {
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-error']").exists()).toBe(true))
 
         expect(wrapper.find("[data-test='replay-check-refused']").exists()).toBe(false)
-        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from transform")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
     })
 

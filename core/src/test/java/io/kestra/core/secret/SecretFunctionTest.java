@@ -54,7 +54,7 @@ public class SecretFunctionTest {
     @Test
     @LoadFlows({ "flows/valids/secrets.yaml" })
     @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
-    @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = "(?s).*")
     void getSecret() throws TimeoutException, QueueException, InternalException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.addListener(logs::add);

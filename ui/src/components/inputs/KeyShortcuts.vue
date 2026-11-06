@@ -1,6 +1,7 @@
 <template>
     <KsDialog
         v-model="isKeyShortcutsDialogShown"
+        class="key-shortcuts-dialog"
         headerClass="dialog-header"
         bodyClass="dialog-body"
         scrollable
@@ -106,11 +107,12 @@
 </script>
 
 <style scoped>
-:deep(.dialog-header) {
+/* The dialog is teleported to <body>, so scoped :deep() selectors never reach its header and body */
+:global(.key-shortcuts-dialog .dialog-header) {
     padding: var(--ks-spacing-4);
 }
 
-:deep(.dialog-body) {
+:global(.key-shortcuts-dialog .dialog-body) {
     padding: var(--ks-spacing-2);
 }
 

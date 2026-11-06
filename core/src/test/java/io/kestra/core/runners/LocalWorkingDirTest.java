@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.utils.IdUtils;
@@ -18,32 +19,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LocalWorkingDirTest {
+    @TempDir
+    Path tempDir;
 
     @Test
     void shouldReturnWorkingDirPathGivenWorkingDirId() {
         String workingDirId = IdUtils.create();
-        LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), workingDirId);
+        LocalWorkingDir workingDirectory = new LocalWorkingDir(tempDir, workingDirId);
         assertTrue(workingDirectory.path().endsWith(workingDirId));
     }
 
     @Test
     void shouldReturnTheSameWorkingDirPath() {
-        LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), IdUtils.create());
+        LocalWorkingDir workingDirectory = new LocalWorkingDir(tempDir, IdUtils.create());
         assertThat(workingDirectory.path()).isEqualTo(workingDirectory.path());
     }
 
     @Test
     void shouldResolvePathFromWorkingDir() {
-        LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), IdUtils.create());
+        LocalWorkingDir workingDirectory = new LocalWorkingDir(tempDir, IdUtils.create());
 
         Path path = workingDirectory.resolve(Path.of("file.txt"));
-        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/file.txt");
+        assertThat(path).isEqualTo(workingDirectory.path().resolve("file.txt"));
 
         path = workingDirectory.resolve(Path.of("subdir/file.txt"));
-        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/subdir/file.txt");
+        assertThat(path).isEqualTo(workingDirectory.path().resolve("subdir/file.txt"));
 
         assertThat(workingDirectory.resolve(null)).isEqualTo(workingDirectory.path());
-        assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("/etc/passwd")));
+        assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(tempDir.resolve("outside.txt")));
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("../../etc/passwd")));
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("subdir/../../../etc/passwd")));
     }
@@ -51,27 +54,26 @@ class LocalWorkingDirTest {
     @Test
     void shouldCreatedTempFile() throws IOException {
         String workingDirId = IdUtils.create();
-        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
+        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(tempDir, workingDirId));
         Path tempFile = workingDirectory.createTempFile();
-        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
+        assertThat(tempFile.getParent()).isEqualTo(workingDirectory.path());
         assertThat(workingDirectory.getAllCreatedTempFiles().size()).isEqualTo(1);
     }
 
     @Test
     void shouldCreateFile() throws IOException {
         String workingDirId = IdUtils.create();
-        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
+        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(tempDir, workingDirId));
         Path path = workingDirectory.createFile("folder/file.txt");
 
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
-        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt")).isTrue();
+        assertThat(path).isEqualTo(workingDirectory.path().resolve("folder/file.txt"));
         assertThat(workingDirectory.getAllCreatedFiles().size()).isEqualTo(1);
     }
 
     @Test
     void shouldThrowExceptionGivenFileAlreadyExist() throws IOException {
         String workingDirId = IdUtils.create();
-        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
+        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(tempDir, workingDirId));
 
         workingDirectory.createFile("folder/file.txt", "1".getBytes(StandardCharsets.UTF_8));
         Assertions.assertThrows(FileAlreadyExistsException.class, () ->
@@ -83,7 +85,7 @@ class LocalWorkingDirTest {
     @Test
     void shouldFindAllFilesMatchingPatterns() throws IOException {
         // Given
-        LocalWorkingDir workingDir = new LocalWorkingDir(Path.of("/tmp/"));
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir);
         workingDir.createTempFile();
         workingDir.createFile("test1.txt");
         workingDir.createFile("test2.txt");
@@ -105,7 +107,7 @@ class LocalWorkingDirTest {
     @Test
     void shouldRecreateDirectoryAfterCleanup() throws IOException {
         // Given
-        LocalWorkingDir workingDir = new LocalWorkingDir(Path.of("/tmp/"), IdUtils.create());
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir, IdUtils.create());
         Path firtPath = workingDir.path(true);
         Path file = workingDir.createFile("test.txt");
 
@@ -125,7 +127,7 @@ class LocalWorkingDirTest {
 
     @Test
     void should_put_file_into_local_dir() throws IOException {
-        LocalWorkingDir workingDir = new LocalWorkingDir(Path.of("/tmp/"), IdUtils.create());
+        LocalWorkingDir workingDir = new LocalWorkingDir(tempDir, IdUtils.create());
         workingDir.path(true);
         Path file = workingDir.createFile("test.txt", new ByteArrayInputStream("First file".getBytes(StandardCharsets.UTF_8)));
 

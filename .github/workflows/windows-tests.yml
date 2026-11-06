@@ -1,0 +1,60 @@
+name: Windows - Filesystem tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: false
+          dependency-graph: disabled
+
+      # Filesystem coverage without the Linux containers and shell scripts required by the full backend suite.
+      - name: Run filesystem tests
+        shell: pwsh
+        run: >-
+          .\gradlew.bat :core:test --rerun
+          --tests io.kestra.core.utils.FileUtilsTest
+          --tests io.kestra.core.utils.PathMatcherPredicateTest
+          --tests io.kestra.core.utils.WindowsUtilsTest
+          --tests io.kestra.core.runners.LocalWorkingDirTest
+          --tests io.kestra.core.runners.WorkingDirFactoryTest
+          --tests io.kestra.core.serializers.FileSerdeTest
+          :storage-local:test --rerun
+          --no-daemon --no-scan --max-workers=2 --console=plain
+
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-filesystem-test-reports
+          path: |
+            core/build/reports/tests/test/
+            core/build/test-results/test/
+            storage-local/build/reports/tests/test/
+            storage-local/build/test-results/test/
+            build/test-metadata.json
+          retention-days: 7

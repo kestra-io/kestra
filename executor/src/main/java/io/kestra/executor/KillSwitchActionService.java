@@ -1,5 +1,7 @@
 package io.kestra.executor;
 
+import java.util.Optional;
+
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -44,23 +46,29 @@ public class KillSwitchActionService {
      * @param evaluationType the kill-switch verdict — must not be {@link EvaluationType#PASS}
      * @param tenantId tenant owning the execution
      * @param executionId execution to act on
+     * @return the context of the updated execution, which the caller must hand to the executor so that a KILLING
+     *         execution is driven to KILLED and a CANCELLED one gets its terminal processing; empty when nothing changed
      */
-    public void handle(EvaluationType evaluationType, String tenantId, String executionId) {
-        switch (evaluationType) {
-            case IGNORE -> log.warn(IGNORING_EXECUTION_MSG, executionId);
+    public Optional<ExecutorContext> handle(EvaluationType evaluationType, String tenantId, String executionId) {
+        return switch (evaluationType) {
+            case IGNORE -> {
+                log.warn(IGNORING_EXECUTION_MSG, executionId);
+                yield Optional.empty();
+            }
             case KILL -> {
                 log.warn(KILLING_EXECUTION_MSG, executionId);
-                killExecution(tenantId, executionId);
+                yield killExecution(tenantId, executionId);
             }
             case CANCEL -> {
                 log.warn(CANCELLING_EXECUTION_MSG, executionId);
-                cancelExecution(executionId);
+                yield cancelExecution(executionId);
             }
-        }
+            case PASS -> Optional.empty();
+        };
     }
 
-    private void killExecution(String tenantId, String executionId) {
-        executionStateStore.lock(executionId, execution ->
+    private Optional<ExecutorContext> killExecution(String tenantId, String executionId) {
+        Optional<ExecutorContext> killing = executionStateStore.lock(executionId, execution ->
         {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed"));
@@ -83,10 +91,11 @@ public class KillSwitchActionService {
         } catch (QueueException e) {
             log.error("Unable to kill the execution {}", executionId, e);
         }
+        return killing;
     }
 
-    private void cancelExecution(String executionId) {
-        executionStateStore.lock(executionId, execution ->
+    private Optional<ExecutorContext> cancelExecution(String executionId) {
+        return executionStateStore.lock(executionId, execution ->
         {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));

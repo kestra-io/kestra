@@ -15,10 +15,11 @@ name: Translations - Generate for a pull request
 # `publish` job holds the write tokens and never runs anything from the pull request: it checks that
 # the patch touches only those data files, applies it and pushes.
 #
-# Pushing to a fork needs a token with write access to the fork (GITHUB_TOKEN never has it). When the
-# PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN secret holds a maintainer token,
-# the commit is pushed straight onto the PR branch; otherwise the run leaves the commit as a patch
-# artifact and says so on the PR.
+# A branch of this repository is pushed to as the Kestra GitHub App, so the push starts the PR checks
+# (a push made with GITHUB_TOKEN starts none). Pushing to a fork needs a token with write access to the
+# fork, which neither has. When the PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN
+# secret holds a maintainer token, the commit is pushed straight onto the PR branch; otherwise the run
+# leaves the commit as a patch artifact and says so on the PR.
 on:
   workflow_dispatch:
     inputs:
@@ -148,7 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -159,6 +160,15 @@ jobs:
         name: Checkout
         with:
           persist-credentials: false
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
 
       - name: Resolve the pull request
         id: pr
@@ -207,18 +217,18 @@ jobs:
 
       - name: Commit them
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "actions@github.com"
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
           git apply --index translations.patch
           git -c core.hooksPath=/dev/null commit -m "chore(core): localize to languages other than english"
 
-      # Same-repository branches take GITHUB_TOKEN; a fork takes the maintainer token, and only when
+      # Same-repository branches take the app token; a fork takes the maintainer token, and only when
       # the contributor allowed maintainer edits. Anything else falls through to the patch below.
       - name: Push onto the pull request branch
         id: push
         continue-on-error: true
         env:
-          PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || github.token }}
+          PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || steps.app-token.outputs.token }}
           CROSS: ${{ steps.pr.outputs.cross }}
           MAINTAINER_CAN_MODIFY: ${{ steps.pr.outputs.maintainer_can_modify }}
           HEAD_REPO: ${{ steps.pr.outputs.head_repo }}

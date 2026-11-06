@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
-      "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadErrorTitle": "प्लगइन सूची लोड नहीं की जा सकी",
       "loadErrorDescription": "आपके Flow चलते रहते हैं। यह पेज केवल प्लगइन की सूची पढ़ता है।",
       "showAll": "सभी प्लगइन दिखाएँ",

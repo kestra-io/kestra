@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "Поиск по {count}+ плагинам",
       "searchTasks": "Искать {count} tasks",
-      "noResults": "Нет плагинов, соответствующих вашему запросу.",
       "loadErrorTitle": "Не удалось загрузить список плагинов",
       "loadErrorDescription": "Ваши Flow продолжают работать. Эта страница только считывает список plugin'ов.",
       "showAll": "Показать все плагины",

@@ -1360,7 +1360,6 @@
     "pluginPage": {
       "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
-      "noResults": "Nessun plugin corrisponde alla tua ricerca.",
       "loadErrorTitle": "Impossibile caricare l'elenco dei plugin",
       "loadErrorDescription": "I tuoi flow continuano a essere eseguiti. Questa pagina legge solo l'elenco dei plugin.",
       "showAll": "Mostra tutti i plugin",

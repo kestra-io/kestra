@@ -1,6 +1,7 @@
 <template>
     <el-empty :image="noData" :imageSize="180">
         <template #description>
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
             <span v-html="description" />
         </template>
     </el-empty>

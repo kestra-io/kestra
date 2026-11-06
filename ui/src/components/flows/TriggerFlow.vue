@@ -24,7 +24,7 @@
             :width="dialogWidth"
         >
             <template #header>
-                <span v-html="$t('execute the flow', {id: flowId})" />
+                <span v-html="$t('execute the flow', {id: escape(flowId)})" />
             </template>
             <FlowRun ref="flowRun" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </el-dialog>
@@ -79,6 +79,7 @@
 
 
 <script>
+    import escape from "lodash/escape"
     import FlowRun from "./FlowRun.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
@@ -130,6 +131,7 @@
             };
         },
         methods: {
+            escape,
             trackExecutionAction(action) {
                 this.apiStore.posthogEvents({
                     type: "FLOW_EXECUTION",

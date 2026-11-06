@@ -245,8 +245,8 @@
     "change state tooltip": "Изменить состояние выполнения",
     "change execution state confirm": "Вы уверены, что хотите изменить состояние выполнения <code>{id}</code>?",
     "change execution state done": "Состояние выполнения обновлено",
-    "mark as": "Пометить как <code>{status}</code>",
-    "unqueue as": "Очередь снята как <code>{status}</code>",
+    "mark as": "Отметить как {status}",
+    "unqueue as": "Снять с очереди как {status}",
     "kill": "Убить",
     "kill parents and subflow": "Прервать текущий и subflows",
     "kill only parents": "Убить только текущий",
@@ -474,8 +474,8 @@
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
-    "bulk replay": "Вы уверены, что хотите воспроизвести <code>{executionCount}</code> выполнение(я)?",
-    "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
+    "bulk replay": "Вы уверены, что хотите повторить {executionCount} Execution(s)?",
+    "bulk change state": "Вы уверены, что хотите изменить состояние {executionCount} execution(s)?",
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",
     "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
     "bulk unqueue": "Вы уверены, что хотите удалить из очереди выполнение(я) <code>{executionCount}</code>?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "Подтвердить",
           "title": "Подтвердите удаление содержимого",
-          "files": "Вы уверены, что хотите удалить <code>{count}</code> файл(ы)?",
-          "folders": "Вы уверены, что хотите удалить <code>{count}</code> папку(и) и все её содержимое?",
-          "mixed": "Вы уверены, что хотите удалить папку(и) <code>{folders}</code> и файл(ы) <code>{files}</code>?",
-          "file_single": "Вы уверены, что хотите удалить файл <code>{name}</code>?",
-          "folder_single": "Вы уверены, что хотите удалить папку <code>{name}</code> и все её содержимое?"
+          "files": "Вы уверены, что хотите удалить {count} файл(ы)?",
+          "folders": "Вы уверены, что хотите удалить {count} папку(и) и все ее содержимое?",
+          "mixed": "Вы уверены, что хотите удалить {folders} папку(и) и {files} файл(ы)?",
+          "file_single": "Вы уверены, что хотите удалить файл {name}?",
+          "folder_single": "Вы уверены, что хотите удалить папку {name} и все ее содержимое?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "Задача FAILED",
     "task was skipped": "Задача была пропущена",
     "task sent a warning": "Задача отправила предупреждение",
-    "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "По умолчанию используется файл namespace: {name}",
     "no_file_choosen": "Файл не выбран",
     "dependency": {
       "controls": {

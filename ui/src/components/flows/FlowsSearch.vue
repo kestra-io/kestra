@@ -33,6 +33,7 @@
                             </template>
                             <template v-for="(fragment, _j) in item.fragments" :key="`pre-${_i}-${_j}`">
                                 <small>
+                                    <!-- nosemgrep: kestra-vue-avoid-v-html -- sanitize escapes the fragment before turning the search markers into mark tags. -->
                                     <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>

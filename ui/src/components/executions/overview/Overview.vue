@@ -165,11 +165,12 @@
     <NoData
         v-else
         id="empty"
-        :text="$t('execution not found', {executionId: route.params.id})"
+        :text="$t('execution not found', {executionId: escape(String(route.params.id))})"
     />
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {onMounted, computed, ref} from "vue";
     import {watchDebounced} from "@vueuse/core";
 

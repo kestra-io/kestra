@@ -245,8 +245,8 @@
     "change state tooltip": "Zmień stan wykonania",
     "change execution state confirm": "Czy na pewno chcesz zmienić stan wykonania <code>{id}</code>?",
     "change execution state done": "Stan wykonania zaktualizowany",
-    "mark as": "Oznacz jako <code>{status}</code>",
-    "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
+    "mark as": "Oznacz jako {status}",
+    "unqueue as": "Usuń z kolejki jako {status}",
     "kill": "Zakończ",
     "kill parents and subflow": "Zatrzymaj bieżący flow i subflow",
     "kill only parents": "Zabij tylko bieżący",
@@ -474,8 +474,8 @@
     "restore": "Przywróć",
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> wykonanie(a)?",
-    "bulk replay": "Czy na pewno chcesz odtworzyć <code>{executionCount}</code> wykonanie(a)?",
-    "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
+    "bulk replay": "Czy na pewno chcesz ponownie uruchomić {executionCount} egzekucję | {executionCount} egzekucje | {executionCount} egzekucji?",
+    "bulk change state": "Czy na pewno chcesz zmienić stan {executionCount} egzekucji?",
     "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> wykonanie(a)?",
     "bulk pause": "Czy na pewno chcesz wstrzymać wykonanie <code>{executionCount}</code>?",
     "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "Potwierdź",
           "title": "Potwierdź usunięcie zawartości",
-          "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
-          "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
-          "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
-          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
-          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?"
+          "files": "Czy na pewno chcesz usunąć {count} plik | {count} pliki | {count} plików?",
+          "folders": "Czy na pewno chcesz usunąć {count} folder | {count} foldery | {count} folderów i całą jego zawartość?",
+          "mixed": "Czy na pewno chcesz usunąć {folders} folder(y) i {files} plik(i)?",
+          "file_single": "Czy na pewno chcesz usunąć plik {name}?",
+          "folder_single": "Czy na pewno chcesz usunąć folder {name} i całą jego zawartość?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "Task failed",
     "task was skipped": "Pominięto task",
     "task sent a warning": "Task wysłał ostrzeżenie",
-    "defaultsToNamespaceFile": "Domyślnie do pliku namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Domyślnie plik namespace'u: {name}",
     "no_file_choosen": "Nie wybrano pliku",
     "dependency": {
       "controls": {

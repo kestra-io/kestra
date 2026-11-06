@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('change execution state confirm', {id: execution.id})" />
+            <p v-html="$t('change execution state confirm', {id: escape(execution.id)})" />
 
             <p>
                 {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
@@ -32,7 +32,11 @@
                 >
                     <template #default>
                         <Status size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="mark as" tag="span" scope="global">
+                            <template #status>
+                                <code>{{ item.code }}</code>
+                            </template>
+                        </i18n-t>
                     </template>
                 </el-option>
             </el-select>
@@ -54,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {ref, computed} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
@@ -110,7 +115,6 @@
             .map(value => {
                 return {
                     code: value,
-                    label: t("mark as", {status: value}),
                     disabled: value === props.execution.state.current
                 };
             });

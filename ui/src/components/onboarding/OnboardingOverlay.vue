@@ -12,6 +12,7 @@
                     <small>{{ stepIndex + 1 }} / {{ steps.length }}</small>
                 </div>
             </div>
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- step texts are fixed onboarding translations with no user input. -->
             <p class="description" v-html="stepDescription" />
             <div v-if="snippetMarkdown" class="snippet-wrap">
                 <Markdown
@@ -28,6 +29,7 @@
                 class="feedback"
             >
                 <template #title>
+                    <!-- nosemgrep: kestra-vue-avoid-v-html -- step texts are fixed onboarding translations with no user input. -->
                     <span class="feedback-note-title" v-html="externalActionNote" />
                 </template>
             </el-alert>

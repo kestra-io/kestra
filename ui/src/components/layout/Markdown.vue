@@ -16,6 +16,7 @@
             </transition>
         </div>
 
+        <!-- nosemgrep: kestra-vue-avoid-v-html -- Markdown.render passes its output through xss(). -->
         <div
             ref="markdownContainer"
             :class="['markdown', 'enhanced-markdown']"

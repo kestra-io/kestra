@@ -26,7 +26,7 @@
             </el-button>
         </template>
 
-        <p v-html="$t('Set labels to execution', {id: execution.id})" />
+        <p v-html="$t('Set labels to execution', {id: escape(execution.id)})" />
 
         <el-form labelPosition="top">
             <el-form-item :label="$t('execution labels')">
@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {computed, ref, watch} from "vue";
 
     import LabelInput from "../../components/labels/LabelInput.vue";

@@ -13,7 +13,7 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
+                <p v-html="$t('change state confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
 
                 <p>
                     {{ $t('change state current state') }} <Status size="small" class="me-1" :status="taskRun.state.current" />
@@ -32,7 +32,11 @@
                     >
                         <template #default>
                             <Status size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span" scope="global">
+                                <template #status>
+                                    <code>{{ item.code }}</code>
+                                </template>
+                            </i18n-t>
                         </template>
                     </el-option>
                 </el-select>
@@ -63,6 +67,7 @@
 </template>
 
 <script>
+    import escape from "lodash/escape"
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -152,7 +157,8 @@
             return {
                 visible,
                 selectedStatus,
-                changeStatus
+                changeStatus,
+                escape
             }
         },
         computed: {
@@ -176,7 +182,6 @@
                     .map(value => {
                         return {
                             code: value,
-                            label: this.$t("mark as", {status: value}),
                             disabled: value === this.taskRun.state.current
                         };
                     })

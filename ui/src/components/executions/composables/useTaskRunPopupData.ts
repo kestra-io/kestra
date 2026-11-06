@@ -3,7 +3,7 @@ import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
-import {defaultTaskRunLogLevel} from "../taskRunLogLevel"
+import type {LevelKey} from "../../../utils/logs"
 
 export type LoadStatus = "idle" | "loading" | "ready" | "error"
 
@@ -48,6 +48,7 @@ interface PopupDataSource {
     logTaskRunId: () => string
     logAttemptNumber: () => number
     logChildTaskRunIds: () => string[]
+    logLevel: () => LevelKey
     taskRunState: () => string | undefined
 }
 
@@ -77,12 +78,12 @@ export function useTaskRunPopupData(source: PopupDataSource) {
     )
 
     const logsCount = useLoadable(
-        () => baseKey.value && `${baseKey.value}|${source.logAttemptNumber()}`,
+        () => baseKey.value && `${baseKey.value}|${source.logAttemptNumber()}|${source.logLevel()}`,
         async () => {
             const countLogs = (filters: QueryFilter[]) => LogsAPI.searchLogs({
                 filters: [
                     {field: "executionId", operation: "EQUALS", value: source.executionId() as string},
-                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: defaultTaskRunLogLevel()},
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: source.logLevel()},
                     ...filters,
                 ],
                 page: 1,

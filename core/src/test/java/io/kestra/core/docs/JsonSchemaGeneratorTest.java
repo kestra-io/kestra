@@ -25,8 +25,10 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.annotations.TicketingField;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.assets.External;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
@@ -449,6 +451,18 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldOfferAssetFailureBehaviorOnTasksOnly() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class, false);
+        Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+
+        Map<String, Object> taskAssets = (Map<String, Object>) definitions.get(AssetsDeclaration.class.getName()).get("properties");
+        Map<String, Object> triggerAssets = (Map<String, Object>) definitions.get(TriggerAssetsDeclaration.class.getName()).get("properties");
+        assertThat(taskAssets, hasKey("assetFailureBehavior"));
+        assertThat(triggerAssets, allOf(hasKey("outputs"), not(hasKey("assetFailureBehavior"))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldExposeAvailableZoneIdsAndOffsetPatternWhenFieldIsAnnotatedWithTimezoneId() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(AbstractTrigger.class, Schedule.class);
 
@@ -664,8 +678,8 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(13));
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs, and the trigger base has its own
+        assertThat(definitions.size(), is(14));
     }
 
     @SuppressWarnings("unchecked")

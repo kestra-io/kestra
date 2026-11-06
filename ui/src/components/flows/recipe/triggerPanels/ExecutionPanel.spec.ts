@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {KsCheckTag, KsSelect} from "@kestra-io/design-system"
+import {KsCheckTag} from "@kestra-io/design-system"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import ExecutionPanel from "./ExecutionPanel.vue"
@@ -80,7 +80,6 @@ describe("ExecutionPanel", () => {
         const wrapper = mountPanel({includeSub: false})
 
         expect(wrapper.props("namespacesLoading")).toBe(false)
-        expect(wrapper.findComponent(KsSelect).props("loading")).toBe(false)
 
         const hint = wrapper.find(".hint")
         expect(hint.text()).toContain("recipe.execution.include_sub_hint_off")

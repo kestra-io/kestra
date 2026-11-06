@@ -245,8 +245,8 @@
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "change execution state confirm": "क्या आप वाकई <code>{id}</code> की execution की state बदलना चाहते हैं?",
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
-    "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
-    "unqueue as": "<code>{status}</code> के रूप में अनक्यू करें",
+    "mark as": "{status} के रूप में चिह्नित करें",
+    "unqueue as": "{status} के रूप में अनक्यू करें",
     "kill": "समाप्त करें",
     "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "kill only parents": "केवल वर्तमान को समाप्त करें",
@@ -474,8 +474,8 @@
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
-    "bulk replay": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः चलाना चाहते हैं?",
-    "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
+    "bulk replay": "क्या आप वाकई {executionCount} execution(s) को फिर से चलाना चाहते हैं?",
+    "bulk change state": "क्या आप वाकई {executionCount} execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
     "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "पुष्टि करें",
           "title": "सामग्री को हटाने की पुष्टि करें",
-          "files": "क्या आप वाकई <code>{count}</code> फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
-          "folders": "क्या आप वाकई <code>{count}</code> फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
-          "mixed": "क्या आप वाकई <code>{folders}</code> फ़ोल्डर(ओं) और <code>{files}</code> फ़ाइल(ओं) को हटाना चाहते हैं?",
-          "file_single": "क्या आप वाकई <code>{name}</code> फ़ाइल को हटाना चाहते हैं?",
-          "folder_single": "क्या आप वाकई <code>{name}</code> फ़ोल्डर और इसकी सभी सामग्री को हटाना चाहते हैं?"
+          "files": "क्या आप वाकई {count} फ़ाइलें हटाना चाहते हैं?",
+          "folders": "क्या आप वाकई {count} फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
+          "mixed": "क्या आप वाकई {folders} फ़ोल्डर और {files} फ़ाइलें हटाना चाहते हैं?",
+          "file_single": "क्या आप वाकई फ़ाइल {name} को हटाना चाहते हैं?",
+          "folder_single": "क्या आप वाकई फ़ोल्डर {name} और उसकी सभी सामग्री को हटाना चाहते हैं?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "टास्क FAILED",
     "task was skipped": "टास्क को छोड़ दिया गया था",
     "task sent a warning": "टास्क ने एक WARNING भेजा",
-    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: {name}",
     "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "dependency": {
       "controls": {

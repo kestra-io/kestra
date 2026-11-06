@@ -14,7 +14,7 @@
         :appendToBody="true"
     >
         <template #header>
-            <span v-html="$t('force run title', {id: execution.id})" />
+            <span v-html="$t('force run title', {id: escape(execution.id)})" />
         </template>
         <template #footer>
             <el-button
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {ref, computed} from "vue";
     import {State} from "@kestra-io/ui-libs";
     import permission from "../../../../../models/permission";

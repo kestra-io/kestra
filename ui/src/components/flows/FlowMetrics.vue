@@ -26,6 +26,7 @@
                 v-if="flowStore.aggregatedMetrics"
             >
                 <template #content>
+                    <!-- nosemgrep: kestra-vue-avoid-v-html -- the chart tooltip helper escapes every title and label it receives. -->
                     <span v-html="tooltipContent" />
                 </template>
                 <Bar

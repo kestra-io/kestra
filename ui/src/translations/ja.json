@@ -245,8 +245,8 @@
     "change state tooltip": "実行状態を変更",
     "change execution state confirm": "実行<code>{id}</code>の状態を変更してもよろしいですか？",
     "change execution state done": "実行状態が更新されました",
-    "mark as": "<code>{status}</code>としてマーク",
-    "unqueue as": "<code>{status}</code>としてキューから外す",
+    "mark as": "{status}としてマーク",
+    "unqueue as": "{status}としてキューから削除",
     "kill": "キル",
     "kill parents and subflow": "現在のflowとsubflowを終了",
     "kill only parents": "現在のもののみを終了",
@@ -474,8 +474,8 @@
     "restore": "復元",
     "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
-    "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
-    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
+    "bulk replay": "{executionCount} 件の Execution をリプレイしてもよろしいですか？",
+    "bulk change state": "{executionCount} 件の execution の状態を変更してもよろしいですか？",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "確認",
           "title": "コンテンツの削除を確認",
-          "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
-          "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
-          "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
-          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
-          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？"
+          "files": "{count} 個のファイルを削除してもよろしいですか？",
+          "folders": "{count}個のフォルダーとそのすべてのコンテンツを削除してもよろしいですか？",
+          "mixed": "{folders}個のフォルダーと{files}個のファイルを削除してもよろしいですか？",
+          "file_single": "ファイル {name} を削除してもよろしいですか？",
+          "folder_single": "フォルダー {name} とそのすべてのコンテンツを削除してもよろしいですか？"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "タスクが失敗しました",
     "task was skipped": "タスクがスキップされました",
     "task sent a warning": "タスクがWARNINGを送信しました",
-    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
+    "defaultsToNamespaceFile": "namespaceファイルにデフォルト設定: {name}",
     "no_file_choosen": "ファイルが選択されていません",
     "dependency": {
       "controls": {

@@ -9,7 +9,7 @@
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('resumed title', {id: execution.id})" />
+            <span v-html="$t('resumed title', {id: escape(execution.id)})" />
         </template>
         <el-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
@@ -27,6 +27,7 @@
 </script>
 
 <script>
+    import escape from "lodash/escape"
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -62,6 +63,7 @@
             }
         },
         methods: {
+            escape,
             click() {
                 if (this.needInputs) {
                     this.isDrawerOpen = true;

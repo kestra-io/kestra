@@ -245,8 +245,8 @@
     "change state tooltip": "Cambiar el estado de ejecución",
     "change execution state confirm": "¿Está seguro de que desea cambiar el estado de la ejecución <code>{id}</code>?",
     "change execution state done": "Estado de ejecución actualizado",
-    "mark as": "Marcar como <code>{status}</code>",
-    "unqueue as": "Desencolar como <code>{status}</code>",
+    "mark as": "Marcar como {status}",
+    "unqueue as": "Desencolar como {status}",
     "kill": "Terminar",
     "kill parents and subflow": "Terminar el flujo actual y los subflows",
     "kill only parents": "Matar solo el actual",
@@ -474,8 +474,8 @@
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "bulk delete": "¿Estás seguro de que quieres eliminar <code>{executionCount}</code> ejecución(es)?",
-    "bulk replay": "¿Estás seguro de que quieres reproducir <code>{executionCount}</code> ejecución(es)?",
-    "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
+    "bulk replay": "¿Estás seguro de que quieres reproducir {executionCount} ejecución(es)?",
+    "bulk change state": "¿Estás seguro de que quieres cambiar el estado de {executionCount} ejecución(es)?",
     "bulk resume": "¿Estás seguro de que quieres reanudar <code>{executionCount}</code> ejecución(es)?",
     "bulk pause": "¿Está seguro de que desea pausar la(s) ejecución(es) <code>{executionCount}</code>?",
     "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
@@ -746,11 +746,11 @@
         "deletion": {
           "confirm": "Confirmar",
           "title": "Confirmar eliminación de contenido",
-          "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
-          "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
-          "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
-          "file_single": "¿Está seguro de que desea eliminar el archivo <code>{name}</code>?",
-          "folder_single": "¿Está seguro de que desea eliminar la carpeta <code>{name}</code> y todo su contenido?"
+          "files": "¿Estás seguro de que quieres eliminar {count} archivo(s)?",
+          "folders": "¿Estás seguro de que quieres eliminar {count} carpeta(s) y todo su contenido?",
+          "mixed": "¿Estás seguro de que quieres eliminar {folders} carpeta(s) y {files} archivo(s)?",
+          "file_single": "¿Estás seguro de que quieres eliminar el archivo {name}?",
+          "folder_single": "¿Estás seguro de que quieres eliminar la carpeta {name} y todo su contenido?"
         }
       },
       "revisions": {
@@ -1759,7 +1759,7 @@
     "task failed": "Tarea FAILED",
     "task was skipped": "La task fue omitida",
     "task sent a warning": "La task envió un WARNING",
-    "defaultsToNamespaceFile": "Por defecto en el archivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Predeterminado al archivo de namespace: {name}",
     "no_file_choosen": "No se ha elegido archivo",
     "dependency": {
       "controls": {

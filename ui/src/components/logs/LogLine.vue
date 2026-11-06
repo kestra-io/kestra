@@ -30,6 +30,7 @@
                     </span>
                 </span>
             </div>
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- the message goes through xss() and Markdown.render sanitizes its output again. -->
             <div
                 ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"

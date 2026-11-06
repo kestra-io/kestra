@@ -287,7 +287,7 @@
             width="70%"
         >
             <template #header>
-                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: escape(selectedFlow.id)})" />
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
@@ -300,6 +300,7 @@
 
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {ref, computed, useTemplateRef} from "vue";
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";

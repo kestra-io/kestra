@@ -7,6 +7,7 @@
             <h5 class="empty-state-title mt-3">
                 {{ title }}
             </h5>
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
             <p
                 class="empty-state-description"
                 :class="themeClass"

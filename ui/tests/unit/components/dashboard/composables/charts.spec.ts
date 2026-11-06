@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from "vitest";
 import {createPinia, setActivePinia} from "pinia";
-import {chartSegmentDrillDown, pushChartDrillDown} from "../../../../../src/components/dashboard/composables/charts";
+import {chartSegmentDrillDown, pushChartDrillDown, tooltip} from "../../../../../src/components/dashboard/composables/charts";
 
 const EXECUTIONS_CHART = {
     data: {
@@ -83,5 +83,19 @@ describe("pushChartDrillDown", () => {
             size: 100,
             page: 1,
         });
+    });
+});
+
+describe("tooltip", () => {
+    it("should escape series labels and titles taken from the data", () => {
+        const html = tooltip({
+            title: ["<img src=x onerror=alert(1)>"],
+            body: [{lines: ["<b>label</b>: 3"]}],
+            labelColors: [{backgroundColor: "red", borderColor: "red"}],
+        });
+
+        expect(html).not.toContain("<img");
+        expect(html).not.toContain("<b>");
+        expect(html).toContain("&lt;b&gt;label&lt;/b&gt;: 3");
     });
 });

@@ -116,6 +116,7 @@ export default {
             }
 
             if (excludedKeys.length > 0) {
+                // nosemgrep: detect-non-literal-regexp -- excludedKeys are filter names from the calling component, never from the URL.
                 const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`);
                 query = Object.fromEntries(
                     Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null)

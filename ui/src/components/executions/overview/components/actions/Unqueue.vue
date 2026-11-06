@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: execution.id})" />
+            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
 
             <el-select
                 :required="true"
@@ -27,7 +27,11 @@
                 >
                     <template #default>
                         <Status size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
+                            <template #status>
+                                <code>{{ item.code }}</code>
+                            </template>
+                        </i18n-t>
                     </template>
                 </el-option>
             </el-select>
@@ -42,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+    import escape from "lodash/escape"
     import {computed, ref} from "vue";
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";
@@ -75,7 +80,6 @@
     const states = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
-            label: t("unqueue as", {status: value}),
         }));
     });
 

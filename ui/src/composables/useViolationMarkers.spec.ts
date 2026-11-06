@@ -88,9 +88,12 @@ function createEditor(model: monaco.editor.ITextModel | null) {
         createDecorationsCollection: vi.fn<
             monaco.editor.IStandaloneCodeEditor["createDecorationsCollection"]
         >(() => collection as unknown as monaco.editor.IEditorDecorationsCollection),
+        setSelection: vi.fn(),
+        revealRangeInCenterIfOutsideViewport: vi.fn(),
+        focus: vi.fn(),
     } satisfies Pick<
         monaco.editor.IStandaloneCodeEditor,
-        "getModel" | "createDecorationsCollection"
+        "getModel" | "createDecorationsCollection" | "setSelection" | "revealRangeInCenterIfOutsideViewport" | "focus"
     >
 
     return {
@@ -107,15 +110,16 @@ function mountMarkers(
 ) {
     const editor = shallowRef(initialEditor)
     const errors = shallowRef<ValidationError[] | undefined>(errorsValue)
+    let revealNext: () => void = () => {}
 
     const wrapper = i18nMount(defineComponent({
         setup() {
-            useViolationMarkers({editor, errors})
+            ;({revealNext} = useViolationMarkers({editor, errors}))
             return () => null
         },
     }))
 
-    return {editor, errors, wrapper}
+    return {editor, errors, wrapper, revealNext: () => revealNext()}
 }
 
 describe("useViolationMarkers", () => {
@@ -381,5 +385,81 @@ describe("useViolationMarkers", () => {
 
         expect(setModelMarkers).not.toHaveBeenCalled()
         expect(editor.clear).not.toHaveBeenCalled()
+    })
+
+    it("reveals the first marker on the first activation", () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+
+        expect(editor.setSelection).toHaveBeenCalledExactlyOnceWith(firstLine)
+        expect(editor.revealRangeInCenterIfOutsideViewport).toHaveBeenCalledExactlyOnceWith(
+            firstLine,
+            monaco.editor.ScrollType.Smooth,
+        )
+        expect(editor.focus).toHaveBeenCalledOnce()
+    })
+
+    it("reveals the second marker on the second activation", () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+        revealNext()
+
+        expect(editor.setSelection).toHaveBeenLastCalledWith(otherLine)
+        expect(editor.revealRangeInCenterIfOutsideViewport).toHaveBeenLastCalledWith(
+            otherLine,
+            monaco.editor.ScrollType.Smooth,
+        )
+    })
+
+    it("wraps back to the first marker after the last activation", () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+        revealNext()
+        revealNext()
+
+        expect(editor.setSelection).toHaveBeenLastCalledWith(firstLine)
+    })
+
+    it("does nothing on activation when the errors resolve to no marker", () => {
+        resolveMarkers.mockReturnValue([])
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+
+        expect(editor.setSelection).not.toHaveBeenCalled()
+        expect(editor.focus).not.toHaveBeenCalled()
+    })
+
+    it("does nothing on activation when there is no editor", () => {
+        const {revealNext} = mountMarkers(undefined)
+
+        expect(() => revealNext()).not.toThrow()
+    })
+
+    it("keeps the cursor across an unchanged re-resolve", async () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const {errors, revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+        expect(editor.setSelection).toHaveBeenLastCalledWith(firstLine)
+
+        errors.value = [...initialErrors]
+        await nextTick()
+
+        revealNext()
+
+        expect(editor.setSelection).toHaveBeenLastCalledWith(otherLine)
     })
 })

@@ -17,12 +17,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.annotations.Plugin;
@@ -64,7 +62,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
-@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 public class WorkingDirectoryTest {
     @Inject
     Suite suite;
@@ -201,8 +198,7 @@ public class WorkingDirectoryTest {
         suite.inputFiles(runnerUtils);
     }
 
-    // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
-    @FlakyTest(description = "Blocked by #13134: working directory output file handling")
+    @Test
     @LoadFlows(value = { "flows/valids/working-directory-outputs.yml" }, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);
@@ -218,6 +214,18 @@ public class WorkingDirectoryTest {
     @LoadFlows({ "flows/valids/working-directory-invalid-runif.yaml" })
     void invalidRunIf() throws Exception {
         suite.invalidRunIf(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure.yaml" })
+    void shouldFailWorkingDirectoryWhenPostExecuteTasksFails() throws Exception {
+        suite.postExecuteTasksFailure(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure-retry.yaml" })
+    void shouldRetryWorkingDirectoryWhenPostExecuteTasksFails() throws Exception {
+        suite.postExecuteTasksFailureRetry(runnerUtils);
     }
 
     @Test
@@ -496,6 +504,22 @@ public class WorkingDirectoryTest {
 
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        }
+
+        public void postExecuteTasksFailure(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure");
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("after")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("onError")).isNotEmpty();
+        }
+
+        public void postExecuteTasksFailureRetry(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure-retry");
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getAttempts()).hasSize(2);
         }
 
         private void put(String path, String content) throws IOException, URISyntaxException {

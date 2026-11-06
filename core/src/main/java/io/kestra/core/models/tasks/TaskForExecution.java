@@ -31,6 +31,8 @@ public class TaskForExecution implements TaskInterface {
 
     protected Property<Approval.CommentRequired> commentRequired;
 
+    protected Boolean approval;
+
     public static TaskForExecution of(TaskInterface task) {
         List<Input<?>> inputs = null;
 
@@ -44,7 +46,7 @@ public class TaskForExecution implements TaskInterface {
             .inputs(inputs);
 
         if (task instanceof Approval approval) {
-            taskForExecutionBuilder.decisions(approval.getDecisions()).commentRequired(approval.getCommentRequired());
+            taskForExecutionBuilder.decisions(approval.getDecisions()).commentRequired(approval.getCommentRequired()).approval(true);
         }
 
         if (task instanceof ExecutableTask<?> executableTask) {

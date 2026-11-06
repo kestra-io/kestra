@@ -10,6 +10,7 @@ export interface ApprovalTask {
     inputs?: InputMetaData[];
     decisions?: {approve?: string; deny?: string};
     commentRequired?: string;
+    approval?: boolean;
 }
 
 export interface ApprovalTaskRun {
@@ -18,7 +19,7 @@ export interface ApprovalTaskRun {
 }
 
 function isApprovalTask(task: FlowUtils.FlowTask | undefined): task is FlowUtils.FlowTask & ApprovalTask {
-    return task?.type === APPROVAL_TYPE && task.id !== undefined
+    return (task?.type === APPROVAL_TYPE || task?.approval === true) && task.id !== undefined
 }
 
 export function findApprovalTask(flow: unknown, taskId: string): ApprovalTask | undefined {

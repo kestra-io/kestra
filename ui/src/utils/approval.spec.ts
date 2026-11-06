@@ -30,6 +30,13 @@ describe("findApprovalTaskRun", () => {
         expect(findApprovalTaskRun(execution, flow, "PAUSED")?.taskRun.id).toBe("tr-approval")
     })
 
+    it("finds a task extending Approval, which the flow marks as an approval", () => {
+        const deploy = {tasks: [{id: "deploy", type: "io.kestra.plugin.ee.terraform.Deploy", approval: true}]}
+        const paused = {taskRunList: [{id: "tr-deploy", taskId: "deploy", state: {current: "PAUSED"}}]} as unknown as Execution
+
+        expect(findApprovalTaskRun(paused, deploy, "PAUSED")?.taskRun.id).toBe("tr-deploy")
+    })
+
     it("returns nothing when no Approval is in that state", () => {
         expect(findApprovalTaskRun(execution, flow, "RUNNING")).toBeUndefined()
     })

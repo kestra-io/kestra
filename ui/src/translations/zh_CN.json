@@ -2328,6 +2328,7 @@
       "default": "默认仪表板",
       "set_default": "设为默认",
       "empty": "没有结果显示。",
+      "overdue": "逾期 — {date}",
       "edition": {
         "label": "编辑仪表板",
         "chart": "编辑此图表"
@@ -2350,7 +2351,8 @@
         "paused": "已暂停",
         "success": "成功",
         "warning": "警告",
-        "failed": "失败"
+        "failed": "失败",
+        "upcoming": "即将到来"
       }
     },
     "setup": {

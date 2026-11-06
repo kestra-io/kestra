@@ -2328,6 +2328,7 @@
       "default": "Tableau de bord par défaut",
       "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
+      "overdue": "En retard — {date}",
       "edition": {
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
@@ -2350,7 +2351,8 @@
         "paused": "En pause",
         "success": "Succès",
         "warning": "Avertissement",
-        "failed": "Échoué"
+        "failed": "Échoué",
+        "upcoming": "À venir"
       }
     },
     "setup": {

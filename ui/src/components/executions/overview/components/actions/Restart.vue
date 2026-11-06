@@ -220,7 +220,7 @@
                 {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
-                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task", checkParams) : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>

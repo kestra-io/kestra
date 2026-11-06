@@ -190,6 +190,7 @@
                     <div class="tab-body">
                         <TaskRunLogs
                             :key="`${currentTaskRun.id}-${logsRefresh}`"
+                            v-model:level="logLevel"
                             :executionId="execution.id"
                             :taskRunIds="logTaskRunIds"
                             hideTaskHeader
@@ -304,6 +305,8 @@
     import {useSelectedTaskRun} from "./composables/useSelectedTaskRun"
     import {useTaskRunPopupData} from "./composables/useTaskRunPopupData"
     import {iterationLabel} from "./iterationLabel"
+    import {defaultTaskRunLogLevel} from "./taskRunLogLevel"
+    import type {LevelKey} from "../../utils/logs"
 
     export type TaskRunPopupTab = "metrics" | "logs" | "outputs" | "artifacts"
 
@@ -403,6 +406,8 @@
 
     const fullscreenLabel = computed(() => t(isFullscreen.value ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
 
+    const logLevel = ref<LevelKey>(defaultTaskRunLogLevel())
+
     const {metricsCount, logsCount, outputs, outputsCount, reload: dataReload} = useTaskRunPopupData({
         enabled: () => open.value,
         executionId: () => props.execution.id,
@@ -411,6 +416,7 @@
         logTaskRunId: () => currentTaskRun.value.id,
         logAttemptNumber: () => attemptIndex.value,
         logChildTaskRunIds: () => logChildTaskRunIds.value,
+        logLevel: () => logLevel.value,
         taskRunState: () => currentTaskRun.value.state.current,
     })
 

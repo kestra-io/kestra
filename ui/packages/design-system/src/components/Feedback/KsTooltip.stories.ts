@@ -36,10 +36,19 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {content: "This is a tooltip"},
+    args: {
+        content: "This is a tooltip",
+        trigger: "hover",
+        placement: "bottom",
+        effect: "light",
+        enterable: true,
+        rawContent: false,
+        disabled: false,
+    },
 }
 
 export const Placements: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTooltip, KsButton},
         template: `
@@ -54,6 +63,7 @@ export const Placements: Story = {
 }
 
 export const WithContentSlot: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTooltip, KsButton},
         template: `
@@ -71,6 +81,7 @@ export const WithContentSlot: Story = {
 
 /** Theme – dark and light */
 export const Theme: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTooltip, KsButton},
         template: `
@@ -88,6 +99,7 @@ export const Theme: Story = {
 
 /** HTML content via rawContent */
 export const HTMLContent: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTooltip, KsButton},
         template: `
@@ -106,6 +118,7 @@ export const HTMLContent: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTooltip, KsButton},
         template: `

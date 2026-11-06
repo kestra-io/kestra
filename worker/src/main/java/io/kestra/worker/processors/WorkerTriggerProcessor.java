@@ -46,8 +46,8 @@ import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
 @Slf4j
 public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTrigger> {
+    private static final Map<String, AtomicInteger> EVALUATE_TRIGGER_RUNNING_COUNT = new ConcurrentHashMap<>();
 
-    private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
     private final WorkerQueue<LogEntry> workerLogQueue;
     private final WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue;
     private final RunContextInitializer runContextInitializer;
@@ -91,12 +91,12 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start();
 
-                this.evaluateTriggerRunningCount.computeIfAbsent(
+                EVALUATE_TRIGGER_RUNNING_COUNT.computeIfAbsent(
                     workerTrigger.uid(), s -> metricRegistry
                         .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT_DESCRIPTION, new AtomicInteger(0), metricsTags)
                 );
 
-                this.evaluateTriggerRunningCount.get(workerTrigger.uid()).addAndGet(1);
+                EVALUATE_TRIGGER_RUNNING_COUNT.get(workerTrigger.uid()).addAndGet(1);
 
                 ConditionContext conditionContext = runContextInitializer.forWorker(workerTrigger);
                 TriggerContext triggerContext = TriggerContext.of(workerTrigger);
@@ -170,7 +170,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                     runContext.cleanup();
                 }
 
-                this.evaluateTriggerRunningCount.get(workerTrigger.uid()).addAndGet(-1);
+                EVALUATE_TRIGGER_RUNNING_COUNT.get(workerTrigger.uid()).addAndGet(-1);
             }
             );
 

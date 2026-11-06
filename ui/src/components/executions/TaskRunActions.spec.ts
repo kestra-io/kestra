@@ -152,7 +152,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
         expect(click).toHaveBeenCalled()
         click.mockRestore()
@@ -179,7 +179,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-4",
-            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: "tr-2"}],
         })
     })
 
@@ -304,7 +304,10 @@ describe("TaskRunActions", () => {
         expect(executionsStore.loadLogs).toHaveBeenCalledWith({
             store: false,
             executionId: "ex-failed",
-            params: {taskRunId: "tr-failed", minLevel: "ERROR"},
+            filters: [
+                {field: "taskRunId", operation: "EQUALS", value: "tr-failed"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ],
             size: 100,
         })
     })

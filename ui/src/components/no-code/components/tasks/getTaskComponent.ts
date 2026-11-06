@@ -11,7 +11,7 @@ type TaskComponent = Component & {
 
 const TasksComponents = import.meta.glob<{ default: TaskComponent }>("./Task*.vue", {eager: true})
 
-export interface Schema {
+export type Schema = {
     $ref?: string;
     $required?: boolean;
     type?: string | {const: string};
@@ -19,6 +19,7 @@ export interface Schema {
     description?: string;
     markdownDescription?: string;
     properties?: Record<string, Schema>;
+    additionalProperties?: boolean | Schema;
     required?: string[];
     default?: unknown;
     allOf?: Schema[];
@@ -31,6 +32,10 @@ export interface Schema {
     pattern?: string;
     $language?: string;
     $secret?: boolean;
+    $deprecated?: boolean;
+    $group?: string;
+    $index?: number;
+    $dynamic?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
@@ -145,7 +150,7 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         // A discriminated union too large to page through in a plain TaskArray, but not
         // plugin-provided (e.g. flow Input's ~15 short-named types: string, int, json, ...) —
         // the implementation control doesn't apply, so it keeps the collapsible counted-header list.
-        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10) {
+        if (items?.anyOf && (items.anyOf.length === 0 || items.anyOf.length > 10)) {
             return "list"
         }
 

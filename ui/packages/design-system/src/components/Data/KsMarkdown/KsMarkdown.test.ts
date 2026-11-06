@@ -72,6 +72,14 @@ describe("KsMarkdown", () => {
         expect(alert.find("strong").text()).toBe("bold")
     })
 
+    test("keeps text after a colon that the directive syntax would otherwise swallow", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "<em>io.kestra.plugin:plugin-dbt:2.5.4</em> at 10:45 on http://localhost:8080/ui"},
+        })
+
+        expect(wrapper.text()).toContain("io.kestra.plugin:plugin-dbt:2.5.4 at 10:45 on http://localhost:8080/ui")
+    })
+
     test("opens only external links in a new tab", () => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: "[docs](https://kestra.io) [flows](/flows)"}})
         const [external, internal] = wrapper.findAll("a")
@@ -301,9 +309,10 @@ describe("KsMarkdown", () => {
     test.each([
         ["https://www.youtube.com/embed/abc", "https://www.youtube.com/embed/abc"],
         ["https://www.youtube-nocookie.com/embed/abc", "https://www.youtube-nocookie.com/embed/abc"],
+        ["https://demo.arcade.software/abc?embed", "https://demo.arcade.software/abc?embed"],
         ["http://www.youtube.com/embed/abc", undefined],
         ["https://evil.example.com/phish", undefined],
-    ])("embeds only HTTPS YouTube iframes: %s", (url, src) => {
+    ])("embeds only HTTPS YouTube and Arcade iframes: %s", (url, src) => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: `<iframe src="${url}"></iframe>`}})
 
         expect(wrapper.find("iframe").attributes("src")).toBe(src)

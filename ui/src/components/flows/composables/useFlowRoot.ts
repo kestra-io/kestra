@@ -10,6 +10,7 @@ import {useActiveTab} from "../../../composables/useActiveTab"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
 import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -73,6 +74,7 @@ export function useFlowRoot() {
                     name,
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
                     // Dependencies surfaces a live count and is disabled when there are none.
                     ...(name === "dependencies"
                         ? {
@@ -108,7 +110,7 @@ export function useFlowRoot() {
         if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
                 router.replace({name: route.name as string, params: route.params, query: newQuery})
             }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.IndexingRepository;
 import io.kestra.core.utils.DateUtils;
 
@@ -37,6 +38,7 @@ public interface ExecutionStatisticsRepositoryInterface extends IndexingReposito
         String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        List<State.Type> states,
         Instant startDate,
         Instant endDate,
         DateUtils.GroupType groupBy);

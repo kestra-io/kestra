@@ -17,15 +17,20 @@
     import {dayjs} from "@kestra-io/design-system"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
+    import {flattenInputs} from "../../utils/inputs"
 
     type DateInput = Parameters<typeof dayjs>[0]
+
+    const DATE_LIKE_TYPES = ["DATE", "TIME", "DATETIME"]
 
     const props = withDefaults(defineProps<{
         flow: Flow;
         inputs?: Record<string, unknown>;
         executionLabels?: Label[];
         verbose?: boolean;
+        replay?: {executionId: string; taskRunId?: string; revision?: number};
     }>(),{
+        replay: undefined,
         inputs: () => ({}),
         executionLabels: () => [],
         verbose: true,
@@ -41,12 +46,16 @@
         command.push("-H", `'${name}: ${value}'`)
     }
 
-    function addInputs(command: string[]) {
-        if (!props.flow.inputs) return
+    const leafInputs = computed(() => flattenInputs(props.flow.inputs))
 
-        props.flow.inputs.forEach((input) => {
+    function addInputs(command: string[]) {
+        leafInputs.value.forEach((input) => {
             let inputValue: string | undefined
             const value = props.inputs?.[input.id]
+
+            // An untouched or cleared picker holds undefined, null or "", which Execute leaves out
+            // (normalizeInputValues), and dayjs() would turn into the current date or "Invalid Date".
+            if (DATE_LIKE_TYPES.includes(input.type) && (value === undefined || value === null || value === "")) return
 
             switch (input.type) {
             case "FILE":
@@ -61,6 +70,13 @@
             case "TIME":
                 inputValue = dayjs(value as DateInput).format("HH:mm:ss")
                 break
+            case "DATETIME":
+            {
+                // The picker holds a Date, and String(date) is not a value the API can parse.
+                const date = dayjs(value as DateInput)
+                inputValue = date.isValid() ? date.toISOString() : String(value)
+                break
+            }
             default:
                 inputValue = value === undefined ? undefined : String(value)
             }
@@ -81,11 +97,21 @@
     }
 
     const url = computed(() => {
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
+
+        if (props.replay) {
+            const replayParams = [
+                props.replay.taskRunId ? `taskRunId=${encodeURIComponent(props.replay.taskRunId)}` : undefined,
+                props.replay.revision === undefined ? undefined : `revision=${props.replay.revision}`,
+            ].filter(Boolean)
+            const replayUrl = `${origin}/executions/${props.replay.executionId}/actions/replay-with-inputs`
+            return replayParams.length > 0 ? `${replayUrl}?${replayParams.join("&")}` : replayUrl
+        }
+
         const queryParams = (props.executionLabels || [])
             .filter((label) => label.key && label.value)
             .map((label) => generateExecutionLabel(label.key, label.value))
 
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
         let ret = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`
 
         if (queryParams.length > 0) {
@@ -112,7 +138,7 @@
         addHeader(mainCommand, "Content-Type", "multipart/form-data")
         addInputs(mainCommand)
         mainCommand.push(`'${url.value}'`)
-        const hasFileInput = props.flow.inputs?.some((input) => input.type === "FILE")
+        const hasFileInput = leafInputs.value.some((input) => input.type === "FILE")
 
         if (hasFileInput) {
             return `${toShell(prefix.value)} && \\\n${toShell(mainCommand)}`

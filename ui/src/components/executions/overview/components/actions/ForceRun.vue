@@ -20,7 +20,7 @@
         </template>
         <template #footer>
             <KsButton
-                :icon="QueueFirstInLastOut"
+                :icon="RunFast"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
@@ -44,7 +44,6 @@
 
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     const props = defineProps<{
         execution: Execution;

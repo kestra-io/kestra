@@ -1,8 +1,8 @@
 import {afterAll, describe, test, expect} from "vitest"
-import {ref} from "vue"
+import {defineComponent, h, ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObjectField from "./TaskObjectField.vue"
-import {FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import {taskComponentsReady} from "./useBlockComponent"
@@ -71,5 +71,30 @@ describe("TaskObjectField located validation errors", () => {
         const wrapper = mountArrayField({"stopAfter[0]": ["item error"]})
 
         expect(wrapper.text()).toContain("item error")
+    })
+})
+
+describe("TaskObjectField component override", () => {
+    const Grid = Object.assign(defineComponent({render: () => h("div", {"data-test": "grid"})}), {ksTaskName: "grid"})
+
+    function mountWithOverride(task: Record<string, unknown>) {
+        return i18nMount(TaskObjectField, {
+            props: {schema: {type: "string"}, fieldKey: "defaults", task, modelValue: undefined},
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {
+                    [BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY as symbol]: (fieldKey: string, parent: {type?: string}) =>
+                        fieldKey === "defaults" && parent.type === "TABLE" ? Grid : undefined,
+                },
+            },
+        })
+    }
+
+    test("renders the component the edition provides for the field", () => {
+        expect(mountWithOverride({type: "TABLE"}).find("[data-test='grid']").exists()).toBe(true)
+    })
+
+    test("keeps the schema-driven component when the edition provides none for the field", () => {
+        expect(mountWithOverride({type: "STRING"}).find("[data-test='grid']").exists()).toBe(false)
     })
 })

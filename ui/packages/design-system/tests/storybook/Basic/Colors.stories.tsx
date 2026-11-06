@@ -9,6 +9,7 @@ import { ref } from "vue"
 
 export default {
     title: "Basic/Colors",
+    parameters: {controls: {disable: true}},
 } as Meta
 
 type Story = StoryObj

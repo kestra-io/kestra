@@ -61,8 +61,11 @@
 
 <script setup lang="ts">
     import {ref, watch, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
 
     defineOptions({inheritAttrs: false})
+
+    const {t} = useI18n({useScope: "global"})
 
     const props = defineProps<{
         modelValue?: string | null
@@ -111,18 +114,18 @@
         }
 
         const match = durationString.match(
-            /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/,
+            /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/,
         )
 
         if (!match) {
-            durationIssue.value = `Invalid ISO 8601 duration: ${durationString}`
+            durationIssue.value = t("invalid_duration", {value: durationString})
             return false
         }
 
         days.value = parseInt(match[1] ?? "0")
         hours.value = parseInt(match[2] ?? "0")
         minutes.value = parseInt(match[3] ?? "0")
-        seconds.value = parseInt(match[4] ?? "0")
+        seconds.value = parseFloat(match[4] ?? "0")
         durationIssue.value = null
         return true
     }
@@ -140,8 +143,11 @@
     })
 
     onMounted(() => {
-        applyDuration(props.modelValue ?? "")
-        updateDuration()
+        if (applyDuration(props.modelValue ?? "")) {
+            updateDuration()
+        } else {
+            customDuration.value = props.modelValue ?? ""
+        }
     })
 </script>
 

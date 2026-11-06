@@ -187,6 +187,9 @@ function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue |
     }
 }
 
+const FOLLOW_MAX_RETRY_ATTEMPTS = 5
+const FOLLOW_RETRY_DELAY_MS = 1000
+
 export const useExecutionsStore = defineStore("executions", () => {
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
@@ -588,6 +591,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         let closed = false
         let finished = false
         let receivedEnd = false
+        let receivedExecution = false
 
         const finish = (errored: boolean) => {
             if (finished || closed) return
@@ -606,18 +610,25 @@ export const useExecutionsStore = defineStore("executions", () => {
             {executionId},
             {
                 signal: controller.signal,
-                /** No auto-reconnect: each reconnect leaked off-heap Netty buffers (kestra-io/kestra#16982). */
-                sseMaxRetryAttempts: 1,
+                /** The SDK never resets its attempt count, so this caps reconnects per stream. Unbounded ones leaked off-heap Netty buffers (kestra-io/kestra#16982). */
+                sseMaxRetryAttempts: FOLLOW_MAX_RETRY_ATTEMPTS,
+                sseDefaultRetryDelay: FOLLOW_RETRY_DELAY_MS,
                 onSseEvent: (event: { id?: string }) => {
                     if (event.id === "end") receivedEnd = true
                 },
-                onSseError: () => finish(true),
+                onSseError: () => {
+                    // a stream that never delivered an execution failed with a 404, which a retry cannot fix
+                    if (receivedExecution) return
+                    finish(true)
+                    controller.abort()
+                },
             },
         )
             .then(async ({stream}) => {
                 for await (const executionEvent of sseData(stream)) {
                     if (closed) break
                     if (!executionEvent.state) continue
+                    receivedExecution = true
                     handlers.onExecution(executionEvent)
                 }
                 finish(!receivedEnd)

@@ -12,5 +12,21 @@ public record JdbcQueueConfiguration(
     @Bindable(defaultValue = "PT60S") Duration pollSwitchInterval,
     @Bindable(defaultValue = "100") Integer pollSize,
     @Bindable(defaultValue = "5") Integer switchSteps,
-    @Bindable(defaultValue = "true") Boolean immediateRepoll) {
+    @Bindable(defaultValue = "true") Boolean immediateRepoll,
+    @Bindable(defaultValue = "PT30S") Duration broadcastGapTimeout) {
+
+    public JdbcQueueConfiguration(
+        Duration minPollInterval,
+        Duration maxPollInterval,
+        Duration pollSwitchInterval,
+        Integer pollSize,
+        Integer switchSteps,
+        Boolean immediateRepoll) {
+        this(minPollInterval, maxPollInterval, pollSwitchInterval, pollSize, switchSteps, immediateRepoll, Duration.ofSeconds(30));
+    }
+
+    @Override
+    public Duration broadcastGapTimeout() {
+        return broadcastGapTimeout != null ? broadcastGapTimeout : Duration.ofSeconds(30);
+    }
 }

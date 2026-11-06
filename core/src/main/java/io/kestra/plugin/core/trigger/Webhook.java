@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpResponse.Status;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -344,7 +345,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                 // A body too large to enqueue is propagated so the ErrorController handler maps it to 413; any
                 // other error becomes a 500.
                 Throwable unwrapped = Exceptions.unwrap(e);
-                if (unwrapped instanceof MessageTooBigException) {
+                if (unwrapped instanceof MessageTooBigException || unwrapped instanceof WebhookNotFoundException) {
                     return Mono.error(unwrapped);
                 }
                 return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
@@ -375,12 +376,20 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             headers.put("Content-Type", List.of(this.responseContentType));
         }
 
+        Status httpStatus = HttpResponse.Status.valueOf(statusCode);
+
         Object responseBody = textBody(body, headers);
-        return HttpResponse.builder()
-            .status(HttpResponse.Status.valueOf(statusCode))
+        HttpResponse<?> response = HttpResponse.builder()
+            .status(httpStatus)
             .headers(headers.isEmpty() ? null : HttpHeaders.of(headers, (name, value) -> true))
             .body(responseBody)
             .build();
+        
+        if (httpStatus.equals(Status.NOT_FOUND)) {
+          throw new WebhookNotFoundException(response);
+        }
+        
+        return response;
     }
 
     private Object textBody(Object body, Map<String, List<String>> headers) {

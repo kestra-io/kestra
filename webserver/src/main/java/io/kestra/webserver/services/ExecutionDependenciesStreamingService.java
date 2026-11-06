@@ -88,10 +88,16 @@ public class ExecutionDependenciesStreamingService {
                 return;
             }
 
-            String executionId = either.getLeft().executionId();
+            FollowExecutionEvent event = either.getLeft();
+            // skip the repository lookup for the many events of flows that nobody follows
+            if (!isFollowedFlow(event)) {
+                return;
+            }
+
+            String executionId = event.executionId();
             // This fan-out runs on the queue-polling thread, which has no authenticated principal,
             // so the ACL-enforcing findById would always deny authorization on EE.
-            Optional<Execution> maybeExecution = executionRepositoryInterface.findByIdWithoutAcl(either.getLeft().tenantId(), executionId);
+            Optional<Execution> maybeExecution = executionRepositoryInterface.findByIdWithoutAcl(event.tenantId(), executionId);
             if (maybeExecution.isEmpty()) {
                 log.error("Unable to find the execution id {}", executionId);
                 return;
@@ -221,6 +227,15 @@ public class ExecutionDependenciesStreamingService {
         if (queueSubscriber != null) {
             queueSubscriber.close();
         }
+    }
+
+    private boolean isFollowedFlow(FollowExecutionEvent event) {
+        return subscribers.values().stream()
+            .flatMap(executionSubscribers -> executionSubscribers.values().stream())
+            .anyMatch(
+                subscriber -> subscriber.dependencies().stream()
+                    .anyMatch(node -> node.getTenantId().equals(event.tenantId()) && node.getNamespace().equals(event.namespace()) && node.getId().equals(event.flowId()))
+            );
     }
 
     private boolean isADependency(Execution execution, List<FlowNode> nodes, String correlationId) {

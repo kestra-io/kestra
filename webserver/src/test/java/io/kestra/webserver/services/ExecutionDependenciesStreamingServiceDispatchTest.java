@@ -144,6 +144,19 @@ class ExecutionDependenciesStreamingServiceDispatchTest {
     }
 
     @Test
+    void shouldNotLoadTheExecutionOfAFlowNobodyFollows() {
+        // Given a subscriber following one flow
+        service.registerSubscriber(CORRELATION_ID, "subscriber", subscriber(sink()));
+        Execution other = execution.toBuilder().id("other-id").flowId("other-flow").build();
+
+        // When an event of another flow is dispatched
+        dispatcher.accept(Either.left(new FollowExecutionEvent(other, ExecutionEventType.UPDATED)));
+
+        // Then the execution is not read from the repository
+        verify(executionRepository, never()).findByIdWithoutAcl(TENANT_ID, "other-id");
+    }
+
+    @Test
     void shouldNotFailWhenEventCannotBeDeserialized() {
         assertThatCode(() -> dispatcher.accept(Either.right(new DeserializationException("boom"))))
             .doesNotThrowAnyException();

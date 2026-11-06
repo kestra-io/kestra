@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSetter;
 
 import io.kestra.core.models.TenantInterface;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -57,12 +55,6 @@ public class TaskRun implements TenantInterface {
     @With
     List<TaskRunAttempt> attempts;
 
-    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
-    @With
-    @Nullable
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    List<AssetsInOut> assetEmits;
-
     @NotNull
     State state;
 
@@ -95,24 +87,6 @@ public class TaskRun implements TenantInterface {
         return this;
     }
 
-    /**
-     * Folds the pre-existing single `assets` object into {@code assetEmits} when deserializing executions
-     * saved before `assetEmits` existed, so old executions still load. New code uses {@link #getAssetEmits()}.
-     *
-     * @deprecated use {@code assetEmits}.
-     */
-    @Deprecated(forRemoval = true, since = "2.0.0")
-    @JsonSetter("assets")
-    public void setAssets(@Nullable AssetsInOut assets) {
-        if (assets == null) {
-            return;
-        }
-        if (!(this.assetEmits instanceof ArrayList)) {
-            this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
-        }
-        this.assetEmits.add(assets);
-    }
-
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,
@@ -124,7 +98,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             this.attempts,
-            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -153,7 +126,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -201,7 +173,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assetEmits,
             this.state.withState(newState),
             this.iteration,
             this.dynamic,
@@ -224,7 +195,6 @@ public class TaskRun implements TenantInterface {
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
-            .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();
@@ -308,7 +278,6 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
-            ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";
     }

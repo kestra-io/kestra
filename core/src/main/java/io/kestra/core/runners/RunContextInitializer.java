@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 
+import io.kestra.core.assets.AssetEmitContext;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
@@ -146,8 +147,21 @@ public class RunContextInitializer {
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
+        runContext.setAssetEmitContext(assetEmitContext(workerTask, variables));
 
         return runContext;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static AssetEmitContext assetEmitContext(WorkerTask workerTask, Map<String, Object> variables) {
+        TaskRun taskRun = workerTask.getTaskRun();
+        Integer flowRevision = variables.get("flow") instanceof Map<?, ?> flow && ((Map<String, Object>) flow).get("revision") instanceof Number revision
+            ? revision.intValue()
+            : null;
+        return new AssetEmitContext(
+            taskRun.getTenantId(), taskRun.getNamespace(), taskRun.getFlowId(), flowRevision, taskRun.getExecutionId(), taskRun.getTaskId(), taskRun.getId(),
+            workerTask.getTask().getType(), workerTask.getExecutionKind()
+        );
     }
 
     /**

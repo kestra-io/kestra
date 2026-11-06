@@ -29,9 +29,9 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -133,6 +133,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     currentTask,
                     runContext.cloneForPlugin(currentTask)
                 );
+                currentWorkerTask.setExecutionKind(workerTask.getExecutionKind());
 
                 // all tasks will be handled immediately by the worker
                 WorkerTaskResult workerTaskResult = null;
@@ -452,6 +453,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             )
         );
 
+        Instant attemptStartDate = Instant.now();
+        StartAssets startAssets = emitStartAssets(runContext, workerTask, attemptStartDate);
+
         AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
         metricRunningCount.incrementAndGet();
 
@@ -481,9 +485,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
-        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
+        TaskRunWithOutput.AssetEmission assetEmission = startAssets.assetEmission();
+        List<String> assetFailures = new ArrayList<>(startAssets.failures());
         try {
-            if (workerTask.getTask().getAssets() != null) {
+            if (workerTask.getTask().getAssets() != null && runContext instanceof DefaultRunContext defaultRunContext) {
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
@@ -506,26 +511,13 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
                 }
 
-                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
-                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
-                List<AssetsInOut> bundles = new ArrayList<>();
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
-                    bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
-                }
-                for (AssetEmit emit : runContext.assets().emitted()) {
-                    try {
-                        emit.outputs().forEach(runContext::validate);
-                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
-                    } catch (ConstraintViolationException e) {
-                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
-                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                    }
-                }
-
-                if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
+                    AssetEmitter declared = defaultRunContext.declaredAssets(state, attemptStartDate, Instant.now(), startAssets.used());
+                    declared.emit(new AssetEmit(withDefaultNamespace(declaredInputs, taskRun.getNamespace()), declaredOutputs));
+                    assetFailures.addAll(declared.failures());
                 }
             }
+            assetFailures.addAll(runContext.assets().failures());
         } catch (ConstraintViolationException e) {
             // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
             String assetViolations = violationsUnder("assets", e);
@@ -541,7 +533,139 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
+        if (!assetFailures.isEmpty()) {
+            logger.warn("Some assets of task '{}' were not written: {}", taskRun.getTaskId(), String.join(", ", assetFailures));
+            if (assetEmission == TaskRunWithOutput.AssetEmission.OK) {
+                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+            }
+        }
+
         return new TaskRunWithOutput(taskRun, outputs, assetEmission);
+    }
+
+    private record StartAssets(Set<String> used, List<String> failures, TaskRunWithOutput.AssetEmission assetEmission) {
+        private static final StartAssets NONE = new StartAssets(Set.of(), List.of(), TaskRunWithOutput.AssetEmission.OK);
+    }
+
+    private static final Set<String> ASSET_IDENTITY_KEYS = Set.of("id", "type", "namespace");
+
+    // rendered before the task runs, so a property needing its outputs is skipped, and an asset whose identity needs them is left out until the end
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static StartAssets emitStartAssets(RunContext runContext, WorkerTask workerTask, Instant attemptStartDate) {
+        AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+        if (assetsDeclaration == null || !(runContext instanceof DefaultRunContext defaultRunContext)) {
+            return StartAssets.NONE;
+        }
+
+        Logger logger = runContext.logger();
+        String taskId = workerTask.getTaskRun().getTaskId();
+        try {
+            List<String> skipped = new ArrayList<>();
+            List<AssetIdentifier> inputs = new ArrayList<>();
+            if (assetsDeclaration.getInputs() != null) {
+                try {
+                    for (AssetIdentifier input : runContext.render(assetsDeclaration.getInputs().skipCache()).asList(AssetIdentifier.class)) {
+                        try {
+                            runContext.validate(input);
+                            inputs.add(input);
+                        } catch (ConstraintViolationException e) {
+                            // validated again when the task ends, which fails it
+                        }
+                    }
+                } catch (IllegalVariableEvaluationException e) {
+                    // rendered again when the task ends
+                }
+            }
+
+            List<Asset> rendered = new ArrayList<>();
+            Optional<List<Map>> rawOutputs = Property.asStaticList((Property) assetsDeclaration.getOutputs(), Map.class);
+            if (rawOutputs.isPresent()) {
+                for (Map<String, Object> rawOutput : rawOutputs.get()) {
+                    try {
+                        rendered.add(renderStartAsset(runContext, rawOutput, skipped));
+                    } catch (IllegalVariableEvaluationException | IllegalArgumentException e) {
+                        skipped.add(String.valueOf(rawOutput.get("id")));
+                    }
+                }
+            } else if (assetsDeclaration.getOutputs() != null) {
+                try {
+                    rendered.addAll(runContext.render(assetsDeclaration.getOutputs().skipCache()).asList(Asset.class));
+                } catch (IllegalVariableEvaluationException e) {
+                    skipped.add("outputs");
+                }
+            }
+
+            List<Asset> outputs = new ArrayList<>();
+            for (Asset asset : rendered) {
+                try {
+                    runContext.validate(asset);
+                    // the declared status describes the asset once the task succeeded
+                    if (asset.getMetadata() != null) {
+                        asset.getMetadata().remove(Asset.STATUS_METADATA_KEY);
+                    }
+                    outputs.add(asset);
+                } catch (ConstraintViolationException e) {
+                    skipped.add(asset.getId());
+                }
+            }
+
+            if (!skipped.isEmpty()) {
+                logger.warn(
+                    "Some declared assets of task '{}' reference values that do not exist when it starts, they are only written when it ends: {}",
+                    taskId, String.join(", ", skipped)
+                );
+            }
+
+            if (inputs.isEmpty() && outputs.isEmpty()) {
+                return StartAssets.NONE;
+            }
+            AssetEmitter declared = defaultRunContext.declaredAssets(RUNNING, attemptStartDate, null, Set.of());
+            declared.emit(new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs));
+            Set<String> used = new HashSet<>();
+            inputs.forEach(input -> used.add(input.id()));
+            outputs.forEach(output -> used.add(output.getId()));
+            return new StartAssets(used, declared.failures(), TaskRunWithOutput.AssetEmission.OK);
+        } catch (Exception e) {
+            logger.warn("Unable to emit the assets of task '{}' at start", taskId, e);
+            return new StartAssets(Set.of(), List.of(), TaskRunWithOutput.AssetEmission.FAILED);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Asset renderStartAsset(RunContext runContext, Map<String, Object> rawOutput, List<String> skipped) throws IllegalVariableEvaluationException {
+        String assetId = String.valueOf(rawOutput.get("id"));
+        Map<String, Object> rendered = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : rawOutput.entrySet()) {
+            if ("metadata".equals(entry.getKey()) && entry.getValue() instanceof Map<?, ?> metadata) {
+                Map<String, Object> renderedMetadata = new LinkedHashMap<>();
+                for (Map.Entry<String, Object> metadataEntry : ((Map<String, Object>) metadata).entrySet()) {
+                    try {
+                        renderedMetadata.put(metadataEntry.getKey(), renderValue(runContext, metadataEntry.getValue()));
+                    } catch (IllegalVariableEvaluationException e) {
+                        skipped.add(assetId + ".metadata." + metadataEntry.getKey());
+                    }
+                }
+                rendered.put(entry.getKey(), renderedMetadata);
+            } else if (ASSET_IDENTITY_KEYS.contains(entry.getKey())) {
+                rendered.put(entry.getKey(), renderValue(runContext, entry.getValue()));
+            } else {
+                try {
+                    rendered.put(entry.getKey(), renderValue(runContext, entry.getValue()));
+                } catch (IllegalVariableEvaluationException e) {
+                    skipped.add(assetId + "." + entry.getKey());
+                }
+            }
+        }
+        return JacksonMapper.ofJson().convertValue(rendered, Asset.class);
+    }
+
+    private static Object renderValue(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
+        if (value == null) {
+            return null;
+        }
+        Map<String, Object> wrapper = new HashMap<>();
+        wrapper.put("value", value);
+        return runContext.render(wrapper).get("value");
     }
 
     private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
@@ -558,16 +682,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
      * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
      * flow's own.
      */
-    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
-        return bundles.stream()
-            .map(
-                bundle -> new AssetsInOut(
-                    bundle.getInputs().stream()
-                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
-                        .toList(),
-                    bundle.getOutputs()
-                )
-            )
+    private static List<AssetIdentifier> withDefaultNamespace(List<AssetIdentifier> inputs, String namespace) {
+        return inputs.stream()
+            .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
             .toList();
     }
 

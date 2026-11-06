@@ -11,7 +11,6 @@ import java.util.Optional;
 import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
-import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.KestraContext;
@@ -336,7 +335,6 @@ public final class ExecutorTestHarness {
             killQueue,
             loopExecutionEventQueue,
             runContextLoggerFactory,
-            new AssetService.NoopAssetService(),
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,

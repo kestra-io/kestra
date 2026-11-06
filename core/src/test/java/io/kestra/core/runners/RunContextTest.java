@@ -223,6 +223,26 @@ class RunContextTest {
     }
 
     @Test
+    void shouldReportLatestGaugeValueInRegistry() {
+        String name = "gauge_latest_value";
+        RunContext runContext = runContextFactory.of();
+
+        runContext.metric(Gauge.of(name, 50D));
+        runContext.metric(Gauge.of(name, 75D));
+        runContext.metric(Gauge.of(name, 99D, "key", "value"));
+
+        assertThat(registryGaugeValues(name)).containsExactlyInAnyOrder(75D, 99D);
+
+        runContextFactory.of().metric(Gauge.of(name, 10D));
+
+        assertThat(registryGaugeValues(name)).containsExactlyInAnyOrder(10D, 99D);
+    }
+
+    private List<Double> registryGaugeValues(String name) {
+        return metricRegistry.findGauges(name).stream().map(io.micrometer.core.instrument.Gauge::value).toList();
+    }
+
+    @Test
     void encrypt() throws GeneralSecurityException {
         // given
         RunContext runContext = runContextFactory.of();

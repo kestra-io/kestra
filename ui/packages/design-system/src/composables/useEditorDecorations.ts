@@ -1,6 +1,6 @@
 import {getCurrentScope, onScopeDispose, watch, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-import {pebbleBlocks} from "@kestra-io/plumage"
+import {pebbleTokens} from "@kestra-io/plumage"
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
 
@@ -41,9 +41,9 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         const text = model?.getValue?.()
         if (!text || !model) return
 
-        lists.pebble = pebbleBlocks(text).map(([start, end]) => ({
+        lists.pebble = pebbleTokens(text).map(([start, end, role]) => ({
             range: monaco.Range.fromPositions(model.getPositionAt(start), model.getPositionAt(end)),
-            options: {inlineClassName: "highlight-pebble"},
+            options: {inlineClassName: role === "pebble" ? "highlight-pebble" : `highlight-pebble-${role}`},
         }))
         apply()
     }

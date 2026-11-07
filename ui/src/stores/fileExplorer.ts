@@ -6,6 +6,7 @@ import {makeToast} from "../utils/toast"
 import {globalI18n} from "../translations/i18n"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import type {KsTreeNode} from "@kestra-io/design-system"
+import type {FileAttributes} from "@kestra-io/kestra-sdk"
 
 export interface TreeNodeBase {
     id: string;
@@ -179,10 +180,11 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         return searchResults.value
     }
 
-    function renderNodes(itemsArr: TreeNode[]) {
+    function renderNodes(itemsArr: FileAttributes[]) {
         fileTree.value = []
         
         for (const {type, fileName} of itemsArr) {
+            if (!fileName) continue
             if (type === "Directory") {
                 addFolder({fileName})
             } else if (type === "File") {
@@ -277,7 +279,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
             try {
-                const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
+                const rootTreeNodes = await namespacesStore.readDirectory(payload)
                 renderNodes(rootTreeNodes)
                 fileTree.value = sorted(fileTree.value)
             } catch (e) {
@@ -300,9 +302,9 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 namespace: namespaceId.value,
                 path: getPath(node.data.id),
             }
-            let children: TreeNode[]
+            let entries: FileAttributes[]
             try {
-                children = await namespacesStore.readDirectory<TreeNode>(payload)
+                entries = await namespacesStore.readDirectory(payload)
             } catch (e) {
                 // Only a 404 means the folder was deleted server-side: render it empty rather than
                 // leaving the el-tree node stuck loading. Anything else still propagates and is toasted
@@ -315,8 +317,8 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 resolve?.([])
                 return
             }
-            children = sorted(
-                children.map((item) => ({
+            const children = sorted(
+                entries.map((item) => ({
                     ...item,
                     id: Utils.uid(),
                     leaf: item.type === "File",

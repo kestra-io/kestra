@@ -44,6 +44,7 @@ import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExe
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
+import io.micrometer.core.instrument.Timer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
@@ -114,6 +115,23 @@ class TriggerSchedulerTest {
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
+    }
+
+    @Test
+    void shouldRecordEvaluationLoopDurationWhenClockStepsBackDuringCycle() {
+        // GIVEN
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.flowWithSchedulePT15M(TEST_TZ)));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        Timer timer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION, MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION);
+        long countBefore = timer.count();
+        Instant scheduledTime = SchedulerClock.now().toInstant();
+        SchedulerClock.offset(Duration.ofSeconds(-1));
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), scheduledTime, NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(timer.count()).isEqualTo(countBefore + 1);
     }
 
     @Test

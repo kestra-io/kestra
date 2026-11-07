@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 
@@ -22,7 +23,7 @@ import jakarta.inject.Singleton;
  * fully-qualified class name and on the {@code @Schema} title. Deprecated plugins are skipped.
  */
 @Singleton
-public class SearchPluginsTool implements AiPlatformTool {
+public class SearchPluginsTool implements McpPlatformTool {
     private static final int MAX_RESULTS = 50;
 
     private final PluginRegistry pluginRegistry;
@@ -42,9 +43,14 @@ public class SearchPluginsTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "search-plugins",
-        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema. "
+        name = "search_plugins",
+        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get_plugin_schema. "
             + "Returns an object { plugins } where `plugins` is an array of { type, title } (empty when nothing matches); `type` is the fully-qualified plugin class and `title` may be null."
     )
     public Result searchPlugins(

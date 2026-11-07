@@ -71,6 +71,11 @@
                     <code>
                         {{ scope.row.id }}
                     </code>
+                    <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                        <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                            <AlertCircle />
+                        </KsIcon>
+                    </KsTooltip>
                 </template>
             </KsTableColumn>
 
@@ -104,8 +109,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -352,10 +366,11 @@
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
+    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIcon, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -381,7 +396,7 @@
         TriggerControllerApiCreateBackfillRequest,
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
-    import {searchTriggersForFlow} from "../../utils/triggers"
+    import {blockerMessage, searchTriggersForFlow} from "../../utils/triggers"
     import {useProductTourStore} from "../../stores/productTour"
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
@@ -836,6 +851,11 @@
 </script>
 
 <style scoped>
+    .trigger-blocked-icon {
+        margin-left: var(--ks-spacing-1);
+        vertical-align: middle;
+    }
+
 /* The parent flow tab strips horizontal padding when a data table is present */
 /* (full-width-table behaviour); restore the standard gutter for this tab. */
 .triggers-tab {

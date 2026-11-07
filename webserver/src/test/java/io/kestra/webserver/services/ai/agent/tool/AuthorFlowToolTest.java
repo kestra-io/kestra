@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Integration check for {@code author-flow}: the tool and the real
+ * Integration check for {@code author_flow}: the tool and the real
  * {@link io.kestra.core.services.FlowService} validation are exercised end to end, and the tool's
  * returned publishable draft is asserted. Only the AI provider (which drives an LLM) is mocked, so
  * generated YAML is deterministic while validation runs for real.

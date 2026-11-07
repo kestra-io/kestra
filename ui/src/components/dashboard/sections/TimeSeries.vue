@@ -86,7 +86,7 @@
     import {Motion} from "motion-v"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, toEchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping} from "../../../utils/utils"
@@ -490,7 +490,7 @@
     }
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
+        const params = toEchartsParams(rawParams)
         if (params.seriesType !== "bar" || props.execution || isSelectable.value) return
 
         drillDown(

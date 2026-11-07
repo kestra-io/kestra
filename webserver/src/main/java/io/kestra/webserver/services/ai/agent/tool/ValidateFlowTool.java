@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
@@ -21,7 +22,7 @@ import jakarta.inject.Singleton;
  * deprecated paths and infos.
  */
 @Singleton
-public class ValidateFlowTool implements AiPlatformTool {
+public class ValidateFlowTool implements McpPlatformTool {
     private final FlowService flowService;
 
     @Inject
@@ -39,8 +40,13 @@ public class ValidateFlowTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "validate-flow",
+        name = "validate_flow",
         value = "Validate Kestra flow YAML without saving or executing anything, reporting validation errors, warnings and deprecations. Read-only; always use this to check flow YAML before proposing it. "
             + "Returns an object { valid, errors, warnings, deprecatedPaths, infos } where `valid` is true only when `errors` is empty; each of the other fields is an array of messages."
     )

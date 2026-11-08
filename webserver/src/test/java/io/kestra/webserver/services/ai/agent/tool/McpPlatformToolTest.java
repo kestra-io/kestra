@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpToolAnnotations;
 
@@ -46,13 +47,17 @@ class McpPlatformToolTest {
             "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow",
             "list_namespaces", "list_namespace_dependencies",
             "list_namespace_files", "read_namespace_file", "write_namespace_file", "create_namespace_directory", "move_namespace_file", "delete_namespace_file",
-            "list_kv_entries", "read_kv_entry", "create_kv_entry", "update_kv_entry", "delete_kv_entry"
+            "list_kv_entries", "read_kv_entry", "create_kv_entry", "update_kv_entry", "delete_kv_entry",
+            "search_logs", "delete_execution_logs", "delete_flow_logs"
         );
         assertThat(exposed).allSatisfy(entry ->
         {
             McpToolAnnotations annotations = ((McpPlatformTool) entry.tool()).annotations();
             assertThat(annotations).as("annotations of %s", entry.name()).isNotNull();
             assertThat(annotations.readOnly()).as("readOnly of %s", entry.name()).isEqualTo(AgentToolFamily.READ == entry.family());
+            if (annotations.destructive() && !annotations.readOnly()) {
+                assertThat(entry.writePolicy()).as("writePolicy of destructive %s", entry.name()).isEqualTo(AgentWritePolicy.CONFIRM);
+            }
         });
     }
 }

@@ -3162,6 +3162,8 @@
     "chart mode": {
       "counts": "Décompte",
       "timeline": "Chronologie"
-    }
+    },
+    "search_in_flow_source": "Rechercher « {query} » dans le code source du flux",
+    "flows_matched_query": "{count} flux avec « {query} » dans l’id ou le namespace. | {count} flux avec « {query} » dans l’id ou le namespace."
   }
 }

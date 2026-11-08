@@ -59,6 +59,17 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
+
+                <div v-if="searchQuery" class="source-row">
+                    <TextBoxSearch class="dim" />
+                    <span class="dim">{{ $t("flows_matched_query", {count: flowStore.total, query: searchQuery}) }}</span>
+                    <router-link
+                        :to="{name: 'flows/search', query: sourceSearchQuery}"
+                        class="source-search-link"
+                    >
+                        {{ $t("search_in_flow_source", {query: searchQuery}) }}
+                    </router-link>
+                </div>
             </template>
 
             <template #bulk-actions>
@@ -337,7 +348,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIconButton, deepMerge, decodeSearchParams} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
@@ -504,6 +515,44 @@
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
     const canExecute = (flow: Flow) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
+
+    const searchQuery = computed(() => {
+        const decoded = decodeSearchParams(route.query).find((p) => p.field === "q")?.value
+        if (!decoded) {
+            return ""
+        }
+        if (Array.isArray(decoded)) {
+            return decoded.join(" ").trim()
+        }
+        return String(decoded).trim()
+    })
+
+    const filteredNamespace = computed<string | undefined>(() => {
+        if (props.namespace) {
+            return route.params.id as string || props.namespace
+        }
+        const decoded = decodeSearchParams(route.query).find((p) => p.field === "namespace")
+        if (!decoded || !decoded.value) {
+            return undefined
+        }
+        // Only forward namespace filter when the comparator is affirmative and targets exact/prefix namespace hierarchies
+        if (decoded.operation && decoded.operation !== "PREFIX" && decoded.operation !== "EQUALS" && decoded.operation !== "IN") {
+            return undefined
+        }
+        const raw = decoded.value
+        if (Array.isArray(raw)) {
+            return raw[0] ? String(raw[0]) : undefined
+        }
+        return String(raw).split(",")[0] || undefined
+    })
+
+    const sourceSearchQuery = computed(() => {
+        const query: Record<string, string> = {q: searchQuery.value}
+        if (filteredNamespace.value) {
+            query.namespace = filteredNamespace.value
+        }
+        return query
+    })
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -790,5 +839,27 @@
     justify-content: center;
     gap: 0.25rem;
     padding-right: var(--ks-spacing-4);
+}
+
+.source-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+    font-size: var(--ks-font-size-sm);
+    padding-top: var(--ks-spacing-3);
+}
+
+.dim {
+    color: var(--ks-text-secondary);
+}
+
+.source-search-link {
+    color: var(--ks-text-link);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 </style>

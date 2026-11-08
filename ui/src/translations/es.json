@@ -3162,6 +3162,8 @@
     "chart mode": {
       "counts": "Recuentos",
       "timeline": "Cronología"
-    }
+    },
+    "search_in_flow_source": "Buscar \"{query}\" en el código del flujo",
+    "flows_matched_query": "{count} flujo con \"{query}\" en el id o namespace. | {count} flujos con \"{query}\" en el id o namespace."
   }
 }

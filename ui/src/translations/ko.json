@@ -3162,6 +3162,8 @@
     "chart mode": {
       "counts": "카운트",
       "timeline": "타임라인"
-    }
+    },
+    "search_in_flow_source": "플로우 소스에서 \"{query}\" 검색",
+    "flows_matched_query": "ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우. | ID 또는 네임스페이스에 \"{query}\"이(가) 포함된 {count}개의 플로우."
   }
 }

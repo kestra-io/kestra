@@ -62,6 +62,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Approval;
+import io.kestra.core.trace.propagation.TracePropagation;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -72,7 +73,6 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.multipart.CompletedPart;
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.context.propagation.ContextPropagators;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -1504,15 +1504,7 @@ public class ExecutionService {
      * -polling callers (e.g. the {@code subflow()} function) don't depend on the WebhookService.
      */
     private void emitCreateAndAwait(Execution execution) {
-        Optional<String> traceParent = openTelemetry
-            .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator)
-            .map(propagator ->
-            {
-                Map<String, String> carrier = new HashMap<>();
-                propagator.inject(io.opentelemetry.context.Context.current(), carrier, Map::put);
-                return carrier.get("traceparent");
-            });
+        Optional<String> traceParent = TracePropagation.traceParent(openTelemetry, io.opentelemetry.context.Context.current());
 
         Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
             .withKind(execution.getKind())

@@ -83,6 +83,7 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.trace.propagation.TracePropagation;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;
@@ -1124,15 +1125,7 @@ public class ExecutionController {
                 }
 
                 // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
-                // TODO see if we can replicate ExecutionTextMapSetter logic
-                Map<String, String> traceCarrier = new HashMap<>();
-                openTelemetry
-                    .map(OpenTelemetry::getPropagators)
-                    .map(ContextPropagators::getTextMapPropagator)
-                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
-                if (traceCarrier.containsKey("traceparent")) {
-                    createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
-                }
+                createCommand = createCommand.withTraceParent(TracePropagation.traceParent(openTelemetry, otelContext).orElse(null));
 
                 Create finalCreateCommand = createCommand;
                 return awaitBlockingAction(

@@ -19,14 +19,12 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
+import io.kestra.core.trace.propagation.TracePropagation;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
@@ -76,13 +74,8 @@ public final class ExecutableUtils {
         boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate) throws InternalException {
 
-        // extract a trace context for propagation
-        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
-            .getOpenTelemetry()
-            .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator);
-
         var tracerFactory = ((DefaultRunContext) runContext).services().tracerFactory();
+        final Optional<OpenTelemetry> openTelemetry = tracerFactory.getOpenTelemetry();
         var tracer = tracerFactory.getTracer(currentTask.getClass(), "EXECUTOR");
 
         return tracer.inNewContext(
@@ -155,7 +148,7 @@ public final class ExecutableUtils {
 
                             // inject the traceparent into the new execution
                             final Execution restarted = restartedChild;
-                            propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
+                            TracePropagation.traceParent(openTelemetry, Context.current()).ifPresent(restarted::setTraceParent);
 
                             return Optional.of(
                                 SubflowExecution.builder()
@@ -283,7 +276,7 @@ public final class ExecutableUtils {
                 }
 
                 // inject the traceparent into the new execution
-                propagator.ifPresent(pg -> pg.inject(Context.current(), executionWithDepth, ExecutionTextMapSetter.INSTANCE));
+                TracePropagation.traceParent(openTelemetry, Context.current()).ifPresent(executionWithDepth::setTraceParent);
 
                 return Optional.of(
                     SubflowExecution.builder()

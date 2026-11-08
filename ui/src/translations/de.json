@@ -3143,6 +3143,8 @@
     "chart mode": {
       "counts": "Anzahl",
       "timeline": "Zeitachse"
-    }
+    },
+    "search_in_flow_source": "„{query}“ im Flow-Quelltext suchen",
+    "flows_matched_query": "{count} Flow mit „{query}“ in der ID oder im Namespace. | {count} Flows mit „{query}“ in der ID oder im Namespace."
   }
 }

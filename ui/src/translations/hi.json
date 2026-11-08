@@ -3143,6 +3143,8 @@
     "chart mode": {
       "counts": "गणना",
       "timeline": "टाइमलाइन"
-    }
+    },
+    "search_in_flow_source": "फ़्लो स्रोत में \"{query}\" खोजें",
+    "flows_matched_query": "आईडी या नेमस्पेस में \"{query}\" वाला {count} फ़्लो। | आईडी या नेमस्पेस में \"{query}\" वाले {count} फ़्लो।"
   }
 }

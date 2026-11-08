@@ -3143,6 +3143,8 @@
     "chart mode": {
       "counts": "Conteggi",
       "timeline": "Timeline"
-    }
+    },
+    "search_in_flow_source": "Cerca \"{query}\" nel codice sorgente del flusso",
+    "flows_matched_query": "{count} flusso con \"{query}\" nell'id o namespace. | {count} flussi con \"{query}\" nell'id o namespace."
   }
 }

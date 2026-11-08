@@ -3143,6 +3143,8 @@
     "chart mode": {
       "counts": "カウント",
       "timeline": "タイムライン"
-    }
+    },
+    "search_in_flow_source": "フローソースで「{query}」を検索",
+    "flows_matched_query": "IDまたは名前空間に「{query}」を含む {count} 件のフロー。 | IDまたは名前空間に「{query}」を含む {count} 件のフロー。"
   }
 }

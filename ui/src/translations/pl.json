@@ -3143,6 +3143,8 @@
     "chart mode": {
       "counts": "Liczniki",
       "timeline": "Oś czasu"
-    }
+    },
+    "search_in_flow_source": "Szukaj „{query}” w kodzie źródłowym przepływu",
+    "flows_matched_query": "{count} przepływ z „{query}” w identyfikatorze lub przestrzeni nazw. | {count} przepływy z „{query}” w identyfikatorze lub przestrzeni nazw. | {count} przepływów z „{query}” w identyfikatorze lub przestrzeni nazw."
   }
 }

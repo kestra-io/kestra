@@ -144,8 +144,14 @@ describe("GlobalSearch source search item", () => {
         await input.setValue("source")
         await nextTick()
 
-        const ksSearch = wrapper.findComponent({name: "KsSearch"})
-        await ksSearch.vm.$emit("keydown", new KeyboardEvent("keydown", {key: "Enter"}))
+        const searchInput = wrapper.findComponent({name: "KsSearch"})
+        const onKeydown = searchInput.vm.$attrs.onKeydown as ((e: KeyboardEvent) => void) | ((e: KeyboardEvent) => void)[]
+        const enterEvent = new KeyboardEvent("keydown", {key: "Enter"})
+        if (Array.isArray(onKeydown)) {
+            onKeydown.forEach((h) => h(enterEvent))
+        } else if (typeof onKeydown === "function") {
+            onKeydown(enterEvent)
+        }
         await nextTick()
 
         expect(push).toHaveBeenCalledWith({name: "flows/search"})

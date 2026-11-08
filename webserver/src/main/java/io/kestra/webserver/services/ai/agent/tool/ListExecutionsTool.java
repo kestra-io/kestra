@@ -1,7 +1,9 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
@@ -54,7 +56,7 @@ public class ListExecutionsTool implements McpPlatformTool {
     @Tool(
         name = "list_executions",
         value = "List the most recent Kestra executions matching the given per-field filters (newest first, " + MAX_RESULTS + " per page). Read-only; use this to find executions of interest before inspecting one with read_execution. "
-            + "Returns an object { executions, total, page } where `executions` is an array of { id, namespace, flowId, state, startDate, duration } (empty when nothing matches); `duration` is an ISO-8601 duration or null. "
+            + "Returns an object { executions, total, page } where `executions` is an array of { id, namespace, flowId, state, startDate, endDate, duration, labels } (empty when nothing matches); `endDate` is null while the execution runs, `duration` is an ISO-8601 duration or null, and `labels` maps each label key to its value. "
             + "`total` is the number of all matching executions; when it exceeds what was read so far, request the next `page`."
     )
     public Result listExecutions(
@@ -87,13 +89,15 @@ public class ListExecutionsTool implements McpPlatformTool {
             execution.getFlowId(),
             execution.getState().getCurrent().name(),
             String.valueOf(execution.getState().getStartDate()),
-            duration
+            execution.getState().getEndDate().map(Instant::toString).orElse(null),
+            duration,
+            ReadExecutionTool.labels(execution)
         );
     }
 
     public record Result(List<ExecutionSummary> executions, long total, int page) {
     }
 
-    public record ExecutionSummary(String id, String namespace, String flowId, String state, String startDate, String duration) {
+    public record ExecutionSummary(String id, String namespace, String flowId, String state, String startDate, String endDate, String duration, Map<String, String> labels) {
     }
 }

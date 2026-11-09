@@ -72,8 +72,14 @@
 
                         <div v-else-if="!isLoading">
                             <KsNoData
+                                v-if="hasUserFilters"
                                 :title="$t('no_logs_data_title')"
                                 :description="$t('no_logs_data_description')"
+                            />
+                            <KsNoData
+                                v-else
+                                :title="$t('no_logs_yet_title')"
+                                :description="$t('no_logs_yet_description')"
                             />
                         </div>
 
@@ -174,6 +180,7 @@
     import LogDisplaySettings from "./LogDisplaySettings.vue"
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
+    import {hasUserLogFilters} from "./logsEmptyState"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, withoutTimeFilters, type BrushRange} from "../../utils/logsBrushMappers"
 
@@ -269,6 +276,10 @@
             )
         },
     })
+    const hasUserFilters = computed(() => hasUserLogFilters(props.filters ?? route.query, {
+        defaultLevel: defaultLogLevel.value,
+        scopeFields: props.filters ? ["namespace", "flowId", "triggerId"] : [],
+    }))
     const searchTerm = computed(() => {
         const key = Object.keys(route.query).find((k) => k.startsWith("filters[q]"))
         return key ? String(route.query[key] ?? "") : ""

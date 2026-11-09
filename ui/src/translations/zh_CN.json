@@ -1339,6 +1339,8 @@
     "pause backfill": "暂停回填",
     "continue backfills": "继续回填",
     "delete backfills": "删除回填",
+    "delete backfill confirm": "删除 trigger {id} 的 backfill？",
+    "delete backfill success": "trigger {id} 的 backfill 已删除",
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",

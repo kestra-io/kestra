@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill pausieren",
     "continue backfills": "Backfills fortsetzen",
     "delete backfills": "Backfills löschen",
+    "delete backfill confirm": "Backfill von Trigger {id} löschen?",
+    "delete backfill success": "Backfill von Trigger {id} wurde gelöscht",
     "pause backfills": "Backfills pausieren",
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",

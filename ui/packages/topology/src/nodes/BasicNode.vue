@@ -9,10 +9,22 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div v-if="lod === 'pill'" class="node-pill" :style="nodeStyle">
-            <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </KsTooltip>
+        <div v-if="lod === 'pill'" class="node-pill" :style="pillStyle" data-test="topology-task-pill">
+            <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+            </span>
+            <span
+                v-if="statusStyle"
+                class="node-pill-status"
+                :style="pillStatusStyle"
+                data-test="topology-task-pill-status"
+                role="img"
+                :aria-label="state"
+            >
+                <component :is="statusStyle.icon" :size="14" />
+            </span>
         </div>
         <template v-else>
             <div
@@ -74,10 +86,10 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS, NODE_SIZES} from "../utils/constants"
+    import {EVENTS, NODE_SIZES, PILL_COMPENSATION} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {EXECUTION_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
     interface NodeEntity {
@@ -199,6 +211,19 @@
         }
     })
 
+    const pillCompensation = inject(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => 1))
+
+    const pillStyle = computed(() => {
+        const style = nodeStyle.value
+        if (!style) return undefined
+        return {...style, borderWidth: `${pillCompensation.value}px`}
+    })
+
+    const pillStatusStyle = computed(() => ({
+        color: `var(${statusStyle.value?.textVar})`,
+        transform: `scale(${Math.min(pillCompensation.value, PILL_COMPENSATION.GLYPH_MAX)})`,
+    }))
+
     const cardStyle = computed(() => (isExecution.value
         ? {borderColor: statusStyle.value?.border, width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`}
         : nodeStyle.value))
@@ -275,6 +300,7 @@
     }
 
     .node-pill {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -284,6 +310,27 @@
         background-color: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
+    .node-pill-icon {
+        display: flex;
+    }
+
+    .node-pill-status {
+        position: absolute;
+        right: calc(var(--ks-spacing-1) * -1);
+        bottom: calc(var(--ks-spacing-1) * -1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        line-height: 1;
+        transform-origin: top left;
+    }
+
+    .node-pill .icon--dimmed {
+        opacity: 0.2;
     }
 
     .node-grip {

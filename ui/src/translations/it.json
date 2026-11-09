@@ -1092,7 +1092,7 @@
       "heading": "Tutto su Kestra.",
       "subheading": "Gli ultimi aggiornamenti, guide e storie"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Questa esecuzione è ancora RUNNING, eliminarla non la fermerà.<br />È necessario kill l'esecuzione per fermarla.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Questa Execution è ancora in esecuzione, eliminarla non la fermerà.<br />Devi killare l'Execution per fermarla.</div>",
     "restore": "Ripristina",
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "bulk delete": "Sei sicuro di voler eliminare <code>{executionCount}</code> esecuzione/i?",
@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger sbloccato"
     },
+    "trigger blocked": "Bloccato",
+    "trigger blocked policy check failed": "Impossibile controllare le Policy di governance.",
+    "trigger blocked unknown": "Bloccato per una ragione sconosciuta.",
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
     "trigger enable dialog": {
       "title": "Abilita trigger",
@@ -1357,8 +1360,18 @@
     "pluginPage": {
       "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
-      "noResults": "Nessun plugin corrisponde alla tua ricerca.",
-      "loadError": "Impossibile caricare i plugin. Per favore riprova.",
+      "loadErrorTitle": "Impossibile caricare l'elenco dei plugin",
+      "loadErrorDescription": "I tuoi flow continuano a essere eseguiti. Questa pagina legge solo l'elenco dei plugin.",
+      "showAll": "Mostra tutti i plugin",
+      "view": {
+        "cards": "Schede",
+        "table": "Tabella",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Nessun plugin corrisponde ai tuoi filtri",
+        "description": "Prova un termine di ricerca diverso o cancella i filtri di categoria."
+      },
       "notFound": "Questo plugin non è stato trovato.",
       "elementType": {
         "tasks": "Compito",
@@ -1367,8 +1380,13 @@
         "taskRunners": "Esecutore di task",
         "charts": "Grafico",
         "apps": "App",
+        "appBlocks": "Blocco App",
+        "dataFilters": "Filtro dati",
+        "dataFiltersKPI": "Filtro dati KPI",
         "logExporters": "Esportatore di log",
-        "secrets": "Segreto"
+        "secrets": "Segreto",
+        "assets": "Tipo di Asset",
+        "additionalPlugins": "Plugin aggiuntivo"
       },
       "sortBy": "Ordina per",
       "sort": {
@@ -1399,6 +1417,19 @@
         "enterpriseEdition": "Edizione Enterprise",
         "certified": "Certificato",
         "back": "Torna ai plugin"
+      },
+      "management": {
+        "upload": "Carica",
+        "addPlugin": "Aggiungi plugin",
+        "lockedTitle": "Gestione della versione del Plugin",
+        "lockedDescription": "Installa plugin, mantieni diverse versioni affiancate e aggiornale senza ricostruire l'immagine, con l'Enterprise Edition.",
+        "learnMore": "Scopri di più",
+        "includedWithKestra": "Incluso con Kestra",
+        "gateNote": "L'installazione e l'aggiornamento dei plugin sono disponibili nell'Enterprise Edition.",
+        "upsellTitle": "Il versioning dei Plugin è una funzionalità Enterprise",
+        "upsellDescription": "Ogni plugin sottostante viene fornito con questa immagine Kestra ed è pronto per essere utilizzato in un Flow. Sull'Enterprise Edition puoi anche installare un plugin non incluso, bloccare una versione per plugin e aggiornare senza ricostruire l'immagine.",
+        "talkToUs": "Parlaci",
+        "readTheDocs": "Leggi la documentazione"
       }
     },
     "no inputs": "Questo flow non ha inputs.",
@@ -1459,10 +1490,13 @@
           "fields": {
             "app_font_size": "Dimensione carattere applicazione",
             "color_mode": "Modalità colore",
+            "editor_dark_theme": "Tema dell'editor in modalità scura",
             "editor_folding_stratgy": "Raggruppamento automatico del codice nell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_hover_description": "Passa il mouse sulla proprietà per vedere la descrizione",
+            "editor_pebble_hover": "Passa il mouse sul riferimento Pebble per vederne la definizione",
+            "editor_light_theme": "Tema dell'editor in modalità chiara",
             "environment_color": "Colore dell'Ambiente",
             "environment_name": "Nome dell'Ambiente",
             "environment_name_tooltip": "Il nome di questo ambiente è impostato dalla configurazione ma può essere modificato.",
@@ -1485,6 +1519,9 @@
             "editor_font_size": "Dimensione del carattere utilizzata negli editor YAML e no-code.",
             "editor_folding_stratgy": "Comprimi i blocchi YAML lunghi per impostazione predefinita quando si apre un flow.",
             "editor_hover_description": "Mostra le descrizioni delle proprietà al passaggio del mouse nell'editor.",
+            "editor_pebble_hover": "Mostra la definizione e la documentazione di un input, output, variabile, label o variabile trigger quando si passa il mouse sul suo riferimento Pebble nell'editor del flow.",
+            "editor_dark_theme": "Colori della sintassi dell'editor di codice quando la modalità colore è Scuro 1.0 o Dark 2.0.",
+            "editor_light_theme": "Colori della sintassi dell'editor di codice quando la modalità colore è Chiaro.",
             "environment_name": "Nome visualizzato per l'ambiente corrente, mostrato nella navigazione.",
             "environment_color": "Colore di accento utilizzato per l'ambiente corrente nella navigazione.",
             "app_font_size": "Fattore di scala applicato a tutte le dimensioni dei caratteri dell'interfaccia."
@@ -1493,6 +1530,9 @@
             "small": "Piccolo",
             "medium": "Medio",
             "large": "Grande"
+          },
+          "editor_theme_options": {
+            "match_app": "Segui il tema dell'app"
           }
         },
         "localization": {
@@ -1800,9 +1840,9 @@
         },
         "errors": {
           "first_execution": "La prima esecuzione è terminata come {state} invece di avere successo. Apri i log su questa pagina per vedere il motivo, quindi riprova.",
-          "expected_failure": "Questa esecuzione è terminata come {state}, quindi non c'è alcun errore da correggere ancora. Verifica che il flow abbia ancora il task <code>notify</code>, quindi riprova.",
+          "expected_failure": "Questa esecuzione è terminata come {state}, quindi non c'è ancora alcun errore da correggere. Verifica che il flow abbia ancora il task {task}, quindi riprova.",
           "no_execution_to_replay": "Non c'è ancora nessuna esecuzione da rieseguire. Esegui il flow sul passo precedente, quindi riprova.",
-          "replay": "La ripetizione è terminata come {state}. Apri i log su questa pagina per vedere cosa ha riportato <code>notify</code>, quindi riprova.",
+          "replay": "Il replay è terminato come {state}. Apri i log su questa pagina per vedere cosa ha riportato il {task}, quindi riprova.",
           "save_flow": "Il flow del tour non è stato possibile salvare. {reason}",
           "test_event": "Il webhook ha risposto con {status}. Verifica che il flow sia salvato e il trigger sia abilitato, quindi riprova."
         },
@@ -1925,6 +1965,11 @@
     "copy url": "Copia URL",
     "scheduleDate": "Data di pianificazione",
     "scheduleDateInPast": "La data di pianificazione deve essere nel futuro",
+    "inputs_date_range": {
+      "between": "Il valore minimo è {after}, il valore massimo è {before}.",
+      "after": "Il valore minimo è {after}.",
+      "before": "Il valore massimo è {before}."
+    },
     "warning": "Avviso",
     "trigger_check_warning": "Utilizzare le variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza `??` per risolvere il problema. Ad esempio, invece di `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "docs": "Documenti",
@@ -2026,7 +2071,6 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "no_code": {
-      "task_details": "Dettagli del task",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",
@@ -2138,6 +2182,11 @@
       "decrease_fontsize": "Diminuire la dimensione del carattere dell'editor",
       "increase_fontsize": "Aumenta la dimensione del font dell'editor",
       "reset_fontsize": "Reimposta dimensione del carattere dell'editor"
+    },
+    "pebble_hover": {
+      "toggle": "Attiva/disattiva la documentazione al passaggio del mouse di Pebble",
+      "enabled": "La documentazione di Pebble hover è attiva.",
+      "disabled": "La documentazione di Pebble hover è disattivata."
     },
     "instance": "Istanza",
     "something_went_wrong": {
@@ -2544,7 +2593,7 @@
     "reject": "Rifiuta",
     "last modified": "Ultima modifica",
     "run task in playground": "Esegui task nel playground",
-    "defaultsToNamespaceFile": "Predefinito al file namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Predefinito per il file del namespace: {name}",
     "no_file_choosen": "Nessun file selezionato",
     "dependency": {
       "controls": {

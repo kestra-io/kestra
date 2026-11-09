@@ -119,8 +119,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}`)
-        const blueprintData = data as unknown as Blueprint
+        const {data} = await axios.get<Blueprint>(`${apiUrl()}/blueprints/custom/${options.id!}`)
+        const blueprintData = data
         if (load !== latestBlueprintLoad) {
             return blueprintData
         }

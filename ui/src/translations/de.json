@@ -451,7 +451,7 @@
       "whole_action": "Die gesamte Execution stattdessen wiederholen",
       "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
       "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
-      "confirm_from_task": "Replay ab Task",
+      "confirm_from_task": "Replay ab {taskId}",
       "confirm_whole": "Ganze Execution wiederholen"
     },
     "change execution state done": "Execution-Status aktualisiert",

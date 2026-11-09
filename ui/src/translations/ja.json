@@ -451,7 +451,7 @@
       "whole_action": "代わりにExecution全体をリプレイする",
       "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
       "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",
-      "confirm_from_task": "Taskからリプレイ",
+      "confirm_from_task": "{taskId}からReplay",
       "confirm_whole": "Execution全体をリプレイ"
     },
     "change execution state done": "実行状態が更新されました",

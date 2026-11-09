@@ -451,7 +451,7 @@
       "whole_action": "Zamiast tego powtórz całą egzekucję",
       "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
       "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
-      "confirm_from_task": "Replay z Taska",
+      "confirm_from_task": "Replay od {taskId}",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
     "change execution state done": "Status egzekucji zaktualizowany",

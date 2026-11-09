@@ -451,7 +451,7 @@
       "whole_action": "대신 전체 Execution을 Replay합니다.",
       "whole_title": "Revision {revision}을 전체 Execution으로 Replay할 수 있습니다.",
       "whole_description": "이전 결과는 재사용되지 않으므로 모든 Task는 revision {revision}에서 다시 실행됩니다. 원본 Execution은 유지되고 연결됩니다.",
-      "confirm_from_task": "Task에서 Replay",
+      "confirm_from_task": "{taskId}부터 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
     "change execution state done": "실행 상태가 업데이트되었습니다",

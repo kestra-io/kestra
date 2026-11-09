@@ -12,6 +12,7 @@ import java.util.Locale;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.http.client.HttpClientConfiguration;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
@@ -20,31 +21,42 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 public class NonProxyHostsListener implements BeanCreatedEventListener<HttpClientConfiguration> {
-    static final String NON_PROXY_HOSTS_PROPERTY = "http.nonProxyHosts";
+    private static final List<String> NON_PROXY_HOSTS = parse(System.getProperty("http.nonProxyHosts"));
+
+    private final List<String> nonProxyHosts;
+
+    @Inject
+    public NonProxyHostsListener() {
+        this(NON_PROXY_HOSTS);
+    }
+
+    NonProxyHostsListener(List<String> nonProxyHosts) {
+        this.nonProxyHosts = nonProxyHosts;
+    }
 
     @Override
     public HttpClientConfiguration onCreated(BeanCreatedEvent<HttpClientConfiguration> event) {
         HttpClientConfiguration configuration = event.getBean();
         if (configuration.getProxyAddress().isPresent() && configuration.getProxySelector().isEmpty()) {
-            configuration.setProxySelector(new NonProxyHostsSelector(configuration));
+            configuration.setProxySelector(new NonProxyHostsSelector(configuration, nonProxyHosts));
         }
         return configuration;
     }
 
-    static boolean isNonProxyHost(String host) {
-        String nonProxyHosts = System.getProperty(NON_PROXY_HOSTS_PROPERTY);
-        if (host == null || nonProxyHosts == null || nonProxyHosts.isBlank()) {
-            return false;
+    static List<String> parse(String nonProxyHosts) {
+        if (nonProxyHosts == null || nonProxyHosts.isBlank()) {
+            return List.of();
         }
-
-        String normalizedHost = host.toLowerCase(Locale.ROOT);
         return Arrays.stream(nonProxyHosts.split("\\|"))
             .map(pattern -> pattern.trim().toLowerCase(Locale.ROOT))
             .filter(pattern -> !pattern.isEmpty())
-            .anyMatch(pattern -> matches(normalizedHost, pattern));
+            .toList();
     }
 
     private static boolean matches(String host, String pattern) {
+        if (pattern.length() > 1 && pattern.startsWith("*") && pattern.endsWith("*")) {
+            return host.contains(pattern.substring(1, pattern.length() - 1));
+        }
         if (pattern.startsWith("*")) {
             return host.endsWith(pattern.substring(1));
         }
@@ -56,9 +68,11 @@ public class NonProxyHostsListener implements BeanCreatedEventListener<HttpClien
 
     private static final class NonProxyHostsSelector extends ProxySelector {
         private final HttpClientConfiguration configuration;
+        private final List<String> nonProxyHosts;
 
-        private NonProxyHostsSelector(HttpClientConfiguration configuration) {
+        private NonProxyHostsSelector(HttpClientConfiguration configuration, List<String> nonProxyHosts) {
             this.configuration = configuration;
+            this.nonProxyHosts = nonProxyHosts;
         }
 
         @Override
@@ -73,6 +87,14 @@ public class NonProxyHostsListener implements BeanCreatedEventListener<HttpClien
 
         @Override
         public void connectFailed(URI uri, SocketAddress address, IOException exception) {
+        }
+
+        private boolean isNonProxyHost(String host) {
+            if (host == null) {
+                return false;
+            }
+            String normalizedHost = host.toLowerCase(Locale.ROOT);
+            return nonProxyHosts.stream().anyMatch(pattern -> matches(normalizedHost, pattern));
         }
     }
 }

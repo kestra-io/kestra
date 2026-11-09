@@ -5,9 +5,6 @@
         :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
-        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
-            <MenuRight />
-        </KsIcon>
         <span
             class="log-level"
             :class="{'log-level--clickable': clickableLevel}"
@@ -18,7 +15,9 @@
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
-        >{{ levelLabel }}</span>
+        ><KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
+            <MenuRight />
+        </KsIcon>{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
                 <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
@@ -248,6 +247,7 @@ div.line {
     }
 
     .log-level {
+        position: relative;
         flex: none;
         width: 3.5rem;
         padding-top: 1px;
@@ -271,7 +271,8 @@ div.line {
     .icon_container {
         position: absolute;
         top: 50%;
-        left: -0.6rem;
+        /* The label starts after the row's horizontal padding, so this keeps the caret 0.6rem left of the row. */
+        left: calc(-0.6rem - var(--ks-spacing-3));
         transform: translateY(-50%);
         z-index: 1;
     }
@@ -413,6 +414,11 @@ div.line {
             border-radius: var(--ks-radius-xs);
             font-size: var(--ks-font-size-2xs);
             line-height: 1.4;
+        }
+
+        .icon_container {
+            /* The badge border sits outside its padding edge, which is the caret's anchor. */
+            left: calc(-0.6rem - var(--ks-spacing-3) - 1px);
         }
 
         .log-header {

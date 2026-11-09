@@ -115,6 +115,23 @@ const severityLine = (level: Log["level"], cursor: boolean, message: string) => 
     />
 )
 
+const STACK_MESSAGE = [
+    "selected stack first",
+    "    at io.kestra.plugin.Example.execute(Example.java:42)",
+    "    at io.kestra.runner.WorkerThread.run(WorkerThread.java:10)",
+].join("\n")
+
+const caretDelta = (line: HTMLElement) => {
+    const level = line.querySelector(".log-level") as HTMLElement
+    const caret = line.querySelector(".icon_container") as HTMLElement
+    const levelBox = level.getBoundingClientRect()
+    const caretBox = caret.getBoundingClientRect()
+    return {
+        levelBox,
+        delta: Math.abs((caretBox.top + caretBox.height / 2) - (levelBox.top + levelBox.height / 2)),
+    }
+}
+
 export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
     render: () => ({
         setup() {
@@ -126,6 +143,7 @@ export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
                     {severityLine("WARN", false, "plain warn")}
                     {severityLine("INFO", true, "selected info")}
                     {severityLine("INFO", false, "plain info")}
+                    {severityLine("ERROR", true, STACK_MESSAGE)}
                 </div>
             )
         },
@@ -148,14 +166,38 @@ export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
         expect(plainInfo).not.toBe(selectedInfo)
 
         for (const message of ["selected error", "selected warn", "selected info"]) {
-            const line = row(message)
-            const level = line.querySelector(".log-level") as HTMLElement
-            const caret = line.querySelector(".icon_container") as HTMLElement
-            const levelBox = level.getBoundingClientRect()
-            const caretBox = caret.getBoundingClientRect()
-            const delta = Math.abs((caretBox.top + caretBox.height / 2) - (levelBox.top + levelBox.height / 2))
+            const {delta} = caretDelta(row(message))
             expect(delta).toBeLessThan(2)
         }
+
+        const stack = canvas.getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        const {levelBox, delta} = caretDelta(stack)
+        expect(stack.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
+    },
+}
+
+export const SelectedCaretOnMobile: StoryObj<typeof LogLine> = {
+    parameters: {
+        viewport: {
+            options: {mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}}},
+            defaultViewport: "mobile",
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        setup() {
+            return () => severityLine("ERROR", true, STACK_MESSAGE)
+        },
+    }),
+    play: async ({canvasElement}) => {
+        const line = within(canvasElement).getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        expect(getComputedStyle(line).display).toBe("grid")
+        const {levelBox, delta} = caretDelta(line)
+        expect(line.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
     },
 }
 

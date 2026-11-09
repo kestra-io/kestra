@@ -137,6 +137,15 @@ describe("Empty", () => {
         expect(wrapper.findComponent(KsEmptyStateStub).props("learnMore")).toBe(links.namespaceFiles)
     })
 
+    test("prefers an explicit learnMore prop over the documentation link of the type", () => {
+        const wrapper = i18nMount(Empty, {
+            global,
+            props: {type: "namespaceFiles", learnMore: "https://example.com/custom"},
+        })
+
+        expect(wrapper.findComponent(KsEmptyStateStub).props("learnMore")).toBe("https://example.com/custom")
+    })
+
     test("does not render a learn-more link for types without documentation", () => {
         const wrapper = i18nMount(Empty, {
             global,
@@ -176,5 +185,21 @@ describe("Empty", () => {
         expect(contactSales.exists()).toBe(true)
         expect(contactSales.attributes("target")).toBe("_blank")
         expect(contactSales.text()).toBe("Contact sales")
+    })
+
+    test("carries the type in the contact-sales URL", () => {
+        const hrefFor = (type: string) =>
+            i18nMount(Empty, {
+                global,
+                messages: {
+                    demos: {contact_sales: "Contact sales"},
+                },
+                props: {type, demoCta: true},
+            })
+                .find("a[target=\"_blank\"][href*=\"/demo?\"]")
+                .attributes("href")
+
+        expect(hrefFor("namespaceFiles")).toContain("demo-namespaceFiles")
+        expect(hrefFor("unknown")).toContain("demo-unknown")
     })
 })

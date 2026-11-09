@@ -513,7 +513,7 @@
 
     import {filterValidLabels, FILTER_FIELD_PATTERN, resetQueryToDefaults} from "./utils"
     import {
-        FALLBACK_TIME_RANGE,
+        defaultTimeRange,
         queryHasAbsoluteDateFilter,
         queryHasUserFilters,
         readTimeRangeFromQuery,
@@ -523,6 +523,7 @@
     import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -785,7 +786,7 @@
         selection?: string[];
         queryBulkAction?: boolean;
     }>("dataTable")
-    const chartDefaultDuration = computed(() => miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE)
+    const chartDefaultDuration = computed(() => defaultTimeRange(miscStore.configs?.chartDefaultDuration))
 
     let hasAttemptedTimeRangeWiden = false
 
@@ -850,7 +851,7 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
     const localPage = ref(1)
     const localSize = ref(25)
     const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)
@@ -861,6 +862,7 @@
             localPage.value = page
             localSize.value = size
         } else {
+            rememberPageSize(size)
             router.push({query: {...route.query, page: String(page), size: String(size)}})
         }
     }
@@ -959,9 +961,24 @@
         return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
-    const lockedFilters = computed<QueryFilter[]>(() =>
-        props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
-    )
+    const lockedFilters = computed<QueryFilter[]>(() => {
+        const filters: QueryFilter[] = []
+
+        if (props.namespace) {
+            // As on the flow page: a prefix would also count a flow with the same id in a child namespace.
+            filters.push({field: "namespace", operation: props.flowId ? "EQUALS" : "PREFIX", value: props.namespace})
+        }
+
+        if (props.flowId) {
+            filters.push({field: "flowId", operation: "EQUALS", value: props.flowId})
+        }
+
+        if (props.labels) {
+            filters.push({field: "labels", operation: "EQUALS", value: props.labels})
+        }
+
+        return filters
+    })
 
     const executionParams = (row: Execution) => {
         return {

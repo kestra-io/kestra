@@ -1,3 +1,5 @@
+import semver from "semver"
+
 export type PluginElement = {
     cls: string;
     deprecated?: boolean;
@@ -20,6 +22,7 @@ export type Plugin = {
     longDescription?: string;
     description?: string;
     subGroup?: string;
+    version?: string;
     tooltipContent?: string;
     categories?: string[];
     controllers?: string[];
@@ -39,6 +42,12 @@ export function isEntryAPluginElementPredicate(key: string, value: unknown): val
         !["categories", "controllers", "storages", "aliases", "guides"].includes(key) &&
         (value.length === 0 ||
         value[0]?.cls !== undefined)
+}
+
+export function pluginElementType(plugin: Plugin | null | undefined, cls: string | null | undefined): string | undefined {
+    if (!plugin || !cls) return undefined
+    return Object.entries(plugin)
+        .find(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls || el?.aliases?.includes(cls)))?.[0]
 }
 
 export function countUniquePluginElements(plugins: Plugin[]): number {
@@ -70,7 +79,29 @@ export function isPluginMatched(plugin: Plugin, search: string): boolean {
         plugin.group,
         plugin.manifest?.["X-Kestra-Title"],
     ].some(field => field?.toLowerCase().includes(q)) ||
-        Object.values(extractPluginElements(plugin)).flat().some(cls => cls.toLowerCase().includes(q))
+        pluginElementClasses(plugin).some(cls => cls.toLowerCase().includes(q))
+}
+
+export function pluginElementClasses(plugin: Plugin): string[] {
+    return Object.values(extractPluginElements(plugin)).flat()
+}
+
+export function compareVersionsDesc(a: string, b: string): number {
+    const va = semver.coerce(a)?.version
+    const vb = semver.coerce(b)?.version
+    return va && vb ? semver.rcompare(va, vb) : b.localeCompare(a)
+}
+
+export function latestVersionEntries(plugins: Plugin[]): Plugin[] {
+    const latest = new Map<string, Plugin>()
+    for (const plugin of plugins) {
+        const key = `${plugin.name}:${plugin.subGroup ?? ""}`
+        const current = latest.get(key)
+        if (!current || compareVersionsDesc(plugin.version ?? "", current.version ?? "") < 0) {
+            latest.set(key, plugin)
+        }
+    }
+    return [...latest.values()]
 }
 
 export const isEnterpriseEditionPlugin = (classOrGroup?: string | null): boolean =>

@@ -329,16 +329,7 @@ export function extractFileNameFromContentDisposition(header: string | null | un
 }
 
 export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
-    // default theme
-    if (theme === undefined) {
-        if (localStorage.getItem(storageKeys.THEME)) {
-            theme = localStorage.getItem(storageKeys.THEME) as SelectedTheme
-        } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            theme = "dark"
-        } else {
-            theme = "light"
-        }
-    }
+    theme ??= getSelectedTheme()
 
     const disableTransitions = document.createElement("style")
     disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))
@@ -471,17 +462,21 @@ export function getParentNamespaces(namespace: string): string[] {
     return parents
 }
 
-export function resolve$ref<T = unknown>(fullSchema: Record<string, unknown>, obj: T): T {
+function isRefNode(value: unknown): value is {$ref: string} {
+    return typeof value === "object" && value !== null && "$ref" in value && typeof value.$ref === "string" && value.$ref !== ""
+}
+
+export function resolve$ref<T = unknown>(fullSchema: object, obj: T): T {
     if (obj === undefined || obj === null) {
         return obj
     }
-    if ((obj as unknown as { $ref?: unknown })?.$ref) {
-        return getValueAtJsonPath(fullSchema, (obj as unknown as { $ref: string }).$ref) as T
+    if (isRefNode(obj)) {
+        return getValueAtJsonPath(fullSchema, obj.$ref) as T
     }
     return obj
 }
 
-export function getValueAtJsonPath<T = unknown>(fullSchema: Record<string, unknown>, path: string): T {
+export function getValueAtJsonPath<T = unknown>(fullSchema: object, path: string): T {
     if (!fullSchema || !path || typeof path !== "string") {
         return undefined as T
     }

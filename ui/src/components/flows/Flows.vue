@@ -29,7 +29,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             :defaultSort="{prop: 'id', order: 'ascending'}"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @ready="ready = true"
             @row-click="onRowClick"
             :mobileColumns="mobileColumns"
@@ -312,6 +312,7 @@
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
+    import {usePageSize} from "../../composables/usePageSize"
     import {isPlainRowActivation} from "../../utils/rowNavigation"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
@@ -367,6 +368,7 @@
     import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
 
 
     const props = withDefaults(defineProps<{
@@ -549,7 +551,12 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -687,7 +694,7 @@
     }
 
     function chartFilters(): QueryFilter[] {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,

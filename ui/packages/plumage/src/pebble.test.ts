@@ -52,6 +52,21 @@ describe("pebbleTokens", () => {
         ])
     })
 
+    it("gives an empty trim block one token", () => {
+        expect(paint("x: {{-}}")).toEqual(["pebble:{{-}}"])
+    })
+
+    it("reads an accented name whole, as the grammar does", () => {
+        expect(paint("{{ forçado ?? orçamento() | inégal }} {{ trueño }}")).toEqual([
+            "pebble:{{ forçado ", "operator:??", "pebble: ", "function:orçamento", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:inégal", "pebble: }}",
+            "pebble:{{ trueño }}",
+        ])
+    })
+
+    it("keeps a filter its function color when the pipe wraps to the next line", () => {
+        expect(paint("x: {{ inputs.list |\n    upper }}")).toEqual(["pebble:{{ inputs.list ", "operator:|", "pebble:\n    ", "function:upper", "pebble: }}"])
+    })
+
     it("stops a string at the closer the block ends on, as the block does", () => {
         expect(paint("x: '{{ \"a}}b\" }}'")).toEqual(["pebble:{{ \"a}}"])
     })

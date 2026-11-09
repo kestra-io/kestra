@@ -40,7 +40,7 @@ export const pebbleInjection = {
                 {match: STRING, name: "string.quoted.pebble"},
                 {match: WORD.replace("%s", KEYWORDS.join("|")), name: "keyword.control.pebble"},
                 {match: WORD.replace("%s", CONSTANTS.join("|")), name: "constant.language.pebble"},
-                {match: `(\\|)[ \\t]*(${IDENTIFIER})?`, captures: {1: {name: "keyword.operator.pebble"}, 2: {name: "support.function.pebble"}}},
+                {begin: "\\|", end: `(?=^\\S)|(${IDENTIFIER})|(?=\\S)`, beginCaptures: {0: {name: "keyword.operator.pebble"}}, endCaptures: {1: {name: "support.function.pebble"}}},
                 {match: `${IDENTIFIER}(?=[ \\t]*\\()`, name: "support.function.pebble"},
                 {match: IDENTIFIER, name: "variable.other.pebble"},
                 {match: NUMBER, name: "constant.numeric.pebble"},
@@ -93,11 +93,11 @@ const KEYWORD_SET = new Set(KEYWORDS)
 const CONSTANT_SET = new Set(CONSTANTS)
 const STRING_RE = new RegExp(STRING, "y")
 const NUMBER_RE = new RegExp(NUMBER, "y")
-const IDENTIFIER_RE = new RegExp(IDENTIFIER, "y")
+/** Oniguruma's `\w` is Unicode-aware, so the grammar reads `forçado` as one name; the scanner has to as well. */
+const IDENTIFIER_RE = /[A-Za-z_][\p{L}\p{M}\p{Nd}\p{Pc}]*/uy
 const OPERATOR_RE = new RegExp(OPERATOR, "y")
 const PUNCTUATION_RE = new RegExp(PUNCTUATION, "y")
 const SPACE_RE = /[ \t\r\n]+/y
-const NEWLINE_RE = /[ \t\r]*\n/y
 const CALL_RE = /[ \t]*\(/y
 
 function matchAt(re: RegExp, text: string, at: number): number {
@@ -124,8 +124,8 @@ export function pebbleTokens(text: string): PebbleToken[] {
     for (const [start, end] of pebbleBlocks(text)) {
         const closer = text[start + 1] === "{" ? "}" : "%"
         const closed = end - start >= 4 && text[end - 1] === "}" && text[end - 2] === closer
-        const contentEnd = closed ? end - (text[end - 3] === "-" ? 3 : 2) : end
         let at = text[start + 2] === "-" ? start + 3 : start + 2
+        const contentEnd = closed ? Math.max(at, end - (text[end - 3] === "-" ? 3 : 2)) : end
         tokens.push([start, at, "pebble"])
         let afterPipe = false
         let afterDot = false
@@ -135,7 +135,6 @@ export function pebbleTokens(text: string): PebbleToken[] {
             let role: PebbleRole = "pebble"
             if (char === 32 || char === 9 || char === 10 || char === 13) {
                 next = Math.min(matchAt(SPACE_RE, text, at), contentEnd)
-                if (afterPipe && matchAt(NEWLINE_RE, text, at) !== -1) afterPipe = false
                 afterDot = false
                 push(at, next, "pebble")
                 at = next

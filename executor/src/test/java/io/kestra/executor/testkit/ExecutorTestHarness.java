@@ -108,8 +108,8 @@ import jakarta.validation.Validator;
  * Composition root for executor unit tests: the real {@link ExecutorService}, message handlers,
  * processors and {@link DefaultExecutor} wired over in-memory fakes — no Micronaut context, no
  * database, no threads. Collaborators without executor logic ({@link KillSwitchService},
- * {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService},
- * {@link KillSwitchActionService}) are Mockito mocks exposed for per-test stubbing.
+ * {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService}) are Mockito
+ * mocks exposed for per-test stubbing.
  */
 public final class ExecutorTestHarness {
     private static final int MAX_STEPS = 500;
@@ -303,7 +303,7 @@ public final class ExecutorTestHarness {
             KillSwitchService.class,
             invocation -> "evaluate".equals(invocation.getMethod().getName()) ? EvaluationType.PASS : Mockito.RETURNS_DEFAULTS.answer(invocation)
         );
-        this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
+        this.killSwitchActionService = new KillSwitchActionService(executionStateStore, killQueue);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
         this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
@@ -823,10 +823,6 @@ public final class ExecutorTestHarness {
 
     public KillSwitchService killSwitchService() {
         return killSwitchService;
-    }
-
-    public KillSwitchActionService killSwitchActionService() {
-        return killSwitchActionService;
     }
 
     public WorkerTaskResultListener workerTaskResultListener() {

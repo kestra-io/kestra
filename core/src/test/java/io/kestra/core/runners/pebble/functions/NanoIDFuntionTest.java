@@ -41,6 +41,15 @@ public class NanoIDFuntionTest {
     }
 
     @Test
+    void checkDifferentLengthWithInteger() throws Exception {
+        String rendered = variableRenderer.render(
+            "{{ nanoId(length) }}", Map.of("length", 8)
+        );
+        assertThat(!rendered.isEmpty()).as(rendered).isTrue();
+        assertThat(rendered.length()).isEqualTo(8L);
+    }
+
+    @Test
     void checkDifferentAlphabet() throws Exception {
         String rendered = variableRenderer.render(
             "{{ nanoId(length,alphabet) }}", Map.of("length", 21L, "alphabet", ":;<=>?@")
@@ -113,6 +122,22 @@ public class NanoIDFuntionTest {
             "{{ nanoId(length=0) }}", Collections.emptyMap()
         )).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'length' must be greater than: 0");
+    }
+
+    @Test
+    void shouldThrowWhenLengthIsNotANumber() {
+        assertThatThrownBy(() -> variableRenderer.render(
+            "{{ nanoId(length='invalid') }}", Collections.emptyMap()
+        )).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("'length' must be a number");
+    }
+
+    @Test
+    void shouldThrowWhenLengthIsTooLarge() {
+        assertThatThrownBy(() -> variableRenderer.render(
+            "{{ nanoId(length=1001) }}", Collections.emptyMap()
+        )).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("'length' must be lower than: 1000");
     }
 
 }

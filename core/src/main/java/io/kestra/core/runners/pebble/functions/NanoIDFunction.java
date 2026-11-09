@@ -26,8 +26,17 @@ public class NanoIDFunction implements KestraFunction {
     public Object execute(
         Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         int length = DEFAULT_LENGTH;
-        if (args.containsKey(LENGTH) && (args.get(LENGTH) instanceof Long)) {
-            length = parseLength(args, self, lineNumber);
+        if (args.containsKey(LENGTH) && args.get(LENGTH) != null) {
+            if (args.get(LENGTH) instanceof Number number) {
+                length = parseLength(number, self, lineNumber);
+            } else {
+                throw new PebbleException(
+                    null,
+                    "The 'nanoId()' function field 'length' must be a number",
+                    lineNumber,
+                    self.getName()
+                );
+            }
         }
         char[] alphabet = DEFAULT_ALPHABET;
         if (args.containsKey(ALPHABET) && (args.get(ALPHABET) instanceof String)) {
@@ -52,8 +61,8 @@ public class NanoIDFunction implements KestraFunction {
         return createNanoID(length, alphabet);
     }
 
-    private static int parseLength(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
-        var value = (Long) args.get(LENGTH);
+    private static int parseLength(Number number, PebbleTemplate self, int lineNumber) {
+        long value = number.longValue();
         if (value < 1) {
             throw new PebbleException(
                 null,

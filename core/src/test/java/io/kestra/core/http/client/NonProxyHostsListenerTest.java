@@ -4,8 +4,6 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.context.event.BeanCreatedEvent;
@@ -18,23 +16,7 @@ import static org.mockito.Mockito.when;
 
 class NonProxyHostsListenerTest {
     private static final InetSocketAddress PROXY_ADDRESS = InetSocketAddress.createUnresolved("squid", 3128);
-
-    private String previousNonProxyHosts;
-
-    @BeforeEach
-    void setNonProxyHosts() {
-        previousNonProxyHosts = System.getProperty(NonProxyHostsListener.NON_PROXY_HOSTS_PROPERTY);
-        System.setProperty(NonProxyHostsListener.NON_PROXY_HOSTS_PROPERTY, "localhost|keycloak|*.corp");
-    }
-
-    @AfterEach
-    void restoreNonProxyHosts() {
-        if (previousNonProxyHosts == null) {
-            System.clearProperty(NonProxyHostsListener.NON_PROXY_HOSTS_PROPERTY);
-        } else {
-            System.setProperty(NonProxyHostsListener.NON_PROXY_HOSTS_PROPERTY, previousNonProxyHosts);
-        }
-    }
+    private static final Proxy PROXY = new Proxy(Proxy.Type.HTTP, PROXY_ADDRESS);
 
     @Test
     void shouldBypassProxyForNonProxyHostsWhenProxyAddressIsConfigured() {
@@ -42,7 +24,15 @@ class NonProxyHostsListenerTest {
 
         assertThat(configuration.resolveProxy(false, "keycloak", 8080)).isEqualTo(Proxy.NO_PROXY);
         assertThat(configuration.resolveProxy(true, "idp.corp", 443)).isEqualTo(Proxy.NO_PROXY);
-        assertThat(configuration.resolveProxy(true, "api.kestra.io", 443)).isEqualTo(new Proxy(Proxy.Type.HTTP, PROXY_ADDRESS));
+        assertThat(configuration.resolveProxy(true, "api.kestra.io", 443)).isEqualTo(PROXY);
+    }
+
+    @Test
+    void shouldBypassProxyForHostsContainingThePatternWhenItHasAWildcardAtBothEnds() {
+        HttpClientConfiguration configuration = onCreated(proxiedConfiguration());
+
+        assertThat(configuration.resolveProxy(true, "idp.internal.example.com", 443)).isEqualTo(Proxy.NO_PROXY);
+        assertThat(configuration.resolveProxy(true, "internal.example.com", 443)).isEqualTo(PROXY);
     }
 
     @Test
@@ -70,6 +60,6 @@ class NonProxyHostsListenerTest {
     private static HttpClientConfiguration onCreated(HttpClientConfiguration configuration) {
         BeanCreatedEvent<HttpClientConfiguration> event = mock(BeanCreatedEvent.class);
         when(event.getBean()).thenReturn(configuration);
-        return new NonProxyHostsListener().onCreated(event);
+        return new NonProxyHostsListener(NonProxyHostsListener.parse("localhost|keycloak|*.corp|*.internal.*")).onCreated(event);
     }
 }

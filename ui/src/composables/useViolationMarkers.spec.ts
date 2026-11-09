@@ -470,10 +470,23 @@ describe("useViolationMarkers", () => {
         expect(editor.focus).not.toHaveBeenCalled()
     })
 
-    it("does nothing on activation when there is no editor", () => {
-        const {revealNext} = mountMarkers(undefined)
+    it("cycles through the located errors only, skipping those without a location", async () => {
+        const actual = await vi.importActual<typeof import("../utils/violationMarkers")>("../utils/violationMarkers")
+        resolveMarkers.mockImplementation(actual.violationMarkers)
+        const model = createModel()
+        model.getValue.mockReturnValue("id: example\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n    message: hi\n")
+        const editor = createEditor(model.model)
+        const {revealNext} = mountMarkers(editor.editor, [
+            {pointer: "/tasks/0/message", detail: "must not be blank"},
+            {detail: "Flow is invalid"},
+            {pointer: "/id", detail: "must match the pattern"},
+        ])
 
-        expect(() => revealNext()).not.toThrow()
+        revealNext()
+        revealNext()
+        revealNext()
+
+        expect(editor.setSelection.mock.calls.map(([range]) => range.startLineNumber)).toEqual([1, 6, 1])
     })
 
     it("keeps the cursor across an unchanged re-resolve", async () => {

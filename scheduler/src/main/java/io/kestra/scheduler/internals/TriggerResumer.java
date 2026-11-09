@@ -29,6 +29,11 @@ public final class TriggerResumer {
      * consistent across restarts and vNode re-assignments.
      */
     public static TriggerState resume(Clock clock, TriggerEvaluationContext context) {
+        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
+        // the backfill from the new date and silently drop or corrupt its remaining range.
+        if (context.triggerState().getBackfill() != null) {
+            return context.triggerState();
+        }
         return switch (resolveRecoverMissedSchedules(context)) {
             // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
             case ALL -> context.triggerState().getNextEvaluationDate() != null
@@ -43,6 +48,9 @@ public final class TriggerResumer {
      * Updates the state of a resumed trigger so that its missed schedules are skipped.
      */
     public static TriggerState skipMissed(Clock clock, TriggerEvaluationContext context) {
+        if (context.triggerState().getBackfill() != null) {
+            return context.triggerState();
+        }
         // Also advance evaluatedAt so the startup recovery cannot resurrect the skipped schedules.
         return context.triggerState()
             .evaluatedAt(clock, ZonedDateTime.now(clock))
@@ -59,11 +67,6 @@ public final class TriggerResumer {
 
     private static TriggerState updateForLastMissedSchedule(Clock clock, TriggerEvaluationContext context) {
         TriggerState state = context.triggerState();
-        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
-        // the backfill from the new date and silently drop or corrupt its remaining range.
-        if (state.getBackfill() != null) {
-            return state;
-        }
         // Never evaluated (e.g. created disabled): there is no missed schedule to recover, and the last
         // cron tick before now could even predate the trigger's creation.
         if (state.getEvaluatedAt() == null) {
@@ -84,8 +87,7 @@ public final class TriggerResumer {
 
     /**
      * Computes the next evaluation date of a resumed trigger so that missed schedules are skipped: the stale
-     * evaluation date is dropped from the trigger context so the computation seeds from now, while a
-     * running backfill is preserved so it resumes from its current date.
+     * evaluation date is dropped from the trigger context so the computation seeds from now.
      */
     private static ZonedDateTime nextEvaluationDateSkippingMissed(Clock clock, TriggerEvaluationContext context) {
         TriggerContext triggerContext = context.triggerState().context().toBuilder().date(null).build();

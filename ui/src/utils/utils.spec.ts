@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize, splitFirst, getParentNamespaces, isFile, isIon} from "./utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize, splitFirst, getParentNamespaces, isFile, isIon, asArray, deepEqual, getValueAtJsonPath, hexToRgba, extractFileNameFromContentDisposition, resolve$ref} from "./utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -331,5 +331,122 @@ describe("isIon()", () => {
         expect(isIon(null)).toBe(false)
         expect(isIon(undefined)).toBe(false)
         expect(isIon({uri: "kestra:///data/output.ion"})).toBe(false)
+    })
+})
+
+describe("asArray()", () => {
+    it("wraps a single value", () => {
+        expect(asArray("single")).toEqual(["single"])
+        expect(asArray(123)).toEqual([123])
+        expect(asArray({key: "val"})).toEqual([{key: "val"}])
+    })
+
+    it("passes an array through", () => {
+        expect(asArray(["a", "b"])).toEqual(["a", "b"])
+        expect(asArray([])).toEqual([])
+    })
+
+    it("returns [] for undefined", () => {
+        expect(asArray(undefined)).toEqual([])
+    })
+})
+
+describe("deepEqual()", () => {
+    it("is true for structurally equal objects", () => {
+        expect(deepEqual({a: 1, b: {c: 2}}, {a: 1, b: {c: 2}})).toBe(true)
+        expect(deepEqual([1, 2, {x: "y"}], [1, 2, {x: "y"}])).toBe(true)
+        expect(deepEqual("hello", "hello")).toBe(true)
+        expect(deepEqual(42, 42)).toBe(true)
+        expect(deepEqual(null, null)).toBe(true)
+    })
+
+    it("is false when a nested value differs", () => {
+        expect(deepEqual({a: 1, b: {c: 2}}, {a: 1, b: {c: 3}})).toBe(false)
+        expect(deepEqual({a: 1}, {a: 1, b: 2})).toBe(false)
+        expect(deepEqual([1, 2], [1, 3])).toBe(false)
+        expect(deepEqual({a: 1}, "a")).toBe(false)
+    })
+})
+
+describe("getValueAtJsonPath()", () => {
+    const schema = {
+        definitions: {
+            user: {
+                properties: {
+                    name: "Alice",
+                },
+            },
+        },
+    }
+
+    it("reads a nested value", () => {
+        expect(getValueAtJsonPath(schema, "#/definitions/user/properties/name")).toBe("Alice")
+        expect(getValueAtJsonPath(schema, "definitions/user/properties/name")).toBe("Alice")
+    })
+
+    it("returns undefined for a path that does not exist", () => {
+        expect(getValueAtJsonPath(schema, "#/definitions/user/nonexistent")).toBeUndefined()
+        expect(getValueAtJsonPath(schema, "#/missing/path")).toBeUndefined()
+        expect(getValueAtJsonPath(undefined as unknown as Record<string, unknown>, "#/path")).toBeUndefined()
+        expect(getValueAtJsonPath(schema, "")).toBeUndefined()
+    })
+})
+
+describe("hexToRgba()", () => {
+    it("expands a 3-digit hex, handles a 6-digit hex, and applies the opacity", () => {
+        expect(hexToRgba("#f00", 0.5)).toBe("rgba(255,0,0,0.5)")
+        expect(hexToRgba("#0f0", 1)).toBe("rgba(0,255,0,1)")
+        expect(hexToRgba("#ff0000", 0.5)).toBe("rgba(255,0,0,0.5)")
+        expect(hexToRgba("#00ff00", 0.8)).toBe("rgba(0,255,0,0.8)")
+        expect(hexToRgba("#0000ff", 1)).toBe("rgba(0,0,255,1)")
+    })
+
+    it("throws 'Bad Hex' for a malformed value", () => {
+        expect(() => hexToRgba("invalid", 1)).toThrow("Bad Hex")
+        expect(() => hexToRgba("#12", 1)).toThrow("Bad Hex")
+        expect(() => hexToRgba("#12345", 1)).toThrow("Bad Hex")
+        expect(() => hexToRgba("#1234567", 1)).toThrow("Bad Hex")
+        expect(() => hexToRgba("#xyz", 1)).toThrow("Bad Hex")
+    })
+})
+
+describe("extractFileNameFromContentDisposition()", () => {
+    it("handles the filename*=UTF-8'' form and percent-decodes it", () => {
+        expect(extractFileNameFromContentDisposition("attachment; filename*=UTF-8''my%20file.txt")).toBe("my file.txt")
+        expect(extractFileNameFromContentDisposition("attachment; filename*=UTF-8''document%C3%A9.pdf")).toBe("documenté.pdf")
+    })
+
+    it("handles the quoted filename=\"...\" form and the bare filename=... form", () => {
+        expect(extractFileNameFromContentDisposition("attachment; filename=\"report.pdf\"")).toBe("report.pdf")
+        expect(extractFileNameFromContentDisposition("inline; filename=archive.zip")).toBe("archive.zip")
+    })
+
+    it("returns null for a missing or empty header", () => {
+        expect(extractFileNameFromContentDisposition(null)).toBeNull()
+        expect(extractFileNameFromContentDisposition(undefined)).toBeNull()
+        expect(extractFileNameFromContentDisposition("")).toBeNull()
+        expect(extractFileNameFromContentDisposition("inline")).toBeNull()
+    })
+})
+
+describe("resolve$ref", () => {
+    const schema = {definitions: {name: {type: "string"}, wrapper: {$ref: "#/definitions/name"}}}
+
+    it("follows a $ref to its definition, through chained refs", () => {
+        expect(resolve$ref(schema, {$ref: "#/definitions/name"})).toEqual({type: "string"})
+        expect(resolve$ref(schema, {$ref: "#/definitions/wrapper"})).toEqual({type: "string"})
+    })
+
+    it.each([
+        ["an object without a $ref", {type: "number"}],
+        ["an empty $ref", {$ref: ""}],
+        ["a non-string $ref", {$ref: 3}],
+    ])("returns %s unchanged", (_label, node) => {
+        expect(resolve$ref(schema, node)).toBe(node)
+    })
+
+    it("returns null and undefined as they are", () => {
+        expect(resolve$ref(schema, null)).toBeNull()
+        expect(resolve$ref(schema, undefined)).toBeUndefined()
     })
 })

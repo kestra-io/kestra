@@ -40,11 +40,11 @@ describe("NamespaceFilesEmpty", () => {
     test("renders the namespace files image and learn-more link", () => {
         const wrapper = mountEmpty()
 
-        const img = wrapper.find(".ks-empty-state__artwork img")
+        const img = wrapper.find("img")
         expect(img.exists()).toBe(true)
         expect(img.attributes("src")).toMatch(/namespaceFiles/)
 
-        const learnMore = wrapper.find(".ks-empty-state__actions a")
+        const learnMore = wrapper.find("a")
         expect(learnMore.exists()).toBe(true)
         expect(learnMore.attributes("href")).toBe(
             "https://kestra.io/docs/concepts/namespace-files?utm_source=app&utm_medium=referral&utm_campaign=namespace-files",

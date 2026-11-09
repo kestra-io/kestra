@@ -35,6 +35,7 @@ plugins {
 
     // Formatting
     id "io.kestra.gradle.spotless-conventions" version "1.2.10"
+    id 'io.kestra.gradle.repository-conventions' version '1.2.12'
 }
 
 idea {

@@ -1339,6 +1339,8 @@
     "pause backfill": "backfill 일시 중지",
     "continue backfills": "backfill 계속",
     "delete backfills": "backfill 삭제",
+    "delete backfill confirm": "trigger {id}의 backfill을 삭제하시겠습니까?",
+    "delete backfill success": "trigger {id}의 backfill이 삭제되었습니다",
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",

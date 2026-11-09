@@ -529,6 +529,8 @@
   "defaultsToNamespaceFile": "23d68a5ee3df",
   "delete": "e2d0a54968ea",
   "delete backfill": "3fdf6045bf95",
+  "delete backfill confirm": "f7dfca91426d",
+  "delete backfill success": "2ed3dadb18ee",
   "delete backfills": "4fd41a7bd973",
   "delete confirm": "6134ae1de6c5",
   "delete execution running": "8a153fa8e689",

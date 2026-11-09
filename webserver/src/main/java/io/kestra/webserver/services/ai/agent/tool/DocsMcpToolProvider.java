@@ -46,6 +46,8 @@ public class DocsMcpToolProvider {
                 .build();
             this.client = new DefaultMcpClient.Builder()
                 .transport(transport)
+                // The docs server does not speak 2026-07-28, so skip the server/discover round trip on connect.
+                .protocolVersion("2025-11-25")
                 .autoHealthCheck(false)
                 .build();
             this.tools = client.listTools().stream()

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
@@ -778,8 +779,8 @@ class FlowValidationTest {
             """, Flow.class);
 
         assertThat(assetViolations(flow)).containsExactlyInAnyOrder(
-            "Task 'hello' declares an invalid asset in `assets.outputs`: `id` must match \"^[a-zA-Z0-9][a-zA-Z0-9._:-]*\".",
-            "Trigger 'schedule' declares an invalid asset in `assets.outputs`: `id` must match \"^[a-zA-Z0-9][a-zA-Z0-9._:-]*\"."
+            "Task 'hello' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN),
+            "Trigger 'schedule' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN)
         );
     }
 

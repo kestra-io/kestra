@@ -111,6 +111,14 @@ class FlowGraphTest {
         String parallelEnd = cluster(flowGraph, "root\\.parent").getEnd();
         assertThat(edge(flowGraph, ".*t1", parallelEnd).getSource()).matches(".*parent\\.t1");
         assertThat(edge(flowGraph, ".*t4", parallelEnd).getSource()).matches(".*parent\\.t4");
+
+        // parallel branches keep the flow order so the topology layout is stable
+        assertThat(
+            flowGraph.getEdges().stream()
+                .filter(e -> e.getRelation().getRelationType() == RelationType.PARALLEL)
+                .map(e -> e.getTarget().replaceAll(".*\\.", ""))
+                .toList()
+        ).containsExactly("t1", "t2", "t3", "t4", "t5", "t6");
     }
 
     @Test

@@ -95,6 +95,11 @@
                 <template #default="scope">
                     <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
+                        <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                            <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                                <AlertCircle />
+                            </KsIcon>
+                        </KsTooltip>
                     </div>
                 </template>
             </KsTableColumn>
@@ -163,8 +168,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -385,7 +399,7 @@
     import {storageKeys} from "../../../utils/constants"
     import {hasMissingRequiredInputs} from "../../../utils/inputs"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
+    import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
@@ -1031,6 +1045,9 @@
     }
 
     .trigger-id-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
         white-space: nowrap;
     }
 

@@ -13,6 +13,10 @@ function plainText(message: string): monaco.IMarkdownString {
     return {value: message.replace(/[\\`*_{}[\]()#+\-.!|<>~&]/g, "\\$&")}
 }
 
+function byDocumentOrder(a: ViolationMarker, b: ViolationMarker) {
+    return a.lines[0].startLineNumber - b.lines[0].startLineNumber || a.lines[0].startColumn - b.lines[0].startColumn
+}
+
 export function useViolationMarkers(options: {
     editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>
     errors: Ref<ValidationError[] | undefined>
@@ -38,7 +42,7 @@ export function useViolationMarkers(options: {
         clear()
         const model = editor?.getModel()
         if (!editor || !model || model.isDisposed()) return
-        const resolved = violationMarkers(model.getValue(), errors)
+        const resolved = violationMarkers(model.getValue(), errors).sort(byDocumentOrder)
         monaco.editor.setModelMarkers(model, OWNER, resolved.map(({message, lines}) => ({
             ...lines[0],
             message,

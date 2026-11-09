@@ -55,12 +55,12 @@ const otherLine = lineRange(8)
 
 const initialMarkers: ViolationMarker[] = [
     {
-        message: "Missing required property",
-        lines: [firstLine, secondLine, thirdLine],
-    },
-    {
         message: "Invalid task type",
         lines: [otherLine],
+    },
+    {
+        message: "Missing required property",
+        lines: [firstLine, secondLine, thirdLine],
     },
 ]
 

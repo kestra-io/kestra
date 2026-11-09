@@ -133,11 +133,51 @@ describe("executions store follow stream", () => {
         expect((seen[0].state as {current: string}).current).toBe("RUNNING")
         expect((seen[1].state as {current: string}).current).toBe("SUCCESS")
         expect(onError).not.toHaveBeenCalled()
-        // the previous EventSource auto-reconnect (kestra-io/kestra#16982) must stay disabled
-        expect(followExecutionMock).toHaveBeenCalledWith(
-            {executionId: "exec-1"},
-            expect.objectContaining({sseMaxRetryAttempts: 1}),
-        )
+        // reconnecting must stay bounded: an unbounded retry leaked off-heap memory (kestra-io/kestra#16982)
+        const {sseMaxRetryAttempts} = followExecutionMock.mock.calls[0][1] as {sseMaxRetryAttempts?: number}
+        expect(Number.isFinite(sseMaxRetryAttempts)).toBe(true)
+    })
+
+    it("keeps following through a transient error once an execution was received", async () => {
+        const stream = controllableFollowStream()
+        const store = useExecutionsStore()
+        const seen: Array<Record<string, unknown>> = []
+        const onError = vi.fn()
+
+        store.subscribeToExecution("exec-1", {
+            onExecution: (execution) => seen.push(execution as unknown as Record<string, unknown>),
+            onError,
+        })
+        await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
+        const options = followExecutionMock.mock.calls[0][1] as {onSseError: () => void; signal: AbortSignal}
+
+        stream.push({sseId: "progress", execution: {id: "exec-1", state: {current: "RUNNING"}}})
+        await vi.waitFor(() => expect(seen).toHaveLength(1))
+
+        options.onSseError()
+        stream.push({sseId: "progress", execution: {id: "exec-1", state: {current: "RUNNING", histories: []}}})
+
+        await vi.waitFor(() => expect(seen).toHaveLength(2))
+        expect(options.signal.aborted).toBe(false)
+        expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("gives up at once when the stream fails before delivering any execution", async () => {
+        const stream = controllableFollowStream()
+        const store = useExecutionsStore()
+        const onError = vi.fn()
+        const onEnd = vi.fn()
+
+        store.subscribeToExecution("exec-1", {onExecution: vi.fn(), onError, onEnd})
+        await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
+        const options = followExecutionMock.mock.calls[0][1] as {onSseError: () => void; signal: AbortSignal}
+
+        stream.push({sseId: "start", execution: {id: "exec-1"}})
+        options.onSseError()
+
+        expect(onError).toHaveBeenCalledTimes(1)
+        expect(onEnd).toHaveBeenCalledTimes(1)
+        expect(options.signal.aborted).toBe(true)
     })
 
     it("reports an error when the stream stops before the terminating end event", async () => {

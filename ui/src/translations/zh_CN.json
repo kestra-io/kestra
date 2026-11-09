@@ -1100,7 +1100,7 @@
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">此 execution 仍在运行，删除它不会停止它。<br />您需要 kill 该 execution 才能停止它。</div>",
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
@@ -1217,6 +1217,9 @@
     "unlock trigger": {
       "success": "触发器已解锁"
     },
+    "trigger blocked": "已阻止",
+    "trigger blocked policy check failed": "无法检查治理策略。",
+    "trigger blocked unknown": "因未知原因被阻止。",
     "trigger disabled": "在Flow源中触发器已禁用",
     "trigger enable dialog": {
       "title": "启用 trigger",
@@ -1365,8 +1368,18 @@
     "pluginPage": {
       "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
-      "noResults": "没有插件符合您的搜索。",
-      "loadError": "无法加载插件。请重试。",
+      "loadErrorTitle": "无法加载 plugin 列表",
+      "loadErrorDescription": "您的flow将继续运行。此页面仅读取插件列表。",
+      "showAll": "显示所有插件",
+      "view": {
+        "cards": "卡片",
+        "table": "表格",
+        "plugin": "插件"
+      },
+      "empty": {
+        "title": "没有插件符合您的筛选条件",
+        "description": "尝试不同的搜索词，或清除类别筛选器。"
+      },
       "notFound": "未找到此插件。",
       "elementType": {
         "tasks": "任务",
@@ -1375,8 +1388,13 @@
         "taskRunners": "任务运行器",
         "charts": "图表",
         "apps": "应用程序",
+        "appBlocks": "App 块",
+        "dataFilters": "数据筛选",
+        "dataFiltersKPI": "KPI 数据筛选",
         "logExporters": "日志导出器",
-        "secrets": "秘密"
+        "secrets": "秘密",
+        "assets": "Asset 类型",
+        "additionalPlugins": "额外 plugin"
       },
       "sortBy": "排序依据",
       "sort": {
@@ -1407,6 +1425,19 @@
         "enterpriseEdition": "企业版",
         "certified": "认证",
         "back": "返回插件"
+      },
+      "management": {
+        "upload": "上传",
+        "addPlugin": "添加 plugin",
+        "lockedTitle": "插件版本管理",
+        "lockedDescription": "使用企业版安装插件，并排保留多个版本，无需重新构建镜像即可升级。",
+        "learnMore": "了解更多",
+        "includedWithKestra": "Kestra 内置",
+        "gateNote": "企业版支持安装和升级 plugin。",
+        "upsellTitle": "Plugin 版本控制是 Enterprise 功能",
+        "upsellDescription": "以下每个 plugin 都随此 Kestra 镜像一起提供，并可在 flow 中使用。在 Enterprise Edition 中，您还可以安装未捆绑的 plugin，为每个 plugin 锁定版本，以及在不重新构建镜像的情况下进行升级。",
+        "talkToUs": "联系我们",
+        "readTheDocs": "阅读文档"
       }
     },
     "no inputs": "此流程没有输入。",
@@ -1467,10 +1498,13 @@
           "fields": {
             "app_font_size": "应用字体大小",
             "color_mode": "颜色模式",
+            "editor_dark_theme": "深色模式下的编辑器主题",
             "editor_folding_stratgy": "编辑器中的代码自动折叠",
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
             "editor_hover_description": "将鼠标悬停在属性上查看描述",
+            "editor_pebble_hover": "将鼠标悬停在 Pebble 引用上以查看其定义",
+            "editor_light_theme": "浅色模式下的编辑器主题",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
             "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
@@ -1493,6 +1527,9 @@
             "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
             "editor_hover_description": "在编辑器中悬停时显示属性描述。",
+            "editor_pebble_hover": "在 Flow 编辑器中，将鼠标悬停在 input、output、variable、label 或 trigger variable 的 Pebble 引用上时，显示其定义和文档。",
+            "editor_dark_theme": "颜色模式为深色 1.0 或深色模式 2.0 时代码编辑器的语法颜色。",
+            "editor_light_theme": "颜色模式为浅色模式时代码编辑器的语法颜色。",
             "environment_name": "当前环境的显示名称，显示在导航中。",
             "environment_color": "用于导航中当前环境的强调颜色。",
             "app_font_size": "应用于所有界面字体大小的缩放系数。"
@@ -1501,6 +1538,9 @@
             "small": "小",
             "medium": "中",
             "large": "大"
+          },
+          "editor_theme_options": {
+            "match_app": "跟随应用主题"
           }
         },
         "localization": {
@@ -1808,9 +1848,9 @@
         },
         "errors": {
           "first_execution": "第一次执行以 {state} 状态结束，而不是成功。打开此页面上的 logs 查看原因，然后重试。",
-          "expected_failure": "本次执行以 {state} 状态完成，因此尚无需要修复的故障。请检查该 flow 是否仍包含 <code>notify</code> task，然后重试。",
+          "expected_failure": "此 Execution 以 {state} 状态完成，因此尚无需要修复的故障。请检查 flow 是否仍包含 {task} task，然后重试。",
           "no_execution_to_replay": "尚无可重放的执行。请在上一步运行该 flow，然后重试。",
-          "replay": "重放结束，状态为 {state}。在此页面打开 log 查看 <code>notify</code> 报告了什么，然后重试。",
+          "replay": "Replay 以 {state} 状态完成。打开此页面上的 log 以查看 {task} 报告了什么，然后重试。",
           "save_flow": "导览 flow 无法保存。{reason}",
           "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。"
         },
@@ -1933,6 +1973,11 @@
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
     "scheduleDateInPast": "计划日期必须在未来",
+    "inputs_date_range": {
+      "between": "最早值为 {after}，最晚值为 {before}。",
+      "after": "最早值为 {after}。",
+      "before": "最晚值为 {before}。"
+    },
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "docs": "文档",
@@ -2034,7 +2079,6 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
-      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
@@ -2146,6 +2190,11 @@
       "decrease_fontsize": "减小编辑器字体大小",
       "increase_fontsize": "增加编辑器字体大小",
       "reset_fontsize": "重置编辑器字体大小"
+    },
+    "pebble_hover": {
+      "toggle": "切换 Pebble 悬停文档",
+      "enabled": "Pebble 悬停文档已开启。",
+      "disabled": "Pebble 悬停文档已关闭。"
     },
     "instance": "实例",
     "something_went_wrong": {
@@ -2552,7 +2601,7 @@
     "reject": "拒绝",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
-    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：{name}",
     "no_file_choosen": "未选择文件",
     "dependency": {
       "controls": {

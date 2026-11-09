@@ -92,4 +92,19 @@ describe("pluginsEnrichment store — fetchEnrichment titles", () => {
         expect(store.getEnrichment({name: "core", title: "Core", group: "io.kestra.plugin.core"})?.title).toBe("Core Plugins and tasks")
         expect(store.getEnrichment({name: "x", title: "X", group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"})).toBeNull()
     })
+
+    it("links an Enterprise artifact to the release notes of its latest version", async () => {
+        mockedGet.mockImplementation((url: string) => url.endsWith("/v1/plugins/subgroups")
+            ? Promise.resolve([
+                {group: "io.kestra.plugin.ee.secrets", subGroup: null, name: "plugin-ee-secrets", version: "1.2.0"},
+                {group: "io.kestra.plugin.aws", subGroup: null, name: "plugin-aws", version: "3.2.1"},
+            ])
+            : Promise.reject(new Error("unavailable")))
+
+        await store.fetchEnrichment()
+
+        expect(store.getEnrichment({name: "plugin-ee-secrets", title: "Secrets", group: "io.kestra.plugin.ee.secrets"})?.releaseNotesUrl)
+            .toBe("https://api.test/v1/plugins/artifacts/ee/release-notes/plugin-ee-secrets?version=1.2.0")
+        expect(store.getEnrichment({name: "plugin-aws", title: "AWS", group: "io.kestra.plugin.aws"})).toBeNull()
+    })
 })

@@ -104,6 +104,18 @@ export const ZOOM_LOD = {
     EXPANDED: 1.3,
 } as const
 
+export const PILL_COMPENSATION = {
+    STEP: 1,
+    RING_MAX: 4,
+    GLYPH_MAX: 2.5,
+} as const
+
+export function pillZoomCompensation(zoom: number): number {
+    if (!Number.isFinite(zoom) || zoom <= 0) return 1
+    const bounded = Math.min(1 / zoom, PILL_COMPENSATION.RING_MAX)
+    return Math.max(1, Math.round(bounded / PILL_COMPENSATION.STEP) * PILL_COMPENSATION.STEP)
+}
+
 export type LodLevel = "pill" | "default" | "expanded"
 
 export const CLUSTER_TAG_STATUS: Record<string, string> = {

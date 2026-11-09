@@ -197,7 +197,7 @@ public class ExecutorCore {
 
         EvaluationType evaluationType = killSwitchService.evaluate(execution);
         if (evaluationType.isKillSwitched(execution)) {
-            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId()).ifPresent(this::toExecution);
             return;
         }
 

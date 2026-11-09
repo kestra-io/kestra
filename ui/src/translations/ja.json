@@ -214,6 +214,7 @@
     "no_logs_yet_title": "まだログはありません。",
     "no_logs_yet_description": "flowが実行されると、ここにログが表示されます。",
     "execution_no_logs_title": "この実行にはログがありません。",
+    "execution_no_logs_at_level_title": "この実行には {level} レベル以上のログがありません。",
     "duration": "期間",
     "total_duration": "合計時間",
     "running duration": "実行期間",

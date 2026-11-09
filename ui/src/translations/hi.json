@@ -214,6 +214,7 @@
     "no_logs_yet_title": "अभी तक कोई logs नहीं हैं।",
     "no_logs_yet_description": "जब कोई flow चलता है, तो logs यहाँ दिखाई देते हैं।",
     "execution_no_logs_title": "इस निष्पादन में कोई logs नहीं हैं।",
+    "execution_no_logs_at_level_title": "इस निष्पादन में {level} स्तर या उससे ऊपर के कोई logs नहीं हैं।",
     "duration": "अवधि",
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",

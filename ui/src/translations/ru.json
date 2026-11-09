@@ -214,6 +214,7 @@
     "no_logs_yet_title": "Логов пока нет.",
     "no_logs_yet_description": "Логи появятся здесь, когда будет запущен flow.",
     "execution_no_logs_title": "В этом выполнении нет логов.",
+    "execution_no_logs_at_level_title": "В этом выполнении нет логов уровня {level} или выше.",
     "duration": "Длительность",
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",

@@ -26,6 +26,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 const messages = {
     no_logs_data_title: "No logs match",
     execution_no_logs_title: "No logs in this execution",
+    execution_no_logs_at_level_title: "No {level} logs in this execution",
 }
 
 function mountEmptyLogs() {
@@ -54,7 +55,17 @@ describe("executions/Logs empty state", () => {
         route.query = {}
     })
 
-    test("shouldShowTheNeutralMessageWhenNoFilterIsApplied", async () => {
+    test("shouldNameTheDefaultLevelWhenNoFilterIsApplied", async () => {
+        const wrapper = mountEmptyLogs()
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("No INFO logs in this execution")
+        expect(wrapper.text()).not.toContain(messages.no_logs_data_title)
+    })
+
+    test("shouldSayTheExecutionHasNoLogsWhenNoLevelIsHidden", async () => {
+        localStorage.setItem(storageKeys.DEFAULT_LOG_LEVEL, "TRACE")
+
         const wrapper = mountEmptyLogs()
         await flushPromises()
 
@@ -69,6 +80,6 @@ describe("executions/Logs empty state", () => {
         await flushPromises()
 
         expect(wrapper.text()).toContain(messages.no_logs_data_title)
-        expect(wrapper.text()).not.toContain(messages.execution_no_logs_title)
+        expect(wrapper.text()).not.toContain("in this execution")
     })
 })

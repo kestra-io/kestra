@@ -799,16 +799,21 @@ public class FlowController {
     @Operation(tags = { "Flows" }, summary = "Validate a task")
     public ValidateConstraintViolation validateTask(
         @RequestBody(description = "A task definition that can be from tasks or triggers") @Schema(implementation = Object.class) @Body String task,
-        @Parameter(description = "The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)") @QueryValue String section) {
+        @Parameter(description = "The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)") @QueryValue String section,
+        @Parameter(description = "The namespace of the flow the definition belongs to, used to account for governance applied to it") @Nullable @QueryValue String namespace) {
+        return validateTaskSource(tenantService.resolveTenant(), namespace, section, task);
+    }
+
+    protected ValidateConstraintViolation validateTaskSource(String tenantId, @Nullable String namespace, String section, String source) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
             if ("triggers".equalsIgnoreCase(section)) {
-                AbstractTrigger triggerParse = YamlParser.parse(task, AbstractTrigger.class);
+                AbstractTrigger triggerParse = YamlParser.parse(source, AbstractTrigger.class);
                 modelValidator.validate(triggerParse);
             } else {
                 // Every other section (tasks, errors, finally, afterExecution) holds tasks.
-                Task taskParse = YamlParser.parse(task, Task.class);
+                Task taskParse = YamlParser.parse(source, Task.class);
                 modelValidator.validate(taskParse);
             }
         } catch (ConstraintViolationException e) {

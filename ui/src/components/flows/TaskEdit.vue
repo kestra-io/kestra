@@ -189,7 +189,7 @@
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
-    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, POLICY_SUPPLIED_PATHS_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
     import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
@@ -418,6 +418,8 @@
     const flowStore = useFlowStore()
     const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
     const localTaskErrors = ref<ApiValidationError[] | undefined>()
+    const policySuppliedPaths = ref<string[]>([])
+    provide(POLICY_SUPPLIED_PATHS_INJECTION_KEY, computed(() => new Set(policySuppliedPaths.value)))
     const errors = computed(() => {
         const split = validationErrorLines(localTaskErrors.value)
         return split.length === 0 ? undefined : split
@@ -586,11 +588,18 @@
         }
         if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
-            flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskErrors.value = result?.errors })
-                .catch(() => { localTaskErrors.value = undefined })
+            flowStore.validateTask({task: taskYaml.value, section: props.section, namespace: props.namespace || undefined})
+                .then((result) => {
+                    localTaskErrors.value = result?.errors
+                    policySuppliedPaths.value = result?.policySuppliedPaths ?? []
+                })
+                .catch(() => {
+                    localTaskErrors.value = undefined
+                    policySuppliedPaths.value = []
+                })
         } else {
             localTaskErrors.value = undefined
+            policySuppliedPaths.value = []
         }
     }
 
@@ -600,8 +609,10 @@
             flowStore.validateTask({
                 task: taskYaml.value,
                 section: props.section,
+                namespace: props.namespace || undefined,
             }).then((result) => {
                 localTaskErrors.value = result?.errors
+                policySuppliedPaths.value = result?.policySuppliedPaths ?? []
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {

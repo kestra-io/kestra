@@ -2086,6 +2086,7 @@
     "chart": "चार्ट",
     "no_code": {
       "toggle_pebble": "Pebble संपादक टॉगल करें",
+      "policy_supplied": "नीति द्वारा सेट किया गया",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",

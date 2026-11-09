@@ -2086,6 +2086,7 @@
     "chart": "Gráfico",
     "no_code": {
       "toggle_pebble": "Alternar editor de Pebble",
+      "policy_supplied": "Definido por una política",
       "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition",
       "adding": "+ Agregar un {what}",
       "adding_default": "+ Añadir un nuevo value",

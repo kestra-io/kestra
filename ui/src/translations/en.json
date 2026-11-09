@@ -2086,6 +2086,7 @@
     "chart": "Chart",
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
+      "policy_supplied": "Set by a policy",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",

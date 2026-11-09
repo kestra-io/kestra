@@ -2942,6 +2942,7 @@ export const _032E9A671 = <ThrowOnError extends boolean = true>(parameters: {
 export const _407247Bb = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
     section: string;
+    namespace?: string | null;
     body: {
         [key: string]: unknown;
     };
@@ -2949,6 +2950,7 @@ export const _407247Bb = <ThrowOnError extends boolean = true>(parameters: {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'section' },
+                { in: 'query', key: 'namespace' },
                 { key: 'body', map: 'body' }
             ] }]);
     return (options?.client ?? client).post<ValidateTaskResponses, ValidateTaskErrors, ThrowOnError>({

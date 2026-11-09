@@ -71,6 +71,14 @@
                     </span>
 
                     <span
+                        v-if="isPolicySupplied"
+                        class="policy-supplied-hint"
+                        data-test="field-policy-supplied"
+                    >
+                        {{ $t("no_code.policy_supplied") }}
+                    </span>
+
+                    <span
                         v-if="defaultHint !== undefined"
                         class="plugin-default-hint"
                         data-test="field-default-hint"
@@ -151,7 +159,7 @@
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY, POLICY_SUPPLIED_PATHS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
@@ -179,12 +187,7 @@
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
-    const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey)// && props.schema.$required;
-    })
-
-    const isMissingRequired = computed(() => {
-        if (!isRequired.value) return false
+    const isUnset = computed(() => {
         const value = modelValue.value
         return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
     })
@@ -192,6 +195,20 @@
     const fieldPath = computed(() =>
         props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
     )
+
+    const policySuppliedPaths = inject(POLICY_SUPPLIED_PATHS_INJECTION_KEY, undefined)
+    const isPolicySupplied = computed(() =>
+        !props.disabled
+        && Boolean(props.required?.includes(props.fieldKey))
+        && isUnset.value
+        && Boolean(policySuppliedPaths?.value.has(fieldPath.value)),
+    )
+
+    const isRequired = computed(() => {
+        return !props.disabled && props.required?.includes(props.fieldKey) && !isPolicySupplied.value// && props.schema.$required;
+    })
+
+    const isMissingRequired = computed(() => isRequired.value && isUnset.value)
 
     const hasSelectedASchema = ref(false)
 
@@ -349,7 +366,8 @@
         font-weight: 600;
     }
 
-    .plugin-default-hint {
+    .plugin-default-hint,
+    .policy-supplied-hint {
         flex-shrink: 0;
         font-size: var(--ks-font-size-xs);
         font-family: var(--ks-font-family-mono);

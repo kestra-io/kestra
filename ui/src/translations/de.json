@@ -2086,6 +2086,7 @@
     "chart": "Diagramm",
     "no_code": {
       "toggle_pebble": "Pebble-Editor umschalten",
+      "policy_supplied": "Durch eine Policy festgelegt",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",

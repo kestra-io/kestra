@@ -2086,6 +2086,7 @@
     "chart": "チャート",
     "no_code": {
       "toggle_pebble": "ペブルエディタを切り替え",
+      "policy_supplied": "ポリシーにより設定",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",

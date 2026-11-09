@@ -214,6 +214,7 @@
     "no_logs_yet_title": "暂无日志。",
     "no_logs_yet_description": "flow 运行后，日志将显示在这里。",
     "execution_no_logs_title": "此次执行没有日志。",
+    "execution_no_logs_at_level_title": "此次执行没有 {level} 及以上级别的日志。",
     "duration": "持续时间",
     "total_duration": "总持续时间",
     "running duration": "运行时间",

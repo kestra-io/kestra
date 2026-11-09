@@ -214,6 +214,7 @@
     "no_logs_yet_title": "Aucun log pour le moment.",
     "no_logs_yet_description": "Les logs apparaissent ici lorsqu'un flow s'exécute.",
     "execution_no_logs_title": "Cette exécution n'a aucun log.",
+    "execution_no_logs_at_level_title": "Cette exécution n'a aucun log de niveau {level} ou supérieur.",
     "duration": "Durée",
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",

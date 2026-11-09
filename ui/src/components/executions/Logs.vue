@@ -114,6 +114,7 @@
                         :title="$t('no_logs_data_title')"
                         :description="$t('no_logs_data_description')"
                     />
+                    <KsNoData v-else-if="hiddenBelowLevel" :title="$t('execution_no_logs_at_level_title', {level: hiddenBelowLevel})" />
                     <KsNoData v-else :title="$t('execution_no_logs_title')" />
                 </template>
                 <DynamicScroller
@@ -346,6 +347,10 @@
         || routeTaskRunId.value !== undefined
         || !isDefaultLogLevel(effectiveLevelValue.value, merged.value ? ERRORS_ONLY.value : defaultLogLevel.value),
     )
+    const hiddenBelowLevel = computed(() => {
+        const level = effectiveLevelValue.value?.value
+        return level && level !== "TRACE" ? level : undefined
+    })
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")
     const emptyLogIndicesByLevel = () =>

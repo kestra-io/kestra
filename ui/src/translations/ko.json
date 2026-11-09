@@ -214,6 +214,7 @@
     "no_logs_yet_title": "아직 로그가 없습니다.",
     "no_logs_yet_description": "flow가 실행되면 여기에 로그가 표시됩니다.",
     "execution_no_logs_title": "이 실행에는 로그가 없습니다.",
+    "execution_no_logs_at_level_title": "이 실행에는 {level} 수준 이상의 로그가 없습니다.",
     "duration": "지속 시간",
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",

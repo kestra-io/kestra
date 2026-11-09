@@ -208,7 +208,7 @@ class LocalStorageTest extends StorageTestSuite {
 
     @Test
     void existsInstanceResourceShouldDetectDirectories() throws IOException {
-        String dir = "/exists-instance-" + IdUtils.create();
+        var dir = "/exists-instance-" + IdUtils.create();
         storageInterface.createInstanceDirectory(null, URI.create(dir));
 
         assertTrue(storageInterface.existsInstanceResource(null, URI.create(dir)));

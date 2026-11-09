@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill को रोकें",
     "continue backfills": "Backfills जारी रखें",
     "delete backfills": "Backfills हटाएं",
+    "delete backfill confirm": "Trigger {id} का Backfill हटाएं?",
+    "delete backfill success": "Trigger {id} का Backfill हटा दिया गया है",
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
@@ -2792,7 +2794,8 @@
         "tooltip": "flow परीक्षण देखें"
       },
       "errors": {
-        "label": "{count} त्रुटि(याँ)"
+        "label": "{count} त्रुटि(याँ)",
+        "action": "{count} त्रुटि(याँ), अगली त्रुटि पर जाएं"
       }
     },
     "invalid_source_code": "अमान्य स्रोत कोड",

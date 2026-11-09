@@ -1339,6 +1339,8 @@
     "pause backfill": "Приостановить заполнение",
     "continue backfills": "Продолжить заполнения",
     "delete backfills": "Удалить заполнения",
+    "delete backfill confirm": "Удалить backfill trigger {id}?",
+    "delete backfill success": "Backfill trigger {id} удалён",
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
@@ -2792,7 +2794,8 @@
         "tooltip": "Просмотр тестов flow"
       },
       "errors": {
-        "label": "{count} Ошибка(и)"
+        "label": "{count} Ошибка(и)",
+        "action": "{count} ошибка(и), перейти к следующей ошибке"
       }
     },
     "invalid_source_code": "Недопустимый исходный код",

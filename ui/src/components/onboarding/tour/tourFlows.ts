@@ -33,7 +33,7 @@ tasks:
     uri: https://dummyjson.com/carts
 
   - id: ${TOUR_SUMMARIZE_TASK_ID}
-    type: io.kestra.plugin.scripts.python.Script${SUMMARIZE_TASK_RUNNER[runner]}
+    type: io.kestra.plugin.scripts.python.Script${SUMMARIZE_TASK_RUNNER[runner] ?? ""}
     dependencies:
       - kestra
     script: |

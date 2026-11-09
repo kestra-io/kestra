@@ -86,14 +86,14 @@ public final class HttpUriValidator {
     }
 
     @SuppressWarnings("unchecked")
-    public static void validate(URI uri, DefaultRunContext runContext) {
+    public static void validate(URI uri, DefaultRunContext runContext, boolean hasProxy) {
         List<String> allowedList = (List<String>) runContext
-            .getTaskProperty("kestra.tasks.http.allowed-list", List.class)
-            .orElse(Collections.emptyList());
+                .getTaskProperty("kestra.tasks.http.allowed-list", List.class)
+                .orElse(Collections.emptyList());
 
         List<String> deniedList = (List<String>) runContext
-            .getTaskProperty("kestra.tasks.http.denied-list", List.class)
-            .orElse(Collections.emptyList());
+                .getTaskProperty("kestra.tasks.http.denied-list", List.class)
+                .orElse(Collections.emptyList());
 
         if (allowedList.isEmpty() && deniedList.isEmpty()) {
             return;
@@ -103,29 +103,33 @@ public final class HttpUriValidator {
 
         if (authority == null) {
             throw new IllegalArgumentException(
-                "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list)."
-                    .formatted(uri)
-            );
+                    "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list)."
+                            .formatted(uri));
         }
 
-        if (
-            !allowedList.isEmpty()
-                && allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))
-        ) {
+        if (!allowedList.isEmpty()
+                && allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))) {
             throw new IllegalArgumentException(
-                "The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list)."
-                    .formatted(uri)
-            );
+                    "The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list)."
+                            .formatted(uri));
         }
 
         if (deniedList.stream().anyMatch(entry -> isListEntryMatch(entry, uri))) {
             throw new IllegalArgumentException(
-                "The URI %s is in the configured denied list (kestra.tasks.http.denied-list)."
-                    .formatted(uri)
-            );
+                    "The URI %s is in the configured denied list (kestra.tasks.http.denied-list)."
+                            .formatted(uri));
         }
 
-        checkResolvedAddresses(authority.host(), deniedList);
+        if (hasProxy && !deniedList.isEmpty() && parseIpLiteral(authority.host()).isEmpty()) {
+            try {
+                rejectDeniedAddresses(
+                        authority.host(),
+                        org.apache.hc.client5.http.SystemDefaultDnsResolver.INSTANCE.resolve(authority.host()),
+                        deniedList);
+            } catch (UnknownHostException e) {
+                // The proxy may be able to resolve hostnames unavailable locally.
+            }
+        }
     }
 
     private static ResolvedAuthority resolveAuthority(URI uri) {
@@ -154,9 +158,8 @@ public final class HttpUriValidator {
             if (remainder.startsWith(":")) {
                 try {
                     return new ResolvedAuthority(
-                        host,
-                        Integer.parseInt(remainder.substring(1))
-                    );
+                            host,
+                            Integer.parseInt(remainder.substring(1)));
                 } catch (NumberFormatException e) {
                     return new ResolvedAuthority(host, -1);
                 }
@@ -173,9 +176,8 @@ public final class HttpUriValidator {
 
         try {
             return new ResolvedAuthority(
-                hostAndPort.substring(0, colon),
-                Integer.parseInt(hostAndPort.substring(colon + 1))
-            );
+                    hostAndPort.substring(0, colon),
+                    Integer.parseInt(hostAndPort.substring(colon + 1)));
         } catch (NumberFormatException e) {
             return new ResolvedAuthority(hostAndPort, -1);
         }
@@ -203,8 +205,8 @@ public final class HttpUriValidator {
 
     private static String canonicalHost(String host) {
         return parseIpLiteral(host)
-            .map(InetAddress::getHostAddress)
-            .orElseGet(() -> stripTrailingDot(host).toLowerCase(Locale.ROOT));
+                .map(InetAddress::getHostAddress)
+                .orElseGet(() -> stripTrailingDot(host).toLowerCase(Locale.ROOT));
     }
 
     private static boolean isListEntryMatch(String entry, URI uri) {
@@ -218,24 +220,23 @@ public final class HttpUriValidator {
 
         if (cidr != null) {
             return cidr.contains(requestAuthority.host())
-                && (cidr.scheme() == null
-                    || cidr.scheme().equalsIgnoreCase(uri.getScheme()));
+                    && (cidr.scheme() == null
+                            || cidr.scheme().equalsIgnoreCase(uri.getScheme()));
         }
 
         boolean matchSubdomains = entry.startsWith("*.") || entry.contains("://*.");
 
         String strippedEntry = entry
-            .replace("://*.", "://")
-            .replaceFirst("^\\*\\.", "");
+                .replace("://*.", "://")
+                .replaceFirst("^\\*\\.", "");
 
         URI entryUri;
 
         try {
             entryUri = URI.create(
-                strippedEntry.contains("://")
-                    ? strippedEntry
-                    : "//" + strippedEntry
-            );
+                    strippedEntry.contains("://")
+                            ? strippedEntry
+                            : "//" + strippedEntry);
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -250,25 +251,21 @@ public final class HttpUriValidator {
         String entryHost = canonicalHost(entryAuthority.host());
 
         boolean hostMatches = matchSubdomains
-            && parseIpLiteral(host).isEmpty()
-                ? host.endsWith("." + entryHost)
-                : host.equals(entryHost);
+                && parseIpLiteral(host).isEmpty()
+                        ? host.endsWith("." + entryHost)
+                        : host.equals(entryHost);
 
         if (!hostMatches) {
             return false;
         }
 
-        if (
-            entryUri.getScheme() != null
-                && !entryUri.getScheme().equalsIgnoreCase(uri.getScheme())
-        ) {
+        if (entryUri.getScheme() != null
+                && !entryUri.getScheme().equalsIgnoreCase(uri.getScheme())) {
             return false;
         }
 
-        if (
-            entryAuthority.port() != -1
-                && entryAuthority.port() != defaultedPort(uri.getScheme(), requestAuthority.port())
-        ) {
+        if (entryAuthority.port() != -1
+                && entryAuthority.port() != defaultedPort(uri.getScheme(), requestAuthority.port())) {
             return false;
         }
 
@@ -286,8 +283,8 @@ public final class HttpUriValidator {
     }
 
     private static void checkResolvedAddresses(
-        String host,
-        List<String> deniedList) {
+            String host,
+            List<String> deniedList) {
         if (deniedList.isEmpty() || parseIpLiteral(host).isPresent()) {
             return;
         }
@@ -297,13 +294,12 @@ public final class HttpUriValidator {
 
             for (InetAddress address : addresses) {
                 boolean denied = deniedList.stream()
-                    .anyMatch(entry -> isDeniedAddress(entry, address));
+                        .anyMatch(entry -> isDeniedAddress(entry, address));
 
                 if (denied) {
                     throw new IllegalArgumentException(
-                        "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list)."
-                            .formatted(host, address.getHostAddress())
-                    );
+                            "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list)."
+                                    .formatted(host, address.getHostAddress()));
                 }
             }
         } catch (UnknownHostException e) {
@@ -320,22 +316,21 @@ public final class HttpUriValidator {
         }
 
         String strippedEntry = entry
-            .replace("://*.", "://")
-            .replaceFirst("^\\*\\.", "");
+                .replace("://*.", "://")
+                .replaceFirst("^\\*\\.", "");
 
         try {
             URI entryUri = URI.create(
-                strippedEntry.contains("://")
-                    ? strippedEntry
-                    : "//" + strippedEntry
-            );
+                    strippedEntry.contains("://")
+                            ? strippedEntry
+                            : "//" + strippedEntry);
 
             ResolvedAuthority authority = resolveAuthority(entryUri);
 
             return authority != null
-                && parseIpLiteral(authority.host())
-                    .map(address::equals)
-                    .orElse(false);
+                    && parseIpLiteral(authority.host())
+                            .map(address::equals)
+                            .orElse(false);
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -343,8 +338,8 @@ public final class HttpUriValidator {
 
     private static String stripTrailingDot(String host) {
         return host.endsWith(".")
-            ? host.substring(0, host.length() - 1)
-            : host;
+                ? host.substring(0, host.length() - 1)
+                : host;
     }
 
     private static int defaultedPort(String scheme, int port) {
@@ -357,5 +352,18 @@ public final class HttpUriValidator {
             case "https", "wss" -> 443;
             default -> -1;
         };
+    }
+
+    private static void rejectDeniedAddresses(
+            String host,
+            InetAddress[] addresses,
+            List<String> deniedList) {
+        for (InetAddress address : addresses) {
+            if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
+                throw new IllegalArgumentException(
+                        "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list)."
+                                .formatted(host, address.getHostAddress()));
+            }
+        }
     }
 }

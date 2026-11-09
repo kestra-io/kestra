@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
+import type {VNode} from "vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia} from "pinia"
@@ -36,8 +37,8 @@ const settle = async () => {
     await flushPromises()
 }
 
-const logEntry = (id: string) => ({
-    id,
+const logEntry = (key: string) => ({
+    key,
     level: "INFO" as const,
     namespace: "ns",
     flowId: "flow",
@@ -119,6 +120,23 @@ describe("LogsWrapper bulk delete", () => {
 
         expect(deleteLogsByIds).toHaveBeenCalledWith({body: [LOG_ID]})
         expect(levelCountCalls()).toBeGreaterThan(countsBeforeDelete)
+    })
+
+    it("asks for confirmation with the number of selected logs rendered as code", async () => {
+        const {wrapper} = await mountWithLogs({ids: [LOG_ID, OTHER_LOG_ID]})
+        for (const checkbox of wrapper.findAll("[data-test=log-row-checkbox] input")) {
+            await checkbox.setValue(true)
+        }
+        await wrapper.find("[data-test=logs-bulk-delete]").trigger("click")
+        await settle()
+
+        const [message] = vi.mocked(KsMessageBox.confirm).mock.calls[0]
+        const rendered = i18nMount({render: () => message as VNode}, {
+            messages: {"bulk delete logs": "Delete {count} log(s)?"},
+        })
+
+        expect(rendered.html()).toContain("<code>2</code>")
+        expect(rendered.text()).toBe("Delete 2 log(s)?")
     })
 
     it("keeps the selection when the list reloads with the same logs and drops the ids that disappeared", async () => {

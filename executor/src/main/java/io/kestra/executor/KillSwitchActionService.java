@@ -63,7 +63,7 @@ public class KillSwitchActionService {
                 log.warn(CANCELLING_EXECUTION_MSG, executionId);
                 yield cancelExecution(executionId);
             }
-            case PASS -> Optional.empty();
+            case PASS -> throw new IllegalArgumentException("Cannot act on execution '%s' for a PASS kill-switch verdict.".formatted(executionId));
         };
     }
 

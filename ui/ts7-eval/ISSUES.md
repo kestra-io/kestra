@@ -81,12 +81,12 @@ issues if the maintainers prefer. Repros: `repros/ts5088-min/` and `repros/ts288
 > **Expected:** the 7.0 behaviour for both, or entries in the 7.1 breaking-changes notes if either error is intended.
 >
 > **Why it matters:** in a `composite` project both errors also suppress the file's declaration, so every downstream
-> project reports TS6305 / TS7016 against it. In our UI, 6 TS5088 led to 136 follow-up errors in one build, and
-> 12 TS2883 (with the same TS5088) led to 69 in another.
+> project reports TS6305 / TS7016 against it. In our UI, before we annotated the affected exports, 6 TS5088 led to
+> 136 follow-up errors in one build, and 12 TS2883 (with the same TS5088) led to 69 in another.
 
 ## 2. vuejs/language-tools#6334: comment draft (known)
 
-> Same failure at scale: 262 of 1,095 diagnostics in the Kestra UI (Vue 3.5), and 166 more in its EE layer, are `onX` listeners (`@click`,
+> Same failure at scale: 262 of 800 diagnostics in the Kestra UI (Vue 3.5), and 166 more in its EE layer, are `onX` listeners (`@click`,
 > `@keydown`, and component events forwarded through `$attrs` such as `@closed` / `@visible-change`) on components that
 > declare no matching emit. Minimal repro: `repros/NativeListener.vue` (`<Child @click="() => {}" />` gives TS2353 on
 > `onClick`). The `emits: ["click"]` workaround does not apply to wrappers that forward a third-party component's events.

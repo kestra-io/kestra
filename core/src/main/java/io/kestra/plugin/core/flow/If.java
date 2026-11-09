@@ -177,7 +177,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
-            this.childTasks(runContext, parentTaskRun),
+            ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun

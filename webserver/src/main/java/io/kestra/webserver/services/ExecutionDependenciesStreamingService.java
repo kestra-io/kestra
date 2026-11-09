@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.topologies.FlowNode;
@@ -96,6 +97,10 @@ public class ExecutionDependenciesStreamingService {
                 return;
             }
             Execution execution = maybeExecution.get();
+            // an iteration shares the flow and the correlation id of the followed execution but is not a dependency of it
+            if (execution.getKind() == ExecutionKind.LOOP) {
+                return;
+            }
             Optional<String> correlationId = execution.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value());
 
             // Get all subscribers for this correlationId

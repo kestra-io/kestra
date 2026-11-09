@@ -2794,7 +2794,8 @@
         "tooltip": "Flow-Tests anzeigen"
       },
       "errors": {
-        "label": "{count} Fehler"
+        "label": "{count} Fehler",
+        "action": "{count} Fehler, zum nächsten Fehler springen"
       }
     },
     "invalid_source_code": "Ungültiger Quellcode",

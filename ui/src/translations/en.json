@@ -2794,7 +2794,8 @@
         "tooltip": "View flow tests"
       },
       "errors": {
-        "label": "{count} Error(s)"
+        "label": "{count} Error(s)",
+        "action": "{count} error(s), go to the next error"
       }
     },
     "invalid_source_code": "Invalid source code",

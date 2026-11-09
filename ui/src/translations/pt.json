@@ -2794,7 +2794,8 @@
         "tooltip": "Ver testes de flow"
       },
       "errors": {
-        "label": "{count} Erro(s)"
+        "label": "{count} Erro(s)",
+        "action": "{count} erro(s), ir para o próximo erro"
       }
     },
     "invalid_source_code": "Código-fonte inválido",

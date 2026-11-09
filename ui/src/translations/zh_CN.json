@@ -2794,7 +2794,8 @@
         "tooltip": "查看flow测试"
       },
       "errors": {
-        "label": "{count} 错误"
+        "label": "{count} 错误",
+        "action": "{count} 个错误，跳转到下一个错误"
       }
     },
     "invalid_source_code": "源代码无效",

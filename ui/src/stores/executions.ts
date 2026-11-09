@@ -412,8 +412,14 @@ export const useExecutionsStore = defineStore("executions", () => {
     const startExecutionLoad = latestRequest()
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
-     *  trailing event from the previous execution's stream cannot land on top of this one. */
-    const loadExecution = (options: { id: string }) => {
+     *  trailing event from the previous execution's stream cannot land on top of this one.
+     *  `store: false` reads without touching the shared ref or that sequence, for a caller that polls an
+     *  execution the user is not looking at. */
+    const loadExecution = (options: { id: string, store?: boolean }) => {
+        if (options.store === false) {
+            return ExecutionsAPI.execution({executionId: options.id})
+        }
+
         const isLatestLoad = startExecutionLoad()
         return ExecutionsAPI.execution({executionId: options.id}).then(data => {
             if (!isLatestLoad()) return data

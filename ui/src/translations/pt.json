@@ -211,6 +211,9 @@
     "logs": "Logs",
     "no_logs_data_description": "Por favor, tente ajustar seus filtros, alterar o intervalo de tempo ou verifique se o flow foi executado recentemente.",
     "no_logs_data_title": "Nenhum log encontrado",
+    "no_logs_yet_title": "Ainda não há logs.",
+    "no_logs_yet_description": "Os logs aparecem aqui quando um flow é executado.",
+    "execution_no_logs_title": "Esta execução não tem logs.",
     "duration": "Duração",
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
@@ -1897,6 +1900,7 @@
       "false": "{count} trigger(s) ativado(s)"
     },
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
+    "no_namespaces_yet": "Ainda não há namespaces. Um namespace é criado quando um flow o utiliza.",
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "secret": {

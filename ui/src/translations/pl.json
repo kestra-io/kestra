@@ -211,6 +211,9 @@
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
     "no_logs_data_title": "Nie znaleziono logów",
+    "no_logs_yet_title": "Brak logów.",
+    "no_logs_yet_description": "Logi pojawią się tutaj po uruchomieniu flow.",
+    "execution_no_logs_title": "To wykonanie nie ma logów.",
     "duration": "Czas trwania",
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas działania",
@@ -1897,6 +1900,7 @@
       "false": "Włączono {count} Triggerów"
     },
     "no_namespaces": "Żaden namespace nie spełnia kryteriów wyszukiwania.",
+    "no_namespaces_yet": "Brak namespace'ów. Namespace jest tworzony, gdy używa go flow.",
     "system_namespace": "Zachowaj kontrolę nad swoją platformą dzięki systemowym Flowom.",
     "system_namespace_description": "Automatyzuj Taski konserwacyjne, od alertów o awariach po automatyczne porządki.",
     "secret": {

@@ -211,6 +211,9 @@
     "logs": "日志",
     "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_logs_data_title": "未找到日志",
+    "no_logs_yet_title": "暂无日志。",
+    "no_logs_yet_description": "flow 运行后，日志将显示在这里。",
+    "execution_no_logs_title": "此次执行没有日志。",
     "duration": "持续时间",
     "total_duration": "总持续时间",
     "running duration": "运行时间",
@@ -1897,6 +1900,7 @@
       "false": "{count} 个触发器已启用"
     },
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_namespaces_yet": "暂无 namespace。当 flow 使用某个 namespace 时，它会被创建。",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
     "secret": {

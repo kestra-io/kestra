@@ -43,7 +43,8 @@ class McpPlatformToolTest {
             "create_flow", "update_flow", "enable_flow", "disable_flow", "delete_flow",
             "execute_flow", "kill_execution", "pause_execution", "change_execution_state", "update_execution_labels",
             "delete_execution", "read_execution_outputs",
-            "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow"
+            "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow",
+            "list_kv_entries", "read_kv_entry", "create_kv_entry", "update_kv_entry", "delete_kv_entry"
         );
         assertThat(exposed).allSatisfy(entry ->
         {

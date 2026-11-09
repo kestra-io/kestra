@@ -3,6 +3,7 @@
   "version": "0.0.0-dev",
   "description": "Kestra UI Design System – component abstractions over Element Plus",
   "type": "module",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/kestra-io/kestra#readme",
   "repository": {
     "type": "git",

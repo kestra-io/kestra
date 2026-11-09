@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -260,6 +261,7 @@ public class TriggerScheduler {
      */
     public int onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         metricScheduleLoopCounter.increment();
+        long startNanos = System.nanoTime();
 
         ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduledTime, clock.getZone());
 
@@ -276,7 +278,7 @@ public class TriggerScheduler {
         schedulableTriggers.forEach(triggerEvaluationContext -> evaluate(clock, zoneScheduleTime, triggerEvaluationContext));
 
         // Record metrics
-        metricEvaluationLoopDuration.record(Duration.between(scheduledTime, clock.instant()));
+        metricEvaluationLoopDuration.record(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
 
         return schedulableTriggers.size();
     }

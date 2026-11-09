@@ -49,8 +49,9 @@ public final class AiToolSpecifications {
     private AiToolSpecifications() {
     }
 
-    static boolean isExposedFilterField(final QueryFilter.Field field) {
-        return field != QueryFilter.Field.TIME_RANGE;
+    /** A field the model can filter on: not the time range shorthand, and with at least one operator for the resource (sort-only fields have none). */
+    static boolean isExposedFilterField(final QueryFilter.Resource resource, final QueryFilter.Field field) {
+        return field != QueryFilter.Field.TIME_RANGE && !resource.supportedOp(field).isEmpty();
     }
 
     /**
@@ -76,7 +77,7 @@ public final class AiToolSpecifications {
 
             QueryFilter.Resource resource = filterParam.getAnnotation(QueryFilterFormat.class).value();
             for (QueryFilter.Field field : resource.supportedField()) {
-                if (!isExposedFilterField(field)) {
+                if (!isExposedFilterField(resource, field)) {
                     continue;
                 }
                 properties.put(field.name(), fieldFilterSchema(resource, field)); // optional per-field filter

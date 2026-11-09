@@ -38,8 +38,7 @@ class FinallyTest {
     void finallyRunsWhenFlowablesHaveNoEnabledTasks() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "emptyflowables",
-            NAMESPACE, "finally-empty-flowables", null,
-            Duration.ofSeconds(60)
+            NAMESPACE, "finally-empty-flowables", Duration.ofSeconds(60)
         );
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

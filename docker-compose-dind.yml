@@ -15,7 +15,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:18
+    image: postgres:17
     volumes:
       - postgres-data:/var/lib/postgresql
     environment:

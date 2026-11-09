@@ -1,30 +1,23 @@
-import {describe, expect, test, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "@kestra-io/design-system"
+import {afterEach, describe, expect, test, vi} from "vitest"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import CopyToClipboard from "./CopyToClipboard.vue"
 import * as Utils from "../../utils/utils"
 
 describe("CopyToClipboard", () => {
     const mountComponent = (props: {text: string; label?: string; link?: boolean} = {text: "sample-token"}, slots = {}) =>
-        mount(CopyToClipboard, {
-            props,
-            slots,
-            global: {
-                plugins: [KestraDesignSystem],
-                mocks: {
-                    $t: (key: string) => key,
-                },
-            },
-        })
+        i18nMount(CopyToClipboard, {props, slots})
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
 
     test("clicking the button calls the copy helper with text", async () => {
-        const copySpy = vi.spyOn(Utils, "copy").mockImplementation(() => Promise.resolve())
+        const copySpy = vi.spyOn(Utils, "copy").mockResolvedValue(undefined)
         const wrapper = mountComponent({text: "secret-key"})
 
         await wrapper.find("button").trigger("click")
 
         expect(copySpy).toHaveBeenCalledWith("secret-key")
-        copySpy.mockRestore()
     })
 
     test("the label is rendered when label is set", () => {

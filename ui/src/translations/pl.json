@@ -2187,6 +2187,7 @@
     "no_code": {
       "unknown_schema": "Nieznany schemat",
       "toggle_pebble": "Przełącz edytor Pebble",
+      "policy_supplied": "Ustawione przez politykę",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",

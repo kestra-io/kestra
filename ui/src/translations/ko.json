@@ -2187,6 +2187,7 @@
     "no_code": {
       "unknown_schema": "알 수 없는 스키마",
       "toggle_pebble": "Pebble 편집기 전환",
+      "policy_supplied": "정책에 의해 설정됨",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",

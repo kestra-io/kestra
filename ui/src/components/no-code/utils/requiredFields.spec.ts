@@ -144,6 +144,38 @@ describe("countUnsetRequiredFields", () => {
     })
 })
 
+describe("countUnsetRequiredFields with policy-supplied paths", () => {
+    it("skips a top-level required field supplied by a policy", () => {
+        const schema = {type: "object", properties: {message: {type: "string"}, level: {type: "string"}}, required: ["message", "level"]}
+
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["message"]))
+
+        expect(result).toEqual([{path: "level", label: "level"}])
+    })
+
+    it("skips a nested required field supplied by a policy", () => {
+        const schema = {
+            type: "object",
+            properties: {auth: {type: "object", properties: {user: {type: "string"}, token: {type: "string"}}, required: ["user", "token"]}},
+        }
+
+        const result = countUnsetRequiredFields({auth: {}}, schema, {}, "", new Set(["auth.user"]))
+
+        expect(result).toEqual([{path: "auth.token", label: "token"}])
+    })
+
+    it("skips a required field supplied inside an array item", () => {
+        const schema = {
+            type: "object",
+            properties: {items: {type: "array", items: {type: "object", properties: {name: {type: "string"}}, required: ["name"]}}},
+        }
+
+        const result = countUnsetRequiredFields({items: [{}, {}]}, schema, {}, "", new Set(["items[1].name"]))
+
+        expect(result).toEqual([{path: "items[0].name", label: "name"}])
+    })
+})
+
 describe("findRequiredFieldFrames", () => {
     it("returns a frame for a drillable array item, so the jump can open it before focusing the field", () => {
         const itemSchema = {

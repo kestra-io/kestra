@@ -2732,6 +2732,7 @@ export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' |
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
+    policySuppliedPaths?: Array<string>;
     /**
      * @deprecated
      */
@@ -9648,6 +9649,10 @@ export type ValidateTaskData = {
          * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
         section: string;
+        /**
+         * The namespace of the flow the definition belongs to, used to account for governance applied to it
+         */
+        namespace?: string | null;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };

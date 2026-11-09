@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, inject, nextTick} from "vue"
+    import {ref, watch, computed, inject, nextTick, provide} from "vue"
     import {SECTIONS} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {SECTIONS_MAP} from "../../../utils/constants"
@@ -21,6 +21,7 @@
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        POLICY_SUPPLIED_PATHS_INJECTION_KEY,
     } from "../injectionKeys"
     import TaskEditor from "../components/TaskEditor.vue"
     import ValidationError from "../../../components/flows/ValidationError.vue"
@@ -100,11 +101,17 @@
                     flowStore.validateTask({
                         task,
                         section: validationSection.value,
-                    })
+                        namespace: flowStore.flow?.namespace,
+                    }).then((result) => {
+                        policySuppliedPaths.value = result?.policySuppliedPaths ?? []
+                    }).catch(() => {})
                 }
             }, 500)
         }
     }
+
+    const policySuppliedPaths = ref<string[]>([])
+    provide(POLICY_SUPPLIED_PATHS_INJECTION_KEY, computed(() => new Set(policySuppliedPaths.value)))
 
     const timer = ref<ReturnType<typeof setTimeout>>()
     const lastValidatedValue = ref<string>()

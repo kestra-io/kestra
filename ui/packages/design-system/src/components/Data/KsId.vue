@@ -53,7 +53,7 @@
         }
 
         return props.value.toString().substring(0, size.value) +
-            (props.value.length > size.value && size.value !== 8 ? "…" : "")
+            (props.value.length > size.value ? "…" : "")
     })
 </script>
 

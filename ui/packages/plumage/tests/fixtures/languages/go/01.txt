@@ -1,0 +1,31 @@
+func followLogs(client *kestra.KestraClient) {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+    executionID := "your-execution-id"
+
+    ch, err := client.Logs().FollowLogsFromExecution(ctx, executionID, "main", nil)
+    if err != nil {
+        fmt.Printf("Error starting log stream: %v\n", err)
+        return
+    }
+
+    executions, err := client.Executions().FollowExecution(ctx, executionID, "main")
+    if err != nil {
+        fmt.Printf("Error following execution: %v\n", err)
+        return
+    }
+    go func() {
+        for range executions {
+            // drain updates; the channel closes when the execution ends
+        }
+        time.Sleep(time.Second) // let the last log entries arrive
+        cancel()
+    }()
+
+    for entry := range ch {
+        if entry.GetExecutionId() == "" {
+            continue // skip the synthetic "start" entry the server sends on stream open
+        }
+        fmt.Printf("[%s] %s\n", entry.GetLevel(), entry.GetMessage())
+    }
+}

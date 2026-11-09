@@ -3,6 +3,7 @@
   "version": "0.0.0-dev",
   "description": "Kestra UI Design System – component abstractions over Element Plus",
   "type": "module",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/kestra-io/kestra#readme",
   "repository": {
     "type": "git",
@@ -56,9 +57,10 @@
     "yaml": "^2.8.2"
   },
   "dependencies": {
+    "@kestra-io/plumage": "*",
     "dayjs": "^1.11.23",
-    "echarts": ">=6.1.0",
-    "element-plus": ">=2.14.7",
+    "echarts": ">=6.0.0",
+    "element-plus": ">=2.13.5",
     "humanize-duration": "^3.35.0",
     "mermaid": "^12.2.0",
     "motion-v": "^2.8.0",
@@ -68,9 +70,9 @@
     "remark-parse": "^11.0.0",
     "shiki": "^4.5.0",
     "unified": ">=11.0.5",
-    "vue": "^3.5.44",
+    "vue": "^3.5.0",
     "vue-echarts": ">=8.3.2",
-    "vue-i18n": "^11.4.16",
+    "vue-i18n": "^11.4.4",
     "xss": "^1.0.17"
   },
   "devDependencies": {
@@ -80,7 +82,7 @@
     "@storybook/addon-themes": "^10.6.5",
     "@storybook/addon-vitest": "^10.6.5",
     "@storybook/vue3-vite": "^10.6.5",
-    "@tsdown/css": "^0.23.3",
+    "@tsdown/css": "^0.23.4",
     "@types/humanize-duration": "^3.27.4",
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.6.5",
@@ -101,7 +103,7 @@
     "sass": "^1.106.1",
     "sass-embedded": "^1.106.1",
     "storybook": "^10.6.3",
-    "tsdown": "^0.23.3",
+    "tsdown": "^0.23.4",
     "typescript": "^6",
     "unrun": "^0.3.1",
     "vite": "^8.3.5",

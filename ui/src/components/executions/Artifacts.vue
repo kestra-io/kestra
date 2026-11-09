@@ -25,7 +25,7 @@
                     :selected="artifact.key === selected?.key"
                     inset
                     :data-test="`execution-artifact-${artifact.key}`"
-                    @click="selectedKey = artifact.key"
+                    @click="selectArtifact(artifact.key)"
                 >
                     <template #leading><KsIcon><FileDocumentOutline /></KsIcon></template>
                 </KsSelectableListItem>
@@ -46,8 +46,10 @@
                 :artifact="selected"
                 :siblings="siblings"
                 :execution="execution"
+                :taskRunId="selectedRun?.id"
                 :fullscreen="fullscreenOpen"
                 @select="selectedKey = $event"
+                @selectIteration="onSelectIteration"
                 @toggleFullscreen="fullscreenOpen = !fullscreenOpen"
             />
         </Teleport>
@@ -102,16 +104,42 @@
         ? fullscreenViewerTarget.value ?? inlineViewerTarget.value
         : inlineViewerTarget.value)
 
+    const selectArtifact = (key: string) => {
+        const target = artifacts.value.find((a) => a.key === key)
+        const nextQuery: Record<string, string | undefined> = {...route.query, artifact: key}
+        if (target && target.taskId !== selected.value?.taskId) {
+            delete nextQuery.iteration
+        }
+        router.replace({query: nextQuery})
+    }
+
     const selectedKey = computed({
         get: () => typeof route.query.artifact === "string" ? route.query.artifact : undefined,
-        set: (key) => router.replace({query: {...route.query, artifact: key}}),
+        set: (key) => { if (key) selectArtifact(key) },
     })
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
     const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
 
     const {runsOf, fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => execution.value)
 
-    // A task inside a loop runs once per iteration: the header shows the total, the viewer reads the latest run.
+    const selectedRuns = computed(() => selected.value ? runsOf(selected.value.taskId) : [])
+
+    const selectedRun = computed(() => {
+        const runs = selectedRuns.value
+        if (!runs.length) return undefined
+        const param = typeof route.query.iteration === "string" ? route.query.iteration : undefined
+        if (param) {
+            const match = runs.find((r) => r.id === param)
+            if (match) return match
+        }
+        return runs.at(-1)
+    })
+
+    const onSelectIteration = (taskRunId: string) => {
+        router.replace({query: {...route.query, iteration: taskRunId}})
+    }
+
+    // A task inside a loop runs once per iteration: the header shows the total duration across all runs.
     const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
         const seconds = runsOf(taskId).reduce((sum, run) => sum + (run.state?.duration ? durationUtils.duration(run.state.duration) : 0), 0)
         return seconds ? [[taskId, durationUtils.humanDuration(seconds)]] : []
@@ -133,7 +161,7 @@
 
         for (const artifact of artifacts.value) {
             const resolve = subtitleResolvers[artifact.taskType] as ((ctx: unknown) => unknown) | undefined
-            const task = tasks.value.find((t) => t.id === artifact.taskId)
+            const task = tasks.value.find((candidate) => candidate.id === artifact.taskId)
             if (!resolve || !task) continue
             const sequence = (subtitleSequences.get(artifact.key) ?? 0) + 1
             subtitleSequences.set(artifact.key, sequence)

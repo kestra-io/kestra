@@ -1541,7 +1541,11 @@ public class ExecutionService {
             && ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
-    private void requestKill(Execution execution) {
+    /**
+     * Asks the executor to kill the execution, without waiting for it. A failure to emit the request is logged
+     * and not rethrown.
+     */
+    public void requestKill(Execution execution) {
         try {
             killQueue.emit(
                 ExecutionKilledExecution.builder()
@@ -1551,7 +1555,7 @@ public class ExecutionService {
                     .build()
             );
         } catch (Exception e) {
-            log.warn("Unable to request kill of orphan execution '{}'", execution.getId(), e);
+            log.warn("Unable to request kill of execution '{}'", execution.getId(), e);
         }
     }
 

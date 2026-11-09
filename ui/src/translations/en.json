@@ -1092,7 +1092,7 @@
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
@@ -1209,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger is unlocked"
     },
+    "trigger blocked": "Blocked",
+    "trigger blocked policy check failed": "Governance policies could not be checked.",
+    "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
     "trigger enable dialog": {
       "title": "Enable trigger",
@@ -1357,8 +1360,18 @@
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
-      "noResults": "No plugins match your search.",
-      "loadError": "Could not load plugins. Please try again.",
+      "loadErrorTitle": "Could not load the plugin list",
+      "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
+      "showAll": "Show all plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Table",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "No plugin matches your filters",
+        "description": "Try a different search term, or clear the category filters."
+      },
       "notFound": "This plugin could not be found.",
       "elementType": {
         "tasks": "Task",
@@ -1367,8 +1380,13 @@
         "taskRunners": "Task runner",
         "charts": "Chart",
         "apps": "App",
+        "appBlocks": "App block",
+        "dataFilters": "Data filter",
+        "dataFiltersKPI": "KPI data filter",
         "logExporters": "Log exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset type",
+        "additionalPlugins": "Additional plugin"
       },
       "sortBy": "Sort by",
       "sort": {
@@ -1399,6 +1417,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certified",
         "back": "Back to plugins"
+      },
+      "management": {
+        "upload": "Upload",
+        "addPlugin": "Add plugin",
+        "lockedTitle": "Plugin version management",
+        "lockedDescription": "Install plugins, keep several versions side by side and upgrade them without rebuilding the image, with the Enterprise Edition.",
+        "learnMore": "Learn more",
+        "includedWithKestra": "Included with Kestra",
+        "gateNote": "Installing and upgrading plugins is available on the Enterprise Edition.",
+        "upsellTitle": "Plugin versioning is an Enterprise feature",
+        "upsellDescription": "Every plugin below ships with this Kestra image and is ready to use in a flow. On the Enterprise Edition you can also install a plugin that is not bundled, pin a version per plugin, and upgrade without rebuilding the image.",
+        "talkToUs": "Talk to us",
+        "readTheDocs": "Read the docs"
       }
     },
     "no inputs": "This flow has no inputs.",
@@ -1459,10 +1490,13 @@
           "fields": {
             "app_font_size": "App Font Size",
             "color_mode": "Color mode",
+            "editor_dark_theme": "Editor Theme in Dark Mode",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
+            "editor_pebble_hover": "Hover on Pebble reference to see its definition",
+            "editor_light_theme": "Editor Theme in Light Mode",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1485,6 +1519,9 @@
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
+            "editor_dark_theme": "Syntax colors of the code editor when the color mode is Dark 1.0 or Dark 2.0.",
+            "editor_light_theme": "Syntax colors of the code editor when the color mode is Light.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."
@@ -1493,6 +1530,9 @@
             "small": "Small",
             "medium": "Medium",
             "large": "Large"
+          },
+          "editor_theme_options": {
+            "match_app": "Match the app theme"
           }
         },
         "localization": {
@@ -1800,9 +1840,9 @@
         },
         "errors": {
           "first_execution": "The first execution finished as {state} instead of succeeding. Open the logs on this page to see why, then try again.",
-          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the <code>notify</code> task, then try again.",
+          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the {task} task, then try again.",
           "no_execution_to_replay": "There is no execution to replay yet. Run the flow on the previous step, then try again.",
-          "replay": "The replay finished as {state}. Open the logs on this page to see what <code>notify</code> reported, then try again.",
+          "replay": "The replay finished as {state}. Open the logs on this page to see what {task} reported, then try again.",
           "save_flow": "The tour flow could not be saved. {reason}",
           "test_event": "The webhook responded with {status}. Check that the flow is saved and the trigger is enabled, then try again."
         },
@@ -1925,6 +1965,11 @@
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
     "scheduleDateInPast": "Schedule date must be in the future",
+    "inputs_date_range": {
+      "between": "Earliest value is {after}, latest value is {before}.",
+      "after": "Earliest value is {after}.",
+      "before": "Latest value is {before}."
+    },
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -2026,7 +2071,6 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -2138,6 +2182,11 @@
       "decrease_fontsize": "Decrease editor font size",
       "increase_fontsize": "Increase editor font size",
       "reset_fontsize": "Reset editor font size"
+    },
+    "pebble_hover": {
+      "toggle": "Toggle Pebble hover docs",
+      "enabled": "Pebble hover docs are on.",
+      "disabled": "Pebble hover docs are off."
     },
     "instance": "Instance",
     "something_went_wrong": {
@@ -2544,7 +2593,7 @@
     "reject": "Reject",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
-    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Defaults to namespace file: {name}",
     "no_file_choosen": "No file chosen",
     "dependency": {
       "controls": {

@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -19,7 +20,7 @@ import jakarta.inject.Singleton;
  * Read-only agent tool listing flows matching per-field query filters, one compact line per flow.
  */
 @Singleton
-public class ListFlowsTool implements AiPlatformTool {
+public class ListFlowsTool implements McpPlatformTool {
     private static final int MAX_RESULTS = 50;
     private static final int MAX_DESCRIPTION_LENGTH = 120;
 
@@ -40,22 +41,29 @@ public class ListFlowsTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "list-flows",
-        value = "List Kestra flows matching the given per-field filters (at most 50). Read-only; use this to discover flows before reading one with read-flow. "
-            + "Returns an object { flows } where `flows` is an array of { namespace, id, description } (empty when nothing matches); long descriptions are truncated."
+        name = "list_flows",
+        value = "List Kestra flows matching the given per-field filters (at most " + MAX_RESULTS + " returned). Read-only; use this to discover flows before reading one with read_flow, or to count them. "
+            + "Returns an object { flows, total } where `flows` is an array of { namespace, id, description } (empty when nothing matches); long descriptions are truncated. "
+            + "`total` is the number of all matching flows, which can exceed the length of `flows`."
     )
     public Result listFlows(
         @QueryFilterFormat(QueryFilter.Resource.FLOW) List<QueryFilter> filters,
         final AgentCallContext.Context context) {
         String tenant = context.tenant();
 
-        List<Flow> flows = flowRepository.find(PageableUtils.from(1, MAX_RESULTS), tenant, filters);
+        var flows = flowRepository.find(PageableUtils.from(1, MAX_RESULTS), tenant, filters);
 
         return new Result(
             flows.stream()
                 .map(ListFlowsTool::toSummary)
-                .toList()
+                .toList(),
+            flows.getTotal()
         );
     }
 
@@ -70,7 +78,7 @@ public class ListFlowsTool implements AiPlatformTool {
         return text.length() <= MAX_DESCRIPTION_LENGTH ? text : text.substring(0, MAX_DESCRIPTION_LENGTH) + "…";
     }
 
-    public record Result(List<FlowSummary> flows) {
+    public record Result(List<FlowSummary> flows, long total) {
     }
 
     public record FlowSummary(String namespace, String id, String description) {

@@ -104,7 +104,7 @@ public class McpServerChangeNotifier {
         log.debug("Flow id: {} changed; refreshing tools on {} MCP server(s)", flow.getId(), serverIdsToRefresh.size());
 
         for (String serverId : serverIdsToRefresh) {
-            mcpServerHandlerTransport.get().refreshTools(flow.getTenantId(), serverId)
+            mcpServerHandlerTransport.get().refreshTools(flow.getTenantId(), serverId, McpToolSource.Kind.FLOWS)
                 .doOnError(e -> log.error("Failed to refresh tools for server {}: {}", serverId, e.getMessage()))
                 .doOnSuccess((_) -> log.debug("Tool list change notification successfully sent serverId: {}", serverId))
                 .onErrorComplete()

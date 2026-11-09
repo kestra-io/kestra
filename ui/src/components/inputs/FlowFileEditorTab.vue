@@ -88,6 +88,8 @@
         path: string;
         flow: boolean;
         dirty: boolean;
+        /** Unsaved edits carried over when the tab follows its file to a new path. */
+        content?: string;
     }
 </script>
 
@@ -154,6 +156,7 @@
 
     const sourceNS = ref("")
     const savedSourceNS = ref("")
+    let pendingContent = props.content
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value)
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
@@ -203,6 +206,9 @@
         if (result.content) {
             sourceNS.value = result.content
             savedSourceNS.value = result.content
+        }
+        if (pendingContent !== undefined) {
+            sourceNS.value = pendingContent
         }
     }
 
@@ -372,6 +378,7 @@
             flowStore.flowYaml = newValue
         }
         sourceNS.value = newValue
+        pendingContent = undefined
         if(props.path){
             updateContent?.({path: props.path, content: newValue})
         }
@@ -440,6 +447,7 @@
                 content: content || "",
             })
             savedSourceNS.value = content
+            pendingContent = undefined
         } finally {
             if (sendingContent.value === content) {
                 sendingContent.value = undefined

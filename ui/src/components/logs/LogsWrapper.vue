@@ -143,7 +143,7 @@
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, applyDefaultFilters, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -276,8 +276,14 @@
             )
         },
     })
+    const filterDefaultQuery = computed(() => applyDefaultFilters({}, {
+        namespace: logFilter.value.keys?.some((key) => key.key === "namespace") ? undefined : null,
+        includeTimeRange: true,
+        includeScope: false,
+    }).query)
     const hasUserFilters = computed(() => hasUserLogFilters(props.filters ?? route.query, {
         defaultLevel: defaultLogLevel.value,
+        defaultQuery: props.filters ? undefined : filterDefaultQuery.value,
         scopeFields: props.filters ? ["namespace", "flowId", "triggerId"] : [],
     }))
     const searchTerm = computed(() => {

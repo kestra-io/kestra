@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "logs": "Logs",
     "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
-    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
+    "no_logs_data_title": "No se encontraron logs",
     "duration": "Duración",
     "total_duration": "Duración total",
     "running duration": "Duración en ejecución",
@@ -2338,10 +2338,10 @@
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "no_results": {
       "executions": "No se encontraron ejecuciones",
-      "triggers": "No se encontraron Triggers",
-      "flows": "No se encontraron Flows",
-      "kv_pairs": "No se encontraron pares Key-Value",
-      "secrets": "No se encontraron Secrets",
+      "triggers": "No se encontraron triggers",
+      "flows": "No se encontraron flows",
+      "kv_pairs": "No se encontraron pares key-value",
+      "secrets": "No se encontraron secrets",
       "all_columns_hidden": "Todas las columnas están ocultas",
       "all_columns_hidden_description": "Vuelve a activar al menos una columna en Personalizar columnas de tabla para ver los datos de nuevo."
     },

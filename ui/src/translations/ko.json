@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
-    "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
+    "no_logs_data_title": "로그를 찾을 수 없음",
     "duration": "지속 시간",
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
-    "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
+    "no_logs_data_title": "Keine Logs gefunden",
     "duration": "Dauer",
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",

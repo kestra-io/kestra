@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
     "logs": "Fichiers journaux",
     "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
-    "no_logs_data_title": "Aucun log trouvé pour les filtres sélectionnés.",
+    "no_logs_data_title": "Aucun log trouvé",
     "duration": "Durée",
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
@@ -2338,7 +2338,7 @@
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "no_results": {
       "executions": "Aucune exécution trouvée",
-      "triggers": "Aucun Trigger trouvé",
+      "triggers": "Aucun trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
       "secrets": "Aucun secret trouvé",

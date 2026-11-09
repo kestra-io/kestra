@@ -164,15 +164,28 @@ describe("countUnsetRequiredFields with policy-supplied paths", () => {
         expect(result).toEqual([{path: "auth.token", label: "token"}])
     })
 
-    it("skips a required field supplied inside an array item", () => {
+    it("still counts the unsupplied required children of an absent parent a policy partially supplies", () => {
         const schema = {
             type: "object",
-            properties: {items: {type: "array", items: {type: "object", properties: {name: {type: "string"}}, required: ["name"]}}},
+            properties: {auth: {type: "object", properties: {user: {type: "string"}, token: {type: "string"}}, required: ["user", "token"]}},
+            required: ["auth"],
         }
 
-        const result = countUnsetRequiredFields({items: [{}, {}]}, schema, {}, "", new Set(["items[1].name"]))
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["auth.user"]))
 
-        expect(result).toEqual([{path: "items[0].name", label: "name"}])
+        expect(result).toEqual([{path: "auth.token", label: "token"}])
+    })
+
+    it("counts an absent required parent when nothing under it is supplied", () => {
+        const schema = {
+            type: "object",
+            properties: {auth: {type: "object", properties: {user: {type: "string"}}, required: ["user"]}},
+            required: ["auth"],
+        }
+
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["other"]))
+
+        expect(result).toEqual([{path: "auth", label: "auth"}])
     })
 })
 

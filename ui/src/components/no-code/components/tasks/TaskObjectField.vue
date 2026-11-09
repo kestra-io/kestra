@@ -199,13 +199,13 @@
     const policySuppliedPaths = inject(POLICY_SUPPLIED_PATHS_INJECTION_KEY, undefined)
     const isPolicySupplied = computed(() =>
         !props.disabled
-        && Boolean(props.required?.includes(props.fieldKey))
+        && (props.required?.includes(props.fieldKey) ?? false)
         && isUnset.value
-        && Boolean(policySuppliedPaths?.value.has(fieldPath.value)),
+        && (policySuppliedPaths?.value.has(fieldPath.value) ?? false),
     )
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey) && !isPolicySupplied.value// && props.schema.$required;
+        return !props.disabled && props.required?.includes(props.fieldKey) && !isPolicySupplied.value
     })
 
     const isMissingRequired = computed(() => isRequired.value && isUnset.value)

@@ -158,6 +158,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -174,6 +175,8 @@ public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
     private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
     private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
+    private static final Duration FOLLOW_HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
+    static final String FOLLOW_HEARTBEAT_ID = "heartbeat";
 
     @Nullable
     @Value("${micronaut.server.context-path}")
@@ -2707,6 +2710,7 @@ public class ExecutionController {
 
                 // Send current state
                 emitter.next(Event.of(execution).id("progress"));
+                emitHeartbeats(emitter, executionId, FOLLOW_HEARTBEAT_INTERVAL);
 
                 // Register for updates
                 streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
@@ -2745,12 +2749,19 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+            .take(Duration.ofHours(1)); // heartbeats stop a between-item timeout from firing, so cap the lifetime instead
 
         return sseConnectionMetrics.track(
             flux, "execution",
             () -> streamingService.unregisterSubscriber(executionId, subscriberId)
         );
+    }
+
+    /** Keeps a quiet stream writing, so the UI can tell a stalled connection from a run with no update. */
+    static void emitHeartbeats(FluxSink<Event<Execution>> emitter, String executionId, Duration interval) {
+        Disposable heartbeats = Flux.interval(interval)
+            .subscribe(tick -> emitter.next(Event.of(Execution.builder().id(executionId).build()).id(FOLLOW_HEARTBEAT_ID)));
+        emitter.onDispose(heartbeats);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -3299,6 +3310,7 @@ public class ExecutionController {
                 // check if there are already terminated executions so we could end them immediately
                 List<Execution> terminatedExecutions = executionRepository
                     .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null)
+                    .filter(exec -> exec.getKind() != ExecutionKind.LOOP)
                     .mapNotNull(exec ->
                     {
                         if (

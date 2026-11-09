@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX, LOG_LEVELS, isDeepEqual, throttle, type LevelFilterValue} from "@kestra-io/design-system"
@@ -191,22 +191,22 @@ const FOLLOW_MAX_RETRY_ATTEMPTS = 5
 const FOLLOW_RETRY_DELAY_MS = 1000
 
 export const useExecutionsStore = defineStore("executions", () => {
-    const executions = ref<Execution[] | undefined>(undefined)
-    const execution = ref<Execution | undefined>(undefined)
+    const executions: Ref<Execution[] | undefined> = ref(undefined)
+    const execution: Ref<Execution | undefined> = ref(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
     /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
     const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
-    const subflowsExecutions = ref<Record<string, Execution>>({})
-    const scopedIterations = ref<Record<string, Execution>>({})
+    const subflowsExecutions: Ref<Record<string, Execution>> = ref({})
+    const scopedIterations: Ref<Record<string, Execution>> = ref({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
-    const flow = ref<FlowForExecution | undefined>(undefined)
+    const flow: Ref<FlowForExecution | undefined> = ref(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
     const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
-    const flowsExecutable = ref<FlowForExecution[]>([])
+    const flowsExecutable: Ref<FlowForExecution[]> = ref([])
 
     watch(execution, (newExecution) => {
         if(!newExecution){

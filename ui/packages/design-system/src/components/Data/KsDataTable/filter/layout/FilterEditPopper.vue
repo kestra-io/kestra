@@ -47,7 +47,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
-    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
+    import {formatFilterDate, formatFilterDateRange, resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -366,7 +366,7 @@
                 const endDate = state.endDateValue ?? new Date()
                 return {
                     value: {startDate, endDate},
-                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+                    label: formatFilterDateRange(startDate, endDate),
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -385,7 +385,7 @@
                 const endDate = state.endDateValue ?? new Date()
                 return {
                     value: {startDate, endDate},
-                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+                    label: formatFilterDateRange(startDate, endDate),
                 }
             }
             return {
@@ -406,7 +406,7 @@
         case "date":
             return {
                 value: state.dateValue ?? "",
-                label: state.dateValue?.toLocaleDateString() ?? "",
+                label: state.dateValue ? formatFilterDate(state.dateValue) : "",
             }
         case "radio":
             if (state.radioValue === "ALL") return null

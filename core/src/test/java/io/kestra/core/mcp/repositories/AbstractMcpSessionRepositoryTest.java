@@ -118,7 +118,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
         McpSession saved = mcpSessionRepository.save(createSession(tenant));
 
         // When
-        Optional<McpSession> deleted = mcpSessionRepository.delete(tenant, saved.sessionId());
+        Optional<McpSession> deleted = mcpSessionRepository.delete(tenant, saved.serverId(), saved.sessionId());
 
         // Then
         assertThat(deleted).isPresent();
@@ -133,10 +133,43 @@ public abstract class AbstractMcpSessionRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         // When
-        Optional<McpSession> result = mcpSessionRepository.delete(tenant, IdUtils.create());
+        Optional<McpSession> result = mcpSessionRepository.delete(tenant, "server-id", IdUtils.create());
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldKeepEachServersSessionWhenTwoServersOfATenantShareASessionId() {
+        // Given — two servers of one tenant, each with a session under the same id
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String sessionId = IdUtils.create();
+        mcpSessionRepository.save(new McpSession(tenant, "server-a", sessionId, "node-a", "user-a", false));
+
+        // When
+        mcpSessionRepository.save(new McpSession(tenant, "server-b", sessionId, "node-b", "user-b", false));
+
+        // Then — the second save did not overwrite the first
+        assertThat(mcpSessionRepository.find(tenant, "server-a", sessionId))
+            .get().extracting(McpSession::userId).isEqualTo("user-a");
+        assertThat(mcpSessionRepository.find(tenant, "server-b", sessionId))
+            .get().extracting(McpSession::userId).isEqualTo("user-b");
+    }
+
+    @Test
+    void shouldDeleteOnlyThatServersSessionWhenTwoServersOfATenantShareASessionId() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String sessionId = IdUtils.create();
+        mcpSessionRepository.save(new McpSession(tenant, "server-a", sessionId, "node-a", null, false));
+        mcpSessionRepository.save(new McpSession(tenant, "server-b", sessionId, "node-b", null, false));
+
+        // When
+        mcpSessionRepository.delete(tenant, "server-a", sessionId);
+
+        // Then
+        assertThat(mcpSessionRepository.find(tenant, "server-a", sessionId)).isEmpty();
+        assertThat(mcpSessionRepository.find(tenant, "server-b", sessionId)).isPresent();
     }
 
     @Test

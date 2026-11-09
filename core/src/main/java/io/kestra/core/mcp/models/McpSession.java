@@ -16,11 +16,15 @@ public record McpSession(
     String userId,
     boolean deleted) implements HasUID, BroadcastEvent {
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The server is part of the key so that two servers of the same tenant never share a row.
+     */
     @Override
     @JsonIgnore
     public String uid() {
-        return IdUtils.fromParts(tenantId, sessionId);
+        return IdUtils.fromParts(tenantId, serverId, sessionId);
     }
 
     /** {@inheritDoc} */

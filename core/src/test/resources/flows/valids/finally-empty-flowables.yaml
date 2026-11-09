@@ -1,0 +1,58 @@
+id: finally-empty-flowables
+namespace: io.kestra.tests
+
+tasks:
+  - id: if_false
+    type: io.kestra.plugin.core.flow.If
+    condition: "false"
+    then:
+      - id: if_unused
+        type: io.kestra.plugin.core.log.Log
+        message: unused
+    finally:
+      - id: if_cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: if cleanup
+
+  - id: sequential_disabled
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: sequential_unused
+        type: io.kestra.plugin.core.log.Log
+        disabled: true
+        message: unused
+    finally:
+      - id: sequential_cleanup_wait
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT1S
+      - id: sequential_cleanup_done
+        type: io.kestra.plugin.core.log.Log
+        message: sequential cleanup done
+
+  - id: parallel_disabled
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: parallel_unused
+        type: io.kestra.plugin.core.log.Log
+        disabled: true
+        message: unused
+    finally:
+      - id: parallel_cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: parallel cleanup
+
+  - id: loop_empty
+    type: io.kestra.plugin.core.flow.Loop
+    values: '[]'
+    tasks:
+      - id: loop_unused
+        type: io.kestra.plugin.core.log.Log
+        message: unused
+    finally:
+      - id: loop_cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: loop cleanup
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after cleanup

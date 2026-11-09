@@ -34,6 +34,26 @@ class FinallyTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Test
+    @LoadFlows(value = { "flows/valids/finally-empty-flowables.yaml" }, tenantId = "emptyflowables")
+    void finallyRunsWhenFlowablesHaveNoEnabledTasks() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            "emptyflowables",
+            NAMESPACE, "finally-empty-flowables", null,
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("if_cleanup")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("sequential_cleanup_done")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("parallel_cleanup")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("loop_cleanup")).hasSize(1);
+
+        var cleanupEnd = execution.findTaskRunsByTaskId("sequential_cleanup_done").getFirst().getState().getEndDate().orElseThrow();
+        var afterStart = execution.findTaskRunsByTaskId("after").getFirst().getState().getStartDate();
+        assertThat(afterStart).isAfterOrEqualTo(cleanupEnd);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/finally-sequential.yaml" }, tenantId = "sequentialwithouterrors")
     void sequentialWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(

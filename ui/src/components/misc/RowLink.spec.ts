@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest"
-import {shallowMount} from "@vue/test-utils"
+import {mount, shallowMount} from "@vue/test-utils"
 import RowLink from "./RowLink.vue"
 
 const mountRowLink = (props: {text: string; icon?: string; clickable?: boolean}) =>
@@ -42,8 +42,10 @@ describe("RowLink", () => {
     })
 
     test.each([true, false])("renders the chevron when clickable is %s", (clickable) => {
-        const wrapper = mountRowLink({text: "A row", clickable})
+        // Fully mounted on purpose: a shallow stub is named after the local import, so it
+        // would stay green even if the chevron icon itself were swapped for another one.
+        const wrapper = mount(RowLink, {props: {text: "A row", clickable}})
 
-        expect(wrapper.find("chevron-right-stub").exists()).toBe(true)
+        expect(wrapper.find(".chevron-right-icon").exists()).toBe(true)
     })
 })

@@ -75,7 +75,6 @@ public class StorageKVBackend implements KVBackend {
             if (metadata.isDeleted()) {
                 return Optional.empty();
             }
-            
             if (isExpired(metadata)) {
                 this.delete(tenant, namespace, key);
                 throw new ResourceExpiredException("The requested value has expired");

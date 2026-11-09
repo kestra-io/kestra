@@ -67,6 +67,10 @@ function isUnset(value: unknown): boolean {
     return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
 }
 
+function hasSuppliedDescendant(supplied: ReadonlySet<string>, path: string): boolean {
+    return [...supplied].some((suppliedPath) => suppliedPath.startsWith(`${path}.`) || suppliedPath.startsWith(`${path}[`))
+}
+
 /**
  * Walks a task's data alongside its schema to find required properties left unset, recursing into
  * nested objects, array items and the anyOf branch matching the current value — independent of
@@ -106,7 +110,11 @@ export function countUnsetRequiredFields(
         const childPath = path ? `${path}.${key}` : key
 
         if (resolved.required?.includes(key) && isUnset(childValue)) {
-            return supplied.has(childPath) ? [] : [{path: childPath, label: key}]
+            if (supplied.has(childPath)) return []
+            if (hasSuppliedDescendant(supplied, childPath)) {
+                return childSchema ? countUnsetRequiredFields({}, childSchema, definitions, childPath, supplied) : []
+            }
+            return [{path: childPath, label: key}]
         }
 
         return childValue !== undefined && childSchema

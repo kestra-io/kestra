@@ -818,6 +818,57 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void shouldRejectReplayValidationWhenInputDefaultChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "").replace("type: STRING\n", "type: STRING\n    defaults: eu\n");
+        Execution execution = seedReplayExecution(source, "first", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace("defaults: eu", "defaults: us"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("defaults has changed");
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenInputWasAdded() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "");
+        Execution execution = seedReplayExecution(source, "first", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace("variables:", "  - id: region\n    type: STRING\nvariables:"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("input 'region' has been added");
+    }
+
+    @Test
+    void shouldRejectReplayValidationAsMovedWhenTaskInsertedBeforeFirstTask() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "");
+        Execution execution = seedReplayExecution(source, "second", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace(
+            "tasks:\n",
+            "tasks:\n  - id: inserted\n    type: io.kestra.plugin.core.log.Log\n    message: new\n"
+        ));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("task 'first' has been moved").doesNotContain("has been removed");
+    }
+
+    @Test
     void shouldRejectReplayValidationWhenVariableChanged() {
         // Given
         String flowId = IdUtils.create();

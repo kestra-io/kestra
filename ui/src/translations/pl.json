@@ -1339,6 +1339,8 @@
     "pause backfill": "Wstrzymaj Backfill",
     "continue backfills": "Kontynuuj Backfille",
     "delete backfills": "Usuń Backfille",
+    "delete backfill confirm": "Usunąć backfill triggera {id}?",
+    "delete backfill success": "Backfill triggera {id} został usunięty",
     "pause backfills": "Wstrzymaj Backfille",
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
@@ -2792,7 +2794,8 @@
         "tooltip": "Zobacz testy Flow"
       },
       "errors": {
-        "label": "{count} Błąd(y)"
+        "label": "{count} Błąd(y)",
+        "action": "{count} błąd(y), przejdź do następnego błędu"
       }
     },
     "invalid_source_code": "Nieprawidłowy kod źródłowy",

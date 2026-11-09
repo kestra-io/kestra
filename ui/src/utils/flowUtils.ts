@@ -48,6 +48,15 @@ export function getAllTaskIds(flow: unknown): string[] {
     if ("errors" in flow) {
         loopOver(flow.errors, isTaskObject, result)
     }
+    if ("finally" in flow) {
+        loopOver(flow.finally, isTaskObject, result)
+    }
+    if ("afterExecution" in flow) {
+        loopOver(flow.afterExecution, isTaskObject, result)
+    }
+    if ("after" in flow) {
+        loopOver(flow.after, isTaskObject, result)
+    }
     return [...new Set(result.map(t => String(t.id)))]
 }
 

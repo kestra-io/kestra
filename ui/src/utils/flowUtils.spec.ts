@@ -215,6 +215,56 @@ tasks:
         ])
     })
 
+    it("getAllTaskIds includes tasks from finally and after blocks", () => {
+        const flow = {
+            tasks: [
+                {id: "step-1", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            errors: [
+                {id: "on-error", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            finally: [
+                {id: "cleanup-1", type: "io.kestra.plugin.core.log.Log"},
+                {
+                    id: "nested-finally",
+                    type: "io.kestra.plugin.core.flow.Parallel",
+                    tasks: [
+                        {id: "cleanup-nested", type: "io.kestra.plugin.core.log.Log"},
+                    ],
+                },
+            ],
+            afterExecution: [
+                {id: "notify-after", type: "io.kestra.plugin.core.log.Log"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "step-1",
+            "on-error",
+            "cleanup-1",
+            "nested-finally",
+            "cleanup-nested",
+            "notify-after",
+        ])
+    })
+
+    it("getAllTaskIds extracts task ids from YAML flow containing finally block", () => {
+        const flowYaml = `
+id: test_finally_tasks
+namespace: company.team
+tasks:
+  - id: step_1
+    type: io.kestra.plugin.core.log.Log
+    message: "Processing..."
+finally:
+  - id: cleanup_step
+    type: io.kestra.plugin.core.log.Log
+    message: "Cleaning up resources..."
+`
+        const flow = YAML_UTILS.parse(flowYaml)
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual(["step_1", "cleanup_step"])
+    })
+
     it("getAllTaskIds removes duplicate task ids", () => {
         const flow = {
             tasks: [

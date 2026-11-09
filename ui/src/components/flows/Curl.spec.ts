@@ -75,6 +75,20 @@ describe("Curl", () => {
             .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'env.region=us-east-2' -F 'env.day=2026-01-15' -F 'top=custom' ${URL}`)
     })
 
+    it("targets the replay endpoint of the execution when replaying", () => {
+        const wrapper = i18nMount(Curl, {
+            props: {flow, inputs: {}, verbose: false, replay: {executionId: "abc123", taskRunId: "tr1", revision: 3}},
+            global: {stubs: {CopyToClipboard: true}},
+        })
+        const command = wrapper.find("code").text()
+        wrapper.unmount()
+
+        expect(command).toBe(
+            "curl -X POST -H 'Content-Type: multipart/form-data' " +
+            "'http://localhost:8080/api/v1/main/executions/abc123/actions/replay-with-inputs?taskRunId=tr1&revision=3'",
+        )
+    })
+
     it("downloads the example file when the FILE input is inside a FORM", () => {
         const formFlow = {...flow, inputs: [{id: "upload", type: "FORM", inputs: [{id: "data", type: "FILE"}]}]} as unknown as Flow
 

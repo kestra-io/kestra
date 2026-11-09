@@ -14,10 +14,6 @@
     display: none !important;
 }
 
-.flex-column {
-    flex-direction: column !important;
-}
-
 .flex-grow-1 {
     flex-grow: 1 !important;
 }
@@ -34,24 +30,12 @@
     margin: 0 !important;
 }
 
-.mt-1 {
-    margin-top: 0.25rem !important;
-}
-
 .me-1 {
     margin-right: 0.25rem !important;
 }
 
 .me-2 {
     margin-right: 0.5rem !important;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem !important;
-}
-
-.p-2 {
-    padding: 0.5rem !important;
 }
 
 .p-3 {
@@ -63,29 +47,8 @@
     padding-bottom: 1rem !important;
 }
 
-.gap-2 {
-    gap: 0.5rem !important;
-}
-
-.gap-3 {
-    gap: 1rem !important;
-}
-
-.fs-6 {
-    font-size: 0.875rem !important;
-}
-
-.fw-normal {
-    font-weight: 400 !important;
-}
-
 .fw-bold {
     font-weight: 700 !important;
-}
-
-.text-break {
-    word-wrap: break-word !important;
-    word-break: break-word !important;
 }
 
 .text-success {

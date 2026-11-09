@@ -330,7 +330,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask, executorTask.runContext());
                                                 // Internal dispatch convention: null = default queue. SystemTask routing
                                                 // is enforced upstream in WorkerQueueService.
                                                 String workerQueueId = routing

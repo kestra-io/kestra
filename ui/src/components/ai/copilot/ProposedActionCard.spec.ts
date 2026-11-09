@@ -18,7 +18,7 @@ const planAction: ProposedActionEvent = {
     ],
 }
 const mutateAction: ProposedActionEvent = {
-    confirmationId: "c2", tool: "restart-execution", family: "MUTATE", summary: "Restart exec-1", arguments: {id: "exec-1"},
+    confirmationId: "c2", tool: "restart_execution", family: "MUTATE", summary: "Restart exec-1", arguments: {id: "exec-1"},
 }
 
 const mountCard = (action: ProposedActionEvent, props = {}) =>

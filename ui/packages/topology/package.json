@@ -3,10 +3,12 @@
     "version": "0.0.0-dev",
     "description": "Kestra flow topology graph component – powered by Vue Flow",
     "type": "module",
-    "homepage": "https://github.com/kestra-io/kestra#readme",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/kestra-io/kestra/tree/develop/ui/packages/topology#readme",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/kestra-io/kestra.git"
+        "url": "git+https://github.com/kestra-io/kestra.git",
+        "directory": "ui/packages/topology"
     },
     "bugs": {
         "url": "https://github.com/kestra-io/kestra/issues"

@@ -302,3 +302,7 @@ KESTRA_CORPUS=~/blueprints npm run test:unit
 ## Publishing
 
 The package is published to npm by the **Publish Design System** workflow ([`.github/workflows/publish-design-system.yml`](../../../.github/workflows/publish-design-system.yml)). Run it with `plumage` as the package and a patch, minor or major increment. It runs the tests, builds, bumps from the latest version on npm, tags `plumage/v<version>` and publishes through npm trusted publishing.
+
+## License
+
+[Apache 2.0](https://github.com/kestra-io/kestra/blob/develop/LICENSE)

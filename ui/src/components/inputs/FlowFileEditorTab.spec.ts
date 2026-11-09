@@ -69,9 +69,9 @@ const i18n = createI18n({
     },
 })
 
-function mountTab() {
+function mountTab(content?: string) {
     return mount(FlowFileEditorTab, {
-        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false},
+        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false, content},
         global: {
             plugins: [i18n],
             provide: {
@@ -168,5 +168,19 @@ describe("FlowFileEditorTab", () => {
 
         expect(saveOrCreateFile).toHaveBeenCalledTimes(2)
         expect(saveOrCreateFile).toHaveBeenLastCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited again"})
+    })
+
+    it("should keep unsaved content carried over from the old path and save it to the new one", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        saveOrCreateFile.mockResolvedValue(undefined)
+
+        const wrapper = mountTab("file content\nunsaved line")
+        await flushPromises()
+        const editor = wrapper.findComponent({name: "KsEditor"})
+
+        expect(editor.attributes("modelvalue")).toBe("file content\nunsaved line")
+        editor.vm.$emit("save")
+        await flushPromises()
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "file content\nunsaved line"})
     })
 })

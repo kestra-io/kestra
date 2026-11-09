@@ -1,0 +1,21 @@
+id: follow-dependencies-loop-parent
+namespace: io.kestra.tests
+
+# The Loop iterations share the flow id and the correlation id of this execution, and the
+# pause keeps this execution alive after the subflow and every iteration terminated.
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: follow-dependencies-partial-child
+
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["a", "b", "c"]
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ item.value }}"
+
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause

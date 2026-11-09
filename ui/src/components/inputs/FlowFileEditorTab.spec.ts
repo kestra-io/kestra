@@ -218,6 +218,27 @@ describe("FlowFileEditorTab", () => {
         expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "file content\nunsaved line"})
     })
 
+    it("should keep unsaved edits when a namespace file tab is parked in KeepAlive and shown again", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        const shown = ref(true)
+        const Host = defineComponent({
+            setup: () => () => h(KeepAlive, null, {
+                default: () => shown.value ? h(FlowFileEditorTab, namespaceFileProps) : h("div"),
+            }),
+        })
+
+        const wrapper = mountWithTabContext(Host)
+        await flushPromises()
+        wrapper.findComponent({name: "KsEditor"}).vm.$emit("update:model-value", "file content edited")
+
+        shown.value = false
+        await flushPromises()
+        shown.value = true
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "KsEditor"}).attributes("modelvalue")).toBe("file content edited")
+    })
+
     it("should leave the flow tab's error navigation alone when a namespace file tab mounts", async () => {
         fileMetadata.mockResolvedValue({size: 1024})
         const navigation = {count: 1, revealNext: vi.fn()}

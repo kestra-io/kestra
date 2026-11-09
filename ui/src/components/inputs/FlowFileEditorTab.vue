@@ -175,7 +175,7 @@
     const fileSize = ref<number>()
 
     async function loadFile() {
-        if (props.dirty || props.flow) return
+        if (props.dirty || isDirty.value || props.flow) return
 
         if (!fileNamespace.value) return
 

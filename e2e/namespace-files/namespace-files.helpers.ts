@@ -33,7 +33,7 @@ export class FilesEditor {
     private pendingFileReads = 0
 
     constructor(public readonly page: Page) {
-        const isFileRead = (request: Request) => request.method() === "GET" && /\/files\?path=/.test(request.url())
+        const isFileRead = (request: Request) => request.method() === "GET" && /\/files(\/stats)?\?path=/.test(request.url())
         const settled = (request: Request) => {
             if (isFileRead(request)) this.pendingFileReads--
         }

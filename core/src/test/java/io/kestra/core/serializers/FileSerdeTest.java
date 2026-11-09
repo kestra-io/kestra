@@ -212,6 +212,95 @@ class FileSerdeTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldKeepOnlyTheGivenFields() throws IOException {
+        byte[] file = binary(Map.of("a", 1, "b", "unused", "c", 3), Map.of("a", 2, "b", "unused", "c", 4));
+
+        List<Object> list = new ArrayList<>();
+        boolean hasMore = FileSerde.read(new ByteArrayInputStream(file), 10, Set.of("a", "c"), list::add);
+
+        assertThat(list).containsExactly(Map.of("a", 1, "c", 3), Map.of("a", 2, "c", 4));
+        assertThat(hasMore).isFalse();
+    }
+
+    @Test
+    void shouldKeepNestedValuesOfTheGivenFieldsAndSkipTheNestedOnesOfTheOthers() throws IOException {
+        byte[] file = binary(Map.of("kept", Map.of("x", List.of(1, 2)), "skipped", Map.of("y", List.of(Map.of("z", 1)))));
+
+        List<Object> list = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file), 10, Set.of("kept"), list::add);
+
+        assertThat(list).containsExactly(Map.of("kept", Map.of("x", List.of(1, 2))));
+    }
+
+    @Test
+    void shouldKeepOnlyTheGivenFieldsOfTextIon() throws IOException {
+        String file = """
+            {a:1,b:"unused",c:3}
+            {a:2,b:"unused",c:4}
+            """;
+
+        List<Object> list = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file.getBytes(java.nio.charset.StandardCharsets.UTF_8)), 10, Set.of("a"), list::add);
+
+        assertThat(list).containsExactly(Map.of("a", 1), Map.of("a", 2));
+    }
+
+    @Test
+    void shouldReadTheGivenFieldsAsTheFullReadDoes() throws IOException {
+        byte[] file = binary(Map.of("amount", 10.5, "count", 3, "at", Instant.parse("2026-11-08T10:00:00Z"), "name", "alice", "unused", "x"));
+
+        List<Object> full = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file), 10, full::add);
+        List<Object> projected = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file), 10, Set.of("amount", "count", "at", "name"), projected::add);
+
+        Map<String, Object> expected = new HashMap<>((Map<String, Object>) full.getFirst());
+        expected.remove("unused");
+        assertThat(projected).containsExactly(expected);
+    }
+
+    @Test
+    void shouldPassNonObjectValuesUnchangedWhenFieldsAreGiven() throws IOException {
+        byte[] file = binary("scalar", List.of(1, 2), Map.of("a", 1, "b", 2));
+
+        List<Object> list = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file), 10, Set.of("a"), list::add);
+
+        assertThat(list).containsExactly("scalar", List.of(1, 2), Map.of("a", 1));
+    }
+
+    @Test
+    void shouldStopAtMaxLinesWhenFieldsAreGiven() throws IOException {
+        byte[] file = binary(Map.of("a", 1), Map.of("a", 2), Map.of("a", 3));
+
+        List<Object> list = new ArrayList<>();
+        assertThat(FileSerde.read(new ByteArrayInputStream(file), 2, Set.of("a"), list::add)).isTrue();
+        assertThat(list).hasSize(2);
+
+        list.clear();
+        assertThat(FileSerde.read(new ByteArrayInputStream(file), 3, Set.of("a"), list::add)).isFalse();
+        assertThat(list).hasSize(3);
+    }
+
+    @Test
+    void shouldReadEmptyObjectsWhenNoFieldIsGiven() throws IOException {
+        byte[] file = binary(Map.of("a", 1), Map.of("a", 2));
+
+        List<Object> list = new ArrayList<>();
+        FileSerde.read(new ByteArrayInputStream(file), 10, Set.of(), list::add);
+
+        assertThat(list).containsExactly(Map.of(), Map.of());
+    }
+
+    private static byte[] binary(Object... rows) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        for (Object row : rows) {
+            FileSerde.write(out, row);
+        }
+        return out.toByteArray();
+    }
+
+    @Test
     void binaryRoundtripMultiValue() throws IOException {
         File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
         try (FileOutputStream out = new FileOutputStream(tempFile)) {

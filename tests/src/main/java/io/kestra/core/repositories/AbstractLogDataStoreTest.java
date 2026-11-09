@@ -922,8 +922,8 @@ public abstract class AbstractLogDataStoreTest {
     }
 
     private List<String> idsOf(String tenant, String executionId) {
-        return logDataStore.find(Pageable.UNPAGED, tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, executionId)))
-            .getContent().stream().map(LogEntry::getId).toList();
+        return logDataStore.findWithKeys(Pageable.UNPAGED, tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, executionId)))
+            .getContent().stream().map(LogDataStoreInterface.KeyedLog::key).toList();
     }
 
     @Test

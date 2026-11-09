@@ -7,6 +7,8 @@ import java.util.OptionalInt;
 
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
@@ -16,6 +18,7 @@ import io.kestra.plugin.core.dashboard.data.Logs;
 
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
@@ -123,7 +126,19 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
      * A log entry together with its stable storage key (the unique row/document id), needed to
      * resume keyset pagination — the deserialized {@link LogEntry} does not carry its own key.
      */
-    record KeyedLog(String key, LogEntry log) {}
+    @Schema(name = "KeyedLog")
+    record KeyedLog(
+        @Nullable @Schema(description = "Storage key of the log, the input of DELETE /logs/by-ids; absent when the store has none.") String key,
+        @JsonUnwrapped LogEntry log
+    ) {}
+
+    /**
+     * Same as {@link #find(Pageable, String, List)}, with the storage key of each log.
+     * The default leaves the key null, for stores that cannot address a single log.
+     */
+    default Page<KeyedLog> findWithKeys(Pageable pageable, @Nullable String tenantId, List<QueryFilter> filters) {
+        return find(pageable, tenantId, filters).map(log -> new KeyedLog(null, log));
+    }
 
     /**
      * Keyset-paginated fetch ordered by (timestamp ASC, key ASC), strictly after the given position.

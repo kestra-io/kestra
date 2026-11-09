@@ -167,7 +167,25 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
-        return toOffsetPage(findPageWithId(pageable, tenantId, condition), pageable);
+        return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public Page<KeyedLog> findWithKeys(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
+        ArrayListTotal<KeyedLog> keyedLogs = this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            SelectConditionStep<Record> select = (SelectConditionStep) context
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(condition);
+
+            return this.jdbcRepository.fetchPage(context, select, pageable, record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)));
+        });
+        return toOffsetPage(keyedLogs, pageable);
     }
 
     private static Condition withDefaultKind(@Nullable List<QueryFilter> filters, Condition condition) {
@@ -177,32 +195,12 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         return NORMAL_KIND_CONDITION.and(condition);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private ArrayListTotal<LogEntry> findPageWithId(Pageable pageable, String tenantId, Condition condition) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
-            DSLContext context = DSL.using(configuration);
-
-            SelectConditionStep<Record> select = (SelectConditionStep) context
-                .select(KEY_FIELD, VALUE_FIELD)
-                .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter(tenantId))
-                .and(condition);
-
-            return this.jdbcRepository.fetchPage(context, select, pageable, this::mapWithId);
-        });
-    }
-
-    private LogEntry mapWithId(Record record) {
-        LogEntry entry = this.jdbcRepository.deserialize(record.get(VALUE_FIELD, String.class));
-        return entry.toBuilder().id(record.get(KEY_FIELD)).build();
-    }
-
     /**
      * JDBC log stores paginate by offset with an exact total (the default {@code PaginationType.OFFSET}).
      * Wrap the {@link ArrayListTotal} produced by the shared paging helpers into a Micronaut {@link Page}
      * carrying that total, so the interface can also expose cursor pages from external stores.
      */
-    private static Page<LogEntry> toOffsetPage(ArrayListTotal<LogEntry> result, Pageable pageable) {
+    private static <T> Page<T> toOffsetPage(ArrayListTotal<T> result, Pageable pageable) {
         return Page.of(result, pageable, result.getTotal());
     }
 

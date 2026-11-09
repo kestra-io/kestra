@@ -26,20 +26,20 @@ export class LogsPage extends BasePage {
     }
 
     async waitForLogRows() {
-        await this.page.locator(".log-row").first().waitFor({state: "visible"})
+        await this.page.locator("[data-test=log-row]").first().waitFor({state: "visible"})
     }
 
     async getDisplayedLogCount(): Promise<number> {
         await this.waitForLogRows()
-        return await this.page.locator(".log-row").count()
+        return await this.page.locator("[data-test=log-row]").count()
     }
 
     async expectDisplayedLogCountToBe(expectedCount: number) {
-        return expect(this.page.locator(".log-row")).toHaveCount(expectedCount)
+        return expect(this.page.locator("[data-test=log-row]")).toHaveCount(expectedCount)
     }
 
     async selectLogRowByIndex(index: number = 0) {
-        const checkbox = this.page.locator(".log-row").nth(index).locator("[data-test=log-row-checkbox]")
+        const checkbox = this.page.locator("[data-test=log-row]").nth(index).locator("[data-test=log-row-checkbox]")
         await checkbox.waitFor({state: "visible"})
         await checkbox.click()
         await expect(checkbox.getByRole("checkbox")).toBeChecked()

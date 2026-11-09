@@ -117,7 +117,7 @@
             "taskRunId",
             "level",
             "index",
-            "id",
+            "key",
             "attemptNumber",
             "executionKind",
             ...(props.excludeMetas ?? []),

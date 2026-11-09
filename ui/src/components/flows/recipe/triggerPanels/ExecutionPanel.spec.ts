@@ -58,14 +58,14 @@ describe("ExecutionPanel", () => {
     it("shows the error hint when states is empty", () => {
         const wrapper = mountPanel({states: []})
 
-        expect(wrapper.find(".hint-error").exists()).toBe(true)
+        expect(wrapper.find(".hint-error").text()).toBe("recipe.execution.states_required")
         expect(wrapper.find(".hint-reco").exists()).toBe(false)
     })
 
     it("shows the recommendation hint when states contains FAILED", () => {
         const wrapper = mountPanel({states: ["FAILED"]})
 
-        expect(wrapper.find(".hint-reco").exists()).toBe(true)
+        expect(wrapper.find(".hint-reco").text()).toBe("recipe.execution.states_recommended")
         expect(wrapper.find(".hint-error").exists()).toBe(false)
     })
 

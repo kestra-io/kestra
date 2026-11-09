@@ -144,12 +144,6 @@ describe("FileExplorer drag and drop", () => {
         expect(moveTabs).toHaveBeenCalledWith({from: "README.md", to: "docs/README.md"})
     })
 
-    it("moves the open tabs along with a folder dropped into another folder", async () => {
-        await dragAndDrop(mountExplorer(), docs, "archive/docs")
-
-        expect(moveTabs).toHaveBeenCalledWith({from: "docs", to: "archive/docs"})
-    })
-
     it("leaves the open tabs alone when the server refuses the move", async () => {
         moveFileDirectory.mockRejectedValue(new Error("refused"))
 

@@ -1059,7 +1059,6 @@
                     path,
                 })
                 tree.value?.remove(node)
-                // a deleted folder takes the tabs of everything inside it along
                 closeTab?.({
                     path,
                     folder: !node.leaf,

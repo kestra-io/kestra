@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest"
+import {afterAll, describe, expect, it} from "vitest"
 import TaskRunLogs from "./TaskRunLogs.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
@@ -24,6 +24,10 @@ function mountLogs() {
 }
 
 describe("TaskRunLogs", () => {
+    afterAll(() => {
+        localStorage.clear()
+    })
+
     it("shouldPassTheSelectedLevelAsBothTheClientFilterAndTheRequestFilter", async () => {
         const wrapper = mountLogs()
         const details = wrapper.get("[data-test='task-run-details']")

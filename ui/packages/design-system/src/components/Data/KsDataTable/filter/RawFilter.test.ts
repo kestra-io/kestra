@@ -68,7 +68,7 @@ const mountRawFilter = (ctx: FilterContext) =>
 
 const mountWithRawQuery = (initial?: string) => {
     const rawQuery = ref<string | undefined>(initial)
-    // The context type is non-nullable; issue #22297 still requires covering the undefined guard.
+    // The context type is non-nullable, but the component still guards against undefined at runtime, so the cast lets the specs reach that guard.
     const ctx = makeCtx({rawQuery: computed(() => rawQuery.value as string)})
     return {wrapper: mountRawFilter(ctx), rawQuery, ctx}
 }
@@ -122,6 +122,16 @@ describe("RawFilter", () => {
 
     test("an external query change overwrites an untouched draft", async () => {
         const {wrapper, rawQuery} = mountWithRawQuery(RAW_QUERY)
+
+        rawQuery.value = NEXT_QUERY
+        await nextTick()
+
+        expect(draftValue(wrapper)).toBe(NEXT_QUERY)
+        expect(wrapper.get(".raw-apply").attributes("disabled")).toBeDefined()
+    })
+
+    test("an external query change overwrites an untouched draft that started empty", async () => {
+        const {wrapper, rawQuery} = mountWithRawQuery()
 
         rawQuery.value = NEXT_QUERY
         await nextTick()

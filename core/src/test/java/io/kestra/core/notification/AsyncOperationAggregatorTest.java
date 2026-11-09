@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
+import io.kestra.core.async.AsyncOperationProcessedEvent.Progress;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.lock.LockService;
+import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.server.CoreAsyncOperationType;
@@ -20,6 +22,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
 @KestraTest
@@ -61,6 +64,21 @@ class AsyncOperationAggregatorTest {
             assertThat(counts.get(NotificationItemOutcome.SUCCEEDED)).isEqualTo(2L);
             assertThat(counts.get(NotificationItemOutcome.FAILED)).isEqualTo(1L);
         });
+    }
+
+    @Test
+    void shouldIgnoreProgressEventsAndKeepTheErrorOfAFailedItem() throws Exception {
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationService.notifyAsyncOperation("test-user", null, operationId, CoreAsyncOperationType.EXECUTION_KILL, List.of("item-1", "item-2"));
+
+        asyncOperationQueue.emit(new AsyncOperationProcessedEvent(operationId, null, "item-1", Outcome.RUNNING, null, new Progress(5, 10), Instant.now()));
+        asyncOperationQueue.emit(new AsyncOperationProcessedEvent(operationId, null, "item-2", Outcome.FAILED, "boom", Instant.now()));
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(
+            () -> assertThat(notificationItemRepository.findByOperationId(null, operationId))
+                .extracting(NotificationItem::getResourceId, NotificationItem::getOutcome, NotificationItem::getError)
+                .containsExactlyInAnyOrder(tuple("item-1", NotificationItemOutcome.PENDING, null), tuple("item-2", NotificationItemOutcome.FAILED, "boom"))
+        );
     }
 
     @Test

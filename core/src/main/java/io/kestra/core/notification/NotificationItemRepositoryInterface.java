@@ -53,6 +53,16 @@ public interface NotificationItemRepositoryInterface {
     List<String> findResourceIds(@Nullable String tenantId, String operationId, @Nullable NotificationItemOutcome outcome);
 
     /**
+     * The items of the {@code (tenantId, operationId)} operation, via the {@code (tenantId, operationId)} index.
+     */
+    List<NotificationItem> findByOperationId(@Nullable String tenantId, String operationId);
+
+    /**
+     * The {@code PENDING} items run in-process by the service {@code owner}, to fail them once that service is gone.
+     */
+    List<NotificationItem> findPendingByOwner(String owner);
+
+    /**
      * Retention purge, cascaded from {@code NotificationService#purge()}: deletes every item row
      * belonging to any of the given (already-purged) operations, via the
      * {@code (tenantId, operationId)} index.

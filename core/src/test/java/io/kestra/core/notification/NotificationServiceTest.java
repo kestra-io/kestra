@@ -103,7 +103,7 @@ public abstract class NotificationServiceTest {
     @Test
     void shouldProjectProgressOntoNotificationGivenFindByUser() {
         notificationService.notifyAsyncOperation(USER_ID, TenantService.MAIN_TENANT, "op-items-2", CoreAsyncOperationType.EXECUTION_KILL, List.of("res-1", "res-2"));
-        notificationService.updateNotificationItemOutcome("op-items-2", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED);
+        notificationService.updateNotificationItemOutcome("op-items-2", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED, null);
 
         // this may actually update/refresh the counters depending on the backend
         notificationItemRepository.countUpToDateOperationOutcomesByOperationId(TenantService.MAIN_TENANT, "op-items-2");
@@ -123,7 +123,7 @@ public abstract class NotificationServiceTest {
     void shouldFlipItemOutcomeGivenRecordAsyncOperationItemOutcome() {
         notificationService.notifyAsyncOperation(USER_ID, TenantService.MAIN_TENANT, "op-outcome-1", CoreAsyncOperationType.EXECUTION_KILL, List.of("res-1"));
 
-        notificationService.updateNotificationItemOutcome("op-outcome-1", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED);
+        notificationService.updateNotificationItemOutcome("op-outcome-1", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED, null);
 
         Notification notification = notificationRepository.findByOperationId("op-outcome-1").orElseThrow();
         Map<NotificationItemOutcome, Long> counts = notificationItemRepository.countUpToDateOperationOutcomesByOperationId(notification.getTenantId(), "op-outcome-1");
@@ -135,7 +135,7 @@ public abstract class NotificationServiceTest {
     void shouldUpsertNotificationItemGivenRecordAsyncOperationItemOutcomeForUnknownResource() {
         notificationService.notifyAsyncOperation(USER_ID, TenantService.MAIN_TENANT, "op-outcome-2", CoreAsyncOperationType.EXECUTION_KILL, List.of("res-1"));
 
-        notificationService.updateNotificationItemOutcome("op-outcome-2", TenantService.MAIN_TENANT, "unknown-resource", NotificationItemOutcome.SUCCEEDED);
+        notificationService.updateNotificationItemOutcome("op-outcome-2", TenantService.MAIN_TENANT, "unknown-resource", NotificationItemOutcome.SUCCEEDED, null);
 
         Notification notification = notificationRepository.findByOperationId("op-outcome-2").orElseThrow();
         Map<NotificationItemOutcome, Long> counts = notificationItemRepository.countUpToDateOperationOutcomesByOperationId(notification.getTenantId(), "op-outcome-2");
@@ -145,7 +145,7 @@ public abstract class NotificationServiceTest {
 
     @Test
     void shouldNotThrowGivenRecordAsyncOperationItemOutcomeWithoutMatchingNotification() {
-        assertThatCode(() -> notificationService.updateNotificationItemOutcome("unknown-op", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED))
+        assertThatCode(() -> notificationService.updateNotificationItemOutcome("unknown-op", TenantService.MAIN_TENANT, "res-1", NotificationItemOutcome.SUCCEEDED, null))
             .doesNotThrowAnyException();
     }
 

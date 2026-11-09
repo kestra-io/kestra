@@ -15,6 +15,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @MicronautTest
 public abstract class AbstractNotificationItemRepositoryTest {
@@ -33,6 +34,41 @@ public abstract class AbstractNotificationItemRepositoryTest {
             .outcome(outcome)
             .updated(Instant.now())
             .build();
+    }
+
+    @Test
+    void findByOperationId_returnsOnlyThatOperationsItemsOfThatTenant() {
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationItemRepository.create(
+            List.of(
+                item(operationId, "res-1", null),
+                item(operationId, "res-2", null).toBuilder().outcome(NotificationItemOutcome.FAILED).error("boom").build(),
+                item(operationId, "res-3", "tenantA"),
+                item(TestsUtils.randomString(this.getClass().getSimpleName()), "res-4", null)
+            )
+        );
+
+        assertThat(notificationItemRepository.findByOperationId(null, operationId))
+            .extracting(NotificationItem::getResourceId, NotificationItem::getError)
+            .containsExactlyInAnyOrder(tuple("res-1", null), tuple("res-2", "boom"));
+    }
+
+    @Test
+    void findPendingByOwner_skipsFinishedItemsAndOtherOwners() {
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        String owner = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationItemRepository.create(
+            List.of(
+                item(operationId, "res-1", null).toBuilder().owner(owner).build(),
+                item(operationId, "res-2", null, NotificationItemOutcome.SUCCEEDED).toBuilder().owner(owner).build(),
+                item(operationId, "res-3", null).toBuilder().owner("another-service").build(),
+                item(operationId, "res-4", null)
+            )
+        );
+
+        assertThat(notificationItemRepository.findPendingByOwner(owner))
+            .extracting(NotificationItem::getResourceId)
+            .containsExactly("res-1");
     }
 
     @Test

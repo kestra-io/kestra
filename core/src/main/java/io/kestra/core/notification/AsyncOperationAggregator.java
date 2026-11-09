@@ -15,8 +15,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tallies the succeeded/failed outcome of every {@link AsyncOperationProcessedEvent} onto the
- * notification tracking its operation.
+ * Tallies the succeeded/failed outcome of every terminal {@link AsyncOperationProcessedEvent} onto the
+ * notification tracking its operation; progress events are not persisted.
  * <p>
  * Runs on the Executor, or a standalone server (see {@link RequiresExecutor}). A cluster may run
  * several Executors and the queue broadcasts every event to all of them, so only the instance
@@ -70,10 +70,13 @@ public class AsyncOperationAggregator {
                         log.trace("AsyncOperationProcessedEvent received: {}", event);
                     }
                     NotificationItemOutcome outcome = switch (event.outcome()) {
+                        case RUNNING -> null;
                         case SUCCEEDED -> NotificationItemOutcome.SUCCEEDED;
                         case FAILED -> NotificationItemOutcome.FAILED;
                     };
-                    notificationService.updateNotificationItemOutcome(event.operationId(), event.tenantId(), event.itemId(), outcome);
+                    if (outcome != null) {
+                        notificationService.updateNotificationItemOutcome(event.operationId(), event.tenantId(), event.itemId(), outcome, event.error());
+                    }
                 } catch (Exception exception) {
                     log.error("Error while processing AsyncOperationProcessedEvent", exception);
                 }

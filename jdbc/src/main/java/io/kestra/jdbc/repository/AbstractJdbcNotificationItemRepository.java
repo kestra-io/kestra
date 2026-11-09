@@ -77,6 +77,30 @@ public class AbstractJdbcNotificationItemRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
+    public List<NotificationItem> findByOperationId(String tenantId, String operationId) {
+        return findItems(tenantAndOperationCondition(tenantId, operationId));
+    }
+
+    @Override
+    public List<NotificationItem> findPendingByOwner(String owner) {
+        return findItems(field("owner").eq(owner).and(field("outcome").eq(NotificationItemOutcome.PENDING.name())));
+    }
+
+    private List<NotificationItem> findItems(Condition condition) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> this.jdbcRepository.fetch(
+                    DSL
+                        .using(configuration)
+                        .select(field("value"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(condition)
+                )
+            );
+    }
+
+    @Override
     public int deleteByOperationIds(List<TenantOperationId> operationIds) {
         if (operationIds.isEmpty()) {
             return 0;

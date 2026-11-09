@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * One resource targeted by an {@link AsyncOperationType async operation}
- * (an execution id or a trigger uid — see {@link AsyncOperationType#resourceType()}),
+ * (an execution id, a trigger uid or plugin artifact coordinates — see {@link AsyncOperationType#resourceType()}),
  * and its processing outcome.
  * <p>
  * The physical primary key is {@link #uid()}, a hash of the {@code (operationId, resourceId)}
@@ -40,6 +40,17 @@ public class NotificationItem implements HasUID {
 
     @NotNull
     private Instant updated;
+
+    /**
+     * The id of the service running this item in-process, so the item can be failed once that
+     * service is reported dead (see {@link io.kestra.core.async.AsyncOperationResourceReleaser}).
+     * {@code null} when the item is processed from a durable queue, which outlives any one service.
+     */
+    @Nullable
+    private String owner;
+
+    @Nullable
+    private String error;
 
     @Override
     public String uid() {

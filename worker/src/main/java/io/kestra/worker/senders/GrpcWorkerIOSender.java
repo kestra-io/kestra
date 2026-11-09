@@ -51,6 +51,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     private final WorkerQueueRegistry workerQueueRegistry;
     private final Class<T> eventType;
     private final SendStrategy sendStrategy;
+    private final int maxBatchBytes;
     private final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod;
     private final boolean resendOnFailure;
     private final Duration replyTimeout;
@@ -80,6 +81,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      * @param name the name of the sender.
      * @param eventType the event type.
      * @param sendStrategy the strategy for sending data (per-item or batch).
+     * @param maxBatchBytes the controller's inbound message size limit; a batch whose request exceeds it is split before being sent.
      * @param grpcSendMethod the gRPC method to call for sending data.
      * @param fallbackMapperOnResourceExhausted optional mapper applied to each item when the server rejects the
      *        message with {@code RESOURCE_EXHAUSTED}; the mapped item is
@@ -94,16 +96,18 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         final String name,
         final Class<T> eventType,
         final SendStrategy sendStrategy,
+        final int maxBatchBytes,
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
         @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
         final boolean resendOnFailure) {
-        this(workerQueueRegistry, name, eventType, sendStrategy, grpcSendMethod, fallbackMapperOnResourceExhausted, resendOnFailure, DEFAULT_REPLY_TIMEOUT);
+        this(workerQueueRegistry, name, eventType, sendStrategy, maxBatchBytes, grpcSendMethod, fallbackMapperOnResourceExhausted, resendOnFailure, DEFAULT_REPLY_TIMEOUT);
     }
 
     GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
         final String name,
         final Class<T> eventType,
         final SendStrategy sendStrategy,
+        final int maxBatchBytes,
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
         @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
         final boolean resendOnFailure,
@@ -112,6 +116,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         this.eventType = eventType;
         this.workerQueueRegistry = workerQueueRegistry;
         this.sendStrategy = Objects.requireNonNull(sendStrategy, "sendStrategy must not be null");
+        this.maxBatchBytes = maxBatchBytes;
         this.grpcSendMethod = Objects.requireNonNull(grpcSendMethod, "grpcSendMethod must not be null");
         this.fallbackMapperOnResourceExhausted = fallbackMapperOnResourceExhausted;
         this.resendOnFailure = resendOnFailure;
@@ -218,12 +223,31 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
         switch (sendStrategy) {
             case PER_ITEM -> results.forEach(result -> sendOpaqueData(BatchMessage.of(List.of(result))));
-            case BATCH -> sendOpaqueData(BatchMessage.of(results));
+            case BATCH -> sendBatch(results);
         }
     }
 
-    private void sendOpaqueData(final BatchMessage<T> batchMessage) {
+    /**
+     * Splits the batch in halves while its request exceeds the controller's inbound limit, so a batch is never rejected
+     * for its size alone; the limit still applies to a single item, which the fallback on {@code RESOURCE_EXHAUSTED} handles.
+     */
+    private void sendBatch(final List<T> results) {
+        BatchMessage<T> batchMessage = BatchMessage.of(results);
         OpaqueData request = buildRequest(batchMessage);
+        if (results.size() > 1 && request.getSerializedSize() > maxBatchBytes) {
+            int half = results.size() / 2;
+            sendBatch(results.subList(0, half));
+            sendBatch(results.subList(half, results.size()));
+            return;
+        }
+        sendOpaqueData(request, batchMessage);
+    }
+
+    private void sendOpaqueData(final BatchMessage<T> batchMessage) {
+        sendOpaqueData(buildRequest(batchMessage), batchMessage);
+    }
+
+    private void sendOpaqueData(final OpaqueData request, final BatchMessage<T> batchMessage) {
         StreamObserver<OpaqueData> baseObserver = fallbackMapperOnResourceExhausted != null
             ? new FallbackOnResourceExhaustedObserver(batchMessage)
             : new ResendOnFailureObserver(batchMessage);
@@ -359,6 +383,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     /**
      * A per-call {@link StreamObserver} that retries with a fallback message when the server
      * rejects the original message with {@code RESOURCE_EXHAUSTED} (e.g. message too large).
+     * A batch of several items is first resent one item at a time, since the limit applies to the whole message.
      */
     private class FallbackOnResourceExhaustedObserver implements StreamObserver<OpaqueData> {
 
@@ -374,7 +399,9 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
         @Override
         public void onError(Throwable t) {
-            if (isResourceExhausted(t) && fallbackMapperOnResourceExhausted != null) {
+            if (isResourceExhausted(t) && originalBatch.records().size() > 1) {
+                resendOneByOne(originalBatch);
+            } else if (isResourceExhausted(t) && fallbackMapperOnResourceExhausted != null) {
                 List<T> fallbackItems = originalBatch.records().stream()
                     .map(fallbackMapperOnResourceExhausted)
                     .filter(Objects::nonNull)
@@ -393,6 +420,18 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
         @Override
         public void onCompleted() {
+        }
+
+        private void resendOneByOne(final BatchMessage<T> batch) {
+            List<T> records = batch.records();
+            for (int i = 0; i < records.size(); i++) {
+                try {
+                    sendOpaqueData(BatchMessage.of(List.of(records.get(i))));
+                } catch (RuntimeException e) {
+                    onSendFailed(BatchMessage.of(records.subList(i, records.size())), e);
+                    return;
+                }
+            }
         }
 
         private static boolean isResourceExhausted(final Throwable t) {

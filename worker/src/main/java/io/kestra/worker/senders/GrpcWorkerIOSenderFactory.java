@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import org.slf4j.event.Level;
 
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -34,21 +35,25 @@ public class GrpcWorkerIOSenderFactory {
             + "The task run is failed and its outputs are dropped. Reduce the size of the task outputs, or increase 'kestra.grpc.max-inbound-message-size' on the worker controller.";
 
     /**
-     * Creates a sender for {@link WorkerTaskResult} events (sent per-item).
+     * Creates a sender for {@link WorkerTaskResult} events (sent as a batch, so that the controller emits them
+     * and releases their running entries in one statement each).
      * <p>
-     * If the server rejects the message with {@code RESOURCE_EXHAUSTED} (e.g. outputs too large),
-     * the result is retried with a failed state and no outputs so the execution can still terminate.
+     * If the server rejects the message with {@code RESOURCE_EXHAUSTED} (e.g. outputs too large), a batch is
+     * first resent one result at a time, then the oversized result is retried with a failed state and no outputs
+     * so the execution can still terminate.
      */
     @Singleton
     public GrpcWorkerIOSender<WorkerTaskResult> taskResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry,
+        final GrpcConfiguration grpcConfiguration,
         final LogEntryEmitter logEntryEmitter) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "TaskResultWorkerIOSender",
             WorkerTaskResult.class,
-            SendStrategy.PER_ITEM,
+            SendStrategy.BATCH,
+            grpcConfiguration.maxInboundMessageSize(),
             controllerServiceStub::sendWorkerTaskResults,
             result ->
             {
@@ -68,12 +73,14 @@ public class GrpcWorkerIOSenderFactory {
     @Singleton
     public GrpcWorkerIOSender<WorkerTriggerResult> triggerResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
-        final WorkerQueueRegistry workerQueueRegistry) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final GrpcConfiguration grpcConfiguration) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "TriggerResultWorkerIOSender",
             WorkerTriggerResult.class,
             SendStrategy.PER_ITEM,
+            grpcConfiguration.maxInboundMessageSize(),
             controllerServiceStub::sendWorkerTriggerResults,
             null,
             // Trigger results are terminal work output — re-queue on a transient network partition, like task results.
@@ -87,12 +94,14 @@ public class GrpcWorkerIOSenderFactory {
     @Singleton
     public GrpcWorkerIOSender<LogEntry> logEntrySender(
         final WorkerControllerServiceStub controllerServiceStub,
-        final WorkerQueueRegistry workerQueueRegistry) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final GrpcConfiguration grpcConfiguration) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "LogEntryWorkerIOSender",
             LogEntry.class,
             SendStrategy.BATCH,
+            grpcConfiguration.maxInboundMessageSize(),
             controllerServiceStub::sendWorkerLogEntries,
             null,
             // Logs are best-effort and high-volume: re-queuing could back-pressure the worker, so drop on failure.
@@ -106,12 +115,14 @@ public class GrpcWorkerIOSenderFactory {
     @Singleton
     public GrpcWorkerIOSender<MetricEntry> metricsSender(
         final WorkerControllerServiceStub controllerServiceStub,
-        final WorkerQueueRegistry workerQueueRegistry) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final GrpcConfiguration grpcConfiguration) {
         return new GrpcWorkerIOSender<>(
             workerQueueRegistry,
             "MetricsWorkerIOSender",
             MetricEntry.class,
             SendStrategy.BATCH,
+            grpcConfiguration.maxInboundMessageSize(),
             controllerServiceStub::sendWorkerMetricEntries,
             null,
             // Metrics are best-effort and high-volume: drop on failure rather than back-pressure the worker.

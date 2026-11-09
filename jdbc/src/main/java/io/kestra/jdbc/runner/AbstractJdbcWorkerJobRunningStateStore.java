@@ -99,6 +99,23 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     }
 
     @Override
+    public void deleteByKeys(List<String> keys) {
+        if (keys.isEmpty()) {
+            return;
+        }
+
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(
+                configuration -> DSL
+                    .using(configuration)
+                    .deleteFrom(this.jdbcRepository.getTable())
+                    .where(field("key").in(keys))
+                    .execute()
+            );
+    }
+
+    @Override
     public void deleteByKeyAndWorker(TransactionContext txContext, String key, String workerUid) {
         // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
         if (txContext.supports(JdbcTransactionContext.class)) {

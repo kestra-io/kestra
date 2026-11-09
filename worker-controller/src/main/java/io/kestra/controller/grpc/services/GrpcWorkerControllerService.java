@@ -19,9 +19,6 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.MessageTooBigException;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
@@ -41,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.WorkerControllerServiceImplBase implements WorkerControllerService {
 
     @Inject
-    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private WorkerTaskResultPublisher workerTaskResultPublisher;
 
     @Inject
     private DispatchQueueInterface<MetricEntry> metricEntryQueue;
@@ -66,9 +63,6 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerCapacityPolicyFactory workerCapacityPolicyFactory;
-
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
     private WorkerTenantAccessGuard workerTenantAccessGuard;
@@ -197,44 +191,10 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     public void sendWorkerTaskResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<WorkerTaskResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TASK_RESULT);
-        workerTenantAccessGuard.allowedJobResults(
+        List<WorkerTaskResult> allowed = workerTenantAccessGuard.allowedJobResults(
             request.getHeader(), message.records(), result -> result.getTaskRun().getTenantId(), result -> result.getTaskRun().getId()
-        ).forEach(workerTaskResult ->
-        {
-            try {
-                workerTaskResultQueue.emit(workerTaskResult);
-
-                // only remove the worker job running once the task has reached a terminal state
-                if (workerTaskResult.getTaskRun().getState().isTerminated()) {
-                    workerJobRunningStateStore.deleteByKey(workerTaskResult.getTaskRun().getId());
-                }
-            } catch (QueueException e) {
-                // If there is a QueueException it can either be caused by the message limit or another queue issue.
-                // We fail the task and try to resend it.
-                WorkerTaskResult failed = new WorkerTaskResult(workerTaskResult.getTaskRun().fail(), workerTaskResult.getOutputs());
-                if (e instanceof MessageTooBigException) {
-                    // If it's a message too big, we remove the outputs
-                    failed = failed.withOutputs(null);
-                }
-                if (e instanceof UnsupportedMessageException) {
-                    // Unsupported queue payloads are most likely caused by a bad output value,
-                    // so retry without outputs instead of crashing the worker/controller loop.
-                    failed = failed.withOutputs(null);
-                }
-                RunContextLogger contextLogger = runContextLoggerFactory.create(workerTaskResult);
-                contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
-                try {
-                    this.workerTaskResultQueue.emit(failed);
-
-                    // only remove the worker job running once the task has reached a terminal state
-                    if (failed.getTaskRun().getState().isTerminated()) {
-                        workerJobRunningStateStore.deleteByKey(failed.getTaskRun().getId());
-                    }
-                } catch (QueueException ex) {
-                    log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTaskRun().getTaskId(), failed.getTaskRun().getId(), e);
-                }
-            }
-        });
+        );
+        workerTaskResultPublisher.publish(allowed);
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
     }

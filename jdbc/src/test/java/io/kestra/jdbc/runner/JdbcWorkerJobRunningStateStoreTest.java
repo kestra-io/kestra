@@ -93,6 +93,23 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
     }
 
     @Test
+    void shouldDeleteOnlyTheGivenKeysWhenDeletingByKeys() {
+        // Given
+        WorkerTaskRunning first = workerTaskRunning();
+        WorkerTaskRunning second = workerTaskRunning();
+        WorkerTaskRunning kept = workerTaskRunning();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, first);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, second);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, kept);
+
+        // When
+        workerJobRunningStateStore.deleteByKeys(List.of(first.uid(), second.uid(), IdUtils.create()));
+
+        // Then
+        assertThat(rawKeys()).containsExactly(kept.uid());
+    }
+
+    @Test
     void shouldCommitSaveBeforeReturningWhenCallerTransactionIsOpen() {
         // Given a save() performed while a caller-owned transaction is open on the
         // current thread — as happens when the worker-controller dispatches jobs from

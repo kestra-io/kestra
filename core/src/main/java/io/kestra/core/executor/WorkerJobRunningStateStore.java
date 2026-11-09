@@ -1,5 +1,6 @@
 package io.kestra.core.executor;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -25,6 +26,13 @@ public interface WorkerJobRunningStateStore {
      * @param key the key of the worker job to be deleted.
      */
     void deleteByKey(String key);
+
+    /**
+     * Deletes the running worker jobs for the given keys, in a single round trip when the store supports it.
+     */
+    default void deleteByKeys(List<String> keys) {
+        keys.forEach(this::deleteByKey);
+    }
 
     /**
      * Deletes a running worker job for the given key.

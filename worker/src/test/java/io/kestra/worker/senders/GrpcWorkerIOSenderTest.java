@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +47,9 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @KestraTest
@@ -151,6 +155,79 @@ class GrpcWorkerIOSenderTest {
         assertThat(logEntry.getTaskRunId()).isEqualTo(taskRun.getId());
         assertThat(logEntry.getAttemptNumber()).isZero();
         assertThat(logEntry.getMessage()).contains("kestra.grpc.max-inbound-message-size");
+    }
+
+    @Test
+    void shouldResendResultsOneByOneWhenTheBatchIsTooLarge() {
+        // Given a batch of two results of which one is too large on its own; the mocked controller does the rejecting,
+        // since a real oversized message leaves its stream half-open on the server and holds its shutdown for the whole grace period
+        WorkerTaskResult small = buildTaskResult(Map.of("key", "value"));
+        TaskRun largeTaskRun = buildTaskResult(Map.of()).getTaskRun()
+            .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .withState(State.Type.SUCCESS);
+        WorkerTaskResult large = new WorkerTaskResult(largeTaskRun, Map.of("output", "too large for the controller"));
+        doAnswer(inv ->
+        {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            List<WorkerTaskResult> records = deserialize(req).records();
+            boolean tooLarge = records.size() > 1
+                || (records.getFirst().getTaskRun().getId().equals(large.getTaskRun().getId()) && records.getFirst().getOutputs() != null);
+            if (tooLarge) {
+                obs.onError(new StatusRuntimeException(Status.RESOURCE_EXHAUSTED.withDescription("gRPC message exceeds maximum size")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        // When
+        taskResultSender.send(List.of(small, large));
+
+        // Then the batch is rejected, each result is resent alone, and only the large one is failed:
+        // 4 calls in all (the batch, the small result, the large result, the large result failed without outputs)
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(5))
+            .untilAsserted(() -> verify(grpcWorkerControllerService, times(4)).sendWorkerTaskResults(captor.capture(), any()));
+
+        List<BatchMessage<WorkerTaskResult>> calls = captor.getAllValues().stream().map(GrpcWorkerIOSenderTest::deserialize).toList();
+        assertThat(calls.stream().map(call -> call.records().size())).contains(2);
+        Map<String, WorkerTaskResult> delivered = calls.stream()
+            .filter(call -> call.records().size() == 1)
+            .map(call -> call.records().getFirst())
+            .collect(Collectors.toMap(result -> result.getTaskRun().getId(), Function.identity(), (first, second) -> second));
+        assertThat(delivered).containsOnlyKeys(small.getTaskRun().getId(), large.getTaskRun().getId());
+        assertThat(delivered.get(small.getTaskRun().getId()).getOutputs()).isEqualTo(Map.of("key", "value"));
+        assertThat(delivered.get(small.getTaskRun().getId()).getTaskRun().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(delivered.get(large.getTaskRun().getId()).getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(delivered.get(large.getTaskRun().getId()).getOutputs()).isNull();
+    }
+
+    @Test
+    void shouldSplitTheBatchBeforeSendingWhenItExceedsTheInboundMessageSize() {
+        // Given two results of 600 KB each: together above the 1 MB limit set via @Property, each one below it
+        char[] payload = new char[600 * 1024];
+        Arrays.fill(payload, 'a');
+        WorkerTaskResult first = buildTaskResult(Map.of("output", new String(payload)));
+        WorkerTaskResult second = buildTaskResult(Map.of("output", new String(payload)));
+
+        // When
+        taskResultSender.send(List.of(first, second));
+
+        // Then both arrive intact in a call of their own, without any rejection from the transport
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(5))
+            .untilAsserted(() -> verify(grpcWorkerControllerService, times(2)).sendWorkerTaskResults(captor.capture(), any()));
+
+        List<BatchMessage<WorkerTaskResult>> calls = captor.getAllValues().stream().map(GrpcWorkerIOSenderTest::deserialize).toList();
+        assertThat(calls).allSatisfy(call -> assertThat(call.records()).hasSize(1));
+        assertThat(calls.stream().map(call -> call.records().getFirst().getTaskRun().getId()))
+            .containsExactlyInAnyOrder(first.getTaskRun().getId(), second.getTaskRun().getId());
+        assertThat(calls).allSatisfy(call -> assertThat(call.records().getFirst().getOutputs()).containsKey("output"));
+        verifyNoInteractions(logEntryEmitter);
     }
 
     @Test
@@ -370,6 +447,7 @@ class GrpcWorkerIOSenderTest {
             "test",
             WorkerTaskResult.class,
             GrpcWorkerIOSender.SendStrategy.PER_ITEM,
+            1024 * 1024,
             grpcSendMethod,
             null,
             true,

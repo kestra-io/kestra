@@ -1,5 +1,7 @@
 import {useApiStore} from "../stores/api"
 import {useMiscStore} from "override/stores/misc"
+import {usePluginsStore} from "../stores/plugins"
+import {useBlueprintsStore} from "../stores/blueprints"
 import {Tab} from "./multiPanelTypes"
 import {storageKeys} from "./constants"
 
@@ -112,6 +114,54 @@ export function makeEvent(action: string, tab_type: string, metadata?: TrackingE
         tab_type,
         metadata: metadata ?? {},
     })
+}
+
+export function getTabMetadata(tab: TrackedTab): TrackingEventMetadata {
+    const metadata: TrackingEventMetadata = {}
+    const value = tab.uid
+
+    if (value === "doc") {
+        try {
+            const pluginsStore = usePluginsStore()
+            if (pluginsStore.editorPlugin?.cls) {
+                metadata.documentation_page = pluginsStore.editorPlugin.cls
+            }
+        } catch {
+            //
+        }
+    }
+
+    if (value === "blueprints") {
+        try {
+            const blueprintsStore = useBlueprintsStore()
+            if (blueprintsStore.blueprint?.id) {
+                metadata.blueprint_name = blueprintsStore.blueprint.id
+            }
+        } catch {
+            //
+        }
+    }
+
+    if (value.startsWith("nocode-")) {
+        try {
+            const tabData = JSON.parse(value.substring(12))
+            if (tabData.taskType) {
+                metadata.task_type = tabData.taskType
+            }
+        } catch {
+            // Ignore parsing errors
+        }
+    }
+
+    return metadata
+}
+
+export function trackTabOpen(tab: TrackedTab) {
+    makeEvent("open", getTabType(tab), getTabMetadata(tab))
+}
+
+export function trackTabClose(tab: TrackedTab) {
+    makeEvent("close", getTabType(tab), getTabMetadata(tab))
 }
 
 export function trackBlueprintSelection(blueprintId: string) {

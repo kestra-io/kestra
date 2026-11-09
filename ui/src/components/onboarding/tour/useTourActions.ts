@@ -34,6 +34,7 @@ const FLOW_TAB = {
 const STILL_RUNNING_AFTER_MS = 180_000
 const DOCKER_LOGS_ATTEMPTS = 4
 const DOCKER_LOGS_RETRY_MS = 1000
+const DOCKER_LOGS_SIZE = 50
 
 export interface WaitForExecutionOptions {
     signal: AbortSignal;
@@ -273,7 +274,7 @@ export function useTourActions() {
             if (signal.aborted) {
                 throw new DOMException("The wait was aborted.", "AbortError")
             }
-            const execution = await executionsStore.loadExecution({id: executionId})
+            const execution = await executionsStore.loadExecution({id: executionId, store: false})
             const current = execution?.state?.current
             if (current && State.isTerminated(current)) {
                 return execution
@@ -304,6 +305,7 @@ export function useTourActions() {
             const logs = await executionsStore.loadLogs({
                 executionId,
                 filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+                size: DOCKER_LOGS_SIZE,
                 store: false,
             }).catch(() => [])
             if (isDockerSocketFailure(logs ?? [])) {

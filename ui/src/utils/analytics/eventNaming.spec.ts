@@ -53,6 +53,8 @@ const fixtures: [string, EventProperties, string][] = [
     ["onboarding", {onboarding: {event: "tour_continued", action: "add_task"}}, "app.onboarding-tour.continued"],
     ["onboarding", {onboarding: {event: "tour_completed", action: "chain"}}, "app.onboarding-tour.completed"],
     ["onboarding", {onboarding: {event: "tour_closed", action: "test_event"}}, "app.onboarding-tour.closed"],
+    ["onboarding", {onboarding: {event: "tour_docker_unavailable", action: "flow_generated"}}, "app.onboarding-tour.docker-unavailable"],
+    ["onboarding", {onboarding: {event: "tour_docker_fallback", action: "flow_generated"}}, "app.onboarding-tour.docker-fallback"],
 ]
 
 describe("resolvePosthogEventName", () => {

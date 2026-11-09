@@ -107,6 +107,100 @@ Warning.args = argsDefaults("WARN");
 export const Error = Template.bind({});
 Error.args = argsDefaults("ERROR");
 
+const severityLine = (level: Log["level"], cursor: boolean, message: string) => (
+    <LogLine
+        cursor={cursor}
+        level={level}
+        log={{level, message, timestamp: "2026-10-20T08:57:19.401Z"} as Log}
+    />
+)
+
+const STACK_MESSAGE = [
+    "selected stack first",
+    "    at io.kestra.plugin.Example.execute(Example.java:42)",
+    "    at io.kestra.runner.WorkerThread.run(WorkerThread.java:10)",
+].join("\n")
+
+const caretDelta = (line: HTMLElement) => {
+    const level = line.querySelector(".log-level") as HTMLElement
+    const caret = line.querySelector(".icon_container") as HTMLElement
+    const levelBox = level.getBoundingClientRect()
+    const caretBox = caret.getBoundingClientRect()
+    return {
+        levelBox,
+        delta: Math.abs((caretBox.top + caretBox.height / 2) - (levelBox.top + levelBox.height / 2)),
+    }
+}
+
+export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
+    render: () => ({
+        setup() {
+            return () => (
+                <div>
+                    {severityLine("ERROR", true, "selected error")}
+                    {severityLine("ERROR", false, "plain error")}
+                    {severityLine("WARN", true, "selected warn")}
+                    {severityLine("WARN", false, "plain warn")}
+                    {severityLine("INFO", true, "selected info")}
+                    {severityLine("INFO", false, "plain info")}
+                    {severityLine("ERROR", true, STACK_MESSAGE)}
+                </div>
+            )
+        },
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const row = (message: string) => {
+            const line = canvas.getByText(message).closest(".line")
+            expect(line).toBeTruthy()
+            return line as HTMLElement
+        }
+        const background = (message: string) => getComputedStyle(row(message)).backgroundColor
+        const selectedInfo = background("selected info")
+        const plainInfo = background("plain info")
+
+        expect(background("selected error")).toBe(selectedInfo)
+        expect(background("selected warn")).toBe(selectedInfo)
+        expect(background("plain error")).not.toBe(plainInfo)
+        expect(background("plain warn")).not.toBe(plainInfo)
+        expect(plainInfo).not.toBe(selectedInfo)
+
+        for (const message of ["selected error", "selected warn", "selected info"]) {
+            const {delta} = caretDelta(row(message))
+            expect(delta).toBeLessThan(2)
+        }
+
+        const stack = canvas.getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        const {levelBox, delta} = caretDelta(stack)
+        expect(stack.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
+    },
+}
+
+export const SelectedCaretOnMobile: StoryObj<typeof LogLine> = {
+    parameters: {
+        viewport: {
+            options: {mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}}},
+            defaultViewport: "mobile",
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        setup() {
+            return () => severityLine("ERROR", true, STACK_MESSAGE)
+        },
+    }),
+    play: async ({canvasElement}) => {
+        const line = within(canvasElement).getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        expect(getComputedStyle(line).display).toBe("grid")
+        const {levelBox, delta} = caretDelta(line)
+        expect(line.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
+    },
+}
+
 export const WithTitle = Template.bind({});
 WithTitle.args = {
     cursor: true,

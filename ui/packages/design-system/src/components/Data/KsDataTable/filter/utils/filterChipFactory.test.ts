@@ -1,4 +1,4 @@
-import {describe, expect, test} from "vitest"
+import {afterEach, describe, expect, test} from "vitest"
 
 import {
     Comparators,
@@ -14,12 +14,15 @@ import {
     createDefaultVisibleFilters,
     createTimeRangeFilter,
     defaultVisibleValueLabel,
+    formatFilterDate,
+    formatFilterDateRange,
     isDateRangeValue,
     processFieldValue,
     resolveDefaultVisibleValue,
 } from "./filterChipFactory"
 import {parseEncodedGroups} from "./routeDecoder"
 import {DATE_FILTER_KEY, TIME_RANGE_KEY} from "./constants"
+import {TIMEZONE_STORAGE_KEY} from "../../../../../utils/date"
 
 const labelsConfiguration: FilterConfiguration = {
     title: "Executions",
@@ -256,6 +259,22 @@ const dateRange = {
     endDate: new Date("2026-08-02T00:00:00.000Z"),
 }
 
+describe("filter date labels use Settings timezone", () => {
+    afterEach(() => {
+        localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+    })
+
+    test("formats an absolute range in the stored timezone rather than the browser locale", () => {
+        localStorage.setItem(TIMEZONE_STORAGE_KEY, "America/New_York")
+
+        // 00:00 UTC on Aug 1 is 20:00 the previous evening in America/New_York (EDT, UTC-4).
+        expect(formatFilterDateRange(dateRange.startDate, dateRange.endDate)).toBe(
+            "Jul 31, 2026 8:00 PM - Aug 1, 2026 8:00 PM",
+        )
+        expect(formatFilterDate(dateRange.startDate)).toBe("Jul 31, 2026")
+    })
+})
+
 describe("range filter creation", () => {
     test("creates a time range chip", () => {
         const config: FilterKeyConfig = {
@@ -272,7 +291,7 @@ describe("range filter creation", () => {
             keyLabel: "Interval",
             comparator: Comparators.EQUALS,
             value: dateRange,
-            valueLabel: `${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
+            valueLabel: formatFilterDateRange(dateRange.startDate, dateRange.endDate),
         })
     })
 
@@ -307,7 +326,7 @@ describe("range filter creation", () => {
             keyLabel: "Created at",
             comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
             value: dateRange,
-            valueLabel: `${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
+            valueLabel: formatFilterDateRange(dateRange.startDate, dateRange.endDate),
         })
     })
 })
@@ -405,10 +424,10 @@ describe("default visible filters", () => {
     test("formats readable labels for every supported value kind", () => {
         expect(defaultVisibleValueLabel("RUNNING")).toBe("RUNNING")
         expect(defaultVisibleValueLabel(["team:core", "env:prod"])).toBe("team:core, env:prod")
-        expect(defaultVisibleValueLabel(dateRange.startDate)).toBe(dateRange.startDate.toLocaleDateString())
+        expect(defaultVisibleValueLabel(dateRange.startDate)).toBe(formatFilterDate(dateRange.startDate))
         expect(defaultVisibleValueLabel(undefined as unknown as string)).toBe("")
         expect(defaultVisibleValueLabel(dateRange)).toBe(
-            `${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
+            formatFilterDateRange(dateRange.startDate, dateRange.endDate),
         )
     })
 })

@@ -2,8 +2,10 @@ import {describe, expect, test} from "vitest"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import SettingRow from "./SettingRow.vue"
 
-const mountSettingRow = (props: {[key: string]: unknown} = {}, slots: {[key: string]: string} = {}) =>
-    i18nMount(SettingRow, {props, slots})
+const mountSettingRow = (
+    props: {label: string, description?: string, stacked?: boolean, required?: boolean},
+    slots: {description?: string, default?: string} = {},
+) => i18nMount(SettingRow, {props, slots})
 
 describe("SettingRow", () => {
     test("renders the label in the label block", () => {

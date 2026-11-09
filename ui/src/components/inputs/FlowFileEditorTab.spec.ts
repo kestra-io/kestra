@@ -218,6 +218,28 @@ describe("FlowFileEditorTab", () => {
         expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "file content\nunsaved line"})
     })
 
+    it("should leave the flow tab's error navigation alone when a namespace file tab mounts", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        const navigation = {count: 1, revealNext: vi.fn()}
+        useFlowStore().errorNavigation = navigation
+
+        mountTab()
+        await flushPromises()
+
+        expect(toRaw(useFlowStore().errorNavigation)).toBe(navigation)
+    })
+
+    it("should register error navigation for the flow tab and clear it on unmount", async () => {
+        violationMarkers().value = locatedErrors
+
+        const wrapper = mountWithTabContext(FlowFileEditorTab, flowTabProps)
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
+
+        wrapper.unmount()
+        expect(useFlowStore().errorNavigation).toBeNull()
+    })
+
     it("should drop error navigation while the flow tab is parked in KeepAlive and restore it when shown again", async () => {
         violationMarkers().value = locatedErrors
         const shown = ref(true)

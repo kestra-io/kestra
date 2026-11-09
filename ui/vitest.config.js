@@ -62,6 +62,8 @@ export default defineConfig({
         ],
     },
     test: {
+        // Vue's dev build prints this once per runtime whenever a <Suspense> mounts; it carries no test signal.
+        onConsoleLog: (log) => !log.startsWith("<Suspense> is an experimental feature"),
         projects: [
             "./vitest.config.unit.js",
             mergeConfig(resolvedViteConfig, {
@@ -75,6 +77,7 @@ export default defineConfig({
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.ts"],
+                    isolate: false,
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a

@@ -20,12 +20,6 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -42,7 +36,7 @@ export type AbstractFlow = {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
 };
 
@@ -87,7 +81,7 @@ export type AbstractTrigger = {
     /**
      * Routing requirements (tags + fallback) for this trigger.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this trigger and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -433,6 +427,14 @@ export type ApiTriggerState = {
     lastTriggeredDate?: string;
     executionId?: string;
     kind?: TriggerType;
+    blockedBy?: Blocker;
+};
+
+export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
+
+export type ApprovalDecisions = {
+    approve?: PropertyString;
+    deny?: PropertyString;
 };
 
 export type ArtefactDraft = {
@@ -575,6 +577,23 @@ export type BasicAuthCredentials = {
     currentPassword?: string;
 };
 
+/**
+ * What blocks the trigger's flow from running.
+ */
+export type Blocker = {
+    reason?: BlockerReason;
+    /**
+     * The ids of what blocks the flow, such as the rejecting policies when the reason is POLICY.
+     */
+    ids?: Array<string>;
+    /**
+     * The message reported to the user.
+     */
+    message?: string;
+};
+
+export type BlockerReason = 'UNKNOWN' | 'POLICY' | 'POLICY_CHECK_FAILED';
+
 export type BlueprintControllerApiBlueprintItem = {
     id?: string;
     title?: string;
@@ -664,6 +683,20 @@ export type ConcurrencyLimit = {
     running?: number;
 };
 
+export type ConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    tenantId?: string;
+    namespace?: string;
+    flowId?: string;
+    running?: number;
+    queued?: number;
+};
+
+export type ConcurrencyLimitControllerConcurrencyLimitUpdateRequest = {
+    namespace?: string | null;
+    flowId?: string | null;
+    running: number;
+};
+
 /**
  * Paged response for stores that may not know their exact row count (e.g. an external log store): `total` is only present when the backing store can compute it. Kept as a separate type from PagedResults rather than a shared `total` field: only this path can legitimately omit `total`, so the OpenAPI schema (and generated SDK types) can still mark `total` as required on every other, always-countable, endpoint. When `total` is absent, pagination falls back to an opaque cursor (`type`/`nextCursor`) since there is no page count to offset from.
  */
@@ -691,6 +724,7 @@ export type DailyExecutionStatistics = {
         CREATED?: number;
         SUBMITTED?: number;
         RUNNING?: number;
+        PAUSING?: number;
         PAUSED?: number;
         RESTARTED?: number;
         KILLING?: number;
@@ -835,6 +869,13 @@ export type Execution = {
     loopRun?: LoopRun | null;
 };
 
+export type ExecutionControllerApiReviewAllowed = {
+    /**
+     * Whether the current user may review or cancel the Approval task run
+     */
+    allowed?: boolean;
+};
+
 export type ExecutionControllerApiValidateExecutionInputsResponse = {
     id: string;
     namespace: string;
@@ -862,6 +903,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
     message: string;
     renderError?: boolean;
     path?: string;
+    detail?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -895,6 +937,8 @@ export type ExecutionControllerLastExecutionResponse = {
     startDate: string;
     status: StateType;
 };
+
+export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
@@ -1042,12 +1086,6 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1061,9 +1099,15 @@ export type Flow = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1142,12 +1186,6 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1167,8 +1205,14 @@ export type FlowForExecution = AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1224,7 +1268,7 @@ export type FlowInterface = FlowId & SoftDeletableFlowInterface & TenantInterfac
             [key: string]: unknown;
         };
     };
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     concurrency?: Concurrency;
     quotas?: Array<Quota>;
     sla?: Array<Sla>;
@@ -1321,12 +1365,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1340,8 +1378,14 @@ export type FlowWithSource = Flow & AbstractFlow & {
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1360,6 +1404,21 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     quotas?: Array<Quota>;
     source?: string;
+};
+
+export type FlowWorkerSelector = {
+    /**
+     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 63 chars per tag, max 20 tags. The list, or any of its tags, can be a Pebble expression, rendered when the job is routed; a tag rendering to an empty value is ignored, and when no tag is left the selector is treated as unset.
+     */
+    tags?: PropertyListString;
+    /**
+     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
+     */
+    match?: WorkerSelectorMatch;
+    /**
+     * Strategy when no worker is available. Defaults to FAIL when null.
+     */
+    fallback?: WorkerQueueFallback;
 };
 
 export type FollowLogEvent = {
@@ -1420,6 +1479,14 @@ export type InputObject = {
      * The default value to use if no value is specified.
      */
     defaults?: PropertyObject;
+    /**
+     * Whether the input is searchable.
+     *
+     * A searchable input will be stored in a separate table with its own index, and available for search via the **Inputs & Outputs** filter.
+     * By default, an input is not searchable.
+     *
+     */
+    searchable?: boolean;
     /**
      * The suggested value for the input.
      *
@@ -1725,6 +1792,7 @@ export type Output = {
     type: Type;
     displayName?: string;
     required?: boolean;
+    searchable?: boolean;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1733,6 +1801,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**
@@ -1778,8 +1855,8 @@ export type PagedResultsBlueprintControllerApiBlueprintItem = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsConcurrencyLimit = {
-    results: Array<ConcurrencyLimit>;
+export type PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult = {
+    results: Array<ConcurrencyLimitControllerConcurrencyLimitSearchResult>;
     total: number;
 };
 
@@ -1844,6 +1921,14 @@ export type PagedResultsPluginControllerApiTriggerPlugin = {
  */
 export type PagedResultsPlugin = {
     results: Array<Plugin>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsSearchableDataControllerSearchableDataInformation = {
+    results: Array<SearchableDataControllerSearchableDataInformation>;
     total: number;
 };
 
@@ -2110,6 +2195,13 @@ export type ProblemError = {
     type?: string;
 };
 
+export type PropertyApprovalCommentRequired = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: ApprovalCommentRequired;
+};
+
 export type PropertyAssetFailureBehavior = ({
     [key: string]: unknown;
 } | string) & {
@@ -2145,6 +2237,13 @@ export type PropertyListAsset = ({
     value?: Array<Asset>;
 };
 
+export type PropertyListString = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: Array<string>;
+};
+
 export type PropertyObject = ({
     [key: string]: unknown;
 } | string) & {
@@ -2169,7 +2268,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'searchableData' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2199,9 +2298,14 @@ export type Sla = {
 
 export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 
-export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
+export type SlaType = 'MAX_DURATION' | 'AVG_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
+
+export type SearchableDataControllerSearchableDataInformation = {
+    dataId?: string;
+    value?: string;
+};
 
 export type ServerInstance = {
     id: string;
@@ -2356,7 +2460,7 @@ export type StateHistory = {
     date: string;
 };
 
-export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
+export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
 
 export type Task = {
     id: string;
@@ -2391,7 +2495,7 @@ export type Task = {
     /**
      * Routing requirements (tags + fallback) for this task.
      */
-    workerSelector?: WorkerSelector;
+    workerSelector?: FlowWorkerSelector;
     /**
      * Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition).
      */
@@ -2443,6 +2547,8 @@ export type TaskForExecution = {
     tasks?: Array<TaskForExecution>;
     inputs?: Array<InputObject>;
     subflowId?: ExecutableTaskSubflowId;
+    decisions?: ApprovalDecisions;
+    commentRequired?: PropertyApprovalCommentRequired;
 };
 
 export type TaskRun = {
@@ -2604,21 +2710,6 @@ export type WebhookResponse = {
  * Strategy when no worker is available. Defaults to FAIL when null.
  */
 export type WorkerQueueFallback = 'FAIL' | 'WAIT' | 'CANCEL' | 'IGNORE';
-
-export type WorkerSelector = {
-    /**
-     * Required tags used to route to a matching Worker Queue. Each tag is an RFC 1123 label: lowercase alphanumerics and hyphens, must start and end with alphanumeric, max 64 chars per tag, max 20 tags.
-     */
-    tags?: Array<string>;
-    /**
-     * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
-     */
-    match?: WorkerSelectorMatch;
-    /**
-     * Strategy when no worker is available. Defaults to FAIL when null.
-     */
-    fallback?: WorkerQueueFallback;
-};
 
 /**
  * How selector tags are matched against a Worker Queue's tag set. ALL: queue tags must be a superset of the selector tags. ANY: queue tags must intersect the selector tags. Defaults to ALL when null.
@@ -3075,6 +3166,111 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type HandleDeleteRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleDeleteRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleDeleteRequestError = HandleDeleteRequestErrors[keyof HandleDeleteRequestErrors];
+
+export type HandleDeleteRequestResponses = {
+    /**
+     * handleDeleteRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+
+export type HandleGetRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleGetRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleGetRequestError = HandleGetRequestErrors[keyof HandleGetRequestErrors];
+
+export type HandleGetRequestResponses = {
+    /**
+     * handleGetRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+
+export type HandleRequestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp';
+};
+
+export type HandleRequestErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HandleRequestError = HandleRequestErrors[keyof HandleRequestErrors];
+
+export type HandleRequestResponses = {
+    /**
+     * handleRequest 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
 
 export type ListenUserNotificationsData = {
     body?: never;
@@ -4648,12 +4844,56 @@ export type GetServiceResponses = {
 
 export type GetServiceResponse = GetServiceResponses[keyof GetServiceResponses];
 
+export type UpdateConcurrencyLimitData = {
+    body: ConcurrencyLimitControllerConcurrencyLimitUpdateRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type UpdateConcurrencyLimitErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
+
+export type UpdateConcurrencyLimitResponses = {
+    /**
+     * updateConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
+
 export type SearchConcurrencyLimitsData = {
     body?: never;
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
     url: '/api/v1/{tenant}/concurrency-limit/search';
 };
 
@@ -4678,7 +4918,7 @@ export type SearchConcurrencyLimitsResponses = {
     /**
      * searchConcurrencyLimits 200 response
      */
-    200: PagedResultsConcurrencyLimit;
+    200: PagedResultsConcurrencyLimitControllerConcurrencyLimitSearchResult;
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
@@ -4719,43 +4959,6 @@ export type GetConcurrencyLimitResponses = {
 };
 
 export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
-
-export type UpdateConcurrencyLimitData = {
-    body: ConcurrencyLimit;
-    path: {
-        namespace: string;
-        flowId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
-};
-
-export type UpdateConcurrencyLimitErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type UpdateConcurrencyLimitError = UpdateConcurrencyLimitErrors[keyof UpdateConcurrencyLimitErrors];
-
-export type UpdateConcurrencyLimitResponses = {
-    /**
-     * updateConcurrencyLimit 200 response
-     */
-    200: ConcurrencyLimit;
-};
-
-export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
 
 export type SearchDashboardsData = {
     body?: never;
@@ -6740,6 +6943,62 @@ export type GetExecutionResponses = {
 
 export type GetExecutionResponse = GetExecutionResponses[keyof GetExecutionResponses];
 
+export type CancelApprovalData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/cancel-approval';
+};
+
+export type CancelApprovalErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CancelApprovalError = CancelApprovalErrors[keyof CancelApprovalErrors];
+
+export type CancelApprovalResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type CancelApprovalResponse = CancelApprovalResponses[keyof CancelApprovalResponses];
+
 export type UpdateExecutionStatusData = {
     body?: never;
     path: {
@@ -7522,6 +7781,180 @@ export type ValidateResumeExecutionInputsResponses = {
 };
 
 export type ValidateResumeExecutionInputsResponse = ValidateResumeExecutionInputsResponses[keyof ValidateResumeExecutionInputsResponses];
+
+export type ReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review';
+};
+
+export type ReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReviewExecutionError = ReviewExecutionErrors[keyof ReviewExecutionErrors];
+
+export type ReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReviewExecutionResponse = ReviewExecutionResponses[keyof ReviewExecutionResponses];
+
+export type IsReviewAllowedData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/allowed';
+};
+
+export type IsReviewAllowedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution does not exist
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type IsReviewAllowedError = IsReviewAllowedErrors[keyof IsReviewAllowedErrors];
+
+export type IsReviewAllowedResponses = {
+    /**
+     * On success
+     */
+    200: ExecutionControllerApiReviewAllowed;
+};
+
+export type IsReviewAllowedResponse = IsReviewAllowedResponses[keyof IsReviewAllowedResponses];
+
+export type ValidateReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/validate';
+};
+
+export type ValidateReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReviewExecutionError = ValidateReviewExecutionErrors[keyof ValidateReviewExecutionErrors];
+
+export type ValidateReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Array<ExecutionControllerApiValidateExecutionInputsResponse>;
+};
+
+export type ValidateReviewExecutionResponse = ValidateReviewExecutionResponses[keyof ValidateReviewExecutionResponses];
 
 export type UpdateTaskRunStateData = {
     /**
@@ -10242,7 +10675,7 @@ export type ListToolsResponses = {
 
 export type ListToolsResponse = ListToolsResponses[keyof ListToolsResponses];
 
-export type HandleDeleteRequestData = {
+export type HandleDeleteRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10252,18 +10685,18 @@ export type HandleDeleteRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleDeleteRequestResponses = {
+export type HandleDeleteRequest1Responses = {
     /**
-     * handleDeleteRequest 200 response
+     * handleDeleteRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleDeleteRequestResponse = HandleDeleteRequestResponses[keyof HandleDeleteRequestResponses];
+export type HandleDeleteRequest1Response = HandleDeleteRequest1Responses[keyof HandleDeleteRequest1Responses];
 
-export type HandleGetRequestData = {
+export type HandleGetRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10273,18 +10706,18 @@ export type HandleGetRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleGetRequestResponses = {
+export type HandleGetRequest1Responses = {
     /**
-     * handleGetRequest 200 response
+     * handleGetRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleGetRequestResponse = HandleGetRequestResponses[keyof HandleGetRequestResponses];
+export type HandleGetRequest1Response = HandleGetRequest1Responses[keyof HandleGetRequest1Responses];
 
-export type HandleRequestData = {
+export type HandleRequest1Data = {
     body?: never;
     path: {
         tenant: string;
@@ -10294,16 +10727,16 @@ export type HandleRequestData = {
     url: '/api/v1/{tenant}/mcp/{id}';
 };
 
-export type HandleRequestResponses = {
+export type HandleRequest1Responses = {
     /**
-     * handleRequest 200 response
+     * handleRequest_1 200 response
      */
     200: {
         [key: string]: unknown;
     };
 };
 
-export type HandleRequestResponse = HandleRequestResponses[keyof HandleRequestResponses];
+export type HandleRequest1Response = HandleRequest1Responses[keyof HandleRequest1Responses];
 
 export type AggregateMetricsFromFlowData = {
     body?: never;
@@ -11449,6 +11882,16 @@ export type SetKeyValueData = {
      * The value of the key
      */
     body: string;
+    headers?: {
+        /**
+         * The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)
+         */
+        ttl?: string | null;
+        /**
+         * The description of the key
+         */
+        description?: string | null;
+    };
     path: {
         /**
          * The namespace id
@@ -11694,6 +12137,54 @@ export type PostResponses = {
 };
 
 export type PostResponse = PostResponses[keyof PostResponses];
+
+export type ListSearchableDataData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/searchable_data/{executionId}';
+};
+
+export type ListSearchableDataErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableDataError = ListSearchableDataErrors[keyof ListSearchableDataErrors];
+
+export type ListSearchableDataResponses = {
+    /**
+     * listSearchableData 200 response
+     */
+    200: PagedResultsSearchableDataControllerSearchableDataInformation;
+};
+
+export type ListSearchableDataResponse = ListSearchableDataResponses[keyof ListSearchableDataResponses];
 
 export type ListSecretsData = {
     body?: never;
@@ -12718,7 +13209,12 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
 

@@ -119,6 +119,23 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
+    void shouldMountTmpfsInContainerWhenConfigured() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .tmpfs(Property.ofExpression("{\"{{ workingDir }}/scratch\": \"size=64m\"}"))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(List.of("/bin/sh", "-c", "grep -qE ' /.+/scratch tmpfs .*size=65536k' /proc/mounts"))
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result.getExitCode()).isZero();
+    }
+
+    @Test
     void shouldNotReportOomForExitCode137WithoutDockerOomEvidence() {
         var runContext = runContext(this.runContextFactory);
         var docker = Docker.builder().image("rockylinux:9.3-minimal").build();
@@ -184,6 +201,30 @@ class DockerTest extends AbstractTaskRunnerTest {
             Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
             Assertions.assertThat(client.listContainersCmd().withShowAll(true).withLabelFilter(labels).exec()).isEmpty();
         }
+    }
+
+    @Test
+    void shouldApplyRenderedDnsServersToContainer() throws Exception {
+        var runContext = runContext(this.runContextFactory, Map.of("dnsServer", "192.0.2.53"));
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .networkMode("bridge")
+            .dns(List.of(" {{ dnsServer }} ", "", " 198.51.100.53 "))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "grep -Fqx 'nameserver 192.0.2.53' /etc/resolv.conf && " +
+                        "grep -Fqx 'nameserver 198.51.100.53' /etc/resolv.conf"
+                )
+            )
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {

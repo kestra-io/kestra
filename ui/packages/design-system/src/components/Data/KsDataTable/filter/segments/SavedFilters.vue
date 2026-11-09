@@ -38,7 +38,7 @@
                         link
                         size="small"
                         class="edit-button"
-                        :icon="PencilOutline"
+                        :icon="Pencil"
                         @click.stop="$emit('edit', savedFilter)"
                     />
                     <KsButton
@@ -68,7 +68,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessageBox} from "../../../../Feedback/KsMessageBox"
     import type {SavedFilter} from "../utils/filterTypes"
-    import {BookmarkOffOutline, BookmarkOutline, Close, Delete, PencilOutline} from "../utils/icons"
+    import {BookmarkOffOutline, BookmarkOutline, Close, Delete, Pencil} from "../utils/icons"
 
     const {t} = useI18n({useScope: "global"})
 

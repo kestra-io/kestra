@@ -2,10 +2,7 @@ plugins {
     id 'com.google.protobuf' version '0.10.0'
 }
 
-ext {
-    grpcVersion = '1.85.0'
-    protobufVersion = '4.36.1'
-}
+evaluationDependsOn(':platform')
 
 configurations {
     tests
@@ -34,16 +31,16 @@ dependencies {
     // gRPC
     implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
     implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
-    implementation("io.grpc:grpc-services:$grpcVersion")
+    implementation("io.grpc:grpc-services")
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVersion"
+        artifact = "com.google.protobuf:protoc:${project(':platform').protobufVersion}"
     }
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+            artifact = "io.grpc:protoc-gen-grpc-java:${project(':platform').grpcVersion}"
         }
     }
     generateProtoTasks {

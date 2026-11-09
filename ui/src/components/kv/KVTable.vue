@@ -7,7 +7,7 @@
         :currentPage="urlPage"
         :pageSize="urlSize"
         :defaultSort="defaultSort"
-        @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+        @page-changed="onPageChanged"
         @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
@@ -121,7 +121,7 @@
                     placement="left"
                     @click="viewKvModal(scope.row)"
                 >
-                    <Eye />
+                    <TextSearch />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -135,7 +135,7 @@
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >
-                    <FileDocumentEdit />
+                    <Pencil />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -301,8 +301,8 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, groupBy, deepMerge} from "@kestra-io/design-system"
     import type {FormInstance, FormItemRule} from "@kestra-io/design-system"
@@ -323,6 +323,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
 
     import {dateUtils, dayjs, useTableColumns} from "@kestra-io/design-system"
@@ -407,7 +408,12 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
     // uses: otherwise a page opened with ?sort=updateDate:desc lists rows by date under an arrow on Key, and

@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, ref, watch, type Ref} from "vue"
     import {useRoute} from "vue-router"
 
     import {useStorage} from "@vueuse/core"
@@ -138,7 +138,7 @@
 
     const data = ref<ChartResults>()
     const activeTab = ref("all")
-    const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
+    const stateFilter: Ref<QueryFilter | null> = ref(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)
     const pageSize = useStorage(
         `dashboard-page-size:${props.dashboardId ?? "default"}:${props.chart.id}`,
@@ -191,7 +191,7 @@
 
     defineExpose({refresh, exportParameters})
 
-    watch(() => route.params.filters, () => refresh(), {deep: true, immediate: true})
+    watch(() => route.fullPath, () => refresh(), {immediate: true})
 </script>
 
 <style scoped>

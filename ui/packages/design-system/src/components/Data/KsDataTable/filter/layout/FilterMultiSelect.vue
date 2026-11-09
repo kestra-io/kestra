@@ -1,11 +1,14 @@
 <template>
     <div class="multi-select-panel">
         <div class="panel-header">
-            <div v-if="props.searchable" class="search-section">
+            <div class="search-section">
                 <KsInput
+                    ref="searchInput"
                     v-model="searchQuery"
-                    size="default"
+                    size="small"
+                    borderless
                     clearable
+                    @keydown.enter="(event: KeyboardEvent) => !event.isComposing && selectVisibleOptions()"
                     :placeholder="$t('filter.search options')"
                     :prefixIcon="Magnify"
                 />
@@ -70,6 +73,12 @@
                                     @click="handleOptionChange(group.options[0].value, !modelValue.includes(group.options[0].value))"
                                 >
                                     <KsExecutionStatus :status="group.options[0].value" size="small" />
+                                    <KsBadge
+                                        v-if="group.options[0].count !== undefined"
+                                        :value="formatCount(group.options[0].count!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                 </button>
                             </div>
                         </div>
@@ -106,6 +115,12 @@
                                         :style="{background: `var(${group.token})`}"
                                     />
                                     <span class="group-label-text">{{ $t(group.labelKey) }}</span>
+                                    <KsBadge
+                                        v-if="groupTotal(group) !== undefined"
+                                        :value="formatCount(groupTotal(group)!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                     <span
                                         class="group-count"
                                         :class="{active: isGroupPartiallySelected(group) || isGroupFullySelected(group)}"
@@ -134,6 +149,12 @@
                                         <KsExecutionStatus
                                             :status="option.value"
                                             size="small"
+                                        />
+                                        <KsBadge
+                                            v-if="option.count !== undefined"
+                                            :value="formatCount(option.count!)"
+                                            type="neutral"
+                                            inline
                                         />
                                     </div>
                                     <KsCheckbox
@@ -166,6 +187,12 @@
                 >
                     <div class="option-content">
                         <span class="option-label">{{ option.label }}</span>
+                        <KsBadge
+                            v-if="option.count !== undefined"
+                            :value="formatCount(option.count!)"
+                            type="neutral"
+                            inline
+                        />
                     </div>
                     <KsCheckbox
                         :modelValue="modelValue.includes(option.value)"
@@ -189,18 +216,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, ref, watch} from "vue"
     import {Magnify, InformationOutline, ChevronDown} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
     import {resolveStateGroups, type ResolvedGroup} from "../utils/stateGroups"
+    import {formatCount} from "../utils/helpers"
+    import type {FilterValue} from "../utils/filterTypes"
 
     const props = defineProps<{
         label?: string;
         filterKey?: string;
         modelValue: string[];
-        searchable?: boolean;
         placeholder?: string;
-        options: {value: string; label: string}[];
+        options: FilterValue[];
         /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
         serverSideSearch?: boolean;
     }>()
@@ -213,6 +241,9 @@
     }>()
 
     const searchQuery = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
     const expandedGroups = ref<Set<string>>(new Set())
 
     watch(searchQuery, (value) => {
@@ -282,6 +313,15 @@
         emits("update:modelValue", [...values])
     }
 
+    // Matched locally even with server-side search, so Enter never acts on a list the reload has not replaced yet.
+    const selectVisibleOptions = () => {
+        const query = searchQuery.value.trim().toLowerCase()
+        if (!query) return
+        const visible = (isStateFilter.value ? visibleGroups.value.flatMap(group => group.options) : props.options)
+            .filter(option => option.label.toLowerCase().includes(query) || option.value.toLowerCase().includes(query))
+        emits("update:modelValue", [...new Set([...props.modelValue, ...visible.map(option => option.value)])])
+    }
+
     const handleDeselectAll = () => {
         const targets = isStateFilter.value ? props.options : filteredOptions.value
         const values = new Set(props.modelValue)
@@ -303,6 +343,11 @@
             next.add(key)
         }
         expandedGroups.value = next
+    }
+
+    const groupTotal = (group: ResolvedGroup) => {
+        const counted = group.options.filter(o => o.count !== undefined)
+        return counted.length ? counted.reduce((sum, o) => sum + (o.count ?? 0), 0) : undefined
     }
 
     const groupSelectedCount = (group: ResolvedGroup) =>
@@ -339,8 +384,8 @@
         background-color: var(--ks-bg-surface);
 
         & .search-section {
-            padding: 1rem;
-            padding-bottom: 0.5rem;
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         & .controls-section {
@@ -422,6 +467,7 @@
             & .option-content {
                 display: flex;
                 align-items: center;
+                gap: var(--ks-spacing-2);
                 flex: 1;
                 min-width: 0;
 

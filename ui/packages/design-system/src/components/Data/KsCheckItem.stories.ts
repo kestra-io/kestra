@@ -16,10 +16,12 @@ export default meta
 type Story = StoryObj<typeof KsCheckItem>
 
 export const Pending: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsCheckItem},
-        template: "<ks-check-item :met=\"false\">At least 8 characters</ks-check-item>",
+        setup() { return {args} },
+        template: "<ks-check-item v-bind=\"args\">At least 8 characters</ks-check-item>",
     }),
+    args: {met: false},
 }
 
 export const Met: Story = {
@@ -27,6 +29,7 @@ export const Met: Story = {
         components: {KsCheckItem},
         template: "<ks-check-item :met=\"true\">Passwords match</ks-check-item>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const LongLabel: Story = {
@@ -38,4 +41,5 @@ export const LongLabel: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

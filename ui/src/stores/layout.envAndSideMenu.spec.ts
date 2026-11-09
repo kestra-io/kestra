@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { setActivePinia, createPinia } from "pinia"
-import { useLayoutStore } from "./layout"
-import { storageKeys } from "../utils/constants"
+import {describe, it, expect, beforeEach, afterEach, vi} from "vitest"
+import {setActivePinia, createPinia} from "pinia"
+import {useLayoutStore} from "./layout"
+import {storageKeys} from "../utils/constants"
 
 const stubMatchMedia = (matches: boolean | ((query: string) => boolean) = false) => {
     vi.stubGlobal("matchMedia", vi.fn((query: string) => ({
@@ -111,15 +111,15 @@ describe("layout store environment banner and side menu state", () => {
 
         store.setMenuSectionCollapsed("flows", true)
 
-        expect(store.menuSectionsCollapsed).toEqual({ flows: true })
+        expect(store.menuSectionsCollapsed).toEqual({flows: true})
         expect(store.menuSectionsCollapsed).not.toBe(initialSections)
-        expect(JSON.parse(localStorage.getItem("menuSectionsCollapsed")!)).toEqual({ flows: true })
+        expect(JSON.parse(localStorage.getItem("menuSectionsCollapsed")!)).toEqual({flows: true})
 
         const previousSections = store.menuSectionsCollapsed
         store.setMenuSectionCollapsed("admin", false)
 
-        expect(store.menuSectionsCollapsed).toEqual({ flows: true, admin: false })
+        expect(store.menuSectionsCollapsed).toEqual({flows: true, admin: false})
         expect(store.menuSectionsCollapsed).not.toBe(previousSections)
-        expect(JSON.parse(localStorage.getItem("menuSectionsCollapsed")!)).toEqual({ flows: true, admin: false })
+        expect(JSON.parse(localStorage.getItem("menuSectionsCollapsed")!)).toEqual({flows: true, admin: false})
     })
 })

@@ -207,6 +207,24 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_dark_theme')"
+                :description="$t('settings.blocks.theme.descriptions.editor_dark_theme')"
+            >
+                <KsSelect fit data-test="editor-dark-theme" :modelValue="editorDarkTheme ?? MATCH_APP_THEME" @update:model-value="onEditorDarkTheme">
+                    <KsOption v-for="item in editorThemeOptions('dark')" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_light_theme')"
+                :description="$t('settings.blocks.theme.descriptions.editor_light_theme')"
+            >
+                <KsSelect fit data-test="editor-light-theme" :modelValue="editorLightTheme ?? MATCH_APP_THEME" @update:model-value="onEditorLightTheme">
+                    <KsOption v-for="item in editorThemeOptions('light')" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')"
                 :description="$t('settings.blocks.theme.descriptions.editor_folding_stratgy')"
             >
@@ -225,6 +243,17 @@
                     :aria-label="$t('settings.blocks.theme.fields.editor_hover_description')"
                     :modelValue="settings.hoverTextEditor"
                     @change="onHover"
+                />
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                :description="$t('settings.blocks.theme.descriptions.editor_pebble_hover')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.theme.fields.editor_pebble_hover')"
+                    :modelValue="settings.pebbleHover"
+                    @change="onPebbleHover"
                 />
             </SettingRow>
 
@@ -307,9 +336,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
-    import {dateUtils, dayjs} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, editorFontFamily} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
@@ -319,6 +348,8 @@
     import {DEFAULT_EXECUTION_TAB} from "../executions/executionTabs"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
+    import {editorDarkTheme, editorLightTheme} from "../../composables/useTheme"
+    import {themes, type ThemeKind} from "@kestra-io/plumage"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {validateFlowTemplate, type FlowTemplateValidation} from "../../utils/newFlowTemplate"
@@ -342,6 +373,7 @@
     const CONFIG = "settings.blocks.configuration"
     const THEME = "settings.blocks.theme"
     const LOCALE = "settings.blocks.localization"
+    const MATCH_APP_THEME = "app"
 
     const SETTING_TOASTS = {
         [storageKeys.DEFAULT_NAMESPACE]: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
@@ -360,8 +392,11 @@
         [storageKeys.LOGS_FONT_SIZE]: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
         [storageKeys.EDITOR_FONT_FAMILY]: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
         [storageKeys.EDITOR_FONT_SIZE]: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
+        [storageKeys.EDITOR_DARK_THEME]: [`${THEME}.fields.editor_dark_theme`, `${THEME}.descriptions.editor_dark_theme`],
+        [storageKeys.EDITOR_LIGHT_THEME]: [`${THEME}.fields.editor_light_theme`, `${THEME}.descriptions.editor_light_theme`],
         [storageKeys.AUTOFOLD_TEXT_EDITOR]: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
         [storageKeys.HOVER_TEXT_EDITOR]: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.PEBBLE_HOVER]: [`${THEME}.fields.editor_pebble_hover`, `${THEME}.descriptions.editor_pebble_hover`],
         [storageKeys.TIMEZONE_STORAGE_KEY]: [`${LOCALE}.fields.time_zone`, `${LOCALE}.descriptions.time_zone`],
         [storageKeys.DATE_FORMAT_STORAGE_KEY]: [`${LOCALE}.fields.date_format`, `${LOCALE}.descriptions.date_format`],
     }
@@ -394,9 +429,10 @@
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
         appFontSize: appFontSizeMode.value,
-        editorFontFamily: localStorage.getItem(storageKeys.EDITOR_FONT_FAMILY) || "'JetBrains Mono', monospace",
+        editorFontFamily: editorFontFamily(),
         autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
         hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
+        pebbleHover: localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false",
         lang: Utils.getLang(),
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
@@ -450,6 +486,13 @@
         {value: "medium", label: t("settings.blocks.theme.app_font_size_options.medium")},
         {value: "large", label: t("settings.blocks.theme.app_font_size_options.large")},
     ])
+
+    function editorThemeOptions(kind: ThemeKind) {
+        return [
+            {value: MATCH_APP_THEME, label: t(`${THEME}.editor_theme_options.match_app`)},
+            ...themes.filter((theme) => theme.kind === kind).map((theme) => ({value: theme.name, label: theme.displayName})),
+        ]
+    }
 
     const autoRefreshOptions = computed(() => AUTO_REFRESH_INTERVALS.map((seconds) => ({value: seconds, label: `${seconds}`})))
 
@@ -708,6 +751,18 @@
         persist(storageKeys.EDITOR_FONT_FAMILY, value)
     }
 
+    function onEditorDarkTheme(value: string | undefined) {
+        editorDarkTheme.value = value && value !== MATCH_APP_THEME ? value : null
+        const meta = SETTING_TOASTS[storageKeys.EDITOR_DARK_THEME]
+        notifySaved(meta?.[0], meta?.[1])
+    }
+
+    function onEditorLightTheme(value: string | undefined) {
+        editorLightTheme.value = value && value !== MATCH_APP_THEME ? value : null
+        const meta = SETTING_TOASTS[storageKeys.EDITOR_LIGHT_THEME]
+        notifySaved(meta?.[0], meta?.[1])
+    }
+
     function onFontSize(value: number | undefined) {
         if (value === undefined) {
             return
@@ -724,6 +779,11 @@
     function onHover(value: boolean | string | number) {
         settings.hoverTextEditor = Boolean(value)
         persist(storageKeys.HOVER_TEXT_EDITOR, settings.hoverTextEditor)
+    }
+
+    function onPebbleHover(value: boolean | string | number) {
+        settings.pebbleHover = Boolean(value)
+        persist(storageKeys.PEBBLE_HOVER, settings.pebbleHover)
     }
 
     function onEditorPlayground(value: boolean | string | number) {
@@ -771,24 +831,9 @@
         persist(storageKeys.DATE_FORMAT_STORAGE_KEY, value)
     }
 
-    function updateThemeBasedOnSystem() {
-        if (settings.theme === "syncWithSystem") {
-            Utils.switchTheme(miscStore, "syncWithSystem")
-        }
-    }
-
-    let mediaQuery: MediaQueryList | undefined
-
     onMounted(() => {
-        mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-        mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
-
         const validation = validateFlowTemplate(settings.flowTemplate)
         flowTemplateError.value = validation.errorCode ? validation : undefined
-    })
-
-    onBeforeUnmount(() => {
-        mediaQuery?.removeEventListener("change", updateThemeBasedOnSystem)
     })
 
     watch(() => miscStore.theme, () => {

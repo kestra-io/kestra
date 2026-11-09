@@ -79,9 +79,11 @@ function createModel() {
 
 function createEditor(model: monaco.editor.ITextModel | null) {
     const clear = vi.fn<monaco.editor.IEditorDecorationsCollection["clear"]>()
+    const getRange = vi.fn<monaco.editor.IEditorDecorationsCollection["getRange"]>(() => null)
     const collection = {
         clear,
-    } satisfies Pick<monaco.editor.IEditorDecorationsCollection, "clear">
+        getRange,
+    } satisfies Pick<monaco.editor.IEditorDecorationsCollection, "clear" | "getRange">
 
     const stub = {
         getModel: vi.fn(() => model),
@@ -99,6 +101,7 @@ function createEditor(model: monaco.editor.ITextModel | null) {
     return {
         ...stub,
         clear,
+        getRange,
         // Keep the partial-editor assertion at the Monaco boundary.
         editor: stub  as unknown as monaco.editor.IStandaloneCodeEditor,
     }
@@ -157,7 +160,7 @@ describe("useViolationMarkers", () => {
         )
     })
 
-    it("decorates only continuation ranges with escaped hover text", () => {
+    it("anchors each first line and squiggles only continuation ranges with escaped hover text", () => {
         const model = createModel()
         const editor = createEditor(model.model)
         resolveMarkers.mockReturnValue([
@@ -174,6 +177,14 @@ describe("useViolationMarkers", () => {
         mountMarkers(editor.editor)
 
         expect(editor.createDecorationsCollection).toHaveBeenCalledExactlyOnceWith([
+            {
+                range: firstLine,
+                options: {stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges},
+            },
+            {
+                range: otherLine,
+                options: {stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges},
+            },
             {
                 range: secondLine,
                 options: {
@@ -242,7 +253,12 @@ describe("useViolationMarkers", () => {
         expect(editor.clear.mock.invocationCallOrder[0]).toBeLessThan(
             setModelMarkers.mock.invocationCallOrder[1],
         )
-        expect(editor.createDecorationsCollection).toHaveBeenCalledExactlyOnceWith([])
+        expect(editor.createDecorationsCollection).toHaveBeenCalledExactlyOnceWith([
+            {
+                range: otherLine,
+                options: {stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges},
+            },
+        ])
     })
 
     it("clears the old model before applying markers to a replacement editor", async () => {
@@ -400,6 +416,19 @@ describe("useViolationMarkers", () => {
             monaco.editor.ScrollType.Smooth,
         )
         expect(editor.focus).toHaveBeenCalledOnce()
+    })
+
+    it("reveals where the error sits after edits moved it", () => {
+        const model = createModel()
+        const editor = createEditor(model.model)
+        const shiftedLine = lineRange(6)
+        editor.getRange.mockImplementation(index => index === 0 ? shiftedLine as monaco.Range : null)
+        const {revealNext} = mountMarkers(editor.editor)
+
+        revealNext()
+
+        expect(editor.getRange).toHaveBeenCalledWith(0)
+        expect(editor.setSelection).toHaveBeenCalledExactlyOnceWith(shiftedLine)
     })
 
     it("reveals the second marker on the second activation", () => {

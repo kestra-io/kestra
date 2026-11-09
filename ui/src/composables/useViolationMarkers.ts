@@ -7,6 +7,7 @@ import type {ValidationError} from "../utils/validationErrors"
 const OWNER = "backend-validation"
 // Monaco's own error squiggle, so continuation lines look like the marker on the first one.
 export const MONACO_ERROR_SQUIGGLE_CLASS = "squiggly-error"
+const ANCHOR_STICKINESS = monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
 
 /** Shows backend details verbatim in a markdown hover, like the plain-text marker message. */
 function plainText(message: string): monaco.IMarkdownString {
@@ -49,11 +50,15 @@ export function useViolationMarkers(options: {
             severity: monaco.MarkerSeverity.Error,
         })))
         markedModel = model
-        // One Problems entry per violation: the other lines of a block get the same squiggle without a marker.
-        decorations = editor.createDecorationsCollection(resolved.flatMap(({message, lines}) => lines.slice(1).map(range => ({
-            range,
-            options: {className: MONACO_ERROR_SQUIGGLE_CLASS, hoverMessage: plainText(message)},
-        }))))
+        // The first `resolved.length` decorations are invisible anchors, so `revealNext` reads where each violation sits after edits.
+        decorations = editor.createDecorationsCollection([
+            ...resolved.map(({lines}) => ({range: lines[0], options: {stickiness: ANCHOR_STICKINESS}})),
+            // One Problems entry per violation: the other lines of a block get the same squiggle without a marker.
+            ...resolved.flatMap(({message, lines}) => lines.slice(1).map(range => ({
+                range,
+                options: {className: MONACO_ERROR_SQUIGGLE_CLASS, hoverMessage: plainText(message)},
+            }))),
+        ])
         markers.value = resolved
         // Keep the cursor across a re-resolve that found the same violations, so a click never goes back to error #1.
         const fingerprint = JSON.stringify(resolved)
@@ -65,7 +70,7 @@ export function useViolationMarkers(options: {
         const editor = options.editor.value
         if (!editor || !markers.value.length) return
         cursor = (cursor + 1) % markers.value.length
-        const range = markers.value[cursor].lines[0]
+        const range = decorations?.getRange(cursor) ?? markers.value[cursor].lines[0]
         editor.setSelection(range)
         editor.revealRangeInCenterIfOutsideViewport(range, monaco.editor.ScrollType.Smooth)
         editor.focus()

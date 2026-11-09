@@ -24,8 +24,8 @@
             }"
         />
 
-        <KsCol v-if="namespaces.length === 0" class="namespaces empty-state">
-            <span>{{ $t("no_namespaces") }}</span>
+        <KsCol v-if="loaded && namespaces.length === 0" class="namespaces empty-state">
+            <span>{{ $t(hasUserFilters ? "no_namespaces" : "no_namespaces_yet") }}</span>
         </KsCol>
 
         <KsCol
@@ -125,8 +125,11 @@
     })
 
     const namespaces = ref([]) as Ref<Namespace[]>
+    const loaded = ref(false)
+    const hasUserFilters = computed(() => Object.keys(route.query).some((key) => key.startsWith("filters[")))
     const loadData = async () => {
         namespaces.value = await useNamespaces(1000, {filters: routeQueryToQueryFilters(route.query)}).all()
+        loaded.value = true
     }
 
     watch(

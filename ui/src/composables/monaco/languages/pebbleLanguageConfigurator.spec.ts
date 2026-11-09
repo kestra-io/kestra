@@ -14,6 +14,8 @@ import {
     registerFunctionParametersAutoCompletion,
     registerNestedValueAutoCompletion,
     registerFilterAutoCompletion,
+    endOfWordColumn,
+    NO_SUGGESTIONS,
 } from "./pebbleLanguageConfigurator"
 
 describe.each([
@@ -45,5 +47,49 @@ describe.each([
             model.dispose()
             spy.mockRestore()
         }
+    })
+})
+
+describe("endOfWordColumn", () => {
+    it("returns the column at the end of the word under the cursor", () => {
+        const model = monaco.editor.createModel("{{ inputs")
+        try {
+            expect(endOfWordColumn(new monaco.Position(1, 4), model)).toBe(10)
+        } finally {
+            model.dispose()
+        }
+    })
+
+    it("a cursor mid-word still resolves to the word's end", () => {
+        const model = monaco.editor.createModel("{{ inputs")
+        try {
+            expect(endOfWordColumn(new monaco.Position(1, 7), model)).toBe(10)
+        } finally {
+            model.dispose()
+        }
+    })
+
+    it("a cursor on whitespace returns the cursor column itself", () => {
+        const model = monaco.editor.createModel("foo bar")
+        try {
+            expect(endOfWordColumn(new monaco.Position(1, 4), model)).toBe(4)
+        } finally {
+            model.dispose()
+        }
+    })
+
+    it("punctuation terminates the word", () => {
+        const model = monaco.editor.createModel("{{ inputs}}")
+        try {
+            expect(endOfWordColumn(new monaco.Position(1, 4), model)).toBe(10)
+        } finally {
+            model.dispose()
+        }
+    })
+})
+
+describe("NO_SUGGESTIONS", () => {
+    it("is the empty-suggestion shape Monaco expects, not undefined", () => {
+        expect(NO_SUGGESTIONS).toEqual({suggestions: []})
     })
 })

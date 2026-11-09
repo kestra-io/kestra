@@ -55,7 +55,7 @@ describe("BlockShortcutsDialog", () => {
         })
 
         const [withAlt, withoutAlt] = wrapper.findAll(".block-editor-shortcut")
-        expect(withAlt.find(".block-editor-shortcut-or").exists()).toBe(true)
+        expect(withAlt.find(".block-editor-shortcut-or").text()).toBe("block_editor.shortcuts.or")
         expect(withAlt.findAll("kbd").map(kbd => kbd.text())).toEqual(["a", "x", "y"])
         expect(withoutAlt.find(".block-editor-shortcut-or").exists()).toBe(false)
         expect(withoutAlt.findAll("kbd").map(kbd => kbd.text())).toEqual(["b"])

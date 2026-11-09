@@ -1,0 +1,485 @@
+id: redis-cross-instance-key-reconcile-guard
+namespace: company.team
+
+description: |
+  Reconcile a secondary Redis instance against a Redis instance the operator designates as the
+  source of truth. Both instances are read with one read-only Lua script each, which returns every
+  key in a bounded namespace with its type, its remaining TTL and a SHA1 digest of its value. A key
+  the source has that the secondary lacks is MISSING. A key whose digests differ is STALE. A key the
+  secondary has that the source does not is an ORPHAN. A key whose bytes match but whose expiry does
+  not is TTL_DRIFT. Behind a dry run and a Pause the secondary is repaired, copying each value from
+  the source with its TTL and deleting the orphans, then both instances are read again and the run
+  fails if any divergence remains. Only the secondary is ever written to.
+
+inputs:
+  - id: source_host
+    type: STRING
+    displayName: Source of truth host
+    description: The instance whose contents are authoritative. It is only ever read.
+    defaults: "localhost"
+
+  - id: source_port
+    type: INT
+    displayName: Source of truth port
+    defaults: 6379
+
+  - id: source_password
+    type: STRING
+    displayName: Source of truth password
+    description: Password for the connecting user on the source of truth. It needs
+      read rights only.
+    defaults: "{{ secret('REDIS_SOURCE_PASSWORD') }}"
+
+  - id: mirror_host
+    type: STRING
+    displayName: Secondary host
+    description: The mirror, the warm standby or the regional copy. This is the only
+      instance the flow writes to.
+    defaults: "localhost"
+
+  - id: mirror_port
+    type: INT
+    displayName: Secondary port
+    defaults: 6380
+
+  - id: mirror_password
+    type: STRING
+    displayName: Secondary password
+    defaults: "{{ secret('REDIS_MIRROR_PASSWORD') }}"
+
+  - id: designated_source_of_truth
+    type: STRING
+    displayName: Designated source of truth (host:port)
+    description: >-
+      Must equal source_host:source_port exactly. Neither Redis instance is
+      authoritative by nature, so the flow refuses to guess which side is right.
+      Stating the designation here is what stops a transposed host pair from
+      overwriting good data with drifted data.
+    defaults: ""
+
+  - id: key_pattern
+    type: STRING
+    displayName: Key namespace to reconcile
+    description: A redis-cli MATCH glob. Keep it narrow, because every matching key
+      on both instances is read in one run.
+    defaults: "mirror:*"
+
+  - id: max_keys
+    type: INT
+    displayName: Maximum keys per run
+    description: >-
+      Upper bound on the namespace. If either instance holds more matching keys
+      than this the run fails without diffing anything, because a partial keyset
+      would report healthy keys as orphans.
+    defaults: 1000
+
+  - id: ttl_tolerance_seconds
+    type: INT
+    displayName: TTL tolerance (seconds)
+    description: Two volatile copies of a key whose remaining TTLs differ by less
+      than this are treated as matching.
+    defaults: 60
+
+  - id: network
+    type: STRING
+    displayName: Docker network for redis-cli
+    description: Leave empty unless the redis-cli container needs to join a named
+      Docker network to reach the instances.
+    defaults: ""
+
+  - id: approval_timeout
+    type: DURATION
+    displayName: Approval timeout
+    description: How long the Pause waits for an answer. With no answer nothing is written.
+    defaults: PT1H
+
+  - id: auto_remediate
+    type: BOOL
+    displayName: Auto remediate
+    defaults: false
+
+  - id: dry_run
+    type: BOOL
+    displayName: Dry run
+    description: Must be false, together with auto_remediate, before any key on the
+      secondary is written or deleted.
+    defaults: true
+
+variables:
+  source_url: "redis://{{ inputs.source_password == '' ? '' : ':' ~
+    inputs.source_password ~ '@' }}{{ inputs.source_host }}:{{
+    inputs.source_port }}"
+  mirror_url: "redis://{{ inputs.mirror_password == '' ? '' : ':' ~
+    inputs.mirror_password ~ '@' }}{{ inputs.mirror_host }}:{{
+    inputs.mirror_port }}"
+  audit_lua: >-
+    local p=ARGV[1]; local lim=tonumber(ARGV[2]); local cur='0'; local ks={};
+    local n=0; repeat local r=redis.call('SCAN',cur,'MATCH',p,'COUNT',500);
+    cur=r[1]; for i=1,#r[2] do n=n+1; if n<=lim then ks[#ks+1]=r[2][i]; end end
+    until cur=='0' or n>lim; if n>lim then return {'__OVERFLOW__ overflow -1 -
+    -1'} end; table.sort(ks); local out={}; for i=1,#ks do local k=ks[i]; local
+    t=redis.call('TYPE',k)['ok']; local d='-'; local l='-1'; if t=='string' then
+    local v=redis.call('GET',k); d=redis.sha1hex(v); l=tostring(string.len(v));
+    end; local pt=redis.call('PTTL',k); local ts='-1'; if pt>0 then
+    ts=tostring(math.ceil(pt/1000)); end; out[#out+1]=k..' '..t..' '..ts..'
+    '..d..' '..l; end; return out
+  parse_prog: >-
+    .v | split("\\n") | map(select(length > 0)) | map(split(" ")) | map({key:
+    (.[0:(length - 4)] | join(" ")), type: .[length - 4], ttl: (.[length - 3] |
+    tonumber), sha: .[length - 2], len: (.[length - 1] | tonumber)})
+  overflow_prog: >-
+    [.[] | select(.key == "__OVERFLOW__")] | length
+  diff_prog: >-
+    ([.src[] | {key: .key, value: .}] | from_entries) as $S | ([.dst[] | {key:
+    .key, value: .}] | from_entries) as $D | (.tol | tonumber) as $tol | (([$S |
+    keys] + [$D | keys]) | add | unique) as $U | [ $U[] as $k
+        | $S[$k] as $s
+        | $D[$k] as $d
+        | if (($s != null and $s.type != "string") or ($d != null and $d.type != "string"))
+          then {code: "UNSUPPORTED", key: $k, ttl: -1, source_type: ($s.type // "absent"), secondary_type: ($d.type // "absent")}
+          elif $d == null then {code: "MISSING", key: $k, ttl: $s.ttl, source_bytes: $s.len, secondary_bytes: -1}
+          elif $s == null then {code: "ORPHAN", key: $k, ttl: -1, source_bytes: -1, secondary_bytes: $d.len}
+          elif $s.sha != $d.sha then {code: "STALE", key: $k, ttl: $s.ttl, source_bytes: $s.len, secondary_bytes: $d.len}
+          else ( (if $s.ttl >= $d.ttl then $s.ttl - $d.ttl else $d.ttl - $s.ttl end) as $delta
+                 | if ($s.ttl < 0 and $d.ttl < 0) then empty
+                   elif ($s.ttl < 0 or $d.ttl < 0 or $delta > $tol)
+                   then {code: "TTL_DRIFT", key: $k, ttl: $s.ttl, source_ttl: $s.ttl, secondary_ttl: $d.ttl}
+                   else empty end )
+          end ]
+  copy_prog: >-
+    [.[] | select(.code == "MISSING" or .code == "STALE" or .code ==
+    "TTL_DRIFT")
+         | {key: .key, code: .code, volatile: (.ttl >= 0), ttl: .ttl}]
+  orphan_prog: >-
+    [.[] | select(.code == "ORPHAN") | .key]
+  unsupported_prog: >-
+    [.[] | select(.code == "UNSUPPORTED") | .key]
+  report_prog: >-
+    map("\(.code) \(.key) ttl=\(.ttl)") | join("; ")
+
+tasks:
+  - id: designation_gate
+    type: io.kestra.plugin.core.flow.If
+    description: >-
+      Neither instance is authoritative by nature, so the operator states which
+      one is. A missing or mismatched designation stops the run before a single
+      key is read.
+    condition: >-
+      {{ inputs.designated_source_of_truth != (inputs.source_host ~ ':' ~
+      inputs.source_port)
+         or (inputs.source_host == inputs.mirror_host and inputs.source_port == inputs.mirror_port) }}
+    then:
+      - id: not_designated
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: >-
+          Refusing to reconcile. designated_source_of_truth is "{{
+          inputs.designated_source_of_truth }}" while the source inputs point at
+          {{ inputs.source_host }}:{{ inputs.source_port }}. The secondary is {{
+          inputs.mirror_host }}:{{ inputs.mirror_port }}. Set
+          designated_source_of_truth to the source host and port. Point the two
+          instance input groups at different instances.
+    else:
+      - id: designation_logged
+        type: io.kestra.plugin.core.log.Log
+        message: >-
+          Source of truth {{ inputs.source_host }}:{{ inputs.source_port }}
+          (read only). Secondary {{ inputs.mirror_host }}:{{ inputs.mirror_port
+          }} (the only instance this flow writes to). Namespace {{
+          inputs.key_pattern }}, at most {{ inputs.max_keys }} keys.
+
+  - id: source_read
+    type: io.kestra.plugin.redis.cli.RedisCLI
+    description: >-
+      Read the source namespace with EVAL_RO. Redis itself rejects any write
+      from a read-only script, so the authoritative instance cannot be modified
+      by this task even if the script were changed.
+    host: "{{ inputs.source_host }}"
+    port: "{{ inputs.source_port }}"
+    password: "{{ inputs.source_password }}"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      networkMode: "{{ inputs.network }}"
+    commands:
+      - >-
+        EVAL_RO "{{ render(vars.audit_lua) }}" 0 "{{ inputs.key_pattern }}" {{
+        inputs.max_keys }}
+
+  - id: mirror_read
+    type: io.kestra.plugin.redis.cli.RedisCLI
+    description: Read the same namespace on the secondary with the same read-only
+      script, so both sides are measured the same way.
+    host: "{{ inputs.mirror_host }}"
+    port: "{{ inputs.mirror_port }}"
+    password: "{{ inputs.mirror_password }}"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      networkMode: "{{ inputs.network }}"
+    commands:
+      - >-
+        EVAL_RO "{{ render(vars.audit_lua) }}" 0 "{{ inputs.key_pattern }}" {{
+        inputs.max_keys }}
+
+  - id: parse
+    type: io.kestra.plugin.core.output.OutputValues
+    description: One record per key on each side, sorted by key inside the script so
+      the two lists are comparable.
+    values:
+      source_keys: >-
+        {{ {'v': outputs.source_read.vars.command_1} | jq(vars.parse_prog) |
+        first | toJson }}
+      secondary_keys: >-
+        {{ {'v': outputs.mirror_read.vars.command_1} | jq(vars.parse_prog) |
+        first | toJson }}
+
+  - id: bounds_gate
+    type: io.kestra.plugin.core.flow.If
+    description: >-
+      A namespace larger than max_keys is refused outright. A truncated keyset
+      would read as a pile of orphans and the repair would delete live keys.
+    condition: >-
+      {{ (fromJson(outputs.parse.values.source_keys) | jq(vars.overflow_prog) |
+      first)
+         + (fromJson(outputs.parse.values.secondary_keys) | jq(vars.overflow_prog) | first) > 0 }}
+    then:
+      - id: namespace_too_large
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: >-
+          The namespace {{ inputs.key_pattern }} holds more than {{
+          inputs.max_keys }} keys on at least one instance. Narrow the pattern
+          or raise max_keys. Nothing was compared or changed.
+    else:
+      - id: bounds_ok
+        type: io.kestra.plugin.core.log.Log
+        message: >-
+          Read {{ fromJson(outputs.parse.values.source_keys) | length }} keys on
+          the source of truth and {{
+          fromJson(outputs.parse.values.secondary_keys) | length }} on the
+          secondary.
+
+  - id: diff
+    type: io.kestra.plugin.core.output.OutputValues
+    description: Classify every key in the union of the two keysets. Values are
+      compared by SHA1 digest, so no cached value is ever logged.
+    values:
+      findings: >-
+        {{ {'src': fromJson(outputs.parse.values.source_keys), 'dst':
+        fromJson(outputs.parse.values.secondary_keys), 'tol':
+        inputs.ttl_tolerance_seconds} | jq(vars.diff_prog) | first | toJson }}
+
+  - id: plan
+    type: io.kestra.plugin.core.output.OutputValues
+    description: Split the findings into keys to copy from the source, keys to
+      delete on the secondary and keys left alone.
+    values:
+      copies: >-
+        {{ fromJson(outputs.diff.values.findings) | jq(vars.copy_prog) | first |
+        toJson }}
+      orphans: >-
+        {{ fromJson(outputs.diff.values.findings) | jq(vars.orphan_prog) | first
+        | toJson }}
+      unsupported: >-
+        {{ fromJson(outputs.diff.values.findings) | jq(vars.unsupported_prog) |
+        first | toJson }}
+
+  - id: summary
+    type: io.kestra.plugin.core.log.Log
+    message: >-
+      {{ fromJson(outputs.diff.values.findings) | length }} divergences between
+      {{ inputs.source_host }}:{{ inputs.source_port }} and {{
+      inputs.mirror_host }}:{{ inputs.mirror_port }} ({{
+      fromJson(outputs.plan.values.copies) | length }} to copy, {{
+      fromJson(outputs.plan.values.orphans) | length }} to delete, {{
+      fromJson(outputs.plan.values.unsupported) | length }} unsupported and
+      untouched). {{ fromJson(outputs.diff.values.findings) |
+      jq(vars.report_prog) | first }}
+
+  - id: route
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ fromJson(outputs.diff.values.findings) | length > 0 }}"
+    then:
+      - id: alert
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+        payload: |
+          {{ {'text': 'Redis mirror ' ~ inputs.mirror_host ~ ':' ~ inputs.mirror_port ~ ' has drifted from the designated source of truth ' ~ inputs.source_host ~ ':' ~ inputs.source_port ~ ': ' ~ (fromJson(outputs.diff.values.findings) | jq(vars.report_prog) | first) ~ '.' ~ (inputs.auto_remediate and not inputs.dry_run ? ' Repairing the secondary now.' : ' No change applied (auto_remediate=' ~ inputs.auto_remediate ~ ', dry_run=' ~ inputs.dry_run ~ ').')} | toJson }}
+
+      - id: remediate_gate
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.auto_remediate and not inputs.dry_run }}"
+        then:
+          - id: hold
+            type: io.kestra.plugin.core.flow.Pause
+            description: >-
+              Repairing the secondary overwrites and deletes keys on it, so a
+              human answers first. With no answer, nothing is written.
+            pauseDuration: "{{ inputs.approval_timeout }}"
+            onResume:
+              - id: approved
+                type: BOOL
+                displayName: Copy the listed keys onto the secondary and delete its orphans?
+                defaults: false
+              - id: note
+                type: STRING
+                displayName: Decision note
+                defaults: ""
+
+          - id: apply
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.hold.onResume.approved ?? false }}"
+            then:
+              - id: delete_gate
+                type: io.kestra.plugin.core.flow.If
+                condition: "{{ fromJson(outputs.plan.values.orphans) | length > 0 }}"
+                then:
+                  - id: delete_orphans
+                    type: io.kestra.plugin.redis.string.Delete
+                    description: Delete the keys the source of truth does not have. Runs against the
+                      secondary URL only.
+                    url: "{{ render(vars.mirror_url) }}"
+                    keys: "{{ fromJson(outputs.plan.values.orphans) }}"
+                    failedOnMissing: false
+
+              - id: remediate_copies
+                type: io.kestra.plugin.core.flow.Loop
+                description: >-
+                  Copy each key from the source of truth onto the secondary, one
+                  at a time so two writes never race on the same key. Reads come
+                  from the source, writes go to the secondary.
+                concurrencyLimit: 1
+                values: "{{ outputs.plan.values.copies }}"
+                tasks:
+                  - id: read_from_source
+                    type: io.kestra.plugin.redis.string.Get
+                    description: Read the authoritative value. GET cannot change the instance it
+                      reads.
+                    url: "{{ render(vars.source_url) }}"
+                    key: "{{ fromJson(item.value).key }}"
+                    serdeType: STRING
+                    failedOnMissing: false
+
+                  - id: write_branch
+                    type: io.kestra.plugin.core.flow.If
+                    description: A volatile key is written with its remaining TTL. A persistent key
+                      is written without one, which also clears a TTL the
+                      secondary had.
+                    condition: "{{ fromJson(item.value).volatile }}"
+                    then:
+                      - id: write_volatile
+                        type: io.kestra.plugin.redis.string.Set
+                        url: "{{ render(vars.mirror_url) }}"
+                        key: "{{ fromJson(item.value).key }}"
+                        value: "{{ outputs.read_from_source.data }}"
+                        serdeType: STRING
+                        options:
+                          expirationDuration: "PT{{ fromJson(item.value).ttl }}S"
+                    else:
+                      - id: write_persistent
+                        type: io.kestra.plugin.redis.string.Set
+                        url: "{{ render(vars.mirror_url) }}"
+                        key: "{{ fromJson(item.value).key }}"
+                        value: "{{ outputs.read_from_source.data }}"
+                        serdeType: STRING
+
+              - id: reverify_source_read
+                type: io.kestra.plugin.redis.cli.RedisCLI
+                description: Read both instances again, so the proof comes from Redis rather
+                  than from the write tasks.
+                host: "{{ inputs.source_host }}"
+                port: "{{ inputs.source_port }}"
+                password: "{{ inputs.source_password }}"
+                taskRunner:
+                  type: io.kestra.plugin.scripts.runner.docker.Docker
+                  networkMode: "{{ inputs.network }}"
+                commands:
+                  - >-
+                    EVAL_RO "{{ render(vars.audit_lua) }}" 0 "{{
+                    inputs.key_pattern }}" {{ inputs.max_keys }}
+
+              - id: reverify_mirror_read
+                type: io.kestra.plugin.redis.cli.RedisCLI
+                host: "{{ inputs.mirror_host }}"
+                port: "{{ inputs.mirror_port }}"
+                password: "{{ inputs.mirror_password }}"
+                taskRunner:
+                  type: io.kestra.plugin.scripts.runner.docker.Docker
+                  networkMode: "{{ inputs.network }}"
+                commands:
+                  - >-
+                    EVAL_RO "{{ render(vars.audit_lua) }}" 0 "{{
+                    inputs.key_pattern }}" {{ inputs.max_keys }}
+
+              - id: reverify_diff
+                type: io.kestra.plugin.core.output.OutputValues
+                description: The same comparison over the whole namespace again. Anything left,
+                  including a key a writer changed during the Pause, is
+                  unresolved.
+                values:
+                  remaining: >-
+                    {{ {'src': ({'v':
+                    outputs.reverify_source_read.vars.command_1} |
+                    jq(vars.parse_prog) | first), 'dst': ({'v':
+                    outputs.reverify_mirror_read.vars.command_1} |
+                    jq(vars.parse_prog) | first), 'tol':
+                    inputs.ttl_tolerance_seconds} | jq(vars.diff_prog) | first |
+                    toJson }}
+
+              - id: verify_result
+                type: io.kestra.plugin.core.flow.If
+                condition: "{{ fromJson(outputs.reverify_diff.values.remaining) | jq('[.[] |
+                  select(.code != \"UNSUPPORTED\")] | length') | first > 0 }}"
+                then:
+                  - id: reconcile_failed
+                    type: io.kestra.plugin.core.execution.Fail
+                    errorMessage: >-
+                      The secondary still differs from the source of truth: {{
+                      fromJson(outputs.reverify_diff.values.remaining) |
+                      jq(vars.report_prog) | first }}. Check that the connecting
+                      user on {{ inputs.mirror_host }} may run SET and DEL on
+                      this namespace. Check that nothing else is writing to it.
+                else:
+                  - id: reconciled
+                    type: io.kestra.plugin.core.log.Log
+                    message: >-
+                      Reconciled and verified. Keys copied from {{
+                      inputs.source_host }}:{{ inputs.source_port }} onto {{
+                      inputs.mirror_host }}:{{ inputs.mirror_port }}: {{
+                      fromJson(outputs.plan.values.copies) | length }}. Orphans
+                      deleted: {{ fromJson(outputs.plan.values.orphans) | length
+                      }}. 0 divergence left.
+            else:
+              - id: declined
+                type: io.kestra.plugin.core.log.Log
+                message: >-
+                  Repair declined or the approval timed out. Note: {{
+                  outputs.hold.onResume.note ?? '' }}. The secondary is
+                  unchanged.
+        else:
+          - id: report_only
+            type: io.kestra.plugin.core.log.Log
+            message: >-
+              Report only. auto_remediate={{ inputs.auto_remediate }},
+              dry_run={{ inputs.dry_run }}, so no key was written or deleted on
+              {{ inputs.mirror_host }}:{{ inputs.mirror_port }}.
+    else:
+      - id: in_sync
+        type: io.kestra.plugin.core.log.Log
+        message: >-
+          The secondary matches the source of truth across {{ inputs.key_pattern
+          }}: same keys, same value digests, same expiry.
+
+errors:
+  - id: alert_flow_failure
+    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {{ {'text': 'Redis cross instance reconcile guard failed for secondary ' ~ inputs.mirror_host ~ ':' ~ inputs.mirror_port ~ ' (execution ' ~ execution.id ~ '). Check the logs.'} | toJson }}
+
+triggers:
+  - id: hourly
+    type: io.kestra.plugin.core.trigger.Schedule
+    description: Shipped disabled and always in safe mode.
+    cron: "25 * * * *"
+    disabled: true
+    inputs:
+      auto_remediate: false
+      dry_run: true

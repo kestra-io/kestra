@@ -426,7 +426,9 @@ export function useDependencies(
             // Private ECharts API: read post-simulation positions from the internal model.
             type SeriesData = {count(): number; getName(i: number): string; getItemLayout(i: number): unknown}
             type InternalChart = {getModel?(): {getSeriesByIndex?(i: number): {getData?(): SeriesData | undefined} | undefined} | undefined}
-            const data = (chart as unknown as InternalChart).getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
+            const isInternalChart = (value: unknown): value is InternalChart => typeof value === "object" && value !== null && "getModel" in value && typeof value.getModel === "function"
+            const candidate: unknown = chart
+            const data = isInternalChart(candidate) ? candidate.getModel?.()?.getSeriesByIndex?.(0)?.getData?.() : undefined
             if (!data) return
             const positions = new Map<string, {x: number; y: number}>()
             for (let i = 0; i < data.count(); i++) {

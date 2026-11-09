@@ -28,6 +28,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.trigger.Flow.Dependency;
 
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -85,7 +86,7 @@ public class FlowTriggerService {
      * the trigger going silent.
      */
     public List<Execution> computeExecutionsFromFlowTriggerConditions(Execution execution, Flow flow) {
-        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
+        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> ListUtils.isEmpty(trigger.getDependsOn()))
             .stream()
             // we must filter on no dependsOn to avoid evaluating two times triggers that have standard conditions and multiple conditions
             .filter(it -> ListUtils.isEmpty(it.getTrigger().getDependsOn()))
@@ -125,7 +126,7 @@ public class FlowTriggerService {
      * the standard-conditions route.
      */
     public List<Execution> computeExecutionsFromFlowTriggerDependsOn(Execution execution, Flow flow, MultipleConditionStateStore multipleConditionStorage) {
-        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
+        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> !ListUtils.isEmpty(trigger.getDependsOn()))
             .stream()
             // we must filter on dependsOn to avoid evaluating two times triggers that only have standard conditions
             .filter(flowWithFlowTrigger -> !ListUtils.isEmpty(flowWithFlowTrigger.getTrigger().getDependsOn()))
@@ -247,7 +248,7 @@ public class FlowTriggerService {
         }
     }
 
-    private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow) {
+    private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow, Predicate<io.kestra.plugin.core.trigger.Flow> blockedTriggerFilter) {
         if (
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
@@ -259,6 +260,13 @@ public class FlowTriggerService {
                 flow.isDraft() ||
                 flow.getTriggers() == null || flow.getTriggers().isEmpty()
         ) {
+            return Collections.emptyList();
+        }
+
+        // checked before anything is logged on the execution: its team must not learn about flows it cannot see
+        Optional<String> blockingNamespace = flowService.findNamespaceBlockingFlowTrigger(flow, execution);
+        if (blockingNamespace.isPresent()) {
+            warnBlockedFlowTriggers(execution, flow, blockingNamespace.get(), blockedTriggerFilter);
             return Collections.emptyList();
         }
 
@@ -292,6 +300,50 @@ public class FlowTriggerService {
                 }
             })
             .toList();
+    }
+
+    /**
+     * Warns on the flow owning a trigger that a namespace blocks it, only when the execution is evaluated like on
+     * the normal path and the trigger would have fired. A condition that cannot be evaluated is a non-match and
+     * nothing is logged on the execution, as its team must not learn about flows it cannot see.
+     */
+    private void warnBlockedFlowTriggers(Execution execution, Flow flow, String blockingNamespace, Predicate<io.kestra.plugin.core.trigger.Flow> triggerFilter) {
+        List<io.kestra.plugin.core.trigger.Flow> candidates = flowTriggers(flow)
+            .filter(triggerFilter)
+            .filter(trigger -> trigger.getStates().contains(execution.getState().getCurrent()))
+            .toList();
+        if (candidates.isEmpty()) {
+            return;
+        }
+
+        RunContext runContext = runContextFactory.of(null, execution);
+        candidates.forEach(trigger -> {
+            if (wouldFire(trigger, flow, execution, runContext)) {
+                runContextFactory.of(flow, trigger).logger().warn(
+                    "Flow trigger '{}' does not receive executions from namespace `{}` and its children: `{}` does not allow `{}` in its Allowed Namespaces.",
+                    trigger.getId(),
+                    blockingNamespace,
+                    blockingNamespace,
+                    flow.getNamespace()
+                );
+            }
+        });
+    }
+
+    private boolean wouldFire(io.kestra.plugin.core.trigger.Flow trigger, Flow flow, Execution execution, RunContext runContext) {
+        try {
+            if (!conditionService.isTriggerConditionMet(trigger, runContext)) {
+                return false;
+            }
+            for (Dependency dependency : ListUtils.emptyOnNull(trigger.getDependsOn())) {
+                if (conditionService.isConditionMet(dependency.asCondition(), flow, execution, runContext)) {
+                    return true;
+                }
+            }
+            return ListUtils.isEmpty(trigger.getDependsOn());
+        } catch (InternalException | RuntimeException e) {
+            return false;
+        }
     }
 
     /**

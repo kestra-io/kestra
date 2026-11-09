@@ -1,0 +1,97 @@
+{
+    "id": "59uQXHbkMy5YwHEDom72Xv",
+    "namespace": "company.team",
+    "flowId": "hello_world",
+    "flowRevision": 13,
+    "taskRunList": [
+        {
+            "id": "4G8EJhI2IwTdlHYi250h7m",
+            "executionId": "59uQXHbkMy5YwHEDom72Xv",
+            "namespace": "company.team",
+            "flowId": "hello_world",
+            "taskId": "hello",
+            "attempts": [
+                {
+                    "state": {
+                        "current": "SUCCESS",
+                        "histories": [
+                            {
+                                "state": "CREATED",
+                                "date": "2024-11-21T17:09:42.016Z"
+                            },
+                            {
+                                "state": "RUNNING",
+                                "date": "2024-11-21T17:09:42.016Z"
+                            },
+                            {
+                                "state": "SUCCESS",
+                                "date": "2024-11-21T17:09:42.045Z"
+                            }
+                        ],
+                        "duration": 0.029000000,
+                        "startDate": "2024-11-21T17:09:42.016Z",
+                        "endDate": "2024-11-21T17:09:42.045Z"
+                    }
+                }
+            ],
+            "outputs": {
+                "values": {
+                    "result": "This is an output"
+                }
+            },
+            "state": {
+                "current": "SUCCESS",
+                "histories": [
+                    {
+                        "state": "CREATED",
+                        "date": "2024-11-21T17:09:40.937Z"
+                    },
+                    {
+                        "state": "RUNNING",
+                        "date": "2024-11-21T17:09:41.967Z"
+                    },
+                    {
+                        "state": "SUCCESS",
+                        "date": "2024-11-21T17:09:42.053Z"
+                    }
+                ],
+                "duration": 1.116000000,
+                "startDate": "2024-11-21T17:09:40.937Z",
+                "endDate": "2024-11-21T17:09:42.053Z"
+            }
+        }
+    ],
+    "labels": [
+        {
+            "key": "system.correlationId",
+            "value": "59uQXHbkMy5YwHEDom72Xv"
+        }
+    ],
+    "state": {
+        "current": "SUCCESS",
+        "histories": [
+            {
+                "state": "CREATED",
+                "date": "2024-11-21T17:09:40.204Z"
+            },
+            {
+                "state": "RUNNING",
+                "date": "2024-11-21T17:09:40.942Z"
+            },
+            {
+                "state": "SUCCESS",
+                "date": "2024-11-21T17:09:42.994Z"
+            }
+        ],
+        "duration": 2.790000000,
+        "startDate": "2024-11-21T17:09:40.204Z",
+        "endDate": "2024-11-21T17:09:42.994Z"
+    },
+    "originalId": "59uQXHbkMy5YwHEDom72Xv",
+    "deleted": false,
+    "metadata": {
+        "attemptNumber": 1,
+        "originalCreatedDate": "2024-11-21T17:09:40.204Z"
+    },
+    "scheduleDate": "2024-11-21T17:09:40.181Z"
+}

@@ -23,10 +23,28 @@ vi.mock("@kestra-io/design-system", () => {
 })
 
 import type {VNode} from "vue"
-import {KsNotification, KsTableColumn} from "@kestra-io/design-system"
+import {KsMessageBox, KsNotification, KsTableColumn} from "@kestra-io/design-system"
 import {makeToast} from "./toast"
 
 const t = (key: string) => key
+
+describe("toast.confirm", () => {
+    beforeEach(() => {
+        vi.mocked(KsMessageBox.confirm).mockReset().mockResolvedValue("confirm" as never)
+    })
+
+    it("shouldShowTheWarningIconAndCancelButtonByDefault", async () => {
+        await makeToast(t).confirm("Are you sure?", () => {})
+
+        expect(KsMessageBox.confirm).toHaveBeenCalledWith(expect.anything(), "confirmation", {type: "warning", showCancelButton: true})
+    })
+
+    it("shouldDropTheIconAndTheCancelButtonWhenAskedTo", async () => {
+        await makeToast(t).confirm("Are you sure?", () => {}, false, false)
+
+        expect(KsMessageBox.confirm).toHaveBeenCalledWith(expect.anything(), "confirmation", {type: undefined, showCancelButton: false})
+    })
+})
 
 describe("toast.saved", () => {
     beforeEach(() => {

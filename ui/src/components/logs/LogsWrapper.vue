@@ -75,17 +75,18 @@
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
                             <div
                                 v-for="(log, i) in logsStore.logs"
-                                :key="log.id ?? `${log.taskRunId}-${i}`"
+                                :key="log.key ?? `${log.taskRunId}-${i}`"
                                 class="log-row"
-                                :class="{'log-0': i === 0, 'log-row--selected': log.id && selection.includes(log.id)}"
+                                data-test="log-row"
+                                :class="{'log-0': i === 0, 'log-row--selected': log.key && selection.includes(log.key)}"
                             >
                                 <KsCheckbox
-                                    v-if="log.id"
+                                    v-if="log.key"
                                     class="log-row__checkbox"
                                     data-test="log-row-checkbox"
                                     :aria-label="$t('select')"
-                                    :modelValue="selection.includes(log.id)"
-                                    @change="(value: string | number | boolean) => toggleRow(log.id!, Boolean(value))"
+                                    :modelValue="selection.includes(log.key)"
+                                    @change="(value: string | number | boolean) => toggleRow(log.key!, Boolean(value))"
                                 />
                                 <LogLine
                                     class="log-row__content"
@@ -159,11 +160,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
+    import {ref, computed, h, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
     import {getActivePinia} from "pinia"
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
-    import {useI18n} from "vue-i18n"
+    import {I18nT, useI18n} from "vue-i18n"
     import Delete from "vue-material-design-icons/Delete.vue"
     import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
@@ -273,7 +274,7 @@
     const toggleAllSelection = () => {
         queryBulkAction.value = true
         const visibleIds = (logsStore.logs ?? [])
-            .map(l => l.id)
+            .map(l => l.key)
             .filter((id): id is string => Boolean(id))
         selection.value = Array.from(new Set([...selection.value, ...visibleIds]))
     }
@@ -290,13 +291,14 @@
         }
 
         KsMessageBox.confirm(
-            t("bulk delete logs", {count}),
+            h(I18nT, {keypath: "bulk delete logs", tag: "span", scope: "global"}, {
+                count: () => h("code", String(count)),
+            }),
             t("confirmation"),
             {
                 confirmButtonText: t("delete"),
                 cancelButtonText: t("cancel"),
                 type: "warning",
-                dangerouslyUseHTMLString: true,
             },
         ).then(() => {
             const promise = queryBulkAction.value
@@ -647,7 +649,7 @@
     })
 
     watch(() => logsStore.logs, (logs) => {
-        const listedIds = new Set((logs ?? []).map(log => log.id))
+        const listedIds = new Set((logs ?? []).map(log => log.key))
         selection.value = selection.value.filter(id => listedIds.has(id))
         if (selection.value.length === 0) {
             queryBulkAction.value = false

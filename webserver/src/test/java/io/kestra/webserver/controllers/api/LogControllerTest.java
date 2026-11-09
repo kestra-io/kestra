@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -403,16 +404,16 @@ class LogControllerTest {
         logRepository.save(logEntry(tenant, Level.WARN));
         logRepository.save(logEntry(tenant, Level.ERROR));
 
-        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<Map<String, Object>> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),
-            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, Map.class)
         );
         assertThat(logs.getTotal()).isEqualTo(3L);
+        assertThat(logs.getResults()).allSatisfy(log -> assertThat(log).containsKeys("key", "level").doesNotContainKey("log"));
         List<String> idsToDelete = logs.getResults().stream()
             .limit(2)
-            .map(LogEntry::getId)
+            .map(log -> (String) log.get("key"))
             .toList();
-        assertThat(idsToDelete).allSatisfy(id -> assertThat(id).isNotBlank());
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-ids", idsToDelete),

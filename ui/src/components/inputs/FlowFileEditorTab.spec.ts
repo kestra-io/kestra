@@ -1,8 +1,10 @@
 import {describe, expect, it, vi, beforeEach} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
-import {defineComponent, ref} from "vue"
+import {defineComponent, h, KeepAlive, ref, toRaw, type Component} from "vue"
 import FlowFileEditorTab, {FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
+import {useFlowStore} from "../../stores/flow"
+import {useViolationMarkers} from "../../composables/useViolationMarkers"
 
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
@@ -21,9 +23,26 @@ vi.mock("override/stores/namespaces", () => ({
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {pluginsHash: 0}, openCopilot: vi.fn()}),
 }))
-vi.mock("../../stores/flow", () => ({
-    useFlowStore: () => ({flow: {namespace: "io.kestra.test"}, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", previewSource: undefined}),
-}))
+vi.mock("../../stores/flow", async () => {
+    const {reactive} = await import("vue")
+    const store = reactive({
+        flow: {namespace: "io.kestra.test"},
+        isReadOnly: false,
+        isCreating: false,
+        flowYaml: "",
+        flowYamlOrigin: "",
+        previewSource: undefined,
+        errorNavigation: null as {count: number; revealNext: () => void} | null,
+        onEdit: vi.fn(),
+    })
+    return {useFlowStore: () => store}
+})
+vi.mock("../../composables/useViolationMarkers", async () => {
+    const {shallowRef} = await import("vue")
+    const markers = shallowRef<unknown[]>([])
+    const revealNext = vi.fn()
+    return {useViolationMarkers: () => ({markers, revealNext})}
+})
 vi.mock("../../stores/plugins", () => ({
     usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
@@ -69,9 +88,22 @@ const i18n = createI18n({
     },
 })
 
+const locatedErrors = [1, 6].map(line => ({message: "boom", lines: [{startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 5}]}))
+
+function violationMarkers() {
+    return useViolationMarkers({} as never).markers
+}
+
+const namespaceFileProps = {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false}
+const flowTabProps = {name: "Flow.yaml", extension: "yaml", path: "Flow.yaml", flow: true, dirty: false}
+
 function mountTab(content?: string) {
-    return mount(FlowFileEditorTab, {
-        props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false, content},
+    return mountWithTabContext(FlowFileEditorTab, {...namespaceFileProps, content})
+}
+
+function mountWithTabContext(component: Component, props: Record<string, unknown> = {}) {
+    return mount(component, {
+        props,
         global: {
             plugins: [i18n],
             provide: {
@@ -89,6 +121,8 @@ function mountTab(content?: string) {
 
 describe("FlowFileEditorTab", () => {
     beforeEach(() => {
+        useFlowStore().errorNavigation = null
+        violationMarkers().value = []
         fileMetadata.mockReset()
         readFile.mockReset()
         saveOrCreateFile.mockReset()
@@ -182,5 +216,27 @@ describe("FlowFileEditorTab", () => {
         editor.vm.$emit("save")
         await flushPromises()
         expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "file content\nunsaved line"})
+    })
+
+    it("should drop error navigation while the flow tab is parked in KeepAlive and restore it when shown again", async () => {
+        violationMarkers().value = locatedErrors
+        const shown = ref(true)
+        const Host = defineComponent({
+            setup: () => () => h(KeepAlive, null, {
+                default: () => shown.value ? h(FlowFileEditorTab, flowTabProps) : h("div"),
+            }),
+        })
+
+        mountWithTabContext(Host)
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
+
+        shown.value = false
+        await flushPromises()
+        expect(useFlowStore().errorNavigation).toBeNull()
+
+        shown.value = true
+        await flushPromises()
+        expect(useFlowStore().errorNavigation?.count).toBe(2)
     })
 })

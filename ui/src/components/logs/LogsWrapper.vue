@@ -77,9 +77,14 @@
                                 :description="$t('no_logs_data_description')"
                             />
                             <KsNoData
+                                v-else-if="hiddenBelowLevel"
+                                :title="$t('no_logs_in_range_at_level_title', {level: hiddenBelowLevel})"
+                                :description="$t('no_logs_in_range_description')"
+                            />
+                            <KsNoData
                                 v-else
-                                :title="$t('no_logs_yet_title')"
-                                :description="$t('no_logs_yet_description')"
+                                :title="$t('no_logs_in_range_title')"
+                                :description="$t('no_logs_in_range_description')"
                             />
                         </div>
 
@@ -286,6 +291,10 @@
         defaultQuery: props.filters ? undefined : filterDefaultQuery.value,
         scopeFields: props.filters ? ["namespace", "flowId", "triggerId"] : [],
     }))
+    const hiddenBelowLevel = computed(() => {
+        const level = effectiveLogLevel.value
+        return level?.direction === "min" && level.value !== "TRACE" ? level.value : undefined
+    })
     const searchTerm = computed(() => {
         const key = Object.keys(route.query).find((k) => k.startsWith("filters[q]"))
         return key ? String(route.query[key] ?? "") : ""

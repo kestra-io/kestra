@@ -348,8 +348,8 @@
         || !isDefaultLogLevel(effectiveLevelValue.value, merged.value ? ERRORS_ONLY.value : defaultLogLevel.value),
     )
     const hiddenBelowLevel = computed(() => {
-        const level = effectiveLevelValue.value?.value
-        return level && level !== "TRACE" ? level : undefined
+        const level = effectiveLevelValue.value
+        return level?.direction === "min" && level.value !== "TRACE" ? level.value : undefined
     })
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")

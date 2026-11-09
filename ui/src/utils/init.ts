@@ -64,7 +64,7 @@ export default async (
     }
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", {detail: to}))
     })
 
     // Registered before the router installs: app.use(router) starts the first navigation, and both

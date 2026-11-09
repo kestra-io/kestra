@@ -115,6 +115,15 @@ describe("fileExplorer store", () => {
         error.mockRestore()
     })
 
+    it("should leave an entry without a name out of the tree instead of rendering it", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([{type: "File"}, {type: "File", fileName: "one.txt"}])
+
+        await filesStore.loadNodes()
+
+        expect(filesStore.fileTree.map(node => node.fileName)).toEqual(["one.txt"])
+    })
+
     it("should clear the tree when the root load fails so a stale namespace's files are not shown", async () => {
         const filesStore = store()
         readDirectory.mockResolvedValueOnce([{type: "File", fileName: "one.txt"}])

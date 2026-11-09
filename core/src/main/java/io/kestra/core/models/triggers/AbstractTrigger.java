@@ -14,7 +14,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -64,7 +64,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @Valid
     @PluginProperty(hidden = true, group = "execution")
     @Schema(description = "Routing requirements (tags + fallback) for this trigger.")
-    private WorkerSelector workerSelector;
+    private FlowWorkerSelector workerSelector;
 
     @PluginProperty(hidden = true, group = "advanced")
     @Schema(

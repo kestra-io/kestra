@@ -74,7 +74,7 @@ abstract public class Task implements TaskInterface {
     @Valid
     @PluginProperty(hidden = true, group = "execution")
     @Schema(description = "Routing requirements (tags + fallback) for this task.")
-    private WorkerSelector workerSelector;
+    private FlowWorkerSelector workerSelector;
 
     @PluginProperty(hidden = true, group = "advanced")
     @Schema(

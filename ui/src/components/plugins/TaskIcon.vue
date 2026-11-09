@@ -86,7 +86,7 @@
             return undefined
         }
 
-        const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
+        const basePath = (window.KESTRA_BASE_PATH || "").replace(/\/$/, "")
         const base = `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
         return icon.value?.hash ? `${base}?v=${encodeURIComponent(icon.value.hash)}` : base
     })

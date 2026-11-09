@@ -183,7 +183,7 @@ export const useFlowStore = defineStore("flow", () => {
         saveAttempted.value = false
     })
 
-    watch(haveChange, (newValue) => {
+    watch(() => haveChange.value || hasDirtyEditorFiles.value, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 

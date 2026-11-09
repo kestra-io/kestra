@@ -236,6 +236,59 @@ class ScheduleOnDatesTest {
         }
     }
 
+    @Test
+    void shouldRunDateWithMillisecondsOnceWhenNextEvaluationDateFollowsIt() throws Exception {
+        // given: the scheduler stores the date truncated to seconds as the trigger date
+        var withMillis = ZonedDateTime.parse("2025-01-01T10:00:00.500Z");
+        var later = ZonedDateTime.parse("2025-01-01T11:00:00Z");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(withMillis, later)))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+        var firstRound = TriggerContext.builder()
+            .namespace(conditionContext.getFlow().getNamespace())
+            .flowId(conditionContext.getFlow().getId())
+            .triggerId(scheduleOnDates.getId())
+            .date(ZonedDateTime.parse("2025-01-01T10:00:00Z"))
+            .build();
+
+        // when
+        Optional<TriggerEvaluationResult> evaluate = scheduleOnDates.eval(conditionContext, firstRound);
+        ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(firstRound));
+
+        // then
+        assertThat(evaluate).isPresent();
+        assertThat(nextDate).isEqualTo(later);
+    }
+
+    @Test
+    void shouldRunDatesInTheSameSecondOnce() {
+        // given
+        var first = ZonedDateTime.parse("2025-01-01T10:00:00.200Z");
+        var second = ZonedDateTime.parse("2025-01-01T10:00:00.700Z");
+        var later = ZonedDateTime.parse("2025-01-01T11:00:00Z");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(second, first, later)))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+
+        // when
+        var beforeAll = TriggerContext.builder().date(ZonedDateTime.parse("2025-01-01T09:00:00Z")).build();
+        ZonedDateTime firstRun = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(beforeAll));
+        ZonedDateTime afterFirstRun = scheduleOnDates.nextEvaluationDate(
+            conditionContext,
+            Optional.of(TriggerContext.builder().date(firstRun).build())
+        );
+
+        // then
+        assertThat(firstRun).isEqualTo(ZonedDateTime.parse("2025-01-01T10:00:00Z"));
+        assertThat(afterFirstRun).isEqualTo(later);
+    }
+
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         io.kestra.core.models.flows.Flow flow = Flow.builder()
             .id(IdUtils.create())

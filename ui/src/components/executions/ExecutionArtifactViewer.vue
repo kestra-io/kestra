@@ -6,6 +6,23 @@
                 <KsText tag="strong">{{ artifact.title }}</KsText>
                 <KsText size="small" type="secondary">{{ artifact.taskId }}</KsText>
             </div>
+            <KsSelect
+                v-if="iterationRuns.length > 1"
+                :modelValue="taskRunId"
+                size="small"
+                class="artifacts-iteration-select"
+                data-test="execution-artifact-iteration-select"
+                :aria-label="$t('iteration')"
+                @update:modelValue="emit('selectIteration', String($event))"
+            >
+                <KsOption
+                    v-for="(run, index) in iterationRuns"
+                    :key="run.id"
+                    :value="run.id"
+                    :label="labelFor(run, index + 1)"
+                    :data-test="`execution-artifact-iteration-${run.id}`"
+                />
+            </KsSelect>
             <KsSegmented
                 v-if="siblings.length > 1"
                 :modelValue="artifact.key"
@@ -51,7 +68,7 @@
     import {computed, inject} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsAlert, KsIconButton, KsSegmented, KsSkeleton, KsText} from "@kestra-io/design-system"
+    import {KsAlert, KsIconButton, KsOption, KsSegmented, KsSelect, KsSkeleton, KsText} from "@kestra-io/design-system"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
@@ -61,6 +78,7 @@
     import {useArtifactFetchers} from "./composables/useArtifactFetchers"
     import {useProgressStream} from "./composables/useProgressStream"
     import {useExecutionsStore} from "../../stores/executions"
+    import {iterationLabel} from "./iterationLabel"
 
     const props = withDefaults(defineProps<{
         artifact: ExecutionArtifact
@@ -76,6 +94,7 @@
 
     const emit = defineEmits<{
         select: [key: string]
+        selectIteration: [taskRunId: string]
         toggleFullscreen: []
     }>()
 
@@ -98,6 +117,9 @@
     const siblingOptions = computed(() => props.siblings.map((sibling) => ({label: sibling.title, value: sibling.key})))
     const fullscreenLabel = computed(() => t(props.fullscreen ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
 
+    const iterationRuns = computed(() => props.execution?.taskRunList?.filter((run) => run.taskId === props.artifact.taskId) ?? [])
+    const labelFor = (run: {value?: unknown}, position: number) => iterationLabel(t, run, position)
+
     // Built once per selection: a plugin watching these props must not reload on every execution update.
     const fetchers = computed(() => ({
         fetchOutputs: fetchOutputs(props.artifact.taskId),
@@ -115,6 +137,11 @@
 
     .artifacts-switch {
         margin-left: auto;
+    }
+
+    .artifacts-iteration-select {
+        min-width: 9rem;
+        max-width: 14rem;
     }
 
     .artifacts-viewer {

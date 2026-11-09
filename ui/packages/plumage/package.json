@@ -4,6 +4,7 @@
     "description": "Kestra syntax themes for Monaco, Shiki, Expressive Code and VS Code, with Pebble highlighting for YAML.",
     "type": "module",
     "sideEffects": false,
+    "license": "Apache-2.0",
     "homepage": "https://github.com/kestra-io/kestra/tree/develop/ui/packages/plumage#readme",
     "repository": {
         "type": "git",
@@ -58,7 +59,7 @@
         "expressive-code": "0.44.2",
         "monaco-editor": "^0.57.0",
         "shiki": "^4.5.0",
-        "tsdown": "^0.23.1",
+        "tsdown": "^0.23.4",
         "typescript": "^6",
         "vitest": "^5.0.5"
     }

@@ -5,7 +5,7 @@ import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
+import {isEntryAPluginElementPredicate, latestVersionEntries, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginControllerApiTriggerPlugin, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
@@ -236,6 +236,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const plugin = ref<PluginComponent>()
     const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
+    const latestPlugins = computed<Plugin[]>(() => latestVersionEntries(plugins.value ?? []))
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
@@ -520,24 +521,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (!cls || !plugins.value) return null
         // A declared class, then a declared alias, then the package-prefix guess: an alias such as
         // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
-        const declaring = plugins.value.filter(p => Object.entries(p)
+        return findDeclaringPlugin(latestPlugins.value, cls)
+            ?? findDeclaringPlugin(plugins.value, cls)
+            ?? latestPlugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
+            ?? null
+    }
+
+    function findDeclaringPlugin(candidates: Plugin[], cls: string): Plugin | undefined {
+        const declaring = candidates.filter(p => Object.entries(p)
             .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
         if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
-        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
-        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
-        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
+        const aliasing = candidates.filter(p => p.aliases?.includes(cls))
+        return aliasing.find(p => !p.subGroup) ?? aliasing[0]
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
         if (!name || !plugins.value) return null
         if (subGroup) {
-            return plugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
+            return latestPlugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
         }
-        return plugins.value.find(p => p.name === name && !p.subGroup) ?? null
+        return latestPlugins.value.find(p => p.name === name && !p.subGroup) ?? null
     }
 
     function sidebarPluginsFor(context: {cls?: string | null; owner?: Plugin | null}): Plugin[] {
-        const all = plugins.value ?? []
+        const all = latestPlugins.value
         let ownerGroup: string | undefined
         if (context.owner) {
             ownerGroup = context.owner.group
@@ -615,6 +622,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         findPluginByCls,
         findPluginByName,
         sidebarPluginsFor,
+        latestPlugins,
         list,
         listTriggers,
         listWithSubgroup,

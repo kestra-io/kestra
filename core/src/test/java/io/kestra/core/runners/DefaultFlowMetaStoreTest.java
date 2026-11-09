@@ -23,6 +23,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -236,7 +237,7 @@ class DefaultFlowMetaStoreTest {
         // Given a parsing service rejecting the flow at runtime
         FlowWithSource flow = createFlow().toBuilder().revision(1).build();
         FlowParsingService parsingService = mock(FlowParsingService.class);
-        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy"));
+        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy", List.of(), null));
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When
@@ -359,7 +360,7 @@ class DefaultFlowMetaStoreTest {
         // Given a parsing service rejecting the flow at runtime
         FlowWithSource flow = createFlow().toBuilder().revision(1).build();
         FlowParsingService parsingService = mock(FlowParsingService.class);
-        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy"));
+        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy", List.of(), null));
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When

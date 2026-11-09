@@ -124,6 +124,7 @@ jobs:
     outputs:
       ui: ${{ steps.changes.outputs.ui }}
       ui-design-system: ${{ steps.changes.outputs.ui-design-system }}
+      ui-plumage: ${{ steps.changes.outputs.ui-plumage }}
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
       e2e: ${{ steps.changes.outputs.e2e }}
@@ -136,6 +137,9 @@ jobs:
               - 'ui/**'
             ui-design-system:
               - 'ui/packages/design-system/**'
+              - 'ui/packages/plumage/**'
+            ui-plumage:
+              - 'ui/packages/plumage/**'
             translations:
               - 'ui/src/translations/**'
               - 'ui/scripts/translations/**'
@@ -344,6 +348,35 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  plumage:
+    name: Frontend - Plumage tests
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.ui-plumage == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: 'ui/.nvmrc'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Lint, type-check and test plumage
+        run: npm run test --workspace @kestra-io/plumage
+
   # ui-ee imports OSS source through its `kestra/` alias, so a change can pass the OSS type check and still
   # break EE's. Branches in this repository only: fork and Dependabot runs get no secrets to read kestra-ee,
   # and are left to the EE build that the merge dispatches.
@@ -531,7 +564,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, ee-frontend-types, e2e-checks, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, plumage, ee-frontend-types, e2e-checks, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled
@@ -549,7 +582,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, plumage, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

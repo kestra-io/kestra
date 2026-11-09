@@ -17,7 +17,7 @@ updates:
       default-days: 7
       exclude: ["kestra-io/*"]
     commit-message:
-      prefix: "chore(deps-gha)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/devops"]
     groups:
@@ -44,7 +44,7 @@ updates:
       semver-patch-days: 7
       exclude: ["io.kestra*"]
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/backend"]
     groups:
@@ -55,6 +55,20 @@ updates:
         applies-to: version-updates
         update-types: ["minor", "patch"]
         patterns: ["*"]
+    ignore:
+      # Ignore versions of MCP protocol >= 2.0 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22234
+      - dependency-name: "io.modelcontextprotocol.sdk::*"
+        versions: [ ">=2.0.0" ]
+      # Ignore versions of Langchain4J >= 1.19 as it needs MCP protocol 2.0 (see above)
+      - dependency-name: "dev.langchain4j:*"
+        versions: [ ">=1.19.0" ]
+      # Ignore versions of Maven Resolver >= 2.0.11 as we're not ready yet see https://github.com/kestra-io/kestra/issues/22235
+      - dependency-name: "org.apache.maven.resolver:*"
+        versions: [ ">=2.0.11" ]
+      # Ignore versions of Jetty >= 12.1.0 as Wiremock didn't work with it see https://github.com/kestra-io/kestra/issues/22238
+      - dependency-name: "org.eclipse.jetty:*"
+        versions: [ ">=12.1.0" ]
+
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
@@ -85,7 +99,7 @@ updates:
       build:
         applies-to: version-updates
         patterns:
-          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
+          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*", "tsdown", "@tsdown/*"]
 
       types:
         applies-to: version-updates
@@ -113,6 +127,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -131,6 +147,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -152,6 +170,8 @@ updates:
             "@rolldown/*",
             "@swc/*",
             "lightningcss-*",
+            "tsdown",
+            "@tsdown/*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -162,7 +182,7 @@ updates:
           ]
 
     ignore:
-      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint/parser which requires <6.0.0)
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
 
@@ -183,8 +203,8 @@ updates:
     target-branch: develop
     directory: "/ui/packages/design-system"
     commit-message:
-      prefix: "build(design-system)"
-      prefix-development: "build(design-system)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
       interval: "daily"
       timezone: "Europe/Paris"
@@ -206,7 +226,7 @@ updates:
 
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
@@ -230,6 +250,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -248,6 +269,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -266,6 +288,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -277,6 +300,11 @@ updates:
             "remark-*",
             "unified",
           ]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for ui/packages/slot-contracts
   - package-ecosystem: "npm"
@@ -328,8 +356,8 @@ updates:
     target-branch: develop
     directory: "/ui/packages/topology"
     commit-message:
-      prefix: "build(topology)"
-      prefix-development: "build(topology)"
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
       interval: "daily"
       timezone: "Europe/Paris"
@@ -351,7 +379,7 @@ updates:
 
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
@@ -367,6 +395,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -380,6 +409,7 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -393,12 +423,76 @@ updates:
         exclude-patterns:
           [
             "tsdown",
+            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
             "@types/*",
             "@vue-flow/*",
           ]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for ui/packages/plumage
+  - package-ecosystem: "npm"
+    target-branch: develop
+    directory: "/ui/packages/plumage"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
+    schedule:
+      interval: "daily"
+      timezone: "Europe/Paris"
+      time: "06:00"
+    # cooldown never delays security updates, Kestra's own packages are never delayed
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+      exclude: ["@kestra-io/*"]
+    open-pull-requests-limit: 20
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      # must stay first: a dependency is assigned to the first group matching it
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown"]
+
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown", "@types/*", "vitest", "@vitest/*"]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown", "@types/*", "vitest", "@vitest/*"]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown", "@types/*", "vitest", "@vitest/*"]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for the end-to-end tests
   - package-ecosystem: "npm"
@@ -415,7 +509,7 @@ updates:
       semver-patch-days: 7
       exclude: ["@kestra-io/*"]
     commit-message:
-      prefix: "chore(deps-e2e)"
+      prefix: "build(deps)"
     open-pull-requests-limit: 20
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
@@ -426,3 +520,8 @@ updates:
         applies-to: version-updates
         update-types: ["minor", "patch"]
         patterns: ["*"]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]

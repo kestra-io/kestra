@@ -10,14 +10,6 @@
     display: flex !important;
 }
 
-.d-none {
-    display: none !important;
-}
-
-.flex-grow-1 {
-    flex-grow: 1 !important;
-}
-
 .justify-content-center {
     justify-content: center !important;
 }
@@ -28,10 +20,6 @@
 
 .m-0 {
     margin: 0 !important;
-}
-
-.me-1 {
-    margin-right: 0.25rem !important;
 }
 
 .me-2 {
@@ -47,17 +35,8 @@
     padding-bottom: 1rem !important;
 }
 
-.fw-bold {
-    font-weight: 700 !important;
-}
-
 .text-success {
     color: inherit !important;
 }
 
-@media (min-width: 768px) {
-    .d-md-inline-block {
-        display: inline-block !important;
-    }
 
-}

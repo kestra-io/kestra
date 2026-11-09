@@ -271,10 +271,10 @@ div.line {
     .icon_container {
         position: absolute;
         top: 50%;
-        /* The label starts after the row's horizontal padding, so this keeps the caret 0.6rem left of the row. */
         left: calc(-0.6rem - var(--ks-spacing-3));
         transform: translateY(-50%);
         z-index: 1;
+        pointer-events: none;
     }
 
     .log-time {
@@ -417,7 +417,6 @@ div.line {
         }
 
         .icon_container {
-            /* The badge border sits outside its padding edge, which is the caret's anchor. */
             left: calc(-0.6rem - var(--ks-spacing-3) - 1px);
         }
 

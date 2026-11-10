@@ -53,7 +53,6 @@ const defaultDeps: LoopLineageDeps = {
 
 const orUndefined = <T>(promise: Promise<T>) => promise.catch(() => undefined)
 
-/** Levels from the outermost loop iteration down to `execution`; a parent that cannot be read ends the walk without failing. */
 export async function resolveLoopLineage(
     execution: LineageExecution,
     deps: LoopLineageDeps = defaultDeps,
@@ -132,7 +131,6 @@ function runCrumb(level: LoopLineageLevel, context: LoopLineageContext): KsBread
     }
 }
 
-/** The loop tasks and iterations above an execution, up to its own loop task, and the title naming the execution as an iteration. */
 export function executionLineage(levels: LoopLineageLevel[], context: LoopLineageContext): {crumbs: KsBreadcrumbItem[]; title: string} | undefined {
     const current = levels.at(-1)
     if (!current) return undefined
@@ -143,7 +141,6 @@ export function executionLineage(levels: LoopLineageLevel[], context: LoopLineag
     }
 }
 
-/** What leads to the iterations list of `parentId`: the parent's own lineage, the parent run, then the loop task. */
 export function iterationsListLineage(
     parentId: string,
     levels: LoopLineageLevel[],

@@ -77,4 +77,16 @@ class DeleteNamespaceFileToolTest {
             .hasMessageContaining("/missing.txt")
             .hasMessageContaining("was not found");
     }
+
+    @Test
+    void shouldRefuseWhenPathIsTheNamespaceRoot() {
+        String namespace = randomNamespace();
+        Namespace storage = namespaceFactory.of(MAIN_TENANT, namespace);
+        put(storage, "/keep.txt", "keep");
+
+        assertThatThrownBy(() -> tool.deleteNamespaceFile(namespace, "/", CONTEXT))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("namespace root");
+        assertThat(exists(storage, "/keep.txt")).isTrue();
+    }
 }

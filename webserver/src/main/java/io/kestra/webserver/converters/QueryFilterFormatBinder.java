@@ -117,8 +117,30 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
         Map<String, List<String>> queryParams = source.getParameters().asMap();
         List<QueryFilter> filters = getQueryFilters(queryParams, maxDepth, maxWidth);
+        validate(filters, resource);
 
         return () -> Optional.of(filters);
+    }
+
+    @VisibleForTesting
+    static void validate(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        QueryFilter.validateQueryFilters(withoutTimeRange(filters), resource);
+    }
+
+    // No resource lists TIME_RANGE because controllers rewrite it into a date filter before the repository validates.
+    private static List<QueryFilter> withoutTimeRange(List<QueryFilter> filters) {
+        List<QueryFilter> kept = new ArrayList<>(filters.size());
+        for (QueryFilter filter : filters) {
+            if (filter.isNode()) {
+                List<QueryFilter> children = withoutTimeRange(filter.children());
+                if (!children.isEmpty()) {
+                    kept.add(QueryFilter.builder().logical(filter.logical()).children(children).build());
+                }
+            } else if (QueryFilter.Field.TIME_RANGE != filter.field()) {
+                kept.add(filter);
+            }
+        }
+        return kept;
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

@@ -95,7 +95,7 @@
     "@vueuse/core": "^14.3.0",
     "axe-core": "^4.12.1",
     "globals": "^17.6.0",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^21.0.4",
     "jsdom": "^29.1.1",
     "playwright": "^1.64.1",
     "react": "^19.0.0",

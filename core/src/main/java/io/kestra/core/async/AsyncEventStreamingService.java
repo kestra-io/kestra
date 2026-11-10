@@ -19,8 +19,9 @@ import reactor.core.publisher.FluxSink;
  * <p>
  * Controllers performing blocking single-action APIs register a subscriber keyed by
  * {@code (operationId, itemId)} before emitting the domain event; the service dispatches
- * the incoming processed event to the matching subscriber and completes the sink. An operation
- * subscriber receives the events of every item of an operation and is never completed by the service.
+ * the incoming processed events to the matching subscriber and completes the sink on the first
+ * terminal one. An operation subscriber receives the events of every item of an operation and is
+ * never completed by the service.
  * <p>
  * Mirrors {@link io.kestra.core.services.ExecutionStreamingService}: subscribers are held in a nested
  * {@link ConcurrentHashMap} guarded by a single lock for add/remove atomicity.
@@ -74,7 +75,9 @@ public class AsyncEventStreamingService {
 
         try {
             sink.next(event);
-            sink.complete();
+            if (event.outcome().isTerminal()) {
+                sink.complete();
+            }
         } catch (Exception e) {
             log.error(
                 "Error dispatching AsyncOperationProcessedEvent for op {} item {}",
@@ -103,7 +106,7 @@ public class AsyncEventStreamingService {
 
     /**
      * Register a subscriber for a specific {@code (operationId, itemId)} pair.
-     * The sink will receive exactly one event and then complete.
+     * The sink receives the item's events and completes after the first terminal one.
      * All subscribers must ensure to call {@link #unregisterSubscriber(String, String)} to avoid any memory leak.
      */
     public void registerSubscriber(String operationId, String itemId, FluxSink<AsyncOperationProcessedEvent> sink) {

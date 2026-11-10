@@ -4,6 +4,7 @@ import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LO
 import {expect, userEvent, waitFor, within} from "storybook/test"
 import KsFilter from "./KsFilter.vue"
 import {SAME_ROW_TOLERANCE_PX} from "./filter/utils/constants"
+import {formatFilterDate, formatFilterDateRange} from "./filter/utils/filterChipFactory"
 
 const meta: Meta<typeof KsFilter> = {
     title: "Components/Data/KsFilter",
@@ -768,7 +769,7 @@ export const ComparatorDate = comparatorStory(
     DATE_KEY,
     {"filters[created][GREATER_THAN_OR_EQUAL_TO]": "2026-01-15T10:00:00.000Z"},
     "Greater Than or Equal",
-    new Date("2026-01-15T10:00:00.000Z").toLocaleDateString(),
+    formatFilterDate(new Date("2026-01-15T10:00:00.000Z")),
 )
 export const ComparatorDateRange = comparatorStory(
     DATE_RANGE_KEY,
@@ -777,7 +778,7 @@ export const ComparatorDateRange = comparatorStory(
         "filters[lastTriggered][LESS_THAN_OR_EQUAL_TO]": "2026-01-20T18:00:00.000Z",
     },
     /between/i,
-    `${new Date("2026-01-15T10:00:00.000Z").toLocaleString()} - ${new Date("2026-01-20T18:00:00.000Z").toLocaleString()}`,
+    formatFilterDateRange(new Date("2026-01-15T10:00:00.000Z"), new Date("2026-01-20T18:00:00.000Z")),
 )
 export const ComparatorSelect = comparatorStory(SELECT_KEY, {"filters[triggerState][NOT_EQUALS]": "DISABLED"}, "Not Equals", "DISABLED")
 export const ComparatorRadio = comparatorStory(RADIO_KEY, {"filters[childFilter][EQUALS]": "CHILD"}, null, "CHILD")

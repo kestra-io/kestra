@@ -41,10 +41,12 @@
 
 <script setup lang="ts">
     import {ref, computed, defineAsyncComponent} from "vue"
+    import {useI18n} from "vue-i18n"
     import Wrap from "vue-material-design-icons/Wrap.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {KsMarkdown, KsEditor, KsButton, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useToast} from "../../utils/toast"
     import ListPreview, {type PreviewCell} from "../ListPreview.vue"
     import type {FilePreview} from "../../stores/executions"
 
@@ -58,6 +60,9 @@
 
     const props = defineProps<Preview>()
 
+    const {t} = useI18n()
+    const toast = useToast()
+
     const wordWrap = ref(true)
 
     const editorBindings = useEditorBindings()
@@ -70,7 +75,10 @@
     const textContent = computed(() => typeof props.content === "string" ? props.content : "")
     const editorContent = computed(() => forceEditor.value ? JSON.stringify(props.content, null, 2) : textContent.value)
 
-    const copyContent = () => copyToClipboard(editorContent.value)
+    const copyContent = async () => {
+        await copyToClipboard(editorContent.value)
+        toast.success(t("copied"))
+    }
 
     const extensionToMonacoLang = computed(() => {
         switch (props.extension) {

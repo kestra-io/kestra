@@ -47,18 +47,19 @@ describe("BackfillBanner", () => {
         ["equal to", backfill.start],
         ["before", "2025-12-31T00:00:00Z"],
     ])("shows complete progress when end is %s start", (_, end) => {
-        const wrapper = mountBanner({backfill: {...backfill, end}})
+        const wrapper = mountBanner({backfill: {...backfill, end, currentDate: backfill.start}})
 
         expect(wrapper.getComponent(KsProgress).props("percentage")).toBe(100)
         expect(wrapper.text()).toContain("· 100%")
     })
 
     it.each([
-        ["halfway through", backfill.currentDate, 50],
-        ["partway through", "2026-01-11T00:00:00Z", 33],
+        ["halfway through the range", backfill.currentDate, 50],
+        ["a third through the range", "2026-01-11T00:00:00Z", 33],
+        ["two thirds through the range", "2026-01-21T00:00:00Z", 67],
         ["past the end", "2026-02-01T00:00:00Z", 100],
         ["before the start", "2025-12-31T00:00:00Z", 0],
-    ])("shows clamped, rounded progress %s the range", (_, currentDate, percentage) => {
+    ])("shows clamped, rounded progress when currentDate is %s", (_, currentDate, percentage) => {
         const wrapper = mountBanner({backfill: {...backfill, currentDate}})
 
         expect(wrapper.getComponent(KsProgress).props("percentage")).toBe(percentage)

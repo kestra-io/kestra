@@ -48,26 +48,6 @@ class AsyncOperationWaiterTest {
     }
 
     @Test
-    void shouldWaitPastProgressEventsForTheTerminalOutcome() throws java.util.concurrent.TimeoutException {
-        AsyncOperationProcessedEvent received = waiter.submitAndWait(
-            "item-3",
-            operationId -> CompletableFuture.runAsync(() ->
-            {
-                try {
-                    queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-3", Outcome.RUNNING, null, Instant.now()));
-                    queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-3", Outcome.FAILED, "boom", Instant.now()));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }),
-            Duration.ofSeconds(5)
-        );
-
-        assertThat(received.outcome()).isEqualTo(Outcome.FAILED);
-        assertThat(received.error()).isEqualTo("boom");
-    }
-
-    @Test
     void shouldThrowTimeoutExceptionWhenNoEventArrivesWithinTimeout() {
         assertThatThrownBy(() -> waiter.submitAndWait("item-2", opId ->
         {

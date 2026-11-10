@@ -20,8 +20,7 @@ import reactor.core.publisher.Mono;
  * <li>register a sink keyed by {@code (operationId, itemId)} on {@link AsyncEventStreamingService};</li>
  * <li>run the caller's submission callback <em>after</em> registration so the domain event
  * is emitted once the sink is in place;</li>
- * <li>block up to {@code timeout} for the processed event, the wait restarting on each
- * {@link AsyncOperationProcessedEvent.Outcome#RUNNING} progress event;</li>
+ * <li>block up to {@code timeout} for the processed event;</li>
  * <li>always unregister the sink via {@code doFinally}.</li>
  * </ol>
  */
@@ -35,7 +34,7 @@ public class AsyncOperationWaiter {
     }
 
     /**
-     * Reactive variant: returns a {@link Mono} that completes when the terminal processed event is
+     * Reactive variant: returns a {@link Mono} that completes when the processed event is
      * received, or signals {@link TimeoutException} on timeout. Use this from controllers that
      * return a reactive type to free the request thread during the wait.
      *
@@ -53,7 +52,6 @@ public class AsyncOperationWaiter {
             submit.accept(operationId);
         })
             .timeout(timeout)
-            .filter(event -> event.outcome().isTerminal())
             .doFinally(_ -> streamingService.unregisterSubscriber(operationId, itemId))
             .next();
     }

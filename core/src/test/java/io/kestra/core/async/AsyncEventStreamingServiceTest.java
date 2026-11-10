@@ -54,25 +54,6 @@ class AsyncEventStreamingServiceTest {
     }
 
     @Test
-    void shouldKeepItemSubscriberOpenUntilTerminalEvent() throws Exception {
-        String opId = "op-progress";
-        String itemId = "item-progress";
-        CompletableFuture<List<AsyncOperationProcessedEvent>> future = new CompletableFuture<>();
-        Flux.<AsyncOperationProcessedEvent> create(sink -> service.registerSubscriber(opId, itemId, sink))
-            .timeout(Duration.ofSeconds(5))
-            .doFinally(sig -> service.unregisterSubscriber(opId, itemId))
-            .collectList()
-            .subscribe(future::complete, future::completeExceptionally);
-
-        queue.emit(new AsyncOperationProcessedEvent(opId, "tenant", itemId, Outcome.RUNNING, null, new Progress(10, 100), Instant.now()));
-        queue.emit(new AsyncOperationProcessedEvent(opId, "tenant", itemId, Outcome.SUCCEEDED, null, Instant.now()));
-
-        assertThat(future.get(5, TimeUnit.SECONDS))
-            .extracting(AsyncOperationProcessedEvent::outcome)
-            .containsExactly(Outcome.RUNNING, Outcome.SUCCEEDED);
-    }
-
-    @Test
     void shouldDispatchEveryItemEventToOperationSubscriber() throws Exception {
         String opId = "op-follow";
         String subscriberId = "subscriber-1";

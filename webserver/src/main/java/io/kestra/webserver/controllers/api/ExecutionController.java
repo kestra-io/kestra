@@ -1653,7 +1653,7 @@ public class ExecutionController {
                     List<Check> failed = flowService.getFailedChecks(flow, validated.typed());
                     Check.Behavior behavior = Check.resolveBehavior(failed);
                     if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
-                        return Mono.error(blockedByChecks(failed));
+                        return Mono.error(new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + blockedByChecks(failed).getMessage()));
                     }
                     Map<String, Object> newInputs = flowInputOutput.storeExecutionInputs(
                         validated.withExecution(current.toBuilder().id(newExecutionId).build()),

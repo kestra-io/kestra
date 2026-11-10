@@ -33,6 +33,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -45,6 +46,7 @@ import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -84,6 +86,7 @@ public class FlowInputOutput {
     private final LocalPathFactory localPathFactory;
     private final SearchableDataRepositoryInterface searchableDataRepository;
     private final AssetInputResolver assetInputResolver;
+    private final Provider<FlowService> flowService; // Lazy init: FlowService reaches this class through the run context.
 
     @Inject
     public FlowInputOutput(
@@ -93,7 +96,8 @@ public class FlowInputOutput {
         ReusableInputsExpander reusableInputsExpander,
         LocalPathFactory localPathFactory,
         SearchableDataRepositoryInterface searchableDataRepository,
-        AssetInputResolver assetInputResolver) {
+        AssetInputResolver assetInputResolver,
+        Provider<FlowService> flowService) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
@@ -101,6 +105,7 @@ public class FlowInputOutput {
         this.localPathFactory = localPathFactory;
         this.searchableDataRepository = searchableDataRepository;
         this.assetInputResolver = assetInputResolver;
+        this.flowService = flowService;
     }
 
     /**
@@ -149,7 +154,7 @@ public class FlowInputOutput {
     public Mono<Map<String, Object>> readExecutionInputs(final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data) {
-        return this.readExecutionInputs(flow.getInputs(), flow, execution, data);
+        return readData(flow.getInputs(), execution, data, true).map(inputData -> this.readExecutionInputs(flow.getInputs(), flow, execution, inputData, true));
     }
 
     /**
@@ -199,7 +204,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data) {
-        return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
+        return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData, false));
     }
 
     private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
@@ -289,7 +294,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final String executionId,
         final Map<String, ?> data) {
-        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, null), data);
+        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, null), data, true);
     }
 
     /**
@@ -304,7 +309,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        return readExecutionInputs(flow.getInputs(), flow, execution, data);
+        return readExecutionInputs(flow.getInputs(), flow, execution, data, true);
     }
 
     /**
@@ -327,8 +332,24 @@ public class FlowInputOutput {
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
-        final Map<String, ?> data) {
-        return storeExecutionInputs(validateExecutionInputs(inputs, flow, execution, data), true);
+        final Map<String, ?> data,
+        final boolean creation) {
+        ValidatedInputs validated = validateExecutionInputs(inputs, flow, execution, data);
+        // The executor blocks or fails an execution whose checks fail only once it is created, after the edits would have been written.
+        return storeExecutionInputs(validated, !creation || !hasAssetWrites(validated) || passesChecks(validated));
+    }
+
+    private static boolean hasAssetWrites(ValidatedInputs validated) {
+        return validated.values().stream().anyMatch(it -> it.input() instanceof AssetInput assetInput
+            && (AssetInput.PersistOverrides.UPDATE == assetInput.getPersistOverrides() || AssetInput.PersistOverrides.CLONE == assetInput.getPersistOverrides()));
+    }
+
+    private boolean passesChecks(ValidatedInputs validated) {
+        if (!(validated.flow() instanceof Flow flow)) {
+            return true;
+        }
+        Check.Behavior behavior = Check.resolveBehavior(flowService.get().getFailedChecks(flow, validated.typed()));
+        return Check.Behavior.BLOCK_EXECUTION != behavior && Check.Behavior.FAIL_EXECUTION != behavior;
     }
 
     /**

@@ -162,6 +162,37 @@ describe("PluginDocumentation", () => {
         expect(wrapper.get("[data-test='plugin-doc-kind']").text()).toBe(label)
     })
 
+    test.each([
+        [undefined, "1.4.6"],
+        ["1.2.0", "1.2.0"],
+    ])("shouldShowInstalledVersionUnlessFlowPinsOne(%s)", async (pinned, displayed) => {
+        usePluginsStore().plugins = [{
+            name: "scripts",
+            title: "Python",
+            group: "io.kestra.plugin.scripts",
+            subGroup: "io.kestra.plugin.scripts.python",
+            version: "1.4.6",
+            tasks: [{cls: CLS}],
+        }]
+
+        const wrapper = await mountWithPlugin({cls: CLS, version: pinned, schema: SCHEMA})
+
+        expect(wrapper.get("[data-test='plugin-doc-version']").text()).toBe(displayed)
+    })
+
+    test("shouldHideTheVersionWhenPluginHasNone", async () => {
+        usePluginsStore().plugins = [{
+            name: "core",
+            title: "Core",
+            group: "io.kestra.plugin.core",
+            tasks: [{cls: "io.kestra.plugin.core.log.Log"}],
+        }]
+
+        const wrapper = await mountWithPlugin({cls: "io.kestra.plugin.core.log.Log", schema: SCHEMA})
+
+        expect(wrapper.find("[data-test='plugin-doc-version']").exists()).toBe(false)
+    })
+
     test("shouldHideTheKindWhenNoLoadedPluginDeclaresTheClass", async () => {
         const wrapper = await mountWithPlugin({cls: CLS, version: "1.0.0", schema: SCHEMA})
 

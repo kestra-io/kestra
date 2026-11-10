@@ -30,8 +30,8 @@ import io.kestra.executor.ConcurrencyLimitStateStore;
  * the widest-scope FIFO pop with per-candidate fit check.
  */
 public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitStateStore {
-    /** Blocked-candidate scan bound per release, as in the EE JDBC store; the rest wait for later releases. */
-    static final int MAX_POP_CANDIDATES = 100;
+    /** Blocked-scope scan bound per release, as in the EE stores; the rest wait for later releases. */
+    static final int MAX_BLOCKED_SCOPES = 100;
 
     private final Map<String, ConcurrencyLimit> limits = new ConcurrentHashMap<>();
 
@@ -133,23 +133,32 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             .toList();
 
         List<Execution> popped = new ArrayList<>();
-        int attempts = 0;
+        List<ScopedConcurrencyLimit> blockedScopes = new ArrayList<>();
         for (ExecutionQueued candidate : candidates) {
-            if (attempts++ >= MAX_POP_CANDIDATES) {
+            if (blockedScopes.size() >= MAX_BLOCKED_SCOPES) {
                 break;
             }
+            if (blockedScopes.stream().anyMatch(scope -> covers(scope, candidate.getTenantId(), candidate.getNamespace(), candidate.getFlowId()))) {
+                continue;
+            }
             List<ScopedConcurrencyLimit> candidateScopes = candidateLimits.apply(candidate.getExecution());
-            boolean fits = candidateScopes.stream().allMatch(scope -> running(scope) < scope.concurrency().getLimit());
-            if (fits) {
+            Optional<ScopedConcurrencyLimit> fullScope = candidateScopes.stream()
+                .filter(scope -> running(scope) >= scope.concurrency().getLimit())
+                .findFirst();
+            if (fullScope.isEmpty()) {
                 candidateScopes.forEach(this::increment);
                 executionQueuedStateStore.remove(candidate.getExecution());
                 popped.add(consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution()));
                 if (!hasRoom(widest)) {
                     break;
                 }
+            } else if (fullScope.get().scope() == ScopedConcurrencyLimit.Scope.TENANT) {
+                break;
+            } else {
+                // counters only grow during the scan, so everything under a full scope is blocked
+                // too: it is reconsidered whenever that scope frees a slot
+                blockedScopes.add(fullScope.get());
             }
-            // a blocked candidate is skipped, not head-of-line blocking: it is reconsidered
-            // whenever one of its own scopes frees a slot
         }
 
         return popped;

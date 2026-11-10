@@ -48,7 +48,7 @@ public class ListTriggersTool implements McpPlatformTool {
     }
 
     @Tool(
-        name = "list_triggers",
+        name = "list_flow_triggers",
         value = "List the triggers of Kestra flows with their runtime state, matching the given per-field filters (at most " + MAX_RESULTS + " returned). Read-only; use this to find which flows are scheduled, "
             + "when a trigger next runs, or which triggers are disabled or locked. Read a trigger's definition with read_flow. "
             + "Returns an object { triggers, total } where `triggers` is an array of { namespace, flowId, triggerId, type, disabled, disabledInSource, locked, nextEvaluationDate, lastTriggeredDate }. "

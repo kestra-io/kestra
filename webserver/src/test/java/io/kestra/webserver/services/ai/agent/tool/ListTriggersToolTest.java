@@ -42,7 +42,7 @@ class ListTriggersToolTest {
         saveTrigger(NAMESPACE, flowId, "source-disabled", false, true);
         saveTrigger("io.kestra.test.ai.other", otherFlowId, "elsewhere", false, false);
 
-        Map<String, Object> result = ToolCalls.call(tool, "list_triggers", """
+        Map<String, Object> result = ToolCalls.call(tool, "list_flow_triggers", """
             { "NAMESPACE": { "operator": "EQUALS", "value": "%s" } }""".formatted(NAMESPACE), MAIN_TENANT);
 
         assertThat((List<Map<String, Object>>) result.get("triggers"))

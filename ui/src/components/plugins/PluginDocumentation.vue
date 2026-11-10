@@ -26,8 +26,8 @@
                     </div>
                     <div class="dp-type">
                         <KsText class="dp-cls" truncated>{{ currentPlugin.cls }}</KsText>
-                        <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
-                            {{ currentPlugin.version }}
+                        <KsTag v-if="pluginVersion" size="small" class="dp-version" data-test="plugin-doc-version">
+                            {{ pluginVersion }}
                         </KsTag>
                         <KsTooltip
                             trigger="click"
@@ -342,6 +342,10 @@
         const key = pluginElementType(pluginsStore.findPluginByCls(cls), cls)
         const i18nKey = `pluginPage.elementType.${key}`
         return key && te(i18nKey) ? t(i18nKey) : undefined
+    })
+
+    const pluginVersion = computed(() => {
+        return currentPlugin.value?.version ?? pluginsStore.findPluginByCls(currentPlugin.value?.cls)?.version
     })
 
     onMounted(() => {

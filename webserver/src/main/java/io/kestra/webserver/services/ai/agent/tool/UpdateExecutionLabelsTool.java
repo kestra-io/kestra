@@ -46,12 +46,12 @@ public class UpdateExecutionLabelsTool implements McpPlatformTool {
 
     @Override
     public AgentWritePolicy writePolicy() {
-        return AgentWritePolicy.AUTO;
+        return AgentWritePolicy.CONFIRM;
     }
 
     @Override
     public McpToolAnnotations annotations() {
-        return McpToolAnnotations.IDEMPOTENT_UPDATE;
+        return McpToolAnnotations.IDEMPOTENT_DESTRUCTIVE;
     }
 
     @Tool(

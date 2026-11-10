@@ -86,7 +86,7 @@
                         <KsSegmented
                             :modelValue="chartMode"
                             :options="chartModeOptions"
-                            size="small"
+                            size="default"
                             @change="(value) => onChartModeChange(value as ChartMode)"
                         />
                     </template>
@@ -523,6 +523,7 @@
     import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -850,7 +851,7 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
     const localPage = ref(1)
     const localSize = ref(25)
     const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)
@@ -861,6 +862,7 @@
             localPage.value = page
             localSize.value = size
         } else {
+            rememberPageSize(size)
             router.push({query: {...route.query, page: String(page), size: String(size)}})
         }
     }

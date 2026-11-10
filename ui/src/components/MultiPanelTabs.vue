@@ -299,7 +299,7 @@
         removeTab: [tab: string]
     }>()
 
-    const maximizedPanelIndex = ref<number | null>(null)
+    const maximizedPanelIndex = defineModel<number | null>("maximizedPanelIndex", {default: null})
 
     provide(PANEL_MAXIMIZED_INJECTION_KEY, computed(() => maximizedPanelIndex.value !== null))
 

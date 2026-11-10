@@ -1,9 +1,10 @@
 <template>
     <ElInput
         ref="elInputRef"
-        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
+        :modelValue="modelValue"
         :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless}"
+        @update:modelValue="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.prepend" #prepend>
@@ -36,9 +37,8 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const model = defineModel<string | number>()
-
     const props = defineProps<{
+        modelValue?: string | number
         type?: string
         placeholder?: string
         disabled?: boolean
@@ -54,8 +54,10 @@
         borderless?: boolean
     }>()
 
+    // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{
-        change: [value: string | number]
+        "update:modelValue": [value: string]
+        change: [value: string]
     }>()
 
     const slots = defineSlots<{
@@ -65,7 +67,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["borderless"])
+    const filteredProps = useFilteredProps(props, ["borderless", "modelValue"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,

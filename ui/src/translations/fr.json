@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
     "logs": "Fichiers journaux",
     "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
-    "no_logs_data_title": "Aucun log trouvé pour les filtres sélectionnés.",
+    "no_logs_data_title": "Aucun log trouvé",
     "duration": "Durée",
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
@@ -871,7 +871,7 @@
     "last execution date": "Dernière exécution",
     "revisions": "Révisions",
     "no revisions found": "Une seule révision existe pour ce flow",
-    "no revisions": "Aucune révision",
+    "no revisions": "Aucune révision trouvée",
     "side-by-side": "côte à côte",
     "line-by-line": "ligne par ligne",
     "template": "Template",
@@ -1347,6 +1347,8 @@
     "pause backfill": "Mettre en pause le backfill",
     "continue backfills": "Continuer les backfills",
     "delete backfills": "Supprimer les backfills",
+    "delete backfill confirm": "Supprimer le backfill du trigger {id} ?",
+    "delete backfill success": "Le backfill du trigger {id} a été supprimé",
     "pause backfills": "Mettre en pause les backfills",
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
@@ -2344,7 +2346,7 @@
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "no_results": {
       "executions": "Aucune exécution trouvée",
-      "triggers": "Aucun Trigger trouvé",
+      "triggers": "Aucun trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
       "secrets": "Aucun secret trouvé",
@@ -2359,6 +2361,7 @@
       "default": "Tableau de bord par défaut",
       "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
+      "overdue": "En retard — {date}",
       "edition": {
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
@@ -2381,7 +2384,8 @@
         "paused": "En pause",
         "success": "Succès",
         "warning": "Avertissement",
-        "failed": "Échoué"
+        "failed": "Échoué",
+        "upcoming": "À venir"
       }
     },
     "setup": {
@@ -2800,7 +2804,8 @@
         "tooltip": "Voir les tests de flow"
       },
       "errors": {
-        "label": "{count} Erreur(s)"
+        "label": "{count} Erreur(s)",
+        "action": "{count} erreur(s), aller à l'erreur suivante"
       }
     },
     "invalid_source_code": "Code source invalide",

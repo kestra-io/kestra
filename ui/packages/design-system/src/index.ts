@@ -694,4 +694,8 @@ declare module "vue" {
         KsJsonTree: typeof KsJsonTree
         KsUpload: typeof KsUpload
     }
+
+    interface GlobalDirectives {
+        vKsLoading: typeof vKsLoading
+    }
 }

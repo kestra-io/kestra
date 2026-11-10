@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 vi.mock("vue-router", () => ({
@@ -102,11 +102,36 @@ function controllableFollowStream() {
     }
 }
 
+// Each call opens the next connection: its events, then a clean close, or with `hang` an open stream until aborted.
+type FakeConnection = { events: FakeEvent[]; hang?: boolean }
+function scriptedConnections(connections: FakeConnection[]) {
+    let opened = 0
+    followExecutionMock.mockImplementation((_params: unknown, options: {signal: AbortSignal; onSseEvent?: (e: {id?: string}) => void}) => {
+        const connection = connections[Math.min(opened++, connections.length - 1)]
+        return Promise.resolve({
+            stream: (async function* () {
+                for (const event of connection.events) {
+                    options.onSseEvent?.({id: event.sseId})
+                    yield event.execution
+                }
+                if (connection.hang) await new Promise((resolve) => options.signal.addEventListener("abort", resolve))
+            })(),
+        })
+    })
+}
+
+const running = (id = "exec-1"): FakeEvent => ({sseId: "progress", execution: {id, state: {current: "RUNNING"}}})
+const start: FakeEvent = {sseId: "start", execution: {id: "exec-1"}}
+
 describe("executions store follow stream", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         followExecutionMock.mockReset()
         flowFromExecutionByIdMock.mockReset()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it("skips the start stub, forwards real events, and ends without error on completion", async () => {
@@ -133,51 +158,6 @@ describe("executions store follow stream", () => {
         expect((seen[0].state as {current: string}).current).toBe("RUNNING")
         expect((seen[1].state as {current: string}).current).toBe("SUCCESS")
         expect(onError).not.toHaveBeenCalled()
-        // reconnecting must stay bounded: an unbounded retry leaked off-heap memory (kestra-io/kestra#16982)
-        const {sseMaxRetryAttempts} = followExecutionMock.mock.calls[0][1] as {sseMaxRetryAttempts?: number}
-        expect(Number.isFinite(sseMaxRetryAttempts)).toBe(true)
-    })
-
-    it("keeps following through a transient error once an execution was received", async () => {
-        const stream = controllableFollowStream()
-        const store = useExecutionsStore()
-        const seen: Array<Record<string, unknown>> = []
-        const onError = vi.fn()
-
-        store.subscribeToExecution("exec-1", {
-            onExecution: (execution) => seen.push(execution as unknown as Record<string, unknown>),
-            onError,
-        })
-        await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
-        const options = followExecutionMock.mock.calls[0][1] as {onSseError: () => void; signal: AbortSignal}
-
-        stream.push({sseId: "progress", execution: {id: "exec-1", state: {current: "RUNNING"}}})
-        await vi.waitFor(() => expect(seen).toHaveLength(1))
-
-        options.onSseError()
-        stream.push({sseId: "progress", execution: {id: "exec-1", state: {current: "RUNNING", histories: []}}})
-
-        await vi.waitFor(() => expect(seen).toHaveLength(2))
-        expect(options.signal.aborted).toBe(false)
-        expect(onError).not.toHaveBeenCalled()
-    })
-
-    it("gives up at once when the stream fails before delivering any execution", async () => {
-        const stream = controllableFollowStream()
-        const store = useExecutionsStore()
-        const onError = vi.fn()
-        const onEnd = vi.fn()
-
-        store.subscribeToExecution("exec-1", {onExecution: vi.fn(), onError, onEnd})
-        await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
-        const options = followExecutionMock.mock.calls[0][1] as {onSseError: () => void; signal: AbortSignal}
-
-        stream.push({sseId: "start", execution: {id: "exec-1"}})
-        options.onSseError()
-
-        expect(onError).toHaveBeenCalledTimes(1)
-        expect(onEnd).toHaveBeenCalledTimes(1)
-        expect(options.signal.aborted).toBe(true)
     })
 
     it("reports an error when the stream stops before the terminating end event", async () => {
@@ -193,6 +173,102 @@ describe("executions store follow stream", () => {
 
         await vi.waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1))
         expect(onError).toHaveBeenCalledTimes(1)
+        expect(followExecutionMock).toHaveBeenCalledTimes(1)
+    })
+
+    it("reconnects when a stream closes before its end event, and follows the run to its end", async () => {
+        vi.useFakeTimers()
+        scriptedConnections([
+            {events: [start, running()]},
+            {events: [start, running(), {sseId: "end", execution: {id: "exec-1", state: {current: "SUCCESS"}}}]},
+        ])
+        const store = useExecutionsStore()
+        const seen: string[] = []
+        const onError = vi.fn()
+        const onEnd = vi.fn()
+
+        store.subscribeToExecution("exec-1", {
+            onExecution: (execution) => seen.push((execution.state as {current: string}).current),
+            onError,
+            onEnd,
+        })
+        await vi.advanceTimersByTimeAsync(1000)
+
+        expect(followExecutionMock).toHaveBeenCalledTimes(2)
+        expect(seen).toEqual(["RUNNING", "RUNNING", "SUCCESS"])
+        expect(onEnd).toHaveBeenCalledTimes(1)
+        expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("reconnects a stream that stays silent past the idle timeout", async () => {
+        vi.useFakeTimers()
+        scriptedConnections([{events: [start, running()], hang: true}])
+        const store = useExecutionsStore()
+
+        store.subscribeToExecution("exec-1", {onExecution: vi.fn()})
+        await vi.advanceTimersByTimeAsync(74_000)
+        const {signal} = followExecutionMock.mock.calls[0][1] as {signal: AbortSignal}
+        expect(signal.aborted).toBe(false)
+
+        await vi.advanceTimersByTimeAsync(2_000)
+        expect(signal.aborted).toBe(true)
+        expect(followExecutionMock).toHaveBeenCalledTimes(2)
+    })
+
+    it("keeps a quiet stream open while heartbeats arrive", async () => {
+        vi.useFakeTimers()
+        followExecutionMock.mockImplementation((_params: unknown, options: {signal: AbortSignal; onSseEvent?: (e: {id?: string}) => void}) =>
+            Promise.resolve({
+                stream: (async function* () {
+                    options.onSseEvent?.({id: "progress"})
+                    yield {id: "exec-1", state: {current: "RUNNING"}}
+                    await new Promise((resolve) => setTimeout(resolve, 60_000))
+                    options.onSseEvent?.({id: "heartbeat"})
+                    yield {id: "exec-1"}
+                    await new Promise((resolve) => options.signal.addEventListener("abort", resolve))
+                })(),
+            }),
+        )
+        const store = useExecutionsStore()
+
+        store.subscribeToExecution("exec-1", {onExecution: vi.fn()})
+        await vi.advanceTimersByTimeAsync(130_000)
+
+        const {signal} = followExecutionMock.mock.calls[0][1] as {signal: AbortSignal}
+        expect(signal.aborted).toBe(false)
+        expect(followExecutionMock).toHaveBeenCalledTimes(1)
+    })
+
+    it("gives up once a stream keeps dropping right after delivering an execution", async () => {
+        vi.useFakeTimers()
+        scriptedConnections([{events: [start, running()]}])
+        const store = useExecutionsStore()
+        const onError = vi.fn()
+
+        store.subscribeToExecution("exec-1", {onExecution: vi.fn(), onError})
+        await vi.advanceTimersByTimeAsync(30_000)
+        // backing off 1 + 2 + 4 + 8s, even though every connection delivered an execution
+        expect(followExecutionMock).toHaveBeenCalledTimes(5)
+
+        await vi.advanceTimersByTimeAsync(40_000)
+        // 1 initial connection + 6 reconnects (FOLLOW_MAX_RECONNECTS) within the 2 minute window
+        expect(followExecutionMock).toHaveBeenCalledTimes(7)
+        expect(onError).toHaveBeenCalledTimes(1)
+    })
+
+    it("close() cancels a pending reconnect", async () => {
+        vi.useFakeTimers()
+        scriptedConnections([{events: [start, running()]}])
+        const store = useExecutionsStore()
+        const onEnd = vi.fn()
+
+        const handle = store.subscribeToExecution("exec-1", {onExecution: vi.fn(), onEnd})
+        await vi.advanceTimersByTimeAsync(0)
+        handle.close()
+        await vi.advanceTimersByTimeAsync(60_000)
+
+        expect(followExecutionMock).toHaveBeenCalledTimes(1)
+        expect(onEnd).not.toHaveBeenCalled()
     })
 
     it("close() aborts the underlying stream and suppresses terminal callbacks", async () => {

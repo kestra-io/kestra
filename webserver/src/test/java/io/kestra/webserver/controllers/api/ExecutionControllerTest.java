@@ -59,6 +59,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -488,6 +489,23 @@ class ExecutionControllerTest {
                 .state(new io.kestra.core.models.flows.State().withState(io.kestra.core.models.flows.State.Type.SUCCESS))
                 .build()
         );
+    }
+
+    @Test
+    void shouldActOnEveryExecutionWhenBulkActionByQueryMatchesMoreThanOneBatch() {
+        String namespace = "io.kestra.tests.bulk-multiple-batches";
+        int executionCount = 250;
+        for (int i = 0; i < executionCount; i++) {
+            seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "flow", namespace);
+        }
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST("/api/v1/main/executions/labels/by-query?filters[namespace][EQUALS]=" + namespace, List.of(new Label("bulk", "true"))),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(executionCount);
     }
 
     @Test

@@ -2353,6 +2353,7 @@
       "default": "デフォルトダッシュボード",
       "set_default": "デフォルトに設定",
       "empty": "表示する結果がありません。",
+      "overdue": "期限切れ — {date}",
       "edition": {
         "label": "ダッシュボードを編集",
         "chart": "このチャートを編集"
@@ -2375,7 +2376,8 @@
         "paused": "一時停止中",
         "success": "成功",
         "warning": "警告",
-        "failed": "失敗"
+        "failed": "失敗",
+        "upcoming": "近日公開"
       }
     },
     "setup": {

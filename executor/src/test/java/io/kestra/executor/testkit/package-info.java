@@ -1,40 +1,42 @@
 /**
- * Unit-test kit for the executor: run the <b>real</b> {@link io.kestra.executor.ExecutorService}
- * and all message handlers as plain code — no Micronaut context, no database, no queues, no
- * threads — and assert on what the executor <i>decided</i>, not on what a backend stored.
+ * Unit-test kit for the executor: the <b>real</b> {@link io.kestra.executor.DefaultExecutor},
+ * {@link io.kestra.executor.ExecutorService} and message handlers as plain code — no Micronaut
+ * context, no database, no threads — over in-memory fakes and recording queues.
  *
- * <h2>Shape</h2>
+ * <h2>Driving the executor</h2>
+ * {@link io.kestra.executor.testkit.ExecutorTestHarness} is the composition root. Two verbs drive
+ * the whole machine, one queue delivery at a time, exactly as production would receive it:
  * <ul>
- * <li>{@link io.kestra.executor.testkit.ExecutorTestHarness} — the composition root. Everything
- * with executor logic is the production class; everything else is an in-memory fake
- * ({@code InMemory*StateStore}), a recording queue ({@code Recording*Queue} — synchronous
- * assertion channels), or a Mockito mock exposed for per-test stubbing.</li>
- * <li>{@link io.kestra.executor.testkit.Flows}, {@link io.kestra.executor.testkit.Executions},
- * {@link io.kestra.executor.testkit.Results} — fixture factories for the given/when steps.</li>
- * <li>{@link io.kestra.executor.testkit.ExecutorContextAssert} — AssertJ entry point for the
- * {@code ExecutorContext} command object the executor returns.</li>
+ * <li>{@code harness.step(message)} delivers one message and returns what the executor emitted
+ * in return, as {@link io.kestra.executor.testkit.Trace.Emission}s.</li>
+ * <li>{@code harness.run(messages, worker)} drains every queue while a
+ * {@link io.kestra.executor.testkit.ScriptedWorker} answers each dispatched task, and returns the
+ * {@link io.kestra.executor.testkit.Trace} of every delivery and its emissions.</li>
+ * <li>{@code harness.tickExecutionDelays(now)} moves the {@link io.kestra.executor.testkit.MutableClock}
+ * and fires the delay loop once.</li>
  * </ul>
- * The tests built on the kit live in {@code io.kestra.executor.statemachine}: one class per
- * decision dimension (retry, errors/finally, killing, pause, flowable traversal, subflows,
- * flow triggers, concurrency, quotas), each written as given/when/then sagas.
+ * Queue names in a trace are the {@code Trace.*} constants. Assert the outcome with
+ * {@link io.kestra.executor.testkit.HarnessAssert} (persisted state, running counters, queued
+ * executions, pending delays) and the trace; a failure should read as a sentence, so give every
+ * assertion an {@code as(...)}.
+ *
+ * <h2>Pinning one decision</h2>
+ * To look at a single executor cycle rather than the whole run, call a handler directly
+ * ({@code harness.executionEventMessageHandler().handle(event)}) or {@code harness.process(flow, execution)},
+ * and assert on the returned {@code ExecutorContext} with
+ * {@link io.kestra.executor.testkit.ExecutorContextAssert}.
+ *
+ * <h2>Fixtures</h2>
+ * {@link io.kestra.executor.testkit.Flows} (builders or YAML), {@link io.kestra.executor.testkit.Executions}
+ * and {@link io.kestra.executor.testkit.Results} build the given/when steps. Collaborators without
+ * executor logic are Mockito mocks exposed for per-test stubbing.
  *
  * <h2>Why trust the fakes</h2>
- * The fakes are not free-hand reimplementations: the state-store behavior is specified by
- * annotation-free contract classes ({@code ExecutionStateStoreContract},
- * {@code ConcurrencyLimitStateStoreContract}, {@code MultipleConditionStateStoreContract})
- * whose scenarios run unchanged against the JDBC/Elasticsearch implementations <b>and</b>
- * against these fakes. A fake that drifts from production semantics fails its contract run.
- *
- * <h2>Adding a test</h2>
- * <ol>
- * <li>{@code ExecutorTestHarness harness = ExecutorTestHarness.create();}</li>
- * <li>Given: {@code harness.registerFlow(flow)} and seed state via the exposed stores.</li>
- * <li>When: {@code harness.process(execution)} to run full event cycles, or call a single
- * handler (e.g. {@code harness.executionEventMessageHandler().handle(event)}) to pin one
- * decision.</li>
- * <li>Then: assert on the returned {@code ExecutorContext} and on the recording queues —
- * what was emitted is as much the contract as what was stored.</li>
- * </ol>
+ * The state-store fakes are specified by annotation-free contract classes
+ * ({@code ExecutionStateStoreContract}, {@code ConcurrencyLimitStateStoreContract},
+ * {@code MultipleConditionStateStoreContract}) whose scenarios run unchanged against the
+ * JDBC/Elasticsearch implementations <b>and</b> against the fakes. When a fake gains behavior, add
+ * the matching scenario to the contract in the same change.
  *
  * <h2>When to use what</h2>
  * <ul>
@@ -43,7 +45,5 @@
  * backend {@code @MicronautTest} shells.</li>
  * <li>End-to-end wiring across components → the runner tests ({@code H2RunnerTest} etc.).</li>
  * </ul>
- * When a fake gains behavior, add the matching scenario to the store's contract in the same
- * change — the contract is what keeps the kit honest.
  */
 package io.kestra.executor.testkit;

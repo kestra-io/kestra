@@ -45,7 +45,7 @@ class KillReleasesConcurrencySlotTest {
     }
 
     @Test
-    void killingTheSlotHolderWhoseTaskIsOnAWorkerReleasesTheSlotAndPopsTheQueue() {
+    void shouldReleaseTheSlotAndPopTheQueueWhenKillingAHolderWhoseTaskIsOnAWorker() {
         FlowWithSource flow = singleSlotFlow();
         Execution slotHolder = Executions.created(flow);
         Execution queued = Executions.created(flow);
@@ -56,13 +56,13 @@ class KillReleasesConcurrencySlotTest {
         Trace trace = harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.killedFor(slotHolder, T0));
 
         assertKilledAndQueueDrained(flow, slotHolder, queued);
-        assertThat(trace.emitted("execution").map(e -> e.as(Execution.class).getId()))
+        assertThat(trace.emitted(Trace.EXECUTION).map(e -> e.as(Execution.class).getId()))
             .as("the queued execution re-entered the execution queue when the slot freed")
             .contains(queued.getId());
     }
 
     @Test
-    void killingTheSlotHolderSuspendedAtABreakpointReleasesTheSlotAndPopsTheQueue() {
+    void shouldReleaseTheSlotAndPopTheQueueWhenKillingAHolderSuspendedAtABreakpoint() {
         FlowWithSource flow = singleSlotFlow();
         Execution slotHolder = Executions.created(flow).withBreakpoints(List.of(Breakpoint.of("a")));
         Execution queued = Executions.created(flow);
@@ -76,7 +76,7 @@ class KillReleasesConcurrencySlotTest {
     }
 
     @Test
-    void workerKilledResultArrivingBeforeTheKillRequestReleasesTheSlotOnce() {
+    void shouldReleaseTheSlotOnceWhenTheWorkerKilledResultArrivesBeforeTheKillRequest() {
         FlowWithSource flow = singleSlotFlow();
         Execution slotHolder = Executions.created(flow);
         Execution queued = Executions.created(flow);
@@ -91,7 +91,7 @@ class KillReleasesConcurrencySlotTest {
     }
 
     @Test
-    void killingTheSlotHolderWhileItWaitsForATaskRetryReleasesTheSlotAndPopsTheQueue() {
+    void shouldReleaseTheSlotAndPopTheQueueWhenKillingAHolderWaitingForATaskRetry() {
         FlowWithSource flow = singleSlotFlowWithHourlyRetry();
         Execution slotHolder = Executions.created(flow);
         Execution queued = Executions.created(flow);
@@ -105,7 +105,7 @@ class KillReleasesConcurrencySlotTest {
     }
 
     @Test
-    void anExpiredTaskRetryDoesNotRestartAnExecutionKilledWhileItWaited() {
+    void shouldNotRestartTheTaskWhenTheRetryExpiresForAnExecutionKilledWhileWaiting() {
         FlowWithSource flow = singleSlotFlowWithHourlyRetry();
         Execution killedWhileRetrying = Executions.created(flow);
         Execution queued = Executions.created(flow);
@@ -118,7 +118,7 @@ class KillReleasesConcurrencySlotTest {
         harness.run(List.of(), ScriptedWorker.succeeding(RETRY_DATE_PASSED));
 
         assertThat(harness).as("a kill is final: the retry of a killed execution never restarts its task").hasExecutionInState(killedWhileRetrying, State.Type.KILLED);
-        assertThat(onExpiry).as("the expired retry sends nothing to a worker").extracting(Trace.Emission::queue).doesNotContain("workerJobEvent");
+        assertThat(onExpiry).as("the expired retry sends nothing to a worker").extracting(Trace.Emission::queue).doesNotContain(Trace.WORKER_JOB_EVENT);
         assertThat(harness).as("the revived task would have re-held a slot; nothing does, and the delay is consumed").hasRunning(flow, 0).hasPendingDelays(0);
     }
 

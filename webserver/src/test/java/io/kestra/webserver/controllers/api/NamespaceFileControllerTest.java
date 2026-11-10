@@ -538,6 +538,32 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldReturn400WhenMovePathIsEmpty() {
+        String namespace = TestsUtils.randomNamespace();
+
+        for (String query : List.of("from=&to=/x.txt", "from=/x.txt&to=")) {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?" + query, null))
+            );
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        }
+    }
+
+    @Test
+    void shouldReturn422WhenRawMovePathIsNotAValidPath() {
+        String namespace = TestsUtils.randomNamespace();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=//a+b&to=/x.txt", null))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void shouldMoveFileWhenUriEncodedPathContainsSpaces() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);

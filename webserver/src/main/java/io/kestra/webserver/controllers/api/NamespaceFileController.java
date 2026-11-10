@@ -315,6 +315,10 @@ public class NamespaceFileController {
     }
 
     protected List<Pair<NamespaceFile, NamespaceFile>> innerMoveFileDirectory(String namespace, String from, String to) throws Exception {
+        if (from.isBlank() || to.isBlank()) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "The 'from' and 'to' paths are both required.");
+        }
+
         URI fromUri = toMoveUri(from);
         URI toUri = toMoveUri(to);
         ensureWritableNamespaceFile(fromUri);
@@ -375,15 +379,16 @@ public class NamespaceFileController {
         return new URI(null, null, path, null);
     }
 
-    /**
-     * Reads a move parameter as a URI, as clients have always sent it, and falls back to a raw path
-     * when it holds characters that are illegal in a URI, such as a space.
-     */
-    private static URI toMoveUri(String value) throws URISyntaxException {
+    /** Reads a move parameter as a URI and falls back to a raw path when it holds characters a URI cannot, such as a space. */
+    private static URI toMoveUri(String value) {
         try {
             return new URI(value);
-        } catch (URISyntaxException e) {
-            return toFileUri(value.startsWith("/") ? value : "/" + value);
+        } catch (URISyntaxException notAUri) {
+            try {
+                return toFileUri(value.startsWith("/") ? value : "/" + value);
+            } catch (URISyntaxException e) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid path.".formatted(value));
+            }
         }
     }
 

@@ -97,6 +97,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.kestra.core.junit.assertions.Problems;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.exceptions.ResponseClosedException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -113,6 +114,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
@@ -809,6 +811,33 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(executionsAfter.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldSendStartEventBeforeLookupWhenFollowingUnknownExecution() {
+        String tenantId = "followunknownexecution";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        for (String endpoint : List.of("/follow", "/follow-dependencies")) {
+            List<Event<ExecutionStatusEvent>> received = new CopyOnWriteArrayList<>();
+            AtomicReference<Long> startedAfter = new AtomicReference<>();
+            long begin = System.currentTimeMillis();
+
+            assertThatThrownBy(() -> sseClient
+                .eventStream("/api/v1/%s/executions/does-not-exist%s".formatted(tenantId, endpoint), ExecutionStatusEvent.class)
+                .doOnNext(event ->
+                {
+                    received.add(event);
+                    startedAfter.compareAndSet(null, System.currentTimeMillis() - begin);
+                })
+                .collectList()
+                .block(Duration.ofSeconds(30)))
+                .isInstanceOf(ResponseClosedException.class);
+
+            assertThat(received).extracting(Event::getId).containsExactly("start");
+            // the start event must not wait for the 10s lookup, otherwise the connection is only established once it ends
+            assertThat(startedAfter.get()).isLessThan(5_000L);
+        }
     }
 
     @Test

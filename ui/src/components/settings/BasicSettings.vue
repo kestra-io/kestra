@@ -111,6 +111,18 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.open_docs_tab')"
+                :description="$t('settings.blocks.configuration.descriptions.open_docs_tab')"
+            >
+                <KsSwitch
+                    :aria-label="$t('settings.blocks.configuration.fields.open_docs_tab')"
+                    :modelValue="settings.editorOpenDocsTab"
+                    data-test="open-docs-tab-switch"
+                    @change="onEditorOpenDocsTab"
+                />
+            </SettingRow>
+
+            <SettingRow
                 stacked
                 :label="$t('settings.blocks.configuration.fields.flow_template')"
                 :description="$t('settings.blocks.configuration.descriptions.flow_template')"
@@ -387,6 +399,7 @@
         [storageKeys.TRIGGERS_DEFAULT_TAB]: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         [storageKeys.EDITOR_PLAYGROUND]: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.EDITOR_OPEN_DOCS_TAB]: [`${CONFIG}.fields.open_docs_tab`, `${CONFIG}.descriptions.open_docs_tab`],
         [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
         [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
         [storageKeys.LOGS_FONT_SIZE]: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
@@ -437,6 +450,7 @@
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
         editorPlayground: localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false",
+        editorOpenDocsTab: localStorage.getItem(storageKeys.EDITOR_OPEN_DOCS_TAB) !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
         flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
@@ -789,6 +803,11 @@
     function onEditorPlayground(value: boolean | string | number) {
         settings.editorPlayground = Boolean(value)
         persist(storageKeys.EDITOR_PLAYGROUND, settings.editorPlayground)
+    }
+
+    function onEditorOpenDocsTab(value: boolean | string | number) {
+        settings.editorOpenDocsTab = Boolean(value)
+        persist(storageKeys.EDITOR_OPEN_DOCS_TAB, settings.editorOpenDocsTab)
     }
 
     function onEnvName() {

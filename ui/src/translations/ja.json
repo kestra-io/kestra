@@ -863,7 +863,7 @@
     "last execution date": "最後の実行日",
     "revisions": "リビジョン",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
-    "no revisions": "リビジョンなし",
+    "no revisions": "リビジョンが見つかりません",
     "side-by-side": "並列表示",
     "line-by-line": "行ごと表示",
     "template": "テンプレート",

@@ -863,7 +863,7 @@
     "last execution date": "Data ostatniej egzekucji",
     "revisions": "Wersje",
     "no revisions found": "Dla tego Flow istnieje tylko jedna wersja",
-    "no revisions": "Brak wersji",
+    "no revisions": "Nie znaleziono wersji",
     "side-by-side": "obok siebie",
     "line-by-line": "linia po linii",
     "template": "Szablon",

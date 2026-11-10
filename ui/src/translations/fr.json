@@ -863,7 +863,7 @@
     "last execution date": "Dernière exécution",
     "revisions": "Révisions",
     "no revisions found": "Une seule révision existe pour ce flow",
-    "no revisions": "Aucune révision",
+    "no revisions": "Aucune révision trouvée",
     "side-by-side": "côte à côte",
     "line-by-line": "ligne par ligne",
     "template": "Template",

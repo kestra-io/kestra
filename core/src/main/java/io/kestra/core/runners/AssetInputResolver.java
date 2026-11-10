@@ -44,8 +44,9 @@ public interface AssetInputResolver {
     }
 
     /**
-     * Refuses an edit that {@link #store} could not write, before any input is stored, so that a refusal on one
-     * input never leaves the edits of another one written.
+     * Refuses an edit that {@link #store} could not write, before any input is stored, so that an edit refused here
+     * leaves no other edit written. The writes are not transactional: one that fails later in {@link #store}, or an
+     * execution that is never emitted, can leave the edits stored before it in place.
      */
     default void checkWrite(Execution execution, AssetInput input, Object resolved) {
     }

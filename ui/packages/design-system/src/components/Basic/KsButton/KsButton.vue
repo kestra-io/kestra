@@ -42,7 +42,28 @@
 </template>
 
 <script lang="ts">
-    export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+    import type {ButtonProps, ButtonType} from "element-plus"
+    import type {RouteLocationRaw, RouterLinkProps} from "vue-router"
+
+    export type KsButtonType = ButtonType
+
+    export interface KsButtonProps extends ButtonProps {
+        square?: boolean
+        block?: boolean
+        tooltip?: string
+        tooltipPlacement?: string
+        /** With `tag="a"`. */
+        href?: string
+        target?: string
+        rel?: string
+        /** With `:tag="RouterLink"` (or `tag="router-link"`), like the RouterLink props below. */
+        to?: RouteLocationRaw
+        replace?: boolean
+        activeClass?: string
+        exactActiveClass?: string
+        ariaCurrentValue?: RouterLinkProps["ariaCurrentValue"]
+        viewTransition?: boolean
+    }
 
     interface KsButtonTone {
         border: string
@@ -60,7 +81,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, type Component} from "vue"
+    import {computed} from "vue"
 
     import {ElButton} from "element-plus"
 
@@ -69,26 +90,8 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        type?: KsButtonType
-        size?: "small" | "default" | "large" | ""
-        disabled?: boolean
-        icon?: string | object
-        nativeType?: "button" | "submit" | "reset"
-        loading?: boolean
-        text?: boolean
-        link?: boolean
-        bg?: boolean
-        autofocus?: boolean
-        round?: boolean
-        circle?: boolean
-        square?: boolean
-        block?: boolean
-        color?: string
-        tag?: string | Component
-        tooltip?: string
-        tooltipPlacement?: string
-    }>()
+    // Left undefined so a plain button does not render replace="false" and viewTransition="false" attributes.
+    const props = withDefaults(defineProps<KsButtonProps>(), {replace: undefined, viewTransition: undefined})
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

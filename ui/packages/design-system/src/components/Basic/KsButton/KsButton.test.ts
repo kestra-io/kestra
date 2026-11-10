@@ -1,5 +1,7 @@
 import {describe, test, expect} from "vitest"
+import {markRaw} from "vue"
 import {mount} from "@vue/test-utils"
+import {RouterLink} from "vue-router"
 import KestraDesignSystem from "../../../index"
 import KsButton from "./KsButton.vue"
 
@@ -166,5 +168,30 @@ describe("KsButton", () => {
         })
         expect(wrapper.find(".kel-button").classes()).toContain("is-block")
         expect(wrapper.find(".kel-button").attributes("block")).toBeUndefined()
+    })
+
+    test("passes href, target and rel to the anchor it renders with tag a", () => {
+        const wrapper = mount(KsButton, {
+            props: {tag: "a", href: "https://kestra.io", target: "_blank", rel: "noopener"},
+            global: globalConfig,
+        })
+        const anchor = wrapper.find("a.kel-button")
+        expect(anchor.attributes("href")).toBe("https://kestra.io")
+        expect(anchor.attributes("target")).toBe("_blank")
+        expect(anchor.attributes("rel")).toBe("noopener")
+    })
+
+    test("passes to to the RouterLink it renders", () => {
+        const wrapper = mount(KsButton, {
+            props: {tag: markRaw(RouterLink), to: {name: "docs"}},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "RouterLink"}).props("to")).toStrictEqual({name: "docs"})
+    })
+
+    test("renders no RouterLink attributes on a plain button", () => {
+        const wrapper = mount(KsButton, {global: globalConfig})
+        expect(wrapper.find("button.kel-button").attributes("replace")).toBeUndefined()
+        expect(wrapper.find("button.kel-button").attributes("viewtransition")).toBeUndefined()
     })
 })

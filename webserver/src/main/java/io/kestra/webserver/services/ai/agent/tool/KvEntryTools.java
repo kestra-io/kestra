@@ -85,11 +85,16 @@ final class KvEntryTools {
         if (ttl == null || ttl.isBlank()) {
             return null;
         }
+        Duration duration;
         try {
-            return Duration.parse(ttl);
+            duration = Duration.parse(ttl);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("ttl '%s' is not an ISO-8601 duration (e.g. PT1H or P7D).".formatted(ttl));
         }
+        if (duration.isZero() || duration.isNegative()) {
+            throw new IllegalArgumentException("ttl '%s' must be greater than zero; omit it for an entry that does not expire.".formatted(ttl));
+        }
+        return duration;
     }
 
     /** The exception every lookup of a missing entry throws, so the tools report it with one message. */

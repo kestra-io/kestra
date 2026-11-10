@@ -70,6 +70,18 @@ class KvWriteToolsTest {
     }
 
     @Test
+    void shouldRejectTtlWhenNotGreaterThanZeroAndKeepTheExistingEntry() throws IOException, ResourceExpiredException {
+        String key = newKey();
+        create(key, "42", "\"ttl\": \"PT1H\"");
+
+        assertThatThrownBy(() -> create(newKey(), "value", "\"ttl\": \"PT0S\""))
+            .hasMessageContaining("greater than zero");
+        assertThatThrownBy(() -> update(key, "43", "\"ttl\": \"PT0S\""))
+            .hasMessageContaining("greater than zero");
+        assertThat(store().getValue(key)).get().extracting(KVValue::value).isEqualTo(42);
+    }
+
+    @Test
     void shouldKeepDescriptionAndExpirationWhenUpdatingWithoutThem() throws IOException, ResourceExpiredException {
         String key = newKey();
         create(key, "42", "\"description\": \"a number\", \"ttl\": \"PT1H\"");

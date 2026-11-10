@@ -20,12 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class DeleteExecutionTool implements McpPlatformTool {
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final ExecutionService executionService;
     private final FlowRepositoryInterface flowRepository;
 
     @Inject
-    public DeleteExecutionTool(final ExecutionActionSubmitter submitter, final ExecutionService executionService, final FlowRepositoryInterface flowRepository) {
+    public DeleteExecutionTool(final ExecutionCommandSubmitter submitter, final ExecutionService executionService, final FlowRepositoryInterface flowRepository) {
         this.submitter = submitter;
         this.executionService = executionService;
         this.flowRepository = flowRepository;

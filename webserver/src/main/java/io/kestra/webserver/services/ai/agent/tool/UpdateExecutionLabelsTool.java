@@ -25,13 +25,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UpdateExecutionLabelsTool implements McpPlatformTool {
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final ModelValidator modelValidator;
 
     @Inject
     public UpdateExecutionLabelsTool(
-        final ExecutionActionSubmitter submitter,
+        final ExecutionCommandSubmitter submitter,
         final DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         final ModelValidator modelValidator) {
         this.submitter = submitter;

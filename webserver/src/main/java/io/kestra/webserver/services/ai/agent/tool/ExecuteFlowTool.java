@@ -43,7 +43,7 @@ import reactor.core.publisher.Mono;
 public class ExecuteFlowTool implements McpPlatformTool {
     private final ExecutionCreationService executionCreationService;
     private final FlowInputOutput flowInputOutput;
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final ExecutionRepositoryInterface executionRepository;
     private final ExecutionStreamingService streamingService;
@@ -54,7 +54,7 @@ public class ExecuteFlowTool implements McpPlatformTool {
     public ExecuteFlowTool(
         final ExecutionCreationService executionCreationService,
         final FlowInputOutput flowInputOutput,
-        final ExecutionActionSubmitter submitter,
+        final ExecutionCommandSubmitter submitter,
         final DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         final ExecutionRepositoryInterface executionRepository,
         final ExecutionStreamingService streamingService,

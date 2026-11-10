@@ -17,11 +17,11 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ChangeExecutionStateTool implements McpPlatformTool {
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
-    public ChangeExecutionStateTool(final ExecutionActionSubmitter submitter, final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
+    public ChangeExecutionStateTool(final ExecutionCommandSubmitter submitter, final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
         this.submitter = submitter;
         this.executionCommandQueue = executionCommandQueue;
     }

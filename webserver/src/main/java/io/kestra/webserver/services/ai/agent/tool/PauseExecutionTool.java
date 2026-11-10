@@ -16,11 +16,11 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class PauseExecutionTool implements McpPlatformTool {
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
-    public PauseExecutionTool(final ExecutionActionSubmitter submitter, final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
+    public PauseExecutionTool(final ExecutionCommandSubmitter submitter, final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
         this.submitter = submitter;
         this.executionCommandQueue = executionCommandQueue;
     }

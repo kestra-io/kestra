@@ -20,14 +20,14 @@ import jakarta.inject.Singleton;
  * executor has accepted or rejected it, the way the execution endpoints do.
  */
 @Singleton
-public class ExecutionActionSubmitter {
+public class ExecutionCommandSubmitter {
     private final ExecutionRepositoryInterface executionRepository;
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
     private final ActorResolver actorResolver;
 
     @Inject
-    public ExecutionActionSubmitter(
+    public ExecutionCommandSubmitter(
         final ExecutionRepositoryInterface executionRepository,
         final AsyncOperationWaiter asyncOperationWaiter,
         final AsyncOperationsConfiguration asyncOperationsConfiguration,

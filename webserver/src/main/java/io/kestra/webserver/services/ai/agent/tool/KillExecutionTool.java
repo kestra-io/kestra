@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class KillExecutionTool implements McpPlatformTool {
-    private final ExecutionActionSubmitter submitter;
+    private final ExecutionCommandSubmitter submitter;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionService executionService;
@@ -29,7 +29,7 @@ public class KillExecutionTool implements McpPlatformTool {
 
     @Inject
     public KillExecutionTool(
-        final ExecutionActionSubmitter submitter,
+        final ExecutionCommandSubmitter submitter,
         final BroadcastQueueInterface<ExecutionKilled> killQueue,
         final FlowMetaStoreInterface flowMetaStore,
         final ExecutionService executionService,

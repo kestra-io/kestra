@@ -15,7 +15,6 @@ import {
     registerNestedValueAutoCompletion,
     registerFilterAutoCompletion,
     endOfWordColumn,
-    NO_SUGGESTIONS,
 } from "./pebbleLanguageConfigurator"
 
 describe.each([
@@ -88,8 +87,30 @@ describe("endOfWordColumn", () => {
     })
 })
 
-describe("NO_SUGGESTIONS", () => {
-    it("is the empty-suggestion shape Monaco expects, not undefined", () => {
-        expect(NO_SUGGESTIONS).toEqual({suggestions: []})
+describe.each([
+    ["pebble root variable", "plain text", 11, registerPebbleAutocompletion],
+    ["function parameters", "plain text", 11, registerFunctionParametersAutoCompletion],
+    ["nested value", "plain text.", 12, registerNestedValueAutoCompletion],
+    ["filter", "plain | up", 11, registerFilterAutoCompletion],
+    ["filter without a pipe", "{{ plain", 9, registerFilterAutoCompletion],
+])("%s autocompletion outside a pebble expression", (_label, text, column, register) => {
+    it("returns an empty suggestion list rather than undefined", async () => {
+        const spy = vi.spyOn(monaco.languages, "registerCompletionItemProvider")
+            .mockImplementation(() => ({dispose: () => {}}))
+        const model = monaco.editor.createModel(text)
+        try {
+            register([], new PebbleAutoCompletion(), ["yaml"])
+            const provider = spy.mock.calls[0][1]
+            const result = await provider.provideCompletionItems(
+                model,
+                new monaco.Position(1, column),
+                {triggerKind: monaco.languages.CompletionTriggerKind.Invoke},
+                new monaco.CancellationTokenSource().token,
+            )
+            expect(result).toEqual({suggestions: []})
+        } finally {
+            model.dispose()
+            spy.mockRestore()
+        }
     })
 })

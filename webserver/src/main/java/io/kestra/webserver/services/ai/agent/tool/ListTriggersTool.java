@@ -14,6 +14,7 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.utils.PageableUtils;
 
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -49,20 +50,23 @@ public class ListTriggersTool implements McpPlatformTool {
 
     @Tool(
         name = "list_flow_triggers",
-        value = "List the triggers of Kestra flows with their runtime state, matching the given per-field filters (at most " + MAX_RESULTS + " returned). Read-only; use this to find which flows are scheduled, "
+        value = "List the triggers of Kestra flows with their runtime state, matching the given per-field filters (" + MAX_RESULTS + " per page). Read-only; use this to find which flows are scheduled, "
             + "when a trigger next runs, or which triggers are disabled or locked. Read a trigger's definition with read_flow. "
-            + "Returns an object { triggers, total } where `triggers` is an array of { namespace, flowId, triggerId, type, disabled, disabledInSource, locked, nextEvaluationDate, lastTriggeredDate }. "
+            + "Returns an object { triggers, total, page } where `triggers` is an array of { namespace, flowId, triggerId, type, disabled, disabledInSource, locked, nextEvaluationDate, lastTriggeredDate }. "
             + "`disabled` is true when the trigger does not run, either because its definition sets `disabled: true` (then `disabledInSource` is also true) or because it was disabled from the UI or the API. "
-            + "`type` is SCHEDULE, POLLING or REALTIME; dates are ISO-8601 date-times or null. `total` is the number of all matching triggers, which can exceed the length of `triggers`."
+            + "`type` is SCHEDULE, POLLING or REALTIME; dates are ISO-8601 date-times or null. `total` is the number of all matching triggers; when it exceeds what was read so far, request the next `page`."
     )
     public Result listTriggers(
         @QueryFilterFormat(QueryFilter.Resource.TRIGGER) List<QueryFilter> filters,
+        @P(name = "page", value = "The 1-based page to read; omit for the first page", required = false) Integer page,
         final AgentCallContext.Context context) {
-        var triggers = triggerRepository.find(PageableUtils.from(1, MAX_RESULTS), context.tenant(), filters);
+        int pageNumber = ToolPages.pageNumber(page);
+        var triggers = triggerRepository.find(PageableUtils.from(pageNumber, MAX_RESULTS), context.tenant(), filters);
 
         return new Result(
             triggers.stream().map(ListTriggersTool::toSummary).toList(),
-            triggers.getTotal()
+            triggers.getTotal(),
+            pageNumber
         );
     }
 
@@ -80,7 +84,7 @@ public class ListTriggersTool implements McpPlatformTool {
         );
     }
 
-    public record Result(List<TriggerSummary> triggers, long total) {
+    public record Result(List<TriggerSummary> triggers, long total, int page) {
     }
 
     public record TriggerSummary(

@@ -48,10 +48,10 @@ public class SearchFlowSourcesTool implements McpPlatformTool {
 
     @Tool(
         name = "search_flow_sources",
-        value = "Search the YAML source of Kestra flows for a text or a regular expression (at most " + MAX_FLOWS + " flows returned). Read-only; use this to find flows that use a plugin, a task type, an expression or any other text in their code. "
+        value = "Search the YAML source of Kestra flows for a text or a regular expression (" + MAX_FLOWS + " flows per page). Read-only; use this to find flows that use a plugin, a task type, an expression or any other text in their code. "
             + "To find flows by name or namespace, use list_flows instead. "
-            + "Returns an object { flows, total } where `flows` is an array of { namespace, id, matches } and `matches` holds at most " + MAX_MATCHES_PER_FLOW + " { line, snippet } per flow, "
-            + "with the matched text wrapped in [mark]...[/mark] in `snippet`. `total` is the number of all matching flows, which can exceed the length of `flows`."
+            + "Returns an object { flows, total, page } where `flows` is an array of { namespace, id, matches } and `matches` holds at most " + MAX_MATCHES_PER_FLOW + " { line, snippet } per flow, "
+            + "with the matched text wrapped in [mark]...[/mark] in `snippet`. `total` is the number of all matching flows; when it exceeds what was read so far, request the next `page`."
     )
     public Result searchFlowSources(
         @P(name = "query", value = "The text to search for, or a regular expression when `regex` is true") String query,
@@ -60,9 +60,11 @@ public class SearchFlowSourcesTool implements McpPlatformTool {
         @P(name = "caseSensitive", value = "Whether the match must have the same case; default false", required = false) Boolean caseSensitive,
         @P(name = "wholeWord", value = "Whether the match must be a whole word; default false", required = false) Boolean wholeWord,
         @P(name = "scope", value = "The section of the flow YAML to search; default ALL", required = false) SourceSearchScope scope,
+        @P(name = "page", value = "The 1-based page to read; omit for the first page", required = false) Integer page,
         final AgentCallContext.Context context) {
+        int pageNumber = ToolPages.pageNumber(page);
         var results = sourceSearchService.search(
-            PageableUtils.from(1, MAX_FLOWS),
+            PageableUtils.from(pageNumber, MAX_FLOWS),
             context.tenant(),
             namespace,
             query,
@@ -74,7 +76,8 @@ public class SearchFlowSourcesTool implements McpPlatformTool {
 
         return new Result(
             results.stream().map(SearchFlowSourcesTool::toFlowMatches).toList(),
-            results.getTotal()
+            results.getTotal(),
+            pageNumber
         );
     }
 
@@ -89,7 +92,7 @@ public class SearchFlowSourcesTool implements McpPlatformTool {
         );
     }
 
-    public record Result(List<FlowMatches> flows, long total) {
+    public record Result(List<FlowMatches> flows, long total, int page) {
     }
 
     public record FlowMatches(String namespace, String id, List<Match> matches) {

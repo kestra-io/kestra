@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 @KestraTest(environments = "memory")
@@ -77,5 +78,12 @@ class ListFlowDependenciesToolTest {
                 .relation(relation)
                 .build()
         );
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> ToolCalls.call(tool, "list_flow_dependencies", """
+            { "namespace": "any", "flowId": "any", "page": 0 }""", MAIN_TENANT))
+            .hasMessageContaining("Page must be 1 or greater");
     }
 }

@@ -47,31 +47,36 @@ public class ListFlowRevisionsTool implements McpPlatformTool {
 
     @Tool(
         name = "list_flow_revisions",
-        value = "List the revisions of a Kestra flow, newest first (at most " + MAX_RESULTS + " returned). Read-only; use this to see how often and when a flow changed, "
+        value = "List the revisions of a Kestra flow, newest first (" + MAX_RESULTS + " per page). Read-only; use this to see how often and when a flow changed, "
             + "then read_flow with a `revision` to get the source of a given revision, for example to compare two of them. "
-            + "Returns an object { revisions, total } where `revisions` is an array of { revision, updated } and `updated` is an ISO-8601 date-time or null. "
-            + "`total` is the number of all revisions, which can exceed the length of `revisions`."
+            + "Returns an object { revisions, total, page } where `revisions` is an array of { revision, updated } and `updated` is an ISO-8601 date-time or null. "
+            + "`total` is the number of all revisions; when it exceeds what was read so far, request the next `page`."
     )
     public Result listFlowRevisions(
         @P(name = "namespace", value = "The namespace of the flow") String namespace,
         @P(name = "flowId", value = "The id of the flow") String flowId,
+        @P(name = "page", value = "The 1-based page to read; omit for the first page", required = false) Integer page,
         final AgentCallContext.Context context) {
+        int pageNumber = ToolPages.pageNumber(page);
         List<FlowWithSource> revisions = flowRepository.findRevisions(context.tenant(), namespace, flowId, false);
         if (revisions.isEmpty()) {
             throw new IllegalArgumentException("Flow not found: '%s.%s'".formatted(namespace, flowId));
         }
 
+        List<FlowWithSource> newestFirst = revisions.stream()
+            .sorted(Comparator.comparing(FlowWithSource::getRevision).reversed())
+            .toList();
+
         return new Result(
-            revisions.stream()
-                .sorted(Comparator.comparing(FlowWithSource::getRevision).reversed())
-                .limit(MAX_RESULTS)
+            ToolPages.slice(newestFirst, pageNumber, MAX_RESULTS).stream()
                 .map(flow -> new Revision(flow.getRevision(), flow.getUpdated()))
                 .toList(),
-            revisions.size()
+            revisions.size(),
+            pageNumber
         );
     }
 
-    public record Result(List<Revision> revisions, long total) {
+    public record Result(List<Revision> revisions, long total, int page) {
     }
 
     public record Revision(Integer revision, Instant updated) {

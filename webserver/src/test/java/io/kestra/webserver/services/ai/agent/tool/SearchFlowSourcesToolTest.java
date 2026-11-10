@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(environments = "memory")
 class SearchFlowSourcesToolTest {
@@ -54,5 +55,26 @@ class SearchFlowSourcesToolTest {
                 message: %s
             """.formatted(flowId, NAMESPACE, message)));
         return flowId;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnNoFlowsWhenPageIsBeyondTheLastOne() throws Exception {
+        String token = "needle" + IdUtils.create().toLowerCase();
+        createFlow("hello " + token);
+
+        Map<String, Object> result = ToolCalls.call(tool, "search_flow_sources", """
+            { "query": "%s", "namespace": "%s", "page": 2 }""".formatted(token, NAMESPACE), MAIN_TENANT);
+
+        assertThat((List<Map<String, Object>>) result.get("flows")).isEmpty();
+        assertThat(((Number) result.get("total")).longValue()).isEqualTo(1);
+        assertThat(((Number) result.get("page")).intValue()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> ToolCalls.call(tool, "search_flow_sources", """
+            { "query": "any", "page": 0 }""", MAIN_TENANT))
+            .hasMessageContaining("Page must be 1 or greater");
     }
 }

@@ -61,4 +61,28 @@ class ListFlowRevisionsToolTest {
                 message: %s
             """.formatted(flowId, NAMESPACE, message);
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnNoRevisionsWhenPageIsBeyondTheLastOne() throws Exception {
+        String flowId = "flow" + IdUtils.create().toLowerCase();
+        flowService.create(GenericFlow.fromYaml(MAIN_TENANT, source(flowId, "one")));
+
+        Map<String, Object> result = ToolCalls.call(tool, "list_flow_revisions", """
+            { "namespace": "%s", "flowId": "%s", "page": 2 }""".formatted(NAMESPACE, flowId), MAIN_TENANT);
+
+        assertThat((List<Map<String, Object>>) result.get("revisions")).isEmpty();
+        assertThat(((Number) result.get("total")).longValue()).isEqualTo(1);
+        assertThat(((Number) result.get("page")).intValue()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() throws Exception {
+        String flowId = "flow" + IdUtils.create().toLowerCase();
+        flowService.create(GenericFlow.fromYaml(MAIN_TENANT, source(flowId, "one")));
+
+        assertThatThrownBy(() -> ToolCalls.call(tool, "list_flow_revisions", """
+            { "namespace": "%s", "flowId": "%s", "page": 0 }""".formatted(NAMESPACE, flowId), MAIN_TENANT))
+            .hasMessageContaining("Page must be 1 or greater");
+    }
 }

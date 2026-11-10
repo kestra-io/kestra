@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration check that {@code list_executions} returns real executions from the repository,
@@ -50,7 +51,7 @@ class ListExecutionsToolTest {
         String executionId = save(State.Type.SUCCESS);
 
         // When
-        ListExecutionsTool.Result result = tool.listExecutions(List.of(), CONTEXT);
+        ListExecutionsTool.Result result = tool.listExecutions(List.of(), null, CONTEXT);
 
         // Then
         assertThat(result.executions())
@@ -65,7 +66,7 @@ class ListExecutionsToolTest {
 
         // When — filtering on SUCCESS
         List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS", null, null));
-        ListExecutionsTool.Result result = tool.listExecutions(filters, CONTEXT);
+        ListExecutionsTool.Result result = tool.listExecutions(filters, null, CONTEXT);
 
         // Then — only SUCCESS executions are returned, including the one we created
         assertThat(result.executions()).isNotEmpty();
@@ -83,7 +84,7 @@ class ListExecutionsToolTest {
         }
         QueryFilterToolExecutor executor = new QueryFilterToolExecutor(
             tool,
-            ListExecutionsTool.class.getMethod("listExecutions", List.class, AgentCallContext.Context.class)
+            ListExecutionsTool.class.getMethod("listExecutions", List.class, Integer.class, AgentCallContext.Context.class)
         );
         ToolExecutionRequest request = ToolExecutionRequest.builder()
             .id("call-1")
@@ -123,5 +124,25 @@ class ListExecutionsToolTest {
                 .build()
         );
         return executionId;
+    }
+
+    @Test
+    void shouldReturnRemainingExecutionsWhenReadingSecondPage() {
+        String tenant = "listexecutionspage";
+        for (int i = 0; i < 52; i++) {
+            save(tenant, State.Type.SUCCESS);
+        }
+        List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, NAMESPACE, null, null));
+
+        ListExecutionsTool.Result result = tool.listExecutions(filters, 2, AgentCallContext.Context.ofTenant(tenant));
+
+        assertThat(result.executions()).hasSize(2);
+        assertThat(result.total()).isEqualTo(52);
+        assertThat(result.page()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> tool.listExecutions(List.of(), 0, CONTEXT)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Page must be 1 or greater");
     }
 }

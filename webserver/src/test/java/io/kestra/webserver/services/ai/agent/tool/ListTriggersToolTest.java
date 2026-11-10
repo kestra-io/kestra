@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 @KestraTest(environments = "memory", startRunner = false, startScheduler = false)
@@ -80,5 +81,29 @@ class ListTriggersToolTest {
                 .sourceDisabled(sourceDisabled)
                 .build()
         );
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnRemainingTriggersWhenReadingSecondPage() {
+        String namespace = "io.kestra.test.ai.page";
+        String flowId = createFlow(namespace);
+        for (int i = 0; i < 52; i++) {
+            saveTrigger(namespace, flowId, "trigger-%02d".formatted(i), false, false);
+        }
+
+        Map<String, Object> result = ToolCalls.call(tool, "list_flow_triggers", """
+            { "NAMESPACE": { "operator": "EQUALS", "value": "%s" }, "page": 2 }""".formatted(namespace), MAIN_TENANT);
+
+        assertThat((List<Map<String, Object>>) result.get("triggers")).hasSize(2);
+        assertThat(((Number) result.get("total")).longValue()).isEqualTo(52);
+        assertThat(((Number) result.get("page")).intValue()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> ToolCalls.call(tool, "list_flow_triggers", """
+            { "page": 0 }""", MAIN_TENANT))
+            .hasMessageContaining("Page must be 1 or greater");
     }
 }

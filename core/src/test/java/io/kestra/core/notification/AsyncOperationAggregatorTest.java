@@ -12,7 +12,6 @@ import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
 import io.kestra.core.async.AsyncOperationProcessedEvent.Progress;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.lock.LockService;
-import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.server.CoreAsyncOperationType;
@@ -22,7 +21,6 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
 @KestraTest
@@ -75,10 +73,9 @@ class AsyncOperationAggregatorTest {
         asyncOperationQueue.emit(new AsyncOperationProcessedEvent(operationId, null, "item-2", Outcome.FAILED, "boom", Instant.now()));
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(
-            () -> assertThat(notificationItemRepository.findByOperationId(null, operationId))
-                .extracting(NotificationItem::getResourceId, NotificationItem::getOutcome)
-                .containsExactlyInAnyOrder(tuple("item-1", NotificationItemOutcome.PENDING), tuple("item-2", NotificationItemOutcome.FAILED))
+            () -> assertThat(notificationItemRepository.findResourceIds(null, operationId, NotificationItemOutcome.FAILED)).containsExactly("item-2")
         );
+        assertThat(notificationItemRepository.findResourceIds(null, operationId, NotificationItemOutcome.PENDING)).containsExactly("item-1");
     }
 
     @Test

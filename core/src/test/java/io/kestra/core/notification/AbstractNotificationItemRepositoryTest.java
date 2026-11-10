@@ -36,23 +36,6 @@ public abstract class AbstractNotificationItemRepositoryTest {
     }
 
     @Test
-    void findByOperationId_returnsOnlyThatOperationsItemsOfThatTenant() {
-        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
-        notificationItemRepository.create(
-            List.of(
-                item(operationId, "res-1", null),
-                item(operationId, "res-2", null),
-                item(operationId, "res-3", "tenantA"),
-                item(TestsUtils.randomString(this.getClass().getSimpleName()), "res-4", null)
-            )
-        );
-
-        assertThat(notificationItemRepository.findByOperationId(null, operationId))
-            .extracting(NotificationItem::getResourceId)
-            .containsExactlyInAnyOrder("res-1", "res-2");
-    }
-
-    @Test
     void create() {
         String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
         List<NotificationItem> created = notificationItemRepository.create(

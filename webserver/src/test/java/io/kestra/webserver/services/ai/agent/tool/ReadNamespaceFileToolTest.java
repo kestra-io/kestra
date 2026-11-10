@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -74,5 +76,16 @@ class ReadNamespaceFileToolTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("/missing.txt")
             .hasMessageContaining("was not found");
+    }
+
+    @Test
+    void shouldRefuseWhenFileIsNotValidUtf8Text() throws Exception {
+        String namespace = randomNamespace();
+        Namespace storage = namespaceFactory.of(MAIN_TENANT, namespace);
+        storage.putFile(Path.of("/binary.dat"), new ByteArrayInputStream(new byte[] { (byte) 0xff, (byte) 0xfe, 0, 1 }), Namespace.Conflicts.ERROR);
+
+        assertThatThrownBy(() -> tool.readNamespaceFile(namespace, "/binary.dat", null, null, null, CONTEXT))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("not valid UTF-8");
     }
 }

@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
@@ -48,7 +49,7 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
     @Tool(
         name = "read_namespace_file",
         value = "Read a file stored in a Kestra namespace as UTF-8 text, optionally at a specific revision, in pages of at most `maxLength` characters (default " + DEFAULT_MAX_LENGTH + "). "
-            + "Read-only; use list_namespace_files to find the path first. Directories have no content. "
+            + "Fails when the file is not valid UTF-8 text. Read-only; use list_namespace_files to find the path first. Directories have no content. "
             + "Returns an object { namespace, path, revision, offset, content, nextOffset } where `revision` is the revision that was read and `nextOffset` is the offset to pass to read the rest of the file, or null when `content` ends the file."
     )
     public Result readNamespaceFile(
@@ -71,7 +72,7 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
 
         try {
             int read = revision == null ? storage.get(filePath).revision() : revision;
-            try (Reader reader = new InputStreamReader(storage.getFileContent(filePath, read), StandardCharsets.UTF_8)) {
+            try (Reader reader = new InputStreamReader(storage.getFileContent(filePath, read), StandardCharsets.UTF_8.newDecoder())) {
                 skip(reader, start);
                 String content = read(reader, length);
                 boolean more = reader.read() != -1;
@@ -79,6 +80,10 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
                     namespace, NamespaceFileTools.displayPath(NamespaceFile.of(namespace, filePath)), read, start, content, more ? start + content.length() : null
                 );
             }
+        } catch (CharacterCodingException e) {
+            throw new IllegalArgumentException(
+                "File '%s' in namespace '%s' is not valid UTF-8 text, so it cannot be read with this tool.".formatted(NamespaceFile.toLogicalPath(filePath), namespace)
+            );
         } catch (IOException e) {
             throw NamespaceFileTools.failure(e);
         }

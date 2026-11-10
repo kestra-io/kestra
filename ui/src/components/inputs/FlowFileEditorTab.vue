@@ -94,7 +94,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
+    import {computed, onActivated, onDeactivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
@@ -312,9 +312,35 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
-    useViolationMarkers({
+    const {markers: violationMarkerList, revealNext: revealNextViolation} = useViolationMarkers({
         editor: monacoEditor,
         errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
+    // A parked tab keeps its editor alive in KeepAlive, but the badge must not point at an editor nobody can see.
+    let isTabActive = true
+
+    // Guard needed because keep-alive keeps a FlowFileEditorTab instance per namespace file alive alongside the flow tab's.
+    function syncErrorNavigation() {
+        if (!props.flow) return
+        const count = isTabActive ? violationMarkerList.value.length : 0
+        flowStore.errorNavigation = count ? {count, revealNext: revealNextViolation} : null
+    }
+
+    watch(violationMarkerList, syncErrorNavigation, {immediate: true})
+
+    onActivated(() => {
+        isTabActive = true
+        syncErrorNavigation()
+    })
+
+    onDeactivated(() => {
+        isTabActive = false
+        syncErrorNavigation()
+    })
+
+    onBeforeUnmount(() => {
+        if (props.flow) flowStore.errorNavigation = null
     })
 
     useReadOnlyYamlKeys({

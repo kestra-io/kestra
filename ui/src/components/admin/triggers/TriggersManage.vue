@@ -795,7 +795,7 @@
             flowId: row.flowId,
             triggerId: row.triggerId,
         }).then(() => {
-            toast.saved(row.triggerId)
+            toast.success(t("delete backfill success", {id: row.triggerId}))
             triggerLoadDataAfterBulkEditAction()
         })
     }

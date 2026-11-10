@@ -213,6 +213,7 @@
     import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useIsMobile} from "../../../composables/useIsMobile"
+    import {useToast} from "../../../utils/toast"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
@@ -237,6 +238,7 @@
     })
 
     const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
@@ -643,8 +645,9 @@
 
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
-    function copyValue() {
-        copyToClipboard(rawValue.value)
+    async function copyValue() {
+        await copyToClipboard(rawValue.value)
+        toast.success(t("copied"))
     }
 
     function downloadValue() {

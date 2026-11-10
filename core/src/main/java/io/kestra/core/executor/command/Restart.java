@@ -31,6 +31,10 @@ public record Restart(String tenantId,
         );
     }
 
+    public Restart withRevision(@Nullable Integer revision) {
+        return new Restart(tenantId, namespace, flowId, executionId, timestamp, eventId, revision, operationId, actor);
+    }
+
     public Restart withOperationId(String operationId) {
         return new Restart(tenantId, namespace, flowId, executionId, timestamp, eventId, revision, operationId, actor);
     }

@@ -34,13 +34,6 @@ final class NamespaceFileTools {
         return normalized;
     }
 
-    static int pageNumber(final Integer page) {
-        if (page != null && page < 1) {
-            throw new IllegalArgumentException("Page must be 1 or greater, got %d.".formatted(page));
-        }
-        return page == null ? 1 : page;
-    }
-
     static String displayPath(final NamespaceFile file) {
         return displayPath(file, file.isDirectory());
     }

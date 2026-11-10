@@ -62,7 +62,7 @@ public class ListNamespaceFilesTool implements McpPlatformTool {
         @QueryFilterFormat(QueryFilter.Resource.NAMESPACE_FILE_METADATA) List<QueryFilter> filters,
         @P(name = "page", value = "The 1-based page of entries to read; omit for the first page", required = false) Integer page,
         final AgentCallContext.Context context) {
-        int pageNumber = NamespaceFileTools.pageNumber(page);
+        int pageNumber = ToolPages.pageNumber(page);
         List<QueryFilter> effective = new ArrayList<>();
         effective.add(WITHOUT_ROOT_DIRECTORY);
         ListUtils.emptyOnNull(filters).stream()

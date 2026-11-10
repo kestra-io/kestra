@@ -15,7 +15,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 @MicronautTest
 public abstract class AbstractNotificationItemRepositoryTest {
@@ -42,15 +41,15 @@ public abstract class AbstractNotificationItemRepositoryTest {
         notificationItemRepository.create(
             List.of(
                 item(operationId, "res-1", null),
-                item(operationId, "res-2", null).toBuilder().outcome(NotificationItemOutcome.FAILED).error("boom").build(),
+                item(operationId, "res-2", null),
                 item(operationId, "res-3", "tenantA"),
                 item(TestsUtils.randomString(this.getClass().getSimpleName()), "res-4", null)
             )
         );
 
         assertThat(notificationItemRepository.findByOperationId(null, operationId))
-            .extracting(NotificationItem::getResourceId, NotificationItem::getError)
-            .containsExactlyInAnyOrder(tuple("res-1", null), tuple("res-2", "boom"));
+            .extracting(NotificationItem::getResourceId)
+            .containsExactlyInAnyOrder("res-1", "res-2");
     }
 
     @Test

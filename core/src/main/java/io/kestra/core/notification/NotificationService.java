@@ -155,14 +155,13 @@ public class NotificationService {
      * Upserts the {@link NotificationItem} tracking {@code (operationId, resourceId)} to {@code outcome}
      * and pushes an update to SSE followers.
      */
-    public void updateNotificationItemOutcome(String operationId, @Nullable String tenantId, String resourceId, NotificationItemOutcome outcome, @Nullable String error) {
+    public void updateNotificationItemOutcome(String operationId, @Nullable String tenantId, String resourceId, NotificationItemOutcome outcome) {
         notificationItemRepository.update(
             NotificationItem.builder()
                 .operationId(operationId)
                 .tenantId(tenantId)
                 .resourceId(resourceId)
                 .outcome(outcome)
-                .error(error)
                 .updated(Instant.now())
                 .build()
         );

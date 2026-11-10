@@ -41,9 +41,6 @@ public class NotificationItem implements HasUID {
     @NotNull
     private Instant updated;
 
-    @Nullable
-    private String error;
-
     @Override
     public String uid() {
         return IdUtils.from(operationId + resourceId);

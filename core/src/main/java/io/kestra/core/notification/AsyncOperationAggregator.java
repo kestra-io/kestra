@@ -75,7 +75,7 @@ public class AsyncOperationAggregator {
                         case FAILED -> NotificationItemOutcome.FAILED;
                     };
                     if (outcome != null) {
-                        notificationService.updateNotificationItemOutcome(event.operationId(), event.tenantId(), event.itemId(), outcome, event.error());
+                        notificationService.updateNotificationItemOutcome(event.operationId(), event.tenantId(), event.itemId(), outcome);
                     }
                 } catch (Exception exception) {
                     log.error("Error while processing AsyncOperationProcessedEvent", exception);

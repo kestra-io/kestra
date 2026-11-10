@@ -67,7 +67,7 @@ class AsyncOperationAggregatorTest {
     }
 
     @Test
-    void shouldIgnoreProgressEventsAndKeepTheErrorOfAFailedItem() throws Exception {
+    void shouldIgnoreProgressEventsAndRecordTerminalOutcomes() throws Exception {
         String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
         notificationService.notifyAsyncOperation("test-user", null, operationId, CoreAsyncOperationType.EXECUTION_KILL, List.of("item-1", "item-2"));
 
@@ -76,8 +76,8 @@ class AsyncOperationAggregatorTest {
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(
             () -> assertThat(notificationItemRepository.findByOperationId(null, operationId))
-                .extracting(NotificationItem::getResourceId, NotificationItem::getOutcome, NotificationItem::getError)
-                .containsExactlyInAnyOrder(tuple("item-1", NotificationItemOutcome.PENDING, null), tuple("item-2", NotificationItemOutcome.FAILED, "boom"))
+                .extracting(NotificationItem::getResourceId, NotificationItem::getOutcome)
+                .containsExactlyInAnyOrder(tuple("item-1", NotificationItemOutcome.PENDING), tuple("item-2", NotificationItemOutcome.FAILED))
         );
     }
 

@@ -41,6 +41,8 @@
         labelWidth: undefined,
         error: undefined,
         showMessage: undefined,
+        // Left undefined: a forwarded `false` makes ElFormItem turn every required rule off.
+        required: undefined,
         inline: false,
     })
 

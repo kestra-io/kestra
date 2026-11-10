@@ -89,4 +89,13 @@ describe("KsFormItem", () => {
         })
         expect(wrapper.find(".kel-form-item__label").attributes("for")).toBeUndefined()
     })
+
+    test("keeps a field required by the form rules required when KsFormItem gets no required prop", () => {
+        const wrapper = mount(KsForm, {
+            props: {model: {name: ""}, rules: {name: [{required: true, message: "Name is required"}]}},
+            slots: {default: "<ks-form-item label=\"Name\" prop=\"name\"><input /></ks-form-item>"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item").classes()).toContain("is-required")
+    })
 })

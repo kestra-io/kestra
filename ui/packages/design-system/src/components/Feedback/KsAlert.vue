@@ -41,6 +41,7 @@
         center?: boolean
         banner?: boolean
     }>(), {
+        closable: false,
         showIcon: true,
         banner: false,
     })

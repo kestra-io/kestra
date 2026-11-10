@@ -56,7 +56,7 @@ public class SearchLogsTool implements McpPlatformTool {
         @P(name = "page", value = "The 1-based page of log lines to read; omit for the first page", required = false)Integer page,
         @P(name = "maxMessageLength", value = "The maximum number of characters to return per log message, longer messages are cut and end with an ellipsis; omit for the default of " + LogToolPages.DEFAULT_MAX_MESSAGE_LENGTH, required = false) Integer maxMessageLength,
         final AgentCallContext.Context context) {
-        int pageNumber = LogToolPages.pageNumber(page);
+        int pageNumber = ToolPages.pageNumber(page);
         int messageLength = LogToolPages.maxMessageLength(maxMessageLength);
         Page<LogEntry> entries = LogToolPages.find(logRepository, context.tenant(), filters, pageNumber, PAGE_SIZE, "timestamp:desc");
 

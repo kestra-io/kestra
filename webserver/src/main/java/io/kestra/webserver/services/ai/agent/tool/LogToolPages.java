@@ -16,13 +16,6 @@ final class LogToolPages {
     private LogToolPages() {
     }
 
-    static int pageNumber(final Integer page) {
-        if (page != null && page < 1) {
-            throw new IllegalArgumentException("Page must be 1 or greater, got %d.".formatted(page));
-        }
-        return page == null ? 1 : page;
-    }
-
     static int maxMessageLength(final Integer maxMessageLength) {
         if (maxMessageLength != null && maxMessageLength < 1) {
             throw new IllegalArgumentException("maxMessageLength must be 1 or greater, got %d.".formatted(maxMessageLength));

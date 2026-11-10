@@ -69,7 +69,7 @@ public class ReadExecutionLogsTool implements McpPlatformTool {
                 .forEach(effective::add);
         }
 
-        int pageNumber = LogToolPages.pageNumber(page);
+        int pageNumber = ToolPages.pageNumber(page);
         int messageLength = LogToolPages.maxMessageLength(maxMessageLength);
         Page<LogEntry> entries = LogToolPages.find(logRepository, tenant, effective, pageNumber, PAGE_SIZE, "timestamp:asc");
 

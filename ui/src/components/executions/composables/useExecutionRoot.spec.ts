@@ -164,7 +164,6 @@ describe("useExecutionRoot breadcrumb", () => {
         const labels = info.breadcrumb!.map((crumb) => crumb.label)
 
         expect(labels).toEqual(["executions", "company", "team", "nested_loop_demo", "per_region", "1mubyrnL loop-lineage.iteration-count-value:1/3/EMEA", "per_quarter"])
-        expect([labels[0], labels.at(-1)]).toEqual(["executions", "per_quarter"])
         expect(info.title).toBe("5j2D9NuQvgj0wiyuADhgmt loop-lineage.iteration-count-value:2/4/Q2")
     })
 })

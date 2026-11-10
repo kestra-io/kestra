@@ -57,8 +57,9 @@ export function useIterationsListInfo(enabled: () => boolean) {
         root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
     })
 
-    return computed<{title: string; breadcrumb: KsBreadcrumbItem[]} | undefined>(() => {
-        if (!filters.value || !parent.value) return undefined
+    return computed<{title: string; breadcrumb?: KsBreadcrumbItem[]} | undefined>(() => {
+        if (!filters.value) return undefined
+        if (!parent.value) return {title: t("iterations")}
         const {namespace, flowId, levels} = parent.value
         return {
             title: t("iterations"),

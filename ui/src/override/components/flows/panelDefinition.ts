@@ -49,7 +49,6 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Topology",
         },
         uid: "topology",
-        main: true,
         component: markRaw(LowCodeEditorWrapper),
     },
     {

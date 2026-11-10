@@ -848,7 +848,7 @@ class ExecutionControllerTest {
 
         // Then
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("defaults has changed");
+        assertThat(e.getMessage()).contains("input 'name' defaults have changed");
     }
 
     @Test

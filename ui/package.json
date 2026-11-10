@@ -156,7 +156,8 @@
         },
         "storybook": "$storybook",
         "vite": "npm:rolldown-vite@latest",
-        "@nuxtjs/mdc": "~0.22.1"
+        "@nuxtjs/mdc": "~0.22.1",
+        "@opentelemetry/core": "2.8.0"
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"

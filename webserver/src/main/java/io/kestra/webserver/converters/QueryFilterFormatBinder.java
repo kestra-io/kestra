@@ -124,23 +124,28 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
     @VisibleForTesting
     static void validate(List<QueryFilter> filters, QueryFilter.Resource resource) {
-        QueryFilter.validateQueryFilters(withoutTimeRange(filters), resource);
+        QueryFilter.validateQueryFilters(withoutRewrittenFields(filters, resource), resource);
     }
 
-    // No resource lists TIME_RANGE because controllers rewrite it into a date filter before the repository validates.
-    private static List<QueryFilter> withoutTimeRange(List<QueryFilter> filters) {
+    // Controllers rewrite these into a supported date field before the repository validates: timeRange everywhere, startDate and endDate on triggers.
+    private static List<QueryFilter> withoutRewrittenFields(List<QueryFilter> filters, QueryFilter.Resource resource) {
         List<QueryFilter> kept = new ArrayList<>(filters.size());
         for (QueryFilter filter : filters) {
             if (filter.isNode()) {
-                List<QueryFilter> children = withoutTimeRange(filter.children());
+                List<QueryFilter> children = withoutRewrittenFields(filter.children(), resource);
                 if (!children.isEmpty()) {
                     kept.add(QueryFilter.builder().logical(filter.logical()).children(children).build());
                 }
-            } else if (QueryFilter.Field.TIME_RANGE != filter.field()) {
+            } else if (!isRewrittenByController(filter.field(), resource)) {
                 kept.add(filter);
             }
         }
         return kept;
+    }
+
+    private static boolean isRewrittenByController(QueryFilter.Field field, QueryFilter.Resource resource) {
+        return QueryFilter.Field.TIME_RANGE == field
+            || QueryFilter.Resource.TRIGGER == resource && (QueryFilter.Field.START_DATE == field || QueryFilter.Field.END_DATE == field);
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

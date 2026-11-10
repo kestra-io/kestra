@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
-    "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
+    "no_logs_data_title": "ログが見つかりません",
     "duration": "期間",
     "total_duration": "合計時間",
     "running duration": "実行期間",
@@ -863,7 +863,7 @@
     "last execution date": "最後の実行日",
     "revisions": "リビジョン",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
-    "no revisions": "リビジョンなし",
+    "no revisions": "リビジョンが見つかりません",
     "side-by-side": "並列表示",
     "line-by-line": "行ごと表示",
     "template": "テンプレート",
@@ -1339,6 +1339,8 @@
     "pause backfill": "backfillを一時停止",
     "continue backfills": "backfillを続行",
     "delete backfills": "backfillを削除",
+    "delete backfill confirm": "trigger {id} のbackfillを削除しますか？",
+    "delete backfill success": "trigger {id} のbackfillを削除しました",
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
@@ -2351,6 +2353,7 @@
       "default": "デフォルトダッシュボード",
       "set_default": "デフォルトに設定",
       "empty": "表示する結果がありません。",
+      "overdue": "期限切れ — {date}",
       "edition": {
         "label": "ダッシュボードを編集",
         "chart": "このチャートを編集"
@@ -2373,7 +2376,8 @@
         "paused": "一時停止中",
         "success": "成功",
         "warning": "警告",
-        "failed": "失敗"
+        "failed": "失敗",
+        "upcoming": "近日公開"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "フローテストを表示"
       },
       "errors": {
-        "label": "{count} エラー"
+        "label": "{count} エラー",
+        "action": "{count} 件のエラー、次のエラーに移動"
       }
     },
     "invalid_source_code": "無効なソースコード",

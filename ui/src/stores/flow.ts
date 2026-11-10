@@ -162,6 +162,9 @@ export const useFlowStore = defineStore("flow", () => {
      *  read-only-preview banner can decline the active `previewSource` without depending on the AI
      *  dock's internal state directly. */
     const declinePreview = ref<(() => void) | null>(null)
+    /** Registered by `FlowFileEditorTab.vue` (mirrors `filesSaveAll`'s pattern) so the toolbar's
+     *  error status can step through the violations the editor underlines without reaching into Monaco. */
+    const errorNavigation = ref<{count: number; revealNext: () => void} | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
 
@@ -183,7 +186,7 @@ export const useFlowStore = defineStore("flow", () => {
         saveAttempted.value = false
     })
 
-    watch(haveChange, (newValue) => {
+    watch(() => haveChange.value || hasDirtyEditorFiles.value, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
@@ -1096,6 +1099,7 @@ function deleteFlowAndDependencies() {
         saveAttempted,
         previewSource,
         declinePreview,
+        errorNavigation,
         haveChange,
         expandedSubflows,
         addTrigger,

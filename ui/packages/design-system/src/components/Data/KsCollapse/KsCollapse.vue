@@ -17,7 +17,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<CollapseModelValue>()
+    const model = defineModel<CollapseModelValue>({default: () => []})
 
     const props = defineProps<{
         accordion?: boolean

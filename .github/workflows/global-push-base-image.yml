@@ -103,8 +103,12 @@ jobs:
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
             JRE_VERSION=${{ matrix.variant.jre }}
             WITH_PYTHON=${{ matrix.variant.with-python }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.variant.cache-tag }}
-          cache-to: type=inline
+          # No layer cache: the point of the nightly rebuild is to re-run `apt-get upgrade` and
+          # `uv pip install kestra`, and a cached layer never re-runs (the RUN line doesn't change),
+          # so OS and Python security fixes only landed when the eclipse-temurin parent moved.
+          # `pull` also fetches the latest parent image instead of a stale local copy.
+          no-cache: true
+          pull: true
 
       - name: Slack - Notification
         if: ${{ failure() }}

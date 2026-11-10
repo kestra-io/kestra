@@ -8,7 +8,8 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 const stubs = {
     ValidationError: {
         name: "ValidationError",
-        props: ["errors", "warnings", "infos", "iconOnly", "tooltipPlacement"],
+        props: ["errors", "warnings", "infos", "iconOnly", "tooltipPlacement", "activatable"],
+        emits: ["activate"],
         template: "<span />",
     },
     FlowEditorStatCounter: {
@@ -87,5 +88,19 @@ describe("FlowEditorStats.vue", () => {
         const {validation} = mountStats()
 
         expect(validation().exists()).toBe(false)
+    })
+
+    it("makes the error status a button that reveals the next error once the editor located one", async () => {
+        const flowStore = useFlowStore()
+        const {wrapper, validation} = mountStats()
+        expect(validation().props("activatable")).toBe(false)
+
+        const revealNext = vi.fn()
+        flowStore.errorNavigation = {count: 1, revealNext}
+        await wrapper.vm.$nextTick()
+        expect(validation().props("activatable")).toBe(true)
+
+        validation().vm.$emit("activate")
+        expect(revealNext).toHaveBeenCalledOnce()
     })
 })

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
     "logs": "Logs",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
-    "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",
+    "no_logs_data_title": "कोई logs नहीं मिले",
     "duration": "अवधि",
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
@@ -863,7 +863,7 @@
     "last execution date": "अंतिम निष्पादन तिथि",
     "revisions": "पुनरीक्षण",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
-    "no revisions": "कोई संशोधन नहीं",
+    "no revisions": "कोई संशोधन नहीं मिले",
     "side-by-side": "साइड-बाय-साइड",
     "line-by-line": "लाइन-बाय-लाइन",
     "template": "टेम्पलेट",
@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill को रोकें",
     "continue backfills": "Backfills जारी रखें",
     "delete backfills": "Backfills हटाएं",
+    "delete backfill confirm": "Trigger {id} का Backfill हटाएं?",
+    "delete backfill success": "Trigger {id} का Backfill हटा दिया गया है",
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
@@ -2335,11 +2337,11 @@
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "no_results": {
-      "executions": "कोई Executions नहीं मिला",
-      "triggers": "कोई Triggers नहीं मिले",
-      "flows": "कोई Flows नहीं मिला",
-      "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले",
+      "executions": "कोई executions नहीं मिले",
+      "triggers": "कोई triggers नहीं मिले",
+      "flows": "कोई flows नहीं मिले",
+      "kv_pairs": "कोई key-value जोड़े नहीं मिले",
+      "secrets": "कोई secrets नहीं मिले",
       "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
       "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
@@ -2351,6 +2353,7 @@
       "default": "डिफ़ॉल्ट डैशबोर्ड",
       "set_default": "डिफ़ॉल्ट के रूप में सेट करें",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
+      "overdue": "देय तिथि से अधिक — {date}",
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
         "chart": "इस चार्ट को संपादित करें"
@@ -2373,7 +2376,8 @@
         "paused": "रुका हुआ",
         "success": "सफलता",
         "warning": "चेतावनी",
-        "failed": "विफल"
+        "failed": "विफल",
+        "upcoming": "आगामी"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "flow परीक्षण देखें"
       },
       "errors": {
-        "label": "{count} त्रुटि(याँ)"
+        "label": "{count} त्रुटि(याँ)",
+        "action": "{count} त्रुटि(याँ), अगली त्रुटि पर जाएं"
       }
     },
     "invalid_source_code": "अमान्य स्रोत कोड",

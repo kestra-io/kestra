@@ -27,7 +27,22 @@
                     <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
                 </KsContainer>
             </template>
+            <button
+                v-if="activatable"
+                type="button"
+                class="error-status-action"
+                data-test="validation-error-next"
+                :aria-label="$t('flow_editor_stats.errors.action', {count: errors.length})"
+                @click="$emit('activate')"
+            >
+                <KsCodeStatus
+                    status="error"
+                    :iconOnly="iconOnly"
+                    :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
+                />
+            </button>
             <KsCodeStatus
+                v-else
                 status="error"
                 :iconOnly="iconOnly"
                 :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
@@ -113,6 +128,11 @@
         size?: "default" | "small";
         tooltipPlacement?: string;
         iconOnly?: boolean;
+        activatable?: boolean;
+    }>()
+
+    defineEmits<{
+        activate: [];
     }>()
 
     const rootContainer = ref<HTMLSpanElement>()
@@ -189,6 +209,24 @@
 
     .info {
         color: var(--ks-status-info);
+    }
+
+    .error-status-action {
+        display: inline-flex;
+        padding: 0;
+        border: none;
+        background: none;
+        border-radius: var(--ks-radius-sm);
+        cursor: pointer;
+
+        &:hover {
+            background: var(--ks-bg-error);
+        }
+
+        &:focus-visible {
+            outline: var(--ks-border-width-thin) solid var(--ks-border-focus);
+            outline-offset: var(--ks-spacing-1);
+        }
     }
     .validation-error-icon,
     .validation-error-label {

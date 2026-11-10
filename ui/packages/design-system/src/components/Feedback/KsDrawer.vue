@@ -39,7 +39,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<boolean>()
+    const model = defineModel<boolean>({default: false})
 
     const props = withDefaults(defineProps<{
         title?: string

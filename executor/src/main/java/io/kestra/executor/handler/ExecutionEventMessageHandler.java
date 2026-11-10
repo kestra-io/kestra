@@ -124,8 +124,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         if (evaluationType != EvaluationType.PASS) {
             var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return Optional.empty();
+                return killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             }
         }
 

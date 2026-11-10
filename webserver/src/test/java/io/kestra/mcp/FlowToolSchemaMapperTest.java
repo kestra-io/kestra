@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
@@ -159,6 +160,22 @@ class FlowToolSchemaMapperTest {
         InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(TableInput.builder().type(Type.TABLE).minRows(1).maxRows(8).columns(List.of(
+                IntInput.builder().id("size_gb").type(Type.INT).build()
+            )).build())
+            .expectedSchema(Map.of(
+                "type", "array",
+                "items", Map.of(
+                    "type", "object",
+                    "properties", Map.of("size_gb", Map.of("type", "integer")),
+                    "required", List.of("size_gb"),
+                    "additionalProperties", false
+                ),
+                "minItems", 1,
+                "maxItems", 8
+            ))
             .build()
     );
 
@@ -269,7 +286,7 @@ class FlowToolSchemaMapperTest {
 
     @Test
     void shouldMapAllHintsCorrectlyWhenBuildingToolWithAnnotations() {
-        McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(true, false, false, true, false));
+        McpToolTrigger trigger = buildTrigger(new McpToolAnnotations(true, false, false, true, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
 
@@ -282,7 +299,7 @@ class FlowToolSchemaMapperTest {
 
     @Test
     void shouldSetNameAndTitleWhenBuildingToolWithTriggerMetadata() {
-        McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(false, false, false, false, false));
+        McpToolTrigger trigger = buildTrigger(new McpToolAnnotations(false, false, false, false, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
 
@@ -297,13 +314,13 @@ class FlowToolSchemaMapperTest {
             IntInput.builder().id("count").type(Type.INT).required(false).build()
         );
 
-        McpSchema.Tool tool = mapper.buildTool(buildFlow(inputs), buildTrigger(new McpToolTrigger.Annotations(false, false, false, false, false)));
+        McpSchema.Tool tool = mapper.buildTool(buildFlow(inputs), buildTrigger(new McpToolAnnotations(false, false, false, false, false)));
 
         assertThat(tool.inputSchema().properties()).containsKeys("name", "count");
         assertThat(tool.inputSchema().required()).containsExactly("name");
     }
 
-    private McpToolTrigger buildTrigger(McpToolTrigger.Annotations annotations) {
+    private McpToolTrigger buildTrigger(McpToolAnnotations annotations) {
         return McpToolTrigger.builder()
             .id("t").type(McpToolTrigger.class.getName())
             .toolName("my-tool").title("My Tool").toolDescription("desc")

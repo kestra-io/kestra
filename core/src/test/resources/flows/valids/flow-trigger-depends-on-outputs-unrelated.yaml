@@ -1,0 +1,12 @@
+id: flow-trigger-depends-on-outputs-unrelated
+namespace: io.kestra.tests.trigger.depends.on.outputs.other
+
+tasks:
+  - id: ret
+    type: io.kestra.plugin.core.debug.Return
+    format: "do_not_leak"
+
+outputs:
+  - id: secret
+    type: STRING
+    value: "{{ outputs.ret.value }}"

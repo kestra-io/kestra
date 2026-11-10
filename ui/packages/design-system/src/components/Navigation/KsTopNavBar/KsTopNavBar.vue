@@ -1,5 +1,5 @@
 <template>
-    <nav class="ks-topnavbar d-flex align-items-center w-100">
+    <nav class="ks-topnavbar">
         <KsIconButton
             v-if="sidebarCollapsed"
             class="icon-btn"
@@ -10,11 +10,12 @@
             <Menu />
         </KsIconButton>
         <div class="title-section">
-            <div class="d-flex align-items-center gap-2">
+            <div class="title-row">
                 <KsBreadcrumb
                     :items="breadcrumb ?? []"
                     :title="title ?? ''"
                     :mainIcon="mainIcon"
+                    :titleSiblings="titleSiblings"
                     showLeading
                 >
                     <template #title>
@@ -54,7 +55,7 @@
                 <slot name="description" />
             </div>
         </div>
-        <div class="side d-flex gap-2 flex-shrink-0 align-items-center">
+        <div class="side">
             <slot name="search" />
             <slot name="actions" />
             <slot name="panel-toggle" />
@@ -79,7 +80,7 @@
     import Information from "vue-material-design-icons/InformationOutline.vue"
     import DockRight from "vue-material-design-icons/DockRight.vue"
     import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
-    import type {KsBreadcrumbItem} from "../KsBreadcrumb/types"
+    import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "../KsBreadcrumb/types"
     import KsIconButton from "../../Basic/KsIconButton/KsIconButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
     import KsTag from "../../Data/KsTag/KsTag.vue"
@@ -96,6 +97,7 @@
         title?: string
         description?: string
         breadcrumb?: KsBreadcrumbItem[]
+        titleSiblings?: KsBreadcrumbLoader
         mainIcon?: Component
         beta?: boolean
         isBookmarked?: boolean
@@ -125,8 +127,11 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-topnavbar {
+        display: flex;
+        align-items: center;
+        width: 100%;
         height: 60px;
         flex-shrink: 0;
         padding: 0 var(--ks-spacing-4);
@@ -151,6 +156,12 @@
         flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 
     .description {
@@ -188,18 +199,29 @@
         }
     }
 
+    .star {
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
     .dock-toggle {
-         &.is-open {
+        &.is-open {
             color: var(--ks-icon-default);
         }
-        
+
         @media (max-width: 767px) {
             display: none;
         }
     }
 
     .side {
-        :deep(ul) {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
+
+        & :deep(ul) {
             display: flex;
             list-style: none;
             padding: 0;

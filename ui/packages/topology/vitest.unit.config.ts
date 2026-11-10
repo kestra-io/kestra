@@ -9,10 +9,11 @@ export default defineConfig({
     test: {
         environment: "jsdom",
         globals: true,
-        include: ["tests/**/*.test.ts"],
+        include: ["src/**/*.test.ts"],
         setupFiles: ["./tests/units/setup.ts"],
         coverage: {
             include: ["src/**/*.{ts,vue}"],
+            exclude: ["src/**/*.{test,stories}.{ts,tsx}"],
         },
     },
 })

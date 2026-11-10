@@ -1,4 +1,5 @@
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 import InitialSchema from "../../../../src/stores/flow-schema.json"
 import {usePluginsStore} from "../../../../src/stores/plugins"
 
@@ -99,15 +100,15 @@ const PLUGINS_RESPONSE = [{
 }]
 
 export function mockNoCodeTransport() {
-    const axios: any = {}
-    axios.get = (url: string) => {
-        if (url.endsWith("plugins")) return Promise.resolve({data: PLUGINS_RESPONSE})
-        if (url.endsWith("/flow")) return Promise.resolve({data: InitialSchema})
-        return Promise.resolve({data: []})
+    const axios: Partial<AxiosLikeClient> = {}
+    axios.get = async <T>(url: string) => {
+        if (url.endsWith("plugins")) return mockResponse<T>(PLUGINS_RESPONSE)
+        if (url.endsWith("/flow")) return mockResponse<T>(InitialSchema)
+        return mockResponse<T>([])
     }
-    axios.post = (url: string) => {
-        if (url.endsWith("flows/validate/task")) return Promise.resolve({data: {}})
-        return Promise.resolve({data: []})
+    axios.post = async <T>(url: string) => {
+        if (url.endsWith("flows/validate/task")) return mockResponse<T>({})
+        return mockResponse<T>([])
     }
     setMockClient(axios)
 }

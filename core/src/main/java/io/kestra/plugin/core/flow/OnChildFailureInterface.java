@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -29,23 +30,24 @@ public interface OnChildFailureInterface {
     enum OnChildFailure {
         CONTINUE,
         CANCEL,
-        FAIL;
+        FAIL,
+        UNKNOWN;
 
         @JsonCreator
         public static OnChildFailure fromString(final String value) {
-            return Enums.getForNameIgnoreCase(value, OnChildFailure.class, CONTINUE);
+            return Enums.getForNameIgnoreCase(value, OnChildFailure.class, UNKNOWN);
         }
 
         /**
          * The task-run state to apply to interrupted children.
          *
-         * @throws IllegalStateException if called on {@link #CONTINUE}, which never trigger an interrupt.
+         * @throws InternalException if called on {@link #CONTINUE} or {@link #UNKNOWN}, which never trigger an interrupt.
          */
-        public State.Type toTaskRunState() {
+        public State.Type toTaskRunState() throws InternalException {
             return switch (this) {
                 case CANCEL -> State.Type.CANCELLED;
                 case FAIL -> State.Type.FAILED;
-                case CONTINUE -> throw new IllegalStateException("No task run state is defined for onChildFailure value '%s'.".formatted(this));
+                case CONTINUE, UNKNOWN -> throw new InternalException("No task run state is defined for onChildFailure value '%s'.".formatted(this));
             };
         }
     }

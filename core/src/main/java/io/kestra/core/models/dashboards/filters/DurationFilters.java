@@ -53,7 +53,7 @@ public final class DurationFilters {
         for (AbstractFilter<?> filter : filters) {
             if (filter instanceof Or<?> or) {
                 violations.addAll(violations(or.getValues(), durationFields));
-            } else if (durationFields.contains(filter.getField())) {
+            } else if (filter.getField() != null && durationFields.contains(filter.getField())) {
                 // the unit is irrelevant here: a filter is valid when every one of its values is a duration
                 try {
                     rewrite(filter, Duration::toMillis);

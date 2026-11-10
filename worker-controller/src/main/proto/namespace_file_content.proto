@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+// Reads and writes the content of namespace files for workers that do not reach the internal storage.
+// Their metadata goes through the NamespaceFileMetadataService.
+service NamespaceFileContentService {
+  // NOT_FOUND when the object has no content.
+  rpc get(NamespaceFileObjectRequest) returns (stream StreamChunk);
+
+  rpc exists(NamespaceFileObjectRequest) returns (BooleanResponse);
+
+  // The first message carries the object, the following ones its content.
+  rpc put(stream NamespaceFilePutRequest) returns (NamespaceFilePutResponse);
+
+  rpc createDirectory(NamespaceFileObjectRequest) returns (BooleanResponse);
+
+  rpc delete(NamespaceFileObjectRequest) returns (BooleanResponse);
+}
+
+message NamespaceFileObjectRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  // The storage object of a revision, relative to the namespace files root, e.g. "scripts/main.py.v2".
+  // A directory ends with a slash.
+  string object = 4;
+}
+
+message NamespaceFilePutRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  oneof payload {
+    NamespaceFileObject object = 3;
+    StreamChunk chunk = 4;
+  }
+}
+
+message NamespaceFileObject {
+  string namespace = 1;
+  // See NamespaceFileObjectRequest.object.
+  string object = 2;
+}
+
+message NamespaceFilePutResponse {
+  RequestOrResponseHeader header = 1;
+  int64 size = 2;
+}

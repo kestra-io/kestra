@@ -8,11 +8,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,6 +36,8 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.ServerOwned;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.assets.Custom;
@@ -56,7 +60,9 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TimezoneId;
+import io.kestra.core.validations.validator.TableInputValidator;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -91,8 +97,10 @@ public class JsonSchemaGenerator {
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
     private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
-    // A value holding a Pebble expression, accepted next to the literal format of an output asset property.
-    private static final String PEBBLE_EXPRESSION_PATTERN = ".*\\{\\{.*\\}\\}.*";
+    // A value holding a Pebble block, written for ECMA-262 since editors evaluate schema patterns in JavaScript.
+    private static final String PEBBLE_EXPRESSION_PATTERN = IntStream.range(0, PebbleUtil.openingBlockDelimiters().size())
+        .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
+        .collect(Collectors.joining("|", ".*(", ").*"));
 
     private final PluginRegistry pluginRegistry;
 
@@ -101,10 +109,26 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
+    Map<Class<?>, Optional<Object>> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
+    }
+
+    // Same shape as @TimezoneId, untyped branches the no-code editor renders as one select; the plugin schema keeps its top-level enum for the docs.
+    private void acceptExpressionOnDynamicEnums(ObjectNode objectNode) {
+        objectNode.findParents("enum").forEach(jsonNode ->
+        {
+            if (jsonNode instanceof ObjectNode oNode && oNode.path("$dynamic").asBoolean(false) && !oNode.has("anyOf")) {
+                ArrayNode anyOf = oNode.putArray("anyOf");
+                anyOf.addObject().set("enum", oNode.remove("enum"));
+                anyOf.addObject().put("pattern", PEBBLE_EXPRESSION_PATTERN);
+            }
+        });
+    }
+
+    private static String escapeRegex(String literal) {
+        return literal.replaceAll("[\\\\^$.*+?()\\[\\]{}|/]", "\\\\$0");
     }
 
     private void replaceOneOfWithAnyOf(ObjectNode objectNode) {
@@ -143,6 +167,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            acceptExpressionOnDynamicEnums(objectNode);
 
             // Strip edition-restricted input types before collapsing discriminator wrappers: the
             // strip logic removes a whole allOf branch (the one carrying the `type` const), which
@@ -154,7 +179,9 @@ public class JsonSchemaGenerator {
             objectNode = MAPPER.convertValue(schema, ObjectNode.class);
             collapseSingleUseDiscriminatorWrappers(objectNode);
 
-            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            Map<String, Object> collapsed = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            restrictTableColumns(collapsed);
+            return collapsed;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -301,6 +328,76 @@ public class JsonSchemaGenerator {
         } else if (node instanceof List<?> list) {
             list.forEach(value -> collectRefs(value, refs));
         }
+    }
+
+    /**
+     * Narrows the {@code columns} of a {@code TABLE} input to what {@link TableInputValidator} accepts, so that editors
+     * offer neither a forbidden column type nor a property a column cannot declare: each allowed type is reached
+     * through a copy of its definition without those properties.
+     */
+    @SuppressWarnings("unchecked")
+    private static void restrictTableColumns(Map<String, Object> schema) {
+        if (!(schema.get("definitions") instanceof Map<?, ?> rawDefinitions)) {
+            return;
+        }
+
+        Map<String, Object> definitions = (Map<String, Object>) rawDefinitions;
+        Set<String> allowedTypes = TableInputValidator.ALLOWED_COLUMN_TYPES.stream().map(Enum::name).collect(Collectors.toSet());
+        Map<String, Object> columnDefinitions = new LinkedHashMap<>();
+        definitions.values().forEach(definition ->
+        {
+            if (
+                !io.kestra.core.models.flows.Type.TABLE.name().equals(inputTypeOf(definition))
+                    || !(nested(definition, "properties", "columns", "items") instanceof Map<?, ?> items)
+                    || !(items.get("anyOf") instanceof List<?> branches)
+            ) {
+                return;
+            }
+
+            List<Object> restricted = new ArrayList<>();
+            for (Object branch : branches) {
+                String ref = branch instanceof Map<?, ?> map && map.get("$ref") instanceof String value ? value : null;
+                Object target = ref == null ? null : definitions.get(definitionName(ref));
+                String type = inputTypeOf(target);
+                if (type != null && !allowedTypes.contains(type)) {
+                    continue;
+                }
+                if (type == null || !(((Map<String, Object>) target).get("properties") instanceof Map<?, ?>)) {
+                    restricted.add(branch);
+                    continue;
+                }
+                String columnDefinition = definitionName(ref) + "-TableColumn";
+                columnDefinitions.computeIfAbsent(columnDefinition, key -> withoutForbiddenColumnProperties((Map<String, Object>) target));
+                restricted.add(Map.of("$ref", ref.substring(0, ref.lastIndexOf('/') + 1) + columnDefinition));
+            }
+            ((Map<String, Object>) items).put("anyOf", restricted);
+        });
+        definitions.putAll(columnDefinitions);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withoutForbiddenColumnProperties(Map<String, Object> definition) {
+        Map<String, Object> copy = MAPPER.convertValue(definition, MAP_TYPE_REFERENCE);
+        ((Map<String, Object>) copy.get("properties")).keySet().removeAll(TableInputValidator.FORBIDDEN_COLUMN_PROPERTIES);
+        if (copy.get("required") instanceof List<?> required) {
+            copy.put("required", required.stream().filter(name -> !TableInputValidator.FORBIDDEN_COLUMN_PROPERTIES.contains(name)).toList());
+        }
+        return copy;
+    }
+
+    private static String inputTypeOf(Object definition) {
+        return nested(definition, "properties", "type", "const") instanceof String type ? type : null;
+    }
+
+    private static Object nested(Object node, String... keys) {
+        Object current = node;
+        for (String key : keys) {
+            if (!(current instanceof Map<?, ?> map)) {
+                return null;
+            }
+            current = map.get(key);
+        }
+        return current;
     }
 
     private static String definitionName(String ref) {
@@ -466,6 +563,9 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -569,7 +669,12 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                     JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
-                )
+                ) {
+                    @Override
+                    protected boolean isRequired(MemberScope<?, ?> member) {
+                        return super.isRequired(member) && !(member instanceof FieldScope field && builderDefault(field) != null);
+                    }
+                }
             )
             .with(new Swagger2Module() {
                 @Override
@@ -620,8 +725,15 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null)
+            .withIgnoreCheck(JsonSchemaGenerator::isHiddenFromSchema)
             .withDefaultResolver(this::defaults);
+
+        // asset types expose the attributes they keep in metadata through getters, rendered with the whole declaration
+        builder
+            .with(Option.NONSTATIC_NONVOID_NONGETTER_METHODS, Option.FIELDS_DERIVED_FROM_ARGUMENTFREE_METHODS)
+            .forMethods()
+            .withIgnoreCheck(methodScope -> !isAssetAttribute(methodScope) || isHiddenFromSchema(methodScope))
+            .withInstanceAttributeOverride((memberAttributes, methodScope, context) -> memberAttributes.put("$dynamic", true));
 
         // def name
         builder.forTypesInGeneral()
@@ -732,6 +844,26 @@ public class JsonSchemaGenerator {
                 }
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
+                }
+            }
+
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
                 }
             }
 
@@ -1262,6 +1394,17 @@ public class JsonSchemaGenerator {
         return false;
     }
 
+    private static boolean isHiddenFromSchema(MemberScope<?, ?> memberScope) {
+        return memberScope.getAnnotation(Hidden.class) != null || memberScope.getAnnotation(ServerOwned.class) != null;
+    }
+
+    private static boolean isAssetAttribute(MethodScope methodScope) {
+        Class<?> declaringType = methodScope.getDeclaringType().getErasedType();
+        return declaringType != Asset.class && Asset.class.isAssignableFrom(declaringType)
+            && methodScope.getArgumentCount() == 0
+            && methodScope.getAnnotation(JsonProperty.class) != null;
+    }
+
     protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {
         return this.generate(cls, base, Collections.emptyList());
     }
@@ -1303,6 +1446,10 @@ public class JsonSchemaGenerator {
             return null;
         }
 
+        return builderDefault(target);
+    }
+
+    private Object builderDefault(FieldScope target) {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
@@ -1318,9 +1465,11 @@ public class JsonSchemaGenerator {
             }
         }
 
-        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
+        Class<?> instanceCls = baseCls;
 
-        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+        return defaultInstances.computeIfAbsent(baseCls, clazz -> Optional.ofNullable(buildDefaultInstance(clazz)))
+            .map(instance -> defaultValue(instance, instanceCls, target.getName()))
+            .orElse(null);
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {

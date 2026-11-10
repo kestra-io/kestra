@@ -2,6 +2,7 @@ package io.kestra.webserver.filter;
 
 import java.util.Optional;
 
+import io.kestra.mcp.McpToolRoute;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.mcp.models.McpServer;
@@ -24,7 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Slf4j
-@Filter("/api/v1/*/mcp/*")
+@Filter({ "/api/v1/*/mcp/*", "/api/v1/mcp" })
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class McpServerAuthenticationFilter implements HttpServerFilter {
@@ -53,21 +54,17 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(() -> resolveServer(request))
+        Optional<McpToolRoute.Target> target = McpToolRoute.target(request, tenantService::resolveTenant);
+        if (target.isEmpty()) {
+            return chain.proceed(request);
+        }
+        return Mono.fromCallable(() -> mcpServerCache.get(target.get().tenantId(), target.get().serverId()))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMapMany(
                 optMcpServer -> optMcpServer.isEmpty()
                     ? chain.proceed(request)
                     : authenticate(request, chain, optMcpServer.get())
             );
-    }
-
-    private Optional<McpServer> resolveServer(HttpRequest<?> request) {
-        String[] parts = request.getPath().split("/");
-        if (parts.length < 6) {
-            return Optional.empty();
-        }
-        return mcpServerCache.get(tenantService.resolveTenant(), parts[5]);
     }
 
     private Publisher<MutableHttpResponse<?>> authenticate(

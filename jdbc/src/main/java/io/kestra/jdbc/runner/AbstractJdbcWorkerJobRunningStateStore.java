@@ -10,6 +10,7 @@ import org.jooq.impl.DSL;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.runners.WorkerJobRunning;
@@ -122,6 +123,22 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     }
 
     @Override
+    public boolean existsByKeyAndWorker(String key, String workerUid) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .fetchExists(
+                        DSL.selectOne()
+                            .from(this.jdbcRepository.getTable())
+                            .where(field("key").eq(key))
+                            .and(field("worker_uid").eq(workerUid))
+                    )
+            );
+    }
+
+    @Override
     public Set<String> findWorkerUidsWithRunningJobs() {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -173,7 +190,14 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
             .forEach(record ->
             {
                 String key = record.get("key", String.class);
-                WorkerJobRunning workerJobRunning = this.jdbcRepository.deserialize(record.get("value", String.class));
+                WorkerJobRunning workerJobRunning;
+                try {
+                    workerJobRunning = this.jdbcRepository.deserialize(record.get("value", String.class));
+                } catch (DeserializationException e) {
+                    log.warn("Discarding running entry '{}': it could not be deserialized and cannot be processed.", key, e);
+                    deleteByKey(dslContext, key);
+                    return;
+                }
 
                 if (workerJobRunning.isLegacy()) {
                     // Written by a worker of a previous major version: every consumer reads fields this

@@ -3,6 +3,7 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.events.Actor;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.runners.WorkerTask;
 
@@ -43,6 +44,12 @@ public class ExecutionKilledExecution extends ExecutionKilled implements TenantI
      */
     @Nullable
     String operationId;
+
+    /**
+     * Who requested the kill, or {@code null} when the system did.
+     */
+    @Nullable
+    Actor actor;
 
     public boolean isEqual(WorkerTask workerTask) {
         String taskTenantId = workerTask.getTaskRun().getTenantId();

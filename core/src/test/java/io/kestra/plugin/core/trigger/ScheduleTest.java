@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import com.cronutils.model.time.ExecutionTime;
@@ -380,6 +382,56 @@ class ScheduleTest {
             assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "2024-02-29T11:00:00+05:30, 2024-01-31T11:00:00+05:30, 2024-03-31T11:00:00+05:30",
+            "2025-02-28T11:00:00+05:30, 2025-01-31T11:00:00+05:30, 2025-03-31T11:00:00+05:30",
+            "2025-04-30T11:00:00+05:30, 2025-03-31T11:00:00+05:30, 2025-05-31T11:00:00+05:30"
+        }
+    )
+    void shouldWalkPreviousAndNextMonthEndsWhenUsingAWhenCondition(String current, String previous, String next) throws Exception {
+        // Daily cron deliberately exercises the when condition's previous/next walk; monthly schedules use cron L.
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 11 * * *")
+            .timezone("Asia/Kolkata")
+            .when("{{ isLastDayOfMonth(trigger.date) }}")
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse(current);
+        var evaluated = trigger.eval(conditionContext(trigger), triggerContext(date, trigger));
+
+        assertThat(evaluated).isPresent();
+        var variables = evaluated.orElseThrow().trigger().getVariables();
+        assertThat(dateFromVars((String) variables.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars((String) variables.get("previous"), ZonedDateTime.parse(previous))).isEqualTo(ZonedDateTime.parse(previous));
+        assertThat(dateFromVars((String) variables.get("next"), ZonedDateTime.parse(next))).isEqualTo(ZonedDateTime.parse(next));
+    }
+
+    @Test
+    void isDateBetweenConditions() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
+            .when("{{ isDateBetween(trigger.date, '2021-07-27T00:00:00Z', '2021-08-03T00:00:00Z') }}")
+            .build();
+
+        ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var vars = evaluate.get().trigger().getVariables();
+        assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
+        assertThat(vars).doesNotContainKeys("previous", "next");
     }
 
     @Test

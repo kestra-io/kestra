@@ -1,7 +1,7 @@
 <template>
     <div
         class="leaf-block-card"
-        :class="{'leaf-block-card--selected': selected, 'leaf-block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'leaf-block-card--error': issues.length > 0}"
+        :class="{'leaf-block-card--selected': selected, 'leaf-block-card--drag-over': dragOver, 'leaf-block-card--drag-forbidden': dragForbidden, 'block-kbd-focused': focused, 'leaf-block-card--error': issues.length > 0}"
         role="button"
         :tabindex="focused ? 0 : -1"
         :aria-pressed="selected"
@@ -11,7 +11,7 @@
         data-test="block-card"
         @click="emit('select')"
         @dragstart="emit('drag-start', $event)"
-        @dragover.prevent="emit('drag-over', $event)"
+        @dragover="emit('drag-over', $event)"
         @drop.prevent="emit('drop', $event)"
         @dragend="emit('drag-end')"
     >
@@ -23,6 +23,7 @@
         />
 
         <TaskIcon
+            v-if="showIcon"
             class="leaf-block-card-ico"
             :cls="String(displayBlock.type ?? '')"
             :icons="icons"
@@ -83,7 +84,7 @@
                 tabindex="-1"
                 @click.stop="emit('delete')"
             >
-                <DeleteOutline />
+                <Delete />
             </KsIconButton>
         </div>
     </div>
@@ -93,7 +94,7 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import Play from "vue-material-design-icons/Play.vue"
     import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
@@ -118,13 +119,16 @@
         focused?: boolean
         draggable?: boolean
         dragOver?: boolean
+        dragForbidden?: boolean
         runnable?: boolean
         showOpenSplit?: boolean
         showDuplicate?: boolean
+        showIcon?: boolean
         icons?: Record<string, PluginIconData>
     }>(), {
         showOpenSplit: true,
         showDuplicate: true,
+        showIcon: true,
     })
 
     const emit = defineEmits<{
@@ -162,7 +166,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .leaf-block-card {
         position: relative;
         display: flex;
@@ -186,22 +190,27 @@
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
         }
+    }
 
-        &--selected {
-            border-color: var(--ks-border-focus);
-            background: var(--ks-bg-active);
-        }
+    .leaf-block-card--selected {
+        border-color: var(--ks-border-focus);
+        background: var(--ks-bg-active);
+    }
 
-        &--drag-over {
-            border-color: var(--ks-text-link);
-            border-style: dashed;
-        }
+    .leaf-block-card--drag-over {
+        border-color: var(--ks-text-link);
+        border-style: dashed;
+    }
 
-        &--error,
-        &--error:hover {
-            border-color: var(--ks-border-error);
-            box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
-        }
+    .leaf-block-card--drag-forbidden {
+        border-color: var(--ks-border-error);
+        border-style: dashed;
+        cursor: not-allowed;
+    }
+
+    .leaf-block-card--error, .leaf-block-card--error:hover {
+        border-color: var(--ks-border-error);
+        box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
     }
 
     .leaf-block-card-grip {
@@ -284,14 +293,12 @@
         }
     }
 
-    .leaf-block-card-action {
-        &--run:hover {
-            color: var(--ks-text-success);
-        }
+    .leaf-block-card-action--run:hover {
+        color: var(--ks-text-success);
+    }
 
-        &--danger:hover {
-            color: var(--ks-text-error);
-        }
+    .leaf-block-card-action--danger:hover {
+        color: var(--ks-text-error);
     }
 
     .block-kbd-focused {

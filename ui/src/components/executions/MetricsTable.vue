@@ -9,6 +9,7 @@
         :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
         :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
+        :fitHeight
     >
         <template #navbar>
             <slot name="navbar" />
@@ -21,7 +22,7 @@
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
-                    <p class="m-0">
+                    <p class="task-id">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
@@ -35,7 +36,9 @@
                     <template v-else>
                         <KsIcon><Counter /></KsIcon>
                     </template>
-                    &nbsp;<code>{{ scope.row.name }}</code>
+                    &nbsp;<KsTooltip :content="metricDescription(scope.row as MetricEntry)" :disabled="!metricDescription(scope.row as MetricEntry)">
+                        <code>{{ scope.row.name }}</code>
+                    </KsTooltip>
                 </template>
             </KsTableColumn>
 
@@ -68,7 +71,7 @@
 
         <KsTableColumn className="row-action">
             <template #default="scope">
-                <KsIconButton :tooltip="$t('view metrics')" @click="openChart(scope.row)">
+                <KsIconButton :tooltip="$t('view metrics')" @click="openChart(scope.row as {name: string; type: string; taskId?: string | null})">
                     <ChartAreaspline />
                 </KsIconButton>
             </template>
@@ -93,12 +96,14 @@
     import Counter from "vue-material-design-icons/Numeric.vue"
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
-    import type {KsChartSeriesItem} from "@kestra-io/design-system"
+    import type {ColumnConfig, KsChartSeriesItem} from "@kestra-io/design-system"
 
+    import type {MetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 
     import type {Execution} from "../../stores/executions"
     import {date, humanizeDuration, humanizeNumber} from "../../utils/filters"
+    import {useMetricDescriptions} from "./metricDescriptions"
 
     import {useTableColumns} from "@kestra-io/design-system"
 
@@ -109,13 +114,15 @@
         taskRunId?: string;
         showTask?: boolean;
         execution?: Execution;
-        optionalColumns?: any[];
+        optionalColumns?: ColumnConfig[];
+        fitHeight?: boolean;
     }>(), {
         embed: true,
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
         optionalColumns: () => [],
+        fitHeight: false,
     })
 
     const localOptionalColumns = ref([
@@ -132,10 +139,12 @@
 
     const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
-    const metrics = ref<any[] | undefined>(undefined)
+    const metrics = ref<MetricEntry[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
     const pageSize = ref(25)
+
+    const metricDescription = useMetricDescriptions(() => props.execution, metrics)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -151,7 +160,7 @@
         metricsTotal.value = response.total
     }
 
-    watch(() => props.taskRunId, () => {
+    watch([() => props.execution?.id, () => props.execution?.state?.current, () => props.taskRunId], () => {
         dataTable.value?.resetAndReload()
     })
 
@@ -161,7 +170,7 @@
     const chartCategories = ref<string[]>([])
     const chartSeries = ref<KsChartSeriesItem[] | null>(null)
 
-    const openChart = async (row: {name: string; type: string; taskId?: string}) => {
+    const openChart = async (row: {name: string; type: string; taskId?: string | null}) => {
         chartMetricName.value = row.name
         chartOpen.value = true
         chartLoading.value = true
@@ -177,11 +186,11 @@
                 sort: ["timestamp:asc"],
             })
             const entries = (response.results ?? []).filter(
-                (entry: any) => entry.name === row.name && entry.taskId === row.taskId,
+                (entry) => entry.name === row.name && entry.taskId === row.taskId,
             )
 
             const labelOccurrences = new Map<string, number>()
-            chartCategories.value = entries.map((entry: any) => {
+            chartCategories.value = entries.map((entry) => {
                 const label = date(entry.timestamp, "HH:mm:ss.SSS")
                 const occurrence = (labelOccurrences.get(label) ?? 0) + 1
                 labelOccurrences.set(label, occurrence)
@@ -190,7 +199,7 @@
 
             chartSeries.value = [{
                 name: row.name,
-                data: entries.map((entry: any) => entry.type === "timer" ? entry.value / 1000 : entry.value),
+                data: entries.map((entry) => entry.type === "timer" ? entry.value / 1000 : entry.value),
             }]
         } finally {
             chartLoading.value = false
@@ -205,7 +214,11 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .task-id {
+        margin: 0;
+    }
+
     .tag {
         display: inline-flex;
         align-items: center;

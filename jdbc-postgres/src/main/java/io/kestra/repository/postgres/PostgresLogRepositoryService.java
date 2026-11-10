@@ -57,14 +57,9 @@ public final class PostgresLogRepositoryService {
                 .map(descriptor -> (In<Logs.Fields>) descriptor)
                 .toList();
 
-            if (!levelFilters.isEmpty()) {
+            for (In<Logs.Fields> levelFilter : levelFilters) {
                 selectConditionStep = selectConditionStep.and(
-                    levelFilter(
-                        levelFilters.stream()
-                            .flatMap(levelFilter -> levelFilter.getValues().stream())
-                            .map(value -> Level.valueOf(value.toString()))
-                            .toList()
-                    )
+                    levelFilter(levelFilter.getValues().stream().map(value -> Level.valueOf(value.toString())).toList())
                 );
             }
 

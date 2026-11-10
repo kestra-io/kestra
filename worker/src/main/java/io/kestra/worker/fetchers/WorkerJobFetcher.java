@@ -1,8 +1,11 @@
 package io.kestra.worker.fetchers;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.event.Level;
+
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 
 import io.kestra.controller.GrpcChannelManager;
@@ -22,9 +29,14 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
@@ -132,6 +144,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * sit when permits aren't changing.
      */
     private final Queue<String> pendingCompletions = new ConcurrentLinkedQueue<>();
+
+    /**
+     * UIDs of jobs received from the controller and not yet completed, queued or running. Keyed by UID rather
+     * than counted so that a completion for a job this fetcher never received cannot release a permit.
+     */
+    private final Set<String> inFlightJobs = ConcurrentHashMap.newKeySet();
 
     /**
      * Latch to detect when stream completes.
@@ -356,7 +374,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         // Advertise the worker's true maximum in-flight capacity: threads currently
         // executing plus jobs pending in the buffer. Controller bases its reservation
         // math (guaranteedCapacity / sharedCapacity) on this value.
-        int maxConcurrency = workerContext.workerThreads() + workerJobQueue.capacity();
+        int maxConcurrency = maxConcurrency();
 
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
@@ -389,7 +407,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             workerContext.workerGroupId(),
-            workerContext.workerThreads() + workerJobQueue.capacity(),
+            maxConcurrency(),
             calculatePermits()
         );
         for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
@@ -439,12 +457,15 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
                 log.debug("Received job: {}", jobId);
 
+                inFlightJobs.add(job.uid());
                 // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
                 receivedJobs++;
 
             } catch (Exception e) {
                 log.error("Error processing job payload: {}", e.getMessage(), e);
+                inFlightJobs.add(payload.getJobId());
+                Thread.ofVirtual().name("undecodable-job-" + payload.getJobId()).start(() -> failUndecodableJob(payload, e));
             }
         }
 
@@ -453,6 +474,39 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (receivedJobs > 0) {
             sendPermitsForReceivedJobs(observer, calculatePermits(), receivedJobs);
         }
+    }
+
+    /**
+     * Fails a task the worker cannot decode, typically because its plugin is not installed here, so that the
+     * execution ends instead of waiting forever for a result, and releases the slot the controller reserved for it.
+     */
+    private void failUndecodableJob(WorkerJobPayload payload, Exception error) {
+        try {
+            UndecodableJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), UndecodableJob.class);
+            if (job != null && job.taskRun() != null && (job.type() == null || WorkerTask.TYPE.equals(job.type()))) {
+                LogEntry logEntry = LogEntry.of(job.taskRun(), job.executionKind()).toBuilder()
+                    .level(Level.ERROR)
+                    .message(undecodableTaskMessage(error))
+                    .timestamp(Instant.now())
+                    .thread(Thread.currentThread().getName())
+                    .build();
+                workerQueueRegistry.getOrCreate(workerContext, LogEntry.class).put(logEntry);
+                workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class).put(new WorkerTaskResult(job.taskRun().fail()));
+            }
+        } catch (Exception e) {
+            log.error("Unable to fail the job '{}' that could not be decoded: {}", payload.getJobId(), e.getMessage(), e);
+        } finally {
+            onJobCompleted(payload.getJobId());
+        }
+    }
+
+    private String undecodableTaskMessage(Exception error) {
+        return Throwables.getCausalChain(error).stream()
+            .filter(InvalidTypeIdException.class::isInstance)
+            .map(InvalidTypeIdException.class::cast)
+            .findFirst()
+            .map(e -> "The task cannot run on worker '%s' because the plugin type '%s' is not installed on it.".formatted(workerContext.workerId(), e.getTypeId()))
+            .orElseGet(() -> "The task cannot run on worker '%s' because it could not be decoded: %s".formatted(workerContext.workerId(), Throwables.getRootCause(error).getMessage()));
     }
 
     /**
@@ -515,14 +569,22 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     }
 
     /**
-     * Calculates the number of permits to request based on local queue remaining capacity.
+     * Calculates the number of permits to request: the jobs the worker can still take on, threads plus job buffer
+     * minus the jobs in flight, never more than the local queue can hold so that receiving them never blocks.
      * <p>
      * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
      * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
      * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
+        if (fetchingPaused.get()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(maxConcurrency() - inFlightJobs.size(), workerJobQueue.remainingCapacity()));
+    }
+
+    private int maxConcurrency() {
+        return workerContext.workerThreads() + workerContext.jobBufferSize();
     }
 
     /**
@@ -562,6 +624,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (jobId == null || jobId.isEmpty()) {
             return;
         }
+        inFlightJobs.remove(jobId);
         pendingCompletions.offer(jobId);
 
         // lastSentPermits is reset to -1 before a new stream's observer is published and only
@@ -658,5 +721,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                 log.debug("Error cancelling stream: {}", e.getMessage());
             }
         }
+    }
+
+    private record UndecodableJob(String type, TaskRun taskRun, ExecutionKind executionKind) {
     }
 }

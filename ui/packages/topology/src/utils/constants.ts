@@ -27,6 +27,7 @@ export const EVENTS = {
     EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
+    SHOW_ARTIFACTS: "showArtifacts",
     REPLAY_TASK: "replayTask",
     MOUSE_OVER: "mouseover",
     MOUSE_LEAVE: "mouseleave",
@@ -40,6 +41,8 @@ export const EVENTS = {
     MOVE_TASK: "moveTask",
     TASK_DRAG_START: "taskDragStart",
     TASK_DRAG_END: "taskDragEnd",
+    LOOP_STEP: "loopStep",
+    LOOP_SCOPE_FAILED: "loopScopeFailed",
 } as const
 
 export interface CustomActionConfig {
@@ -56,8 +59,10 @@ export interface ShowDetailsConfig {
 
 export const NODE_SIZES = {
     TASK_WIDTH: 218,
-    TASK_WIDTH_EXECUTION: 273,
+    TASK_WIDTH_EXECUTION: 251,
     TASK_HEIGHT: 56,
+    TASK_HEIGHT_EXECUTION: 64,
+    TASK_STATUS_ROW_HEIGHT: 21,
     TRIGGER_WIDTH: 218,
     TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,
@@ -66,7 +71,52 @@ export const NODE_SIZES = {
     COLLAPSED_CLUSTER_HEIGHT: 40,
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
+    // dagre lays a cluster out tightly around its children — it has no notion of a label's own
+    // height. Every lane header claims this much of the cluster's own box instead, and every
+    // direct child is shifted down by the same amount so nothing sits under it.
+    LANE_HEADER_HEIGHT: 32,
 } as const
+
+// dagre's own default. Spelled out because a lane's header is added to the cluster box after
+// layout, so the separation has to be widened by exactly that much for the gap between two
+// ranks to survive it (kestra-io/kestra#19787).
+export const DAGRE_RANK_SEP = 50
+export const DAGRE_NODE_SEP = 50
+
+// vue-flow's own default: how far a smooth-step path runs straight out of a handle before it may
+// turn, so a turn placed inside it would be ignored.
+export const SMOOTH_STEP_OFFSET = 20
+
+// vue-flow's default smooth-step corner radius.
+export const SMOOTH_STEP_RADIUS = 5
+
+// How far inside its lane border a loop's return path runs, parallel to it.
+export const LOOP_RETURN_INSET = 12
+
+// How far from its start marker's centre a loop's return arrowhead stops, so it does not cover the marker.
+export const LOOP_RETURN_HEAD_GAP = 12
+
+// Below PILL, only a minimal glanceable pill renders; above EXPANDED, the node also renders the
+// `details` slot as an overlay. Neither ever changes `NODE_SIZES`, so crossing either threshold
+// only repaints the node — it never re-runs dagre.
+export const ZOOM_LOD = {
+    PILL: 0.5,
+    EXPANDED: 1.3,
+} as const
+
+export const PILL_COMPENSATION = {
+    STEP: 1,
+    RING_MAX: 4,
+    GLYPH_MAX: 2.5,
+} as const
+
+export function pillZoomCompensation(zoom: number): number {
+    if (!Number.isFinite(zoom) || zoom <= 0) return 1
+    const bounded = Math.min(1 / zoom, PILL_COMPENSATION.RING_MAX)
+    return Math.max(1, Math.round(bounded / PILL_COMPENSATION.STEP) * PILL_COMPENSATION.STEP)
+}
+
+export type LodLevel = "pill" | "default" | "expanded"
 
 export const CLUSTER_TAG_STATUS: Record<string, string> = {
     triggers: "success",

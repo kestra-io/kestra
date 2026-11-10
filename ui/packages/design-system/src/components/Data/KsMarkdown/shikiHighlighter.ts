@@ -1,6 +1,7 @@
 // Only the grammars the app itself renders are in this chunk; every other language is a
 // separate chunk fetched on demand by loadLanguageOnDemand().
 import {createHighlighterCore, isSpecialLang, type HighlighterCore} from "shiki/core"
+import type {DynamicImportLanguageRegistration} from "@shikijs/types"
 
 export type {HighlighterCore}
 export {isSpecialLang}
@@ -14,8 +15,7 @@ let promise: Promise<HighlighterCore> | null = null
 
 import {createJavaScriptRegexEngine} from "shiki/engine/javascript"
 
-import GithubLight from "shiki/themes/github-light.mjs"
-import GithubDark from "shiki/themes/github-dark.mjs"
+import {kestraDark, kestraLight, toTextMateTheme, yamlKeysInjection} from "@kestra-io/plumage"
 import Json from "shiki/langs/json.mjs"
 import Python from "shiki/langs/python.mjs"
 import Yaml from "shiki/langs/yaml.mjs"
@@ -27,11 +27,12 @@ export function getShiki(): Promise<HighlighterCore> {
             const jsEngine = createJavaScriptRegexEngine()
 
             return createHighlighterCore({
-                themes: [GithubDark, GithubLight],
+                themes: [toTextMateTheme(kestraDark), toTextMateTheme(kestraLight)],
                 langs: [
                     Json,
                     Python,
                     Yaml,
+                    yamlKeysInjection,
                 ],
                 engine: jsEngine,
             })
@@ -40,7 +41,7 @@ export function getShiki(): Promise<HighlighterCore> {
     return promise
 }
 
-let bundledLanguages: Promise<Record<string, any>> | null = null
+let bundledLanguages: Promise<Record<string, DynamicImportLanguageRegistration>> | null = null
 
 /**
  * Registers a grammar that is not pre-registered above. Shiki's langs index is a list of

@@ -1,14 +1,16 @@
-import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
+import {computed, onUnmounted, ref, watch} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {watchDebounced} from "@vueuse/core"
 
 import {useFlowStore} from "../../../stores/flow"
-import {useRouteTabsStore} from "../../../stores/routeTabs"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
+import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -18,11 +20,8 @@ export function useFlowRoot() {
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
-    const routeTabsStore = useRouteTabsStore()
-
     const previousFlow = ref<string | undefined>(undefined)
     const deleted = ref(false)
-    const tabsOwnerId = Symbol("flow-root-tabs")
 
     const user = computed(() => authStore.user)
     const activeTabName = useActiveTab()
@@ -64,7 +63,10 @@ export function useFlowRoot() {
     const tabs = computed(() => {
         const namespace = flowStore.flow?.namespace
         return FLOW_TAB_ROUTES
-            .filter((tabRoute) => isFlowTabAllowed(tabRoute.meta?.tab as string, {user: user.value, namespace}))
+            .filter((tabRoute) => {
+                const tabName = tabRoute.meta?.tab as string
+                return isFlowTabAllowed(tabName, {user: user.value, namespace}) && isFlowTabEnabled(tabName, {namespace})
+            })
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string
@@ -72,6 +74,7 @@ export function useFlowRoot() {
                     name,
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
                     // Dependencies surfaces a live count and is disabled when there are none.
                     ...(name === "dependencies"
                         ? {
@@ -83,48 +86,31 @@ export function useFlowRoot() {
             })
     })
 
-    function syncTabsToStore() {
-        routeTabsStore.setTabs({
-            ownerId: tabsOwnerId,
-            tabs: tabs.value,
-            routeName: FLOW_PARENT_ROUTE,
-            displayMode: "select",
-        })
-    }
-
     const routeName = computed(() => route.params && route.params.id ? FLOW_PARENT_ROUTE : "")
+
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "flows",
+        root: {label: t("flows"), link: {name: "flows/list"}, scope: t("namespaces")},
+    })
 
     const routeInfo = computed(() => ({
         title: route.params.id.toString(),
-        breadcrumb: [
-            {
-                label: t("flows"),
-                link: {name: "flows/list"},
-            },
-            {
-                label: String(route.params.namespace),
-                link: {
-                    name: "namespaces/update/flows",
-                    params: {id: route.params.namespace},
-                },
-            },
-        ],
+        breadcrumb: namespaceBreadcrumb.value,
+        bookmarkLabel: `${route.params.namespace}: ${route.params.id}`,
         beta: route.meta?.beta as boolean | undefined,
     }))
 
     const ready = computed(() => user.value && flowStore.flow)
-
-    watch(tabs, () => syncTabsToStore(), {immediate: true, deep: true})
 
     // Reload flow data when navigating to a different flow (namespace/id), regardless of
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
 
     watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
                 router.replace({name: route.name as string, params: route.params, query: newQuery})
             }
@@ -149,10 +135,6 @@ export function useFlowRoot() {
         // NOTE: Flow creation component is ./FlowCreate.vue
         flowStore.isCreating = false
         load()
-
-        onBeforeUnmount(() => {
-            routeTabsStore.clearTabsIfOwner(tabsOwnerId)
-        })
 
         onUnmounted(() => {
             flowStore.flow = undefined

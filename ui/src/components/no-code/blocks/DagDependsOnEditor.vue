@@ -38,12 +38,15 @@
         (e: "update", dependsOn: string[]): void
     }>()
 
-    function onUpdate(value: string[]) {
+    function onUpdate(value: string[] | undefined) {
+        if (value === undefined) {
+            return
+        }
         emit("update", value)
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .dag-depends-on {
         display: flex;
         align-items: center;

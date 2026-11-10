@@ -1,0 +1,31 @@
+id: retry-flowable-behavior-success
+namespace: io.kestra.tests
+
+tasks:
+  - id: reset
+    type: io.kestra.plugin.core.kv.Set
+    key: retry_flowable_success_counter
+    kvType: NUMBER
+    value: 0
+
+  - id: seq1
+    type: io.kestra.plugin.core.flow.Sequential
+    retry:
+      type: constant
+      behavior: RETRY_FLOWABLE
+      maxAttempts: 4
+      interval: PT1S
+    tasks:
+      - id: increment
+        type: io.kestra.plugin.core.kv.Set
+        key: retry_flowable_success_counter
+        kvType: NUMBER
+        value: "{{ kv(namespace=flow.namespace, key='retry_flowable_success_counter') + 1 }}"
+
+      - id: check
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ kv(namespace=flow.namespace, key='retry_flowable_success_counter') < 3 }}"
+        then:
+          - id: fail
+            type: io.kestra.plugin.core.execution.Fail
+            errorMessage: "Not yet at 3"

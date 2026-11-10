@@ -3,7 +3,7 @@
     <div class="proposed-action" data-test="copilot-proposed-action">
         <div class="proposed-action-header">
             <KsText size="small" class="proposed-action-title">{{ title }}</KsText>
-            <KsTag v-if="!isPlan && action.family" size="small">{{ action.family }}</KsTag>
+            <KsTag v-if="!isPlan && action.family" size="small" data-test="copilot-proposed-family">{{ action.family }}</KsTag>
             <KsText v-if="!resolved" size="small" class="proposed-action-status">{{ $t("ai.copilot.confirm.pending") }}</KsText>
         </div>
 

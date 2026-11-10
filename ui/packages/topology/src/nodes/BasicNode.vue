@@ -1,8 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :style="nodeStyle"
-        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused, 'node-wrapper--dragging': dragging}]"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer, 'node-wrapper--with-status-row': hasStatusRow}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -10,42 +9,112 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div class="main-content">
-            <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
-            <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
+        <div v-if="lod === 'pill'" class="node-pill" :style="pillStyle" data-test="topology-task-pill">
+            <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
                     <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                 </KsTooltip>
-                <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </div>
-            <div class="node-content">
-                <slot name="badge" />
-                <div class="node-title">
-                    <div class="task-title">
-                        <KsTooltip v-if="extraTooltip" :content="extraTooltip">
-                            {{ displayTitle }}
-                        </KsTooltip>
-                        <template v-else>{{ displayTitle }}</template>
-                    </div>
-                </div>
-                <slot name="content" />
-            </div>
-            <slot name="title-status" />
-            <slot name="title-actions" />
+            </span>
+            <span
+                v-if="statusStyle"
+                class="node-pill-status"
+                :style="pillStatusStyle"
+                data-test="topology-task-pill-status"
+                role="img"
+                :aria-label="state"
+            >
+                <component :is="statusStyle.icon" :size="14" />
+            </span>
         </div>
-        <slot name="details" />
+        <template v-else>
+            <div
+                class="node-core"
+                :style="cardStyle"
+                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
+            >
+                <div class="main-content">
+                    <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
+                    <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                        <slot name="icon-badge" />
+                        <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
+                            <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                        </KsTooltip>
+                        <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                    </div>
+                    <div class="node-content">
+                        <div v-if="$slots.runner" class="node-runner">
+                            <slot name="runner" />
+                        </div>
+                        <div class="node-title">
+                            <div class="task-title">
+                                <KsTooltip v-if="extraTooltip" :content="extraTooltip">
+                                    {{ displayTitle }}
+                                </KsTooltip>
+                                <template v-else>{{ displayTitle }}</template>
+                            </div>
+                        </div>
+                        <div v-if="$slots.subtitle" class="node-subtitle">
+                            <slot name="subtitle" />
+                        </div>
+                        <slot name="content" />
+                    </div>
+                    <slot name="title-status" />
+                    <slot name="title-actions" />
+                </div>
+                <div v-if="$slots.footer" class="node-footer">
+                    <slot name="footer" />
+                </div>
+            </div>
+            <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
+                <slot name="status-row" />
+            </div>
+            <Transition name="node-details-overlay">
+                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
+                    <slot name="details" />
+                </div>
+            </Transition>
+        </template>
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject} from "vue"
-    import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {computed, inject, useSlots} from "vue"
+    import {
+        KsTooltip,
+        useTaskIcon,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS} from "../utils/constants"
+    import {EVENTS, NODE_SIZES, PILL_COMPENSATION} from "../utils/constants"
+    import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {EXECUTION_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
+    interface NodeEntity {
+        id?: string;
+        type?: string;
+        disabled?: boolean;
+        namespace?: string;
+        flowId?: string;
+        subflowId?: {namespace?: string; flowId?: string};
+    }
+
+    export interface BasicNodeData {
+        node: {
+            uid?: string;
+            plugin?: NodeEntity;
+            task?: NodeEntity;
+            trigger?: NodeEntity;
+            triggerDeclaration?: {type?: string};
+            disabled?: boolean;
+        };
+        color?: string;
+        unused?: boolean;
+        isMovable?: boolean;
+        parent?: {taskNode?: {disabled?: boolean; task?: {disabled?: boolean}}};
+    }
 
     const emit = defineEmits([
         EVENTS.EXPAND,
@@ -62,6 +131,9 @@
         EVENTS.TASK_DRAG_START,
         EVENTS.TASK_DRAG_END,
     ])
+
+    const slots = useSlots()
+    const hasStatusRow = computed(() => Boolean(slots["status-row"]) && props.lod !== "pill")
 
     const movable = computed(() => Boolean(props.data?.isMovable))
 
@@ -94,21 +166,26 @@
         inheritAttrs: false,
     })
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         id?: string;
         title?: string;
         type?: string;
         disabled?: boolean;
         state?: string;
-        data: any;
-        icons: any;
+        data: BasicNodeData;
+        icons?: PluginIconMap;
         // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<any>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;
-    }>()
+        // Only a card that opts in (TaskNode) reacts to zoom; a card that doesn't pass it (e.g.
+        // TriggerNode) always renders at its one fixed size.
+        lod?: LodLevel;
+    }>(), {
+        lod: "default",
+    })
 
     const taskIconComponent = useTaskIcon()
 
@@ -134,6 +211,23 @@
         }
     })
 
+    const pillCompensation = inject(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => 1))
+
+    const pillStyle = computed(() => {
+        const style = nodeStyle.value
+        if (!style) return undefined
+        return {...style, borderWidth: `${pillCompensation.value}px`}
+    })
+
+    const pillStatusStyle = computed(() => ({
+        color: `var(${statusStyle.value?.textVar})`,
+        transform: `scale(${Math.min(pillCompensation.value, PILL_COMPENSATION.GLYPH_MAX)})`,
+    }))
+
+    const cardStyle = computed(() => (isExecution.value
+        ? {borderColor: statusStyle.value?.border, width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`}
+        : nodeStyle.value))
+
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
     })
@@ -141,13 +235,15 @@
     const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""))
 
     const taskIconBg = computed(() => {
-        return !["default", "danger"].includes(props.data.color) ? props.data.color : ""
+        const color = props.data.color
+        return color && !["default", "danger"].includes(color) ? color : ""
     })
 
     const classes = computed(() => {
         return [
             {
                 "unused-path": props.data.unused,
+                "node-core--execution": isExecution.value,
                 disabled: node.value?.disabled
                     || props.data.node?.disabled
                     || props.data.parent?.taskNode?.task?.disabled
@@ -175,9 +271,7 @@
 
     const displayTitle = computed(() => props.title ?? trimmedId.value)
 
-    // The full class is what made the old hover box wide; every core and plugin task shares the
-    // same `io.kestra.plugin.` prefix, so dropping it leaves the part that identifies the task.
-    const shortType = computed(() => cls.value?.replace(/^io\.kestra\.plugin\./, ""))
+    const shortType = computed(() => Utils.shortPluginType(cls.value))
 
     // On a plain task the tooltip only repeated the label already on the card, in a second box on
     // top of the native one; a subflow is the only node whose tooltip says something else.
@@ -186,7 +280,59 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .node-wrapper {
+        position: relative;
+        margin: 0;
+        z-index: 150000;
+
+        &.node-wrapper--pill {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        &.node-wrapper--with-footer {
+            height: 100%;
+        }
+    }
+
+    .node-pill {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-strong);
+        box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
+    .node-pill-icon {
+        display: flex;
+    }
+
+    .node-pill-status {
+        position: absolute;
+        right: calc(var(--ks-spacing-1) * -1);
+        bottom: calc(var(--ks-spacing-1) * -1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        line-height: 1;
+        transform-origin: top left;
+    }
+
+    .node-pill .icon--dimmed {
+        opacity: 0.2;
+    }
+
     .node-grip {
         display: flex;
         align-items: center;
@@ -206,22 +352,27 @@
         }
     }
 
-    .node-wrapper--focused {
+    .node-core--focused {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: 2px;
     }
 
+    .node-core.node-core--error {
+        border-color: var(--ks-border-error);
+        box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
+    }
+
     /* The card the user picked up: it stays in the layout as the hole the task came out of. */
-    .node-wrapper--dragging {
+    .node-wrapper--dragging .node-core {
         opacity: 0.35;
     }
 
-    .node-wrapper {
+    .node-core {
+        display: flex;
+        flex-direction: column;
         background-color: var(--ks-bg-surface);
         border-radius: var(--ks-radius-base);
         overflow: hidden;
-        margin: 0;
-        z-index: 150000;
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
         border: 1px solid var(--ks-border-strong);
 
@@ -233,10 +384,6 @@
             gap: var(--ks-spacing-1);
             width: 218px;
             height: 56px;
-        }
-
-        &--execution .main-content {
-            width: 273px;
         }
 
         &.execution-no-taskrun, &.disabled {
@@ -251,6 +398,8 @@
         }
 
         .icon {
+            position: relative;
+            flex-shrink: 0;
             border-radius: var(--ks-radius-lg);
             width: 40px;
             height: 40px;
@@ -260,11 +409,82 @@
             box-sizing: border-box;
             border: 1px solid var(--ks-border-default);
             background-color: var(--ks-topology-icon-bg);
-
-            &--dimmed {
-                opacity: 0.2;
-            }
         }
+
+        .icon--dimmed {
+            opacity: 0.2;
+        }
+    }
+
+    .node-core.node-core--execution {
+        box-sizing: border-box;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2);
+        background-color: var(--ks-bg-surface);
+
+        .main-content {
+            width: auto;
+            height: var(--ks-spacing-7);
+            padding: 0;
+        }
+
+        .icon {
+            border: none;
+            border-radius: var(--ks-radius-base);
+        }
+
+        .node-footer {
+            flex: none;
+            padding: 0;
+        }
+
+        .task-title {
+            font-weight: var(--ks-font-weight-semibold);
+            line-height: var(--ks-line-height-tight);
+        }
+
+        .node-subtitle {
+            line-height: var(--ks-line-height-tight);
+        }
+    }
+
+    .node-core--with-footer {
+        height: 100%;
+        box-sizing: border-box;
+
+        .main-content {
+            flex-shrink: 0;
+        }
+    }
+
+    .node-wrapper--with-status-row {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & > .node-core--with-footer {
+            height: auto;
+            flex: 1 1 0;
+            min-height: 0;
+        }
+    }
+
+    .node-status-row {
+        display: flex;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        padding-top: var(--ks-spacing-1);
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-1);
+    }
+
+    .node-footer {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        min-height: 0;
+        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
     }
 
     .node-content {
@@ -275,12 +495,29 @@
         flex: 1;
         min-width: 0;
 
-        > .node-title {
+        & > .node-title {
             display: flex;
             align-items: center;
             min-width: 0;
             gap: var(--ks-spacing-1);
         }
+    }
+
+    .node-runner {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        font-size: var(--ks-font-size-2xs);
+        line-height: 1;
+    }
+
+    .node-subtitle {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        min-width: 0;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
     }
 
     .material-design-icon.icon-rounded {
@@ -303,4 +540,39 @@
         flex-grow: 1;
     }
 
+    .node-details-overlay {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: var(--ks-z-dropdown);
+        margin-top: var(--ks-spacing-1);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+        max-height: 20rem;
+        overflow: auto;
+    }
+
+    .node-details-overlay:empty {
+        display: none;
+    }
+
+    .node-details-overlay-enter-active,
+    .node-details-overlay-leave-active {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .node-details-overlay-enter-from,
+    .node-details-overlay-leave-to {
+        opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .node-details-overlay-enter-active,
+        .node-details-overlay-leave-active {
+            transition: none;
+        }
+    }
 </style>

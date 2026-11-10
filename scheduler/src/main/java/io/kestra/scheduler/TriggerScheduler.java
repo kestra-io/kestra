@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -199,8 +200,8 @@ public class TriggerScheduler {
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
-                } else if (trigger instanceof Schedulable schedulableTrigger) {
-                    // we recompute the Schedule nextExecutionDate if needed
+                } else if (trigger instanceof Schedulable schedulableTrigger && triggerState.getBackfill() == null) {
+                    // A running backfill is left untouched: recomputing the next evaluation date would drop its remaining range.
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
@@ -210,9 +211,11 @@ public class TriggerScheduler {
                         TriggerState currentTriggerState = triggerState;
                         switch (recoverMissedSchedules) {
                             case LAST -> {
-                                ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
+                                Optional<ZonedDateTime> previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
+                                Instant lastKnownDate = Optional.ofNullable(currentTriggerState.getEvaluatedAt())
+                                    .orElse(currentTriggerState.getNextEvaluationDate());
+                                if (previousDate.isPresent() && lastKnownDate != null && previousDate.get().toInstant().isAfter(lastKnownDate)) {
+                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate.get());
                                     triggerStateStore.save(currentTriggerState);
                                 }
                             }
@@ -258,6 +261,7 @@ public class TriggerScheduler {
      */
     public int onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         metricScheduleLoopCounter.increment();
+        long startNanos = System.nanoTime();
 
         ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduledTime, clock.getZone());
 
@@ -274,7 +278,7 @@ public class TriggerScheduler {
         schedulableTriggers.forEach(triggerEvaluationContext -> evaluate(clock, zoneScheduleTime, triggerEvaluationContext));
 
         // Record metrics
-        metricEvaluationLoopDuration.record(Duration.between(scheduledTime, clock.instant()));
+        metricEvaluationLoopDuration.record(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
 
         return schedulableTriggers.size();
     }

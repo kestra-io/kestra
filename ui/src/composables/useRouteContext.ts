@@ -1,17 +1,10 @@
 import {Ref, watch} from "vue"
+import {setDocumentTitle} from "../utils/documentTitle"
 
-export default function useRouteContext(routeInfo: Ref<{title: string}>, embed: boolean = false) {
-    function handleTitle(){
-        if(!embed) {
-            let baseTitle
-
-            if (document.title.lastIndexOf("|") >= 0) {
-                baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1).trim()
-            } else {
-                baseTitle = document.title
-            }
-
-            document.title = (routeInfo.value?.title ?? "") + " | " + baseTitle
+export default function useRouteContext(routeInfo: Ref<{title?: string | null}>, embed: boolean = false) {
+    function handleTitle() {
+        if (!embed) {
+            setDocumentTitle(routeInfo.value?.title)
         }
     }
 

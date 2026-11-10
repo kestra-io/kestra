@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import io.kestra.jdbc.QueueJdbcDataSourceProvider;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
 import io.micronaut.context.annotation.Requires;
@@ -18,16 +19,16 @@ import jakarta.inject.Singleton;
  * MySQL queue type. Active independently of the repository backend.
  */
 @Singleton
-@Requires(property = "kestra.queue.type", value = "mysql")
+@Requires(property = "kestra.queue.type", pattern = "(?i)mysql")
 public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init-queue";
 
-    private final DataSource dataSource;
+    private final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider;
 
     @Inject
-    public V2_0QueueMigration(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    public V2_0QueueMigration(final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider) {
+        this.queueJdbcDataSourceProvider = queueJdbcDataSourceProvider;
     }
 
     @Override
@@ -47,6 +48,6 @@ public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     @Override
     protected DataSource dataSource() {
-        return dataSource;
+        return queueJdbcDataSourceProvider.dataSource();
     }
 }

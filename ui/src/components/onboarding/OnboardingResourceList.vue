@@ -5,10 +5,7 @@
             v-for="item in items"
             :key="item.titleKey"
             class="onboarding-resource-item"
-            :href="item.href"
-            :to="item.to"
-            :target="item.href ? '_blank' : undefined"
-            :rel="item.href ? 'noreferrer' : undefined"
+            v-bind="item.href ? {href: item.href, target: '_blank', rel: 'noreferrer'} : {to: item.to}"
             @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
@@ -26,14 +23,16 @@
 </template>
 
 <script setup lang="ts">
+    import type {Component} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
         descriptionKey: string;
-        icon: any;
+        icon: Component;
         iconClass: string;
-        to?: any;
+        to?: RouteLocationRaw;
         href?: string;
     }
 
@@ -54,7 +53,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .onboarding-resource-list {
         overflow: hidden;

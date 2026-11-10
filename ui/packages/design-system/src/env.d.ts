@@ -10,7 +10,8 @@ declare module "*.png" {
 }
 
 declare module "xss" {
-    const xss: any
+    import type {IFilterXSSOptions} from "xss"
+    const xss: (html: string, options?: IFilterXSSOptions) => string
     export const escapeAttrValue: (value: string) => string
     export default xss
 }

@@ -3,10 +3,11 @@
         v-if="presentation !== 'panel'"
         :is="component"
         :icon="CodeTags"
+        :size="buttonSize"
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'KsButton' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ label ?? $t("show task source") }}</span>
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -18,7 +19,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,8 +32,9 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
-                        v-if="revision && revisions?.length !== revision"
+                        class="task-edit-revision-alert"
+                        data-test="task-edit-revision-alert"
+                        v-if="isOldRevision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -87,6 +89,7 @@
 
         <div class="task-edit-panel-body">
             <TaskEditData
+                v-if="!outsideFlow"
                 class="task-edit-col task-edit-col-inputs"
                 :class="{'task-edit-col--collapsed': inputsCollapsed}"
                 kind="inputs"
@@ -97,6 +100,7 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
+                :defaultCollapsedKeys="['context', 'namespaceFiles']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
                 @chip-activate="onChipActivate"
@@ -146,16 +150,34 @@
 
         </div>
 
-        <div v-if="errors && errors.length" v-ks-loading="isLoading" class="task-edit-panel-footer">
-            <div class="task-edit-validation-status" role="status" aria-live="polite">
+        <div
+            v-if="(errors && errors.length) || unsetRequiredCount > 0"
+            v-ks-loading="isLoading"
+            class="task-edit-panel-footer"
+        >
+            <div v-if="errors && errors.length" class="task-edit-validation-status" role="status" aria-live="polite">
                 <ValidationError link :errors="errors" />
+            </div>
+            <div
+                v-if="unsetRequiredCount > 0"
+                class="task-edit-required-status"
+                data-test="task-edit-required-status"
+                role="status"
+                aria-live="polite"
+            >
+                <AlertCircleOutline class="task-edit-required-icon" />
+                <span v-if="unsetRequiredCount === 1">{{ $t("block_editor.required_unset_singular") }}</span>
+                <span v-else>{{ $t("block_editor.required_unset_plural", {count: unsetRequiredCount}) }}</span>
+                <KsButton link size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
+                    {{ $t("block_editor.required_unset_jump") }}
+                </KsButton>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
+    import {ref, computed, nextTick, provide, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
     import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
@@ -164,20 +186,32 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Play from "vue-material-design-icons/Play.vue"
+    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
+    import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
-    import {splitValidationErrors} from "../../utils/validationErrors"
+    import {validationErrorLines, type ValidationError as ApiValidationError} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore, type FlowRevision} from "../../stores/flow"
+    import {useFlowStore, type FlowRevision, type ParsedFlow, type Task} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
-    import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {upstreamTaskIds} from "../../utils/flowableBlockOps"
+    import {useContextSections} from "../../composables/useContextSections"
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
+    import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../no-code/injectionKeys"
 
     interface Props {
         component?: string;
+        labeled?: boolean;
+        label?: string;
+        buttonSize?: string;
         task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
@@ -193,11 +227,16 @@
         size?: string;
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
+        outsideFlow?: boolean;
         editorKey?: string;
+        taskPath?: string;
     }
 
     const props = withDefaults(defineProps<Props>(), {
         component: "KsButton",
+        labeled: false,
+        label: undefined,
+        buttonSize: undefined,
         task: undefined,
         taskRaw: undefined,
         taskId: undefined,
@@ -211,7 +250,9 @@
         size: undefined,
         presentation: "drawer",
         hideTabstrip: false,
+        outsideFlow: false,
         editorKey: undefined,
+        taskPath: undefined,
     })
 
     const emit = defineEmits<{
@@ -244,9 +285,38 @@
 
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+    const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null)
+    provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert)
+
+    const unsetRequiredFields = ref<UnsetRequiredField[]>([])
+    provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
+    const unsetRequiredCount = computed(() => unsetRequiredFields.value.length)
+
+    const navigateToRequiredField = ref<((path: string) => boolean) | undefined>(undefined)
+    provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
+
+    async function jumpToFirstUnsetRequired() {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
+            await nextTick()
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
+        }
+        if (!el) return
+
+        openCollapsedGroups(el)
+        await nextTick()
+        scrollThenFocus(el)
+    }
 
     const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
+        if (event.target instanceof HTMLElement && event.target.closest(".monaco-editor")) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+            return
+        }
         if (isArmableField(event.target)) {
             armedField.value?.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = event.target
@@ -263,6 +333,8 @@
             armedField.value.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = null
         }
+        // Tabbing out of Monaco fires focusout while focus is still inside the panel.
+        if (leavingPanel) focusedExpressionEditorInsert.value = null
     }
 
     function insertAndNotify(field: HTMLInputElement | HTMLTextAreaElement, expr: string) {
@@ -271,12 +343,18 @@
         KsMessage.success(t("block_editor.chip_inserted"))
     }
 
-    function onChipActivate(expr: string) {
+    function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
+        } else if (focusedExpressionEditorInsert.value) {
+            focusedExpressionEditorInsert.value(expr)
+            KsMessage.success(t("block_editor.chip_inserted"))
+            trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)
             KsMessage.success(t("block_editor.chip_copied"))
+            trackChipCopied(`inputs.${sectionKey}`)
         }
     }
 
@@ -288,9 +366,11 @@
 
         event.preventDefault()
         const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const sectionKey = event.dataTransfer.getData(CHIP_SECTION_DRAG_MIME)
         const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
         if (expr && isArmableField(target)) {
             insertAndNotify(target, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         }
     }
 
@@ -317,7 +397,7 @@
     const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
 
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -329,43 +409,33 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse(taskYaml.value)?.type ?? propTaskType.value ?? ""
+            return YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
             return propTaskType.value ?? ""
         }
     })
 
     const flowStore = useFlowStore()
-    const localTaskError = ref<string | undefined>()
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
+    const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
-        const split = splitValidationErrors(localTaskError.value)
+        const split = validationErrorLines(localTaskErrors.value)
         return split.length === 0 ? undefined : split
     })
     const pluginMarkdown = computed(() => {
-        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
+        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown
         }
         return null
     })
-
-    function flattenTaskIds(tasks: unknown, acc: string[]) {
-        if (!Array.isArray(tasks)) return
-        for (const task of tasks) {
-            if (task?.id) acc.push(String(task.id))
-            for (const key of ["tasks", "then", "else", "errors", "finally", "defaults"]) flattenTaskIds(task?.[key], acc)
-            if (task?.cases && typeof task.cases === "object") {
-                for (const branch of Object.values(task.cases)) flattenTaskIds(branch, acc)
-            }
-        }
-    }
 
     const currentTaskId = computed(() => String(props.taskId ?? props.task?.id ?? ""))
 
     const editorUri = computed(() => props.editorKey || currentTaskId.value)
 
     const inputSections = computed(() => {
-        const flow = flowStore.flowParsed ?? {}
-        const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
+        const flow: ParsedFlow = flowStore.flowParsed ?? {}
+        const sections: DataSection[] = []
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
@@ -375,14 +445,12 @@
             })})
         }
 
-        const ids: string[] = []
-        flattenTaskIds(flow.tasks, ids)
-        flattenTaskIds(flow.errors, ids)
-        flattenTaskIds(flow.finally, ids)
-        const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value, props.taskPath)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
+
+        sections.push(...contextDataSections.value)
 
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],
@@ -418,7 +486,7 @@
 
     const outputSections = computed(() => {
         const properties = declaredOutputProperties.value
-        if (!properties) return []
+        if (!properties || props.outsideFlow) return []
         const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
@@ -455,9 +523,14 @@
 
     const isLoading = computed(() => taskYaml.value === undefined)
 
+    // Revision numbers are not list indexes: deleting a flow consumes a revision that the list leaves out.
+    const selectedRevision = computed(() => revisions.value?.find(({revision}) => revision === props.revision))
+
+    const isOldRevision = computed(() => Boolean(props.revision) && props.revision !== revisions.value?.at(-1)?.revision)
+
     const source = computed(() => {
         return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
+            ? selectedRevision.value?.source
             : flowStore.flow?.source
     })
 
@@ -468,7 +541,7 @@
             revision: props.revision?.toString(),
         })
         if (props.revision) {
-            if (!revisions.value?.[props.revision - 1]) {
+            if (!selectedRevision.value) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
@@ -508,27 +581,27 @@
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (propTaskType.value) {
+        if (propTaskType.value && !props.outsideFlow) {
             pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
-        if (taskYaml.value) {
+        if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskError.value = (result as {constraints?: string})?.constraints })
-                .catch(() => { localTaskError.value = undefined })
+                .then((result) => { localTaskErrors.value = result?.errors })
+                .catch(() => { localTaskErrors.value = undefined })
         } else {
-            localTaskError.value = undefined
+            localTaskErrors.value = undefined
         }
     }
 
     const commitEdit = () => {
-        if (lastValidatedValue.value !== taskYaml.value) {
+        if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({
                 task: taskYaml.value,
                 section: props.section,
             }).then((result) => {
-                localTaskError.value = (result as {constraints?: string})?.constraints
+                localTaskErrors.value = result?.errors
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {
@@ -546,7 +619,10 @@
         }
 
         taskYaml.value = value
-        timer.value = setTimeout(commitEdit, 500)
+        timer.value = setTimeout(() => {
+            timer.value = undefined
+            commitEdit()
+        }, 500)
     }
 
     const flushPendingEdit = () => {
@@ -572,25 +648,26 @@
         }
         const incoming = raw ?? YAML_UTILS.stringify(newTask)
         const keepLocalEdit = props.presentation === "panel"
-            ? panelHasFocus.value
+            ? normalizeYaml(incoming) === normalizeYaml(taskYaml.value) || (panelHasFocus.value && isDirty.value)
             : normalizeYaml(incoming) === normalizeYaml(taskBaseline.value)
         if (incoming !== taskYaml.value && !keepLocalEdit) {
             taskYaml.value = incoming
             taskBaseline.value = incoming
         }
-        const taskType = newTask?.type ?? YAML_UTILS.parse(incoming)?.type
-        if (taskType) {
-            await pluginsStore.load({cls: taskType}).catch(() => {})
+        const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
+        if (typeof incomingType === "string" && incomingType && !props.outsideFlow) {
+            await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
 
     const typeLoadTimer = ref<ReturnType<typeof setTimeout>>()
     watch(taskYaml, () => {
-        const task = YAML_UTILS.parse(taskYaml.value)
-        if (task?.type && task.type !== type.value) {
-            type.value = task.type
+        const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
+        const parsedType = task?.type
+        if (parsedType && parsedType !== type.value && !props.outsideFlow) {
+            type.value = parsedType
             clearTimeout(typeLoadTimer.value)
-            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: task.type}).catch(() => {}), 500)
+            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
         }
     })
 
@@ -611,7 +688,7 @@
     defineExpose({open: onShow, flushPendingEdit})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-edit-panel {
         display: flex;
         flex-direction: column;
@@ -690,39 +767,35 @@
         flex-direction: column;
     }
 
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
     @container (max-width: 760px) {
         .task-edit-panel-body {
-            @include task-edit-stacked;
+            flex-direction: column;
+
+            .task-edit-col {
+                flex: none;
+                width: 100%;
+                height: auto;
+                border: none;
+                border-bottom: 1px solid var(--ks-border-subtle);
+            }
+
+            .task-edit-col-inputs,
+            .task-edit-col-output {
+                max-height: 30%;
+            }
+
+            .task-edit-col-params {
+                order: -1;
+                flex: 1 1 auto;
+                min-height: 55%;
+            }
+
+            .task-edit-col-inputs.task-edit-col--collapsed,
+            .task-edit-col-output.task-edit-col--collapsed {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
         }
     }
 
@@ -753,11 +826,21 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        flex-wrap: wrap;
         gap: var(--ks-spacing-3);
         flex-shrink: 0;
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-top: 1px solid var(--ks-border-subtle);
         background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
     }
 
     .task-edit-validation-status {
@@ -768,5 +851,18 @@
     :global(.task-edit-chip-insert-target) {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: -1px;
+    }
+
+    .task-edit-required-status {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-error);
+    }
+
+    .task-edit-required-icon {
+        display: inline-flex;
+        flex-shrink: 0;
     }
 </style>

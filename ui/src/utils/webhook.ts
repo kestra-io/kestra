@@ -2,6 +2,14 @@ import {apiUrl} from "override/utils/route"
 
 export const WEBHOOK_TRIGGER_TYPE = "io.kestra.plugin.core.trigger.Webhook"
 
+export const WEBHOOK_TRIGGER_TYPES = [
+    WEBHOOK_TRIGGER_TYPE,
+    "io.kestra.plugin.slack.app.core.Trigger",
+    "io.kestra.plugin.slack.app.Trigger",
+    "io.kestra.plugin.payfit.webhook.Webhook",
+    "io.kestra.plugin.sent.triggers.EventTrigger",
+]
+
 export interface WebhookUrlParams {
     namespace: string;
     id: string;

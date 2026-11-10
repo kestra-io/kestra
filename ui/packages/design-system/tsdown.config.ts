@@ -37,6 +37,9 @@ export default defineConfig({
     exports: {
         enabled: "ci-only",
         devExports: false,
+        customExports: {
+            "./styles/color-palette": {sass: "./dist/assets/styles/_color-palette.scss"},
+        },
     },
     plugins: [svgInlinePlugin],
     fromVite: true,

@@ -74,7 +74,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .raw-filter {
     display: flex;
     flex-direction: column;
@@ -132,7 +132,7 @@
     flex-shrink: 0;
     color: var(--ks-text-dim);
 
-    :deep(svg) {
+    & :deep(svg) {
         font-size: var(--ks-font-size-base);
     }
 }

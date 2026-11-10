@@ -1,4 +1,5 @@
 export const CHIP_DRAG_MIME = "application/x-kestra-chip"
+export const CHIP_SECTION_DRAG_MIME = "application/x-kestra-chip-section"
 
 export function isArmableField(el: EventTarget | null): el is HTMLInputElement | HTMLTextAreaElement {
     if (!(el instanceof HTMLTextAreaElement) && !(el instanceof HTMLInputElement)) {

@@ -1,0 +1,295 @@
+import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {vueRouter} from "storybook-vue3-router";
+import {
+    userEvent,
+    within,
+    expect,
+    waitFor
+} from "storybook/test";
+import LogLine from "./LogLine.vue";
+import type {Log} from "../../stores/logs";
+
+const ALLOWED_LEVELS: Log["level"][] = [
+    "TRACE",
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERROR",
+];
+
+const meta: Meta<typeof LogLine> = {
+    title: "Components/Logs/LogLine",
+    component: LogLine,
+    argTypes: {
+        cursor: {
+            control: "boolean",
+            description: "Shows a cursor icon on the left side of the log line"
+        },
+        filter: {
+            control: "text",
+            description: "Text to filter log messages"
+        },
+        level: {
+            control: "select",
+            options: ALLOWED_LEVELS,
+            description: "Log level"
+        },
+        excludeMetas: {
+            control: "object",
+            description: "Array of meta fields to exclude from display"
+        },
+        title: {
+            control: "boolean",
+            description: "Shows taskId or flowId as a title"
+        }
+    },
+    decorators: [vueRouter([
+        {
+            path: "/",
+            component: () => Promise.resolve({default: () => <div>Home</div>})
+        },
+        {
+            path: "/flows",
+            name: "flows/list",
+            component: () => Promise.resolve({default: () => <div>Flows</div>})
+        },
+        {
+            path: "/:namespace/flows/update/:id",
+            name: "flows/update",
+            component: () => Promise.resolve({default: () => <div>Flow Update</div>})
+        },
+        {
+            path: "/:namespace/executions/:id",
+            name: "executions/list",
+            component: () => Promise.resolve({default: () => <div>Executions List</div>})
+        }
+        ,
+        {
+            path: "/:namespace/executions/update/:flowId/:id",
+            name: "executions/update",
+            component: () => Promise.resolve({default: () => <div>Executions List</div>})
+        }
+    ])]
+};
+
+export default meta;
+
+const Template: StoryFn<typeof LogLine> = (args) => ({
+    components: {LogLine},
+    setup() {
+        return () => {
+            args.log.level = args.level!;
+            return <LogLine {...args} />;
+        }
+    }
+});
+
+const argsDefaults = (level: Log["level"], message = "This is an info message") => ({
+    cursor: true,
+    log: {
+        level,
+        message,
+        timestamp: new Date().toISOString(),
+        namespace: "test-namespace",
+        flowId: "flow-123",
+        executionId: "exec-456"
+    } as Log,
+    level
+})
+
+export const Info = Template.bind({});
+Info.args = argsDefaults("INFO");
+
+export const Warning = Template.bind({});
+Warning.args = argsDefaults("WARN");
+
+export const Error = Template.bind({});
+Error.args = argsDefaults("ERROR");
+
+const severityLine = (level: Log["level"], cursor: boolean, message: string) => (
+    <LogLine
+        cursor={cursor}
+        level={level}
+        log={{level, message, timestamp: "2026-10-20T08:57:19.401Z"} as Log}
+    />
+)
+
+const STACK_MESSAGE = [
+    "selected stack first",
+    "    at io.kestra.plugin.Example.execute(Example.java:42)",
+    "    at io.kestra.runner.WorkerThread.run(WorkerThread.java:10)",
+].join("\n")
+
+const caretDelta = (line: HTMLElement) => {
+    const level = line.querySelector(".log-level") as HTMLElement
+    const caret = line.querySelector(".icon_container") as HTMLElement
+    const levelBox = level.getBoundingClientRect()
+    const caretBox = caret.getBoundingClientRect()
+    return {
+        levelBox,
+        delta: Math.abs((caretBox.top + caretBox.height / 2) - (levelBox.top + levelBox.height / 2)),
+    }
+}
+
+export const SelectedSeverityHighlight: StoryObj<typeof LogLine> = {
+    render: () => ({
+        setup() {
+            return () => (
+                <div>
+                    {severityLine("ERROR", true, "selected error")}
+                    {severityLine("ERROR", false, "plain error")}
+                    {severityLine("WARN", true, "selected warn")}
+                    {severityLine("WARN", false, "plain warn")}
+                    {severityLine("INFO", true, "selected info")}
+                    {severityLine("INFO", false, "plain info")}
+                    {severityLine("ERROR", true, STACK_MESSAGE)}
+                </div>
+            )
+        },
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const row = (message: string) => {
+            const line = canvas.getByText(message).closest(".line")
+            expect(line).toBeTruthy()
+            return line as HTMLElement
+        }
+        const background = (message: string) => getComputedStyle(row(message)).backgroundColor
+        const selectedInfo = background("selected info")
+        const plainInfo = background("plain info")
+
+        expect(background("selected error")).toBe(selectedInfo)
+        expect(background("selected warn")).toBe(selectedInfo)
+        expect(background("plain error")).not.toBe(plainInfo)
+        expect(background("plain warn")).not.toBe(plainInfo)
+        expect(plainInfo).not.toBe(selectedInfo)
+
+        for (const message of ["selected error", "selected warn", "selected info"]) {
+            const {delta} = caretDelta(row(message))
+            expect(delta).toBeLessThan(2)
+        }
+
+        const stack = canvas.getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        const {levelBox, delta} = caretDelta(stack)
+        expect(stack.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
+    },
+}
+
+export const SelectedCaretOnMobile: StoryObj<typeof LogLine> = {
+    parameters: {
+        viewport: {
+            options: {mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}}},
+            defaultViewport: "mobile",
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        setup() {
+            return () => severityLine("ERROR", true, STACK_MESSAGE)
+        },
+    }),
+    play: async ({canvasElement}) => {
+        const line = within(canvasElement).getByText("selected stack first", {exact: false}).closest(".line") as HTMLElement
+        expect(getComputedStyle(line).display).toBe("grid")
+        const {levelBox, delta} = caretDelta(line)
+        expect(line.getBoundingClientRect().height).toBeGreaterThan(levelBox.height * 2)
+        expect(delta).toBeLessThan(2)
+    },
+}
+
+export const WithTitle = Template.bind({});
+WithTitle.args = {
+    cursor: true,
+    log: {
+        level: "INFO",
+        message: "This is a message with title",
+        timestamp: new Date().toISOString(),
+        namespace: "test-namespace",
+        flowId: "flow-123",
+        executionId: "exec-456",
+        taskId: "task-789"
+    } as Log,
+    level: "INFO",
+    title: true
+};
+
+export const WithFilter: StoryObj<typeof LogLine> = {
+    render: () => {
+        return {
+            setup(){
+                const values = ref("filterable");
+                return () => <ks-card>
+                    <ks-form label-position="top">
+                        <ks-form-item label="Filter">
+                            <ks-input v-model={values.value} type="search" placeholder="Filter"/>
+                        </ks-form-item>
+                        <hr style={{margin: ".5rem 0"}}/>
+                        <LogLine {...argsDefaults("INFO", "This is a filterable message")} filter={values.value} />
+                    </ks-form>
+                </ks-card>
+            }
+        }
+    }
+}
+
+// check if when the filter changes, the message disappears
+WithFilter.play = async ({canvasElement}) => {
+    const can = within(canvasElement);
+    const input = can.getByLabelText("Filter");
+    await userEvent.type(input, " hide me");
+    await waitFor(() => expect(can.queryByText("This is a filterable message")).not.toBeInTheDocument());
+}
+
+export const WithRouterLinkInMarkdown = Template.bind({});
+WithRouterLinkInMarkdown.args = argsDefaults("INFO", "Created new execution [[link execution=\"4Q9z27FJ26FRIhdv037HtF\" flowId=\"child\" namespace=\"company.team\"]]")
+
+// check that the proper links were created from the message
+WithRouterLinkInMarkdown.play = async ({canvasElement}) => {
+    const can = within(canvasElement);
+    await waitFor(() => expect(can.getAllByRole("link")).toHaveLength(2));
+    const links = can.getAllByRole("link");
+    expect(links[0]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
+    expect(links[1]).toHaveTextContent("company.team.child");
+}
+
+export const WithExcludedMetas = Template.bind({});
+WithExcludedMetas.args = {
+    cursor: true,
+    log: {
+        level: "INFO",
+        message: "This message has excluded meta fields",
+        timestamp: new Date().toISOString(),
+        namespace: "test-namespace",
+        flowId: "flow-123",
+        executionId: "exec-456"
+    } as Log,
+    level: "INFO",
+    filter: "",
+    excludeMetas: ["namespace", "flowId"],
+    title: false
+};
+
+export const MultipleLogLinesWithAllLevels: StoryFn<typeof LogLine> = () => {
+    return (
+        <ks-card>
+            {
+                ALLOWED_LEVELS.map((level, index) => {
+                    return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args!.log, level} as Log} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-default)"}} />
+                })
+            }
+        </ks-card>
+    );
+};
+
+// reproduction of https://github.com/kestra-io/kestra/pull/7133
+export const ShortLogWithoutContext: StoryFn<typeof LogLine> = () => {
+    return (
+        <ks-card>
+            <LogLine log={{level: "INFO", message: "test"} as Log} level="INFO" />
+        </ks-card>
+    );
+}

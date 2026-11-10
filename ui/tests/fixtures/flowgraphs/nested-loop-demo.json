@@ -1,0 +1,270 @@
+{
+    "nodes": [
+        {
+            "uid": "root.root-1Nest0Rt",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.end-1Nest0En",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.per_region.root-2Nest1Rt",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.per_region.end-2Nest1En",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.per_region",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "per_region",
+                "type": "io.kestra.plugin.core.flow.Loop",
+                "values": [
+                    "EMEA",
+                    "AMER",
+                    "APAC"
+                ],
+                "tasks": [
+                    {
+                        "id": "per_quarter",
+                        "type": "io.kestra.plugin.core.flow.Loop",
+                        "values": [
+                            "Q1",
+                            "Q2",
+                            "Q3",
+                            "Q4"
+                        ],
+                        "tasks": [
+                            {
+                                "id": "fetch_sales",
+                                "type": "io.kestra.plugin.core.log.Log",
+                                "message": "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+                            },
+                            {
+                                "id": "summarize",
+                                "type": "io.kestra.plugin.core.log.Log",
+                                "message": "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "relationType": "DYNAMIC"
+        },
+        {
+            "uid": "root.per_region.per_quarter.root-3Nest2Rt",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.per_region.per_quarter.end-3Nest2En",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.per_region.per_quarter",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "per_quarter",
+                "type": "io.kestra.plugin.core.flow.Loop",
+                "values": [
+                    "Q1",
+                    "Q2",
+                    "Q3",
+                    "Q4"
+                ],
+                "tasks": [
+                    {
+                        "id": "fetch_sales",
+                        "type": "io.kestra.plugin.core.log.Log",
+                        "message": "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+                    },
+                    {
+                        "id": "summarize",
+                        "type": "io.kestra.plugin.core.log.Log",
+                        "message": "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+                    }
+                ]
+            },
+            "relationType": "DYNAMIC"
+        },
+        {
+            "uid": "root.per_region.per_quarter.fetch_sales",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "fetch_sales",
+                "type": "io.kestra.plugin.core.log.Log",
+                "message": "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+            },
+            "relationType": "DYNAMIC"
+        },
+        {
+            "uid": "root.per_region.per_quarter.summarize",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "summarize",
+                "type": "io.kestra.plugin.core.log.Log",
+                "message": "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+            },
+            "relationType": "SEQUENTIAL"
+        }
+    ],
+    "edges": [
+        {
+            "source": "root.root-1Nest0Rt",
+            "target": "root.per_region.root-2Nest1Rt",
+            "relation": {}
+        },
+        {
+            "source": "root.per_region.root-2Nest1Rt",
+            "target": "root.per_region",
+            "relation": {}
+        },
+        {
+            "source": "root.per_region",
+            "target": "root.per_region.per_quarter.root-3Nest2Rt",
+            "relation": {
+                "relationType": "DYNAMIC"
+            }
+        },
+        {
+            "source": "root.per_region.per_quarter.root-3Nest2Rt",
+            "target": "root.per_region.per_quarter",
+            "relation": {}
+        },
+        {
+            "source": "root.per_region.per_quarter",
+            "target": "root.per_region.per_quarter.fetch_sales",
+            "relation": {
+                "relationType": "DYNAMIC"
+            }
+        },
+        {
+            "source": "root.per_region.per_quarter.fetch_sales",
+            "target": "root.per_region.per_quarter.summarize",
+            "relation": {
+                "relationType": "SEQUENTIAL"
+            }
+        },
+        {
+            "source": "root.per_region.per_quarter.summarize",
+            "target": "root.per_region.per_quarter.end-3Nest2En",
+            "relation": {}
+        },
+        {
+            "source": "root.per_region.per_quarter.end-3Nest2En",
+            "target": "root.per_region.end-2Nest1En",
+            "relation": {}
+        },
+        {
+            "source": "root.per_region.end-2Nest1En",
+            "target": "root.end-1Nest0En",
+            "relation": {}
+        }
+    ],
+    "clusters": [
+        {
+            "cluster": {
+                "uid": "cluster_root.per_region",
+                "type": "io.kestra.core.models.hierarchies.GraphCluster",
+                "relationType": "DYNAMIC",
+                "taskNode": {
+                    "uid": "root.per_region",
+                    "type": "io.kestra.core.models.hierarchies.GraphTask",
+                    "task": {
+                        "id": "per_region",
+                        "type": "io.kestra.plugin.core.flow.Loop",
+                        "values": [
+                            "EMEA",
+                            "AMER",
+                            "APAC"
+                        ],
+                        "tasks": [
+                            {
+                                "id": "per_quarter",
+                                "type": "io.kestra.plugin.core.flow.Loop",
+                                "values": [
+                                    "Q1",
+                                    "Q2",
+                                    "Q3",
+                                    "Q4"
+                                ],
+                                "tasks": [
+                                    {
+                                        "id": "fetch_sales",
+                                        "type": "io.kestra.plugin.core.log.Log",
+                                        "message": "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+                                    },
+                                    {
+                                        "id": "summarize",
+                                        "type": "io.kestra.plugin.core.log.Log",
+                                        "message": "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "relationType": "DYNAMIC"
+                }
+            },
+            "nodes": [
+                "root.per_region.root-2Nest1Rt",
+                "root.per_region.end-2Nest1En",
+                "root.per_region",
+                "cluster_root.per_region.per_quarter",
+                "root.per_region.per_quarter.root-3Nest2Rt",
+                "root.per_region.per_quarter.end-3Nest2En"
+            ],
+            "parents": [],
+            "start": "root.per_region.root-2Nest1Rt",
+            "end": "root.per_region.end-2Nest1En"
+        },
+        {
+            "cluster": {
+                "uid": "cluster_root.per_region.per_quarter",
+                "type": "io.kestra.core.models.hierarchies.GraphCluster",
+                "relationType": "DYNAMIC",
+                "taskNode": {
+                    "uid": "root.per_region.per_quarter",
+                    "type": "io.kestra.core.models.hierarchies.GraphTask",
+                    "task": {
+                        "id": "per_quarter",
+                        "type": "io.kestra.plugin.core.flow.Loop",
+                        "values": [
+                            "Q1",
+                            "Q2",
+                            "Q3",
+                            "Q4"
+                        ],
+                        "tasks": [
+                            {
+                                "id": "fetch_sales",
+                                "type": "io.kestra.plugin.core.log.Log",
+                                "message": "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+                            },
+                            {
+                                "id": "summarize",
+                                "type": "io.kestra.plugin.core.log.Log",
+                                "message": "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+                            }
+                        ]
+                    },
+                    "relationType": "DYNAMIC"
+                }
+            },
+            "nodes": [
+                "root.per_region.per_quarter.root-3Nest2Rt",
+                "root.per_region.per_quarter.end-3Nest2En",
+                "root.per_region.per_quarter",
+                "root.per_region.per_quarter.fetch_sales",
+                "root.per_region.per_quarter.summarize"
+            ],
+            "parents": [
+                "cluster_root.per_region"
+            ],
+            "start": "root.per_region.per_quarter.root-3Nest2Rt",
+            "end": "root.per_region.per_quarter.end-3Nest2En"
+        }
+    ]
+}

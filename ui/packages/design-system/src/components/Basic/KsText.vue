@@ -1,5 +1,9 @@
 <template>
-    <ElText v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElText
+        v-bind="({...filteredProps(), ...$attrs} as TextProps)"
+        :type="type === 'secondary' ? undefined : type"
+        :class="{'kel-text--secondary': type === 'secondary'}"
+    >
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,13 +11,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElText} from "element-plus"
+    import {ElText, type TextProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        type?: "" | "primary" | "success" | "warning" | "danger" | "info"
+        type?: "" | "primary" | "secondary" | "success" | "warning" | "danger" | "info"
         size?: "small" | "default" | "large"
         truncated?: boolean
         lineClamp?: string | number
@@ -24,24 +28,36 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["type"])
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/text';
+</style>
 
-    $variants: (
-        "primary": "link",
-        "success": "success",
-        "warning": "warning",
-        "danger": "error",
-        "info": "info",
-    );
+<style>
+    .kel-text.kel-text--primary {
+        --kel-text-color: var(--ks-text-link);
+    }
 
-    @each $variant, $token in $variants {
-        .kel-text.kel-text--#{$variant} {
-            --kel-text-color: var(--ks-text-#{$token});
-        }
+    .kel-text.kel-text--secondary {
+        --kel-text-color: var(--ks-text-secondary);
+    }
+
+    .kel-text.kel-text--success {
+        --kel-text-color: var(--ks-text-success);
+    }
+
+    .kel-text.kel-text--warning {
+        --kel-text-color: var(--ks-text-warning);
+    }
+
+    .kel-text.kel-text--danger {
+        --kel-text-color: var(--ks-text-error);
+    }
+
+    .kel-text.kel-text--info {
+        --kel-text-color: var(--ks-text-info);
     }
 </style>

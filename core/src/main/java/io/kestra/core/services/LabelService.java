@@ -24,7 +24,7 @@ public final class LabelService {
     public static List<Label> labelsExcludingSystem(List<Label> labels) {
         return ListUtils.emptyOnNull(labels)
             .stream()
-            .filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX))
+            .filter(label -> !Label.isSystem(label.key()))
             .toList();
     }
 

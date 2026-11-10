@@ -1,31 +1,30 @@
 <template>
-    <KsCard v-if="loading && flowStore.flow?.concurrency" class="mb-3">
-        <div class="text-center">
+    <KsCard v-if="loading && flowStore.flow?.concurrency" class="concurrency-section">
+        <div class="loading-state">
             <KsIcon class="is-loading">
                 <Loading />
             </KsIcon>
-            <span class="ms-2">{{ $t('loading') }}</span>
+            <span class="loading-label">{{ $t('loading') }}</span>
         </div>
     </KsCard>
-    <KsAlert v-else-if="error && flowStore.flow?.concurrency" type="error" :closable="false" class="mb-3">
+    <KsAlert v-else-if="error && flowStore.flow?.concurrency" type="error" :closable="false" class="concurrency-section">
         {{ $t('flowConcurrency.loadError') }}
     </KsAlert>
     <div v-else-if="concurrencyLimit && flowStore.flow?.concurrency" data-test="concurrency-limit">
-        <KsCard class="concurrency-summary mb-3">
-            <div class="row mb-3">
-                <span class="col d-flex align-items-center">
-                    <h5 class="m-3">RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
+        <KsCard class="concurrency-summary concurrency-section">
+            <div class="concurrency-header">
+                <span class="running-slots">
+                    <h5 class="running-label">RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
                 </span>
-                <span class="col d-flex justify-content-end align-items-center">
-                    {{ $t('behavior') }}: <KsExecutionStatus class="mx-2" :status="flowStore.flow?.concurrency?.behavior" size="small" />
+                <span class="concurrency-behavior">
+                    {{ $t('behavior') }}: <KsExecutionStatus class="concurrency-status" :status="flowStore.flow?.concurrency?.behavior" size="small" />
                 </span>
             </div>
-            <div class="progressbar mb-3">
-                <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
+            <div class="concurrency-section">
+                <KsProgress :stroke-width="16" color="var(--ks-status-info)" radius="var(--ks-radius-base)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
         <Executions
-            :restoreUrl="false"
             :topbar="false"
             :namespace="flowStore.flow?.namespace"
             :flowId="flowStore.flow?.id"
@@ -39,7 +38,7 @@
         type="warning"
         :closable="false"
         :title="$t('flowConcurrency.staleLimit.title')"
-        class="mb-3"
+        class="concurrency-section"
         data-test="concurrency-stale-limit"
     >
         {{ $t('flowConcurrency.staleLimit.message', {count: staleLimit.running}) }}
@@ -54,9 +53,9 @@
     import Empty from "../layout/empty/Empty.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type ConcurrencyLimit} from "@kestra-io/kestra-sdk"
     import {apiUrl} from "override/utils/route"
-    import type {KestraHttpError} from "../../utils/kestraHttp"
+    import {handled, type KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})
@@ -66,11 +65,11 @@
 
     const loading = ref(false)
     const error = ref(false)
-    const concurrencyLimit = ref<{ tenantId: string; namespace: string; flowId: string; running: number } | undefined>(undefined)
+    const concurrencyLimit = ref<ConcurrencyLimit | undefined>(undefined)
 
     const progress = computed(() => {
         if (!flowStore.flow?.concurrency || concurrencyLimit.value === undefined) return 0
-        return (concurrencyLimit.value.running / flowStore.flow.concurrency.limit) * 100
+        return ((concurrencyLimit.value.running ?? 0) / flowStore.flow.concurrency.limit) * 100
     })
 
     // A leftover record holding slots for a flow that no longer declares a concurrency block.
@@ -89,15 +88,15 @@
         error.value = false
 
         try {
-            const response = await axios.get(
+            const response = await axios.get<ConcurrencyLimit>(
                 `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
-                {ignoreNotFound: true, showMessageOnError: false},
             )
 
             concurrencyLimit.value = response.data
         } catch (err) {
             const httpError = err as KestraHttpError | undefined
             if (httpError?.status === 404 || httpError?.response?.status === 404) {
+                handled(err)
                 concurrencyLimit.value = undefined
             } else {
                 error.value = true
@@ -114,35 +113,40 @@
     )
 </script>
 
-<style scoped lang="scss">
-    .img-size {
-        max-width: 200px;
-    }
-    .bg-purple {
-        height: 100%;
-        width: 100%;
-    }
-    h5 {
-        font-weight: bold;
-        margin-left: 0 !important;
+<style scoped>
+    .concurrency-section, .concurrency-header {
+        margin-bottom: var(--ks-spacing-4);
     }
 
-    :deep(.kel-progress) {
-        .kel-progress-bar, .kel-progress-bar__outer, .kel-progress-bar__inner {
-            border-radius: var(--kel-border-radius-base);
-        }
+    .loading-state {
+        text-align: center;
+        padding: var(--ks-spacing-4);
     }
 
-    :deep(.kel-card) {
-        background-color: var(--ks-bg-surface);
+    .loading-label {
+        margin-inline-start: var(--ks-spacing-2);
     }
 
     .concurrency-summary {
         margin-inline: var(--ks-spacing-6);
     }
 
-    .text-center {
-        text-align: center;
-        padding: var(--ks-font-size-lg);
+    .running-slots, .concurrency-behavior {
+        display: flex;
+        align-items: center;
+    }
+
+    .running-label {
+        font-weight: var(--ks-font-weight-bold);
+        margin: var(--ks-spacing-4);
+        margin-inline-start: 0;
+    }
+
+    .concurrency-behavior {
+        justify-content: flex-end;
+    }
+
+    .concurrency-status {
+        margin-inline: var(--ks-spacing-2);
     }
 </style>

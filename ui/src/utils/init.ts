@@ -1,9 +1,9 @@
 import {createRouter, createWebHistory} from "vue-router"
 import type {App} from "vue"
-import type {RouteRecordRaw} from "vue-router"
+import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordRaw, Router} from "vue-router"
 import {configure} from "vue-gtag"
-import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
-import VueVirtualScroller from "vue-virtual-scroller"
+import type {I18nOptions} from "vue-i18n"
+import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
 import {createPinia} from "pinia"
 
 import Toast from "./toast"
@@ -13,22 +13,26 @@ import {setDesignSystemLocale, dateUtils, registerDesignSystemI18n} from "@kestr
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
-import {useDocStore} from "../stores/doc"
+import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
-type GuardFn = (...args: unknown[]) => unknown
+type RouterGuard = (router: Router, to: RouteLocationNormalized, from: RouteLocationNormalizedLoaded) => NavigationGuardReturn | Promise<NavigationGuardReturn>
 
 export default async (
     app: App,
     routes: RouteRecordRaw[],
     _stores: unknown,
     translations: Record<string, unknown>,
-    additionalTranslations: Record<string, unknown> = {},
-    guards: Record<string, GuardFn | undefined> = {},
+    additionalTranslations: TranslationProvider = {},
+    guards: {
+        beforeEach?: RouterGuard,
+        beforeResolve?: RouterGuard,
+        afterEach?: (router: Router, to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => unknown,
+    } = {},
 ) => {
     // router
     const router = createRouter({
@@ -40,31 +44,15 @@ export default async (
     const piniaStore = createPinia()
     app.use(piniaStore)
 
-    /**
-     * Manage docId initialization for Contextual docs
-     */
-    router.beforeEach((to, from) => {
-        // set the docId from the path
-        // so it has a default
-        const pathArray = to.path.split("/")
-        const docId = pathArray[pathArray.length-1]
-
-        const docStore = useDocStore()
-        docStore.docId = docId
-
-        // propagate showDocId query param
-        // to the next page to facilitate docs binding
-        if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
-            return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
-        }
-    })
+    router.beforeEach(documentationGuard)
+    router.afterEach(updateDocId)
 
     if(guards.beforeEach){
-        router.beforeEach(guards.beforeEach.bind(null, router) as Parameters<typeof router.beforeEach>[0])
+        router.beforeEach(guards.beforeEach.bind(null, router))
     }
 
     if(guards.beforeResolve){
-        router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
+        router.beforeResolve(guards.beforeResolve.bind(null, router))
     }
 
     // After the edition's own guards, so an auth or tenant redirect wins over probing an entity
@@ -72,11 +60,11 @@ export default async (
     router.beforeResolve(entityNotFoundGuard)
 
     if(guards.afterEach){
-        router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])
+        router.afterEach(guards.afterEach.bind(null, router))
     }
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", {detail: to}))
     })
 
     // Registered before the router installs: app.use(router) starts the first navigation, and both
@@ -100,21 +88,20 @@ export default async (
     // l18n
     const locale = Utils.getLang()
 
-    // FIXME: any - setupI18n options type doesn't expose all options
     const i18n = setupI18n({
         locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    } as any) // FIXME: any
+    } as Parameters<typeof setupI18n>[0] & I18nOptions)
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations as any) // FIXME: additional translations provider lacks its module type
+        await loadLocaleMessages(i18n, locale, additionalTranslations)
         await setI18nLanguage(i18n, locale)
     }
     setDesignSystemLocale(locale)
@@ -125,7 +112,6 @@ export default async (
     // others plugins
     app.use(Toast)
     app.provide("Toast", Toast)
-    app.use(VueVirtualScroller)
 
     // filters
     app.config.globalProperties.$filters = filters

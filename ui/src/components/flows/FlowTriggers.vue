@@ -37,7 +37,6 @@
                 <KsButton @click="bulkSetDisabled(false)">{{ $t("enable") }}</KsButton>
                 <KsButton @click="bulkSetDisabled(true)">{{ $t("disable") }}</KsButton>
                 <KsButton @click="bulkUnlock()">{{ $t("unlock") }}</KsButton>
-                <KsButton v-if="userCan(action.DELETE)" @click="bulkDelete()">{{ $t("delete triggers") }}</KsButton>
             </template>
 
             <KsTableColumn type="expand">
@@ -45,11 +44,22 @@
                     <BackfillBanner
                         v-if="props.row.backfill"
                         :row="props.row"
-                        @pause="pauseBackfill(props.row)"
-                        @resume="unpauseBackfill(props.row)"
-                        @stop="deleteBackfill(props.row)"
+                        @pause="pauseBackfill(props.row as TriggerRow)"
+                        @resume="unpauseBackfill(props.row as TriggerRow)"
+                        @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
+                    <LogsWrapper
+                        class="trigger-logs"
+                        :filters="{
+                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                            'filters[triggerId][EQUALS]': props.row.id
+                        }"
+                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                        :withCharts="false"
+                        :reloadLogs
+                        embed
+                    />
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -61,6 +71,11 @@
                     <code>
                         {{ scope.row.id }}
                     </code>
+                    <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                        <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                            <AlertCircle />
+                        </KsIcon>
+                    </KsTooltip>
                 </template>
             </KsTableColumn>
 
@@ -94,8 +109,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -122,7 +146,7 @@
                                 v-if="canViewExecutions"
                                 data-test="trigger-executions-link"
                                 :tooltip="$t('executions')"
-                                :to="triggerExecutionsRoute(scope.row)"
+                                :to="triggerExecutionsRoute(scope.row as TriggerRow)"
                             >
                                 <FormatListBulleted />
                             </KsIconButton>
@@ -139,7 +163,7 @@
                     <template v-if="isSchedule(scope.row.type) && !scope.row.backfill">
                         <KsButton
                             :icon="CalendarCollapseHorizontalOutline"
-                            @click="setBackfillModal(scope.row, true)"
+                            @click="setBackfillModal(scope.row as TriggerRow, true)"
                             :disabled="scope.row.disabled || scope.row.sourceDisabled"
                             size="small"
                             type="primary"
@@ -163,7 +187,7 @@
             <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.DISABLE)">
                 <template #default="scope">
                     <KsTooltip
-                        v-if="hasTrigger(scope.row)"
+                        v-if="hasTrigger(scope.row as TriggerRow)"
                         :content="$t('trigger disabled')"
                         :disabled="!scope.row.sourceDisabled"
                     >
@@ -171,7 +195,7 @@
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
-                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row as TriggerRow, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
                             :disabled="scope.row.sourceDisabled"
@@ -183,14 +207,14 @@
             <KsTableColumn columnKey="row-actions" className="row-action" fixed="right">
                 <template #default="scope">
                     <div class="row-actions-cell">
-                        <KsTooltip v-if="canSendTestEvent(scope.row)" :content="$t('test_event.button')">
+                        <KsTooltip v-if="canSendTestEvent(scope.row as TriggerRow)" :content="$t('test_event.button')">
                             <KsButton
                                 data-onboarding-target="trigger-test-event-button"
                                 link
                                 size="small"
                                 :icon="FlashOutline"
                                 :aria-label="$t('test_event.button')"
-                                @click="sendTestEvent(scope.row)"
+                                @click="sendTestEvent(scope.row as TriggerRow)"
                             />
                         </KsTooltip>
                         <KsDropdown trigger="click" placement="bottom-end">
@@ -202,34 +226,25 @@
                             />
                             <template #dropdown>
                                 <KsDropdownMenu>
-                                    <KsDropdownItem @click="openDetails(scope.row)">
-                                        <TextSearch class="mr-1" />
+                                    <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
+                                        <TextSearch />
                                         {{ $t("details") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
                                         v-if="userCan(action.RESTART)"
                                         :disabled="!scope.row.locked"
-                                        @click="restart(scope.row)"
+                                        @click="restart(scope.row as TriggerRow)"
                                     >
-                                        <Restart class="mr-1" />
+                                        <Restart />
                                         {{ $t("restart") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
                                         v-if="userCan(action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                         :disabled="!scope.row.locked"
-                                        @click="unlock(scope.row)"
+                                        @click="unlock(scope.row as TriggerRow)"
                                     >
-                                        <LockOff class="mr-1" />
+                                        <LockOff />
                                         {{ $t("unlock") }}
-                                    </KsDropdownItem>
-                                    <KsDropdownItem
-                                        v-if="userCan(action.DELETE)"
-                                        divided
-                                        class="danger"
-                                        @click="confirmDeleteTrigger(scope.row)"
-                                    >
-                                        <Delete class="mr-1" />
-                                        {{ $t("delete") }}
                                     </KsDropdownItem>
                                 </KsDropdownMenu>
                             </template>
@@ -239,11 +254,11 @@
             </KsTableColumn>
         </KsDataTable>
 
-        <div v-if="triggersWithType.length" class="mt-4">
+        <div v-if="triggersWithType.length" class="add-trigger">
             <KsButton
                 @click="addNewTrigger"
                 :icon="Plus"
-                class="border-0 p-3"
+                class="add-trigger-button"
             >
                 {{ $t('no_code.creation.triggers') }}
             </KsButton>
@@ -276,7 +291,7 @@
         large
     >
         <template #header>
-            <span v-html="$t('backfill executions')" />
+            <span>{{ $t("backfill executions") }}</span>
         </template>
         <KsForm :model="backfill" labelPosition="top">
             <div class="pickers">
@@ -346,16 +361,16 @@
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
 
     import Plus from "vue-material-design-icons/Plus.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import LockOff from "vue-material-design-icons/LockOff.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
+    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIcon, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -368,6 +383,7 @@
 
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {hasMissingRequiredInputs} from "../../utils/inputs"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -380,7 +396,7 @@
         TriggerControllerApiCreateBackfillRequest,
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
-    import {searchTriggersForFlow} from "../../utils/triggers"
+    import {blockerMessage, searchTriggersForFlow} from "../../utils/triggers"
     import {useProductTourStore} from "../../stores/productTour"
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
@@ -569,20 +585,8 @@
         if (end && start > end) {
             return true
         }
-        if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs
-                .filter(input => input.required !== false)
-                .map(input => input.id)
-
-            if (requiredInputs.length > 0) {
-                if (!inputs) {
-                    return true
-                }
-                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
-                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
-                }
-            }
+        if (hasMissingRequiredInputs(flowStore.flow?.inputs, inputs)) {
+            return true
         }
 
         return labels.some(label => Boolean(label.key) !== Boolean(label.value))
@@ -662,7 +666,7 @@
         const identity = triggerIdentity(trigger)
         TriggersAPI.deleteBackfill(identity)
             .then(() => {
-                toast.saved(identity.triggerId)
+                toast.success(t("delete backfill success", {id: identity.triggerId}))
                 loadDataAfterAction()
             })
     }
@@ -812,32 +816,6 @@
         )
     }
 
-    const bulkDelete = () => {
-        toast.confirm(
-            t("bulk delete triggers", {count: selection.value.length}),
-            () => runBulk(
-                () => TriggersAPI.deleteTriggersByIds({body: selection.value}),
-                "bulk success delete triggers",
-                t("delete triggers"),
-            ),
-            "warning",
-        )
-    }
-
-    const confirmDeleteTrigger = (row: TriggerRow) => {
-        toast.confirm(
-            t("delete trigger confirmation", {id: row.id}),
-            () => TriggersAPI.deleteTrigger(triggerIdentity(row)).then(() => {
-                toast.success(t("delete trigger success", {id: row.id}))
-                loadDataAfterAction()
-            }).catch((error: unknown) => {
-                toast.error(t("delete trigger error", {id: row.id}))
-                console.error(error)
-            }),
-            "warning",
-        )
-    }
-
     const isSchedule = (type?: string) => {
         return type === "io.kestra.plugin.core.trigger.Schedule"
     }
@@ -872,9 +850,14 @@
     })
 </script>
 
-<style lang="scss" scoped>
-// The parent flow tab strips horizontal padding when a data table is present
-// (full-width-table behaviour); restore the standard gutter for this tab.
+<style scoped>
+    .trigger-blocked-icon {
+        margin-left: var(--ks-spacing-1);
+        vertical-align: middle;
+    }
+
+/* The parent flow tab strips horizontal padding when a data table is present */
+/* (full-width-table behaviour); restore the standard gutter for this tab. */
 .triggers-tab {
     padding-inline: var(--ks-spacing-5);
 }
@@ -914,5 +897,18 @@
     p {
         margin-bottom: auto;
     }
+}
+
+:deep(.trigger-logs) {
+    margin: var(--ks-spacing-4);
+}
+
+.add-trigger {
+    margin-top: var(--ks-spacing-5);
+}
+
+.add-trigger-button {
+    border: 0;
+    padding: var(--ks-spacing-4);
 }
 </style>

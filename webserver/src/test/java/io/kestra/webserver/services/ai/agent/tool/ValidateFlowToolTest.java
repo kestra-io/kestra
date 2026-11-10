@@ -13,7 +13,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integration check that {@code validate-flow} runs the real {@link io.kestra.core.services.FlowService}
+ * Integration check that {@code validate_flow} runs the real {@link io.kestra.core.services.FlowService}
  * validation: a well-formed flow reports valid, a malformed one reports errors.
  */
 @KestraTest(environments = "memory")

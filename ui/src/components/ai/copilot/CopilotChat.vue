@@ -251,7 +251,7 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -259,7 +259,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
     // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
@@ -371,9 +371,12 @@
     // whatever's pending yet (nothing, since `messages`/`pendingConfirmation` start empty) — a harmless
     // `undefined` write in the common case, but it's what clears a stale `previewSource` left over from a
     // prior CopilotChat instance sharing this same (persistent) flow store.
-    watch(activeFlowPreview, (value) => {
-        flowStore.previewSource = value
-    }, {immediate: true})
+    function mirrorEditorPreview(source: string | undefined): void {
+        flowStore.previewSource = source
+        flowStore.previewBanner = undefined
+    }
+
+    watch(activeFlowPreview, mirrorEditorPreview, {immediate: true})
 
     /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back
      *  to my own editing" action behind both the transcript card's Dismiss button and the main editor's
@@ -383,7 +386,7 @@
         // confirmation takes priority in `activeFlowPreview`, and declining that one goes through its
         // own Reject action on the interactive card, not this shared "drop the preview" shortcut.
         if (!pendingConfirmationFlowSource.value && pendingDraft.value) dismissDraft(pendingDraft.value.draftId)
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     }
 
     flowStore.declinePreview = declineActivePreview
@@ -400,8 +403,7 @@
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
     const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -489,7 +491,7 @@
         // A new turn drops the editor's diff preview even before it resolves: `sendChat` already nulls
         // `pendingConfirmation` (self-clearing `pendingConfirmationFlowSource`), but a past draft card
         // stays in the transcript forever with no such reset, so it must be cleared here explicitly.
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
         sendChat({
             prompt,
             mode: mode.value,
@@ -502,7 +504,7 @@
      *  otherwise survives into the fresh conversation since `reset()` clears the transcript, not the
      *  editor. */
     function onNewChat(): void {
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
         resetDraftTracking()
         reset()
     }
@@ -549,26 +551,81 @@
         focusActiveComposer()
     })
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
-    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
-    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    /** How long the first message waits on the provider list before going out on the backend default. */
+    const PROVIDERS_WAIT_MS = 2000
+
+    /** Set on unmount only: `KeepAlive` deactivation deliberately isn't disposal, so a parked send still goes out. */
+    let disposed = false
+
+    /** A seed arriving while one is parked on an await is handled once that one finishes, never alongside it. */
+    let consuming = false
+
+    // Entry points stash a prompt in miscStore; it's seeded into the composer, or sent straight away when `sendInitialMessage` is set and no turn is in flight.
     async function consumeSeededPrompt(): Promise<void> {
+        if (consuming) return
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
+        consuming = true
+        try {
+            await consumeSeeded(seeded)
+        } finally {
+            consuming = false
+        }
+
+        // Same text means the entry point was clicked twice while this run was parked: drop the repeat rather than send it again.
+        if (miscStore.copilotPrompt === seeded) clearSeededPrompt()
+        else if (miscStore.copilotPrompt) consumeSeededPrompt()
+    }
+
+    function clearSeededPrompt(): void {
+        miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
+        miscStore.copilotSendInitialMessage = false
+    }
+
+    async function consumeSeeded(seeded: string): Promise<void> {
+        const newThread = miscStore.copilotNewThread
+        const threadTitle = miscStore.copilotThreadTitle
+        const sendInitialMessage = miscStore.copilotSendInitialMessage
+        clearSeededPrompt()
+
+        // Resetting before the restore lands would be undone by it, and sending before it would fork a second thread.
+        if (newThread || sendInitialMessage) await restored
+        if (disposed) return
+
         // EE seeds each fix as its own conversation: drop the active thread (still reachable from
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
         // where resetting would discard the only conversation for good.
-        if (miscStore.copilotNewThread) {
+        if (newThread) {
             if (thread.value || messages.value.length > 0) {
                 resetDraftTracking()
                 reset()
             }
-            nextThreadTitle.value = miscStore.copilotThreadTitle
+            nextThreadTitle.value = threadTitle
         }
+
+        // Seeded before the provider wait, so a slow `/ai/providers` never hides the prompt.
         composerText.value = seeded
-        miscStore.copilotPrompt = null
-        miscStore.copilotThreadTitle = null
-        miscStore.copilotNewThread = false
+
+        if (sendInitialMessage) {
+            // Bounded, so a hanging `/ai/providers` falls back to the backend's default provider instead of never sending.
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                await Promise.race([providersLoaded, new Promise((resolve) => { timer = setTimeout(resolve, PROVIDERS_WAIT_MS) })])
+            } finally {
+                clearTimeout(timer)
+            }
+            if (disposed) return
+
+            if (composerText.value !== seeded) return
+            if (canSend.value) {
+                composerText.value = ""
+                onSubmit(seeded)
+                return
+            }
+        }
+
         await nextTick()
         focusActiveComposer()
     }
@@ -579,10 +636,11 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
         cancel()
         // The editor's diff preview must not outlive this panel — e.g. closing the copilot dock
         // while a draft/proposal is still pending.
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     })
 </script>
 
@@ -636,7 +694,7 @@
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+    /* `ui/src/styles/app.css` themes only the WebKit scrollbar, so Firefox needs this to avoid
        a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
        because Chromium ignores those rules as soon as `scrollbar-color` is set. */
     @supports not selector(::-webkit-scrollbar) {

@@ -28,8 +28,10 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import * as Utils from "../../../../utils/utils"
+    import {useToast} from "../../../../utils/toast"
     import {webhookUrl} from "../../../../utils/webhook"
     import {DEFAULT_WEBHOOK_KEY} from "../../../../utils/recipeToYaml"
 
@@ -40,18 +42,22 @@
 
     const webhookKey = defineModel<string>("webhookKey", {required: true})
 
+    const {t} = useI18n()
+    const toast = useToast()
+
     const endpointUrl = computed(() => webhookUrl({
         namespace: props.systemNamespace,
         id: props.flowId,
         key: webhookKey.value || DEFAULT_WEBHOOK_KEY,
     }))
 
-    const copyUrl = () => {
-        Utils.copy(endpointUrl.value)
+    const copyUrl = async () => {
+        await Utils.copy(endpointUrl.value)
+        toast.success(t("copied"))
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .webhook-panel {
         display: flex;
         flex-direction: column;

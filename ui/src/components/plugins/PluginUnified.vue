@@ -1,18 +1,24 @@
 <template>
     <div>
-        <div class="p-4">
-            <h1>
+        <header class="plugin-unified__header">
+            <h1 class="plugin-unified__title" data-test="plugin-title">
                 <TaskIcon
-                    class="icon"
+                    class="plugin-unified__icon"
                     :onlyIcon="true"
                     :cls="currentIcon"
                     :icons="icons"
                 />
                 {{ displayTitle }}
             </h1>
-            <KsMarkdown :content="plugin.description" />
-            <KsMarkdown :content="plugin.longDescription" />
-        </div>
+            <p v-if="plugin?.description" class="plugin-unified__summary">{{ plugin.description }}</p>
+        </header>
+        <KsMarkdown
+            v-if="plugin?.longDescription"
+            compact
+            class="plugin-unified__long"
+            data-test="plugin-long-description"
+            :content="plugin.longDescription"
+        />
 
         <div v-if="showElements" class="elements-view">
             <div v-for="(elements, type) in elementsData" :key="type" class="section">
@@ -47,17 +53,12 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue"
-    import {isEntryAPluginElementPredicate, type PluginIconMap} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../../utils/pluginUtils"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
     import RowLink from "../misc/RowLink.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {getShortName, formatPluginTitle} from "../../utils/global"
-
-    interface PluginElement {
-        cls: string;
-        deprecated: boolean;
-    }
 
     interface Props {
         group: string;
@@ -77,7 +78,7 @@
 
     const pluginsStore = usePluginsStore()
 
-    const plugin = ref<any>({})
+    const plugin = ref<Plugin>()
     const groupedElements = ref<Record<string, Record<string, string[]>>>({})
     const elementsData = ref<Record<string, string[]>>({})
     const icons = ref<PluginIconMap>({})
@@ -101,8 +102,8 @@
         if (!props.group) return
         groupedElements.value = {}
         elementsData.value = {}
-        const plugins = await pluginsStore.listWithSubgroup({includeDeprecated: false})
-        const matchingPlugin = plugins?.find((p: any) => p.group === props.group)
+        const plugins = await pluginsStore.listWithSubgroup()
+        const matchingPlugin = plugins.find(p => p.group === props.group)
         if (!matchingPlugin) return
         plugin.value = matchingPlugin
         if (isSubgroupView.value) {
@@ -112,7 +113,7 @@
         }
     }
 
-    const loadGroupData = async (matchingPlugin: any, plugins: any[]) => {
+    const loadGroupData = async (matchingPlugin: Plugin, plugins: Plugin[]) => {
         const groupParts = matchingPlugin.group.split(".")
         const subgroupTitleMap = plugins.reduce((map, p) => {
             if (p.group === props.group && p.subGroup && p.subGroup !== p.group) {
@@ -138,7 +139,7 @@
         if (Object.keys(result).length === 1) elementsData.value = Object.values(result)[0]
     }
 
-    const loadSubgroupData = async (matchingPlugin: any, plugins: any[]) => {
+    const loadSubgroupData = async (matchingPlugin: Plugin, plugins: Plugin[]) => {
         const subgroupPlugin = plugins.find(p =>
             p.group === props.group &&
             (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`)),
@@ -154,7 +155,7 @@
         elementsData.value = result
     }
 
-    const belongsToSubgroup = (cls: string, matchingPlugin: any): boolean => {
+    const belongsToSubgroup = (cls: string, matchingPlugin: Plugin): boolean => {
         if (!props.subgroup) return false
         const parts = cls.split(".")
         const groupParts = props.group.split(".")
@@ -169,7 +170,8 @@
     const openPlugin = (cls: string) => emit("navigateToElement", cls)
 
     const getSubGroupIcon = (subgroup: string) => {
-        const keys = [`${props.group}.${subgroup}`, subgroup, plugin.value?.subGroup].filter(Boolean)
+        const keys = [`${props.group}.${subgroup}`, subgroup, plugin.value?.subGroup]
+            .filter((key): key is string => Boolean(key))
         return keys.find(key => icons.value[key]) || props.group
     }
 
@@ -183,7 +185,7 @@
     watch(() => [props.group, props.subgroup], async () => await loadData(), {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .section {
         h2 {
             color: var(--ks-text-primary);
@@ -216,22 +218,38 @@
         }
     }
 
-    h1 {
+    .plugin-unified__header {
+        padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-3);
+        border-bottom: 1px solid var(--ks-border-default);
+    }
+
+    .plugin-unified__title {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: var(--ks-spacing-2);
+        margin: 0;
+        font-size: var(--ks-font-size-lg);
+        font-weight: var(--ks-font-weight-bold);
+        line-height: var(--ks-line-height-tight);
         color: var(--ks-text-primary);
-        font-weight: 600;
-        font-size: var(--ks-font-size-xl);
-        line-height: 36px;
+    }
 
-        .icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            flex-shrink: 0;
-            opacity: 1;
-        }
+    .plugin-unified__icon {
+        width: var(--ks-icon-size-lg);
+        height: var(--ks-icon-size-lg);
+        min-width: var(--ks-icon-size-lg);
+        flex: none;
+    }
+
+    .plugin-unified__summary {
+        margin: var(--ks-spacing-3) 0 0;
+        font-size: var(--ks-font-size-sm);
+        line-height: var(--ks-line-height-base);
+        color: var(--ks-text-secondary);
+    }
+
+    .plugin-unified__long {
+        padding: var(--ks-spacing-4);
+        font-size: var(--ks-font-size-sm);
     }
 </style>

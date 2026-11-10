@@ -1,5 +1,5 @@
 <template>
-    <ElCard v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElCard v-bind="({...filteredProps(), ...$attrs} as CardProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCard} from "element-plus"
+    import {ElCard, type CardProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -35,7 +35,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/card';
+</style>
 
+<style>
     .kel-card {
         border-radius: var(--kel-border-radius-round);
         --kel-card-border-color: var(--ks-border-default);
@@ -44,7 +46,7 @@
         color: var(--ks-text-primary);
         background-color: var(--ks-bg-surface);
 
-        .kel-card__header {
+        & .kel-card__header {
             padding: 0.5rem 1rem;
             font-weight: bold;
         }

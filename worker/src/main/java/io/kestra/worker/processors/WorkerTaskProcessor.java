@@ -1,8 +1,8 @@
 package io.kestra.worker.processors;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +56,8 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
+    // METRICS
+    private static final Map<Long, AtomicInteger> METRIC_RUNNING_COUNT = new ConcurrentHashMap<>();
 
     private final String workerId;
     private final String workerGroup;
@@ -64,9 +66,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
-
-    // METRICS
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
     // QUEUEs
     private final WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
@@ -222,36 +221,17 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
 
             runContext = providedRunContext != null ? providedRunContext : runContextInitializer.forWorker(workerTask);
-            Optional<String> hash = Optional.empty();
 
+            Optional<String> hash = Optional.empty();
             if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled()) {
                 runContext.logger().debug("Task output caching is enabled for task '{}''", workerTask.getTask().getId());
                 hash = hashTask(runContext, workerTask.getTask());
                 if (hash.isPresent()) {
-                    try {
-                        Optional<InputStream> cacheFile = runContext.storage().getCacheFile(hash.get(), workerTask.getTaskRun().getValue(), workerTask.getTask().getTaskCache().getTtl());
-                        if (cacheFile.isPresent()) {
-                            runContext.logger().info("Skipping task execution for task '{}' as there is an existing cache entry for it", workerTask.getTask().getId());
-                            try (ZipInputStream archive = new ZipInputStream(cacheFile.get())) {
-                                if (archive.getNextEntry() != null) {
-                                    byte[] cache = archive.readAllBytes();
-                                    Map<String, Object> outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
-
-                                    TaskRunAttempt attempt = TaskRunAttempt.builder()
-                                        .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
-                                        .workerId(this.workerId)
-                                        .build();
-                                    List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
-                                    TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
-                                    WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, outputMap);
-                                    workerTaskResultQueue.put(workerTaskResult);
-                                    return workerTaskResult;
-                                }
-                            }
-                        }
-                    } catch (IOException | RuntimeException e) {
-                        // in case of any exception, log an error and continue
-                        runContext.logger().error("Unexpected exception while loading the cache for task '{}', the task will be executed instead.", workerTask.getTask().getId(), e);
+                    Optional<WorkerTaskResult> cachedResult = loadFromCache(runContext, workerTask, hash.get());
+                    if (cachedResult.isPresent()) {
+                        WorkerTaskResult workerTaskResult = cachedResult.get();
+                        workerTaskResultQueue.put(workerTaskResult);
+                        return workerTaskResult;
                     }
                 }
             }
@@ -344,33 +324,21 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
-            workerTaskResultQueue.put(workerTaskResult);
-
-            // upload the cache file, hash may not be present if we didn't succeed in computing it
+            // upload the cache file before emitting the result so that an execution started right after this one sees the entry
+            // hash may not be present if we didn't succeed in computing it
             if (
                 workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
                     (state == State.Type.SUCCESS || state == State.Type.WARNING)
             ) {
-                runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
-
-                try (
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ZipOutputStream archive = new ZipOutputStream(bos)
-                ) {
-                    var zipEntry = new ZipEntry("outputs.ion");
-                    archive.putNextEntry(zipEntry);
-                    archive.write(JacksonMapper.ofIonBinary().writeValueAsBytes(taskRunWithOutput.outputs()));
-                    archive.closeEntry();
-                    archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
-                    Files.write(archiveFile, bos.toByteArray());
-                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), taskRun.getValue());
-                    runContext.logger().debug("Caching entry uploaded in URI {}", uri);
+                try {
+                    uploadCacheEntry(runContext, workerTask, taskRunWithOutput, hash.get(), taskRun);
                 } catch (IOException | RuntimeException e) {
                     // in case of any exception, log an error and continue
                     runContext.logger().error("Unexpected exception while uploading the cache entry for task '{}', the task not be cached.", workerTask.getTask().getId(), e);
                 }
             }
+
+            workerTaskResultQueue.put(workerTaskResult);
 
             this.logTerminated(workerTask, taskRun);
             return workerTaskResult;
@@ -381,6 +349,55 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 runContext.cleanup();
             }
         }
+    }
+
+    private Optional<WorkerTaskResult> loadFromCache(RunContext runContext, WorkerTask workerTask, String hash) {
+        try {
+            Optional<InputStream> cacheFile = runContext.storage().getCacheFile(hash, workerTask.getTaskRun().getValue(), workerTask.getTask().getTaskCache().getTtl());
+            if (cacheFile.isEmpty()) {
+                return Optional.empty();
+            }
+
+            runContext.logger().info("Skipping task execution for task '{}' as there is an existing cache entry for it", workerTask.getTask().getId());
+            Map<String, Object> outputMap;
+            try (ZipInputStream archive = new ZipInputStream(cacheFile.get())) {
+                if (archive.getNextEntry() == null) {
+                    return Optional.empty();
+                }
+                byte[] cache = archive.readAllBytes();
+                outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
+            }
+
+            TaskRunAttempt attempt = TaskRunAttempt.builder()
+                .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
+                .workerId(this.workerId)
+                .build();
+            List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
+            TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
+            return Optional.of(new WorkerTaskResult(taskRun, outputMap));
+        } catch (IOException | RuntimeException e) {
+            // in case of any exception, log an error and continue
+            runContext.logger().error("Unexpected exception while loading the cache for task '{}', the task will be executed instead.", workerTask.getTask().getId(), e);
+            return Optional.empty();
+        }
+    }
+
+    private void uploadCacheEntry(RunContext runContext, WorkerTask workerTask, TaskRunWithOutput taskRunWithOutput, String hash, TaskRun taskRun) throws IOException {
+        runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
+
+        Path archiveFile = runContext.workingDir().createTempFile(".zip");
+        try (
+            OutputStream os = Files.newOutputStream(archiveFile);
+            ZipOutputStream archive = new ZipOutputStream(os)
+        ) {
+            var zipEntry = new ZipEntry("outputs.ion");
+            archive.putNextEntry(zipEntry);
+            archive.write(JacksonMapper.ofIonBinary().writeValueAsBytes(taskRunWithOutput.outputs()));
+            archive.closeEntry();
+            archive.finish();
+        }
+        URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash, taskRun.getValue());
+        runContext.logger().debug("Caching entry uploaded in URI {}", uri);
     }
 
     private void logTerminated(WorkerTask workerTask, TaskRun taskRun) {
@@ -494,7 +511,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
-                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+                for (AssetEmit emit : runContext.assets().emitted()) {
+                    try {
+                        emit.outputs().forEach(runContext::validate);
+                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
+                    } catch (ConstraintViolationException e) {
+                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
+                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                    }
+                }
 
                 if (!bundles.isEmpty()) {
                     taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
@@ -584,11 +609,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         long index = Hashing.hashToLong(String.join("-", tags));
 
-        return this.metricRunningCount
+        return METRIC_RUNNING_COUNT
             .computeIfAbsent(
-                index, l -> metricRegistry.gauge(
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
+                index, _ -> metricRegistry.gauge(
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT,
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT_DESCRIPTION,
                     new AtomicInteger(0),
                     tags
                 )

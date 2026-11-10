@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition" :style="sourceHandleStyle" />
     <BasicNode
         :id="id"
         :data="dataWithLink"
@@ -7,6 +7,7 @@
         :class="classes"
         :icons="icons"
         :loadIcon="loadIcon"
+        :lod="lod"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
         :focused="isKeyboardFocused"
@@ -15,15 +16,23 @@
         :dragging="props.dragging"
         @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
-        <template #badge>
-            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
+        <template v-if="runnerLabel" #runner>
+            <span class="runner-badge" :title="runnerLabel" data-test="node-runner-badge">{{ runnerLabel }}</span>
+        </template>
+        <template #subtitle>
+            <span class="type-label">{{ typeLabel }}</span>
+        </template>
+        <template v-if="hasRetried" #icon-badge>
+            <span class="retry-marker" role="img" :title="$t('topology-graph.retried')" :aria-label="$t('topology-graph.retried')" data-test="node-retry-marker">
+                <AlertCircle />
+            </span>
         </template>
         <template #details>
-            <Transition name="details-slide">
-                <div v-if="globalShowExtraDetails" class="details-wrapper">
-                    <slot name="details" />
-                </div>
-            </Transition>
+            <slot name="details" />
+        </template>
+        <template v-if="execution" #footer>
+            <span v-if="loopRunsLabel" class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
+            <Duration v-else compact :histories="histories" :execution="taskExecution" />
         </template>
         <template #content>
             <button
@@ -38,82 +47,80 @@
             </button>
         </template>
         <template #title-status>
-            <span v-if="statusStyle" class="status-tag" :style="{color: `var(${statusStyle.textVar})`}">
-                <component :is="statusStyle.icon" class="status-tag__icon" />
-                <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
-                <span v-else class="status-tag__text">
+            <ValidationBadge :issues="validationIssues" />
+        </template>
+        <template v-if="execution" #status-row>
+            <button
+                v-if="artifactCount > 0"
+                type="button"
+                class="artifact-badge"
+                data-test="node-artifact-badge"
+                @click.stop="emit(EVENTS.SHOW_ARTIFACTS, artifactsPayload)"
+            >
+                <DiamondStone class="artifact-badge__icon" />
+                <span>{{ $t("topology-graph.artifacts", {count: artifactCount}, artifactCount) }}</span>
+            </button>
+            <span
+                v-if="statusStyle"
+                class="status-chip"
+                data-test="node-status-chip"
+                :data-state="state"
+                :style="{'--chip-color': `var(${statusStyle.chipVar ?? statusStyle.textVar})`}"
+            >
+                <component :is="statusStyle.icon" class="status-chip__icon" />
+                <span v-if="statusStyle.label" class="status-chip__text">{{ $t(statusStyle.label) }}</span>
+                <span v-else class="status-chip__text">
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
-            <KsTooltip v-if="validationIssues.length" :persistent="false">
-                <template #content>
-                    <div class="task-validation-tooltip">
-                        <div class="task-validation-tooltip-head">
-                            <AlertCircle :size="14" />
-                            <span>{{ $t("error detected") }}</span>
-                        </div>
-                        <ul class="task-validation-tooltip-list">
-                            <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
-                        </ul>
-                    </div>
-                </template>
-                <span
-                    class="task-validation-badge"
-                    data-test="topology-task-validation-badge"
-                    role="img"
-                    tabindex="0"
-                    :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
-                >
-                    <AlertCircle :size="14" />
-                    <span v-if="validationIssues.length > 1" class="task-validation-badge-count">{{ validationIssues.length }}</span>
-                </span>
-            </KsTooltip>
         </template>
         <template #title-actions>
-            <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+            <slot name="taskActions" variant="task" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
                 <NodeMenu :actions="actions" />
             </slot>
         </template>
     </BasicNode>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition" :style="targetHandleStyle" />
 </template>
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {State, KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        SECTIONS,
+        dayjs,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
+    import {statusRowHandleStyle} from "../utils/nodeHandles"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
-    import {getStatusStyle} from "../utils/status"
+    import {getStatusStyle, pickWorstState} from "../utils/status"
+    import {buildNodeActions, type NodeActionsContext} from "../utils/nodeActions"
+    import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import ValidationBadge from "./ValidationBadge.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
-        SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        LOD_INJECTION_KEY,
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        LOOP_LANES_INJECTION_KEY,
+        ARTIFACT_COUNTS_INJECTION_KEY,
     } from "../injectionKeys"
+    import {loopTaskContext} from "../utils/loopOutcome"
 
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
-    import LocationExit from "vue-material-design-icons/LocationExit.vue"
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
-    import SendLock from "vue-material-design-icons/SendLock.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+    import DiamondStone from "vue-material-design-icons/DiamondStone.vue"
 
-    interface TaskType {
+    export interface TaskType {
         id: string;
         type: string;
         default: null;
@@ -131,12 +138,11 @@
         flowId?: string;
     }
 
-    interface NodeData {
+    export interface NodeData {
         node: {
             uid: string;
             type?: string;
             task: TaskType;
-            taskRun: TaskRun
         };
         executionId?: string;
         color?: string;
@@ -144,31 +150,26 @@
         isFlowable?: boolean;
         expandable?: boolean;
         link?: {
-            namespace: string;
-            id: string;
+            namespace?: string;
+            id?: string;
             executionId?: string;
         };
     }
 
-    interface TaskRun {
-        id: string
-        taskId: string;
-        parentTaskRunId?: string;
-        state: {
-            current: [string, string];
-            duration?: string;
-            histories?: {date: string; state: string}[];
-        };
-        outputs?: {
-            executionId?: string;
-        } & Record<string, unknown>;
-        attempts?: unknown[];
-        value?: string;
-    }
-
-    interface ExpandData {
+    export interface ExpandData {
         id: string;
         type: string;
+    }
+
+    interface TaskRunsPayload {
+        id: string | undefined;
+        execution: GraphExecution | undefined;
+        taskRuns: GraphTaskRun[];
+    }
+
+    interface ArtifactsPayload extends TaskRunsPayload {
+        task: TaskType;
+        actions: NodeAction[];
     }
 
     const props = withDefaults(defineProps<{
@@ -176,8 +177,8 @@
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -203,31 +204,33 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: any): void;
-        (event: typeof EVENTS.OPEN_LINK, data: any): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: any): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: any): void;
+        (event: typeof EVENTS.EXPAND, data: ExpandData): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_ARTIFACTS, data: ArtifactsPayload): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
-        (event: typeof EVENTS.EDIT, data: any) :void;
-        (event: typeof EVENTS.DELETE, data: any) :void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: TaskType}): void;
+        (event: typeof EVENTS.EDIT, data: {task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.DELETE, data: {id: string | undefined; section: string}) :void;
         (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
-        (event: typeof EVENTS.ADD_TASK, data: any) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string | undefined; task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string | undefined; description: string}) :void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: TaskType}) :void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: TaskType; customAction: CustomActionConfig}) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
         (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
         (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
-    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const loopLanes = inject(LOOP_LANES_INJECTION_KEY, undefined)
+    const artifactCounts = inject(ARTIFACT_COUNTS_INJECTION_KEY, undefined)
 
     function onCardClick() {
         const task = props.data.node.task
@@ -241,6 +244,8 @@
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const typeLabel = computed(() => Utils.shortPluginType(props.data.node.task?.type))
 
     const validationIssues = computed<string[]>(() =>
         validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
@@ -279,57 +284,69 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
     })
 
     // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
     // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
     const taskRunsWithDynamicChildren = computed(() => {
-        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const ids = new Set(taskRuns.value.map((t) => t.id))
         const children = taskRunList.value.filter(
-            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+            (t) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
         )
         return [...taskRuns.value, ...children]
     })
 
+    const hasRetried = computed(() => taskRuns.value.some((run) => (run.attempts?.length ?? 0) > 1))
+
+    const isRootExecutionTask = computed(() => !props.data.executionId || props.data.executionId === execution?.value?.id)
+
+    const artifactCount = computed(() =>
+        isRootExecutionTask.value ? artifactCounts?.value[taskId.value ?? ""] ?? 0 : 0,
+    )
+
+    const rendersStatusRow = computed(() => Boolean(execution?.value) && lod.value !== "pill")
+    const sourceHandleStyle = computed(() => statusRowHandleStyle(props.sourcePosition, rendersStatusRow.value))
+    const targetHandleStyle = computed(() => statusRowHandleStyle(props.targetPosition, rendersStatusRow.value))
+
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null
+            return undefined
         }
 
         if (taskRuns.value.length === 1) {
             return taskRuns.value[0].state.current
         }
 
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
-
-        const SORT_STATUS: string[] = [
-            State.FAILED,
-            State.KILLED,
-            State.WARNING,
-            State.SKIPPED,
-            State.KILLING,
-            State.RUNNING,
-            State.SUCCESS,
-            State.RESTARTED,
-            State.CREATED,
-        ]
-
-        const result = allStates
-            .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1])
-                return [n, item] as [number, [string, string]]
-            })
-            .sort()
-            .map((j: [number, [string, string]]) => j[1])
-
-        return result[0]
+        const allStates = taskRuns.value.map((t) => t.state.current)
+        return pickWorstState(allStates) ?? allStates[0]
     })
+
+    const loopContext = computed(() =>
+        loopLanes ? loopTaskContext(props.data.node.uid, Utils.afterLastDot(props.data.node.uid) ?? "", loopLanes.value) : undefined,
+    )
+
+    const loopRunsLabel = computed(() => {
+        const summary = loopContext.value?.summary
+        if (!summary) return ""
+        return summary.failed > 0
+            ? t("topology-graph.loop.task-runs-failed", {runs: summary.runs, failed: summary.failed}, summary.runs)
+            : t("topology-graph.loop.task-runs", {runs: summary.runs}, summary.runs)
+    })
+
+    const artifactsPayload = computed<ArtifactsPayload>(() => ({
+        id: taskId.value,
+        task: props.data.node.task,
+        execution: taskExecution.value,
+        taskRuns: taskRuns.value,
+        actions: actions.value,
+    }))
 
     const classes = computed(() => ({
         "execution-no-taskrun":
             Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
+        "node-core--error": validationIssues.value.length > 0,
     }))
 
     const statusStyle = computed(() => getStatusStyle(state.value))
@@ -356,12 +373,7 @@
                 link: {
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
-                    executionId: taskExecution.value?.taskRunList
-                        .filter((taskRun: TaskRun) =>
-                            taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId,
-                        )
-                        ?.[0]?.outputs?.executionId,
+                    executionId: taskRuns.value.find((taskRun) => taskRun.outputs?.executionId)?.outputs?.executionId,
                 },
             }
         }
@@ -370,128 +382,49 @@
 
     const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined
-        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
-        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
+        const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
+        if (customAction) return {config: customAction, eventName: "showCustomAction"} as const
         const showDetail = props.showDetails?.[taskType]
-        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
+        if (showDetail) return {config: showDetail, eventName: "showDetails"} as const
         return undefined
     })
 
     const {t} = useI18n()
 
     const actions = computed<NodeAction[]>(() => {
-        const task = props.data.node.task
-        const readOnly = props.data.isReadOnly
-        const list: NodeAction[] = []
-
-        if (task?.description) {
-            list.push({
-                key: "description",
-                label: t("show description"),
-                icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
-            })
+        const ctx: NodeActionsContext = {
+            task: props.data.node.task,
+            taskId: taskId.value ?? "",
+            isReadOnly: Boolean(props.data.isReadOnly),
+            isFlowable: Boolean(props.data.isFlowable),
+            expandable: Boolean(props.data.expandable),
+            taskExecution: taskExecution.value,
+            taskRuns: taskRuns.value,
+            taskRunsWithDynamicChildren: taskRunsWithDynamicChildren.value,
+            replayEnabled: props.replayEnabled,
+            link: dataWithLink.value.link,
+            actionConfig: actionConfig.value,
         }
-        if (task?.runIf) {
-            list.push({
-                key: "condition",
-                label: t("show task condition"),
-                icon: SendLock,
-                onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "logs",
-                label: t("show task logs"),
-                icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "outputs",
-                label: t("show task outputs"),
-                icon: LocationExit,
-                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-        if (dataWithLink.value.link) {
-            list.push({
-                key: "open",
-                label: t("open"),
-                icon: OpenInNew,
-                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
-            })
-        }
-        if (props.data.expandable) {
-            list.push({
-                key: "expand",
-                label: t("expand"),
-                icon: UnfoldMoreHorizontal,
-                onClick: () => emit(EVENTS.EXPAND, expandData.value),
-            })
-        }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
-            list.push({
-                key: "add-error",
-                label: t("add error handler"),
-                icon: AlertOutline,
-                onClick: () => emit(EVENTS.ADD_ERROR, {task}),
-            })
-        }
-        if (actionConfig.value && task) {
-            list.push({
-                key: "show-details",
-                label: actionConfig.value.config.label || t("show details"),
-                icon: EyeOutline,
-                onClick: () => onShowDetails(),
-            })
-        }
-        if (!readOnly) {
-            list.push({
-                key: "duplicate",
-                label: t("block_editor.duplicate"),
-                icon: ContentCopy,
-                divided: true,
-                onClick: () => emit(EVENTS.DUPLICATE, {id: taskId.value}),
-            })
-            list.push({
-                key: "delete",
-                label: t("delete"),
-                icon: Delete,
-                danger: true,
-                divided: true,
-                onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
-            })
-        }
-        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
-            list.push({
-                key: "replay",
-                label: t("replay"),
-                icon: PlayBoxMultiple,
-                divided: true,
-                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-
-        return list
+        return buildNodeActions(ctx, t, {
+            onShowDescription: (payload) => emit(EVENTS.SHOW_DESCRIPTION, payload),
+            onShowCondition: (payload) => emit(EVENTS.SHOW_CONDITION, {...payload, task: props.data.node.task}),
+            onShowLogs: (payload) => emit(EVENTS.SHOW_LOGS, {...payload, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
+            onShowOutputs: (payload) => emit(EVENTS.SHOW_OUTPUTS, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            onOpenLink: (payload) => emit(EVENTS.OPEN_LINK, payload),
+            onExpand: (payload) => emit(EVENTS.EXPAND, payload),
+            onAddError: () => emit(EVENTS.ADD_ERROR, {task: props.data.node.task}),
+            onShowCustomAction: (payload) => emit(EVENTS.SHOW_CUSTOM_ACTION, {...payload, task: props.data.node.task}),
+            onShowDetails: (payload) => emit(EVENTS.SHOW_DETAILS, {...payload, task: props.data.node.task}),
+            onDuplicate: (payload) => emit(EVENTS.DUPLICATE, payload),
+            onDelete: (payload) => emit(EVENTS.DELETE, payload),
+            onReplayTask: (payload) => emit(EVENTS.REPLAY_TASK, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+        }, expandData.value)
     })
-
-    function onShowDetails() {
-        if (!actionConfig.value || !props.data.node.task) return
-        if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
-            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig})
-        } else {
-            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig})
-        }
-    }
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .playground-button {
     position: absolute;
     bottom: 0;
@@ -512,101 +445,86 @@ button.playground-button {
     background-color: var(--ks-toggle-playground);
 }
 
-.status-tag {
+.status-chip,
+.artifact-badge {
+    background-color: var(--ks-bg-surface);
+    background-image: linear-gradient(var(--chip-tint), var(--chip-tint));
+}
+
+.status-chip {
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-    padding: 0.4rem;
-    border-radius: var(--ks-radius-xs);
-    background-color: var(--ks-bg-tag);
+    box-sizing: border-box;
+    padding: 0 var(--ks-spacing-2);
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--chip-color) 10%, transparent);
+    color: var(--chip-color);
     line-height: 1;
 }
 
-.status-tag__text {
+.status-chip__text {
     font-size: var(--ks-font-size-2xs);
+    font-weight: var(--ks-font-weight-semibold);
     white-space: nowrap;
 }
 
-.details-wrapper {
+.artifact-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    box-sizing: border-box;
+    padding: 0 var(--ks-spacing-2);
+    border: none;
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--ks-status-running) 10%, transparent);
+    color: var(--ks-status-running);
     font-size: var(--ks-font-size-2xs);
+    font-weight: var(--ks-font-weight-semibold);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
 
-    &:has(> *) {
-        border-top: 1px solid var(--ks-border-default);
-        background: var(--ks-bg-base);
-    }
+.artifact-badge__icon {
+    font-size: var(--ks-font-size-lg);
+}
+
+.retry-marker {
+    position: absolute;
+    right: calc(var(--ks-spacing-1) * -1);
+    bottom: calc(var(--ks-spacing-1) * -1);
+    display: flex;
+    border-radius: 50%;
+    background-color: var(--ks-bg-surface);
+    color: var(--ks-status-warning);
+    font-size: var(--ks-font-size-lg);
+}
+
+.loop-runs {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--ks-font-size-2xs);
+    color: var(--ks-text-secondary);
+}
+
+.type-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .runner-badge {
-    align-self: flex-start;
-    max-width: 100%;
-    margin-bottom: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
+    flex-shrink: 0;
+    padding: 0 var(--ks-spacing-1);
+    border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-info);
-    font-size: var(--ks-font-size-2xs);
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.details-slide-enter-active,
-.details-slide-leave-active {
-    transition: max-height 0.25s ease, opacity 0.25s ease;
-    overflow: hidden;
-    max-height: 200px;
-}
-
-.details-slide-enter-from,
-.details-slide-leave-to {
-    max-height: 0;
-    opacity: 0;
-}
-
-.task-validation-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-1);
-    height: 1.125rem;
-    border-radius: var(--ks-radius-sm);
-    background: var(--ks-bg-error);
-    color: var(--ks-text-error);
-    cursor: help;
-}
-
-.task-validation-badge-count {
-    font-size: var(--ks-font-size-xs);
-    font-weight: 600;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.task-validation-tooltip {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-2);
-    max-width: 22rem;
-}
-
-.task-validation-tooltip-head {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    color: var(--ks-text-error);
-    font-weight: 600;
-    font-size: var(--ks-font-size-sm);
-}
-
-.task-validation-tooltip-list {
-    margin: 0;
-    padding-left: var(--ks-spacing-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
-    font-family: var(--ks-font-family-mono);
-}
 </style>

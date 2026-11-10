@@ -4,32 +4,41 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.executor.testkit.InMemoryMultipleConditionStateStore;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -39,6 +48,7 @@ import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESP
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -58,6 +68,8 @@ class FlowTriggerServiceTest {
     private ExecutionOutputService executionOutputService;
     @Inject
     private ExecutionDepthConfiguration executionDepthConfiguration;
+    @Inject
+    private DispatchQueueInterface<LogEntry> logQueue;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
@@ -259,7 +271,7 @@ class FlowTriggerServiceTest {
         // Given a flow whose trigger matches but which governance blocks at runtime
         FlowWithSource raw = flowWithFlowTriggerSource();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy")))));
+            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException(Blocker.Reason.POLICY, "Blocked by governance policy", List.of(), null)))));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -359,6 +371,60 @@ class FlowTriggerServiceTest {
         // Then the flow is never parsed for runtime, as a window is processed far more often than it fires
         assertThat(resultingExecutionsToRun).isEmpty();
         verify(flowMetaStore, never()).findByIdForRuntime(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldExposeTheOutputsOfEveryDependsOnExecutionScopedByNamespaceAndFlowId() throws Exception {
+        // Given a listener depending on two upstream flows, each producing a flow output
+        var upstreamA = aSimpleFlow().toBuilder().id("upstream-a").build();
+        var upstreamB = aSimpleFlow().toBuilder().id("upstream-b").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOnBoth(upstreamA, upstreamB)))
+            .build();
+        var executionA = successfulExecutionWithOutputs(upstreamA, Map.of("value", "from_a"));
+        var executionB = successfulExecutionWithOutputs(upstreamB, Map.of("value", "from_b"));
+        var service = flowTriggerServiceReturningOutputsOf(executionA, executionB);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When both upstream executions terminate
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(executionA, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(executionB, listener, store);
+
+        // Then the outputs of both are exposed, not only the ones of the last execution
+        assertThat(triggered).hasSize(1);
+        assertThat(triggerOutputs(triggered.getFirst())).containsEntry(
+            TEST_NAMESPACE, Map.of(
+                "upstream-a", Map.of("value", "from_a"),
+                "upstream-b", Map.of("value", "from_b")
+            )
+        );
+    }
+
+    @Test
+    void shouldNotExposeTheOutputsOfAnExecutionThatIsNotInDependsOn() throws Exception {
+        // Given a listener depending on one upstream flow, and an unrelated flow in another namespace
+        var upstream = aSimpleFlow().toBuilder().id("upstream").build();
+        var unrelatedFlow = aSimpleFlow().toBuilder().namespace("io.kestra.other").id("unrelated").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOn(upstream)))
+            .build();
+        var unrelated = successfulExecutionWithOutputs(unrelatedFlow, Map.of("secret", "do_not_leak"));
+        var upstreamExecution = successfulExecutionWithOutputs(upstream, Map.of("value", "from_upstream"));
+        var service = flowTriggerServiceReturningOutputsOf(unrelated, upstreamExecution);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When the unrelated execution terminates first, so it is the one that opens the window
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(unrelated, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(upstreamExecution, listener, store);
+
+        // Then its outputs never reach the listener
+        assertThat(triggered).hasSize(1);
+        Map<String, Object> outputs = triggerOutputs(triggered.getFirst());
+        assertThat(outputs).doesNotContainKey("io.kestra.other");
+        assertThat(outputs.toString()).doesNotContain("do_not_leak");
+        // while the single dependency stays reachable scoped, and through the unscoped shorthand
+        assertThat(outputs).containsEntry(TEST_NAMESPACE, Map.of("upstream", Map.of("value", "from_upstream")));
+        assertThat(outputs).containsEntry("value", "from_upstream");
     }
 
     @Test
@@ -501,14 +567,14 @@ class FlowTriggerServiceTest {
 
     @Test
     void computeExecutionsFromFlowTriggers_whenInvalidExpression() {
-        // Given - malformed Pebble expression causes IllegalVariableEvaluationException, treated as false
+        // Given - a trigger-level `when` that cannot be rendered (unknown variable)
         var simpleFlow = aSimpleFlow();
         var flowWithFlowTrigger = Flow.builder()
             .id("flow-with-flow-trigger")
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .tasks(List.of(simpleLogTask()))
-            .triggers(List.of(flowTriggerWithWhen("{{ invalid-pebble-expression() }}")))
+            .triggers(List.of(flowTriggerWithWhen("{{ namespace }}")))
             .build();
         var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
 
@@ -518,7 +584,66 @@ class FlowTriggerServiceTest {
             flowWithFlowTrigger
         );
 
-        // Then
+        // Then the trigger does not fire (the misconfiguration is logged on both the evaluated execution and the
+        // flow that owns the trigger, see FlowTriggerInvalidWhenCycleTest)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependsOnTriggerLevelWhenCannotBeRendered() {
+        // Given - a dependsOn trigger whose trigger-level `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(flowTriggerDependingOn(upstream, "{{ namespace }}")))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire (the misconfiguration is logged, not turned into an execution)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependencyLevelWhenCannotBeRendered() {
+        // Given - a dependsOn entry whose own `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var dependency = io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+            .namespace(upstream.getNamespace())
+            .flowId(upstream.getId())
+            .when(Property.ofExpression("{{ namespace }}"))
+            .build();
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(List.of(dependency))
+            .build();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire; the unrenderable dependency condition is logged, not fired as an execution
         assertThat(resultingExecutionsToRun).isEmpty();
     }
 
@@ -546,6 +671,173 @@ class FlowTriggerServiceTest {
         assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
     }
 
+    @Test
+    void shouldWarnOnListeningFlowOnlyWhenNamespaceBlocksMatchingFlowTrigger() {
+        // Given
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+        var execution = Execution.newExecution(blockedUpstreamFlow(), EMPTY_LABELS).withState(State.Type.FAILED);
+        var listening = listeningFlow(List.of(flowTriggerWithWhen("{{ flow.namespace | startsWith('company.') }}")));
+
+        // When
+        var executions = flowTriggerServiceBlockedBy("company.data").computeExecutionsFromFlowTriggerConditions(execution, listening);
+
+        // Then the trigger does not fire and the flow that owns it is told which namespace blocks it
+        assertThat(executions).isEmpty();
+        var warnings = awaitBlockedTriggerWarnings(logs, listening, 1);
+        assertThat(warnings.getFirst().getFlowId()).isEqualTo(listening.getId());
+        assertThat(warnings.getFirst().getMessage()).isEqualTo(
+            "Flow trigger 'flowTrigger' does not receive executions from namespace `company.data` and its children: `company.data` does not allow `" + TEST_NAMESPACE
+                + "` in its Allowed Namespaces."
+        );
+        // and the blocked side learns nothing about it
+        assertThat(logs).noneMatch(log -> execution.getId().equals(log.getExecutionId()));
+    }
+
+    @Test
+    void shouldNotWarnWhenBlockedExecutionDoesNotMatchFlowTrigger() {
+        // Given triggers the blocked execution would not have fired anyway
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+        var upstream = blockedUpstreamFlow();
+        var execution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.FAILED);
+        var listening = listeningFlow(
+            List.of(
+                io.kestra.plugin.core.trigger.Flow.builder().id("wrong-state").type(io.kestra.plugin.core.trigger.Flow.class.getName()).states(List.of(State.Type.SUCCESS)).build(),
+                flowTriggerWithId("false-when", "{{ flow.namespace | startsWith('other.') }}"),
+                flowTriggerWithId("unrenderable-when", "{{ unknown }}")
+            )
+        );
+        var service = flowTriggerServiceBlockedBy("company.data");
+
+        // When
+        service.computeExecutionsFromFlowTriggerConditions(execution, listening);
+        service.computeExecutionsFromFlowTriggerConditions(
+            Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.FAILED).toBuilder().kind(ExecutionKind.TEST).build(),
+            listeningFlow(List.of(flowTriggerWithNoConditions()))
+        );
+
+        // Then neither the flow nor the blocked execution gets a warning
+        assertThat(blockedTriggerWarningsDeliveredSoFar(logs, listening)).isEmpty();
+        assertThat(logs).noneMatch(log -> execution.getId().equals(log.getExecutionId()));
+    }
+
+    @Test
+    void shouldEvaluateWhenOnTheBlockedExecutionLikeOnTheNormalPath() {
+        // Given
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+        var execution = Execution.newExecution(blockedUpstreamFlow(), List.of(new Label("team", "data"))).withState(State.Type.FAILED);
+        var listening = listeningFlow(
+            List.of(
+                flowTriggerWithId("matching-label", "{{ labels.team == 'data' }}"),
+                flowTriggerWithId("other-label", "{{ labels.team == 'other' }}")
+            )
+        );
+
+        // When
+        flowTriggerServiceBlockedBy("company.data").computeExecutionsFromFlowTriggerConditions(execution, listening);
+
+        // Then only the trigger that would have fired is reported
+        var warnings = awaitBlockedTriggerWarnings(logs, listening, 1);
+        assertThat(warnings.getFirst().getMessage()).startsWith("Flow trigger 'matching-label'");
+    }
+
+    @Test
+    void shouldWarnForDependsOnFlowTriggerOnlyFromTheDependsOnRoute() {
+        // Given
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+        var upstream = blockedUpstreamFlow();
+        var execution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.FAILED);
+        var matching = flowTriggerDependingOn(upstream);
+        var requiringLabels = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("requires-labels")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                        .namespace(upstream.getNamespace())
+                        .flowId(upstream.getId())
+                        .labels(Map.of("team", "data"))
+                        .build()
+                )
+            )
+            .build();
+        var listening = listeningFlow(List.of(matching, requiringLabels));
+        var service = flowTriggerServiceBlockedBy("company.data");
+
+        // When the route for standard conditions runs
+        service.computeExecutionsFromFlowTriggerConditions(execution, listening);
+
+        // Then it leaves dependsOn triggers to the other route
+        assertThat(blockedTriggerWarningsDeliveredSoFar(logs, listening)).isEmpty();
+
+        // When
+        var executions = service.computeExecutionsFromFlowTriggerDependsOn(execution, listening, new SatisfiedWindowStateStore());
+
+        // Then only the trigger whose dependency matches the execution is reported
+        assertThat(executions).isEmpty();
+        awaitBlockedTriggerWarnings(logs, listening, 1);
+    }
+
+    private FlowTriggerService flowTriggerServiceBlockedBy(String blockingNamespace) {
+        var blockingFlowService = mock(FlowService.class);
+        when(blockingFlowService.removeUnwanted(any(), any())).thenReturn(true);
+        when(blockingFlowService.findNamespaceBlockingFlowTrigger(any(), any())).thenReturn(Optional.of(blockingNamespace));
+        return new FlowTriggerService(conditionService, runContextFactory, blockingFlowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
+    }
+
+    private List<LogEntry> awaitBlockedTriggerWarnings(List<LogEntry> logs, Flow listening, int expectedCount) {
+        List<LogEntry> warnings = TestsUtils.awaitLogs(logs, log -> isBlockedTriggerWarning(log, listening), expectedCount);
+        assertThat(warnings).hasSize(expectedCount);
+        return warnings;
+    }
+
+    /**
+     * Best effort for asserting an absence: logs are emitted asynchronously and may be delivered out of order,
+     * so a warning still in flight can be missed, but a correct run never fails on it.
+     */
+    private List<LogEntry> blockedTriggerWarningsDeliveredSoFar(List<LogEntry> logs, Flow listening) {
+        String flush = "flush-" + IdUtils.create();
+        runContextFactory.of(listening, listening.getTriggers().getFirst()).logger().warn(flush);
+        TestsUtils.awaitLogs(logs, log -> flush.equals(log.getMessage()), 1);
+        return logs.stream().filter(log -> isBlockedTriggerWarning(log, listening)).toList();
+    }
+
+    private static boolean isBlockedTriggerWarning(LogEntry log, Flow listening) {
+        return log.getLevel() == Level.WARN
+            && listening.getId().equals(log.getFlowId())
+            && log.getMessage().contains("does not receive executions");
+    }
+
+    private static Flow blockedUpstreamFlow() {
+        return Flow.builder()
+            .id("upstream")
+            .namespace("company.data")
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .build();
+    }
+
+    private static Flow listeningFlow(List<AbstractTrigger> triggers) {
+        return Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(triggers)
+            .build();
+    }
+
+    private static io.kestra.plugin.core.trigger.Flow flowTriggerWithId(String id, String when) {
+        return io.kestra.plugin.core.trigger.Flow.builder()
+            .id(id)
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .when(when)
+            .build();
+    }
+
     private static io.kestra.plugin.core.trigger.Flow flowTriggerWithNoConditions() {
         return io.kestra.plugin.core.trigger.Flow.builder()
             .id("flowTrigger")
@@ -558,6 +850,38 @@ class FlowTriggerServiceTest {
             .id("flowTrigger")
             .type(io.kestra.plugin.core.trigger.Flow.class.getName())
             .when(when)
+            .build();
+    }
+
+    private FlowTriggerService flowTriggerServiceReturningOutputsOf(Execution... executions) throws Exception {
+        var outputService = mock(ExecutionOutputService.class);
+        for (Execution execution : executions) {
+            when(outputService.getOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
+                .thenReturn(execution.getOutputs());
+        }
+        return new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, outputService, executionDepthConfiguration);
+    }
+
+    @SuppressWarnings("removal")
+    private static Execution successfulExecutionWithOutputs(Flow flow, Map<String, Object> outputs) {
+        return Execution.newExecution(flow, EMPTY_LABELS).withState(State.Type.SUCCESS).withOutputs(outputs);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> triggerOutputs(Execution execution) {
+        return (Map<String, Object>) execution.getTrigger().getVariables().get("outputs");
+    }
+
+    private static io.kestra.plugin.core.trigger.Flow flowTriggerDependingOnBoth(Flow first, Flow second) {
+        return io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(first.getNamespace()).flowId(first.getId()).build(),
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(second.getNamespace()).flowId(second.getId()).build()
+                )
+            )
             .build();
     }
 

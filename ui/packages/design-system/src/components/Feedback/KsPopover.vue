@@ -4,7 +4,7 @@
         :hideAfter="0"
         transition=""
         :visible="internalVisible"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as PopoverProps)"
         @update:visible="handleUpdateVisible"
         @hide="emit('hide')"
     >
@@ -19,7 +19,8 @@
 
 <script setup lang="ts">
     import {ElPopover} from "element-plus"
-    import {ref, watch} from "vue"
+    import type {PopoverProps} from "element-plus"
+    import {onBeforeUnmount, ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -49,6 +50,17 @@
 
     const internalVisible = ref(false)
 
+    // ElTooltip does not wire up Escape-to-close itself.
+    function handleEscapeKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") handleUpdateVisible(false)
+    }
+
+    // Must be declared before the props.visible watch below, and without `immediate`.
+    watch(internalVisible, (visible) => {
+        if (visible) document.addEventListener("keydown", handleEscapeKeydown)
+        else document.removeEventListener("keydown", handleEscapeKeydown)
+    })
+
     watch(() => props.visible, (val) => {
         if (val !== undefined) internalVisible.value = val
     }, {immediate: true})
@@ -58,10 +70,15 @@
         emit("update:visible", v)
     }
 
+    onBeforeUnmount(() => document.removeEventListener("keydown", handleEscapeKeydown))
+
     const filteredProps = useFilteredProps(props, ["visible"])
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/popover';
+</style>
+
+<style>
 </style>

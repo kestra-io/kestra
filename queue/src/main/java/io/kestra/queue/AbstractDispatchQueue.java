@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -29,6 +30,10 @@ public abstract class AbstractDispatchQueue<T extends DispatchEvent> extends Abs
 
     @Override
     public final void emit(List<T> messages) throws QueueException {
+        if (messages.isEmpty()) {
+            return;
+        }
+
         this.doEmit(
             messages.stream()
                 .map(throwFunction(message -> new QueueRecord(message.key(), this.queueService.serialize(this.cls, message))))

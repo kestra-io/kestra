@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
@@ -400,7 +399,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -428,7 +427,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -469,16 +468,6 @@ class RequestTest {
     }
 
     @Test
-    // Confirmed live via thread dump on a hung run: the client blocks forever in Apache HttpClient 5's
-    // blocking socket write (sendRequestEntity), while the embedded server's Netty event loops sit idle -
-    // it abandoned the connection without closing or resetting it. A plain blocking Socket write has no
-    // JDK-level write timeout (SO_TIMEOUT only bounds reads), so nothing on Kestra's side can catch this.
-    //
-    // This is a regression of a Micronaut bug already fixed once in 2022 (micronaut-core#4864).
-    // Reported upstream as micronaut-core#13243; tracked on the Kestra side as kestra-io/kestra#19549, which
-    // also covers the exposure on Kestra's own webserver (any multipart upload over the configured
-    // max-request-size/max-file-size hits this same path). Re-enable once the upstream fix lands.
-    @Disabled("Hangs indefinitely instead of failing - micronaut-core#13243 (regression of #4864), kestra-io/kestra#19549")
     void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
         Path tmp = Files.createTempFile("kestra-large-", ".txt");
 
@@ -493,7 +482,7 @@ class RequestTest {
                 bigStorage = storageInterface.put(
                     MAIN_TENANT,
                     null,
-                    new URI("/" + FriendlyId.createFriendlyId()),
+                    new URI("/" + IdUtils.create()),
                     in
                 );
             }

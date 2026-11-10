@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
 import * as Utils from "../../utils/utils"
@@ -19,7 +19,11 @@ vi.mock("./FilePreviewDrawer.vue", () => ({
 }))
 
 // vi.mock is hoisted above plain consts, so the spy has to be hoisted with it.
-const {copyToClipboard} = vi.hoisted(() => ({copyToClipboard: vi.fn()}))
+const {copyToClipboard, toastSuccess} = vi.hoisted(() => ({copyToClipboard: vi.fn(), toastSuccess: vi.fn()}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({success: toastSuccess}),
+}))
 
 vi.mock("@kestra-io/design-system", () => ({
     fileUtils: {isFileUri: () => false},
@@ -43,6 +47,7 @@ const i18n = createI18n({
     messages: {
         en: {
             copy: "Copy",
+            copied: "Copied",
             large_outputs: {
                 value_truncated: "Showing a truncated preview of this {size} value.",
             },
@@ -80,6 +85,12 @@ function editorContent(wrapper: ReturnType<typeof mountVarValue>) {
 }
 
 describe("VarValue", () => {
+    it("should render an empty string as quoted text so the cell is not blank", () => {
+        const wrapper = mountVarValue("")
+
+        expect(wrapper.text()).toContain(Utils.EMPTY_STRING_DISPLAY)
+    })
+
     it("should hand the whole value to the editor when it is small", () => {
         const value = {playbooks: {plays: [{name: "all", tasks: ["a", "b"]}]}}
 
@@ -132,7 +143,7 @@ describe("VarValue", () => {
         downloadText.mockRestore()
     })
 
-    it("should copy the whole value, not the truncated one", async () => {
+    it("should copy the whole value, not the truncated one, and confirm it", async () => {
         const value = "x".repeat(400 * 1024) + " not json"
         copyToClipboard.mockClear()
 
@@ -141,6 +152,8 @@ describe("VarValue", () => {
 
         expect(copyToClipboard).toHaveBeenCalledTimes(1)
         expect(copyToClipboard.mock.calls[0][0]).toBe(value)
+        await flushPromises()
+        expect(toastSuccess).toHaveBeenCalledWith("Copied")
     })
 
     it("should mount a large value without warning, since a warning trace carries the value", () => {

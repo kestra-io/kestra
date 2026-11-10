@@ -35,7 +35,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .row-link {
         display: flex;
         align-items: center;
@@ -62,10 +62,11 @@
             flex: 1;
             color: var(--ks-text-primary);
             text-transform: capitalize;
-            font-size: var(--ks-font-size-base);
+            font-size: var(--ks-font-size-sm);
+            line-height: var(--ks-line-height-base);
         }
 
-        .chevron {
+        .chevron-right-icon {
             font-size: var(--ks-font-size-xl);
             color: var(--ks-text-dim);
         }

@@ -1,9 +1,7 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
-import resource from "../../../models/resource"
-import action from "../../../models/action"
-import {useNamespacesStore} from "override/stores/namespaces"
-import {useAuthStore} from "override/stores/auth"
+import {useMiscStore} from "override/stores/misc"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
@@ -11,6 +9,7 @@ import {useRoute} from "vue-router"
 import {labelComparatorLabels} from "./labelComparatorLabels"
 import {routeFamily} from "../../../utils/routeFamily"
 import {keepTopLevelFilters} from "../../../utils/queryFilters"
+import {namespaceValueProvider} from "./namespaceValueProvider"
 
 /**
  * Applied filters forwarded to the flowId option lookup to narrow it by what the list already shows.
@@ -22,6 +21,7 @@ const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
+    const miscStore = useMiscStore()
     const route = useRoute()
 
     return computed(() => {
@@ -41,25 +41,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                             Comparators.PREFIX,
                         ],
                         valueType: "multi-select" as const,
-                        valueProvider: async () => {
-                            const user = useAuthStore().user
-                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
-                                const namespacesStore = useNamespacesStore()
-                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
-                                return [...new Set(namespaces
-                                    .flatMap(namespace => {
-                                        return namespace.split(".").reduce((current: string[], part: string) => {
-                                            const previousCombination = current?.[current.length - 1]
-                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
-                                        }, [])
-                                    }))].map(namespace => ({
-                                        label: namespace,
-                                        value: namespace,
-                                    }))
-                            }
-                            return []
-                        },
-                        searchable: true,
+                        valueProvider: namespaceValueProvider(),
                     },
                 ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
@@ -87,7 +69,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         })
                         return ids.map(id => ({label: id, value: id}))
                     },
-                    searchable: true,
                     showComparatorSelection: true,
                 }] : []) as FilterConfiguration["keys"],
                 {
@@ -96,9 +77,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {
@@ -112,7 +95,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -146,9 +128,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    removable: false,
+                    clearedValue: defaultTimeRange(miscStore.configs?.chartDefaultDuration),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
@@ -181,6 +165,19 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
+                    key: "searchableData",
+                    label: t("filter.searchableData.label"),
+                    description: t("filter.searchableData.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
                     key: "triggerExecutionId",
                     label: t("filter.triggerExecutionId.label"),
                     description: t("filter.triggerExecutionId.description"),
@@ -192,7 +189,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -206,7 +202,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -217,7 +212,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -228,7 +222,14 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
+                },
+                {
+                    // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
+                    key: "operationId",
+                    label: t("filter.operationId.label"),
+                    description: t("filter.operationId.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "text",
                 },
             ],
         }

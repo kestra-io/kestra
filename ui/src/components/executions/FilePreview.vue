@@ -105,7 +105,7 @@
     import RawPreview, {type Preview} from "./RawPreview.vue"
     import {useExecutionsStore} from "../../stores/executions.ts"
     import {useMiscStore} from "override/stores/misc.ts"
-    import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import Download from "vue-material-design-icons/Download.vue"
     import * as Utils from "../../utils/utils"
 
@@ -119,7 +119,7 @@
     }>()
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURIComponent(value)}`
+        return executionFileUrl(props.executionId, value)
     }
 
     const maxRows = ref<number>()
@@ -152,13 +152,15 @@
         return isTextString(preview.value?.content)
     })
 
-    function isTextString(str: any, sampleSize = 8192) {
+    function isTextString(str: unknown, sampleSize = 8192) {
         if(!str) return false
-        let normalizedStr = str
-        if (typeof str !== "string") {
+        let normalizedStr: string
+        if (typeof str === "string") {
+            normalizedStr = str
+        } else {
             try {
                 normalizedStr = JSON.stringify(str)
-            } catch(e) {
+            } catch {
                 return false
             }
         }
@@ -284,7 +286,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .big-file-warning,
     .load-error {
         display: flex;

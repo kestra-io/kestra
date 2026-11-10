@@ -1,7 +1,7 @@
 <template>
     <div
         class="flowable-cluster"
-        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0}"
+        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0, 'flowable-cluster--drag-over': dragOver, 'flowable-cluster--drag-forbidden': dragForbidden}"
         :data-test="`flowable-cluster-${String(displayBlock.id ?? '')}`"
     >
         <div
@@ -12,9 +12,21 @@
             :aria-expanded="expanded"
             :aria-selected="focused"
             :aria-label="headerAriaLabel"
+            :draggable="draggable"
             data-test="flowable-cluster-header"
             @click="toggle"
+            @dragstart="emit('drag-start', $event)"
+            @dragover="emit('drag-over', $event)"
+            @drop.prevent="emit('drop', $event)"
+            @dragend="emit('drag-end')"
         >
+            <DragVertical
+                v-if="draggable"
+                class="flowable-cluster-grip"
+                :aria-label="$t('block_editor.drag_reorder')"
+                @mousedown.stop
+            />
+
             <component
                 :is="expanded ? ChevronDown : ChevronRight"
                 class="flowable-cluster-chevron"
@@ -70,7 +82,7 @@
                     tabindex="-1"
                     @click.stop="emit('delete', path)"
                 >
-                    <DeleteOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -94,7 +106,6 @@
                 @run="(id) => emit('run', id)"
                 @add-at-path="(p, afterIdx, evt) => emit('add-at-path', p, afterIdx, evt)"
                 @update-depends-on="(p, dependsOn) => emit('update-depends-on', p, dependsOn)"
-                @reorder="(p, from, to) => emit('reorder', p, from, to)"
             />
 
             <div v-if="isSwitchTask" class="flowable-cluster-add-case">
@@ -115,7 +126,7 @@
                     data-test="flowable-add-case-btn"
                     @click="addCase"
                 >
-                    <PlusCircleOutline class="flowable-cluster-add-icon" />
+                    <Plus class="flowable-cluster-add-icon" />
                     {{ $t("block_editor.add_switch_case") }}
                 </button>
                 <span v-if="isCaseKeyTaken" class="flowable-cluster-case-taken" data-test="flowable-add-case-taken">
@@ -133,8 +144,9 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Cog from "vue-material-design-icons/CogOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
@@ -174,6 +186,9 @@
         focusedId?: string
         depth?: number
         playgroundEnabled?: boolean
+        draggable?: boolean
+        dragOver?: boolean
+        dragForbidden?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -184,7 +199,10 @@
         (e: "run", taskId: string): void
         (e: "add-at-path", parentPath: string, afterIndex: number, evt?: Event): void
         (e: "update-depends-on", itemPath: string, dependsOn: string[]): void
-        (e: "reorder", parentPath: string, fromIndex: number, toIndex: number): void
+        (e: "drag-start", event: DragEvent): void
+        (e: "drag-over", event: DragEvent): void
+        (e: "drop", event: DragEvent): void
+        (e: "drag-end"): void
     }>()
 
     const depth = computed(() => props.depth ?? 0)
@@ -302,7 +320,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flowable-cluster {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
@@ -320,6 +338,36 @@
     .flowable-cluster--error {
         border-color: var(--ks-border-error);
         border-left-color: var(--ks-border-error);
+    }
+
+    .flowable-cluster--drag-over {
+        border-color: var(--ks-text-link);
+        border-style: dashed;
+    }
+
+    .flowable-cluster--drag-forbidden {
+        border-color: var(--ks-border-error);
+        border-left-color: var(--ks-border-error);
+        border-style: dashed;
+        cursor: not-allowed;
+    }
+
+    .flowable-cluster-grip {
+        flex-shrink: 0;
+        color: var(--ks-icon-inactive);
+        cursor: grab;
+        display: flex;
+        font-size: var(--ks-font-size-sm);
+        opacity: 0;
+        transition: opacity 0.15s;
+
+        .flowable-cluster-header:hover & {
+            opacity: 1;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .flowable-cluster-header {

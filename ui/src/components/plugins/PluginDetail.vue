@@ -52,17 +52,15 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
-    import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin} from "../../utils/pluginUtils"
-    import {getTheme} from "../../utils/utils"
+    import {isEnterpriseEditionPlugin, pluginElementType, type Plugin} from "../../utils/pluginUtils"
+    import {useTheme} from "../../composables/useTheme"
     import useRouteContext from "../../composables/useRouteContext"
 
     const pluginsStore = usePluginsStore()
     const enrichmentStore = usePluginsEnrichmentStore()
     const miscStore = useMiscStore()
-    const isDarkTheme = computed(() => {
-        void miscStore.theme
-        return getTheme() === "dark"
-    })
+    const theme = useTheme()
+    const isDarkTheme = computed(() => theme.value === "dark")
     const route = useRoute()
     const {t, te} = useI18n()
 
@@ -96,16 +94,9 @@
     const isEnterpriseEdition = computed<boolean>(() => isEnterpriseEditionPlugin(routeCls.value))
 
     const elementTypeLabel = computed<string | null>(() => {
-        const cls = routeCls.value
-        const plugin = owningPlugin.value
-        if (!cls || !plugin) return null
-        for (const [key, value] of Object.entries(plugin)) {
-            if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
-                const i18nKey = `pluginPage.elementType.${key}`
-                return te(i18nKey) ? t(i18nKey) : null
-            }
-        }
-        return null
+        const key = pluginElementType(owningPlugin.value, routeCls.value)
+        const i18nKey = `pluginPage.elementType.${key}`
+        return key && te(i18nKey) ? t(i18nKey) : null
     })
 
     const pluginShortDescription = computed<string | null>(() => {

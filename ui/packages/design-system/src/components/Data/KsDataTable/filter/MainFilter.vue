@@ -6,7 +6,7 @@
             placement="bottom-start"
             trigger="click"
             :width="300"
-            :popperClass="'p-0'"
+            popperClass="customize-filters-popper"
             :showArrow="false"
             :disabled="filter.readOnly?.value || isComplex"
             @hide="isCustomizeFiltersVisible = false"
@@ -90,7 +90,7 @@
             }"
         >
             <FilterChip
-                :ref="(el: any) => setChipRef(cf.id, el)"
+                :ref="(el: Element | ComponentPublicInstance | null) => setChipRef(cf.id, el)"
                 :filter="cf"
                 :filterKey="keyConfigFor(cf)"
                 :class="{'read-only': filter.readOnly?.value}"
@@ -106,7 +106,7 @@
             class="filter-chip-wrap"
         >
             <FilterChip
-                :ref="(el: any) => setChipRef(gf.id, el)"
+                :ref="(el: Element | ComponentPublicInstance | null) => setChipRef(gf.id, el)"
                 :filter="gf"
                 :filterKey="keyConfigFor(gf)"
                 :class="{'read-only': filter.readOnly?.value}"
@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount, type ComponentPublicInstance} from "vue"
     import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
@@ -174,7 +174,8 @@
     const isCustomizeFiltersVisible = ref(false)
     const isAdvancedOpen = ref(false)
     const advancedAnchor = ref(".customize-button")
-    const chipRefs = ref<Record<string, any>>({})
+    type FilterChipInstance = InstanceType<typeof FilterChip>
+    const chipRefs = ref<Record<string, FilterChipInstance>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const openAdvanced = (anchor = ".customize-button") => {
@@ -210,9 +211,10 @@
         nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
     }
 
-    const setChipRef = (filterId: string, el: any) => el
-        ? chipRefs.value[filterId] = el
-        : delete chipRefs.value[filterId]
+    const setChipRef = (filterId: string, el: Element | ComponentPublicInstance | null) => {
+        if (el && !(el instanceof Element)) chipRefs.value[filterId] = el as FilterChipInstance
+        else delete chipRefs.value[filterId]
+    }
 
     const hasValue = (value: AppliedFilter["value"]): boolean => {
         if (Array.isArray(value)) return value.length > 0
@@ -320,10 +322,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter-tokens {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
-
     display: contents;
 }
 
@@ -333,6 +334,7 @@
 
 /* The border box is always present and only its colour toggles, so drawing the rule cannot
    change the layout that decides whether to draw it. */
+
 .filter-chip-wrap.ends-conditional-group {
     padding-right: var(--ks-spacing-2);
     border-right: 1px solid transparent;
@@ -378,28 +380,28 @@
         background-color: var(--ks-btn-secondary-bg-hover);
     }
 
-    .rules-pill-content {
+    & .rules-pill-content {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
     }
 
-    .rules-pill-label {
+    & .rules-pill-label {
         color: var(--ks-text-link);
         font-weight: 600;
     }
 
-    :deep(.rules-pill-icon svg) {
+    & :deep(.rules-pill-icon svg) {
         color: var(--ks-text-link) !important;
         font-size: var(--ks-font-size-md);
     }
 
-    :deep(.rules-pill-chevron svg) {
+    & :deep(.rules-pill-chevron svg) {
         color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
 
-    .rules-pill-dot {
+    & .rules-pill-dot {
         position: absolute;
         top: -2px;
         right: -2px;
@@ -421,7 +423,7 @@
         background-color: var(--ks-btn-secondary-bg-hover);
     }
 
-    :deep(svg) {
+    & :deep(svg) {
         color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
@@ -445,12 +447,12 @@
     min-width: 150px;
     max-width: 200px;
 
-    :deep(.kel-input__wrapper),
-    :deep(.kel-input__inner) {
+    & :deep(.kel-input__wrapper),
+    & :deep(.kel-input__inner) {
         border-radius: var(--ks-radius-base);
     }
 
-    :deep(.kel-input__wrapper) {
+    & :deep(.kel-input__wrapper) {
         height: 32px;
     }
 
@@ -465,5 +467,10 @@
         opacity: 0.6;
     }
 }
+</style>
 
+<style>
+.customize-filters-popper.customize-filters-popper {
+    padding: 0;
+}
 </style>

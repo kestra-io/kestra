@@ -53,12 +53,12 @@
     import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, toEchartsParams, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-    import {useTheme} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
 
     defineOptions({inheritAttrs: false})
 
@@ -240,7 +240,7 @@
     })
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
+        const params = toEchartsParams(rawParams)
         const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
         if (isOthers) {
             expanded.value = true
@@ -258,10 +258,10 @@
 
     defineExpose({refresh})
 
-    watch(() => route.params.filters, () => refresh(), {deep: true})
+    watch(() => route.fullPath, () => refresh())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .chart-wrapper {
         &.short {
             height: 40px;

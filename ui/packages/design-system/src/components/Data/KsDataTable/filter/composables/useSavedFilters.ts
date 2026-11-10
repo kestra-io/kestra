@@ -4,12 +4,15 @@ import {useStorage} from "@vueuse/core"
 import type {AppliedFilter, FilterGroup, LogicalOperator, SavedFilter} from "../utils/filterTypes"
 import {isWrapperGroup} from "../utils/filterTypes"
 
-const isDateString = (value: any) =>
+const isDateString = (value: unknown): value is string =>
     typeof value === "string" && !isNaN(Date.parse(value)) && value.includes("T")
 
-const deserializeAppliedFilter = (f: any): AppliedFilter => ({
+const isSerializedRange = (value: AppliedFilter["value"]): value is {startDate: Date; endDate: Date} =>
+    typeof value === "object" && value !== null && "startDate" in value && "endDate" in value && Boolean(value.startDate) && Boolean(value.endDate)
+
+const deserializeAppliedFilter = (f: AppliedFilter): AppliedFilter => ({
     ...f,
-    value: f.value?.startDate && f.value?.endDate
+    value: isSerializedRange(f.value)
         ? {startDate: new Date(f.value.startDate), endDate: new Date(f.value.endDate)}
         : isDateString(f.value)
             ? new Date(f.value)

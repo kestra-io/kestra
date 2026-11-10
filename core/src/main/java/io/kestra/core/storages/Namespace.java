@@ -127,6 +127,15 @@ public interface Namespace {
     InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException;
 
     /**
+     * Retrieves the content of a file this namespace listed, at the revision it was listed with, without looking
+     * its metadata up again.
+     *
+     * @throws IllegalArgumentException if the file belongs to another namespace.
+     * @throws java.io.FileNotFoundException if the revision has no content.
+     */
+    InputStream getFileContent(NamespaceFile file) throws IOException;
+
+    /**
      * Retrieves the metadata of the namespace file at the given path.
      *
      * @param path the file path.

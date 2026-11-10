@@ -1,8 +1,10 @@
-import type {Meta, StoryFn} from "@storybook/vue3-vite"
-import {Topology, type FlowGraph} from "@kestra-io/topology"
+import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
+import {expect, waitFor} from "storybook/test"
+import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
+import nestedLoopDemo from "../../../fixtures/flowgraphs/nested-loop-demo.json"
 
 const ALLOW_FAILURE_SOURCE = `
 id: allow-failure-demo
@@ -203,4 +205,603 @@ ValidationIssues.args = {
             "timeout: must be a valid ISO 8601 duration",
         ]],
     ]),
+}
+
+// The Parallel's direct children land on purpose-mixed states: the lane header must surface the
+// worst of them (WARNING, ranked above RUNNING) rather than the first or the last child.
+function taskRun(taskId: string, state: string, id = `${taskId}-run`) {
+    return {id, taskId, state: {current: state}}
+}
+
+const MIXED_LANE_EXECUTION = {
+    id: "story-execution-mixed-lane",
+    state: {current: "RUNNING"},
+    taskRunList: [
+        taskRun("log_start", "SUCCESS"),
+        taskRun("parallel_status_showcase", "RUNNING"),
+        taskRun("branch_success", "SUCCESS"),
+        taskRun("branch_warning", "WARNING"),
+        taskRun("branch_loop", "SUCCESS"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-1"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-2"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-3"),
+        taskRun("branch_subflow", "RUNNING"),
+        // branch_paused and branch_long_sleep_kill: no task run yet — still queued behind the
+        // other Parallel branches, so the lane's child count already shows 6 while only 4 ran.
+    ],
+}
+
+// Mirrors the `executionId` the app stamps onto every node once an execution is loaded
+// (executions.ts's loadAugmentedGraph) — without it, TaskNode/ClusterNode never resolve a
+// task run for a node, and the story would render as if no execution existed at all.
+function withExecutionId<T extends {nodes: object[]}>(flowGraph: T, executionId: string) {
+    return {
+        ...flowGraph,
+        nodes: flowGraph.nodes.map((node) => ({...node, executionId})),
+    }
+}
+
+const MIXED_LANE_GRAPH = withExecutionId(STATUS_SHOWCASE_GRAPH, MIXED_LANE_EXECUTION.id)
+
+export const LaneHeaderMixedState = Template.bind({})
+LaneHeaderMixedState.storyName = "Lane Header — Mixed Child State"
+LaneHeaderMixedState.args = {
+    id: "story-lane-header-mixed",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+}
+
+export const ErrorsLane = Template.bind({})
+ErrorsLane.storyName = "Errors Lane"
+ErrorsLane.args = {
+    id: "story-errors-lane",
+    source: STATUS_SHOWCASE_SOURCE,
+    // A flow-level `errors:` task (`error_handler_log`) has no cluster of its own in the graph the
+    // backend sends — this is exactly what makes it render as a labelled lane rather than a
+    // floating dashed line (kestra-io/kestra#19666).
+    flowGraph: STATUS_SHOWCASE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+}
+
+const LodTemplate: StoryFn<typeof Topology> = (args) => ({
+    components: {Topology},
+    setup() {
+        return {args}
+    },
+    template: `<div style="height: 600px; width: 100%;">
+        <Topology v-bind="args">
+            <template #taskDetails="taskProps">
+                <div style="padding: 8px; font-size: 12px; max-width: 16rem;">
+                    Plugin-specific details for {{ taskProps.data.node.task.id }} would render here.
+                </div>
+            </template>
+        </Topology>
+    </div>`,
+})
+
+export const LevelOfDetailPill = LodTemplate.bind({})
+LevelOfDetailPill.storyName = "Level of Detail — Pill (< 50% zoom)"
+LevelOfDetailPill.args = {
+    id: "story-lod-pill",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 0.3},
+}
+
+const PILL_ZOOM = 0.3
+
+const PILL_STATUS_EXECUTION = {
+    ...MIXED_LANE_EXECUTION,
+    taskRunList: [...MIXED_LANE_EXECUTION.taskRunList, taskRun("hard_fail_after_parallel", "FAILED")],
+}
+
+export const LevelOfDetailPillStatuses: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, states stay readable",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args" />
+        </div>`,
+    }),
+    args: {
+        ...LevelOfDetailPill.args,
+        id: "story-lod-pill-statuses",
+        execution: PILL_STATUS_EXECUTION,
+        defaultViewport: {x: 0, y: 0, zoom: PILL_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const statuses = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill-status\"]"))
+
+        await waitFor(() => expect(statuses().length).toBeGreaterThan(0))
+
+        const labels = statuses().map((status) => status.getAttribute("aria-label"))
+        expect(labels).toContain("FAILED")
+        expect(labels).toContain("SUCCESS")
+        expect(labels).toContain("WARNING")
+
+        const pill = canvasElement.querySelector<HTMLElement>("[data-test=\"topology-task-pill\"]")!
+        const ring = parseFloat(getComputedStyle(pill).borderTopWidth)
+        expect(ring * PILL_ZOOM).toBeGreaterThan(0.8)
+        expect(ring * PILL_ZOOM).toBeLessThan(1.25)
+
+        expect(statuses()[0].getBoundingClientRect().height).toBeGreaterThan(8)
+    },
+}
+
+const DEEP_ZOOM = 0.1
+
+export const LevelOfDetailPillDeepZoom: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Pill, compensation stays bounded",
+    render: LevelOfDetailPillStatuses.render,
+    args: {
+        ...LevelOfDetailPillStatuses.args,
+        id: "story-lod-pill-deep-zoom",
+        defaultViewport: {x: 0, y: 0, zoom: DEEP_ZOOM},
+    },
+    play: async ({canvasElement}) => {
+        const pills = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"topology-task-pill\"]"))
+
+        await waitFor(() => expect(pills().length).toBeGreaterThan(0))
+
+        expect(getComputedStyle(pills()[0]).borderTopWidth).toBe("4px")
+    },
+}
+
+export const LevelOfDetailDefault = LodTemplate.bind({})
+LevelOfDetailDefault.storyName = "Level of Detail — Default"
+LevelOfDetailDefault.args = {
+    id: "story-lod-default",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 1},
+}
+
+export const LevelOfDetailExpanded = LodTemplate.bind({})
+LevelOfDetailExpanded.storyName = "Level of Detail — Expanded (> 130% zoom)"
+LevelOfDetailExpanded.args = {
+    id: "story-lod-expanded",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 1.5},
+}
+
+export const LevelOfDetailExpandedWithoutDetails: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Expanded, no details to show",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args">
+                <template #taskDetails><span v-if="false" /></template>
+            </Topology>
+        </div>`,
+    }),
+    args: {...LevelOfDetailExpanded.args, id: "story-lod-expanded-empty"},
+    play: async ({canvasElement}) => {
+        const overlays = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"node-details-overlay\"]"))
+
+        await waitFor(() => expect(overlays().length).toBeGreaterThan(0))
+
+        for (const overlay of overlays()) {
+            expect(getComputedStyle(overlay).display).toBe("none")
+        }
+    },
+}
+
+const DURATION_BAR_SOURCE = `
+id: duration_bar_showcase
+namespace: qa.topology
+tasks:
+  - id: quick_query
+    type: io.kestra.plugin.core.log.Log
+    message: "Quick query"
+  - id: transform_data
+    type: io.kestra.plugin.core.log.Log
+    message: "Transform data"
+  - id: load_warehouse
+    type: io.kestra.plugin.core.log.Log
+    message: "Load warehouse"
+  - id: notify_team
+    type: io.kestra.plugin.core.log.Log
+    message: "Notify team"
+`.trim()
+
+function logTask(id: string, message: string) {
+    return {id, type: "io.kestra.plugin.core.log.Log", message}
+}
+
+const DURATION_BAR_GRAPH = {
+    nodes: [
+        {uid: "root.root-durationbar", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+        {uid: "root.end-durationbar", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+        {uid: "root.quick_query", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("quick_query", "Quick query"), relationType: "SEQUENTIAL"},
+        {uid: "root.transform_data", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("transform_data", "Transform data"), relationType: "SEQUENTIAL"},
+        {uid: "root.load_warehouse", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("load_warehouse", "Load warehouse"), relationType: "SEQUENTIAL"},
+        {uid: "root.notify_team", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("notify_team", "Notify team"), relationType: "SEQUENTIAL"},
+    ],
+    edges: [
+        {source: "root.root-durationbar", target: "root.quick_query", relation: {}},
+        {source: "root.quick_query", target: "root.transform_data", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.transform_data", target: "root.load_warehouse", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.load_warehouse", target: "root.notify_team", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.notify_team", target: "root.end-durationbar", relation: {}},
+    ],
+    clusters: [],
+}
+
+function taskRunWithHistory(taskId: string, histories: {date: string; state: string}[]) {
+    return {
+        id: `${taskId}-run`,
+        taskId,
+        state: {
+            current: histories[histories.length - 1].state,
+            histories,
+        },
+    }
+}
+
+// load_warehouse's inter-attempt backoff is billed as queued, not running, matching bucketOf().
+const DURATION_BAR_EXECUTION = {
+    id: "story-execution-duration-bar",
+    state: {current: "SUCCESS", histories: [{date: "2026-01-01T00:00:00.000Z", state: "CREATED"}]},
+    taskRunList: [
+        taskRunWithHistory("quick_query", [
+            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:00.050Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:00.055Z", state: "SUCCESS"},
+        ]),
+        taskRunWithHistory("transform_data", [
+            {date: "2026-01-01T00:00:01.250Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:01.330Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:05.750Z", state: "SUCCESS"},
+        ]),
+        taskRunWithHistory("load_warehouse", [
+            {date: "2026-01-01T00:00:05.750Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:05.790Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:07.190Z", state: "FAILED"},
+            {date: "2026-01-01T00:00:07.190Z", state: "RETRYING"},
+            {date: "2026-01-01T00:00:07.890Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:09.190Z", state: "FAILED"},
+        ]),
+        taskRunWithHistory("notify_team", [
+            {date: "2026-01-01T00:00:00.000Z", state: "SKIPPED"},
+        ]),
+    ],
+}
+
+const DURATION_BAR_FLOWGRAPH = withExecutionId(DURATION_BAR_GRAPH, DURATION_BAR_EXECUTION.id)
+
+export const DurationBarComparison = Template.bind({})
+DurationBarComparison.storyName = "Duration Bar — Several Durations Side By Side"
+DurationBarComparison.args = {
+    id: "story-duration-bar-comparison",
+    source: DURATION_BAR_SOURCE,
+    flowGraph: DURATION_BAR_FLOWGRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: false,
+    execution: DURATION_BAR_EXECUTION,
+}
+DurationBarComparison.play = async ({canvasElement}) => {
+    const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
+    const barOf = (taskId: string) => nodeOf(taskId)?.querySelector("[data-test=\"duration-compact-bar\"]") as HTMLElement | null
+    const filledWidthOf = (taskId: string) =>
+        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>("[data-test='duration-task-bar']"))
+            .reduce((sum, segment) => sum + segment.getBoundingClientRect().width, 0)
+
+    await waitFor(() => expect(barOf("transform_data")).not.toBeNull())
+
+    expect(barOf("quick_query")).not.toBeNull()
+    expect(barOf("load_warehouse")).not.toBeNull()
+    expect(barOf("notify_team")).toBeNull()
+
+    const longest = filledWidthOf("transform_data")
+    expect(filledWidthOf("quick_query")).toBeLessThan(longest / 2)
+    expect(filledWidthOf("load_warehouse")).toBeLessThan(longest)
+
+    for (const taskId of ["quick_query", "transform_data", "notify_team"]) {
+        const box = nodeOf(taskId)!.getBoundingClientRect()
+        const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
+        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`)
+        expect(Math.round(card.height)).toBe(Math.round(box.height - NODE_SIZES.TASK_STATUS_ROW_HEIGHT))
+        expect(Math.round(card.top)).toBe(Math.round(box.top))
+    }
+
+    const root = canvasElement.ownerDocument.documentElement
+    const originalTheme = root.className
+    const taskBars = ["quick_query", "load_warehouse"].map(taskId =>
+        barOf(taskId)!.querySelector<HTMLElement>("[data-test='duration-task-bar']")!,
+    )
+    try {
+        root.classList.remove("dark", "dark-2")
+        root.classList.add("light")
+        const lightColors = taskBars.map(bar => getComputedStyle(bar).backgroundColor)
+
+        root.classList.remove("light")
+        root.classList.add("dark")
+        await waitFor(() => {
+            taskBars.forEach((bar, index) => {
+                expect(getComputedStyle(bar).backgroundColor).not.toBe(lightColors[index])
+            })
+        })
+    } finally {
+        root.className = originalTheme
+    }
+}
+
+const taskRunWithAttempts = (taskId: string, current: string, attempts: number) => ({
+    ...taskRunWithHistory(taskId, [
+        {date: "2026-01-01T00:00:00.000Z", state: "RUNNING"},
+        {date: "2026-01-01T00:00:01.790Z", state: current},
+    ]),
+    attempts: Array.from({length: attempts}, () => ({state: {current}})),
+})
+
+const NODE_STATES_EXECUTION = {
+    id: "story-execution-node-states",
+    state: {current: "FAILED"},
+    taskRunList: [
+        taskRunWithAttempts("quick_query", "SUCCESS", 1),
+        taskRunWithAttempts("transform_data", "FAILED", 3),
+        taskRunWithAttempts("load_warehouse", "KILLING", 1),
+        taskRunWithAttempts("notify_team", "RUNNING", 1),
+    ],
+}
+
+export const NodeStatusChips: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: DURATION_BAR_SOURCE,
+                flowGraph: withExecutionId(DURATION_BAR_GRAPH, NODE_STATES_EXECUTION.id) as unknown as FlowGraph,
+                execution: NODE_STATES_EXECUTION,
+                artifactCounts: {quick_query: 1, transform_data: 3},
+            }
+        },
+        template: `
+            <div style="height: 560px; width: 420px;">
+                <Topology id="story-node-states" :source="source" :flowGraph="flowGraph" :execution="execution" :artifactCounts="artifactCounts" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
+
+        await waitFor(() => expect(nodeOf("quick_query")).not.toBeNull())
+
+        const chipState = (taskId: string) => nodeOf(taskId)!.querySelector("[data-test='node-status-chip']")?.getAttribute("data-state")
+        expect(chipState("quick_query")).toBe("SUCCESS")
+        expect(chipState("transform_data")).toBe("FAILED")
+        expect(chipState("load_warehouse")).toBe("KILLING")
+        expect(chipState("notify_team")).toBe("RUNNING")
+
+        expect(nodeOf("quick_query")!.querySelector("[data-test='node-artifact-badge']")?.textContent?.trim()).toBe("1 artifact")
+        expect(nodeOf("transform_data")!.querySelector("[data-test='node-artifact-badge']")?.textContent?.trim()).toBe("3 artifacts")
+        expect(nodeOf("load_warehouse")!.querySelector("[data-test='node-artifact-badge']")).toBeNull()
+
+        expect(nodeOf("transform_data")!.querySelector("[data-test='node-retry-marker']")).not.toBeNull()
+        expect(nodeOf("quick_query")!.querySelector("[data-test='node-retry-marker']")).toBeNull()
+
+        for (const taskId of ["quick_query", "transform_data", "load_warehouse", "notify_team"]) {
+            const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
+            const row = nodeOf(taskId)!.querySelector("[data-test='node-status-row']")!.getBoundingClientRect()
+            expect(Math.round(row.top)).toBeGreaterThanOrEqual(Math.round(card.bottom))
+        }
+    },
+}
+
+const RUNNER_TASK = {id: "run_script", type: "io.kestra.plugin.scripts.python.Script", taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}}
+
+const RUNNER_GRAPH = {
+    nodes: [
+        {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+        {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+        {uid: "root.run_script", type: "io.kestra.core.models.hierarchies.GraphTask", task: RUNNER_TASK},
+    ],
+    edges: [
+        {source: "root.root-1", target: "root.run_script", relation: {}},
+        {source: "root.run_script", target: "root.end-1", relation: {}},
+    ],
+    clusters: [],
+}
+
+const RUNNER_EXECUTION = {
+    id: "story-execution-runner",
+    state: {current: "SUCCESS"},
+    taskRunList: [taskRunWithAttempts("run_script", "SUCCESS", 1)],
+}
+
+export const TaskRunnerAboveTheTaskId: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: "id: runner\nnamespace: company.team\ntasks:\n  - id: run_script\n    type: io.kestra.plugin.scripts.python.Script\n",
+                flowGraph: withExecutionId(RUNNER_GRAPH, RUNNER_EXECUTION.id) as unknown as FlowGraph,
+                execution: RUNNER_EXECUTION,
+            }
+        },
+        template: `
+            <div style="height: 320px; width: 420px;">
+                <Topology id="story-runner" :source="source" :flowGraph="flowGraph" :execution="execution" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const node = () => canvasElement.querySelector("[data-id=\"root.run_script\"]") as HTMLElement | null
+
+        await waitFor(() => expect(node()!.querySelector("[data-test='node-runner-badge']")).not.toBeNull())
+
+        const badge = node()!.querySelector("[data-test='node-runner-badge']")!.getBoundingClientRect()
+        const title = node()!.querySelector(".task-title")!.getBoundingClientRect()
+        const card = node()!.querySelector(".node-core")!.getBoundingClientRect()
+        expect(badge.bottom).toBeLessThanOrEqual(title.top + 1)
+        expect(badge.top).toBeGreaterThanOrEqual(card.top)
+    },
+}
+
+// A running task's bar keeps updating every tick — the node's laid-out box must not move as a
+// result (kestra-io/kestra#19666's hard constraint, the reason this issue's slot was reserved).
+export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            const runningExecution = {
+                id: "story-execution-duration-bar-running",
+                state: {current: "RUNNING", histories: [{date: new Date(Date.now() - 10_000).toISOString(), state: "CREATED"}]},
+                taskRunList: [
+                    taskRunWithHistory("quick_query", [
+                        {date: new Date(Date.now() - 5_000).toISOString(), state: "CREATED"},
+                        {date: new Date(Date.now() - 4_800).toISOString(), state: "RUNNING"},
+                    ]),
+                ],
+            }
+            return {
+                source: DURATION_BAR_SOURCE,
+                flowGraph: withExecutionId(DURATION_BAR_GRAPH, runningExecution.id) as unknown as FlowGraph,
+                execution: runningExecution,
+            }
+        },
+        template: `
+            <div style="height: 300px; width: 300px;">
+                <Topology id="story-duration-bar-running" :source="source" :flowGraph="flowGraph" :execution="execution" :defaultViewport="{x: 0, y: 0, zoom: 1}" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const node = () => canvasElement.querySelector("[data-id=\"root.quick_query\"]") as HTMLElement | null
+
+        await expect(node()).not.toBeNull()
+        await waitFor(() => expect(node()!.querySelector(".node-footer [data-test=\"duration-compact-bar\"] [data-test=\"duration-task-bar\"]")).not.toBeNull())
+        const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
+        const before = dimensionsOf(node()!)
+        const barWidth = () => parseFloat(node()!.querySelector<HTMLElement>("[data-test='duration-task-bar']")!.style.width)
+        const widthBefore = barWidth()
+
+        await waitFor(() => expect(barWidth()).toBeGreaterThan(widthBefore), {timeout: 3_000})
+        expect(dimensionsOf(node()!)).toEqual(before)
+        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION + NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`})
+    },
+}
+
+// Three independent canvases, the same flow, three different starting zooms — one below the pill
+// threshold, one at rest, one above the expanded threshold. If a level of detail ever changed the
+// laid-out footprint, the same node would measure differently across them; it must not
+// (kestra-io/kestra#19666's hard constraint: crossing a zoom threshold moves no node).
+export const FootprintInvariance: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: STATUS_SHOWCASE_SOURCE,
+                flowGraph: STATUS_SHOWCASE_GRAPH as unknown as FlowGraph,
+            }
+        },
+        template: `
+            <div style="display: flex; gap: 8px;">
+                <div id="footprint-pill" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-pill" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 0.3}" />
+                </div>
+                <div id="footprint-default" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-default" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 1}" />
+                </div>
+                <div id="footprint-expanded" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-expanded" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 1.6}" />
+                </div>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const nodeAt = (containerId: string) =>
+            canvasElement.querySelector(`#${containerId} [data-id="root.log_start"]`) as HTMLElement | null
+
+        const pill = nodeAt("footprint-pill")
+        const atRest = nodeAt("footprint-default")
+        const expanded = nodeAt("footprint-expanded")
+
+        await expect(pill).not.toBeNull()
+        await expect(atRest).not.toBeNull()
+        await expect(expanded).not.toBeNull()
+
+        const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
+
+        expect(dimensionsOf(pill!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
+        expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
+        expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
+    },
+}
+
+const NESTED_LOOP_SOURCE = `
+id: nested_loop_demo
+namespace: company.team
+tasks:
+  - id: per_region
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["EMEA", "AMER", "APAC"]
+    tasks:
+      - id: per_quarter
+        type: io.kestra.plugin.core.flow.Loop
+        values: ["Q1", "Q2", "Q3", "Q4"]
+        tasks:
+          - id: fetch_sales
+            type: io.kestra.plugin.core.log.Log
+            message: "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+          - id: summarize
+            type: io.kestra.plugin.core.log.Log
+            message: "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+`.trim()
+
+const NESTED_LOOP_EXECUTION = {
+    id: "story-execution-nested-loop",
+    state: {current: "SUCCESS"},
+    taskRunList: [
+        taskRun("per_region", "SUCCESS"),
+        taskRun("per_quarter", "SUCCESS"),
+        taskRun("fetch_sales", "SUCCESS"),
+        taskRun("summarize", "SUCCESS"),
+    ],
+}
+
+export const NestedFlowableLanes: StoryObj<typeof Topology> = {
+    name: "Nested Flowable Lanes",
+    render: Template,
+    args: {
+        id: "story-nested-flowable-lanes",
+        source: NESTED_LOOP_SOURCE,
+        flowGraph: withExecutionId(nestedLoopDemo, NESTED_LOOP_EXECUTION.id) as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: NESTED_LOOP_EXECUTION,
+    },
+    play: async ({canvasElement}) => {
+        const laneOf = (id: string) => canvasElement.querySelector<HTMLElement>(`[data-id="${id}"]`)
+
+        await waitFor(() => expect(laneOf("cluster_root.per_region.per_quarter")).not.toBeNull())
+        const outer = laneOf("cluster_root.per_region")!.getBoundingClientRect()
+        const inner = laneOf("cluster_root.per_region.per_quarter")!.getBoundingClientRect()
+        const zoom = outer.height / parseFloat(laneOf("cluster_root.per_region")!.style.height)
+
+        expect(inner.top).toBeGreaterThanOrEqual(outer.top + NODE_SIZES.LANE_HEADER_HEIGHT * zoom)
+        expect(inner.left).toBeGreaterThanOrEqual(outer.left)
+        expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
+        expect(inner.right).toBeLessThanOrEqual(outer.right)
+    },
 }

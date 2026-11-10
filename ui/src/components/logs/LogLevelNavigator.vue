@@ -1,6 +1,6 @@
 <template>
     <div
-        class="d-flex kel-select__wrapper space-between gap-2"
+        class="kel-select__wrapper"
         :class="{'is-clickable': filterMode}"
         :style="wrapperStyle(level)"
         :role="filterMode ? 'button' : undefined"
@@ -9,11 +9,11 @@
         @keydown.enter="filterMode && emit('select')"
         @keydown.space.prevent="filterMode && emit('select')"
     >
-        <div class="d-flex align-items-center gap-2">
+        <div class="level-label">
             <span class="circle" :style="circle(level)" />
             <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level }}</span>
         </div>
-        <div v-if="!filterMode" class="d-flex align-items-end gap-1">
+        <div v-if="!filterMode" class="level-actions">
             <ChevronUp class="icon-button" @click="forwardEvent('previous')" />
             <ChevronDown class="icon-button" @click="forwardEvent('next')" />
             <Close v-if="isSelected" class="icon-button" @click="forwardEvent('close')" :style="closeButton(level)" />
@@ -44,8 +44,10 @@
             ? {border: `1px solid var(--ks-log-border-${level.toLowerCase()})`}
             : {}
 </script>
-<style scoped lang="scss">
+<style scoped>
 .kel-select__wrapper {
+    display: flex;
+    gap: var(--ks-spacing-2);
     cursor: unset;
     font-size: var(--ks-font-size-xs);
     font-weight: 600;
@@ -73,5 +75,17 @@
         cursor: pointer;
         font-size: var(--ks-font-size-md);
     }
+}
+
+.level-label {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
+.level-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--ks-spacing-1);
 }
 </style>

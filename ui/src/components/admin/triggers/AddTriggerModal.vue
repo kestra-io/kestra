@@ -76,7 +76,7 @@
                         :aria-label="copied ? $t('copied') : $t('copy')"
                         @click="copySource"
                     >
-                        <CheckIcon v-if="copied" class="text-success" />
+                        <CheckIcon v-if="copied" class="success-icon" />
                         <ContentCopy v-else />
                     </KsIconButton>
                     <KsEditor
@@ -145,6 +145,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../../no-code/injectionKeys"
+    import type {Schema} from "../../no-code/components/tasks/getTaskComponent"
 
     const visible = defineModel<boolean>("visible", {required: true})
     const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
@@ -171,12 +172,14 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
+    // The docs-oriented JSONSchema of the plugin is the raw backend schema the no-code editor reads as Schema.
+    const triggerDefinitions = computed(() => (triggerPlugin.value?.schema?.definitions ?? {}) as Record<string, Schema>)
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => ({
         ...(triggerPlugin.value?.schema ?? {}),
-        definitions: triggerPlugin.value?.schema?.definitions ?? {},
+        definitions: triggerDefinitions.value,
         $ref: "",
     })))
-    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, triggerDefinitions)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
     }))
@@ -195,18 +198,24 @@
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
     // schema.properties.properties, with the required array at schema.properties.required.
-    const triggerProperties = computed(() => {
+    // JSONProperty and the no-code Schema are two hand-written views of the same backend JSON
+    // Schema node, so the cast below is the same type-punning TaskObject's own Schema already
+    // relies on for every other caller (e.g. ImplementationCard.vue's branch.definition).
+    const triggerProperties = computed<Record<string, Schema>>(() => {
         const fields = triggerPlugin.value?.schema?.properties?.properties
         if (!fields) return {}
         return Object.fromEntries(
             Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
-        )
+        ) as Record<string, Schema>
     })
 
     const triggerSchema = computed<{required?: string[]}>(() => {
-        const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
-        return required?.length ? {required} : {}
+        const wrapper = triggerPlugin.value?.schema?.properties
+        const declared: unknown = wrapper ? Reflect.get(wrapper, "required") : undefined
+        const required = Array.isArray(declared)
+            ? declared.filter((key: unknown): key is string => typeof key === "string" && !RESERVED_FIELDS.has(key))
+            : []
+        return required.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
@@ -312,7 +321,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         .title {
             display: flex;
@@ -344,21 +353,21 @@
     }
 
     .modal-tabs {
-        :deep(.kel-tabs__header) {
+        & :deep(.kel-tabs__header) {
             margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
         }
     }
 
     .form {
-        :deep(.kel-form-item):first-of-type {
+        & :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }
 
-        :deep(.kel-form-item__label) {
+        & :deep(.kel-form-item__label) {
             font-weight: var(--ks-font-weight-semibold);
         }
 
-        :deep(.id-input .kel-input__inner) {
+        & :deep(.id-input .kel-input__inner) {
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
         }
@@ -379,6 +388,10 @@
             right: var(--ks-spacing-2);
             z-index: 2;
         }
+    }
+
+    .success-icon {
+        color: var(--ks-text-success);
     }
 
     .docs :deep(.plugin-doc) {

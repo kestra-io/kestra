@@ -22,7 +22,6 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -37,8 +36,6 @@ class NamespaceFilesUtilsTest {
     @Inject
     RunContextFactory runContextFactory;
 
-    @Inject
-    StorageInterface storageInterface;
 
     @Inject
     DispatchQueueInterface<LogEntry> workerTaskLogQueue;
@@ -56,7 +53,7 @@ class NamespaceFilesUtilsTest {
         String namespace = runContext.flowInfo().namespace();
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         for (int i = 0; i < 100; i++) {
             namespaceStorage.putFile(Path.of("/" + i + ".txt"), data);
         }
@@ -80,7 +77,7 @@ class NamespaceFilesUtilsTest {
         String namespace = IdUtils.create();
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         for (int i = 0; i < 100; i++) {
             namespaceStorage.putFile(Path.of("/" + i + ".txt"), data);
         }
@@ -104,7 +101,7 @@ class NamespaceFilesUtilsTest {
         String namespace = IdUtils.create();
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/folder1/test.txt"), data);
         namespaceStorage.putFile(Path.of("/folder2/test.txt"), data);
         namespaceStorage.putFile(Path.of("/test.txt"), data);
@@ -130,8 +127,8 @@ class NamespaceFilesUtilsTest {
         String ns2 = baseNs + ".ns2";
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        namespaceFactory.of(MAIN_TENANT, ns1, storageInterface).putFile(Path.of("/test.txt"), data);
-        namespaceFactory.of(MAIN_TENANT, ns2, storageInterface).putFile(Path.of("/test.txt"), data);
+        namespaceFactory.of(MAIN_TENANT, ns1).putFile(Path.of("/test.txt"), data);
+        namespaceFactory.of(MAIN_TENANT, ns2).putFile(Path.of("/test.txt"), data);
 
         NamespaceFilesUtils.loadNamespaceFiles(
             runContext, NamespaceFiles.builder()

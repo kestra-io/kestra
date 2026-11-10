@@ -3,7 +3,9 @@ package io.kestra.core.models.property;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -12,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,11 +23,16 @@ import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.NamespaceFileBackend;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageNamespaceFileBackend;
 import io.kestra.core.utils.IdUtils;
 
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,8 +162,51 @@ class URIFetcherTest {
 
     private URI createNsFile(String namespace, boolean nsInAuthority) throws IOException, URISyntaxException {
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storage);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
+    }
+
+    // Keeps the content out of the internal storage, as the controller relay does for a worker.
+    @MockBean(StorageNamespaceFileBackend.class)
+    @Singleton
+    static class InMemoryNamespaceFileBackend implements NamespaceFileBackend {
+        private final Map<String, byte[]> contents = new ConcurrentHashMap<>();
+
+        @Override
+        public InputStream get(String tenant, NamespaceFile file) throws IOException {
+            byte[] content = contents.get(key(tenant, file));
+            if (content == null) {
+                throw new FileNotFoundException(file.storagePath().toString());
+            }
+            return new ByteArrayInputStream(content);
+        }
+
+        @Override
+        public boolean exists(String tenant, NamespaceFile file) {
+            return contents.containsKey(key(tenant, file));
+        }
+
+        @Override
+        public long put(String tenant, NamespaceFile file, InputStream content) throws IOException {
+            try (content) {
+                byte[] bytes = content.readAllBytes();
+                contents.put(key(tenant, file), bytes);
+                return bytes.length;
+            }
+        }
+
+        @Override
+        public void createDirectory(String tenant, NamespaceFile directory) {
+        }
+
+        @Override
+        public boolean delete(String tenant, NamespaceFile file) {
+            return contents.remove(key(tenant, file)) != null;
+        }
+
+        private static String key(String tenant, NamespaceFile file) {
+            return tenant + ":" + file.namespace() + ":" + file.storagePath();
+        }
     }
 }

@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block">
+        <div class="task-icon">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -26,23 +26,23 @@
         </div>
 
         <div
-            class="task-id flex-grow-1"
+            class="task-id"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
             <KsTooltip>
                 <template #content>
                     {{ $t("from") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate) }}
+                    {{ formatAttemptDate(selectedAttempt(currentTaskRun).state.startDate) }}
                     <br>
                     {{ $t("to") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate) }}
+                    {{ formatAttemptDate(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
                     <Clock />
                     <strong>{{ $t("duration") }}:</strong>
-                    {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
+                    {{ formatAttemptDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
-                    <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
+                    <span class="task-id-title">{{ currentTaskRun.taskId }}</span>
                     <small v-if="currentTaskRun.value">
                         {{ currentTaskRun.value }}
                     </small>
@@ -50,10 +50,18 @@
             </KsTooltip>
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
+        </div>
+
+        <div v-if="executionsStore.isReusedTaskRun(followedExecution.id, currentTaskRun.id)">
+            <KsTooltip :content="$t('reused_task_run.tooltip', {date: formatAttemptDate(currentTaskRun.state.startDate)})">
+                <KsTag size="small" data-test="task-run-reused">
+                    {{ $t("reused_task_run.label") }}
+                </KsTag>
+            </KsTooltip>
         </div>
 
         <div class="task-status">
@@ -81,7 +89,7 @@
     </div>
     <div class="attempt-header" :class="{'attempt-header--flush': hideHeader}">
         <KsSelect
-            class="d-none d-md-inline-block attempt-select"
+            class="attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
@@ -101,8 +109,8 @@
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration
                     :histories="selectedAttempt(currentTaskRun).state.histories"
                     :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
@@ -125,19 +133,26 @@
     import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
 
     const pluginsStore = usePluginsStore()
+    const executionsStore = useExecutionsStore()
     const {navigateToStateFilter} = useStateFilter()
 
+    type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+    type TaskRunWithOutputs = ExecutionTaskRun & {outputs?: {executionId?: string; [key: string]: unknown}}
+
     interface Props {
-        currentTaskRun: any
-        followedExecution: any
-        flow?: any
+        currentTaskRun: TaskRunWithOutputs
+        followedExecution: Execution
+        flow?: FlowForExecution
         forcedAttemptNumber?: number
         taskRunId?: string
         selectedAttemptNumberByTaskRunId?: Record<string, number>
         shownAttemptsUid?: string[]
-        logs?: any[]
+        logs?: LogEntry[]
         filter?: string
         hideHeader?: boolean
         depth?: number
@@ -164,57 +179,66 @@
 
     // computed
     const currentTaskRuns = computed(() =>
-        props.followedExecution?.taskRunList?.filter((tr: any) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
+        props.followedExecution?.taskRunList?.filter((tr) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
     )
 
     const taskRunById = computed(() =>
-        Object.fromEntries(currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun])),
+        Object.fromEntries(currentTaskRuns.value.map((taskRun) => [taskRun.id, taskRun])),
     )
 
     const logsWithIndexByAttemptUid = computed(() => {
         let indexedLogs = props.logs
-            .filter((logLine: any) =>
-                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(taskRunById.value[logLine.taskRunId]),
+            .filter((logLine) =>
+                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(logLine.taskRunId ? taskRunById.value[logLine.taskRunId] : undefined),
             )
-            .map((logLine: any, index: number) => ({...logLine, index}))
+            .map((logLine, index) => ({...logLine, index}))
 
         // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
         indexedLogs = Array.from(new Set(indexedLogs))
 
-        return groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+        return groupBy(indexedLogs, (indexedLog) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
     })
 
     // methods
-    function attempts(taskRun: any): any[] {
+    function attempts(taskRun: TaskRunWithOutputs): TaskRunAttempt[] {
         if (props.followedExecution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
         }
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    function isSubflow(taskRun: any): boolean {
-        return taskRun?.outputs?.executionId
+    function isSubflow(taskRun: TaskRunWithOutputs | undefined): boolean {
+        return !!taskRun?.outputs?.executionId
     }
 
-    function selectedAttempt(taskRun: any): any {
+    function selectedAttempt(taskRun: TaskRunWithOutputs): TaskRunAttempt {
         return attempts(taskRun)[props.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
     }
 
-    function taskType(taskRun: any): string | undefined {
+    function taskType(taskRun: TaskRunWithOutputs | undefined): string | undefined {
         if (!taskRun) return undefined
         const task = FlowUtils.findTaskById(props.flow, taskRun.taskId)
         const parentTaskRunId = taskRun.parentTaskRunId
         if (task === undefined && parentTaskRunId) {
             return taskType(taskRunById.value[parentTaskRunId])
         }
-        return task ? (task as any).type : undefined
+        return task?.type
     }
 
-    function attemptUid(taskRunId: string, attemptNumber: number): string {
+    function attemptUid(taskRunId: LogEntry["taskRunId"], attemptNumber: LogEntry["attemptNumber"]): string {
         return `${taskRunId}-${attemptNumber}`
     }
 
-    function shouldDisplayChevron(taskRun: any): boolean {
+    // An attempt that is still running has no end date or final duration yet.
+    function formatAttemptDate(value?: string | null): string {
+        return value ? dateFilter(value) : ""
+    }
+
+    function formatAttemptDuration(value?: string | null): string {
+        return value ? humanizeDuration(value) : ""
+    }
+
+    function shouldDisplayChevron(taskRun: TaskRunWithOutputs): boolean {
         return shouldDisplayLogs(taskRun.id)
     }
 
@@ -223,7 +247,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -232,22 +256,30 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        & > * {
             display: flex;
             align-items: center;
         }
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs)
+            font-size: var(--ks-font-size-xs);
         }
 
-        .task-duration small {
-            white-space: nowrap;
-            color: var(--ks-text-secondary);
-            line-height: 1;
-        }
+        .task-duration {
+            display: none;
 
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+
+            small {
+                white-space: nowrap;
+                color: var(--ks-text-secondary);
+                line-height: 1;
+                margin-inline-end: var(--ks-spacing-1);
+            }
+        }
     }
 
     .taskrun-header {
@@ -255,13 +287,19 @@
         padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
+            display: none;
             flex-shrink: 0;
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
             border-radius: var(--ks-radius-base);
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
         }
 
         .task-id {
+            flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -270,6 +308,19 @@
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
             }
+
+            .task-id-title {
+                margin-inline-end: var(--ks-spacing-1);
+                font-weight: var(--ks-font-weight-bold);
+            }
+        }
+    }
+
+    @media (max-width: 767px) {
+        .taskrun-header .task-id {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
         }
     }
 
@@ -280,11 +331,19 @@
     }
 
     .attempt-header {
+        .attempt-select {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+        }
+
         .kel-select {
             width: 115px;
             height: 32px;
 
-            :deep(.kel-select__wrapper) {
+            & :deep(.kel-select__wrapper) {
                 height: 32px;
                 min-height: 32px;
             }

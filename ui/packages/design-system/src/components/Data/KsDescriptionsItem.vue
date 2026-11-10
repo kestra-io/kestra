@@ -1,5 +1,5 @@
 <template>
-    <ElDescriptionsItem v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElDescriptionsItem v-bind="({...filteredProps(), ...$attrs} as DescriptionItemProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDescriptionsItem} from "element-plus"
+    import {ElDescriptionsItem, type DescriptionItemProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false, name: "ElDescriptionsItem"})

@@ -63,7 +63,7 @@
                         :content="longDescription"
                     />
                 </div>
-                <aside v-if="hasOverviewContent" class="plugin-detail__aside">
+                <aside v-if="$slots.versions || hasOverviewContent" class="plugin-detail__aside">
                     <PluginOverview
                         :versions="enrichedVersions"
                         :currentVersion
@@ -77,7 +77,11 @@
                         :currentVersionDate
                         :minKestraVersion
                         @select-version="onSelectVersion"
-                    />
+                    >
+                        <template v-if="$slots.versions" #versions>
+                            <slot name="versions" />
+                        </template>
+                    </PluginOverview>
                 </aside>
             </div>
         </div>
@@ -86,7 +90,6 @@
 
 <script setup lang="ts">
     import {computed, onMounted, watch} from "vue"
-    import semver from "semver"
     import {useRoute, useRouter} from "vue-router"
     import {KsIconButton, KsMarkdown, KsTag, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
@@ -97,7 +100,7 @@
     import PluginOverview, {type VersionItem} from "./PluginOverview.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
-    import {getPluginReleaseUrl, isEntryAPluginElementPredicate, type Plugin, type PluginAuthor, type PluginIconMap} from "../../utils/pluginUtils"
+    import {compareVersionsDesc, getPluginReleaseUrl, isEntryAPluginElementPredicate, type Plugin, type PluginAuthor, type PluginIconMap} from "../../utils/pluginUtils"
 
     const KESTRA_TEAM: PluginAuthor = {name: "Kestra Core Team"}
 
@@ -174,12 +177,6 @@
         return enrichmentStore.loaded ? KESTRA_TEAM : null
     })
 
-    const sortVersionsDesc = (a: string, b: string): number => {
-        const va = semver.coerce(a)?.version
-        const vb = semver.coerce(b)?.version
-        return va && vb ? semver.rcompare(va, vb) : b.localeCompare(a)
-    }
-
     const routeCls = computed<string | undefined>(() => route.params.cls as string | undefined)
 
     function firstElementClsOf(plugin: Plugin): string | undefined {
@@ -204,7 +201,7 @@
     const canSwitchVersion = computed<boolean>(() => Boolean(routeCls.value))
 
     const installedVersions = computed<string[]>(() =>
-        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(sortVersionsDesc) : [],
+        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(compareVersionsDesc) : [],
     )
 
     const publicVersions = computed(() => enrichmentStore.getVersions(versionProbeCls.value))
@@ -226,7 +223,7 @@
                 byVersion.set(v, {version: v, publishedAt: null, minKestraCompatibilityVersion: null, releaseNotesUrl: null, installed: true})
             }
         }
-        return [...byVersion.values()].sort((a, b) => sortVersionsDesc(a.version, b.version))
+        return [...byVersion.values()].sort((a, b) => compareVersionsDesc(a.version, b.version))
     })
 
     const currentVersion = computed<string | undefined>(() => {
@@ -278,76 +275,76 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-header {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);
         min-width: 0;
         padding: var(--ks-spacing-6);
+    }
 
-        &__row {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--ks-spacing-4);
-            min-width: 0;
-        }
+    .plugin-header__row {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--ks-spacing-4);
+        min-width: 0;
+    }
 
-        &__back {
-            flex-shrink: 0;
-            margin-top: var(--ks-spacing-2);
-        }
+    .plugin-header__back {
+        flex-shrink: 0;
+        margin-top: var(--ks-spacing-2);
+    }
 
-        &__logo {
-            flex-shrink: 0;
-            width: 3.75rem;
-            height: 3.75rem;
-            padding: var(--ks-spacing-2);
-            background-color: var(--ks-bg-plugin-icon);
-            border: 1px solid var(--ks-border-default);
-            color: var(--ks-black);
-            border-radius: var(--ks-radius-base);
-        }
+    .plugin-header__logo {
+        flex-shrink: 0;
+        width: 3.75rem;
+        height: 3.75rem;
+        padding: var(--ks-spacing-2);
+        background-color: var(--ks-bg-plugin-icon);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-black);
+        border-radius: var(--ks-radius-base);
+    }
 
-        &__body {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-2);
-        }
+    .plugin-header__body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__title-row {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-3);
-            min-width: 0;
-        }
+    .plugin-header__title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        min-width: 0;
+    }
 
-        &__name {
-            margin: 0;
-            font-size: var(--ks-font-size-xl);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-width: 0;
-            flex: 1 1 auto;
-        }
+    .plugin-header__name {
+        margin: 0;
+        font-size: var(--ks-font-size-xl);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
 
-        &__tags {
-            display: flex;
-            gap: var(--ks-spacing-2);
-            flex-wrap: wrap;
-        }
+    .plugin-header__tags {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        flex-wrap: wrap;
+    }
 
-        &__subtitle {
-            margin: 0;
-            font-size: var(--ks-font-size-sm);
-            line-height: 1.25rem;
-            color: var(--ks-text-secondary);
-        }
+    .plugin-header__subtitle {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.25rem;
+        color: var(--ks-text-secondary);
     }
 
     .plugin-page {
@@ -357,22 +354,22 @@
         background-color: var(--ks-bg-base);
         container-type: inline-size;
         container-name: plugin-page;
+    }
 
-        &__sidebar {
-            flex: 0 0 14rem;
-            min-width: 0;
-            height: 100%;
-            overflow: hidden;
-            border-right: 1px solid var(--ks-border-default);
-        }
+    .plugin-page__sidebar {
+        flex: 0 0 14rem;
+        min-width: 0;
+        height: 100%;
+        overflow: hidden;
+        border-right: 1px solid var(--ks-border-default);
+    }
 
-        &__body {
-            flex: 1 1 auto;
-            min-width: 0;
-            overflow-y: auto;
-            container-type: inline-size;
-            container-name: plugin-body;
-        }
+    .plugin-page__body {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-y: auto;
+        container-type: inline-size;
+        container-name: plugin-body;
     }
 
     .plugin-detail {
@@ -380,42 +377,42 @@
         align-items: flex-start;
         gap: var(--ks-spacing-6);
         padding: var(--ks-spacing-6);
+    }
 
-        &__main {
-            flex: 1 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
+    .plugin-detail__main {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+    }
+
+    .plugin-detail__main--flat {
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+        gap: var(--ks-spacing-4);
+
+        .plugin-header {
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-base);
-
-            &--flat {
-                background-color: transparent;
-                border: none;
-                border-radius: 0;
-                gap: var(--ks-spacing-4);
-
-                .plugin-header {
-                    background-color: var(--ks-bg-surface);
-                    border: 1px solid var(--ks-border-default);
-                    border-radius: var(--ks-radius-base);
-                }
-            }
         }
+    }
 
-        &__body {
-            padding: var(--ks-spacing-6);
+    .plugin-detail__body {
+        padding: var(--ks-spacing-6);
+    }
 
-            &--flat {
-                padding: 0;
-            }
-        }
+    .plugin-detail__body--flat {
+        padding: 0;
+    }
 
-        &__aside {
-            flex: 0 0 18rem;
-            min-width: 0;
-        }
+    .plugin-detail__aside {
+        flex: 0 0 18rem;
+        min-width: 0;
     }
 
     @container plugin-body (max-width: 900px) {
@@ -431,28 +428,28 @@
 
         .plugin-header {
             gap: var(--ks-spacing-3);
+        }
 
-            &__logo {
-                width: 2.5rem;
-                height: 2.5rem;
-            }
+        .plugin-header__logo {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
 
-            &__name {
-                font-size: var(--ks-font-size-lg);
-            }
+        .plugin-header__name {
+            font-size: var(--ks-font-size-lg);
+        }
 
-            &__title-row {
-                flex-wrap: wrap;
-            }
+        .plugin-header__title-row {
+            flex-wrap: wrap;
         }
 
         .plugin-detail {
             padding: var(--ks-spacing-3);
             gap: var(--ks-spacing-3);
+        }
 
-            &__body:not(&__body--flat) {
-                padding: var(--ks-spacing-4);
-            }
+        .plugin-detail__body:not(.plugin-detail__body--flat) {
+            padding: var(--ks-spacing-4);
         }
 
         .plugin-header {

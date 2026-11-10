@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
-import {resolvePosthogEventName} from "./eventNaming"
+import {resolvePosthogEventName, EventProperties} from "./eventNaming"
 
-const fixtures: [string, Record<string, any>, string][] = [
+const fixtures: [string, EventProperties, string][] = [
     ["flow_execution", {action: "executed"}, "app.flow.executed"],
     ["flow_execution", {action: "open_modal"}, "app.execute-modal.opened"],
     ["flow_execution", {action: "submit"}, "app.execute-modal.submitted"],
@@ -22,6 +22,10 @@ const fixtures: [string, Record<string, any>, string][] = [
     ["setup_flow:marketing_survey_skipped", {}, "app.marketing-survey.skipped"],
     ["setup_flow:completed", {}, "app.setup-flow.completed"],
     ["error", {}, "app.error.occurred"],
+    ["context_section_expanded", {}, "app.task-editor-context-section.expanded"],
+    ["chip_inserted", {}, "app.task-editor-chip.inserted"],
+    ["chip_copied", {}, "app.task-editor-chip.copied"],
+    ["required_field_jump", {}, "app.task-editor-required-field.jumped"],
     ["editor_tab_action", {action: "open"}, "app.editor-tab.opened"],
     ["editor_tab_action", {action: "close"}, "app.editor-tab.closed"],
     ["editor_tab_action", {action: "plugin_doc"}, "app.plugin-doc.viewed"],

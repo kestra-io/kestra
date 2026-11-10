@@ -163,6 +163,7 @@ public class WorkingDirectoryTest {
                 childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
                 childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
             ))
+            .state(new State().withState(State.Type.RUNNING))
             .build();
 
         // When resolving the state now that every subtask has terminated
@@ -502,7 +503,7 @@ public class WorkingDirectoryTest {
         }
 
         private void put(String path, String content, String namespace) throws IOException, URISyntaxException {
-            namespaceFactory.of(MAIN_TENANT, namespace, storageInterface).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
+            namespaceFactory.of(MAIN_TENANT, namespace).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
         }
     }
 

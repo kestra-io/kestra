@@ -6,6 +6,8 @@ import java.util.Optional;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import io.kestra.core.models.namespaces.NamespaceInterface;
+
 import jakarta.inject.Singleton;
 
 /**
@@ -64,7 +66,7 @@ public class FlowWithDefaultCache {
         cache.asMap().values().stream()
             .filter(
                 processed -> Objects.equals(processed.flow().getTenantId(), tenantId)
-                    && (Objects.equals(processed.flow().getNamespace(), namespace) || processed.flow().getNamespace().startsWith(namespace + "."))
+                    && NamespaceInterface.isDescendantOrSelf(namespace, processed.flow().getNamespace())
             )
             .map(processed -> processed.flow().uid())
             .forEach(cache::invalidate);

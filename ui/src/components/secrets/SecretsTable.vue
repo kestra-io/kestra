@@ -9,7 +9,7 @@
             :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"
@@ -81,7 +81,7 @@
                         v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
                         <template #content>
-                            <span v-html="$t('secret.isReadOnly')" />
+                            <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
                         <KsIcon class="d-flex justify-content-center">
                             <Lock />
@@ -109,12 +109,12 @@
             >
                 <template #default="scope">
                     <KsIconButton
-                        v-if="canUpdate(scope.row)"
+                        v-if="canUpdate(scope.row as NamespaceSecret & {namespace?: string})"
                         :tooltip="$t('update')"
                         placement="left"
-                        @click="updateSecretModal(scope.row)"
+                        @click="updateSecretModal(scope.row as NamespaceSecret)"
                     >
-                        <FileDocumentEdit />
+                        <Pencil />
                     </KsIconButton>
                 </template>
             </KsTableColumn>
@@ -126,10 +126,10 @@
             >
                 <template #default="scope">
                     <KsIconButton
-                        v-if="canDelete(scope.row)"
+                        v-if="canDelete(scope.row as NamespaceSecret & {namespace?: string})"
                         :tooltip="$t('delete')"
                         placement="left"
-                        @click="removeSecret(scope.row)"
+                        @click="removeListedSecret(scope.row as NamespaceSecret)"
                     >
                         <Delete />
                     </KsIconButton>
@@ -229,7 +229,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
 
     import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
@@ -242,6 +242,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import type {ListSecretsData} from "@kestra-io/kestra-sdk"
     import {useAuthStore} from "override/stores/auth"
@@ -513,7 +514,12 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -570,6 +576,11 @@
                 })
                 .then(() => dataTable.value?.reload())
         })
+    }
+
+    const removeListedSecret = (row: NamespaceSecret) => {
+        if (!row.namespace) return
+        removeSecret({key: row.key, namespace: row.namespace})
     }
 
     const isSecretValueUpdated = () => {
@@ -651,7 +662,7 @@
         }
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .secrets-table {
         display: flex;
         flex-direction: column;

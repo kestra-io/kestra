@@ -7,13 +7,13 @@
             class="card-grid-item"
             useRaw
         >
-            <div class="card h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="overflow-hidden">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-text-wrap">
                         <h4 class="card-title">
                             {{ item.title }}
                         </h4>
-                        <p class="card-text mb-0">
+                        <p class="card-text">
                             {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
                         </p>
                     </div>
@@ -26,8 +26,7 @@
 
 <script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
-    import {useDocStore} from "../../stores/doc"
-
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import ContextDocsLink from "./ContextDocsLink.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
@@ -49,13 +48,13 @@
         }
     })
 
-    const resourcesWithMetadata = ref<Record<string, any>>({})
+    const resourcesWithMetadata = ref<Record<string, DocMetadata>>({})
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value)
     })
 
     const navigation = computed(() => {
-        let parentMetadata: Record<string, any> = {}
+        let parentMetadata: Partial<DocMetadata> = {}
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]}
             delete parentMetadata.description
@@ -73,13 +72,23 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .card {
+        height: 100%;
         transition: border-color 0.2s ease;
 
         &:hover {
             border-color: var(--ks-border-strong);
         }
+    }
+
+    .card-body {
+        display: flex;
+        align-items: center;
+    }
+
+    .card-text-wrap {
+        overflow: hidden;
     }
 
     .card-title {
@@ -89,6 +98,7 @@
     }
 
     .card-text {
+        margin-bottom: 0;
         font-size: var(--ks-font-size-xs) !important;
         font-weight: 400;
         color: var(--ks-text-secondary);

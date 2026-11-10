@@ -17,5 +17,6 @@
         "skipLibCheck": true,
         "allowImportingTsExtensions": true
     },
-    "include": ["src", "tsdown.config.ts"]
+    "include": ["src", "tsdown.config.ts"],
+    "exclude": ["src/**/*.test.ts"]
 }

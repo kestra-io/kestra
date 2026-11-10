@@ -38,13 +38,14 @@
     import ContextInfoContent from "../ContextInfoContent.vue"
 
     import {useApiStore} from "../../stores/api"
+    import {storageKeys} from "../../utils/constants"
 
     const apiStore = useApiStore()
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
     const feeds = computed(() => apiStore.feeds)
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     onMounted(() => {
         lastNewsReadDate.value = feeds.value[0].publicationDate
     })
@@ -53,7 +54,7 @@
     useScrollMemory(ref("context-panel-news"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .newsHeader {
         padding: 2rem 2rem 0;
 
@@ -74,6 +75,7 @@
     .post {
         position: relative;
         display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
         align-items: flex-start;
         margin: 0 1rem;
@@ -118,6 +120,7 @@
         .metaBlock {
             display: flex;
             flex-direction: column;
+            flex: 1 1 12rem;
             gap: 0.25rem;
             min-width: 0;
         }
@@ -132,6 +135,10 @@
             aspect-ratio: auto;
             border: none;
             border-radius: var(--kel-border-radius-round);
+        }
+
+        .metaBlock {
+            flex: none;
         }
     }
 

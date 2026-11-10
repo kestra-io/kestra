@@ -41,7 +41,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                             :tooltip="$t('block_editor.delete')"
                             @click.stop="removeItem(index)"
                         >
-                            <DeleteOutline />
+                            <Delete />
                         </KsIconButton>
                     </div>
                 </div>
@@ -104,9 +104,9 @@
                 :key="'array-' + index"
                 :gutter="10"
                 align="top"
-                class="w-100"
+                class="custom-row"
             >
-                <KsCol :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
+                <KsCol :span="2" class="custom-col reorder" v-if="items.length > 1">
                     <KsIconButton
                         :disabled="index === 0"
                         :tooltip="$t('block_editor.move_up')"
@@ -122,7 +122,7 @@
                         <ChevronDown />
                     </KsIconButton>
                 </KsCol>
-                <KsCol :span="items.length > 1 ? 20 : 22" class="pe-2 array-value-col">
+                <KsCol :span="items.length > 1 ? 20 : 22" class="array-value-col">
                     <Wrapper merge>
                         <template #tasks>
                             <component
@@ -142,7 +142,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </KsCol>
             </KsRow>
@@ -155,14 +155,15 @@
 <script setup lang="ts">
     import {computed, inject, provide, ref, watch} from "vue"
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons"
+    import {Delete, ChevronUp, ChevronDown} from "../../utils/icons"
 
     import {useI18n} from "vue-i18n"
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
-    import {summarizeValue, shouldDrillItem} from "./fieldNesting"
+    import type {Schema} from "./getTaskComponent"
+    import {summarizeValue, shouldDrillItem, describeArrayItem} from "./fieldNesting"
 
     defineOptions({inheritAttrs: false})
 
@@ -174,8 +175,8 @@
 
     const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
-        schema?: any;
-        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean | null;
+        schema?: Schema;
+        modelValue?: (string | number | boolean | Record<string, unknown> | undefined)[] | string | number | boolean | null;
         required?: boolean;
         root?: string;
     }>(), {
@@ -193,20 +194,20 @@
         props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const definitions = inject(
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+        computed<Record<string, Schema>>(() => ({})),
+    )
 
     const canDrillItems = computed(() =>
         Boolean(fieldNav) && shouldDrillItem(props.schema?.items, definitions.value),
     )
 
-    function itemLabel(element: any, index: number): string {
-        if (element && typeof element === "object" && !Array.isArray(element)) {
-            return String(element.id ?? element.name ?? element.type ?? `#${index + 1}`)
-        }
-        return `#${index + 1}`
+    function itemLabel(element: unknown, index: number): string {
+        return describeArrayItem(element, index)
     }
 
-    function itemPreview(element: any): string {
+    function itemPreview(element: unknown): string {
         const summary = summarizeValue(element)
         if (summary.kind === "empty") return t("no_code.nav.not_set")
         if (summary.kind === "count") return t("no_code.nav.items", {count: summary.count})
@@ -217,12 +218,12 @@
         fieldNav?.push({
             path: `${props.root}[${index}]`,
             label: itemLabel(items.value[index], index),
-            schema: props.schema.items,
+            schema: props.schema.items ?? {},
         })
     }
 
     const componentType = computed(() => {
-        return getBlockComponent.value?.(props.schema.items, props.root)
+        return getBlockComponent.value?.(props.schema.items ?? {}, props.root)
     })
 
     const needWrapper = computed(() => {
@@ -234,7 +235,7 @@
         ].includes(componentType.value.ksTaskName)
     })
 
-    const items = ref<any[]>([])
+    const items = ref<unknown[]>([])
     const localEdit = ref(false)
 
     watch(() => props.modelValue, (value) => {
@@ -247,7 +248,7 @@
             : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})
 
-    function emitItems(value: any) {
+    function emitItems(value: unknown[] | undefined) {
         localEdit.value = true
         emits("update:modelValue", value)
     }
@@ -288,18 +289,12 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .disabled {
     opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed;
-}
-
-.array-value-col {
-    flex: 1;
-    max-width: none;
 }
 
 .task-collection--cards {
@@ -356,5 +351,21 @@
 
 .task-array-item-body {
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+
+.custom-row {
+    width: 100%;
+}
+
+.custom-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.array-value-col {
+    flex: 1;
+    max-width: none;
+    padding-right: var(--ks-spacing-2) !important;
 }
 </style>

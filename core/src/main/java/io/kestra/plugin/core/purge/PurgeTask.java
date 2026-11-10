@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -62,7 +63,7 @@ public interface PurgeTask<T> extends SystemTask {
                         .filter(ns ->
                         {
                             for (String renderedNamespace : renderedNamespaces) {
-                                if (ns.startsWith(renderedNamespace)) {
+                                if (NamespaceInterface.isDescendantOrSelf(renderedNamespace, ns)) {
                                     return true;
                                 }
                             }

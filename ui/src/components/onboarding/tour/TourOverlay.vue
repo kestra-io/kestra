@@ -114,7 +114,10 @@
                     class="guide-alert"
                 >
                     <template #title>
-                        <span v-if="error.isHtml" v-html="error.message" />
+                        <i18n-t v-if="'key' in error" :keypath="error.key" tag="span" scope="global">
+                            <template v-for="(value, name) in error.params" #[name] :key="name">{{ value }}</template>
+                            <template #task><code>notify</code></template>
+                        </i18n-t>
                         <span v-else>{{ error.message }}</span>
                     </template>
                 </KsAlert>
@@ -148,18 +151,20 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {useEventListener, useResizeObserver} from "@vueuse/core"
+    import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf} from "./tourScenes"
+    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
+    import {scrimClipPath, type Hole} from "./tourScrim"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
     import {useToast} from "../../../utils/toast"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
@@ -220,7 +225,7 @@
         return true
     }
 
-    type TourError = {message: string; isHtml: boolean}
+    type TourError = {key: string; params: Record<string, unknown>} | {message: string}
 
     const isBusy = ref(false)
     const isReady = ref(false)
@@ -250,7 +255,9 @@
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
     const nextLabel = computed(() =>
-        isWorking.value ? t(translationKey("actions.running")) : t(sceneKey("next")),
+        isWorking.value
+            ? t(workingLabelKey(sceneKey("working"), translationKey("actions.running"), te))
+            : t(sceneKey("next")),
     )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
@@ -274,8 +281,6 @@
 
     const RING_PADDING = 6
 
-    type Hole = {top: number; left: number; bottom: number; right: number};
-
     const spotlight = ref<{
         scrim: Record<string, string> | null;
         rings: Record<string, string>[];
@@ -287,14 +292,8 @@
 
     const px = (value: number) => `${value}px`
 
-    const scrimClipPath = (hole: Hole) => [
-        "0 0", "100% 0", "100% 100%", "0 100%", "0 0",
-        `${px(hole.left)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.top)}`,
-    ].join(", ")
+    const scrimRadius = () => (parseFloat(cssVar("--ks-radius-lg")) || 0)
+        * parseFloat(getComputedStyle(document.documentElement).fontSize)
 
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
@@ -345,7 +344,7 @@
             right: Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING),
         }
 
-        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length].map(Math.round).join(":")
+        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length, window.innerWidth, window.innerHeight].map(Math.round).join(":")
         if (key === lastSpotlightKey) {
             return
         }
@@ -354,7 +353,7 @@
         spotlight.value = {
             // A ranked selector matches nested elements, so the scrim keeps one union hole:
             // overlapping holes cancel each other out and re-dim what the step points at.
-            scrim: scene.value?.dim === false ? null : {clipPath: `polygon(${scrimClipPath(hole)})`},
+            scrim: scene.value?.dim === false ? null : {clipPath: scrimClipPath(hole, scrimRadius(), {width: window.innerWidth, height: window.innerHeight})},
             rings: rects.map((rect) => ({
                 top: px(rect.top - RING_PADDING),
                 left: px(rect.left - RING_PADDING),
@@ -439,6 +438,23 @@
 
     let stopDrag: (() => void) | null = null
 
+    const DRAG_MARGIN = 20
+
+    const clampDragOffset = () => {
+        const rect = cardEl.value?.getBoundingClientRect()
+        const {x, y} = dragOffset.value
+        if (!rect || (x === 0 && y === 0)) {
+            return
+        }
+        const anchorLeft = rect.left - x
+        const anchorTop = rect.top - y
+        const clampedX = Math.max(DRAG_MARGIN - anchorLeft, Math.min(x, window.innerWidth - rect.width - DRAG_MARGIN - anchorLeft))
+        const clampedY = Math.max(DRAG_MARGIN - anchorTop, Math.min(y, window.innerHeight - rect.height - DRAG_MARGIN - anchorTop))
+        if (clampedX !== x || clampedY !== y) {
+            dragOffset.value = {x: clampedX, y: clampedY}
+        }
+    }
+
     const onCardMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) {
             return
@@ -454,7 +470,7 @@
         const start = {x: event.clientX, y: event.clientY}
         const startOffset = {...dragOffset.value}
         const startRect = cardEl.value?.getBoundingClientRect()
-        const margin = 20
+        const margin = DRAG_MARGIN
 
         const onMouseMove = (moveEvent: MouseEvent) => {
             if (!startRect) {
@@ -509,9 +525,9 @@
 
     const describeError = (e: unknown): TourError => {
         if (e instanceof TourSceneError) {
-            return {message: t(e.key, e.params), isHtml: true}
+            return {key: e.key, params: e.params}
         }
-        return {message: (e as {message?: string} | null)?.message ?? String(e), isHtml: false}
+        return {message: (e as {message?: string} | null)?.message ?? String(e)}
     }
 
     const runScene = async () => {
@@ -612,6 +628,9 @@
 
     watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
 
+    useResizeObserver(cardEl, clampDragOffset)
+    useEventListener(window, "resize", clampDragOffset)
+
     watch(showIntro, (visible) => {
         if (visible) {
             track("tour_offered")
@@ -685,7 +704,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour-overlay {
         position: fixed;
         inset: 0;
@@ -713,7 +732,7 @@
         left: calc(var(--menu-width) + var(--ks-spacing-4));
     }
 
-    // Same list as SELECTABLE_TEXT in the script above.
+    /* Same list as SELECTABLE_TEXT in the script above. */
     .guide-title,
     .guide-body,
     .guide-plan,
@@ -849,7 +868,7 @@
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, var(--ks-white) 30%);
     }
 
-    // Position is set every frame; a transition would make the ring trail behind its target.
+    /* Position is set every frame; a transition would make the ring trail behind its target. */
     .tour-scrim {
         position: fixed;
         inset: 0;

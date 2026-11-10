@@ -50,6 +50,7 @@ public final class TriggerState implements TriggerId {
     private final Instant lastTriggeredDate;
     private final String executionId;
     private final long dispatchEpoch;
+    private final Blocker blockedBy;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -119,7 +120,8 @@ public final class TriggerState implements TriggerId {
             null,
             null,
             null,
-            0L
+            0L,
+            null
         );
     }
 
@@ -174,7 +176,7 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState disabled(final Clock clock, boolean disabled) {
-        return update(clock).disabled(disabled).build();
+        return update(clock).disabled(disabled).blockedBy(null).build();
     }
 
     /**
@@ -185,6 +187,16 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState sourceDisabled(final Clock clock, boolean sourceDisabled) {
         return update(clock).sourceDisabled(sourceDisabled).build();
+    }
+
+    /**
+     * Records what blocks this trigger's flow, or clears it with {@code null}.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState blockedBy(final Clock clock, Blocker blocker) {
+        return update(clock).blockedBy(blocker).build();
     }
 
     /**
@@ -315,6 +327,7 @@ public final class TriggerState implements TriggerId {
             .locked(false)
             .workerId(null)
             .executionId(null)
+            .blockedBy(null)
             .build();
     }
 
@@ -352,13 +365,17 @@ public final class TriggerState implements TriggerId {
 
     /**
      * Bumps the dispatch generation, marking a new dispatch to a worker.
+     * <p>
+     * The epoch is the dispatch time in milliseconds, kept strictly increasing, rather than a counter: a deleted
+     * then re-created trigger starts from a new state, and a counter would reissue epochs its previous instance
+     * already used.
      *
      * @param clock the scheduler clock.
      * @return a new {@link TriggerState}
      */
     public TriggerState nextDispatchEpoch(final Clock clock) {
         return update(clock)
-            .dispatchEpoch(dispatchEpoch + 1)
+            .dispatchEpoch(Math.max(clock.millis(), dispatchEpoch + 1))
             .build();
     }
 
@@ -410,7 +427,8 @@ public final class TriggerState implements TriggerId {
             .lastEventId(lastEventId)
             .lastTriggeredDate(lastTriggeredDate)
             .executionId(executionId)
-            .dispatchEpoch(dispatchEpoch);
+            .dispatchEpoch(dispatchEpoch)
+            .blockedBy(blockedBy);
     }
 
     // Lombok hack to properly generate Javadoc

@@ -1,5 +1,5 @@
 <template>
-    <ElOption v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElOption v-bind="({...filteredProps(), ...$attrs} as InstanceType<typeof ElOption>['$props'])">
         <template v-if="$slots['default']" #default>
             <slot />
         </template>
@@ -18,7 +18,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        value: any
+        value: unknown
         label?: string | number
         disabled?: boolean
     }>()
@@ -30,10 +30,13 @@
     const filteredProps = useFilteredProps(props)
 
     const colorMap = inject(KsSelectColorMapKey, undefined)
-    const color = computed(() => colorMap?.value?.[props.value])
+    const color = computed(() => colorMap?.value?.[String(props.value)])
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/option';
+</style>
+
+<style>
 </style>

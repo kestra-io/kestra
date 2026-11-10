@@ -3,8 +3,8 @@
 // WHY THIS EXISTS
 // ---------------
 // There is no backend behind Storybook, yet almost every component tree issues HTTP calls. Before
-// this module the only stub was `axios.defaults.adapter` (see preview.ts), which covers just the 4
-// files in src/ that still import axios. Everything else is fetch-based:
+// this module the only stub was an axios adapter, which covered just the few files in src/ that
+// imported axios. Everything is fetch-based now:
 //
 //   * the generated SDK (packages/kestra-sdk/src/openapi/*) resolves
 //     `options.fetch ?? _config.fetch ?? globalThis.fetch` per request (openapi/client/client.gen.ts),
@@ -27,14 +27,18 @@
 // once per story, so a blank-looking story is traceable to the missing mock in one line instead of
 // surfacing as an HTML-string-shaped prop three components deep.
 
+import type {AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+
 declare global {
     interface Window {
         __kestraRejectionReporter?: boolean
     }
 }
 
+export type ApiRouteContext = {body?: unknown; query: URLSearchParams}
+
 /** A payload, or a function of the request context returning one. */
-type ApiRouteHandler = ((context: {body?: unknown}) => unknown) | unknown
+type ApiRouteHandler = ((context: ApiRouteContext) => unknown) | unknown
 
 type ApiRouteHandlers = Record<string, ApiRouteHandler>
 
@@ -43,6 +47,7 @@ type RoutePattern = {key: string; segments: string[]}
 type MockedFetch = typeof fetch & {__kestraApiMock?: boolean}
 
 const API_MARKER = "/api/v1"
+const PUBLIC_API_ORIGIN = "https://api.kestra.io"
 
 /**
  * Payloads for the API routes stories actually reach, keyed by `METHOD <path from /api/v1 onward>`.
@@ -69,15 +74,19 @@ const HANDLERS: ApiRouteHandlers = {
     "GET /plugins/inputs": [],
     "GET /plugins/triggers": {results: [], total: 0},
     "GET /plugins/schemas/:type": {},
+    "GET /plugins/:cls": {},
+    "GET /plugins/ticketing-systems": {results: [], total: 0},
     "POST /plugins/pluginUiManifest": {manifest: {}},
 
     // --- flows --------------------------------------------------------------------------------
     "GET /flows/:namespace": [],
     "GET /flows/:namespace/:id/revisions": [],
     "GET /flows/:namespace/:id/dependencies": {nodes: [], edges: []},
+    "POST /flows/validate/task": {index: 0},
 
     // --- namespaces ---------------------------------------------------------------------------
     "POST /namespaces/autocomplete": [],
+    "GET /namespaces/search": {results: [], total: 0},
     "GET /namespaces/:namespace/files/directory": [],
 
     // --- executions ---------------------------------------------------------------------------
@@ -112,8 +121,8 @@ let storyPatterns: RoutePattern[] = []
  * Register handlers for the current story only, taking precedence over the global map — same
  * key/payload contract as {@link HANDLERS}. Call it from a story file's `beforeEach` (which runs
  * after the preview-level `beforeEach` has reset the previous story's registration). This is the
- * story-side mock the warning below refers to: `vi.mock()` cannot intercept the pre-bundled SDK in
- * a story file, so per-story data has to come in at the fetch layer, here.
+ * story-side mock the warning below refers to: story files share one iframe (`isolate: false`), so a
+ * `vi.mock()` in one of them would leak into the files after it, and per-story data comes in here.
  */
 export function mockStoryApiRoutes(handlers: ApiRouteHandlers): void {
     Object.assign(storyHandlers, handlers)
@@ -209,7 +218,8 @@ export function resolveApiRequest(method: string, rawUrl: string, context: {body
             : patterns.find(({segments}) => matchesPattern(segments, requestSegments))?.key
         if (matched !== undefined) {
             const handler = handlers[matched]
-            return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
+            const query = new URL(rawUrl, window.location.href).searchParams
+            return {status: 200, data: typeof handler === "function" ? handler({...context, query}) : handler}
         }
     }
 
@@ -222,13 +232,18 @@ export function resolveApiRequest(method: string, rawUrl: string, context: {body
     return {status: 200, data: []}
 }
 
+/** A response for a `setMockClient()` double. The caller picks `T`, as it does against the real client. */
+export function mockResponse<T>(data: unknown, status = 200): AxiosLikeResponse<T> {
+    return {data: data as T, status, headers: {"content-type": "application/json"}}
+}
+
 /**
  * Axios-like adapter over {@link resolveApiRequest}, for stories that install their own
  * `setMockClient()` and need a default for the URIs they don't handle themselves.
  */
-export function mockClientFallback(method: string, uri: string, data?: unknown): {data: unknown; status: number; statusText: string; headers: Record<string, string>} {
+export function mockClientFallback<T>(method: string, uri: string, data?: unknown): AxiosLikeResponse<T> & {statusText: string} {
     const {status, data: payload} = resolveApiRequest(method, uri, {body: data})
-    return {data: payload, status, statusText: "OK", headers: {"content-type": "application/json"}}
+    return {...mockResponse<T>(payload, status), statusText: "OK"}
 }
 
 function jsonResponse({status, data}: {status: number; data: unknown}): Response {
@@ -266,7 +281,11 @@ function installFetchMock(): void {
 
         // Anything that is not an API call — Vite's module graph, monaco assets, the storybook and
         // vitest channels — goes to the untouched native fetch.
-        if (path === undefined) return native(input, init)
+        if (path === undefined) {
+            // kestra.io's public API (feeds, docs, plugin catalog): no story depends on it, so it answers empty.
+            if (rawUrl.startsWith(PUBLIC_API_ORIGIN)) return Promise.resolve(jsonResponse({status: 200, data: []}))
+            return native(input, init)
+        }
 
         const signal = init?.signal ?? (isRequest ? (input as Request).signal : undefined)
         if (signal?.aborted) {

@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Generate a bot token
         id: bot-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -101,6 +101,30 @@ jobs:
             Up for another? Our [curated list of good first issues](https://go.kestra.io/contributing) is the best place to look, and you can filter it by `area/backend`, `area/frontend` or `area/plugin` depending on what you enjoy. Just comment on the one you pick and wait until we assign it to you before starting.
 
             Thanks again for making Kestra better - and don't forget to ⭐ the repo!
+
+            ---
+
+            ### 🏅 Claim your Contributor Badge
+
+            We want you to be able to showcase your contribution on your GitHub profile page. GitHub's native Achievements section is reserved for GitHub-system badges, so custom open-source badges are displayed in your profile README. Here's how to add yours.
+
+            #### Step 1: Set up your profile README
+
+            _Skip this if you already have one._
+
+            1. Create a new **public** repository named exactly after your GitHub username (e.g., `myusername/myusername`).
+            2. Initialize it with a README.
+            3. That `README.md` will now automatically appear at the top of your public profile ([github.com/myusername](https://github.com/myusername)).
+
+            #### Step 2: Add your Contributor Badge
+
+            1. Open your profile repository's `README.md` and click the **Edit** (pencil) icon.
+            2. Paste the following Markdown snippet wherever you'd like your badge to appear:
+
+            ```markdown
+            ### Open Source Contributions
+            [![Contributor](https://img.shields.io/badge/1st%20PR%20MERGED-KESTRA-1F232C?style=for-the-badge&logo=github&logoColor=200062&labelColor=CDC5FF)](https://kestra.io/community?from=github-badge)
+            ```
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |

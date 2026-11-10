@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +21,7 @@ import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
 
 import reactor.core.publisher.Flux;
@@ -57,12 +60,12 @@ public final class NamespaceFilesUtils {
             .orElse(false);
 
         List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>();
+        Map<String, Namespace> namespaceStorages = new HashMap<>();
         for (String namespace : namespaces) {
-            List<NamespaceFile> files = runContext.storage()
-                .namespace(namespace)
-                .findAllFilesMatching(include, exclude);
+            Namespace namespaceStorage = runContext.storage().namespace(namespace);
+            namespaceStorages.put(namespace, namespaceStorage);
 
-            matchedNamespaceFiles.addAll(files);
+            matchedNamespaceFiles.addAll(namespaceStorage.findAllFilesMatching(include, exclude));
         }
 
         // Use half of the available threads to avoid impacting concurrent tasks
@@ -72,7 +75,7 @@ public final class NamespaceFilesUtils {
             .runOn(Schedulers.fromExecutorService(EXECUTOR_SERVICE))
             .doOnNext(throwConsumer(nsFile ->
             {
-                try (InputStream content = runContext.storage().getFile(nsFile.uri())) {
+                try (InputStream content = namespaceStorages.get(nsFile.namespace()).getFileContent(nsFile)) {
                     Path path = folderPerNamespace ? Path.of(nsFile.namespace() + "/" + nsFile.path()) : Path.of(nsFile.path());
                     runContext.workingDir().putFile(path, content, fileExistComportment);
                 }

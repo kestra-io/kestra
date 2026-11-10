@@ -1,12 +1,9 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
-import resource from "../../../models/resource"
-import action from "../../../models/action"
-import {useNamespacesStore} from "override/stores/namespaces"
-import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {labelComparatorLabels} from "./labelComparatorLabels"
+import {namespaceValueProvider} from "./namespaceValueProvider"
 
 export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -27,25 +24,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.PREFIX,
                     ],
                     valueType: "multi-select",
-                    valueProvider: async () => {
-                        const user = useAuthStore().user
-                        if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
-                            const namespacesStore = useNamespacesStore()
-                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
-                            return [...new Set(namespaces
-                                .flatMap(namespace => {
-                                    return namespace.split(".").reduce((current: string[], part: string) => {
-                                        const previousCombination = current?.[current.length - 1]
-                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
-                                    }, [])
-                                }))].map(namespace => ({
-                                    label: namespace,
-                                    value: namespace,
-                                }))
-                        }
-                        return []
-                    },
-                    searchable: true,
+                    valueProvider: namespaceValueProvider(),
                 },
                 {
                     key: "timeRange",
@@ -69,7 +48,6 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions")
                         return VALUES.EXECUTION_STATES
                     },
-                    searchable: true,
                     showComparatorSelection: true,
                     colored: true,
                 },
@@ -134,7 +112,6 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     //     const flowIds = await flowStore.loadDistinctFlowIds();
                     //     return flowIds.map((flowId: string) => ({label: flowId, value: flowId}));
                     // },
-                    searchable: true,
                 },
                 {
                     key: "timeRange",

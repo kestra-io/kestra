@@ -1,10 +1,12 @@
 import {defineStore} from "pinia"
-import {computed, ref} from "vue"
+import {computed, ref, type Ref} from "vue"
 import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {useToast} from "../utils/toast"
-import {useI18n} from "vue-i18n"
+import {makeToast} from "../utils/toast"
+import {globalI18n} from "../translations/i18n"
 import type {KestraHttpError} from "../utils/kestraHttp"
+import type {KsTreeNode} from "@kestra-io/design-system"
+import type {FileAttributes} from "@kestra-io/kestra-sdk"
 
 export interface TreeNodeBase {
     id: string;
@@ -29,11 +31,7 @@ export interface TreeNodeDirectory{
     children: TreeNode[];
 }
 
-export interface ElTreeNode {
-    childNodes: ElTreeNode[];
-    data: TreeNode;
-    level: number;
-}
+export type ElTreeNode = KsTreeNode<TreeNode>
 
 export type TreeNode = TreeNodeFile | TreeNodeDirectory;
 
@@ -68,7 +66,7 @@ function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
 }
 
 export const useFileExplorerStore = defineStore("fileExplorer", () => {
-    const fileTree = ref<TreeNode[]>([])
+    const fileTree: Ref<TreeNode[]> = ref([])
     const searchResults = ref<string[]>([])
     const namespaceId = ref<string>()
     // whether the root level of the tree has been loaded at least once,
@@ -76,8 +74,13 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     const rootLoaded = ref(false)
 
     const namespacesStore = useNamespacesStore()
-    const toast = useToast()
-    const {t} = useI18n()
+    const t = (key: string, values?: Record<string, unknown>) => {
+        if (!globalI18n.value) {
+            return key
+        }
+        return (values ? globalI18n.value?.t(key, values) : globalI18n.value?.t(key)) ?? key
+    }
+    const toast = makeToast(t)
 
     function folderNode(fileName: string, children: TreeNode[]): TreeNodeDirectory {
         return {
@@ -177,10 +180,11 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         return searchResults.value
     }
 
-    function renderNodes(itemsArr: TreeNode[]) {
+    function renderNodes(itemsArr: FileAttributes[]) {
         fileTree.value = []
         
         for (const {type, fileName} of itemsArr) {
+            if (!fileName) continue
             if (type === "Directory") {
                 addFolder({fileName})
             } else if (type === "File") {
@@ -275,7 +279,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
             try {
-                const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
+                const rootTreeNodes = await namespacesStore.readDirectory(payload)
                 renderNodes(rootTreeNodes)
                 fileTree.value = sorted(fileTree.value)
             } catch (e) {
@@ -298,9 +302,9 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 namespace: namespaceId.value,
                 path: getPath(node.data.id),
             }
-            let children: TreeNode[]
+            let entries: FileAttributes[]
             try {
-                children = await namespacesStore.readDirectory<TreeNode>(payload)
+                entries = await namespacesStore.readDirectory(payload)
             } catch (e) {
                 // Only a 404 means the folder was deleted server-side: render it empty rather than
                 // leaving the el-tree node stuck loading. Anything else still propagates and is toasted
@@ -313,8 +317,8 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 resolve?.([])
                 return
             }
-            children = sorted(
-                children.map((item) => ({
+            const children = sorted(
+                entries.map((item) => ({
                     ...item,
                     id: Utils.uid(),
                     leaf: item.type === "File",

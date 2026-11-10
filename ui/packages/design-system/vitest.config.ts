@@ -61,12 +61,13 @@ export default defineConfig({
                     environment: "jsdom",
                     globals: true,
                     browser: {enabled: false},
-                    include: ["tests/**/*.test.ts"],
+                    include: ["src/**/*.test.ts"],
                 },
             },
         ],
         coverage: {
             include: ["src/**/*.{ts,vue}"],
+            exclude: ["src/**/*.{test,stories}.{ts,tsx}"],
         },
     },
 })

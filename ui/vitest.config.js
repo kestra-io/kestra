@@ -1,17 +1,10 @@
 import {defineConfig} from "vite"
-import vue from "@vitejs/plugin-vue"
 
 import {mergeConfig} from "vitest/config"
 import viteConfig from "./vite.config.js"
 import path from "node:path"
-import {fileURLToPath} from "node:url"
 import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
 import {playwright} from "@vitest/browser-playwright"
-
-const dirname =
-    typeof __dirname !== "undefined"
-        ? __dirname
-        : path.dirname(fileURLToPath(import.meta.url))
 
 // vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
 // place in a test run); the storybook CLI sets it automatically, so mirror that here.
@@ -62,7 +55,6 @@ process.stdout.write = (chunk, ...rest) => {
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-    plugins: [vue()],
     resolve: {
         ...resolvedViteConfig.resolve,
         alias: [
@@ -70,6 +62,8 @@ export default defineConfig({
         ],
     },
     test: {
+        // Vue's dev build prints this once per runtime whenever a <Suspense> mounts; it carries no test signal.
+        onConsoleLog: (log) => !log.startsWith("<Suspense> is an experimental feature"),
         projects: [
             "./vitest.config.unit.js",
             mergeConfig(resolvedViteConfig, {
@@ -77,19 +71,13 @@ export default defineConfig({
                     // The plugin will run tests for the stories defined in your Storybook config
                     // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
                     storybookTest({
-                        configDir: path.join(dirname, ".storybook"),
+                        configDir: path.join(import.meta.dirname, ".storybook"),
                     }),
                 ],
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.ts"],
-                    reporters: [
-                        ["default"],
-                        ["junit"],
-                    ],
-                    outputFile: {
-                        junit: "./test-report.storybook.junit.xml",
-                    },
+                    isolate: false,
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a
@@ -116,7 +104,7 @@ export default defineConfig({
             }),
         ],
         coverage: {
-            reporter: ["text", "html"],
+            reporter: ["text", "html", "lcov"],
             include: [
                 "src/**/*.{ts,vue}",
             ],

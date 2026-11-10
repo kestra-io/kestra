@@ -20,6 +20,7 @@
 
         <slot name="extra" />
 
+        <!-- activatable uses errorNavigation.count rather than errors.length: it is only set when at least one error resolved to an editor marker. -->
         <ValidationError
             v-if="hasFlow"
             class="stat-validation"
@@ -28,6 +29,8 @@
             :warnings="flowWarnings"
             :infos="flowStore.flowInfos"
             :iconOnly="isNarrow"
+            :activatable="Boolean(flowStore.errorNavigation?.count)"
+            @activate="flowStore.errorNavigation?.revealNext()"
         />
     </div>
 </template>
@@ -67,11 +70,13 @@
             ) ?? []
 
         const otherWarnings = flowStore.flowValidation?.warnings ?? []
+        const ksEditorWarnings = flowStore.ksEditorWarnings ?? []
 
         const warnings = [
             ...outdatedWarning,
             ...deprecationWarnings,
             ...otherWarnings,
+            ...ksEditorWarnings,
         ]
 
         return warnings.length === 0 ? undefined : warnings
@@ -92,7 +97,7 @@
         cancelPendingRefresh = deferToIdle(refreshStats)
     }
 
-    onUnmounted(() => cancelPendingRefresh?.())
+    onUnmounted(() => { cancelPendingRefresh?.() })
 
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id] as const,
@@ -112,7 +117,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-editor-stats {
         display: flex;
         align-items: center;

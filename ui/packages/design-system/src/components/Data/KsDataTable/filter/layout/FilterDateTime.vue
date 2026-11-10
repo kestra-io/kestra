@@ -4,7 +4,7 @@
             :modelValue="dateValue"
             type="datetime"
             :placeholder="`Select ${label.toLowerCase()}`"
-            @update:model-value="$emit('update:dateValue', $event)"
+            @update:model-value="$emit('update:dateValue', $event ?? null)"
         />
     </div>
 </template>

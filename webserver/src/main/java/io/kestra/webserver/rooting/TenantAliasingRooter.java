@@ -5,8 +5,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import io.kestra.webserver.utils.RequestUtils;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.web.router.DefaultRouter;
 import io.micronaut.web.router.RouteBuilder;
@@ -26,9 +29,14 @@ public class TenantAliasingRooter extends DefaultRouter {
         Pattern.compile("/api/v1/configs/login")
     );
 
+    private final String contextPath;
+
     @Inject
-    public TenantAliasingRooter(Collection<RouteBuilder> builders) {
+    public TenantAliasingRooter(
+        Collection<RouteBuilder> builders,
+        @Value("${micronaut.server.context-path:}") String contextPath) {
         super(builders);
+        this.contextPath = RequestUtils.normalizeContextPath(contextPath);
     }
 
     @SneakyThrows
@@ -42,9 +50,11 @@ public class TenantAliasingRooter extends DefaultRouter {
             return closest;
         }
 
-        boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(rawPath).matches());
-        if (rawPath.startsWith("/api/v1/") && !excluded) {
-            String rewrittenRawPath = rawPath.replaceFirst("^/api/v1", "/api/v1/" + getTenantId());
+        String apiPath = RequestUtils.stripContextPath(contextPath, rawPath);
+        boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(apiPath).matches());
+        if (apiPath.startsWith("/api/v1/") && !excluded) {
+            String strippedContextPath = rawPath.substring(0, rawPath.length() - apiPath.length());
+            String rewrittenRawPath = strippedContextPath + apiPath.replaceFirst("^/api/v1", "/api/v1/" + getTenantId());
             URI updatedUri = new URI(rebuildRawUri(request, rewrittenRawPath));
             return super.findClosest(request.toMutableRequest().uri(updatedUri));
         }

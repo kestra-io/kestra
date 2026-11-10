@@ -1,7 +1,5 @@
 package io.kestra.cli;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.plugins.ExternalPluginsRegistrar;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -22,35 +21,52 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class KestraTest {
     @Test
     void testHelp() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-
         // No arg will print help
-        assertThat(Kestra.runCli(new String[0])).isZero();
-        assertThat(out.toString()).contains("kestra");
-
-        out.reset();
+        var noArgs = ConsoleCapture.run(() -> Kestra.runCli(new String[0]));
+        assertThat(noArgs.value()).isZero();
+        assertThat(noArgs.out()).contains("kestra");
 
         // Explicit help command
-        assertThat(Kestra.runCli(new String[] { "--help" })).isZero();
-        assertThat(out.toString()).contains("kestra");
+        var help = ConsoleCapture.run(() -> Kestra.runCli(new String[] { "--help" }));
+        assertThat(help.value()).isZero();
+        assertThat(help.out()).contains("kestra");
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "standalone", "executor", "indexer", "scheduler", "webserver", "worker", "controller", "local" })
     void testServerCommandHelp(String serverType) {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-
         final String[] args = new String[] { "server", serverType, "--help" };
 
         try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
         }
 
-        assertThat(Kestra.runCli(args)).isZero();
+        var result = ConsoleCapture.run(() -> Kestra.runCli(args));
 
-        assertThat(out.toString()).contains("Usage: kestra server " + serverType);
+        assertThat(result.value()).isZero();
+        assertThat(result.out()).contains("Usage: kestra server " + serverType);
+    }
+
+    @Test
+    void shouldPushPluginsPathWhenCommandLoadsExternalPlugins() {
+        String[] args = { "server", "standalone", "--plugins", "/opt/kestra/plugins" };
+
+        try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
+            ctx.getEnvironment().start();
+
+            assertThat(ctx.getProperty(ExternalPluginsRegistrar.PLUGINS_PATH_PROPERTY, String.class)).contains("/opt/kestra/plugins");
+        }
+    }
+
+    @Test
+    void shouldNotPushPluginsPathWhenCommandSkipsExternalPlugins() {
+        String[] args = { "plugins", "install", "--plugins", "/opt/kestra/plugins" };
+
+        try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
+            ctx.getEnvironment().start();
+
+            assertThat(ctx.getProperty(ExternalPluginsRegistrar.PLUGINS_PATH_PROPERTY, String.class)).isEmpty();
+        }
     }
 
     @Test
@@ -88,15 +104,13 @@ class KestraTest {
 
     @Test
     void missingRequiredParamsPrintHelpInsteadOfException() {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(out));
-
         final String[] argsWithMissingParams = new String[] { "flow", "delete" };
 
-        assertThat(Kestra.runCli(argsWithMissingParams)).isEqualTo(2);
+        var result = ConsoleCapture.run(() -> Kestra.runCli(argsWithMissingParams));
 
-        assertThat(out.toString()).contains("Missing required parameters: ");
-        assertThat(out.toString()).contains("Usage: kestra flow delete ");
-        assertThat(out.toString()).doesNotContain("MissingParameterException: ");
+        assertThat(result.value()).isEqualTo(2);
+        assertThat(result.err()).contains("Missing required parameters: ");
+        assertThat(result.err()).contains("Usage: kestra flow delete ");
+        assertThat(result.err()).doesNotContain("MissingParameterException: ");
     }
 }

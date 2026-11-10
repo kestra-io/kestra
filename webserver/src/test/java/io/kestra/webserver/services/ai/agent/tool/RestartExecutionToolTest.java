@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code restart-execution} restarts a restartable execution and waits for the
+ * Integration check that {@code restart_execution} restarts a restartable execution and waits for the
  * executor to apply the restart before returning — so the outcome is observable — and rejects a missing
  * or non-restartable execution. Runs against the real executor ({@code startRunner = true}) because the
  * tool now blocks on the async restart operation, which only completes once the executor processes it.
@@ -62,7 +62,7 @@ class RestartExecutionToolTest {
         assertThat(failedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // When — restart via the tool
-        RestartExecutionTool.Result result = tool.restartExecution(failedExecution.getId(), null, CONTEXT);
+        RestartExecutionTool.Result result = tool.restartExecution(failedExecution.getId(), CONTEXT);
 
         // Then — the tool waited for the executor to accept the restart and acknowledged it
         assertThat(result.executionId()).isEqualTo(failedExecution.getId());
@@ -80,7 +80,7 @@ class RestartExecutionToolTest {
 
     @Test
     void shouldThrowWhenExecutionNotFound() {
-        assertThatThrownBy(() -> tool.restartExecution("does-not-exist", null, CONTEXT))
+        assertThatThrownBy(() -> tool.restartExecution("does-not-exist", CONTEXT))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Execution not found");
     }
@@ -91,7 +91,7 @@ class RestartExecutionToolTest {
         String executionId = save(State.Type.RUNNING);
 
         // When / Then
-        assertThatThrownBy(() -> tool.restartExecution(executionId, null, CONTEXT))
+        assertThatThrownBy(() -> tool.restartExecution(executionId, CONTEXT))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("cannot be restarted");
     }

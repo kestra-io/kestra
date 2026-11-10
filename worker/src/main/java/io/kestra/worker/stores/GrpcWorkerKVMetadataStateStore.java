@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.KVMetadataRequest;
+import io.kestra.controller.grpc.KVMetadataSaveRequest;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.OpaqueData;
@@ -108,9 +109,10 @@ public class GrpcWorkerKVMetadataStateStore implements KVMetadataStateStore {
     public PersistedKvMetadata save(PersistedKvMetadata item) {
         log.trace("Saving KV metadata via gRPC: namespace={}, name={}", item.getNamespace(), item.getName());
 
-        OpaqueData request = OpaqueData.newBuilder()
+        KVMetadataSaveRequest request = KVMetadataSaveRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
             .setMessage(MESSAGE_FORMAT.toByteString(item))
+            .setTenantId(item.getTenantId())
             .build();
 
         OpaqueData response = kvMetadataStub.save(request);

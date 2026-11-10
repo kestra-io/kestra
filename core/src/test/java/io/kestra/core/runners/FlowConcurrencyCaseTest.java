@@ -7,6 +7,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.awaitility.core.ConditionTimeoutException;
+import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -17,6 +18,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
 
@@ -46,6 +48,9 @@ public class FlowConcurrencyCaseTest {
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
+    @Inject
+    private LogDataStoreInterface logRepository;
+
     public void flowConcurrencyCancel(String tenantId) throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
         try {
@@ -56,6 +61,16 @@ public class FlowConcurrencyCaseTest {
             assertThat(execution1.getState().isRunning()).isTrue();
 
             assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(Type.CANCELLED::equals);
+            for (Execution execution : shouldFailExecutions) {
+                Await.await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                    assertThat(logRepository.findByExecutionId(tenantId, execution.getId(), Level.WARN))
+                        .anySatisfy(log -> {
+                            assertThat(log.getLevel()).isEqualTo(Level.WARN);
+                            assertThat(log.getTaskId()).isNull();
+                            assertThat(log.getMessage()).isEqualTo("Execution is CANCELLED due to concurrency limit exceeded.");
+                        })
+                );
+            }
         } finally {
             runnerUtils.killExecution(execution1);
         }
@@ -93,6 +108,34 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+    }
+
+    public void flowConcurrencyQueueLimit(String tenantId) throws QueueException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-limit", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-limit", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        Execution executionResult1 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
+        Execution executionResult2 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution2);
+
+        assertThat(executionResult1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+        assertThat(execution3.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution3.getState().getHistories()).extracting(State.History::getState).containsExactly(State.Type.CREATED, State.Type.CANCELLED);
+        Await.await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+            assertThat(logRepository.findByExecutionId(tenantId, execution3.getId(), Level.WARN))
+                .anySatisfy(log -> {
+                    assertThat(log.getLevel()).isEqualTo(Level.WARN);
+                    assertThat(log.getTaskId()).isNull();
+                    assertThat(log.getMessage()).isEqualTo("Execution is CANCELLED due to concurrency queue limit reached (1/1).");
+                })
+        );
     }
 
     public void flowConcurrencyQueuePause(String tenantId) throws QueueException {
@@ -285,7 +328,8 @@ public class FlowConcurrencyCaseTest {
         try {
             Await.await()
                 .atMost(Duration.ofSeconds(10))
-                .until(() -> {
+                .until(() ->
+                {
                     ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
                         .findById(tenantId, NAMESPACE, flowId)
                         .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));
@@ -420,6 +464,19 @@ public class FlowConcurrencyCaseTest {
 
         // we manually reset the concurrency count to avoid messing with any other tests
         concurrencyLimitRepository.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
+    }
+
+    public void flowConcurrencyLoop(String tenantId) throws QueueException, TimeoutException {
+        // #19705: with a flow concurrency limit of 1, the LOOP child executions must not
+        // compete for the parent flow's only slot — the parent already holds it while the
+        // loop runs, so gating them deadlocks the execution.
+        Execution execution = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-loop");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(tenantId, execution.getId(), null);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
     }
 
     void flowConcurrencyScheduled(String tenantId) throws QueueException {

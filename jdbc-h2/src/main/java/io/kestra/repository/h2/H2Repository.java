@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.repositories.ArrayListTotal;
@@ -26,6 +27,8 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 @Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
+    private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
+    private static final int MAX_PERSIST_ATTEMPTS = 5;
 
     @Inject
     public H2Repository(@Parameter JdbcTableConfig jdbcTableConfig,
@@ -42,21 +45,40 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     }
 
     private int persistInternal(T entity, DSLContext context, Map<Field<Object>, Object> fields) {
-        int affectedRows = context
-            .update(table)
-            .set(fields)
-            .where(KEY_FIELD.eq(key(entity)))
-            .execute();
-
-        if (affectedRows == 0) {
-            return context
-                .insertInto(table)
-                .set(KEY_FIELD, key(entity))
+        IntegrityConstraintViolationException lastConflict = null;
+        for (int attempt = 0; attempt < MAX_PERSIST_ATTEMPTS; attempt++) {
+            int affectedRows = context
+                .update(table)
                 .set(fields)
+                .where(KEY_FIELD.eq(key(entity)))
                 .execute();
-        } else {
-            return affectedRows;
+
+            if (affectedRows > 0) {
+                return affectedRows;
+            }
+
+            try {
+                return context
+                    .insertInto(table)
+                    .set(KEY_FIELD, key(entity))
+                    .set(fields)
+                    .execute();
+            } catch (IntegrityConstraintViolationException e) {
+                if (!isUniqueConstraintViolation(e)) {
+                    throw e;
+                }
+                lastConflict = e;
+            }
         }
+
+        throw new IllegalStateException(
+            "Failed to persist entity with key '%s' after %d attempts due to concurrent conflicts.".formatted(key(entity), MAX_PERSIST_ATTEMPTS),
+            lastConflict
+        );
+    }
+
+    private static boolean isUniqueConstraintViolation(IntegrityConstraintViolationException e) {
+        return UNIQUE_VIOLATION_SQL_STATE.equals(e.sqlState());
     }
 
     @Override
@@ -136,14 +158,11 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         return new ArrayListTotal<>(map, totalCount);
     }
 
-    // We need to create H2 repositories for the queue as it uses an H2Repository named 'queue',
-    // we may find a way to only create this one at some point as here we create unnecessary beans.
+    // The queue uses JdbcTableConfig and QueueJdbcDataSourceProvider directly, so it needs no H2Repository bean.
     static class H2Condition implements io.micronaut.context.condition.Condition {
         @Override
         public boolean matches(ConditionContext context) {
-            boolean isRepository = ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "h2".equals(it) || "memory".equals(it)).orElse(false);
-            boolean isQueue = ((Optional<String>) context.get("kestra.queue.type", String.class)).map(it -> "h2".equals(it) || "memory".equals(it)).orElse(false);
-            return isRepository || isQueue;
+            return ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "h2".equals(it) || "memory".equals(it)).orElse(false);
         }
     }
 }

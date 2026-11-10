@@ -5,7 +5,7 @@
     <ElSteps
         v-else
         :class="{'kel-steps--small': size === 'small'}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSteps} from "element-plus"
+    import {ElSteps, type StepsProps} from "element-plus"
     import {provide, toRef} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -24,8 +24,8 @@
         active?: number
         direction?: "horizontal" | "vertical"
         space?: string | number
-        finishStatus?: string
-        processStatus?: string
+        finishStatus?: StepsProps["finishStatus"]
+        processStatus?: StepsProps["processStatus"]
         simple?: boolean
         alignCenter?: boolean
         size?: "default" | "small"
@@ -46,25 +46,36 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/steps';
+</style>
 
-    // variant="bar": a label-less, equal-width segmented progress meter. State comes from each
-    // KsStep's `status` (see barSegments): filled = a passed step, active = current, upcoming = rest.
+<style>
+    /* variant="bar": a label-less, equal-width segmented progress meter. State comes from each */
+    /* KsStep's `status` (see barSegments): filled = a passed step, active = current, upcoming = rest. */
+
     .ks-stepbar {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2, 0.5rem);
         width: 100%;
+    }
 
-        &__seg {
-            flex: 1 1 0;
-            height: 0.375rem;
-            border-radius: var(--ks-radius-xl);
+    .ks-stepbar__seg {
+        flex: 1 1 0;
+        height: 0.375rem;
+        border-radius: var(--ks-radius-xl);
+        background: var(--ks-border-default);
+        transition: background 0.18s ease;
+
+        &.is-filled {
+            background: var(--ks-primary-500);
+        }
+
+        &.is-active {
+            background: var(--ks-primary-300);
+        }
+
+        &.is-upcoming {
             background: var(--ks-border-default);
-            transition: background 0.18s ease;
-
-            &.is-filled { background: var(--ks-primary-500); }
-            &.is-active { background: var(--ks-primary-300); }
-            &.is-upcoming { background: var(--ks-border-default); }
         }
     }
 </style>

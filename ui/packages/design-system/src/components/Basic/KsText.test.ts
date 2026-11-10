@@ -1,0 +1,39 @@
+import {describe, test, expect} from "vitest"
+import {mount} from "@vue/test-utils"
+import KestraDesignSystem from "../../index"
+import KsText from "./KsText.vue"
+
+const globalConfig = {plugins: [KestraDesignSystem]}
+
+describe("KsText", () => {
+    test("renders text element", () => {
+        const wrapper = mount(KsText, {
+            slots: {default: "Hello World"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-text").exists()).toBe(true)
+        expect(wrapper.text()).toBe("Hello World")
+    })
+
+    test("type prop applies correct class", () => {
+        const wrapper = mount(KsText, {
+            props: {type: "success"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-text--success").exists()).toBe(true)
+
+        const secondaryWrapper = mount(KsText, {
+            props: {type: "secondary"},
+            global: globalConfig,
+        })
+        expect(secondaryWrapper.find(".kel-text--secondary").exists()).toBe(true)
+    })
+
+    test("size prop applies correct class", () => {
+        const wrapper = mount(KsText, {
+            props: {size: "large"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-text--large").exists()).toBe(true)
+    })
+})

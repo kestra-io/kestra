@@ -13,9 +13,16 @@ on:
           - "true"
         default: "false"
         required: false
+      # Keep these options in step with the branch list in the `plan` job.
       branch:
-        description: "Run for this branch only (default: every branch in the list)"
-        type: string
+        description: "Branch to translate, or all for every branch in the list"
+        type: choice
+        options:
+          - "develop"
+          - "releases/v2.0.x"
+          - "releases/v1.3.x"
+          - "all"
+        default: "develop"
         required: false
 
 # Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
@@ -29,7 +36,7 @@ jobs:
   # A schedule always fires from the default branch, so this one workflow file drives every branch
   # in the list below: each gets its own checkout, its own generator run and its own bot PR. Adding a
   # release branch is a one-line change here, once that branch has the translation toolset (the
-  # fingerprints and the shared scripts). A manual run can be narrowed to one branch.
+  # fingerprints and the shared scripts). A manual run translates one branch (develop by default), or all of them.
   plan:
     name: Branches
     runs-on: ubuntu-latest
@@ -41,7 +48,7 @@ jobs:
         env:
           ONLY: ${{ inputs.branch }}
         run: |
-          if [ -n "$ONLY" ]; then
+          if [ -n "$ONLY" ] && [ "$ONLY" != "all" ]; then
             echo "branches=$(printf '%s' "$ONLY" | jq -R -c '[.]')" >> "$GITHUB_OUTPUT"
           else
             echo 'branches=["develop","releases/v2.0.x","releases/v1.3.x"]' >> "$GITHUB_OUTPUT"
@@ -54,7 +61,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
-      # One branch at a time: the generator calls Gemini per key, and a run is short anyway.
+      # One branch at a time: the generator calls Gemini (through Vertex AI) per key, and a run is short anyway.
       max-parallel: 1
       matrix:
         branch: ${{ fromJSON(needs.plan.outputs.branches) }}
@@ -66,7 +73,7 @@ jobs:
             fetch-depth: 0
 
         - name: Set up Node
-          uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+          uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
           with:
             node-version: "24.x"
 
@@ -74,10 +81,16 @@ jobs:
           run: npm ci
           working-directory: ui
 
+        - name: Authenticate to Google Cloud
+          uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+          with:
+            credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
         - name: Generate translations
           run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ inputs.retranslate_modified_keys }}
           env:
-            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+            GOOGLE_CLOUD_PROJECT: kestra-prd
+            GOOGLE_CLOUD_LOCATION: global
 
         - name: Set up Git
           run: |

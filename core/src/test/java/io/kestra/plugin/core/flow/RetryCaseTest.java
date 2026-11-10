@@ -2,15 +2,19 @@ package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.Await;
 
 import io.micronaut.data.model.Pageable;
@@ -28,6 +32,8 @@ public class RetryCaseTest {
     protected TestRunnerUtils runnerUtils;
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+    @Inject
+    private TaskOutputService taskOutputService;
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -94,6 +100,24 @@ public class RetryCaseTest {
             .findById(tenant, "io.kestra.tests", "retry-new-execution-flow-attempts")
             .orElseThrow();
         runAndAssertThereWasTwoRetriesAndFinishedFailed(flow);
+    }
+
+    public void retryNewExecutionSubflowOutputs(String tenant) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "subflow-retry-new-execution-parent", Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("read").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void retryNewExecutionInLoop(String tenant) throws TimeoutException, QueueException, InternalException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "loop-retry-new-execution", Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        TaskRun loopTaskRun = execution.findTaskRunsByTaskId("loop").getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 2)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 2));
     }
 
     private void runAndAssertThereWasTwoRetriesAndFinishedFailed(Flow flow) throws TimeoutException, QueueException {
@@ -190,5 +214,39 @@ public class RetryCaseTest {
             attempt2 -> assertThat(attempt2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS)
         );
         assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(2);
+    }
+
+    public void retryFlowableBehavior(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the flowable is retried as a unit, up to maxAttempts
+        assertThat(execution.findTaskRunsByTaskId("seq1").getFirst().getAttempts()).hasSize(3);
+        // children are wiped per attempt: only the last attempt's runs remain
+        assertThat(execution.findTaskRunsByTaskId("get_token")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("call_api")).hasSize(1);
+        // a child without its own retry must not be retried as a leaf under a RETRY_FLOWABLE parent
+        assertThat(execution.findTaskRunsByTaskId("call_api").getFirst().getAttempts()).hasSize(1);
+    }
+
+    public void retryFlowableBehaviorSuccess(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        // fails on attempts 1 and 2, succeeds on attempt 3, and stops retrying
+        assertThat(execution.findTaskRunsByTaskId("seq1").getFirst().getAttempts()).hasSize(3);
+        assertThat(execution.findTaskRunsByTaskId("check")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("check").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void retryFlowableBehaviorAllowFailure(Execution execution) {
+        // the failure is only allowed after the last attempt, so the next task runs once
+        assertThat(execution.findTaskRunsByTaskId("allow").getFirst().getAttempts()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("after")).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    public void retryFlowableBehaviorNestedLeaf(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // parent retried as a unit; the leaf keeps its own retry inside each round
+        assertThat(execution.findTaskRunsByTaskId("seq1").getFirst().getAttempts()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("leaf")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("leaf").getFirst().getAttempts()).hasSize(2);
     }
 }

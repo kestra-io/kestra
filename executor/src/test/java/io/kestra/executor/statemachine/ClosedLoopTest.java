@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.executor.command.ForceRun;
+import io.kestra.core.executor.command.Reschedule;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -135,6 +137,61 @@ class ClosedLoopTest {
         harness.run(List.of(), ScriptedWorker.succeeding(T0.plus(Duration.ofHours(2))));
         assertThat(harness).hasExecutionInState(scheduled, State.Type.SUCCESS);
         assertThat(harness.executionDelayStateStore().pending()).isEmpty();
+    }
+
+    @Test
+    void rescheduledExecutionStartsAtTheNewDate() {
+        // Given: an execution scheduled one hour from now
+        FlowWithSource flow = Flows.of(Flows.log("a"));
+        harness.registerFlow(flow);
+        Execution scheduled = Executions.created(flow).toBuilder().scheduleDate(T0.plus(Duration.ofHours(1))).build();
+        harness.clock().set(T0);
+        harness.step(scheduled);
+
+        // When: it is moved earlier
+        harness.step(Reschedule.from(scheduled, T0.plus(Duration.ofMinutes(10))));
+
+        // Then: a single delay remains, and it fires at the new date
+        assertThat(harness.executionDelayStateStore().pending()).hasSize(1);
+        assertThat(harness.tickExecutionDelays(T0.plus(Duration.ofMinutes(5)))).isEmpty();
+        assertThat(harness.tickExecutionDelays(T0.plus(Duration.ofMinutes(15)))).extracting(Trace.Emission::queue).contains("executionEvent");
+        harness.run(List.of(), ScriptedWorker.succeeding(T0.plus(Duration.ofMinutes(15))));
+        assertThat(harness).hasExecutionInState(scheduled, State.Type.SUCCESS);
+    }
+
+    @Test
+    void rescheduledExecutionDoesNotStartAtTheOldDate() {
+        // Given: an execution scheduled one hour from now, moved to three hours from now
+        FlowWithSource flow = Flows.of(Flows.log("a"));
+        harness.registerFlow(flow);
+        Execution scheduled = Executions.created(flow).toBuilder().scheduleDate(T0.plus(Duration.ofHours(1))).build();
+        harness.clock().set(T0);
+        harness.step(scheduled);
+        harness.step(Reschedule.from(scheduled, T0.plus(Duration.ofHours(3))));
+
+        // When / Then: the old date passes without a start, the new one starts it
+        harness.tickExecutionDelays(T0.plus(Duration.ofHours(2)));
+        assertThat(harness).hasExecutionInState(scheduled, State.Type.CREATED);
+        harness.tickExecutionDelays(T0.plus(Duration.ofHours(4)));
+        harness.run(List.of(), ScriptedWorker.succeeding(T0.plus(Duration.ofHours(4))));
+        assertThat(harness).hasExecutionInState(scheduled, State.Type.SUCCESS);
+    }
+
+    @Test
+    void forceRunScheduledExecutionIsNotRevivedByItsStaleDelay() {
+        // Given: a scheduled execution that is force-run before its date
+        FlowWithSource flow = Flows.of(Flows.log("a"));
+        harness.registerFlow(flow);
+        Execution scheduled = Executions.created(flow).toBuilder().scheduleDate(T0.plus(Duration.ofHours(1))).build();
+        harness.clock().set(T0);
+        harness.step(scheduled);
+        harness.step(ForceRun.from(scheduled));
+
+        // When: its original delay matures
+        harness.tickExecutionDelays(T0.plus(Duration.ofHours(2)));
+
+        // Then: the execution is still RUNNING rather than reset to CREATED
+        assertThat(harness).hasExecutionInState(scheduled, State.Type.RUNNING);
     }
 
 }

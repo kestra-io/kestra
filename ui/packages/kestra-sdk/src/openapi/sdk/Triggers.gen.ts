@@ -75,14 +75,14 @@ export const unpauseBackfillByIds = (parameters: Omit<Parameters<typeof _3139A61
 }, options?: Omit<Parameters<typeof _3139A61a>[1], 'throwOnError'>) => getDataOrThrow(_3139A61a(addTenantToParameters(parameters), options));
 
 /**
- * Delete triggers by query parameters asynchronously
+ * Delete orphan trigger state matching the query
  */
 export const deleteTriggersByQuery = (parameters: Omit<Parameters<typeof _0675820B5>[0], 'tenant'> & {
     tenant?: string;
 }, options?: Omit<Parameters<typeof _0675820B5>[1], 'throwOnError'>) => getDataOrThrow(_0675820B5(addTenantToParameters(parameters), options));
 
 /**
- * Delete given triggers asynchronously
+ * Delete orphan trigger state for the given triggers
  */
 export const deleteTriggersByIds = (parameters: Omit<Parameters<typeof _03C4Fde05>[0], 'tenant'> & {
     tenant?: string;
@@ -145,7 +145,7 @@ export const searchTriggersForFlow = (parameters: Omit<Parameters<typeof _077995
 }, options?: Omit<Parameters<typeof _077995F6c>[1], 'throwOnError'>) => getDataOrThrow(_077995F6c(addTenantToParameters(parameters), options));
 
 /**
- * Delete a trigger
+ * Delete orphan trigger state
  */
 export const deleteTrigger = (parameters: Omit<Parameters<typeof _04B613E73>[0], 'tenant'> & {
     tenant?: string;

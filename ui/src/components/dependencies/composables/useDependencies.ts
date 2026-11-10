@@ -6,6 +6,7 @@ import type {EChartsType, ECElementEvent} from "echarts/core"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import type {ExecutionStatusEvent} from "@kestra-io/kestra-sdk"
+import {useToast} from "../../../utils/toast"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -13,7 +14,8 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useMiscStore} from "override/stores/misc"
 import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
 import {transformResponse} from "../utils/transform"
-import type {Types, Node, Element} from "../utils/types"
+import {edgeKindToken} from "../utils/relationKind"
+import type {Types, Node, Element, ElementsResult} from "../utils/types"
 
 const NODE_BG = {
     default:  "--ks-dependencies-node-background-default",
@@ -38,20 +40,24 @@ const EDGE_COLOR = {
     hovered:  "--ks-dependencies-edge-hovered",
 } as const
 
-// Material Design "package-variant-closed" glyph: ECharts symbols are drawn on a canvas and
-// cannot mount a Vue component, so the icon is embedded as an SVG `image://` symbol.
+// Material Design glyphs: ECharts symbols are drawn on a canvas and cannot mount a Vue
+// component, so each icon is embedded as an SVG `image://` symbol instead.
 const ASSET_ICON_PATH =
     "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L10.11,5.22L16,8.61L17.96,7.5L12,4.15M6.04,7.5L12,10.85L13.96,9.75L8.08,6.35L6.04,7.5M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"
 
+// "sitemap" glyph, matching the icon DagCanvas uses for a flow node.
+const FLOW_ICON_PATH =
+    "M9,2V8H11V11H5C3.89,11 3,11.89 3,13V16H1V22H7V16H5V13H11V16H9V22H15V16H13V13H19V16H17V22H23V16H21V13C21,11.89 20.11,11 19,11H13V8H15V2H9Z"
+
 /**
- * ECharts `image://` symbol for an asset node. Colours are baked into the SVG because ECharts
+ * ECharts `image://` symbol for a node. Colours are baked into the SVG because ECharts
  * ignores itemStyle for image symbols; graphNodes rebuilds it on every state or theme change.
  */
-function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string): string {
+function nodeSymbol(path: string, bgColor: string, borderColor: string, iconColor: string): string {
     const svg =
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
         `<circle cx="12" cy="12" r="11" fill="${bgColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
-        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${ASSET_ICON_PATH}"/>` +
+        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${path}"/>` +
         "</svg>"
     return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
@@ -91,11 +97,15 @@ export function useDependencies(
     subtype: Types = FLOW,
     initialNodeID: string,
     params: RouteParams,
-    fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
+    fetchAssetDependencies?: () => Promise<ElementsResult>,
     /** Field the graph is grouped by; returns undefined for nodes it says nothing about. */
     groupOf: Ref<((node: Node) => string | undefined) | undefined> = ref(undefined),
     /** True only for the asset view: click-to-clear and dblclick-to-open are asset-only. */
     dagView = false,
+    /** Re-fetches one node's own sub-graph, for expanding a collapsed hub; asset view only. */
+    expandAssetNode?: (nodeID: string) => Promise<ElementsResult>,
+    /** Every group a node belongs to; unlike `groupOf` it may be multi-valued. */
+    membersOf: Ref<((node: Node) => string[]) | undefined> = ref(undefined),
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -104,6 +114,7 @@ export function useDependencies(
     const miscStore = useMiscStore()
 
     const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
 
     const isLoading = ref(true)
     const isRendering = ref(true)
@@ -113,12 +124,13 @@ export function useDependencies(
     const getChart = (): EChartsType | null =>
         graphRef.value?.getEchartsInstance?.() ?? null
 
-    // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
-    // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
+    // chartNodes/chartEdges are frozen after the initial render, then re-frozen once with the settled
+    // positions; applyStylesToChart() updates styles imperatively so ECharts never re-runs the force simulation.
     const chartNodes = ref<KsGraphNode[] | null>(null)
     const chartEdges = ref<KsGraphEdge[] | null>(null)
     /** Positions read back from ECharts once the force simulation has settled. */
     const capturedPositions = ref(new Map<string, {x: number; y: number}>())
+    const chartLayout = computed(() => (capturedPositions.value.size > 0 ? "none" : "force"))
     /** Only focusNode and fitGraph write it; anything else re-asserting it would yank the viewport back. */
     const viewState = ref<{zoom: number; center?: [number, number]}>({zoom: 1})
 
@@ -137,7 +149,7 @@ export function useDependencies(
         // Only undefined means "no group": the ungrouped bucket is a real group keyed by the empty string.
         if (key === undefined) { isolatedIDs.value = null; return }
         const match = nodesOf(elements.value.data)
-            .filter((node) => (laneOf.value?.(node.id) ?? "") === key)
+            .filter((node) => (membersOf.value?.(node) ?? [laneOf.value?.(node.id) ?? ""]).includes(key))
             .map((node) => node.id)
         isolatedIDs.value = match.length ? new Set(match) : null
     }
@@ -161,7 +173,9 @@ export function useDependencies(
         return new Set([...table].filter((id) => isolated.has(id)))
     })
 
-    const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
+    const elements = ref<ElementsResult>({data: [], count: 0})
+    const graphTruncated = computed(() => elements.value.truncated ?? false)
+    const expandingNodeID = ref<string | undefined>(undefined)
 
     /** Node ids to their group, when a grouping field is selected. */
     const laneOf = computed(() => {
@@ -206,7 +220,7 @@ export function useDependencies(
         const edgeCounts   = buildEdgeCounts(elements.value.data)
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
-        const assetIconColor = cssVar("--ks-text-primary")
+        const iconColor = cssVar("--ks-text-primary")
 
         return nodesOf(elements.value.data)
             .map((node) => {
@@ -256,7 +270,7 @@ export function useDependencies(
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
-                    ...(isAsset ? {symbol: assetNodeSymbol(bgColor, borderColor, assetIconColor)} : {}),
+                    ...(isAsset || dagView ? {symbol: nodeSymbol(isAsset ? ASSET_ICON_PATH : FLOW_ICON_PATH, bgColor, borderColor, iconColor)} : {}),
                     itemStyle:  baseItemStyle,
                     emphasis: {
                         itemStyle: {
@@ -310,12 +324,12 @@ export function useDependencies(
                     color   = cssVar(EDGE_COLOR.faded)
                     opacity = 0.1
                 } else if (isSelected) {
-                    color   = execColor ?? cssVar(EDGE_COLOR.selected)
+                    color   = execColor ?? cssVar(edgeKindToken(edge.kind) ?? EDGE_COLOR.selected)
                 } else if (isFaded) {
                     color   = cssVar(EDGE_COLOR.faded)
                     opacity = 0.35
                 } else {
-                    color   = cssVar(EDGE_COLOR.default)
+                    color   = cssVar(edgeKindToken(edge.kind) ?? EDGE_COLOR.default)
                 }
 
                 const baseLineStyle = {
@@ -328,6 +342,8 @@ export function useDependencies(
                 return {
                     source:    edge.source,
                     target:    edge.target,
+                    // Undirected (RELATED) edges draw no arrowhead; every other kind keeps the series default.
+                    symbol:    edge.directed === false ? ["none", "none"] : ["none", "arrow"],
                     lineStyle: baseLineStyle,
                     emphasis:  {lineStyle: {color: cssVar(EDGE_COLOR.hovered), opacity: 1, type: "solid", width: 2}},
                     blur:      {lineStyle: baseLineStyle},
@@ -410,7 +426,9 @@ export function useDependencies(
             // Private ECharts API: read post-simulation positions from the internal model.
             type SeriesData = {count(): number; getName(i: number): string; getItemLayout(i: number): unknown}
             type InternalChart = {getModel?(): {getSeriesByIndex?(i: number): {getData?(): SeriesData | undefined} | undefined} | undefined}
-            const data = (chart as unknown as InternalChart).getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
+            const isInternalChart = (value: unknown): value is InternalChart => typeof value === "object" && value !== null && "getModel" in value && typeof value.getModel === "function"
+            const candidate: unknown = chart
+            const data = isInternalChart(candidate) ? candidate.getModel?.()?.getSeriesByIndex?.(0)?.getData?.() : undefined
             if (!data) return
             const positions = new Map<string, {x: number; y: number}>()
             for (let i = 0; i < data.count(); i++) {
@@ -437,18 +455,18 @@ export function useDependencies(
         }]}, false)
     }
 
+    const withCapturedPositions = (nodes: KsGraphNode[]): KsGraphNode[] => nodes.map((n) => {
+        const pos = capturedPositions.value.get(n.id)
+        return pos ? {...n, x: pos.x, y: pos.y} : n
+    })
+
     /** Applies the latest styles directly to ECharts with layout:"none", bypassing the frozen props. */
     const applyStylesToChart = (): void => {
         const chart = getChart()
         if (!chart) return
         bindCanvasClicks()
-        const positions    = capturedPositions.value
-        const nodesWithPos = graphNodes.value.map((n) => {
-            const pos = positions.get(n.id)
-            return pos ? {...n, x: pos.x, y: pos.y} : n
-        })
-        const layout = positions.size > 0 ? "none" : "force"
-        chart.setOption({series: [{type: "graph", data: nodesWithPos, links: graphEdges.value, layout}]}, false)
+        const data = withCapturedPositions(graphNodes.value)
+        chart.setOption({series: [{type: "graph", data, links: graphEdges.value, layout: chartLayout.value}]}, false)
     }
 
     watch([graphNodes, graphEdges], () => {
@@ -475,6 +493,7 @@ export function useDependencies(
             capturePositions()
             if (capturedPositions.value.size > 0) {
                 const id = selectedNodeID.value
+                chartNodes.value = withCapturedPositions(graphNodes.value)
                 // Switch to layout:"none" now so the one-time refit it triggers happens under
                 // the initial focus below, rather than under the user's first click.
                 applyStylesToChart()
@@ -494,7 +513,7 @@ export function useDependencies(
         try {
             if (fetchAssetDependencies) {
                 const result = await fetchAssetDependencies()
-                elements.value = {data: result.data, count: result.count}
+                elements.value = {data: result.data, count: result.count, truncated: result.truncated}
             } else if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
@@ -610,15 +629,51 @@ export function useDependencies(
         applyView(chart)
     }
 
+    const expandNode = async (nodeID: string): Promise<void> => {
+        if (!expandAssetNode || expandingNodeID.value) return
+        expandingNodeID.value = nodeID
+        try {
+            const result = await expandAssetNode(nodeID)
+            const known = new Set(elements.value.data.map((el) => el.data.id))
+            const additions = result.data.filter((el) => !known.has(el.data.id))
+            // Peers come back without hub metadata, so only the expanded node may be refreshed.
+            const expanded = result.data.find((fresh) => fresh.data.id === nodeID)
+            const refreshed = expanded
+                ? elements.value.data.map((el) => (el.data.id === nodeID ? expanded : el))
+                : elements.value.data
+
+            elements.value = {
+                data: [...refreshed, ...additions],
+                count: elements.value.count + nodesOf(additions).length,
+                truncated: elements.value.truncated,
+            }
+
+            // The force view freezes its snapshot after the first render, so a merge must re-freeze it.
+            if (additions.length > 0 && chartNodes.value !== null) {
+                await nextTick()
+                chartNodes.value = withCapturedPositions(graphNodes.value)
+                chartEdges.value = graphEdges.value
+                capturedPositions.value = new Map()
+                captureAndFocusWhenReady()
+            }
+        } catch {
+            toast.error(t("dependency.dag.hub.expand_failed"))
+        } finally {
+            expandingNodeID.value = undefined
+        }
+    }
+
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
         /** Live computed nodes and edges, reflecting selection, filter and theme changes. */
         graphNodes,
         graphEdges,
-        /** Frozen snapshots for KsGraph props, set once after the initial render. */
+        /** Frozen snapshots for KsGraph props, set after the initial render and again with the settled positions. */
         chartNodes,
         chartEdges,
+        /** KsGraph layout: "force" until the positions settle, then "none" for good. */
+        chartLayout,
         /** Intersection of the table filter and any isolated group; dims everything outside it. */
         shownNodeIDs,
         /** Drops the table filter and any pinned group together. */
@@ -641,6 +696,9 @@ export function useDependencies(
         handleNodeClick: (node: KsGraphNode) => {
             selectNode(node.id as string)
         },
+        expandNode,
+        expandingNodeID,
+        graphTruncated,
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),

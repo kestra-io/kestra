@@ -1,6 +1,6 @@
 <template>
     <div class="no-code" ref="scrollContainer">
-        <div class="p-4">
+        <div class="no-code-content">
             <Task
                 v-if="creatingTask || editingTask"
             />
@@ -15,7 +15,7 @@
                     </template>
                 </Wrapper>
 
-                <hr class="my-4">
+                <hr class="separator">
 
                 <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
                     <template #tasks>
@@ -48,10 +48,10 @@
         DEFAULT_NAMESPACE_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
-        PANEL_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
@@ -63,21 +63,22 @@
     import {useFlowFields} from "./utils/useFlowFields"
     import {debounce} from "@kestra-io/design-system"
     import {NoCodeProps} from "../flows/noCodeTypes"
-    import {useFlowStore} from "../../stores/flow"
-    import {usePluginsStore} from "../../stores/plugins"
+    import {useFlowStore, type ParsedFlow} from "../../stores/flow"
+    import {usePluginsStore, type JsonSchemaDef} from "../../stores/plugins"
     import {useKeyboardSave} from "./utils/useKeyboardSave"
     import {deepEqual} from "../../utils/utils"
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
+    import {blockPath, FLOW_ROOT_PATH, useFieldValidationErrors} from "./utils/useFieldValidationErrors"
     const props = defineProps<NoCodeProps>()
 
-    function shouldMerge(schema: any): boolean {
-        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
+    function shouldMerge(schema?: JsonSchemaDef): boolean {
+        const complexObject = Boolean((schema?.type && ["object", "array"].includes(schema.type)) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf)
         return !complexObject
     }
 
-    function onTaskUpdateField(key: string, val: any) {
+    function onTaskUpdateField(key: string, val: unknown) {
         const realValue = val === null || val === undefined ? undefined :
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
@@ -118,9 +119,9 @@
     const timeout = ref()
 
     const editorUpdate = (source: string) => {
-        let parsedSource: any = {}
+        let parsedSource: ParsedFlow = {}
         try {
-            parsedSource = YAML_UTILS.parse(source)
+            parsedSource = YAML_UTILS.parse<ParsedFlow>(source) ?? {}
         } catch {
             return
         }
@@ -153,13 +154,11 @@
         },
     )
 
-    const panel = ref()
     const pluginsStore = usePluginsStore()
 
     provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value))
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "")
     provide(REF_PATH_INJECTION_KEY, props.refPath)
-    provide(PANEL_INJECTION_KEY, panel)
     provide(POSITION_INJECTION_KEY, props.position ?? "after")
     provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false)
     provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"))
@@ -170,6 +169,12 @@
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
+        if (props.creatingTask) return undefined
+        if (!props.editingTask) return FLOW_ROOT_PATH
+        return blockPath(props.parentPath, props.refPath)
+    }))
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
@@ -219,10 +224,18 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .no-code {
         height: 100%;
         overflow-y: auto;
+
+        .no-code-content {
+            padding: var(--ks-spacing-5);
+        }
+
+        .separator {
+            margin: var(--ks-spacing-5) 0;
+        }
 
         hr {
             margin: 0;

@@ -1,5 +1,5 @@
 <template>
-    <ElRow v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElRow v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -28,4 +28,7 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/row';
+</style>
+
+<style>
 </style>

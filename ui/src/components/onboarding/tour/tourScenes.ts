@@ -11,6 +11,7 @@ import {
     TOUR_WEBHOOK_TRIGGER_TYPE,
     tourFlowSource,
 } from "./tourFlows"
+import type {Execution} from "../../../stores/executions"
 
 export class TourSceneError extends Error {
     constructor(
@@ -22,7 +23,7 @@ export class TourSceneError extends Error {
     }
 }
 
-const expectState = (execution: any, expected: string, key: string) => {
+const expectState = (execution: Execution | undefined, expected: string, key: string) => {
     const state = execution?.state?.current
     if (state !== expected) {
         throw new TourSceneError(key, {state: state ?? "unknown"})
@@ -77,6 +78,9 @@ export const sceneIndexOf = (scenes: readonly SceneShape[], id: string | null) =
     const index = sceneIdsOf(scenes).indexOf(id ?? "")
     return index >= 0 ? index : 0
 }
+
+export const workingLabelKey = (sceneKey: string, genericKey: string, exists: (key: string) => boolean) =>
+    exists(sceneKey) ? sceneKey : genericKey
 
 export interface TourRoute {
     name?: string | symbol | null;

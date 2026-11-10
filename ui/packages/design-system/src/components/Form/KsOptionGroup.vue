@@ -1,5 +1,5 @@
 <template>
-    <ElOptionGroup v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElOptionGroup v-bind="({...filteredProps(), ...$attrs} as InstanceType<typeof ElOptionGroup>['$props'])">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -27,4 +27,7 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/option-group';
+</style>
+
+<style>
 </style>

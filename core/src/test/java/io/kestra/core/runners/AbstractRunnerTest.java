@@ -66,6 +66,9 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
+    protected ApprovalTest.Suite approvalTest;
+
+    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -312,6 +315,17 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(
+        { "flows/valids/flow-trigger-depends-on-outputs-flow-a.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-b.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-unrelated.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-listen.yaml" }
+    )
+    void flowTriggerDependsOnOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnOutputs();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
     void flowTriggerDependsOnResetsAfterFiring() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();
@@ -448,6 +462,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunApprove() throws Exception {
+        approvalTest.approve(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    public void approvalRunDeny() throws Exception {
+        approvalTest.deny(runnerUtils);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -473,6 +499,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = { "flows/valids/waitfor-max-iterations.yaml" }, tenantId = "waitformaxiterations")
     void waitforMaxIterations() throws Exception {
         loopUntilTestCaseTest.waitforMaxIterations("waitformaxiterations");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
     }
 
     @Test
@@ -515,6 +547,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-failed.yaml")
     protected void loopFailed(Execution execution) throws Exception {
         loopCaseTest.loopFailed(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-run-if-false.yaml")
+    protected void loopRunIfFalse(Execution execution) throws Exception {
+        loopCaseTest.loopRunIfFalse(execution);
     }
 
     @Test
@@ -566,6 +604,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-with-loop-until.yaml")
+    protected void loopWithLoopUntil(Execution execution) throws Exception {
+        loopCaseTest.loopWithLoopUntil(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-map.yaml")
     protected void loopMap(Execution execution) throws Exception {
         loopCaseTest.loopMap(execution);
@@ -575,6 +619,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-values-from-uri.yaml")
     protected void loopValuesFromUri(Execution execution) throws Exception {
         loopCaseTest.loopValuesFromUri(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-empty-values-from-uri.yaml")
+    protected void loopEmptyValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopEmptyValuesFromUri(execution);
     }
 
     @Test
@@ -645,6 +695,31 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-with-pause.yaml")
+    public void loopWithPause(Execution execution) {
+        loopCaseTest.loopWithPause(execution);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-breakpoint.yaml" }, tenantId = "loop-breakpoint")
+    void loopBreakpointOnChildTask() throws Exception {
+        loopCaseTest.loopBreakpointOnChildTask("loop-breakpoint");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-break.yaml")
+    public void loopBreak(Execution execution) throws InternalException {
+        loopCaseTest.loopBreak(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);
@@ -660,6 +735,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-max-duration-ok.yaml" })
     void maxDurationSLAShouldPass() throws Exception {
         slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-fail.yaml" })
+    void avgDurationSLAShouldFail() throws Exception {
+        slaTestCase.avgDurationSLAShouldFail();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-avg-duration-not-enough-history.yaml" })
+    void avgDurationSLAShouldNotMonitorWithoutEnoughHistory() throws Exception {
+        slaTestCase.avgDurationSLAShouldNotMonitorWithoutEnoughHistory();
     }
 
     @Test
@@ -684,6 +771,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
     }
 
     @Test

@@ -6,7 +6,7 @@ import {existsSync, readFileSync, readdirSync, statSync, writeFileSync} from "no
 import {createHash} from "node:crypto"
 import {execSync} from "node:child_process"
 import path from "node:path"
-import {fileURLToPath} from "node:url"
+import {fileURLToPath, pathToFileURL} from "node:url"
 
 // This file's own location, not the caller's uiRoot: hey-api-plugin is a single physical package
 // under kestra/ui/packages (both OSS's and EE's workspaces field point at the same directory), so
@@ -160,7 +160,7 @@ export function checkSpecAndGenerate(uiRoot) {
 }
 
 // Only run as CLI when executed directly — not when EE's ensure-sdk.mjs imports these functions.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     const uiRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
     if (process.argv.includes("--check-spec")) {
         checkSpecAndGenerate(uiRoot)

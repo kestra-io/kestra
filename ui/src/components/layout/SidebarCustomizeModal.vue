@@ -69,9 +69,6 @@
             <KsButton type="default" @click="onReset">
                 {{ $t("reset to defaults") }}
             </KsButton>
-            <KsButton type="primary" @click="visible = false">
-                {{ $t("close") }}
-            </KsButton>
         </template>
     </KsDialog>
 </template>
@@ -225,52 +222,54 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .sidebar-customize {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-5);
+    }
 
-        &__section-title {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 600;
-            color: var(--ks-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: var(--ks-spacing-2);
+    .sidebar-customize__section-title {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .sidebar-customize__item {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        background: var(--ks-bg-surface);
+        cursor: grab;
+        user-select: none;
+
+        &:not(:last-child) {
+            border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
         }
 
-        &__item {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-3) var(--ks-spacing-4);
-            background: var(--ks-bg-surface);
-            cursor: grab;
-            user-select: none;
-
-            &:not(:last-child) {
-                border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
-            }
-
-            &:active {
-                cursor: grabbing;
-            }
+        &:active {
+            cursor: grabbing;
         }
+    }
 
-        &__empty {
-            padding: var(--ks-spacing-4);
-            text-align: center;
-            color: var(--ks-text-dim);
-            font-size: var(--ks-font-size-sm);
-            border: var(--ks-border-width-base) dashed var(--ks-border-default);
-            transition: border-color 0.1s ease;
+    .sidebar-customize__empty {
+        padding: var(--ks-spacing-4);
+        text-align: center;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-sm);
+        border: var(--ks-border-width-base) dashed var(--ks-border-default);
+        transition: border-color 0.1s ease;
 
-            &.is-drag-over {
-                border-color: var(--ks-text-link);
-            }
+        &.is-drag-over {
+            border-color: var(--ks-text-link);
         }
+    }
 
+    .sidebar-customize {
         .drag-handle {
             color: var(--ks-text-dim);
             flex-shrink: 0;
@@ -284,10 +283,10 @@
         .item-title {
             flex: 1;
             min-width: 0;
+        }
 
-            &--hidden {
-                color: var(--ks-text-secondary);
-            }
+        .item-title--hidden {
+            color: var(--ks-text-secondary);
         }
     }
 </style>

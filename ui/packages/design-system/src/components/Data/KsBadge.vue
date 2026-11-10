@@ -1,7 +1,8 @@
 <template>
     <ElBadge
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'kel-badge--inline': inline}"
+        v-bind="({...filteredProps(), ...$attrs} as BadgeProps)"
+        :type="type === 'neutral' ? undefined : type"
+        :class="{'kel-badge--inline': inline, 'kel-badge--small': size === 'small', 'ks-badge--neutral': type === 'neutral'}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -10,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElBadge} from "element-plus"
+    import {ElBadge, type BadgeProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -18,15 +19,17 @@
 
     const props = defineProps<{
         value?: string | number
-        type?: "primary" | "success" | "warning" | "danger" | "info"
+        /** `neutral` is a grey pill for counts that sit next to content without competing with it. */
+        type?: "primary" | "success" | "warning" | "danger" | "info" | "neutral"
         max?: number
         isDot?: boolean
         hidden?: boolean
         showZero?: boolean
         inline?: boolean
+        size?: "small" | "default"
     }>()
 
-    const filteredProps = useFilteredProps(props, ["inline"])
+    const filteredProps = useFilteredProps(props, ["inline", "size", "type"])
 
     defineSlots<{
         default?(): unknown
@@ -36,10 +39,16 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/badge';
-    @use "../../assets/styles/color-palette" as palette;
+</style>
 
+<style>
     .kel-badge .kel-badge__content--danger {
-        background-color: palette.$base-red-500;
+        background-color: var(--ks-red-500);
+    }
+
+    .kel-badge.ks-badge--neutral .kel-badge__content {
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-secondary);
     }
 
     .kel-badge--inline {
@@ -52,5 +61,11 @@
         transform: none;
         border: none;
         margin: 0;
+    }
+
+    .kel-badge--small {
+        --kel-badge-size: calc(var(--ks-font-size-2xs) + var(--ks-spacing-1));
+        --kel-badge-font-size: var(--ks-font-size-2xs);
+        --kel-badge-padding: var(--ks-spacing-1);
     }
 </style>

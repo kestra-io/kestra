@@ -6,39 +6,35 @@ import io.kestra.core.models.flows.input.*;
  * The supported data types.
  */
 public enum Type {
-    STRING(StringInput.class.getName()),
-    SELECT(SelectInput.class.getName()),
-    INT(IntInput.class.getName()),
-    FLOAT(FloatInput.class.getName()),
-    BOOL(BoolInput.class.getName()),
-    DATETIME(DateTimeInput.class.getName()),
-    DATE(DateInput.class.getName()),
-    TIME(TimeInput.class.getName()),
-    DURATION(DurationInput.class.getName()),
-    FILE(FileInput.class.getName()),
-    JSON(JsonInput.class.getName()),
-    ION(IonInput.class.getName()),
-    URI(URIInput.class.getName()),
-    SECRET(SecretInput.class.getName()),
-    ARRAY(ArrayInput.class.getName()),
-    MULTISELECT(MultiselectInput.class.getName()),
-    YAML(YamlInput.class.getName()),
-    EMAIL(EmailInput.class.getName()),
-    FORM(FormInput.class.getName()),
-    REUSABLE_INPUTS(ReusableInputsInput.class.getName());
+    STRING(StringInput.class),
+    SELECT(SelectInput.class),
+    INT(IntInput.class),
+    FLOAT(FloatInput.class),
+    BOOL(BoolInput.class),
+    DATETIME(DateTimeInput.class),
+    DATE(DateInput.class),
+    TIME(TimeInput.class),
+    DURATION(DurationInput.class),
+    FILE(FileInput.class),
+    JSON(JsonInput.class),
+    ION(IonInput.class),
+    URI(URIInput.class),
+    SECRET(SecretInput.class),
+    ARRAY(ArrayInput.class),
+    MULTISELECT(MultiselectInput.class),
+    YAML(YamlInput.class),
+    EMAIL(EmailInput.class),
+    FORM(FormInput.class),
+    REUSABLE_INPUTS(ReusableInputsInput.class),
+    TABLE(TableInput.class);
 
-    private final String clsName;
+    private final Class<? extends Input<?>> cls;
 
-    Type(String clsName) {
-        this.clsName = clsName;
+    Type(Class<? extends Input<?>> cls) {
+        this.cls = cls;
     }
 
-    @SuppressWarnings("unchecked")
     public Class<? extends Input<?>> cls() {
-        try {
-            return (Class<? extends Input<?>>) Class.forName(this.clsName);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return this.cls;
     }
 }

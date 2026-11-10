@@ -10,6 +10,7 @@ import RotatingDots from "../assets/icons/RotatingDots.vue"
 export interface StatusStyle {
     icon: Component;
     textVar: string;
+    chipVar?: string;
     bg?: string;
     border?: string;
     dimIcon?: boolean;
@@ -19,6 +20,7 @@ export interface StatusStyle {
 const SUCCESS: StatusStyle = {
     icon: CheckCircleOutline,
     textVar: "--ks-text-success",
+    chipVar: "--ks-status-success",
     bg: "var(--ks-topology-bg-success)",
     border: "var(--ks-border-success)",
 }
@@ -26,6 +28,7 @@ const SUCCESS: StatusStyle = {
 const ERROR: StatusStyle = {
     icon: CloseCircleOutline,
     textVar: "--ks-text-error",
+    chipVar: "--ks-status-error",
     bg: "var(--ks-topology-bg-errors)",
     border: "var(--ks-topology-border-errors)",
 }
@@ -77,4 +80,55 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
 export function getStatusStyle(state?: string | null): StatusStyle | undefined {
     if (!state) return undefined
     return STATUS_STYLES[state.toLowerCase()] ?? NEUTRAL
+}
+
+// Worst-first: a single failure anywhere outweighs any number of successes.
+// Every `State.Type` value (core/src/main/java/io/kestra/core/models/flows/State.java) is
+// ranked explicitly so a merely-waiting or in-progress state (e.g. PAUSED) can never outrank
+// a real failure by falling through to the unranked bucket.
+const SORT_STATUS: string[] = [
+    "FAILED",
+    "KILLED",
+    "CANCELLED",
+    "WARNING",
+    "SKIPPED",
+    "RETRYING",
+    "KILLING",
+    "BREAKPOINT",
+    "PAUSED",
+    "QUEUED",
+    "SUBMITTED",
+    "PAUSING",
+    "RUNNING",
+    "RESUBMITTED",
+    "SUCCESS",
+    "RESTARTED",
+    "RETRIED",
+    "CREATED",
+]
+
+/** A state absent from `SORT_STATUS` (i.e. not a known `State.Type`) sorts first, same as a
+ *  real failure — better to surface a genuinely unknown state than to hide it behind a
+ *  merely-ranked one. */
+export function pickWorstState(states: string[]): string | undefined {
+    if (!states.length) return undefined
+    return states
+        .map((state) => [SORT_STATUS.indexOf(state), state] as [number, string])
+        .sort((a, b) => a[0] - b[0])[0][1]
+}
+
+export interface AggregateTaskRun {
+    taskId: string;
+    state: {current: string};
+}
+
+/** The worst state among `childTaskIds`' own task runs, or `undefined` when none of them ran yet. */
+export function computeAggregateState(
+    childTaskIds: string[],
+    taskRunList: AggregateTaskRun[],
+): string | undefined {
+    const states = childTaskIds.flatMap((taskId) =>
+        taskRunList.filter((run) => run.taskId === taskId).map((run) => run.state.current),
+    )
+    return pickWorstState(states)
 }

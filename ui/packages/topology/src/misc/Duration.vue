@@ -1,5 +1,11 @@
 <template>
+    <template v-if="compact">
+        <div v-if="showCompactBar" class="split-bar compact-bar" data-test="duration-compact-bar" aria-hidden="true">
+            <span data-test="duration-task-bar" class="compact-task-bar" :style="compactBarStyle" />
+        </div>
+    </template>
     <KsPopover
+        v-else
         v-model:visible="visible"
         :trigger="trigger"
         :enterable="true"
@@ -15,6 +21,7 @@
             <button
                 type="button"
                 class="ks-duration-value"
+                data-test="duration-value"
                 :disabled="!hasHistory"
                 :aria-label="ariaLabel"
             >
@@ -39,22 +46,25 @@
                     </template>
                 </div>
                 <template v-if="!neverRan">
-                    <div class="split-bar" aria-hidden="true">
+                    <div class="split-bar" data-test="duration-bar" aria-hidden="true">
                         <span
                             v-if="breakdown.queued > 0"
                             class="split-bar-seg split-bar-queued"
-                            :style="{width: shareOf(breakdown.queued) + '%'}"
+                            data-test="duration-segment-queued"
+                            :style="{width: segmentWidths.queued + '%'}"
                         />
                         <span
                             v-if="breakdown.running > 0"
                             class="split-bar-seg split-bar-running"
+                            data-test="duration-segment-running"
                             :class="{'split-bar-running-live': isActivelyRunning}"
-                            :style="{width: shareOf(breakdown.running) + '%'}"
+                            :style="{width: segmentWidths.running + '%'}"
                         />
                         <span
                             v-if="breakdown.paused > 0"
                             class="split-bar-seg split-bar-paused"
-                            :style="{width: shareOf(breakdown.paused) + '%'}"
+                            data-test="duration-segment-paused"
+                            :style="{width: segmentWidths.paused + '%'}"
                         />
                     </div>
                     <div class="split-rows">
@@ -138,6 +148,7 @@
         KsIconButton,
         KsScrollbar,
         KsExecutionStatus,
+        copyToClipboard,
         type ExecutionStatus,
     } from "@kestra-io/design-system"
     import History from "vue-material-design-icons/History.vue"
@@ -145,6 +156,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import * as Utils from "../utils/utils"
+    import type {GraphExecution} from "../utils/vueFlowUtils"
     import {computeDurationBreakdown} from "./durationBreakdown"
 
     const TIER1_POPPER_STYLE = {
@@ -175,11 +187,15 @@
         /** What this duration belongs to (e.g. a task id), used to disambiguate the trigger's
          *  aria-label when several are rendered on the same page (e.g. the Logs tab). */
         subject?: string;
+        execution?: GraphExecution;
+        compact?: boolean;
     }>(), {
         histories: undefined,
         interval: 100,
         attemptCount: undefined,
         subject: undefined,
+        compact: false,
+        execution: undefined,
     })
 
     const {t} = useI18n()
@@ -215,6 +231,31 @@
     const waitingToStart = computed(() => breakdown.value.isRunning && breakdown.value.running === 0)
     const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.total === 0)
 
+    const compactBarStyle = computed(() => {
+        const execution = props.execution
+        const executionStart = dayjs(execution?.state?.histories?.[0]?.date ?? "").valueOf()
+        const executionEnd = execution?.state?.current && State.isRunning(execution.state.current)
+            ? now.value
+            : Math.max(...(execution?.taskRunList ?? []).flatMap(run =>
+                run.state.histories?.slice(-1).map(h => dayjs(h.date).valueOf()) ?? [],
+            ))
+        const duration = executionEnd - executionStart
+        const entries = filteredHistories.value
+        const first = entries[0]
+        const last = entries.at(-1)
+        if (!first || !last || !Number.isFinite(duration) || duration <= 0 || last.state === State.SKIPPED) return undefined
+        const start = entries.find(h => h.state === State.RUNNING)?.date.valueOf() ?? first.date.valueOf()
+        const end = breakdown.value.isRunning ? now.value : last.date.valueOf()
+        if (end <= start) return undefined
+        const width = Math.min(100, Math.max(3, (end - start) / duration * 100))
+        return {
+            marginLeft: `${Math.max(0, Math.min((start - executionStart) / duration * 100, 100 - width))}%`,
+            width: `${width}%`,
+            background: `var(--ks-status-${last.state.toLowerCase()})`,
+        }
+    })
+    const showCompactBar = computed(() => compactBarStyle.value !== undefined)
+
     const derivedAttemptGroupCount = computed(() => {
         if (!hasHistory.value) return 0
         const boundaries = filteredHistories.value.filter((h, i) => i > 0 && h.state === "RETRYING").length
@@ -239,7 +280,7 @@
         if (!refreshHandler) {
             refreshHandler = setInterval(() => {
                 now.value = Date.now()
-            }, props.interval)
+            }, props.compact ? 1000 : props.interval)
         }
     }
 
@@ -252,7 +293,7 @@
 
     // Driven by the state and not by the history's first entry, so the ticker also restarts on the
     // RUNNING of a second attempt, which leaves that entry untouched.
-    watch(() => breakdown.value.isRunning, (running) => running ? paint() : cancel(), {immediate: true})
+    watch(() => breakdown.value.isRunning || Boolean(props.compact && props.execution?.state?.current && State.isRunning(props.execution.state.current)), (running) => running ? paint() : cancel(), {immediate: true})
 
     onBeforeUnmount(cancel)
 
@@ -283,10 +324,21 @@
         return formatDuration(breakdown.value.total)
     })
 
-    function shareOf(part: number): number {
-        if (breakdown.value.total <= 0) return 0
-        return Math.min(100, (part / breakdown.value.total) * 100)
-    }
+    const segmentWidths = computed(() => {
+        const denominator = breakdown.value.total
+        let remaining = 100
+        const take = (part: number) => {
+            if (denominator <= 0) return 0
+            const width = Math.min(remaining, Math.max(0, (part / denominator) * 100))
+            remaining -= width
+            return width
+        }
+        return {
+            queued: take(breakdown.value.queued),
+            running: take(breakdown.value.running),
+            paused: take(breakdown.value.paused),
+        }
+    })
 
     function shareLabel(part: number): string {
         if (breakdown.value.total <= 0) return "0%"
@@ -397,7 +449,7 @@
             .map((h) => `${formatInTimezone(h.date, "YYYY-MM-DD HH:mm:ss.SSS")}  ${h.state}`)
             .join("\n")
 
-        navigator.clipboard?.writeText(text).then(() => {
+        copyToClipboard(text).then(() => {
             copied.value = true
             setTimeout(() => {
                 copied.value = false
@@ -406,7 +458,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-duration-value {
         appearance: none;
         padding: 0;
@@ -492,6 +544,16 @@
     .split-bar-seg {
         height: 100%;
         min-width: 3px;
+    }
+
+    .compact-bar {
+        width: 100%;
+        height: calc(var(--ks-spacing-px) * 2);
+    }
+
+    .compact-task-bar {
+        flex: none;
+        height: 100%;
     }
 
     .split-bar-queued {

@@ -114,16 +114,15 @@
             <ElSwitch v-model="value1" />
             <ElSwitch
                 v-model="value1"
-                class="m-2"
-                style="--ep-switch-on-color: black; --ep-switch-off-color: gray;"
+                style="--ep-switch-on-color: black; --ep-switch-off-color: gray; margin: .5rem"
             />
         </div>
 
         <div class="my-2">
-            <ElInput v-model="input" class="m-2" style="width: 200px" />
+            <ElInput v-model="input" style="width: 200px; margin: .5rem" />
             <ElDatePicker
                 v-model="curDate"
-                class="m-2"
+                style="margin: .5rem"
                 type="date"
                 placeholder="Pick a day"
             />
@@ -335,7 +334,7 @@
     const state1 = ref("")
 
     const restaurants = ref<RestaurantItem[]>([])
-    const querySearch = (queryString: string, cb: any) => {
+    const querySearch = (queryString: string, cb: (results: RestaurantItem[]) => void) => {
         const results = queryString
             ? restaurants.value.filter(createFilter(queryString))
             : restaurants.value

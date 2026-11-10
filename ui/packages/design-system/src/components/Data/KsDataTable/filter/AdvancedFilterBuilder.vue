@@ -115,7 +115,7 @@
         anchor: ".customize-button",
     })
 
-    const open = defineModel<boolean>()
+    const open = defineModel<boolean>({default: false})
     const positionStyle = ref<Record<string, string>>({})
 
     const computePosition = () => {

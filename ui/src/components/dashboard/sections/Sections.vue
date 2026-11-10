@@ -108,6 +108,7 @@
 
     interface ChartComponent {
         refresh(): void;
+        exportChart?(): Chart;
         exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
     }
 
@@ -205,9 +206,10 @@
     })
 
     async function exportChart(chart: Chart) {
-        const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
+        const component = chartsComponents.get(chart.id)
+        const {filters: chartFilters = [], ...pagination} = component?.exportParameters?.() ?? {}
 
-        await dashboardStore.export(props.dashboard, chart, {
+        await dashboardStore.export(props.dashboard, component?.exportChart?.() ?? chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         })

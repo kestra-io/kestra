@@ -3,6 +3,7 @@ import {ComponentPropsAndSlots, StoryObj} from "@storybook/vue3-vite";
 import {expect, fn, spyOn, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {nextTick, ref} from "vue";
+import {dateUtils} from "@kestra-io/design-system";
 import {useFlowStore} from "../../stores/flow";
 
 
@@ -274,5 +275,28 @@ export const RefreshHistoricalComparison: Story = {
         await expect(canvas.queryByText("NEW_CURRENT_REVISION")).not.toBeInTheDocument();
         await expect(canvas.getByText("Revision 1", {exact: true})).toBeVisible();
         await expect(canvas.getByText("Revision 3", {exact: true})).toBeVisible();
+    },
+};
+
+export const DatesFollowSettings: Story = {
+    beforeEach() {
+        localStorage.setItem(dateUtils.DATE_FORMAT_STORAGE_KEY, "DD/MM/YYYY HH:mm:ss");
+        localStorage.setItem(dateUtils.TIMEZONE_STORAGE_KEY, "UTC");
+    },
+    render: () => ({
+        components: {Revisions},
+        setup() {
+            const revisionsList = [
+                {revision: 1, source: "FIRST_REVISION", updated: "2026-11-09T10:15:30Z"},
+                {revision: 2, source: "CURRENT_REVISION", updated: "2026-11-10T08:05:09Z"},
+            ];
+            return {revisionsList, loadSource: () => Promise.resolve(undefined)};
+        },
+        template: '<Revisions lang="text" :revisions="revisionsList" :revisionSource="loadSource" :editRouteQuery="false" />',
+    }),
+    async play({canvasElement}) {
+        const left = within(canvasElement.querySelector('[data-test="revision-left"]') as HTMLElement);
+        await userEvent.click(left.getByRole("combobox"));
+        await waitFor(() => expect(within(document.body).getByRole("option", {name: /Revision 1/})).toHaveTextContent("09/11/2026 10:15:30"));
     },
 };

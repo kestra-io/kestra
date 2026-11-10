@@ -18,9 +18,7 @@
             },
         }"
     >
-        <code class="link" :class="{colored: props.colored}">
-            {{ label.slice(0, 8) }}
-        </code>
+        <KsId :value="label" />
     </RouterLink>
 
     <code v-else class="link" :class="{colored: props.colored}">{{ label }}</code>
@@ -28,6 +26,7 @@
 
 <script setup lang="ts">
     import {PropType, computed} from "vue"
+    import {KsId} from "@kestra-io/design-system"
     import type {Column} from "../../../types.ts"
 
     const props = defineProps({

@@ -90,6 +90,7 @@ class LogControllerCursorTest {
         reset(logRepository);
         when(tenantService.resolveTenant()).thenReturn("main");
         when(logRepository.find(any(), any(), any())).thenReturn(cursorPage("next-token"));
+        when(logRepository.findWithKeys(any(), any(), any())).thenCallRealMethod();
 
         CursorOrOffsetPagedResults<LogEntry> res = client.toBlocking().retrieve(
             GET("/api/v1/main/logs/search"),
@@ -108,6 +109,7 @@ class LogControllerCursorTest {
         reset(logRepository);
         when(tenantService.resolveTenant()).thenReturn("main");
         when(logRepository.find(any(), any(), any())).thenReturn(cursorPage("next-token"));
+        when(logRepository.findWithKeys(any(), any(), any())).thenCallRealMethod();
 
         client.toBlocking().retrieve(
             GET("/api/v1/main/logs/search?cursor=opaque-token-123"),

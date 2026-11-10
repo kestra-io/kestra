@@ -39,7 +39,7 @@ public class UpdateKvEntryTool implements McpPlatformTool {
 
     @Override
     public McpToolAnnotations annotations() {
-        return McpToolAnnotations.IDEMPOTENT_DESTRUCTIVE;
+        return McpToolAnnotations.ADDITIVE;
     }
 
     @Tool(

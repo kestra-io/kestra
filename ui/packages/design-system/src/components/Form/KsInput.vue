@@ -22,10 +22,21 @@
     </ElInput>
 </template>
 
+<script lang="ts">
+    import type {InputProps} from "element-plus"
+
+    export interface KsInputProps extends Omit<InputProps, "modelValue"> {
+        modelValue?: string | number
+        required?: boolean
+        /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
+        borderless?: boolean
+    }
+</script>
+
 <script setup lang="ts">
-    import {type Component, computed, ref} from "vue"
-    import {ElInput, type InputProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {computed, ref} from "vue"
+    import {ElInput} from "element-plus"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
@@ -37,22 +48,7 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const props = defineProps<{
-        modelValue?: string | number
-        type?: string
-        placeholder?: string
-        disabled?: boolean
-        showPassword?: boolean
-        suffixIcon?: Component | string
-        clearable?: boolean
-        size?: "large" | "default" | "small"
-        name?: string
-        id?: string
-        required?: boolean
-        rows?: number
-        /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
-        borderless?: boolean
-    }>()
+    const props = defineProps<KsInputProps>()
 
     // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{
@@ -67,7 +63,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["borderless", "modelValue"])
+    const filteredProps = usePassedProps(props, ["borderless", "modelValue"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,

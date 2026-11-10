@@ -49,7 +49,7 @@
         type FilterKeyConfig,
         Comparators,
     } from "../utils/filterTypes"
-    import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {formatFilterDate, formatFilterDateRange, isDateRangeValue} from "../utils/filterChipFactory"
     import {normalizeRelativeDate} from "../utils/relativeDates"
     import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
@@ -115,9 +115,9 @@
                 ? value[0]
                 : [value[0], h(KsTag, {size: "small"}, () => `+${value.length - 1}`)]
         case value instanceof Date:
-            return value.toLocaleDateString()
+            return formatFilterDate(value)
         case value && typeof value === "object" && "startDate" in value:
-            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
+            return formatFilterDateRange(value.startDate, value.endDate)
         case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value)
         default:

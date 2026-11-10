@@ -311,6 +311,18 @@ class InternalKVStoreTest {
         assertThat(result.get().value()).isEqualTo(42);
     }
 
+    @Test
+    void putWithoutOverwriteShouldSucceedOnExpiredKey() throws IOException, ResourceExpiredException {
+        InternalKVStore kv = kv();
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "old"), false);
+
+        assertThat(kv.get(TEST_KV_KEY)).isEmpty();
+        assertThat(kv.exists(TEST_KV_KEY)).isFalse();
+
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), "new"), false);
+        assertThat(kv.getValue(TEST_KV_KEY)).contains(new KVValue("new"));
+    }
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

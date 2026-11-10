@@ -141,6 +141,58 @@ describe("useRouteFilterPolicy", () => {
             expect(routerStub.replace).toHaveBeenCalledTimes(1)
         })
 
+        test("shouldReturnDefaultValueWhileNormalizationNavigationIsInFlight", () => {
+            routerStub.autoApply = false
+            const policy = startPolicy(() =>
+                useRouteFilterPolicy<LevelFilterValue>({
+                    ...resolverOptions,
+                    defaultValue: () => minLevel("DEBUG"),
+                    fallbackValue: () => minLevel("TRACE"),
+                    applyDefaultIfMissing: () => true,
+                }))
+
+            expect(policy.isRouteSettled.value).toBe(false)
+            expect(policy.routeValue.value).toBeUndefined()
+            expect(policy.effectiveValue.value).toEqual(minLevel("DEBUG"))
+        })
+
+        test("shouldRevertToFallbackValueWhenFilterIsClearedAfterNormalization", () => {
+            const policy = startPolicy(() =>
+                useRouteFilterPolicy<LevelFilterValue>({
+                    ...resolverOptions,
+                    defaultValue: () => minLevel("DEBUG"),
+                    fallbackValue: () => minLevel("TRACE"),
+                    applyDefaultIfMissing: () => true,
+                }))
+
+            expect(policy.effectiveValue.value).toEqual(minLevel("DEBUG"))
+
+            policy.setRouteValue(undefined)
+
+            expect(policy.effectiveValue.value).toEqual(minLevel("TRACE"))
+        })
+
+        test("shouldPreserveEffectiveValueReferenceWhenRouteLandsWithSameValue", () => {
+            routerStub.autoApply = false
+            const policy = startPolicy(() =>
+                useRouteFilterPolicy<LevelFilterValue>({
+                    ...resolverOptions,
+                    defaultValue: () => minLevel("DEBUG"),
+                    fallbackValue: () => minLevel("TRACE"),
+                    applyDefaultIfMissing: () => true,
+                }))
+
+            const initialEffectiveValue = policy.effectiveValue.value
+            expect(initialEffectiveValue).toEqual(minLevel("DEBUG"))
+
+            // Simulate the normalizing route landing with the default value
+            setQuery(resolverOptions.writeToRoute({}, minLevel("DEBUG")))
+
+            expect(policy.isRouteSettled.value).toBe(true)
+            // Identity reference must be preserved so watchers (like in TaskRunDetails) do not re-fetch
+            expect(policy.effectiveValue.value).toBe(initialEffectiveValue)
+        })
+
         test("shouldNotWriteTheDefaultValueToTheQueryWhenApplyDefaultIfMissingIsFalse", () => {
             const policy = startPolicy(() =>
                 useRouteFilterPolicy<LevelFilterValue>({

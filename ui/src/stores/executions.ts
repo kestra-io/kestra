@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX, LOG_LEVELS, isDeepEqual, throttle, type LevelFilterValue} from "@kestra-io/design-system"
@@ -187,26 +187,30 @@ function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue |
     }
 }
 
-const FOLLOW_MAX_RETRY_ATTEMPTS = 5
 const FOLLOW_RETRY_DELAY_MS = 1000
+const FOLLOW_MAX_RETRY_DELAY_MS = 30_000
+const FOLLOW_MAX_RECONNECTS = 6
+const FOLLOW_RECONNECT_WINDOW_MS = 120_000
+/** 2.5 server heartbeats (ExecutionController.FOLLOW_HEARTBEAT_INTERVAL), so one late heartbeat is not a stall. */
+const FOLLOW_IDLE_TIMEOUT_MS = 75_000
 
 export const useExecutionsStore = defineStore("executions", () => {
-    const executions = ref<Execution[] | undefined>(undefined)
-    const execution = ref<Execution | undefined>(undefined)
+    const executions: Ref<Execution[] | undefined> = ref(undefined)
+    const execution: Ref<Execution | undefined> = ref(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
     /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
     const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
-    const subflowsExecutions = ref<Record<string, Execution>>({})
-    const scopedIterations = ref<Record<string, Execution>>({})
+    const subflowsExecutions: Ref<Record<string, Execution>> = ref({})
+    const scopedIterations: Ref<Record<string, Execution>> = ref({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
-    const flow = ref<FlowForExecution | undefined>(undefined)
+    const flow: Ref<FlowForExecution | undefined> = ref(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
     const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
-    const flowsExecutable = ref<FlowForExecution[]>([])
+    const flowsExecutable: Ref<FlowForExecution[]> = ref([])
 
     watch(execution, (newExecution) => {
         if(!newExecution){
@@ -561,8 +565,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }, 500)
 
-    /** Follows an execution through the SDK stream, skipping the first id-only event. `onEnd` fires once,
-     *  and `onError` too when the stream stops before its "end" event (a 404 or a lost connection). */
+    /** Follows an execution through the SDK stream, skipping the id-only start and heartbeat events. `onEnd` fires once,
+     *  and `onError` too when the stream stops before its "end" event and cannot be resumed (a 404 or a lost connection). */
     function subscribeToExecution(
         executionId: string,
         handlers: {
@@ -571,11 +575,14 @@ export const useExecutionsStore = defineStore("executions", () => {
             onEnd?: () => void;
         },
     ): { close: () => void } {
-        const controller = new AbortController()
+        let connection: AbortController | undefined
+        let retryTimer: ReturnType<typeof setTimeout> | undefined
+        let idleTimer: ReturnType<typeof setTimeout> | undefined
         let closed = false
         let finished = false
-        let receivedEnd = false
         let receivedExecution = false
+        let consecutiveFailures = 0
+        const reconnects: number[] = []
 
         const finish = (errored: boolean) => {
             if (finished || closed) return
@@ -587,37 +594,67 @@ export const useExecutionsStore = defineStore("executions", () => {
         const close = () => {
             if (closed) return
             closed = true
-            controller.abort()
+            clearTimeout(retryTimer)
+            clearTimeout(idleTimer)
+            connection?.abort()
         }
 
-        ExecutionsAPI.followExecution(
-            {executionId},
-            {
-                signal: controller.signal,
-                /** The SDK never resets its attempt count, so this caps reconnects per stream. Unbounded ones leaked off-heap Netty buffers (kestra-io/kestra#16982). */
-                sseMaxRetryAttempts: FOLLOW_MAX_RETRY_ATTEMPTS,
-                sseDefaultRetryDelay: FOLLOW_RETRY_DELAY_MS,
-                onSseEvent: (event: { id?: string }) => {
-                    if (event.id === "end") receivedEnd = true
+        /** Unbounded reconnects leaked off-heap Netty buffers (kestra-io/kestra#16982), hence the cap per time window. */
+        const reconnect = () => {
+            const now = Date.now()
+            while (reconnects.length > 0 && now - reconnects[0] > FOLLOW_RECONNECT_WINDOW_MS) reconnects.shift()
+            if (reconnects.length >= FOLLOW_MAX_RECONNECTS) {
+                finish(true)
+                return
+            }
+            reconnects.push(now)
+            const delay = Math.min(FOLLOW_RETRY_DELAY_MS * 2 ** consecutiveFailures, FOLLOW_MAX_RETRY_DELAY_MS)
+            consecutiveFailures++
+            retryTimer = setTimeout(connect, delay)
+        }
+
+        const follow = async (controller: AbortController) => {
+            let receivedEnd = false
+            const armIdleTimeout = () => {
+                clearTimeout(idleTimer)
+                idleTimer = setTimeout(() => controller.abort(), FOLLOW_IDLE_TIMEOUT_MS)
+            }
+            armIdleTimeout()
+            const {stream} = await ExecutionsAPI.followExecution(
+                {executionId},
+                {
+                    signal: controller.signal,
+                    sseMaxRetryAttempts: 1,
+                    onSseEvent: (event: { id?: string }) => {
+                        armIdleTimeout()
+                        if (event.id === "end") receivedEnd = true
+                    },
                 },
-                onSseError: () => {
-                    // a stream that never delivered an execution failed with a 404, which a retry cannot fix
-                    if (receivedExecution) return
-                    finish(true)
-                    controller.abort()
-                },
-            },
-        )
-            .then(async ({stream}) => {
-                for await (const executionEvent of sseData(stream)) {
-                    if (closed) break
-                    if (!executionEvent.state) continue
-                    receivedExecution = true
-                    handlers.onExecution(executionEvent)
-                }
-                finish(!receivedEnd)
-            })
-            .catch(() => finish(true))
+            )
+            for await (const executionEvent of sseData(stream)) {
+                if (closed) break
+                if (!executionEvent.state) continue
+                receivedExecution = true
+                handlers.onExecution(executionEvent)
+            }
+            return receivedEnd
+        }
+
+        const connect = async () => {
+            connection = new AbortController()
+            const connectedAt = Date.now()
+            const receivedEnd = await follow(connection).catch(() => false)
+            clearTimeout(idleTimer)
+            // the server sends progress on every connect, so only a connection that held resets the backoff
+            if (Date.now() - connectedAt > FOLLOW_MAX_RETRY_DELAY_MS) consecutiveFailures = 0
+            if (closed) return
+            if (receivedEnd) finish(false)
+            // no execution ever received is most likely a 404, which a retry cannot fix
+            else if (!receivedExecution) finish(true)
+            else reconnect()
+        }
+
+        connect()
 
         return {close}
     }

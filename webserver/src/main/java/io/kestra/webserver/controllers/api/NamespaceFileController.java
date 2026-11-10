@@ -381,8 +381,9 @@ public class NamespaceFileController {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid hierarchical path.".formatted(path));
         }
 
-        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
-            throw new IllegalArgumentException("Forbidden path: " + path.getPath());
+        String normalizedPath = NamespaceFile.normalize(Path.of(path.getPath())).toString();
+        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(normalizedPath).matches())) {
+            throw new IllegalArgumentException("Forbidden path: " + normalizedPath);
         }
     }
 

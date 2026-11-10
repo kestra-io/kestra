@@ -3,9 +3,12 @@ import {
     stateFilterForTab,
     hasQuickFilters,
     chartConstrainsState,
+    upcomingChartFor,
     ALL_STATES,
+    QUICK_FILTER_TABS,
+    UPCOMING_TAB,
 } from "./quickFilters"
-import type {Chart} from "../types"
+import type {Chart, Column} from "../types"
 
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
@@ -77,6 +80,58 @@ describe("quickFilters", () => {
 
         it("is false without a STATE column", () => {
             expect(hasQuickFilters(chart({columns: {id: {field: "ID"}}}))).toBe(false)
+        })
+    })
+
+    describe("upcomingChartFor", () => {
+        const LABELS = {namespace: "Namespace", flow: "Flow", trigger: "Trigger", nextExecution: "Next execution"}
+
+        const upcoming = (source: Chart = chart({})) => upcomingChartFor(source, LABELS)
+
+        it("builds a Triggers table derived from the source chart", () => {
+            const result = upcoming()
+
+            expect(result.id).toBe("c__upcoming")
+            expect(result.type).toBe("io.kestra.plugin.core.dashboard.chart.Table")
+            expect(result.data?.type).toBe("io.kestra.plugin.core.dashboard.data.Triggers")
+        })
+
+        it("labels its four columns from the labels it is given", () => {
+            const columns = upcoming().data?.columns ?? {}
+
+            expect(Object.values(columns).map((column: Column) => column.field))
+                .toEqual(["NAMESPACE", "FLOW_ID", "TRIGGER_ID", "NEXT_EXECUTION_DATE"])
+            expect(Object.values(columns).map((column: Column) => column.displayName))
+                .toEqual(["Namespace", "Flow", "Trigger", "Next execution"])
+        })
+
+        it("orders the soonest run first and leaves disabled triggers out", () => {
+            const {orderBy, where} = upcoming().data as Record<string, unknown>
+
+            expect(orderBy).toEqual([{column: "next_execution_date", order: "ASC"}])
+            expect(where).toEqual([{field: "DISABLED", type: "EQUAL_TO", value: false}])
+        })
+
+        it("mirrors the source chart's pagination", () => {
+            expect(upcoming().chartOptions?.pagination?.enabled).toBe(false)
+
+            const paginated = {...chart({}), chartOptions: {pagination: {enabled: true}}} as Chart
+            expect(upcoming(paginated).chartOptions?.pagination?.enabled).toBe(true)
+        })
+
+        it("carries the whole definition as YAML, since it is rendered through the preview endpoint", () => {
+            const content = upcoming().content ?? ""
+
+            expect(content).toContain("io.kestra.plugin.core.dashboard.data.Triggers")
+            expect(content).toContain("NEXT_EXECUTION_DATE")
+            expect(content).toContain("c__upcoming")
+        })
+    })
+
+    describe("UPCOMING_TAB", () => {
+        it("stays out of the state tabs, so the All tab keeps its own states", () => {
+            expect(QUICK_FILTER_TABS.map((tab) => tab.key)).not.toContain(UPCOMING_TAB.key)
+            expect(ALL_STATES).toHaveLength(17)
         })
     })
 })

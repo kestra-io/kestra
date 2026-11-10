@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "logs": "Logs",
     "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
-    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
+    "no_logs_data_title": "No se encontraron logs",
     "duration": "Duración",
     "total_duration": "Duración total",
     "running duration": "Duración en ejecución",
@@ -863,7 +863,7 @@
     "last execution date": "Fecha de última ejecución",
     "revisions": "Revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
-    "no revisions": "Sin revisiones",
+    "no revisions": "No se encontraron revisiones",
     "side-by-side": "lado a lado",
     "line-by-line": "línea por línea",
     "template": "Plantilla",
@@ -1339,6 +1339,8 @@
     "pause backfill": "Pausar el backfill",
     "continue backfills": "Continuar backfills",
     "delete backfills": "Eliminar backfills",
+    "delete backfill confirm": "¿Eliminar el backfill del trigger {id}?",
+    "delete backfill success": "Se eliminó el backfill del trigger {id}",
     "pause backfills": "Pausar backfills",
     "backfill executions": "Ejecuciones de backfill",
     "execute backfill": "Ejecutar backfill",
@@ -2336,10 +2338,10 @@
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "no_results": {
       "executions": "No se encontraron ejecuciones",
-      "triggers": "No se encontraron Triggers",
-      "flows": "No se encontraron Flows",
-      "kv_pairs": "No se encontraron pares Key-Value",
-      "secrets": "No se encontraron Secrets",
+      "triggers": "No se encontraron triggers",
+      "flows": "No se encontraron flows",
+      "kv_pairs": "No se encontraron pares key-value",
+      "secrets": "No se encontraron secrets",
       "all_columns_hidden": "Todas las columnas están ocultas",
       "all_columns_hidden_description": "Vuelve a activar al menos una columna en Personalizar columnas de tabla para ver los datos de nuevo."
     },
@@ -2351,6 +2353,7 @@
       "default": "Dashboard predeterminado",
       "set_default": "Establecer como predeterminado",
       "empty": "No hay resultados para mostrar.",
+      "overdue": "Atrasado — {date}",
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Editar este gráfico"
@@ -2373,7 +2376,8 @@
         "paused": "Pausado",
         "success": "Éxito",
         "warning": "Advertencia",
-        "failed": "Fallido"
+        "failed": "Fallido",
+        "upcoming": "Próximo"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Ver pruebas de flow"
       },
       "errors": {
-        "label": "{count} Error(es)"
+        "label": "{count} Error(es)",
+        "action": "{count} error(es), ir al siguiente error"
       }
     },
     "invalid_source_code": "Código fuente no válido",

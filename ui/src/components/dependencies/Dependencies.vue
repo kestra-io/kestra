@@ -18,7 +18,7 @@
         <div
             v-if="isLoading"
             v-ks-loading="true"
-            class="h-100"
+            class="loading-container"
         />
         <Empty
             v-else-if="!hasElements"
@@ -34,6 +34,7 @@
                                 class="graph-canvas"
                                 :nodes="chartNodes"
                                 :edges="chartEdges"
+                                :layout="chartLayout"
                                 :loading="isRendering"
                                 :options="graphOptions"
                                 @node-click="handleNodeClick"
@@ -218,6 +219,7 @@
         getElements,
         chartNodes,
         chartEdges,
+        chartLayout,
         isLoading,
         isRendering,
         selectedNodeID,
@@ -320,11 +322,15 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dependencies-wrapper {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
+}
+
+.loading-container {
     height: 100%;
 }
 

@@ -44,6 +44,26 @@ describe("TaskEditModal", () => {
         expect(hint.find("a").text()).toBe("Settings")
     })
 
+    it("offers no plugin documentation for a block outside a flow", () => {
+        const wrapper = mount(TaskEditModal, {
+            props: {
+                section: "tasks" as const,
+                flowId: "",
+                namespace: "company.team",
+                editorKey: "inputs[0]",
+                parentPath: "inputs",
+                refPath: 0,
+                blockSchemaPath: "inputs",
+                crumbs: [],
+                task: {id: "env", type: "STRING"},
+                outsideFlow: true,
+            },
+            global: {plugins: [i18n], stubs},
+        })
+
+        expect(wrapper.find("[data-test=\"task-edit-modal-docs-toggle\"]").exists()).toBe(false)
+    })
+
     // The modal is appendToBody, so the keyboard guard claims it by marker rather than by DOM
     // containment. That delivery runs through KsDialog's $attrs and element-plus's own forwarding,
     // neither of which this repo's code owns — so it is asserted against the real dialog.

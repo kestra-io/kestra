@@ -1,8 +1,9 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import {usePwaInstall} from "./usePwaInstall"
 import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
+import {storageKeys} from "../utils/constants"
 
 function mountPwaInstall() {
     let api: ReturnType<typeof usePwaInstall>
@@ -37,10 +38,10 @@ function stubLocation(protocol: string, hostname: string) {
     }
 }
 
-function fireBeforeInstallPrompt() {
+function fireBeforeInstallPrompt(outcome: "accepted" | "dismissed" = "accepted") {
     const event = new Event("beforeinstallprompt") as Event & {prompt: () => Promise<void>, userChoice: Promise<unknown>}
     event.prompt = vi.fn().mockResolvedValue(undefined)
-    event.userChoice = Promise.resolve({outcome: "accepted", platform: "web"})
+    event.userChoice = Promise.resolve({outcome, platform: "web"})
     window.dispatchEvent(event)
     return event
 }
@@ -57,6 +58,7 @@ describe("usePwaInstall", () => {
 
     afterEach(() => {
         restoreLocation()
+        localStorage.removeItem(storageKeys.PWA_INSTALL_DISMISSED)
     })
 
     afterAll(() => {
@@ -143,5 +145,27 @@ describe("usePwaInstall", () => {
         const {api} = mountPwaInstall()
 
         expect(api.canInstall.value).toBe(true)
+    })
+
+    it("stays dismissed after a page reload", async () => {
+        mountPwaInstall().api.dismiss()
+        await nextTick()
+
+        const {api} = mountPwaInstall()
+        fireBeforeInstallPrompt()
+
+        expect(api.dismissed.value).toBe(true)
+        expect(api.canInstall.value).toBe(false)
+    })
+
+    it("stays dismissed after a reload when the native install dialog is cancelled", async () => {
+        const {api: first} = mountPwaInstall()
+        fireBeforeInstallPrompt("dismissed")
+        await first.promptInstall()
+
+        const {api} = mountPwaInstall()
+        fireBeforeInstallPrompt()
+
+        expect(api.canInstall.value).toBe(false)
     })
 })

@@ -53,13 +53,15 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/upload';
+</style>
 
+<style>
     .kel-upload {
         &:focus {
-            // Prevent purple color from propagating to child text nodes
+            /* Prevent purple color from propagating to child text nodes */
             color: inherit;
 
-            .kel-upload-dragger {
+            & .kel-upload-dragger {
                 border-color: var(--ks-border-focus);
             }
         }

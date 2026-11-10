@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu="onContextMenu">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed, 'is-overlay': isOverlay}" :inert="isOverlay && collapsed ? true : undefined" @contextmenu="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -58,7 +58,15 @@
         </template>
     </KsSideBar>
 
-    <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
+    <div
+        v-if="isOverlay && !collapsed"
+        class="sidebar-scrim"
+        data-test="sidebar-scrim"
+        aria-hidden="true"
+        @click="onCollapse(true)"
+    />
+
+    <SidebarCustomizeModal v-if="customizeModalLoaded" v-model="showCustomizeModal" :menu="menu" />
 
     <Teleport to="body">
         <div
@@ -76,19 +84,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent, onUnmounted, nextTick, watch} from "vue"
+    import {computed, h, ref, defineAsyncComponent, defineComponent, onUnmounted, nextTick, watch} from "vue"
 
     defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {usePointerSwipe} from "@vueuse/core"
+    import {onKeyStroke, usePointerSwipe} from "@vueuse/core"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
-    import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useFeatureSpotlightStore} from "../../stores/featureSpotlight"
@@ -120,7 +128,9 @@
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
     const featureSpotlightStore = useFeatureSpotlightStore()
+    const SidebarCustomizeModal = defineAsyncComponent(() => import("./SidebarCustomizeModal.vue"))
     const showCustomizeModal = ref(false)
+    const customizeModalLoaded = ref(false)
     const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
     const contextMenuItem = ref<HTMLButtonElement | null>(null)
 
@@ -154,6 +164,7 @@
 
     function openCustomizeFromContextMenu() {
         hideContextMenu()
+        customizeModalLoaded.value = true
         showCustomizeModal.value = true
     }
 
@@ -163,6 +174,41 @@
         layoutStore.setSideMenuCollapsed(folded)
         emit("menu-collapse", folded)
     }
+
+    const isOverlay = useIsMobile()
+
+    onKeyStroke("Escape", () => {
+        if (isOverlay.value && !props.collapsed) onCollapse(true)
+    })
+
+    watch(() => $route.fullPath, () => {
+        if (isOverlay.value && !props.collapsed) onCollapse(true)
+    })
+
+    const BEHIND_DRAWER = "#app-body > :not(#side-menu):not(.sidebar-scrim), #bottom-actions-slot"
+
+    const setBehindDrawerInert = (inert: boolean) => {
+        document.querySelectorAll(BEHIND_DRAWER).forEach((element) => element.toggleAttribute("inert", inert))
+    }
+
+    let breakpointCrossing = false
+
+    watch(isOverlay, (overlay) => {
+        breakpointCrossing = true
+        if (overlay && !props.collapsed) onCollapse(true)
+        if (!overlay) emit("menu-collapse", layoutStore.restoreSideMenuCollapsed())
+        setTimeout(() => { breakpointCrossing = false })
+    })
+
+    watch(() => isOverlay.value && !props.collapsed, async (open) => {
+        setBehindDrawerInert(open)
+        if (breakpointCrossing) return
+        await nextTick()
+        const target = open ? "#side-menu a[href]" : "[data-testid=topnav-sidebar-toggle]"
+        document.querySelector<HTMLElement>(target)?.focus()
+    }, {flush: "post"})
+
+    onUnmounted(() => setBehindDrawerInert(false))
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
@@ -261,7 +307,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 #side-menu {
     position: relative;
     width: 215px;
@@ -274,6 +320,25 @@
         width: 0;
         border-right-width: 0;
     }
+
+    &.is-overlay {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        z-index: var(--ks-z-overlay);
+        width: min(80vw, 20rem);
+
+        &.is-collapsed {
+            width: 0;
+        }
+    }
+}
+
+.sidebar-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: calc(var(--ks-z-overlay) - 1);
+    background: var(--ks-bg-scrim);
 }
 
 .top-level-link {
@@ -332,27 +397,27 @@
     border: var(--ks-border-width-thin) solid var(--ks-border-strong);
     border-radius: var(--ks-radius-base);
     box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+}
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-        padding: var(--ks-spacing-2);
-        border: 0;
-        border-radius: var(--ks-radius-xs);
-        background: transparent;
-        color: var(--ks-text-primary);
-        font: inherit;
-        font-size: var(--ks-font-size-xs);
-        text-align: left;
-        cursor: pointer;
+.sidebar-context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+    padding: var(--ks-spacing-2);
+    border: 0;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
+    color: var(--ks-text-primary);
+    font: inherit;
+    font-size: var(--ks-font-size-xs);
+    text-align: left;
+    cursor: pointer;
 
-        &:hover,
+    &:hover,
         &:focus-visible {
-            background: var(--ks-bg-hover-elevated);
-            outline: none;
-        }
+        background: var(--ks-bg-hover-elevated);
+        outline: none;
     }
 }
 </style>

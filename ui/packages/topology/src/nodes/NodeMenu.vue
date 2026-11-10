@@ -9,7 +9,7 @@
     >
         <component
             :is="actions[0].icon"
-            :class="{'text-danger': actions[0].danger}"
+            :class="{'node-action--danger': actions[0].danger}"
             :alt="actions[0].label"
         />
     </KsIconButton>
@@ -52,3 +52,8 @@
 
 </script>
 
+<style scoped>
+    .node-action--danger {
+        color: var(--ks-text-error);
+    }
+</style>

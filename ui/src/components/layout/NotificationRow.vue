@@ -80,7 +80,7 @@
     defineEmits<{click: []; "mark-read": []; "mark-unread": []}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .item {
         padding: var(--ks-spacing-1) 0;
     }
@@ -124,7 +124,7 @@
             gap: var(--ks-spacing-1);
             min-width: 0;
 
-            :deep(.date) {
+            & :deep(.date) {
                 font-size: var(--ks-font-size-2xs);
                 font-weight: 400;
                 color: var(--ks-text-secondary);

@@ -42,7 +42,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .stat {
         display: inline-flex;
         align-items: center;

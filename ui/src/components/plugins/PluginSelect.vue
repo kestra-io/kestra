@@ -165,7 +165,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     :deep(div.task-icon) {
         display: inline-block;
         width: var(--ks-font-size-lg);
@@ -195,7 +195,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.task-icon) {
+        & :deep(.task-icon) {
             width: 2rem;
             height: 2rem;
         }

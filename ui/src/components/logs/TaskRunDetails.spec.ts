@@ -1,14 +1,18 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
 import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
     executions: {} as {
         execution: {id: string; state: {current: string}} | undefined
         logs: unknown
         loadLogs: ReturnType<typeof vi.fn>
+        reusedLogsOf: ReturnType<typeof vi.fn>
+        isReusedTaskRun: ReturnType<typeof vi.fn>
         followLogs: ReturnType<typeof vi.fn>
         loadFlowForExecution: ReturnType<typeof vi.fn>
         subscribeToExecution: ReturnType<typeof vi.fn>
@@ -26,7 +30,47 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 }))
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskRunOutputs: vi.fn().mockResolvedValue({}),
+    taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
+const scrollerMocks = vi.hoisted(() => ({
+    scrollCalls: [] as string[],
+    scrollToItem: vi.fn(),
+}))
+
+vi.mock("vue-virtual-scroller", async () => {
+    const {defineComponent, h} = await import("vue")
+
+    return {
+        DynamicScroller: defineComponent({
+            inheritAttrs: true,
+            props: ["items"],
+            setup(props, {attrs, slots, expose}) {
+                const scrollToBottom = vi.fn(() => {
+                    const taskRunId = attrs["data-scroll-key"]
+                    if (typeof taskRunId === "string") {
+                        scrollerMocks.scrollCalls.push(taskRunId)
+                    }
+                })
+                expose({
+                    scrollToBottom,
+                    scrollToItem: scrollerMocks.scrollToItem,
+                })
+
+                return () => h("div", attrs, [
+                    ...(slots.before ? [slots.before()] : []),
+                    ...(props.items ?? []).map((item: unknown, index: number) =>
+                        slots.default?.({item, index, active: true}),
+                    ),
+                ])
+            },
+        }),
+        DynamicScrollerItem: defineComponent({
+            setup(_, {slots}) {
+                return () => slots.default?.()
+            },
+        }),
+    }
+})
 
 import TaskRunDetails from "./TaskRunDetails.vue"
 
@@ -44,12 +88,29 @@ const execution = (id: string, state: string) => ({
     taskRunList: [],
 })
 
+const executionWithTaskRuns = (id: string) => ({
+    ...execution(id, "FAILED"),
+    taskRunList: [
+        {
+            id: "tr-failed",
+            taskId: "first",
+            state: {current: "FAILED"},
+            attempts: [{state: {current: "FAILED"}}],
+        },
+        {
+            id: "tr-success",
+            taskId: "second",
+            state: {current: "SUCCESS"},
+            attempts: [{state: {current: "SUCCESS"}}],
+        },
+    ],
+})
 const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `log of ${id}`}]
 
 function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
         props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
-        global: {plugins: [i18n, KestraDesignSystem]},
+        global: {plugins: [i18n, KestraDesignSystem, memoryRouter(), createPinia()]},
     })
 }
 
@@ -68,10 +129,14 @@ describe("TaskRunDetails log loading across executions", () => {
     beforeEach(() => {
         vi.useFakeTimers()
         openedStreams = []
+        scrollerMocks.scrollCalls = []
+        scrollerMocks.scrollToItem.mockClear()
         store.executions = reactive({
             execution: undefined,
             logs: undefined,
             loadLogs: vi.fn(({executionId}: {executionId: string}) => Promise.resolve(logsFor(executionId))),
+            reusedLogsOf: vi.fn(() => []),
+            isReusedTaskRun: vi.fn(() => false),
             followLogs: vi.fn(({id}: {id: string}) => {
                 openedStreams.push(id)
                 return Promise.resolve({close: vi.fn(), onmessage: null, onerror: null})
@@ -136,7 +201,10 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(store.executions.loadFlowForExecution).toHaveBeenCalledWith(expect.objectContaining({store: false, flowId: "simple-dag"}))
         expect(store.executions.loadLogs).toHaveBeenCalledWith({
             executionId: "child-a",
-            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO", "filters[kind][IN]": "PLAYGROUND"},
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "kind", operation: "IN", value: "PLAYGROUND"},
+            ],
         })
         const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
         expect(vm.filteredLogs).toEqual(logsFor("child-a"))
@@ -228,5 +296,49 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(block.text()).toContain("concurrency limit exceeded")
         expect(block.text()).not.toContain("another task run")
         expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{ERROR: ["-1/0"]}])
+    })
+
+    it("should mark the task runs a replay reused and show the logs it carried over for them", async () => {
+        store.executions.loadLogs.mockResolvedValue([])
+        store.executions.isReusedTaskRun.mockImplementation((executionId: string, taskRunId: string) => executionId === "exec-2" && taskRunId === "tr-a2")
+        store.executions.reusedLogsOf.mockImplementation((executionId: string) => executionId === "exec-2"
+            ? [{level: "INFO", taskRunId: "tr-a2", attemptNumber: 0, timestamp: "2026-01-01T00:00:00Z", message: "a ran"}]
+            : [])
+        store.executions.execution = {
+            ...execution("exec-2", "SUCCESS"),
+            taskRunList: [{id: "tr-a2", taskId: "a", state: {current: "SUCCESS"}, attempts: [{state: {current: "SUCCESS"}}]}],
+        } as ReturnType<typeof execution>
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        expect(store.executions.reusedLogsOf).toHaveBeenCalledWith("exec-2", {value: "INFO", direction: "min"})
+        expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{INFO: ["0/0"]}])
+        expect(wrapper.find("[data-test=\"task-run-reused\"]").text()).toBe("reused_task_run.label")
+    })
+
+    it("should scroll failed task logs to the bottom when subsequent task runs exist", async () => {
+        store.executions.loadLogs.mockResolvedValue([
+            {
+                level: "INFO",
+                taskRunId: "tr-failed",
+                attemptNumber: 0,
+                message: "first log line",
+            },
+            {
+                level: "ERROR",
+                taskRunId: "tr-failed",
+                attemptNumber: 0,
+                message: "final error line",
+            },
+        ])
+        store.executions.execution = executionWithTaskRuns("exec-1") as never
+        const wrapper = mountDetails()
+        await flushPromises()
+        await nextTick()
+        await flushPromises()
+
+        expect(scrollerMocks.scrollCalls).toContain("tr-failed")
+
+        wrapper.unmount()
     })
 })

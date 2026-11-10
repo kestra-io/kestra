@@ -34,6 +34,7 @@
                     </div>
                 </KsAlert>
             </div>
+            <NamespaceFilesTip v-if="flow && previewSource === undefined && !flowStore.isReadOnly" />
             <KsEditor
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
@@ -59,6 +60,7 @@
                 @execute="execute"
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
+                @editor-warnings="onKsEditorWarnings"
             >
                 <template #absolute>
                     <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
@@ -86,11 +88,13 @@
         path: string;
         flow: boolean;
         dirty: boolean;
+        /** Unsaved edits carried over when the tab follows its file to a new path. */
+        content?: string;
     }
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
+    import {computed, onActivated, onDeactivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
@@ -100,7 +104,6 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
     import {useFlowEditorActions} from "../flows/useFlowEditorActions"
-    import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
@@ -117,6 +120,7 @@
     import {humanFileSize} from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
+    import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
 
@@ -152,6 +156,7 @@
 
     const sourceNS = ref("")
     const savedSourceNS = ref("")
+    let pendingContent = props.content
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value)
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
@@ -202,6 +207,9 @@
             sourceNS.value = result.content
             savedSourceNS.value = result.content
         }
+        if (pendingContent !== undefined) {
+            sourceNS.value = pendingContent
+        }
     }
 
     const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
@@ -224,9 +232,15 @@
             setDirty?.({path: props.path, dirty: newVal})
         }
     })
+    watch(() => props.flow,
+          () => {
+              if (props.flow) {
+                  flowStore.ksEditorWarnings = []
+              }
+          },
+    )
 
     onMounted(() => {
-        useDocStore().docId = "flowEditor"
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"})
         }
@@ -257,6 +271,9 @@
     })
 
     onBeforeUnmount(() => {
+        if(props.flow){
+            flowStore.ksEditorWarnings = []
+        }
         window.removeEventListener("keydown", handleGlobalSave)
         window.removeEventListener("keydown", toggleAiShortcut)
         pluginsStore.editorPlugin = undefined
@@ -295,9 +312,35 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
-    useViolationMarkers({
+    const {markers: violationMarkerList, revealNext: revealNextViolation} = useViolationMarkers({
         editor: monacoEditor,
         errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
+    // A parked tab keeps its editor alive in KeepAlive, but the badge must not point at an editor nobody can see.
+    let isTabActive = true
+
+    // Guard needed because keep-alive keeps a FlowFileEditorTab instance per namespace file alive alongside the flow tab's.
+    function syncErrorNavigation() {
+        if (!props.flow) return
+        const count = isTabActive ? violationMarkerList.value.length : 0
+        flowStore.errorNavigation = count ? {count, revealNext: revealNextViolation} : null
+    }
+
+    watch(violationMarkerList, syncErrorNavigation, {immediate: true})
+
+    onActivated(() => {
+        isTabActive = true
+        syncErrorNavigation()
+    })
+
+    onDeactivated(() => {
+        isTabActive = false
+        syncErrorNavigation()
+    })
+
+    onBeforeUnmount(() => {
+        if (props.flow) flowStore.errorNavigation = null
     })
 
     useReadOnlyYamlKeys({
@@ -313,7 +356,7 @@
         onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
-    const timeout = ref<any>(null)
+    const timeout = ref<ReturnType<typeof setTimeout>>()
 
     const editorContent = computed(() => source.value)
 
@@ -361,6 +404,7 @@
             flowStore.flowYaml = newValue
         }
         sourceNS.value = newValue
+        pendingContent = undefined
         if(props.path){
             updateContent?.({path: props.path, content: newValue})
         }
@@ -369,7 +413,9 @@
         if(!props.flow) return
 
         // throttle the trigger of the flow update
-        clearTimeout(timeout.value)
+        if (timeout.value) {
+            clearTimeout(timeout.value)
+        }
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source: newValue,
@@ -383,7 +429,9 @@
     }
 
     onBeforeUnmount(() => {
-        clearTimeout(timeout.value)
+        if (timeout.value) {
+            clearTimeout(timeout.value)
+        }
     })
 
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
@@ -391,11 +439,18 @@
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
         pluginsStore.updateDocumentation(cls ? {cls, version: version ?? undefined, hash: hash.value} : undefined)
     }
-
+    function onKsEditorWarnings(warnings: {line: number, message: string}[]) {
+        if(!props.flow) return
+        flowStore.ksEditorWarnings = warnings.map(w =>
+            t("schema warning", {line: w.line, message: w.message}),
+        )
+    }
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
     // path as the Save button — including auto-install of missing plugins before persisting.
     const saveFlowYaml = async () => {
-        clearTimeout(timeout.value)
+        if (timeout.value) {
+            clearTimeout(timeout.value)
+        }
         if(!editorRefElement.value?.getEditor()) return
 
         await save()
@@ -405,7 +460,9 @@
     const sendingContent = ref<string>()
 
     const saveFileContent = async () => {
-        clearTimeout(timeout.value)
+        if (timeout.value) {
+            clearTimeout(timeout.value)
+        }
         const content = source.value
         if(!namespace.value || !props.path || props.flow || content === sendingContent.value) return
         sendingContent.value = content
@@ -416,6 +473,7 @@
                 content: content || "",
             })
             savedSourceNS.value = content
+            pendingContent = undefined
         } finally {
             if (sendingContent.value === content) {
                 sendingContent.value = undefined
@@ -447,7 +505,7 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .editor-tab {
         height: 100%;
         display: flex;

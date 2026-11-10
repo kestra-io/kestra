@@ -111,7 +111,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .picker {
         min-width: 16rem;
 

@@ -1,12 +1,12 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
+    <span v-if="props.labels.length" class="labels-container" :class="{wrap}">
         <KsCheckTag
             v-for="(label, index) in visibleLabels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
-            class="me-0 label"
+            class="label"
             data-test="label"
         >
             <span class="label-text" :title="wrap ? undefined : text(label)">{{ text(label) }}</span>
@@ -126,7 +126,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .label.kel-check-tag,
 .label-more {
     background-color: var(--ks-bg-tag);
@@ -142,6 +142,8 @@
 }
 
 .labels-container {
+    display: flex;
+    gap: var(--ks-spacing-1);
     overflow: hidden;
     flex-wrap: nowrap;
     min-width: 0;

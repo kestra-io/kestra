@@ -97,12 +97,14 @@
 <script setup lang="ts">
     import {handledIf} from "../../utils/kestraHttp"
     import {computed, ref, watch, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useToast} from "../../utils/toast"
     import {executionFileUrl} from "../../utils/executionUtils"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
@@ -126,6 +128,8 @@
     })
 
     const editorBindings = useEditorBindings()
+    const {t} = useI18n()
+    const toast = useToast()
 
     const humanSize = ref<string>("")
     const fileStatus = ref<"loading" | "available" | "missing">("loading")
@@ -229,7 +233,10 @@
 
     const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
 
-    const copyFullValue = () => copyToClipboard(fullText.value)
+    const copyFullValue = async () => {
+        await copyToClipboard(fullText.value)
+        toast.success(t("copied"))
+    }
 
     const downloadFullValue = () => Utils.downloadText(
         fullText.value,
@@ -279,7 +286,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

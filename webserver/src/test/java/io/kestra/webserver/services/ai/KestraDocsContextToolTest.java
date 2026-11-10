@@ -11,10 +11,13 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,6 +53,25 @@ class KestraDocsContextToolTest {
             Field schedulerField = DefaultMcpClient.class.getDeclaredField("healthCheckScheduler");
             schedulerField.setAccessible(true);
             assertThat(schedulerField.get(client)).isNull();
+        }
+    }
+
+    @Test
+    void shouldSkipProtocolDetectionWhenConnecting(WireMockRuntimeInfo wmRuntimeInfo) {
+        // Given
+        stubFor(post(urlPathMatching("/v1/mcp.*"))
+            .willReturn(okJson("""
+                {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"mock-docs","version":"1.0"}}}
+            """)));
+
+        VersionProvider versionProvider = mock(VersionProvider.class);
+        when(versionProvider.getVersion()).thenReturn("2.1.0");
+
+        // When
+        try (KestraDocsContextTool ignored = new KestraDocsContextTool(wmRuntimeInfo.getHttpBaseUrl(), versionProvider)) {
+            // Then
+            verify(0, postRequestedFor(urlPathMatching("/v1/mcp.*")).withRequestBody(containing("server/discover")));
+            verify(1, postRequestedFor(urlPathMatching("/v1/mcp.*")).withRequestBody(containing("\"initialize\"")));
         }
     }
 

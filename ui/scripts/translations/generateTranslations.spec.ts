@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
@@ -13,7 +13,13 @@ const rejectingClient = () =>
     ({models: {generateContent: async () => { throw new Error("403 permission denied") }}}) as unknown as TranslationClient
 
 describe("generateTranslations", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "log").mockImplementation(() => {})
+        vi.spyOn(console, "error").mockImplementation(() => {})
+    })
+
     afterEach(() => {
+        vi.restoreAllMocks()
         process.exitCode = undefined
     })
 
@@ -77,6 +83,26 @@ describe("generateTranslations", () => {
 
             expect(process.exitCode).toBe(1)
             expect(JSON.parse(readFileSync(fingerprintsFile, "utf-8"))).not.toHaveProperty("greeting")
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
+
+    it("accepts the English text for a nested key the checker allows to stay in English", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {pluginPage: {view: {plugin: "Plugin"}}}}))
+        const fingerprintsFile = join(dir, "fingerprints.json")
+
+        try {
+            await generateTranslations({
+                client: clientReturning("Plugin"),
+                translationsDir: dir,
+                fingerprintsFile,
+                languages: [["ja", "Japanese"]],
+            })
+
+            expect(process.exitCode).toBeUndefined()
+            expect(JSON.parse(readFileSync(fingerprintsFile, "utf-8"))).toHaveProperty(["pluginPage|view|plugin"])
         } finally {
             rmSync(dir, {recursive: true, force: true})
         }

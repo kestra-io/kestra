@@ -1,10 +1,21 @@
 import {describe, expect, it, vi} from "vitest"
-import {defineComponent, h} from "vue"
+import {computed, defineComponent, h} from "vue"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
+import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
+import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
+import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
+import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
+import ProgressClock from "vue-material-design-icons/ProgressClock.vue"
+import Cancel from "vue-material-design-icons/Cancel.vue"
+import RotatingDots from "../assets/icons/RotatingDots.vue"
 import BasicNode from "./BasicNode.vue"
+import {PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
+import {PILL_COMPENSATION, ZOOM_LOD, pillZoomCompensation} from "../utils/constants"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const CLS = "io.kestra.plugin.core.log.Log"
+const PILL = "[data-test=\"topology-task-pill\"]"
+const PILL_STATUS = "[data-test=\"topology-task-pill-status\"]"
 
 // Records the props the app-provided task-icon component is mounted with.
 const iconProps: Record<string, unknown>[] = []
@@ -18,7 +29,7 @@ const TaskIconSpy = defineComponent({
     },
 })
 
-function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
+function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}, zoom?: number) {
     return i18nMount(BasicNode, {
         props: {
             id: "root.my-task",
@@ -29,7 +40,10 @@ function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<strin
         global: {
             // KsTooltip wraps the title in an element-plus popper; render only its default slot.
             stubs: {KsTooltip: {template: "<span><slot /></span>"}},
-            provide: {[TASK_ICON_INJECTION_KEY as symbol]: TaskIconSpy},
+            provide: {
+                [TASK_ICON_INJECTION_KEY as symbol]: TaskIconSpy,
+                ...(zoom === undefined ? {} : {[PILL_ZOOM_COMPENSATION_INJECTION_KEY as symbol]: computed(() => pillZoomCompensation(zoom))}),
+            },
         },
         slots,
     })
@@ -99,6 +113,38 @@ describe("BasicNode layout", () => {
     })
 })
 
+describe("BasicNode status row", () => {
+    const slots = {"status-row": "<span class='row-marker'>chip</span>", footer: "<div class='footer-marker'>bar</div>"}
+
+    it("should render the status row below the card, outside of it", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect(wrapper.find(".node-wrapper > .node-core + .node-status-row > .row-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-core .row-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill"}, slots)
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).not.toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row when no status row is given", () => {
+        const wrapper = mountBasicNode({}, {footer: slots.footer})
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+    })
+
+    it("should place the retry badge on the task icon and the runner above the title", () => {
+        const wrapper = mountBasicNode({}, {"icon-badge": "<i class='badge-marker' />", runner: "<b class='runner-marker' />"})
+
+        expect(wrapper.find(".icon > .badge-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-content > .node-runner + .node-title").exists()).toBe(true)
+    })
+})
+
 describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
     const slots = {
         subtitle: "<span class='subtitle-marker'>Log</span>",
@@ -108,12 +154,13 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         footer: "<div class='footer-marker'>bar</div>",
     }
 
-    it("should collapse to just the icon below the pill threshold", () => {
-        const wrapper = mountBasicNode({lod: "pill"}, slots)
+    it("should collapse to the icon and its own status glyph below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill", state: "FAILED"}, slots)
 
         expect(wrapper.find(".node-pill").exists()).toBe(true)
-        expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
+        expect(wrapper.find(PILL_STATUS).exists()).toBe(true)
         expect(wrapper.find(".status-marker").exists()).toBe(false)
+        expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
         expect(wrapper.find(".actions-marker").exists()).toBe(false)
         expect(wrapper.find(".footer-marker").exists()).toBe(false)
     })
@@ -134,5 +181,97 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         expect(wrapper.find(".status-marker").exists()).toBe(true)
         expect(wrapper.find(".node-details-overlay .details-marker").exists()).toBe(true)
         expect(wrapper.find(".node-footer .footer-marker").exists()).toBe(true)
+    })
+})
+
+describe("BasicNode pill status (kestra-io/kestra#21619)", () => {
+    it.each([
+        ["SUCCESS", CheckCircleOutline, "--ks-text-success"],
+        ["FAILED", CloseCircleOutline, "--ks-text-error"],
+        ["KILLED", CloseCircleOutline, "--ks-text-error"],
+        ["RUNNING", RotatingDots, "--ks-status-running"],
+        ["KILLING", StopCircleOutline, "--ks-status-pending"],
+        ["SKIPPED", SkipNextCircleOutline, "--ks-status-neutral"],
+        ["CANCELLED", Cancel, "--ks-status-neutral"],
+        ["WARNING", ProgressClock, "--ks-status-neutral"],
+    ])("should give a %s task a recognizable status glyph at the pill level", (state, icon, textVar) => {
+        const wrapper = mountBasicNode({lod: "pill", state})
+
+        const badge = wrapper.find(PILL_STATUS)
+        expect(badge.exists()).toBe(true)
+        expect(badge.attributes("style")).toContain(textVar)
+        expect(badge.attributes("aria-label")).toBe(state)
+        expect(wrapper.findComponent(icon).exists()).toBe(true)
+    })
+
+    it("should keep dimming a skipped task's plugin icon, as the full card does", () => {
+        const wrapper = mountBasicNode({lod: "pill", state: "SKIPPED"})
+
+        expect(wrapper.find(".node-pill .icon--dimmed").exists()).toBe(true)
+    })
+
+    it("should render no status glyph for a task that has not run", () => {
+        const wrapper = mountBasicNode({lod: "pill"})
+
+        expect(wrapper.find(".node-pill").exists()).toBe(true)
+        expect(wrapper.find(PILL_STATUS).exists()).toBe(false)
+    })
+})
+
+describe("BasicNode pill status at low zoom (kestra-io/kestra#21619)", () => {
+    const ringWidthOf = (zoom: number) =>
+        mountBasicNode({lod: "pill", state: "FAILED"}, {}, zoom).find(PILL).attributes("style")
+    const glyphScaleOf = (zoom: number) =>
+        mountBasicNode({lod: "pill", state: "FAILED"}, {}, zoom).find(PILL_STATUS).attributes("style")
+
+    it("should widen the state ring as the canvas zooms out, so it survives in screen pixels", () => {
+        expect(ringWidthOf(ZOOM_LOD.PILL)).toContain("border-width: 2px")
+        expect(ringWidthOf(0.29)).toContain("border-width: 3px")
+        expect(ringWidthOf(0.25)).toContain("border-width: 4px")
+    })
+
+    it("should stop widening the ring at the cap, so a very large graph cannot grow a ring over its own pill", () => {
+        expect(ringWidthOf(0.1)).toContain(`border-width: ${PILL_COMPENSATION.RING_MAX}px`)
+        expect(ringWidthOf(0.02)).toContain(`border-width: ${PILL_COMPENSATION.RING_MAX}px`)
+    })
+
+    it("should leave the ring at its natural width once the cards are back", () => {
+        expect(ringWidthOf(1)).toContain("border-width: 1px")
+    })
+
+    it("should leave a pill with no execution state at its authored width, however far out the canvas is", () => {
+        for (const zoom of [ZOOM_LOD.PILL, 0.29, 0.02]) {
+            const wrapper = mountBasicNode({lod: "pill"}, {}, zoom)
+
+            expect(wrapper.find(PILL).exists()).toBe(true)
+            expect(wrapper.find(PILL).attributes("style")).toBeUndefined()
+        }
+    })
+
+    it("should enlarge the status glyph at low zoom but never past the cap that keeps it on its pill", () => {
+        expect(glyphScaleOf(1)).toContain("scale(1)")
+        expect(glyphScaleOf(0.29)).toContain(`scale(${PILL_COMPENSATION.GLYPH_MAX})`)
+        expect(glyphScaleOf(0.02)).toContain(`scale(${PILL_COMPENSATION.GLYPH_MAX})`)
+    })
+
+    it.each(["SUCCESS", "FAILED", "SKIPPED", "WARNING"])("should compensate a %s task at fit-to-view zoom", (state) => {
+        const wrapper = mountBasicNode({lod: "pill", state}, {}, 0.29)
+
+        expect(wrapper.find(PILL).attributes("style")).toContain("border-width: 3px")
+        expect(wrapper.find(PILL_STATUS).attributes("style")).toContain(`scale(${PILL_COMPENSATION.GLYPH_MAX})`)
+    })
+
+    it("should keep the status tint on the pill alongside the widened ring", () => {
+        const style = mountBasicNode({lod: "pill", state: "FAILED"}, {}, 0.29).find(PILL).attributes("style")
+
+        expect(style).toContain("--ks-topology-bg-errors")
+        expect(style).toContain("--ks-topology-border-errors")
+    })
+
+    it("should scale nothing when no compensation is provided, so a node outside a canvas still renders", () => {
+        const wrapper = mountBasicNode({lod: "pill", state: "FAILED"})
+
+        expect(wrapper.find(PILL).attributes("style")).toContain("border-width: 1px")
+        expect(wrapper.find(PILL_STATUS).attributes("style")).toContain("scale(1)")
     })
 })

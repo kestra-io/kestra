@@ -73,7 +73,7 @@
     onBeforeUnmount(() => observer?.disconnect())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprint-icon-stack {
         display: flex;
         align-items: center;
@@ -81,32 +81,32 @@
         min-width: 0;
         flex: 1 1 auto;
         overflow: hidden;
+    }
 
-        &__icon {
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: var(--ks-spacing-5);
-            height: var(--ks-spacing-5);
-            padding: 2px;
-            background-color: var(--ks-bg-plugin-icon);
-            border: 1px solid var(--ks-border-default);
-            color: var(--ks-black);
-            border-radius: var(--ks-radius-base);
-        }
+    .blueprint-icon-stack__icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-spacing-5);
+        height: var(--ks-spacing-5);
+        padding: 2px;
+        background-color: var(--ks-bg-plugin-icon);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-black);
+        border-radius: var(--ks-radius-base);
+    }
 
-        &__more {
-            width: var(--ks-spacing-5);
-            height: var(--ks-spacing-5);
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--ks-bg-tag);
-            border-radius: var(--ks-radius-base);
-            font-size: var(--ks-font-size-2xs);
-            color: var(--ks-text-primary);
-        }
+    .blueprint-icon-stack__more {
+        width: var(--ks-spacing-5);
+        height: var(--ks-spacing-5);
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--ks-bg-tag);
+        border-radius: var(--ks-radius-base);
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-primary);
     }
 </style>

@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, watchEffect} from "vue"
+import {themes} from "@kestra-io/plumage"
 import KsEditor from "./KsEditor.vue"
 
 const meta: Meta<typeof KsEditor> = {
@@ -9,7 +10,7 @@ const meta: Meta<typeof KsEditor> = {
     argTypes: {
         lang: {control: "select", options: ["yaml", "json", "python", "javascript", "typescript", "shell", "markdown", "plaintext", "yaml-pebble"]},
         schemaType: {control: "select", options: [undefined, "flow", "dashboard", "app", "testsuites", "section"]},
-        theme: {control: "select", options: ["dark", "light", "vs"]},
+        theme: {control: "select", options: themes.map(theme => theme.name)},
         inline: {control: "boolean"},
         readOnly: {control: "boolean"},
         navbar: {control: "boolean"},
@@ -46,7 +47,16 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px;height:360px\"><ks-editor v-model=\"value\" v-bind=\"args\" /></div>",
     }),
-    args: {lang: "yaml", theme: "dark"},
+    args: {
+        lang: "yaml",
+        theme: "dark",
+        path: "",
+        placeholder: "",
+        label: "",
+        readOnly: false,
+        inline: false,
+        navbar: true,
+    },
 }
 
 export const FlowSchema: Story = {
@@ -55,7 +65,7 @@ export const FlowSchema: Story = {
         setup() { return {value: ref(YAML_SAMPLE)} },
         template: "<div style=\"padding:24px;height:420px\"><ks-editor v-model=\"value\" lang=\"yaml\" schemaType=\"flow\" /></div>",
     }),
-    parameters: {docs: {description: {story: "With `schemaType=flow`, pebble `{{ }}` highlighting is auto-enabled and duplicate task-id markers are added on parse errors. Autocompletion is wired by the consumer via `configureLanguage` prop."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "With `schemaType=flow`, pebble `{{ }}` highlighting is auto-enabled and duplicate task-id markers are added on parse errors. Autocompletion is wired by the consumer via `configureLanguage` prop."}}},
 }
 
 export const Inline: Story = {
@@ -64,7 +74,7 @@ export const Inline: Story = {
         setup() { return {value: ref("hello = {{ flow.id }}")} },
         template: "<div style=\"padding:24px;width:480px\"><ks-editor v-model=\"value\" lang=\"yaml-pebble\" :inline=\"true\" /></div>",
     }),
-    parameters: {docs: {description: {story: "Single-line variant — navbar suppressed, height clamped to one line, no minimap, no line numbers."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "Single-line variant — navbar suppressed, height clamped to one line, no minimap, no line numbers."}}},
 }
 
 export const Diff: Story = {
@@ -77,7 +87,7 @@ export const Diff: Story = {
         },
         template: "<div style=\"padding:24px;height:420px\"><ks-editor v-model=\"modified\" :original=\"original\" lang=\"yaml\" /></div>",
     }),
-    parameters: {docs: {description: {story: "Passing `original` mounts the diff editor. Toggle `options.diffSideBySide` for inline vs side-by-side."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "Passing `original` mounts the diff editor. Toggle `options.diffSideBySide` for inline vs side-by-side."}}},
 }
 
 export const Json: Story = {
@@ -86,10 +96,11 @@ export const Json: Story = {
         setup() { return {value: ref(JSON_SAMPLE)} },
         template: "<div style=\"padding:24px;height:360px\"><ks-editor v-model=\"value\" lang=\"json\" /></div>",
     }),
-    parameters: {docs: {description: {story: "JSON mode. Pebble highlighting is OFF by default (no flow-class schemaType)."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "JSON mode. Pebble highlighting is OFF by default (no flow-class schemaType)."}}},
 }
 
 export const ReadOnly: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsEditor},
         setup() { return {value: ref(YAML_SAMPLE)} },
@@ -98,6 +109,7 @@ export const ReadOnly: Story = {
 }
 
 export const LightTheme: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsEditor},
         setup() { return {value: ref(YAML_SAMPLE)} },
@@ -111,10 +123,11 @@ export const Plaintext: Story = {
         setup() { return {value: ref("Plain text with {{ pebble }} that should NOT highlight (no schemaType).")} },
         template: "<div style=\"padding:24px;height:200px\"><ks-editor v-model=\"value\" lang=\"plaintext\" /></div>",
     }),
-    parameters: {docs: {description: {story: "Plaintext (e.g. file preview, audit log content). Pebble highlight off by default — flow-only feature."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "Plaintext (e.g. file preview, audit log content). Pebble highlight off by default — flow-only feature."}}},
 }
 
 export const WithPlaceholder: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsEditor},
         setup() { return {value: ref("")} },
@@ -123,6 +136,7 @@ export const WithPlaceholder: Story = {
 }
 
 export const WithLabel: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsEditor},
         setup() { return {value: ref(YAML_SAMPLE)} },
@@ -189,6 +203,7 @@ async function toleratingMonacoCancelledOnDispose(run: () => void): Promise<void
 }
 
 export const ExposedApi: Story = {
+    parameters: {controls: {disable: true}},
     render: handleStory("api", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
     play: async () => {
         await settled("api")
@@ -206,6 +221,7 @@ export const ExposedApi: Story = {
 }
 
 export const HighlightsAndDestroy: Story = {
+    parameters: {controls: {disable: true}},
     render: handleStory("lifecycle", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
     play: async () => {
         await settled("lifecycle")
@@ -243,7 +259,7 @@ export const EmitsFocusEvent: Story = {
         const count = canvasElement.querySelector("[data-testid='focus-count']")?.textContent
         if (count !== "1") throw new Error("KsEditor did not emit 'focus' when the editor gained focus")
     },
-    parameters: {docs: {description: {story: "The 'focus' event fires whenever the Monaco editor gains focus — consumers (e.g. the block editor's Inputs chip panel) use it to know which expression field to insert a clicked chip into."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "The 'focus' event fires whenever the Monaco editor gains focus — consumers (e.g. the block editor's Inputs chip panel) use it to know which expression field to insert a clicked chip into."}}},
 }
 
 export const InsertTextAtCursor: Story = {
@@ -260,7 +276,7 @@ export const InsertTextAtCursor: Story = {
             throw new Error("insertTextAtCursor did not insert the text at the cursor position")
         }
     },
-    parameters: {docs: {description: {story: "insertTextAtCursor() inserts arbitrary text at the current cursor position — used to insert an Inputs-panel chip into a focused expression field via click, mirroring the existing drag-and-drop insertion."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "insertTextAtCursor() inserts arbitrary text at the current cursor position — used to insert an Inputs-panel chip into a focused expression field via click, mirroring the existing drag-and-drop insertion."}}},
 }
 
 export const InsertTextAtCursorReplacesSelection: Story = {
@@ -277,10 +293,11 @@ export const InsertTextAtCursorReplacesSelection: Story = {
             throw new Error("insertTextAtCursor did not replace the active selection")
         }
     },
-    parameters: {docs: {description: {story: "insertTextAtCursor() replaces an active selection instead of inserting at its collapsed position, matching the plain-field chip-insertion behavior (insertAtCaret)."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "insertTextAtCursor() replaces an active selection instead of inserting at its collapsed position, matching the plain-field chip-insertion behavior (insertAtCaret)."}}},
 }
 
 export const DiffResolvesDiffEditor: Story = {
+    parameters: {controls: {disable: true}},
     render: handleStory("diff", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" original=\"id: before\" lang=\"yaml\" /></div>"),
     play: async () => {
         await settled("diff")
@@ -290,6 +307,7 @@ export const DiffResolvesDiffEditor: Story = {
 }
 
 export const InstallsWindowHelpers: Story = {
+    parameters: {controls: {disable: true}},
     render: handleStory("helpers", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
     play: async () => {
         await settled("helpers")

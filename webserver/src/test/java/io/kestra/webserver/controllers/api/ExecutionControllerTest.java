@@ -1384,7 +1384,7 @@ class ExecutionControllerTest {
         String content = client.toBlocking().retrieve(GET(filesUrl + "?path=" + encodedPath), String.class);
 
         // Then
-        assertThat(fileUri.toString()).isEqualTo("kestra:///io/kestra/test-nsfile-uri/_files/orders.csv");
+        assertThat(fileUri.toString()).isEqualTo("kestra://io/kestra/test-nsfile-uri/_files/orders.csv");
         assertThat(metas.getSize()).isEqualTo(csv.length());
         assertThat(preview).containsEntry("extension", "csv");
         assertThat(content).isEqualTo(csv);
@@ -1407,7 +1407,7 @@ class ExecutionControllerTest {
         String second = client.toBlocking().retrieve(GET(filesUrl + URLEncoder.encode(secondUri.toString(), StandardCharsets.UTF_8)), String.class);
 
         // Then
-        assertThat(secondUri.toString()).isEqualTo("kestra:///io/kestra/test-nsfile-revision/_files/orders.csv.v2");
+        assertThat(secondUri.toString()).isEqualTo("kestra://io/kestra/test-nsfile-revision/_files/orders.csv.v2");
         assertThat(first).isEqualTo("first");
         assertThat(second).isEqualTo("second");
     }

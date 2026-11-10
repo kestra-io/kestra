@@ -372,9 +372,12 @@ public class StorageContext {
      * the file must still be resolved through {@link Namespace}.
      */
     public static boolean isInNamespaceFiles(String namespace, URI path) {
-        return path.getPath() != null
-            && !FileUtils.isParentTraversal(path)
-            && path.getPath().startsWith(String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespaceAsPath(namespace)) + "/");
+        if (path.getPath() == null) {
+            return false;
+        }
+        String logicalPath = logicalPath(path);
+        return !FileUtils.isParentTraversal(logicalPath)
+            && logicalPath.startsWith(namespaceFilePrefix(namespace) + "/");
     }
 
     /**

@@ -57,10 +57,7 @@ public class ListKvEntriesTool implements McpPlatformTool {
         @QueryFilterFormat(QueryFilter.Resource.KV_METADATA) List<QueryFilter> filters,
         @P(name = "page", value = "The 1-based page of entries to read; omit for the first page", required = false) Integer page,
         final AgentCallContext.Context context) {
-        if (page != null && page < 1) {
-            throw new IllegalArgumentException("Page must be 1 or greater, got %d.".formatted(page));
-        }
-        int pageNumber = page == null ? 1 : page;
+        int pageNumber = ToolPages.pageNumber(page);
 
         ArrayListTotal<KVEntry> entries = KvEntryTools.io(
             () -> kvService.list(PageableUtils.from(pageNumber, PAGE_SIZE, SORT), context.tenant(), null, filters)

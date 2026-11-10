@@ -1339,6 +1339,8 @@
     "pause backfill": "backfill 일시 중지",
     "continue backfills": "backfill 계속",
     "delete backfills": "backfill 삭제",
+    "delete backfill confirm": "trigger {id}의 backfill을 삭제하시겠습니까?",
+    "delete backfill success": "trigger {id}의 backfill이 삭제되었습니다",
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
@@ -2351,6 +2353,7 @@
       "default": "기본 대시보드",
       "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
+      "overdue": "기한 초과 — {date}",
       "edition": {
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
@@ -2373,7 +2376,8 @@
         "paused": "일시 중지됨",
         "success": "성공",
         "warning": "경고",
-        "failed": "실패"
+        "failed": "실패",
+        "upcoming": "예정됨"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "flow 테스트 보기"
       },
       "errors": {
-        "label": "{count} 오류"
+        "label": "{count} 오류",
+        "action": "{count}개의 오류, 다음 오류로 이동"
       }
     },
     "invalid_source_code": "잘못된 소스 코드",

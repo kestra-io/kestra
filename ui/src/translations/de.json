@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill pausieren",
     "continue backfills": "Backfills fortsetzen",
     "delete backfills": "Backfills löschen",
+    "delete backfill confirm": "Backfill von Trigger {id} löschen?",
+    "delete backfill success": "Backfill von Trigger {id} wurde gelöscht",
     "pause backfills": "Backfills pausieren",
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
@@ -2351,6 +2353,7 @@
       "default": "Standard-Dashboard",
       "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
+      "overdue": "Überfällig — {date}",
       "edition": {
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
@@ -2373,7 +2376,8 @@
         "paused": "Pausiert",
         "success": "Erfolg",
         "warning": "Warnung",
-        "failed": "Fehlgeschlagen"
+        "failed": "Fehlgeschlagen",
+        "upcoming": "Bevorstehend"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Flow-Tests anzeigen"
       },
       "errors": {
-        "label": "{count} Fehler"
+        "label": "{count} Fehler",
+        "action": "{count} Fehler, zum nächsten Fehler springen"
       }
     },
     "invalid_source_code": "Ungültiger Quellcode",

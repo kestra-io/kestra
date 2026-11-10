@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill को रोकें",
     "continue backfills": "Backfills जारी रखें",
     "delete backfills": "Backfills हटाएं",
+    "delete backfill confirm": "Trigger {id} का Backfill हटाएं?",
+    "delete backfill success": "Trigger {id} का Backfill हटा दिया गया है",
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
@@ -2351,6 +2353,7 @@
       "default": "डिफ़ॉल्ट डैशबोर्ड",
       "set_default": "डिफ़ॉल्ट के रूप में सेट करें",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
+      "overdue": "देय तिथि से अधिक — {date}",
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
         "chart": "इस चार्ट को संपादित करें"
@@ -2373,7 +2376,8 @@
         "paused": "रुका हुआ",
         "success": "सफलता",
         "warning": "चेतावनी",
-        "failed": "विफल"
+        "failed": "विफल",
+        "upcoming": "आगामी"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "flow परीक्षण देखें"
       },
       "errors": {
-        "label": "{count} त्रुटि(याँ)"
+        "label": "{count} त्रुटि(याँ)",
+        "action": "{count} त्रुटि(याँ), अगली त्रुटि पर जाएं"
       }
     },
     "invalid_source_code": "अमान्य स्रोत कोड",

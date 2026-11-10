@@ -86,7 +86,7 @@
                         <KsSegmented
                             :modelValue="chartMode"
                             :options="chartModeOptions"
-                            size="small"
+                            size="default"
                             @change="(value) => onChartModeChange(value as ChartMode)"
                         />
                     </template>

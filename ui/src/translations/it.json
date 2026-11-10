@@ -1339,6 +1339,8 @@
     "pause backfill": "Metti in pausa il backfill",
     "continue backfills": "Continua i backfills",
     "delete backfills": "Elimina i backfills",
+    "delete backfill confirm": "Eliminare il backfill del trigger {id}?",
+    "delete backfill success": "Il backfill del trigger {id} è stato eliminato",
     "pause backfills": "Metti in pausa i backfills",
     "backfill executions": "Esecuzioni di backfill",
     "execute backfill": "Esegui backfill",
@@ -2351,6 +2353,7 @@
       "default": "Dashboard predefinito",
       "set_default": "Imposta come predefinito",
       "empty": "Non ci sono risultati da mostrare.",
+      "overdue": "In ritardo — {date}",
       "edition": {
         "label": "Modifica Dashboard",
         "chart": "Modifica questo grafico"
@@ -2373,7 +2376,8 @@
         "paused": "In pausa",
         "success": "Successo",
         "warning": "Avviso",
-        "failed": "Fallito"
+        "failed": "Fallito",
+        "upcoming": "Prossimamente"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Visualizza i test del flow"
       },
       "errors": {
-        "label": "{count} Errore/i"
+        "label": "{count} Errore/i",
+        "action": "{count} errore/i, vai all'errore successivo"
       }
     },
     "invalid_source_code": "Codice sorgente non valido",

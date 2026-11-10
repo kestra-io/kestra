@@ -1339,6 +1339,8 @@
     "pause backfill": "Mettre en pause le backfill",
     "continue backfills": "Continuer les backfills",
     "delete backfills": "Supprimer les backfills",
+    "delete backfill confirm": "Supprimer le backfill du trigger {id} ?",
+    "delete backfill success": "Le backfill du trigger {id} a été supprimé",
     "pause backfills": "Mettre en pause les backfills",
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
@@ -2351,6 +2353,7 @@
       "default": "Tableau de bord par défaut",
       "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
+      "overdue": "En retard — {date}",
       "edition": {
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
@@ -2373,7 +2376,8 @@
         "paused": "En pause",
         "success": "Succès",
         "warning": "Avertissement",
-        "failed": "Échoué"
+        "failed": "Échoué",
+        "upcoming": "À venir"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Voir les tests de flow"
       },
       "errors": {
-        "label": "{count} Erreur(s)"
+        "label": "{count} Erreur(s)",
+        "action": "{count} erreur(s), aller à l'erreur suivante"
       }
     },
     "invalid_source_code": "Code source invalide",

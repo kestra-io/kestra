@@ -1805,15 +1805,30 @@ public class ExecutionController {
                     );
                 }
 
-                if (originalInput.getDefaults() != null && newInput.getDefaults() == null) {
+                if (!Objects.equals(originalInput.getDefaults(), newInput.getDefaults())) {
                     throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults has been removed. Replay the whole execution instead."
+                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults have changed. Replay the whole execution instead."
                             .formatted(taskRunId, revision, originalInput.getId())
                     );
                 }
             }
 
-            // 3. refuse if any variable definition changed
+            // 3. Refuse if an input has been added
+            for (Input<?> newInput : ListUtils.emptyOnNull(newFlow.getInputs())) {
+                Input<?> originalInput = ListUtils.emptyOnNull(executionflow.getInputs()).stream()
+                    .filter(input -> input.getId().equals(newInput.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+                if (originalInput == null) {
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been added. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, newInput.getId())
+                    );
+                }
+            }
+
+            // 4. refuse if any variable definition changed
             for (Map.Entry<String, Object> originalVar : MapUtils.emptyOnNull(executionflow.getVariables()).entrySet()) {
                 Object newVar = MapUtils.emptyOnNull(newFlow.getVariables()).get(originalVar.getKey());
 
@@ -1839,9 +1854,14 @@ public class ExecutionController {
         for (int i = 0; i < originalTasks.size(); i++) {
             Task originalTask = originalTasks.get(i);
             Task newTask = newTasks.size() > i ? newTasks.get(i) : null;
-            if (newTask == null || !originalTask.getId().equals(newTask.getId())) {
+            if (newTask == null) {
                 throw new ConflictException(
                     "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
+                );
+            }
+            if (!originalTask.getId().equals(newTask.getId())) {
+                throw new ConflictException(
+                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been moved. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
                 );
             }
             if (originalTask.getId().equals(targetTaskId)) {

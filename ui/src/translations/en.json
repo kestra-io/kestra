@@ -451,7 +451,7 @@
         "whole_action": "Replay the whole execution instead",
         "whole_title": "Revision {revision} can be replayed as a whole execution.",
         "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
-        "confirm_from_task": "Replay from task",
+        "confirm_from_task": "Replay from {taskId}",
         "confirm_whole": "Replay whole execution"
     },
     "change execution state done": "Execution state updated",

@@ -92,7 +92,6 @@ export function isPebbleHoverEnabled(): boolean {
     return localStorage.getItem(storageKeys.PEBBLE_HOVER) !== "false"
 }
 
-/** Hover contents for `symbols`, resolved from `ref` against the flow `source`; null when there is nothing to show. */
 export async function pebbleHoverContents(
     ref: PebbleReference,
     symbols: FlowSymbol[],
@@ -144,7 +143,6 @@ export function togglePebbleHover(): boolean {
     return enabled
 }
 
-// The palette only lists an editor's own actions, so `monaco.editor.addEditorAction` would never show there.
 export function registerPebbleHoverToggle(disposables: monaco.IDisposable[], label: string, onToggled: (enabled: boolean) => void): void {
     const addToggle = (editor: monaco.editor.ICodeEditor) => {
         const standalone = editor as Partial<monaco.editor.IStandaloneCodeEditor>

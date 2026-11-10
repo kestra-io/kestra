@@ -145,6 +145,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LogLine from "../logs/LogLine.vue"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import {
         decodeSearchParams,
         encodeFiltersToQuery,
@@ -484,12 +485,13 @@
     const pageKey = props.embed ? "logsPage" : "page"
     const sizeKey = props.embed ? "logsSize" : "size"
     const urlPage = computed(() => Number(route.query[pageKey]) || 1)
-    const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query[sizeKey]))
 
     const pinToBottom = ref(false)
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
         pinToBottom.value = !props.embed
+        rememberPageSize(size)
         router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
     }
 

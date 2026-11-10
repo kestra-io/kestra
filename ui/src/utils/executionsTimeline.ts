@@ -6,6 +6,7 @@ export interface TimelineExecution {
     state: string;
     startMs: number;
     endMs: number;
+    ongoing?: boolean;
 }
 
 export interface TimelineExecutionWithLane extends TimelineExecution {

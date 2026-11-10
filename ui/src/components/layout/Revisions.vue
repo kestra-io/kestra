@@ -235,7 +235,7 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return ""
 
-        return dateFilter(updatedDate, "YYYY-MM-DD HH:mm")
+        return dateFilter(updatedDate)
     }
 
     function formatRevisionText(revision: number): string {

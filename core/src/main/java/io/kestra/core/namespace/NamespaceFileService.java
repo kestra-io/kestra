@@ -58,6 +58,13 @@ public class NamespaceFileService {
      * @return the paginated list of {@link NamespaceFile}.
      */
     public ArrayListTotal<NamespaceFile> find(Pageable pageable, String tenantId, String namespace, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchBehavior) {
+        return findMetadata(pageable, tenantId, namespace, filters, allowDeleted, fetchBehavior).map(NamespaceFile::fromMetadata);
+    }
+
+    /**
+     * Same as {@link #find} but keeps the stored metadata (size, dates, deletion flag) of each entry.
+     */
+    public ArrayListTotal<NamespaceFileMetadata> findMetadata(Pageable pageable, String tenantId, String namespace, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchBehavior) {
         List<QueryFilter> allFilters = Stream.concat(
             Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()),
             filters.stream()
@@ -69,7 +76,7 @@ public class NamespaceFileService {
             allFilters,
             allowDeleted,
             fetchBehavior
-        ).map(NamespaceFile::fromMetadata);
+        );
     }
 
     /**

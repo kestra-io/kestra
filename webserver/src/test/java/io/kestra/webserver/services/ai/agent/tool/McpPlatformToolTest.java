@@ -40,7 +40,8 @@ class McpPlatformToolTest {
             "read_flow", "list_flows", "read_execution", "list_executions", "read_execution_logs",
             "search_plugins", "get_plugin_schema", "validate_flow", "restart_execution",
             "search_flow_sources", "list_flow_revisions", "list_flow_dependencies", "list_flow_triggers",
-            "create_flow", "update_flow", "enable_flow", "disable_flow", "delete_flow"
+            "create_flow", "update_flow", "enable_flow", "disable_flow", "delete_flow",
+            "list_namespace_files", "read_namespace_file", "write_namespace_file", "create_namespace_directory", "move_namespace_file", "delete_namespace_file"
         );
         assertThat(exposed).allSatisfy(entry ->
         {

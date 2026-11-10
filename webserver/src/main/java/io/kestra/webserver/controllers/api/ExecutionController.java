@@ -1339,7 +1339,7 @@ public class ExecutionController {
      */
     private InputStream namespaceFileContent(Execution execution, URI path) throws IOException {
         Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
-        Path file = Path.of(StorageContext.namespaceFilePrefix(execution.getNamespace())).relativize(Path.of(path.getPath()));
+        Path file = Path.of(StorageContext.namespaceFilePrefix(execution.getNamespace())).relativize(Path.of(StorageContext.logicalPath(path)));
 
         Matcher revision = NAMESPACE_FILE_REVISION.matcher(file.toString());
         if (revision.matches() && Integer.parseInt(revision.group(2)) > 1) {

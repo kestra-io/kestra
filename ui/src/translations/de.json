@@ -2353,6 +2353,7 @@
       "default": "Standard-Dashboard",
       "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
+      "overdue": "Überfällig — {date}",
       "edition": {
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
@@ -2375,7 +2376,8 @@
         "paused": "Pausiert",
         "success": "Erfolg",
         "warning": "Warnung",
-        "failed": "Fehlgeschlagen"
+        "failed": "Fehlgeschlagen",
+        "upcoming": "Bevorstehend"
       }
     },
     "setup": {

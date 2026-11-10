@@ -57,7 +57,7 @@
     import {useI18n} from "vue-i18n"
     import {type KsBreadcrumbItem} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
-    import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginIconMap} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement, type PluginIconMap} from "../../utils/pluginUtils"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import PluginUnified from "./PluginUnified.vue"
@@ -116,6 +116,12 @@
                     ? elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
                     : [],
             )
+
+    const findCanonicalCls = (plugin: Plugin, cls: string): string | undefined =>
+        Object.entries(plugin ?? {})
+            .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+            .flatMap(([, elements]) => elements as PluginElement[])
+            .find(element => !element.deprecated && (element.cls === cls || element.aliases?.includes(cls)))?.cls
 
     const getPluginDisplayName = (plugin: Plugin): string | undefined => {
         return plugin?.manifest?.["X-Kestra-Title"]
@@ -262,9 +268,15 @@
 
         const pluginCls = editorPlugin.cls
         const pluginVersion = editorPlugin.version
-        const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls))
+        const canonicalCls = props.plugins.map(plugin => findCanonicalCls(plugin, pluginCls)).find(Boolean)
+        const matchingPlugin = canonicalCls
+            ? props.plugins.find(plugin => getPluginElements(plugin).includes(canonicalCls))
+            : undefined
 
         if (!matchingPlugin) {
+            navigationStack.value = []
+            currentGroup.value = ""
+            currentSubgroup.value = undefined
             currentDocumentationPlugin.value = editorPlugin
             currentView.value = "documentation"
             return
@@ -274,7 +286,7 @@
         currentGroup.value = matchingPlugin.group
         pushNavigationItem({title: formatPluginTitle(matchingPlugin.title) ?? capitalize(getSimpleType(matchingPlugin.group)), type: "group", data: {group: matchingPlugin.group}})
 
-        const subgroupName = findSubgroupForPlugin(matchingPlugin, pluginCls)
+        const subgroupName = findSubgroupForPlugin(matchingPlugin, canonicalCls ?? pluginCls)
         if (subgroupName) {
             currentSubgroup.value = subgroupName
             pushNavigationItem({title: getSubgroupTitle(currentGroup.value, subgroupName), type: "subgroup", data: {subgroup: subgroupName}})
@@ -285,7 +297,7 @@
         pushNavigationItem({title: getSimpleType(pluginCls), type: "element", data: {cls: pluginCls}})
         currentView.value = "documentation"
         const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value})
-        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin
+        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, version: pluginVersion, ...pluginData} : editorPlugin
     }
 
     const findSubgroupForPlugin = (plugin: Plugin, pluginCls: string) => {

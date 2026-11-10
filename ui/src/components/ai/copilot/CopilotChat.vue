@@ -373,6 +373,7 @@
     // prior CopilotChat instance sharing this same (persistent) flow store.
     watch(activeFlowPreview, (value) => {
         flowStore.previewSource = value
+        flowStore.previewBanner = undefined
     }, {immediate: true})
 
     /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back

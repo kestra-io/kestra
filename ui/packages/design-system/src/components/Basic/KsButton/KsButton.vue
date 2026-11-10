@@ -42,7 +42,16 @@
 </template>
 
 <script lang="ts">
-    export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+    import type {ButtonProps, ButtonType} from "element-plus"
+
+    export type KsButtonType = ButtonType
+
+    export interface KsButtonProps extends ButtonProps {
+        square?: boolean
+        block?: boolean
+        tooltip?: string
+        tooltipPlacement?: string
+    }
 
     interface KsButtonTone {
         border: string
@@ -60,7 +69,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, type Component} from "vue"
+    import {computed} from "vue"
 
     import {ElButton} from "element-plus"
 
@@ -69,26 +78,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        type?: KsButtonType
-        size?: "small" | "default" | "large" | ""
-        disabled?: boolean
-        icon?: string | object
-        nativeType?: "button" | "submit" | "reset"
-        loading?: boolean
-        text?: boolean
-        link?: boolean
-        bg?: boolean
-        autofocus?: boolean
-        round?: boolean
-        circle?: boolean
-        square?: boolean
-        block?: boolean
-        color?: string
-        tag?: string | Component
-        tooltip?: string
-        tooltipPlacement?: string
-    }>()
+    const props = defineProps<KsButtonProps>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

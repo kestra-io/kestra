@@ -29,6 +29,7 @@
                         :flow="flow"
                         :renderLabels="renderLabels"
                         mode="wizard"
+                        :hideRecapNavigation="!embed"
                         v-model="inputs"
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
@@ -85,14 +86,19 @@
             </KsTabs>
 
             <div class="bottom-buttons" v-if="!embed">
-                <div class="left-align">
-                    <KsFormItem>
-                        <KsButton v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
-                            {{ $t('prefill inputs') }}
-                        </KsButton>
-                    </KsFormItem>
+                <div class="secondary-actions">
+                    <KsButton
+                        v-if="openTab === 'inputs' && hasFormInputs && inputsOnRecap"
+                        :icon="ChevronLeft"
+                        @click="inputsFormRef?.goBack()"
+                    >
+                        {{ $t('back') }}
+                    </KsButton>
+                    <KsButton v-if="canPrefill" :icon="ContentCopy" @click="fillInputsFromExecution">
+                        {{ $t('prefill inputs') }}
+                    </KsButton>
                 </div>
-                <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                <div class="execute-row" v-if="!hasFormInputs || inputsOnRecap">
                     <ValidationMessages :messages="validationMessages" />
                     <span data-onboarding-target="flow-execute-confirm-button">
                         <KsButton
@@ -142,6 +148,7 @@
     import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import Play from "vue-material-design-icons/Play.vue"
     import Curl from "./Curl.vue"
     import WebhookCurl from "./WebhookCurl.vue"
@@ -323,6 +330,7 @@
     const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
 
     const canPrefill = computed(() =>
+        (openTab.value === "inputs" || openTab.value === "labels") &&
         Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
     )
 
@@ -500,38 +508,30 @@
 
 <style scoped>
     .flow-execution-checks-alerts {
-        margin-bottom: 1rem;
+        margin-bottom: var(--ks-spacing-4);
     }
 
     .draft-publish-action {
         margin-top: var(--ks-spacing-2);
     }
-    :deep(.kel-collapse) {
-        border-radius: var(--kel-border-radius-round);
-        border: 1px solid var(--ks-border-default);
-        background: var(--ks-bg-tag);
 
-        .kel-collapse-item__header {
-            background: transparent;
-            border-bottom: 1px solid var(--ks-border-default);
-            font-size: var(--ks-font-size-sm);
-        }
-
-        .kel-collapse-item__content {
-            background: var(--ks-bg-tag);
-            border-bottom: 1px solid var(--ks-border-default);
-        }
-
-        .kel-collapse-item__header, .kel-collapse-item__content {
-            &:last-child {
-                border-bottom-left-radius: var(--kel-border-radius-round);
-                border-bottom-right-radius: var(--kel-border-radius-round);
-            }
-        }
+    .bottom-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        margin-top: var(--ks-spacing-4);
     }
 
-    .right-align{
-        text-align: right;
+    .secondary-actions {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: var(--ks-spacing-2);
+
+        & > * {
+            margin: 0;
+        }
     }
 
     .execute-row {
@@ -543,6 +543,6 @@
     }
 
     .execution-pane {
-        margin-top: 1rem;
+        margin-top: var(--ks-spacing-4);
     }
 </style>

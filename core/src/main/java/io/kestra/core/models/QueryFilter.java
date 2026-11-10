@@ -204,12 +204,14 @@ public record QueryFilter(
         },
         // Governance policy scope (INSTANCE/TENANT/NAMESPACE) — distinct from SCOPE, which is bound to FlowScope
         // in both the request binder and the repository condition mapping.
+        @JsonProperty("policyScope")
         POLICY_SCOPE("policyScope") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("enforcement")
         ENFORCEMENT("enforcement") {
             @Override
             public List<Op> supportedOp() {
@@ -342,12 +344,14 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("severity")
         SEVERITY("severity") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("assignee")
         ASSIGNEE("assignee") {
             @Override
             public List<Op> supportedOp() {

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
@@ -130,6 +132,23 @@ public class NanoIDFuntionTest {
             "{{ nanoId(length='invalid') }}", Collections.emptyMap()
         )).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'length' must be a number");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"8.9", "0.5"})
+    void shouldThrowWhenLengthIsNotAWholeNumber(String length) {
+        assertThatThrownBy(() -> variableRenderer.render(
+            "{{ nanoId(length=" + length + ") }}", Collections.emptyMap()
+        )).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("'length' must be a whole number");
+    }
+
+    @Test
+    void checkDifferentLengthWithWholeDecimal() throws Exception {
+        String rendered = variableRenderer.render(
+            "{{ nanoId(length) }}", Map.of("length", 8.0)
+        );
+        assertThat(rendered.length()).isEqualTo(8);
     }
 
     @Test

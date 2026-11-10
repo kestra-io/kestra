@@ -55,12 +55,12 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
-import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.errors.ProblemType;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.exceptions.BulkValidationException;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -74,14 +74,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
@@ -253,19 +251,12 @@ public class FlowController {
     @Get(uri = "/search")
     @Operation(tags = { "Flows" }, summary = "Search for flows")
     public PagedResults<Flow> searchFlows(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by namespace in ascending order", value = "namespace:asc"),
-                @ExampleObject(name = "Sort by flow ID in descending order", value = "id:desc"),
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws HttpStatusException {
         return PagedResults.of(
             flowRepository.find(
-                PageableUtils.from(page, size, sort),
+                paging.toPageable(),
                 tenantService.resolveTenant(),
                 filters
             )
@@ -284,9 +275,7 @@ public class FlowController {
     @Get(uri = "/source")
     @Operation(tags = { "Flows" }, summary = "Search for flows source code")
     public PagedResults<SourceSearchResult> searchFlowsBySourceCode(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "Whether the query must match with exact case") @QueryValue(defaultValue = "false") boolean caseSensitive,
@@ -295,7 +284,7 @@ public class FlowController {
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
         return PagedResults.of(
             sourceSearchService.search(
-                PageableUtils.from(page, size, sort),
+                paging.toPageable(),
                 tenantService.resolveTenant(),
                 namespace,
                 query,

@@ -540,6 +540,12 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "This task was retried",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",

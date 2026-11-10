@@ -540,6 +540,12 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "refresh": "刷新",
     "filter by status": "按{status}状态筛选执行",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "此 task 已重试",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",

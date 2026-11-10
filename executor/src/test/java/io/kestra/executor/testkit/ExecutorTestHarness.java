@@ -306,6 +306,7 @@ public final class ExecutorTestHarness {
         this.killSwitchActionService = new KillSwitchActionService(executionStateStore, killQueue);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
         this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
+        Mockito.when(workerJobRunningStateStore.existsByKey(Mockito.anyString())).thenReturn(true);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
@@ -340,7 +341,8 @@ public final class ExecutorTestHarness {
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
-            new PausedTaskNotifier.NoopPausedTaskNotifier()
+            new PausedTaskNotifier.NoopPausedTaskNotifier(),
+            workerJobRunningStateStore
         );
 
         this.executionEventMessageHandler = new ExecutionEventMessageHandler(

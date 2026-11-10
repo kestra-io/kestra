@@ -1,4 +1,5 @@
 import {describe, it, expect, vi} from "vitest"
+import {KsEditor} from "@kestra-io/design-system"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import type {Flow} from "../../stores/flow"
 
@@ -27,16 +28,28 @@ const flow = {
 function curlFor(inputs: Record<string, unknown>, curlFlow: Flow = flow) {
     const wrapper = i18nMount(Curl, {
         props: {flow: curlFlow, inputs, verbose: false},
-        global: {stubs: {CopyToClipboard: true, KsEditor: true}},
+        global: {stubs},
     })
     const command = wrapper.findComponent(CopyToClipboard).props("text")
     wrapper.unmount()
     return command
 }
 
+const stubs = {CopyToClipboard: true, KsEditor: {props: {modelValue: String, lang: String, readOnly: Boolean}, template: "<div />"}}
+
 const URL = "'http://localhost:8080/api/v1/main/executions/company.team/dates'"
 
 describe("Curl", () => {
+    it("shows the copied command in a read-only shell editor", () => {
+        const wrapper = i18nMount(Curl, {props: {flow, inputs: {}, verbose: false}, global: {stubs}})
+        const editor = wrapper.findComponent(KsEditor)
+
+        expect(editor.props("modelValue")).toBe(wrapper.findComponent(CopyToClipboard).props("text"))
+        expect(editor.props("lang")).toBe("shell")
+        expect(editor.props("readOnly")).toBe(true)
+        wrapper.unmount()
+    })
+
     it.each([
         ["left untouched", undefined],
         ["cleared", null],
@@ -82,7 +95,7 @@ describe("Curl", () => {
     it("targets the replay endpoint of the execution when replaying", () => {
         const wrapper = i18nMount(Curl, {
             props: {flow, inputs: {}, verbose: false, replay: {executionId: "abc123", taskRunId: "tr1", revision: 3}},
-            global: {stubs: {CopyToClipboard: true, KsEditor: true}},
+            global: {stubs},
         })
         const command = wrapper.findComponent(CopyToClipboard).props("text")
         wrapper.unmount()

@@ -1,22 +1,24 @@
 <template>
     <div class="curl-wrapper">
-        <KsEditor
-            v-bind="editorBindings"
-            :modelValue="curlCommand"
-            lang="shell"
-            inline
-            :navbar="false"
-            readOnly
-            :options="{
-                fullHeight: false,
-                customHeight: 24,
-                editor: {
-                    padding: {top: 6, bottom: 6},
-                    guides: {indentation: false},
-                    wrappingIndent: 'indent',
-                },
-            }"
-        />
+        <div class="code">
+            <KsEditor
+                v-bind="editorBindings"
+                :modelValue="curlCommand"
+                lang="shell"
+                inline
+                :navbar="false"
+                readOnly
+                :options="{
+                    fullHeight: false,
+                    customHeight: 24,
+                    editor: {
+                        padding: {top: 6, bottom: 6},
+                        guides: {indentation: false},
+                        wrappingIndent: 'indent',
+                    },
+                }"
+            />
+        </div>
 
         <CopyToClipboard :text="curlCommand" />
 
@@ -165,6 +167,10 @@
 <style scoped>
     .curl-wrapper {
         position: relative;
+    }
+
+    .code {
+        padding-right: var(--ks-spacing-8);
     }
 
     .curl-alert {

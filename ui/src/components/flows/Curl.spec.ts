@@ -7,8 +7,12 @@ vi.mock("override/utils/route", () => ({
     basePath: () => "/api/v1/main",
     apiUrl: () => "http://localhost:8080/api/v1/main",
 }))
+vi.mock("../../composables/useEditorBindings", () => ({
+    useEditorBindings: () => ({}),
+}))
 
 import Curl from "./Curl.vue"
+import CopyToClipboard from "../layout/CopyToClipboard.vue"
 
 const flow = {
     id: "dates",
@@ -23,9 +27,9 @@ const flow = {
 function curlFor(inputs: Record<string, unknown>, curlFlow: Flow = flow) {
     const wrapper = i18nMount(Curl, {
         props: {flow: curlFlow, inputs, verbose: false},
-        global: {stubs: {CopyToClipboard: true}},
+        global: {stubs: {CopyToClipboard: true, KsEditor: true}},
     })
-    const command = wrapper.find("code").text()
+    const command = wrapper.findComponent(CopyToClipboard).props("text")
     wrapper.unmount()
     return command
 }
@@ -39,27 +43,27 @@ describe("Curl", () => {
         ["empty", ""],
     ])("omits optional DATE, TIME and DATETIME inputs that are %s", (_, value) => {
         expect(curlFor({d: value, t: value, dt: value}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  ${URL}`)
     })
 
     it("omits an empty DATE input and keeps a filled TIME input", () => {
         expect(curlFor({t: new Date(2026, 9, 26, 14, 5, 9)}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 't=14:05:09' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 't=14:05:09' \\\n  ${URL}`)
     })
 
     it("omits an empty TIME input and keeps a filled DATE input", () => {
         expect(curlFor({d: new Date(2026, 9, 26), t: null}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'd=2026-10-26' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 'd=2026-10-26' \\\n  ${URL}`)
     })
 
     it("sends a filled DATETIME input as an ISO instant", () => {
         expect(curlFor({dt: new Date(Date.UTC(2026, 9, 20, 8, 35, 9))}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'dt=2026-10-20T08:35:09.000Z' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 'dt=2026-10-20T08:35:09.000Z' \\\n  ${URL}`)
     })
 
     it("keeps an unparsable DATETIME value as is instead of throwing", () => {
         expect(curlFor({dt: "not-a-date"}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'dt=not-a-date' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 'dt=not-a-date' \\\n  ${URL}`)
     })
 
     it("sends the inputs of a FORM under their dotted id, next to the other inputs", () => {
@@ -72,19 +76,19 @@ describe("Curl", () => {
         } as unknown as Flow
 
         expect(curlFor({"env.region": "us-east-2", "env.day": new Date(2026, 0, 15), top: "custom"}, formFlow))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'env.region=us-east-2' -F 'env.day=2026-01-15' -F 'top=custom' ${URL}`)
+            .toBe(`curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 'env.region=us-east-2' \\\n  -F 'env.day=2026-01-15' \\\n  -F 'top=custom' \\\n  ${URL}`)
     })
 
     it("targets the replay endpoint of the execution when replaying", () => {
         const wrapper = i18nMount(Curl, {
             props: {flow, inputs: {}, verbose: false, replay: {executionId: "abc123", taskRunId: "tr1", revision: 3}},
-            global: {stubs: {CopyToClipboard: true}},
+            global: {stubs: {CopyToClipboard: true, KsEditor: true}},
         })
-        const command = wrapper.find("code").text()
+        const command = wrapper.findComponent(CopyToClipboard).props("text")
         wrapper.unmount()
 
         expect(command).toBe(
-            "curl -X POST -H 'Content-Type: multipart/form-data' " +
+            "curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  " +
             "'http://localhost:8080/api/v1/main/executions/abc123/actions/replay-with-inputs?taskRunId=tr1&revision=3'",
         )
     })
@@ -94,7 +98,7 @@ describe("Curl", () => {
 
         expect(curlFor({}, formFlow)).toBe(
             "curl -O 'https://huggingface.co/datasets/kestra/datasets/resolve/main/json/kestra.json' && \\\n" +
-            `curl -X POST -H 'Content-Type: multipart/form-data' -F 'upload.data=@kestra.json;filename=kestra.json' ${URL}`,
+            `curl -X POST \\\n  -H 'Content-Type: multipart/form-data' \\\n  -F 'upload.data=@kestra.json;filename=kestra.json' \\\n  ${URL}`,
         )
     })
 })

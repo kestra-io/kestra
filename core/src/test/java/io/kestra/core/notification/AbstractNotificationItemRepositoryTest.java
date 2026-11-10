@@ -54,24 +54,6 @@ public abstract class AbstractNotificationItemRepositoryTest {
     }
 
     @Test
-    void findPendingByOwner_skipsFinishedItemsAndOtherOwners() {
-        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
-        String owner = TestsUtils.randomString(this.getClass().getSimpleName());
-        notificationItemRepository.create(
-            List.of(
-                item(operationId, "res-1", null).toBuilder().owner(owner).build(),
-                item(operationId, "res-2", null, NotificationItemOutcome.SUCCEEDED).toBuilder().owner(owner).build(),
-                item(operationId, "res-3", null).toBuilder().owner("another-service").build(),
-                item(operationId, "res-4", null)
-            )
-        );
-
-        assertThat(notificationItemRepository.findPendingByOwner(owner))
-            .extracting(NotificationItem::getResourceId)
-            .containsExactly("res-1");
-    }
-
-    @Test
     void create() {
         String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
         List<NotificationItem> created = notificationItemRepository.create(

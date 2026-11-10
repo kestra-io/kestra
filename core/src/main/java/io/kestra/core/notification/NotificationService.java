@@ -90,17 +90,6 @@ public class NotificationService {
      * single implicit user (no real user model).
      */
     public void notifyAsyncOperation(@Nullable String userId, @Nullable String tenantId, String operationId, AsyncOperationType operationType, List<String> resourceIds) {
-        notifyAsyncOperation(userId, tenantId, operationId, operationType, resourceIds, null);
-    }
-
-    /**
-     * Same as {@link #notifyAsyncOperation(String, String, String, AsyncOperationType, List)}, for an
-     * operation run in-process by the service {@code owner} rather than from a durable queue: its
-     * items still {@code PENDING} when that service is reported dead are failed by
-     * {@link io.kestra.core.async.AsyncOperationResourceReleaser}.
-     */
-    public void notifyAsyncOperation(@Nullable String userId, @Nullable String tenantId, String operationId, AsyncOperationType operationType, List<String> resourceIds,
-        @Nullable String owner) {
         Notification created = createNotification(
             userId,
             tenantId,
@@ -120,7 +109,6 @@ public class NotificationService {
                             .operationId(operationId)
                             .tenantId(tenantId)
                             .resourceId(resourceId)
-                            .owner(owner)
                             .updated(now)
                             .build()
                     )
@@ -165,8 +153,7 @@ public class NotificationService {
 
     /**
      * Upserts the {@link NotificationItem} tracking {@code (operationId, resourceId)} to {@code outcome}
-     * and pushes an update to SSE followers. The row is replaced, so the item's {@code owner} is dropped,
-     * which only matters while the item is {@code PENDING}.
+     * and pushes an update to SSE followers.
      */
     public void updateNotificationItemOutcome(String operationId, @Nullable String tenantId, String resourceId, NotificationItemOutcome outcome, @Nullable String error) {
         notificationItemRepository.update(

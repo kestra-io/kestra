@@ -41,14 +41,6 @@ public class NotificationItem implements HasUID {
     @NotNull
     private Instant updated;
 
-    /**
-     * The id of the service running this item in-process, so the item can be failed once that
-     * service is reported dead (see {@link io.kestra.core.async.AsyncOperationResourceReleaser}).
-     * {@code null} when the item is processed from a durable queue, which outlives any one service.
-     */
-    @Nullable
-    private String owner;
-
     @Nullable
     private String error;
 

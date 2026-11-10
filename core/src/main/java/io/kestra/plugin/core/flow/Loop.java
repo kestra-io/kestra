@@ -289,8 +289,9 @@ public class Loop extends AbstractBranch<Loop.Output> {
         description = """
             They can be fetched from the execution context using the `outputs` output of the loop task run.
             The values are in the order in which iterations finished, not the order of `values`: with the default `concurrencyLimit` of 0, \
-            iterations run in parallel and the order can change between executions. To match a result to its input, read `item.value` from \
-            the same entry of the `outputs` output, or include `{{ item.value }}` in the output value."""
+            iterations run in parallel and the order can change between executions. To match a result to its input, use the iteration index \
+            rather than the value, since `values` can contain duplicates: read `item.iteration` from the same entry of the `outputs` output, \
+            or include `{{ item.index }}` in the output value."""
     )
     @PluginProperty(dynamic = true)
     @Valid

@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,14 +15,14 @@ import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.models.api.Pagination;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
@@ -32,8 +31,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
@@ -57,9 +55,7 @@ public class BlueprintController {
             + "Only top-level `QUERY` and `TAGS` conditions are honored; logical (AND/OR) and nested filter groups are rejected with a 400."
     )
     public PagedResults<ApiBlueprintItem> searchBlueprints(
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) Integer size,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "The blueprint kind") Kind kind,
         @Parameter(
             description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected."

@@ -242,6 +242,17 @@ class KVControllerTest {
         assertThat(body).doesNotContainIgnoringCase("order by");
     }
 
+    @Test
+    void shouldReturn422WhenListingKeysWithPageSizeAboveMaximum() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/kv?size=1001"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        assertThat(e.getResponse().getBody(String.class).orElse("")).contains("validation-failed", "\"pointer\":\"/size\"");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void listAllKeysSortsByUpdateDateAlias() throws IOException {

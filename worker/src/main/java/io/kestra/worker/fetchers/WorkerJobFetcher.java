@@ -1,6 +1,7 @@
 package io.kestra.worker.fetchers;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
@@ -13,6 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.event.Level;
+
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 
 import io.kestra.controller.GrpcChannelManager;
@@ -24,9 +29,14 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
@@ -454,6 +464,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
             } catch (Exception e) {
                 log.error("Error processing job payload: {}", e.getMessage(), e);
+                inFlightJobs.add(payload.getJobId());
+                Thread.ofVirtual().name("undecodable-job-" + payload.getJobId()).start(() -> failUndecodableJob(payload, e));
             }
         }
 
@@ -462,6 +474,39 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (receivedJobs > 0) {
             sendPermitsForReceivedJobs(observer, calculatePermits(), receivedJobs);
         }
+    }
+
+    /**
+     * Fails a task the worker cannot decode, typically because its plugin is not installed here, so that the
+     * execution ends instead of waiting forever for a result, and releases the slot the controller reserved for it.
+     */
+    private void failUndecodableJob(WorkerJobPayload payload, Exception error) {
+        try {
+            UndecodableJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), UndecodableJob.class);
+            if (job != null && job.taskRun() != null && (job.type() == null || WorkerTask.TYPE.equals(job.type()))) {
+                LogEntry logEntry = LogEntry.of(job.taskRun(), job.executionKind()).toBuilder()
+                    .level(Level.ERROR)
+                    .message(undecodableTaskMessage(error))
+                    .timestamp(Instant.now())
+                    .thread(Thread.currentThread().getName())
+                    .build();
+                workerQueueRegistry.getOrCreate(workerContext, LogEntry.class).put(logEntry);
+                workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class).put(new WorkerTaskResult(job.taskRun().fail()));
+            }
+        } catch (Exception e) {
+            log.error("Unable to fail the job '{}' that could not be decoded: {}", payload.getJobId(), e.getMessage(), e);
+        } finally {
+            onJobCompleted(payload.getJobId());
+        }
+    }
+
+    private String undecodableTaskMessage(Exception error) {
+        return Throwables.getCausalChain(error).stream()
+            .filter(InvalidTypeIdException.class::isInstance)
+            .map(InvalidTypeIdException.class::cast)
+            .findFirst()
+            .map(e -> "The task cannot run on worker '%s' because the plugin type '%s' is not installed on it.".formatted(workerContext.workerId(), e.getTypeId()))
+            .orElseGet(() -> "The task cannot run on worker '%s' because it could not be decoded: %s".formatted(workerContext.workerId(), Throwables.getRootCause(error).getMessage()));
     }
 
     /**
@@ -676,5 +721,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                 log.debug("Error cancelling stream: {}", e.getMessage());
             }
         }
+    }
+
+    private record UndecodableJob(String type, TaskRun taskRun, ExecutionKind executionKind) {
     }
 }

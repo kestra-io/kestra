@@ -251,7 +251,8 @@ public final class ExecutorTestHarness {
             new DisabledReusableInputsExpander(),
             new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
             Mockito.mock(SearchableDataRepositoryInterface.class),
-            new DisabledAssetInputResolver()
+            new DisabledAssetInputResolver(),
+            () -> Mockito.mock(FlowService.class)
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {

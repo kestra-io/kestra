@@ -52,6 +52,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(resolveParameters = false)
 class KVControllerTest {
@@ -436,16 +437,14 @@ class KVControllerTest {
 
     @Test
     void shouldRejectSetKeyValueWhenTtlIsNotAnIsoDuration() throws IOException {
-        HttpClientResponseException exception = Assertions.assertThrows(
+        assertThatThrownBy(() -> client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
+                .contentType(MediaType.TEXT_PLAIN)
+                .header("ttl", "not-a-duration")
+        )).isInstanceOfSatisfying(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(
-                HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
-                    .contentType(MediaType.TEXT_PLAIN)
-                    .header("ttl", "not-a-duration")
-            )
+            exception -> assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode())
         );
-
-        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(kvStore().exists("my-key")).isFalse();
     }
 

@@ -12,8 +12,26 @@ import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockAiService;
+import io.kestra.webserver.services.ai.amazon.bedrock.AmazonBedrockConfiguration;
+import io.kestra.webserver.services.ai.anthropic.AnthropicAiService;
+import io.kestra.webserver.services.ai.anthropic.AnthropicConfiguration;
+import io.kestra.webserver.services.ai.azure.openai.AzureOpenAiAiService;
+import io.kestra.webserver.services.ai.azure.openai.AzureOpenAiConfiguration;
+import io.kestra.webserver.services.ai.deepseek.DeepSeekAiService;
+import io.kestra.webserver.services.ai.deepseek.DeepSeekConfiguration;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
+import io.kestra.webserver.services.ai.gemini.vertexai.GoogleVertexAiAiService;
+import io.kestra.webserver.services.ai.gemini.vertexai.GoogleVertexAiConfiguration;
+import io.kestra.webserver.services.ai.mistralai.MistralAiAiService;
+import io.kestra.webserver.services.ai.mistralai.MistralAiConfiguration;
+import io.kestra.webserver.services.ai.ollama.OllamaAiService;
+import io.kestra.webserver.services.ai.ollama.OllamaConfiguration;
+import io.kestra.webserver.services.ai.openai.OpenAiAiService;
+import io.kestra.webserver.services.ai.openai.OpenAiConfiguration;
+import io.kestra.webserver.services.ai.openrouter.OpenRouterAiService;
+import io.kestra.webserver.services.ai.openrouter.OpenRouterConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
 
 import io.micronaut.context.annotation.Requires;
@@ -128,22 +146,57 @@ public class AiServiceManager {
             return null;
         }
 
-        if (!"gemini".equals(type)) {
-            throw new IllegalArgumentException(
-                "Unsupported AI provider type '" + type + "' for Kestra OSS. Only 'gemini' is supported. " +
-                    "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
-            );
-        }
-
         try {
             ObjectMapper mapper = JacksonMapper.ofJson().copy()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-            AiService<?> service = new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig,
-                expressionContextService, flowParsingService
-            );
+            AiService<?> service = switch (type) {
+                case "gemini" -> new GeminiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, GeminiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "openai" -> new OpenAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OpenAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "anthropic" -> new AnthropicAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AnthropicConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "ollama" -> new OllamaAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OllamaConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "open-router" -> new OpenRouterAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, OpenRouterConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "mistralai" -> new MistralAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, MistralAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "bedrock" -> new AmazonBedrockAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AmazonBedrockConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "deepseek" -> new DeepSeekAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, DeepSeekConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "azure-openai" -> new AzureOpenAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, AzureOpenAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                case "googlevertexai" -> new GoogleVertexAiAiService(
+                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners,
+                    mapper.convertValue(configMap, GoogleVertexAiConfiguration.class), expressionContextService, flowParsingService
+                );
+                default -> null;
+            };
+            if (service == null) {
+                log.warn("Unknown AI provider type '{}' for provider '{}'.", type, provider.id());
+                return null;
+            }
             if (this.kestraDocsContextTool != null) {
                 service.setKestraDocsContextTool(this.kestraDocsContextTool);
             }

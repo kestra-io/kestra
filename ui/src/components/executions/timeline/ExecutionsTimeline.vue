@@ -355,6 +355,7 @@
                 state: execution.state.current,
                 startMs: new Date(execution.state.startDate).getTime(),
                 endMs: execution.state.endDate ? new Date(execution.state.endDate).getTime() : Date.now(),
+                ongoing: !execution.state.endDate,
             }))
     }
 

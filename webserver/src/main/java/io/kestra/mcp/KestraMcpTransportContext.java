@@ -8,9 +8,11 @@ import lombok.EqualsAndHashCode;
 /**
  * The caller is deliberately left out of {@code equals}/{@code hashCode}: a session is identified by its
  * tenant, server and session id, and is looked up from paths that know nothing about who is calling.
+ * Whether the caller may use a session is checked separately, against the owner recorded by
+ * {@link McpSessionService}.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode(exclude = "userId")
 public class KestraMcpTransportContext implements McpTransportContext {
     private final String tenantId;

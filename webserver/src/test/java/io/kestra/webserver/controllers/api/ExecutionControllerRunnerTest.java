@@ -97,6 +97,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.kestra.core.junit.assertions.Problems;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.exceptions.ResponseClosedException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -113,6 +114,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
@@ -809,6 +811,33 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(executionsAfter.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldSendStartEventBeforeLookupWhenFollowingUnknownExecution() {
+        String tenantId = "followunknownexecution";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        for (String endpoint : List.of("/follow", "/follow-dependencies")) {
+            List<Event<ExecutionStatusEvent>> received = new CopyOnWriteArrayList<>();
+            AtomicReference<Long> startedAfter = new AtomicReference<>();
+            long begin = System.currentTimeMillis();
+
+            assertThatThrownBy(() -> sseClient
+                .eventStream("/api/v1/%s/executions/does-not-exist%s".formatted(tenantId, endpoint), ExecutionStatusEvent.class)
+                .doOnNext(event ->
+                {
+                    received.add(event);
+                    startedAfter.compareAndSet(null, System.currentTimeMillis() - begin);
+                })
+                .collectList()
+                .block(Duration.ofSeconds(30)))
+                .isInstanceOf(ResponseClosedException.class);
+
+            assertThat(received).extracting(Event::getId).containsExactly("start");
+            // the start event must not wait for the 10s lookup, otherwise the connection is only established once it ends
+            assertThat(startedAfter.get()).isLessThan(5_000L);
+        }
     }
 
     @Test
@@ -4018,6 +4047,43 @@ class ExecutionControllerRunnerTest {
         assertThat(eventsForFlow(terminatedEvents, childFlowId)).extracting(Event::getId).containsExactly("end");
         assertThat(eventsForFlow(terminatedEvents, parentFlowId)).extracting(Event::getId).containsExactly("end");
         assertThat(terminatedEvents.getLast().getId()).isEqualTo("end-all");
+    }
+
+    @Test
+    @LoadFlows(
+        value = { "flows/valids/follow-dependencies-loop-parent.yaml",
+            "flows/valids/follow-dependencies-partial-child.yaml" },
+        tenantId = "followdependenciesloopiterations"
+    )
+    void shouldIgnoreLoopIterationsWhenFollowingDependencies() {
+        // Given: a parent that is paused after its subflow and all its Loop iterations terminated.
+        // The iterations share the parent's flow and correlation id but are not the parent.
+        String tenantId = "followdependenciesloopiterations";
+        String parentFlowId = "follow-dependencies-loop-parent";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution parent = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, parentFlowId, null, false);
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isPaused());
+
+        // When: following the dependencies of the still-paused parent
+        List<Event<ExecutionStatusEvent>> events = new CopyOnWriteArrayList<>();
+        Disposable subscription = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .subscribe(events::add);
+
+        try {
+            await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(250))
+                .untilAsserted(() -> assertThat(eventsForFlow(events, parentFlowId)).isNotEmpty());
+
+            // Then: only the parent reports for its flow, and the stream stays open since it is still paused.
+            assertThat(eventsForFlow(events, parentFlowId)).extracting(event -> event.getData().executionId()).containsOnly(parent.getId());
+            assertThat(eventsForFlow(events, parentFlowId).getFirst().getId()).isEqualTo("progress");
+            assertThat(events).extracting(Event::getId).doesNotContain("end-all");
+        } finally {
+            subscription.dispose();
+        }
     }
 
     private static List<Event<ExecutionStatusEvent>> eventsForFlow(List<Event<ExecutionStatusEvent>> events, String flowId) {

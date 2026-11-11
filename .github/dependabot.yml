@@ -182,7 +182,7 @@ updates:
           ]
 
     ignore:
-      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint/parser which requires <6.0.0)
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
 
@@ -300,6 +300,11 @@ updates:
             "remark-*",
             "unified",
           ]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for ui/packages/slot-contracts
   - package-ecosystem: "npm"
@@ -426,6 +431,11 @@ updates:
             "@vue-flow/*",
           ]
 
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
   # Maintain dependencies for ui/packages/plumage
   - package-ecosystem: "npm"
     target-branch: develop
@@ -479,6 +489,11 @@ updates:
         applies-to: version-updates
         exclude-patterns: ["tsdown", "@types/*", "vitest", "@vitest/*"]
 
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
   # Maintain dependencies for the end-to-end tests
   - package-ecosystem: "npm"
     target-branch: develop
@@ -505,3 +520,8 @@ updates:
         applies-to: version-updates
         update-types: ["minor", "patch"]
         patterns: ["*"]
+
+    ignore:
+      # Ignore TypeScript major updates (most dependencies do not support v7 yet)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]

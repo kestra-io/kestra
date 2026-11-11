@@ -5,13 +5,16 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.eclipse.aether.ConfigurationProperties;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.MultiRuntimeException;
 import org.eclipse.aether.RepositorySystem;
@@ -59,6 +62,10 @@ public class MavenPluginDownloader implements Closeable {
     private static final String HTTP_PROXY_PORT = System.getProperty("http.proxyPort");
     private static final String HTTPS_PROXY_HOST = System.getProperty("https.proxyHost");
     private static final String HTTPS_PROXY_PORT = System.getProperty("https.proxyPort");
+    // Maven waits 30 minutes for the next byte by default, and an interrupt cannot end that wait, so a stalled download would hold its thread and the artifact lock.
+    private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofMinutes(2);
+    private static final String LOCK_WAIT_SECONDS = "aether.syncContext.named.time";
+    private static final long DEFAULT_LOCK_WAIT_SECONDS = 30;
 
     public static final String LATEST = "latest";
 
@@ -71,7 +78,7 @@ public class MavenPluginDownloader implements Closeable {
         @Nullable PluginsConfiguration pluginsConfiguration) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
-        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration.localRepositoryPath() : null);
+        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration : new PluginsConfiguration(null, null));
     }
 
     /**
@@ -99,6 +106,10 @@ public class MavenPluginDownloader implements Closeable {
             request.setRepositories(buildRemoteRepositories(this.repositoryConfigs));
 
             VersionRangeResult result = system.resolveVersionRange(session, request);
+            result.getExceptions().stream()
+                .filter(e -> !isNotFound(e))
+                .findFirst()
+                .ifPresent(e -> log.warn("Failed to list the versions of '{}' from at least one Maven repository, so the list may be incomplete.", dependency, e));
             return result.getVersions().stream().map(Object::toString).toList();
         } catch (VersionRangeResolutionException e) {
             log.debug("Failed to resolve all versions for '{}'", dependency);
@@ -221,8 +232,14 @@ public class MavenPluginDownloader implements Closeable {
             .toList();
     }
 
-    private RepositorySystemSession repositorySystemSession(RepositorySystem system, String localRepositoryPath) {
+    private RepositorySystemSession repositorySystemSession(RepositorySystem system, PluginsConfiguration configuration) {
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        Duration readTimeout = Optional.ofNullable(configuration.readTimeout()).orElse(DEFAULT_READ_TIMEOUT);
+        session.setConfigProperty(ConfigurationProperties.REQUEST_TIMEOUT, Math.toIntExact(readTimeout.toMillis()));
+        // A retry of a stalled download waits for its read timeout to release the artifact lock instead of failing on it.
+        session.setConfigProperty(LOCK_WAIT_SECONDS, readTimeout.toSeconds() + DEFAULT_LOCK_WAIT_SECONDS);
+
+        String localRepositoryPath = configuration.localRepositoryPath();
 
         if (localRepositoryPath == null) {
             try {

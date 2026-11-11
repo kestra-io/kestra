@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
-    "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",
+    "no_logs_data_title": "Nie znaleziono logów",
     "duration": "Czas trwania",
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas działania",
@@ -451,7 +451,7 @@
       "whole_action": "Zamiast tego powtórz całą egzekucję",
       "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
       "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
-      "confirm_from_task": "Replay z Taska",
+      "confirm_from_task": "Replay od {taskId}",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
     "change execution state done": "Status egzekucji zaktualizowany",
@@ -863,7 +863,7 @@
     "last execution date": "Data ostatniej egzekucji",
     "revisions": "Wersje",
     "no revisions found": "Dla tego Flow istnieje tylko jedna wersja",
-    "no revisions": "Brak wersji",
+    "no revisions": "Nie znaleziono wersji",
     "side-by-side": "obok siebie",
     "line-by-line": "linia po linii",
     "template": "Szablon",
@@ -1339,6 +1339,8 @@
     "pause backfill": "Wstrzymaj Backfill",
     "continue backfills": "Kontynuuj Backfille",
     "delete backfills": "Usuń Backfille",
+    "delete backfill confirm": "Usunąć backfill triggera {id}?",
+    "delete backfill success": "Backfill triggera {id} został usunięty",
     "pause backfills": "Wstrzymaj Backfille",
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
@@ -2351,6 +2353,7 @@
       "default": "Domyślny Dashboard",
       "set_default": "Ustaw jako domyślny",
       "empty": "Brak wyników do wyświetlenia.",
+      "overdue": "Zaległe — {date}",
       "edition": {
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
@@ -2373,7 +2376,8 @@
         "paused": "Wstrzymane",
         "success": "Sukces",
         "warning": "Ostrzeżenie",
-        "failed": "Nieudane"
+        "failed": "Nieudane",
+        "upcoming": "Nadchodzące"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Zobacz testy Flow"
       },
       "errors": {
-        "label": "{count} Błąd(y)"
+        "label": "{count} Błąd(y)",
+        "action": "{count} błąd(y), przejdź do następnego błędu"
       }
     },
     "invalid_source_code": "Nieprawidłowy kod źródłowy",

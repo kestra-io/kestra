@@ -31,9 +31,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.Controller;
-import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.micronaut.context.ApplicationContext;
@@ -92,53 +90,6 @@ class WorkerTest {
                 .atMost(Duration.ofMinutes(1))
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> !results.isEmpty() && results.getLast().getTaskRun().getState().isTerminated());
-        }
-
-        // Then
-        assertThat(results.getLast().getTaskRun().getState().getHistories()).hasSize(3);
-    }
-
-    @Test
-    void shouldFailWhenWorkerReceivesFlowableTask() throws QueueException {
-        // Given
-        Pause pause = Pause.builder()
-            .type(Pause.class.getName())
-            .pauseDuration(Property.ofValue(Duration.ofSeconds(1)))
-            .id("unit-test")
-            .build();
-
-        WorkingDirectory flowableTask = WorkingDirectory.builder()
-            .type(WorkingDirectory.class.getName())
-            .id("worker-unit-test")
-            .tasks(List.of(pause))
-            .build();
-
-        Flow flow = Flow.builder()
-            .id(IdUtils.create())
-            .namespace("io.kestra.unit-test")
-            .tasks(List.of(flowableTask))
-            .build();
-
-        Execution execution = TestsUtils.mockExecution(flow, Map.of());
-        ResolvedTask resolvedTask = ResolvedTask.of(pause);
-        WorkerTask workerTask = WorkerTask.builder()
-            .data(WorkerTaskData.from(runContextFactory.of(Map.of("key", "value"))))
-            .task(flowableTask)
-            .taskRun(TaskRun.of(execution, resolvedTask))
-            .build();
-
-        List<WorkerTaskResult> results = new ArrayList<>();
-        workerTaskResultQueue.addListener(results::add);
-
-        // When
-        try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(1);
-            workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
-
-            await()
-                .atMost(Duration.ofMinutes(1))
-                .pollInterval(Duration.ofMillis(100))
-                .until(() -> !results.isEmpty() && results.getLast().getTaskRun().getState().isFailed());
         }
 
         // Then

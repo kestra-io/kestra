@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
-    "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
+    "no_logs_data_title": "Keine Logs gefunden",
     "duration": "Dauer",
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
@@ -451,7 +451,7 @@
       "whole_action": "Die gesamte Execution stattdessen wiederholen",
       "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
       "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
-      "confirm_from_task": "Replay ab Task",
+      "confirm_from_task": "Replay ab {taskId}",
       "confirm_whole": "Ganze Execution wiederholen"
     },
     "change execution state done": "Execution-Status aktualisiert",
@@ -863,7 +863,7 @@
     "last execution date": "Letztes Execution-Datum",
     "revisions": "Revisionen",
     "no revisions found": "Für diesen Flow existiert nur eine Revision",
-    "no revisions": "Keine Revisionen",
+    "no revisions": "Keine Revisionen gefunden",
     "side-by-side": "Nebeneinander",
     "line-by-line": "Zeile für Zeile",
     "template": "Vorlage",
@@ -1339,6 +1339,8 @@
     "pause backfill": "Backfill pausieren",
     "continue backfills": "Backfills fortsetzen",
     "delete backfills": "Backfills löschen",
+    "delete backfill confirm": "Backfill von Trigger {id} löschen?",
+    "delete backfill success": "Backfill von Trigger {id} wurde gelöscht",
     "pause backfills": "Backfills pausieren",
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
@@ -2351,6 +2353,7 @@
       "default": "Standard-Dashboard",
       "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
+      "overdue": "Überfällig — {date}",
       "edition": {
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
@@ -2373,7 +2376,8 @@
         "paused": "Pausiert",
         "success": "Erfolg",
         "warning": "Warnung",
-        "failed": "Fehlgeschlagen"
+        "failed": "Fehlgeschlagen",
+        "upcoming": "Bevorstehend"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Flow-Tests anzeigen"
       },
       "errors": {
-        "label": "{count} Fehler"
+        "label": "{count} Fehler",
+        "action": "{count} Fehler, zum nächsten Fehler springen"
       }
     },
     "invalid_source_code": "Ungültiger Quellcode",

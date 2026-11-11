@@ -31,17 +31,18 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
-import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.worker.StickyWorkerRouting;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.executor.KillSwitchActionService;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
+import io.micronaut.context.BeanProvider;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import jakarta.inject.Inject;
@@ -61,7 +62,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final ExecutorService executorService;
-    private final WorkerQueueService workerGroupService;
     private final QuotaService quotaService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
@@ -70,8 +70,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final RunContextLoggerFactory runContextLoggerFactory;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
+    private final SLAService slaService;
     private final MetricRegistry metricRegistry;
     private final Tracer tracer;
+    private final BeanProvider<StickyWorkerRouting> stickyWorkerRouting;
 
     @Inject
     public ExecutionEventMessageHandler(
@@ -82,7 +84,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         ConcurrencyLimitStateStore concurrencyLimitStateStore,
         ConcurrencyLimitResolver concurrencyLimitResolver,
         ExecutorService executorService,
-        WorkerQueueService workerGroupService,
         QuotaService quotaService,
         FlowMetaStoreInterface flowMetaStore,
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
@@ -91,10 +92,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         RunContextLoggerFactory runContextLoggerFactory,
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
+        SLAService slaService,
         MetricRegistry metricRegistry,
         TracerFactory tracerFactory,
-        Clock clock) {
+        Clock clock,
+        BeanProvider<StickyWorkerRouting> stickyWorkerRouting) {
         this.clock = clock;
+        this.stickyWorkerRouting = stickyWorkerRouting;
         this.executionStateStore = executionStateStore;
         this.executionQueuedStateStore = executionQueuedStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
@@ -102,7 +106,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
         this.concurrencyLimitResolver = concurrencyLimitResolver;
         this.executorService = executorService;
-        this.workerGroupService = workerGroupService;
         this.quotaService = quotaService;
         this.flowMetaStore = flowMetaStore;
         this.workerJobEventQueue = workerJobEventQueue;
@@ -111,6 +114,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
+        this.slaService = slaService;
         this.metricRegistry = metricRegistry;
         this.tracer = tracerFactory.getTracer(DefaultExecutor.class, "EXECUTOR");
     }
@@ -121,8 +125,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         if (evaluationType != EvaluationType.PASS) {
             var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return Optional.empty();
+                return killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             }
         }
 
@@ -170,11 +173,16 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
+                                            var duration =  slaService.computeSLADuration(execution, monitoringSla);
+                                            if (duration.isEmpty()) {
+                                                continue;
+                                            }
                                             monitors.add(
                                                 SLAMonitor.builder()
                                                     .executionId(execution.getId())
                                                     .slaId(sla.getId())
-                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), duration.get()))
+                                                    .duration(duration.get())
                                                     .build()
                                             );
                                         }
@@ -307,6 +315,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+                            Execution processedExecution = executor.getExecution();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->
@@ -322,16 +331,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                Optional<WorkerQueueRouting> routing = executorService.resolveWorkerQueue(flow, processedExecution, workerTask, executorTask.runContext());
                                                 // Internal dispatch convention: null = default queue. SystemTask routing
                                                 // is enforced upstream in WorkerQueueService.
                                                 String workerQueueId = routing
                                                     .map(WorkerQueueRouting::workerQueueId)
                                                     .map(WorkerQueues::toDispatchKey)
                                                     .orElse(null);
-                                                if (workerTask.getTask() instanceof WorkingDirectory) {
-                                                    // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+                                                if (workerTask.getWorkingDirectoryId() != null && !(workerTask.getTask() instanceof WorkingDirectory.Open)) {
+                                                    emitToWorkingDirectoryWorker(processedExecution, workerTask, workerQueueId, workerTaskResults);
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
                                                     workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
@@ -452,6 +460,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 }
             )
         );
+    }
+
+    /**
+     * Sends a task of a WorkingDirectory to the worker holding its folder.
+     */
+    private void emitToWorkingDirectoryWorker(Execution execution, WorkerTask workerTask, String workerQueueId, List<WorkerTaskResult> workerTaskResults) throws QueueException {
+        String workerId = WorkingDirectory.boundWorkerId(execution, workerTask.getWorkingDirectoryId())
+            .orElseThrow(() -> new IllegalStateException("The WorkingDirectory task run '%s' has not been opened by any worker.".formatted(workerTask.getWorkingDirectoryId())));
+
+        WorkerTask submitted = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.SUBMITTED));
+        WorkerJobEvent event = stickyWorkerRouting.get().route(submitted, workerQueueId, workerId);
+        workerJobEventQueue.emit(event.key(), event);
+        workerTaskResults.add(new WorkerTaskResult(submitted.getTaskRun()));
     }
 
     private Execution fail(Execution message, Exception e) {

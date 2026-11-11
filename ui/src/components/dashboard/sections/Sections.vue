@@ -106,13 +106,20 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const chartsComponents = new Map<string, {
+    interface ChartComponent {
         refresh(): void;
+        exportChart?(): Chart;
         exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
-    }>()
+    }
+
+    const chartsComponents = new Map<string, ChartComponent>()
+
+    function isChartComponent(el: Element | ComponentPublicInstance | null): el is ComponentPublicInstance & ChartComponent {
+        return el !== null && typeof Reflect.get(el, "refresh") === "function"
+    }
 
     function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
-        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void})
+        if (isChartComponent(el)) chartsComponents.set(chartId, el)
         else chartsComponents.delete(chartId)
     }
 
@@ -199,9 +206,10 @@
     })
 
     async function exportChart(chart: Chart) {
-        const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
+        const component = chartsComponents.get(chart.id)
+        const {filters: chartFilters = [], ...pagination} = component?.exportParameters?.() ?? {}
 
-        await dashboardStore.export(props.dashboard, chart, {
+        await dashboardStore.export(props.dashboard, component?.exportChart?.() ?? chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         })

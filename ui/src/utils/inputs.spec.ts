@@ -66,7 +66,7 @@ describe("normalize for TIME hydrates the wall-clock time", () => {
             ["09:05:03", 9, 5, 3],
             ["14:30", 14, 30, 0],
         ] as const) {
-            const hydrated = dayjs(normalize("TIME", value))
+            const hydrated = dayjs(normalize("TIME", value) as string)
             expect([hydrated.hour(), hydrated.minute(), hydrated.second()]).toEqual([hour, minute, second])
         }
     })
@@ -327,5 +327,12 @@ describe("hasMissingRequiredInputs", () => {
     it("needs nothing when the flow has no required input", () => {
         expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
         expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
+    })
+
+    it("checks FORM children by their dotted id", () => {
+        const formInputs = [{id: "env", type: "FORM", inputs: [{id: "region"}, {id: "zone", required: false}]}]
+        expect(hasMissingRequiredInputs(formInputs, {"env.region": "EU"})).toBe(false)
+        expect(hasMissingRequiredInputs(formInputs, {"env.zone": "a"})).toBe(true)
+        expect(hasMissingRequiredInputs(formInputs, {env: "EU"})).toBe(true)
     })
 })

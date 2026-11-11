@@ -3,6 +3,7 @@ import {ComponentPropsAndSlots, StoryObj} from "@storybook/vue3-vite";
 import {expect, fn, spyOn, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {nextTick, ref} from "vue";
+import {dateUtils} from "@kestra-io/design-system";
 import {useFlowStore} from "../../stores/flow";
 
 
@@ -156,31 +157,52 @@ export const DeleteSelectedRevision: Story = {
         const flowStore = useFlowStore();
         spyOn(flowStore, "deleteRevision").mockResolvedValue(undefined);
 
-        await waitFor(() =>
-            expect(canvasElement.querySelectorAll(".revision-grid-col").length).toBe(2)
-        );
-
-        const [leftOptions] = await selectorOptions(canvasElement);
-
-        const rev3Option = leftOptions.find(opt => opt.textContent?.includes("3"));
-        expect(rev3Option).toBeDefined();
-        const trashIcon = (rev3Option!.querySelector("span[role='img']") ?? rev3Option!.querySelector("svg")) as Element;
-        expect(trashIcon).not.toBeNull();
-        (trashIcon as HTMLElement).click();
-
-        await waitFor(() => {
-            const confirmBtn = document.querySelector(
-                "[role='dialog'][aria-label='Confirmation'] button.kel-button--primary"
-            ) as HTMLElement;
-            expect(confirmBtn).not.toBeNull();
-            confirmBtn.click();
-        });
-
-        await waitFor(() =>
-            expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
-        );
+        await deleteRevisionThree(canvasElement);
     }
 };
+
+const deleteRevisionMock = fn(() => Promise.resolve());
+
+export const DeleteThroughHandler: Story = {
+    render: deletionRender,
+    args: {
+        ...DeleteSelectedRevision.args,
+        deleteRevision: deleteRevisionMock,
+    },
+    async play({canvasElement}) {
+        const flowStore = useFlowStore();
+        const flowDeletion = spyOn(flowStore, "deleteRevision").mockResolvedValue(undefined);
+
+        await deleteRevisionThree(canvasElement);
+
+        await waitFor(() => expect(deleteRevisionMock).toHaveBeenCalledWith(3));
+        await expect(flowDeletion).not.toHaveBeenCalled();
+    }
+};
+
+async function deleteRevisionThree(canvasElement: HTMLElement) {
+    await waitFor(() =>
+        expect(canvasElement.querySelectorAll(".revision-grid-col").length).toBe(2)
+    );
+
+    const [leftOptions] = await selectorOptions(canvasElement);
+
+    const rev3Option = leftOptions.find(opt => opt.textContent?.includes("3"));
+    expect(rev3Option).toBeDefined();
+    const trashIcon = (rev3Option!.querySelector("span[role='img']") ?? rev3Option!.querySelector("svg")) as Element;
+    expect(trashIcon).not.toBeNull();
+    // A confirmation closed by an earlier story can linger in the shared DOM, so wait for the one this click opens.
+    const confirmations = () => within(document.body).queryAllByRole("dialog", {name: "Confirmation"});
+    const openedBefore = confirmations().length;
+    (trashIcon as HTMLElement).click();
+
+    await waitFor(() => expect(confirmations().length).toBeGreaterThan(openedBefore));
+    await userEvent.click(within(confirmations()[confirmations().length - 1]).getByRole("button", {name: "OK"}));
+
+    await waitFor(() =>
+        expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
+    );
+}
 
 let delayedSource: Promise<string>;
 let finishSource: (source: string) => void;
@@ -253,5 +275,28 @@ export const RefreshHistoricalComparison: Story = {
         await expect(canvas.queryByText("NEW_CURRENT_REVISION")).not.toBeInTheDocument();
         await expect(canvas.getByText("Revision 1", {exact: true})).toBeVisible();
         await expect(canvas.getByText("Revision 3", {exact: true})).toBeVisible();
+    },
+};
+
+export const DatesFollowSettings: Story = {
+    beforeEach() {
+        localStorage.setItem(dateUtils.DATE_FORMAT_STORAGE_KEY, "DD/MM/YYYY HH:mm:ss");
+        localStorage.setItem(dateUtils.TIMEZONE_STORAGE_KEY, "UTC");
+    },
+    render: () => ({
+        components: {Revisions},
+        setup() {
+            const revisionsList = [
+                {revision: 1, source: "FIRST_REVISION", updated: "2026-11-09T10:15:30Z"},
+                {revision: 2, source: "CURRENT_REVISION", updated: "2026-11-10T08:05:09Z"},
+            ];
+            return {revisionsList, loadSource: () => Promise.resolve(undefined)};
+        },
+        template: '<Revisions lang="text" :revisions="revisionsList" :revisionSource="loadSource" :editRouteQuery="false" />',
+    }),
+    async play({canvasElement}) {
+        const left = within(canvasElement.querySelector('[data-test="revision-left"]') as HTMLElement);
+        await userEvent.click(left.getByRole("combobox"));
+        await waitFor(() => expect(within(document.body).getByRole("option", {name: /Revision 1/})).toHaveTextContent("09/11/2026 10:15:30"));
     },
 };

@@ -5,6 +5,7 @@ import type {RouteParams} from "vue-router"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {ChatMessage} from "./useAiChat"
 import type {ProposedActionEvent, ThreadSummary} from "./types"
+import type {FlowPreviewBanner} from "../../../stores/flow"
 import {mountGlobal} from "../../../../tests/unit/components/ai/copilot/_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -56,7 +57,7 @@ vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 // CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
 // create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
 // `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
-const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined, previewBanner: undefined as FlowPreviewBanner | undefined})
 vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "./CopilotChat.vue"
@@ -100,6 +101,7 @@ describe("CopilotChat", () => {
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
         flowStore.previewSource = undefined
+        flowStore.previewBanner = undefined
     })
 
     afterEach(() => {
@@ -449,7 +451,7 @@ describe("CopilotChat", () => {
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
         // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
         vi.mocked(providersMock).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
-        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
+        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
         await flushPromises() // let the provider list resolve so selectedProvider is set
         const card = w.findComponent({name: "ProposedActionCard"})
@@ -561,6 +563,19 @@ describe("CopilotChat", () => {
             ]
             mountChat()
             expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
+        })
+
+        it("drops the banner another preview left, so its own draft gets the Copilot banner", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            mountChat()
+            flowStore.previewSource = "id: my-flow\nnamespace: company.team\nlabels:\n  managed-by: governance"
+            flowStore.previewBanner = {message: "Previewing policy changes", actionLabel: "Turn off preview", onAction: vi.fn()}
+
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            await flushPromises()
+
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+            expect(flowStore.previewBanner).toBeUndefined()
         })
 
         it("clears once the pending mutate confirmation is approved", async () => {
@@ -847,7 +862,7 @@ describe("CopilotChat", () => {
     it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
         state.messages.value = [
             {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
-            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", kind: "AUTHORING", arguments: {}}},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author_flow", kind: "AUTHORING", arguments: {}}},
         ]
         state.streaming.value = true
         const w = mountChat()
@@ -858,7 +873,7 @@ describe("CopilotChat", () => {
         // Its result arrives → the tool call is no longer the last message, so the spinner clears.
         state.messages.value = [
             ...state.messages.value,
-            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author-flow", outcome: "ok"}},
+            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author_flow", outcome: "ok"}},
         ]
         await flushPromises()
         expect(w.find(".copilot-tool-spinner").exists()).toBe(false)

@@ -15,6 +15,14 @@ vi.mock("./shikiHighlighter", async (importOriginal) => {
 const BASE64_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
 
 describe("KsMarkdown", () => {
+    test("adds the compact modifier only when the compact prop is set", () => {
+        const regular = i18nMount(KsMarkdown, {props: {content: "# Title"}})
+        const compact = i18nMount(KsMarkdown, {props: {content: "# Title", compact: true}})
+
+        expect(regular.find(".ks-markdown--compact").exists()).toBe(false)
+        expect(compact.find(".ks-markdown--compact").exists()).toBe(true)
+    })
+
     test("adds a hidden anchor link to each heading", () => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: "# My Title"}})
         const anchor = wrapper.find("h1#my-title a.anchor")
@@ -70,6 +78,14 @@ describe("KsMarkdown", () => {
 
         expect(alert.props("type")).toBe("warning")
         expect(alert.find("strong").text()).toBe("bold")
+    })
+
+    test("keeps text after a colon that the directive syntax would otherwise swallow", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "<em>io.kestra.plugin:plugin-dbt:2.5.4</em> at 10:45 on http://localhost:8080/ui"},
+        })
+
+        expect(wrapper.text()).toContain("io.kestra.plugin:plugin-dbt:2.5.4 at 10:45 on http://localhost:8080/ui")
     })
 
     test("opens only external links in a new tab", () => {
@@ -301,9 +317,10 @@ describe("KsMarkdown", () => {
     test.each([
         ["https://www.youtube.com/embed/abc", "https://www.youtube.com/embed/abc"],
         ["https://www.youtube-nocookie.com/embed/abc", "https://www.youtube-nocookie.com/embed/abc"],
+        ["https://demo.arcade.software/abc?embed", "https://demo.arcade.software/abc?embed"],
         ["http://www.youtube.com/embed/abc", undefined],
         ["https://evil.example.com/phish", undefined],
-    ])("embeds only HTTPS YouTube iframes: %s", (url, src) => {
+    ])("embeds only HTTPS YouTube and Arcade iframes: %s", (url, src) => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: `<iframe src="${url}"></iframe>`}})
 
         expect(wrapper.find("iframe").attributes("src")).toBe(src)

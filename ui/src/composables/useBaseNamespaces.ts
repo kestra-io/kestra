@@ -1,7 +1,7 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import {useClient, type ApiSecretListResponseApiSecretMeta, type KvEntry, type Namespace, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
+import {useClient, type ApiSecretListResponseApiSecretMeta, type FileAttributes, type KvEntry, type Namespace, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
@@ -185,11 +185,11 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.createNamespaceDirectory(payload)
     }
 
-    async function readDirectory<T>(payload: {namespace: string; path?: string}): Promise<T[]> {
+    async function readDirectory(payload: {namespace: string; path?: string}): Promise<FileAttributes[]> {
         try {
             // A directory removed server-side is handled by the caller (see fileExplorer loadNodes), so its 404 must not toast.
             const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
-            return (data ?? []) as unknown as T[]
+            return data ?? []
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) {
                 handled(e)
@@ -232,7 +232,8 @@ export const useBaseNamespacesStore = () => {
         if (!payload.path) return []
 
         try {
-            return await FilesAPI.fileRevisions(payload) as unknown as {revision: number}[]
+            const revisions = await FilesAPI.fileRevisions(payload)
+            return revisions.flatMap(({revision}) => revision === undefined ? [] : [{revision}])
         } catch (e: unknown) {
             console.error(e instanceof Error ? e.message : "File not found")
             return []
@@ -278,7 +279,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)})
     }
 
     /**
@@ -288,7 +289,7 @@ export const useBaseNamespacesStore = () => {
      */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
         await FilesAPI.moveFileDirectory(
-            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)},
         )
     }
 

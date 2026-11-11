@@ -198,18 +198,24 @@
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
     // schema.properties.properties, with the required array at schema.properties.required.
-    const triggerProperties = computed(() => {
+    // JSONProperty and the no-code Schema are two hand-written views of the same backend JSON
+    // Schema node, so the cast below is the same type-punning TaskObject's own Schema already
+    // relies on for every other caller (e.g. ImplementationCard.vue's branch.definition).
+    const triggerProperties = computed<Record<string, Schema>>(() => {
         const fields = triggerPlugin.value?.schema?.properties?.properties
         if (!fields) return {}
         return Object.fromEntries(
             Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
-        )
+        ) as Record<string, Schema>
     })
 
     const triggerSchema = computed<{required?: string[]}>(() => {
-        const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
-        return required?.length ? {required} : {}
+        const wrapper = triggerPlugin.value?.schema?.properties
+        const declared: unknown = wrapper ? Reflect.get(wrapper, "required") : undefined
+        const required = Array.isArray(declared)
+            ? declared.filter((key: unknown): key is string => typeof key === "string" && !RESERVED_FIELDS.has(key))
+            : []
+        return required.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)

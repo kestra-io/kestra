@@ -3,6 +3,7 @@ import {ref} from "vue"
 import * as NotificationsAPI from "@kestra-io/kestra-sdk/notifications"
 import {history_ as fetchHistory} from "@kestra-io/kestra-sdk/notifications"
 import type {Notification} from "@kestra-io/kestra-sdk"
+import {sseData} from "../utils/kestraHttp"
 
 export type {Notification} from "@kestra-io/kestra-sdk"
 
@@ -139,8 +140,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
         catchUp().catch(() => undefined)
         NotificationsAPI.listenUserNotifications({signal: controller.signal, sseMaxRetryAttempts: 1})
             .then(async ({stream}) => {
-                for await (const event of stream) {
-                    receive(event as unknown as Notification)
+                for await (const notification of sseData(stream)) {
+                    receive(notification)
                 }
             })
             .catch(() => undefined)

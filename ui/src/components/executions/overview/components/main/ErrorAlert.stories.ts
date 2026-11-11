@@ -132,7 +132,7 @@ export const ExpandedLogLines: Story = {
         template: "<ErrorAlert :execution=\"execution\" />",
     }),
     async play({canvasElement}) {
-        const expandBtn = canvasElement.querySelector<HTMLElement>(".expand-btn")!
+        const expandBtn = await within(canvasElement).findByRole("button", {name: /expand/i})
         await userEvent.click(expandBtn)
         await expect(canvasElement.querySelector(".logs")).toBeTruthy()
         await expect(canvasElement.querySelector(".error-preview")).toBeNull()
@@ -143,8 +143,13 @@ export const ExpandedLogLines: Story = {
     },
 }
 
-/** When the execution has no error logs the component renders nothing visible. */
+/** The failure title remains visible when error logs are unavailable. */
 export const NoLogs: Story = {
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await expect(await canvas.findByText(/execution failed/i)).toBeTruthy()
+        await expect(canvas.queryByRole("button", {name: /expand/i})).toBeNull()
+    },
     beforeEach() {
         mockStoryApiRoutes({"GET /logs/:executionId": []})
     },

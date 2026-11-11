@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer, 'node-wrapper--with-status-row': hasStatusRow}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -9,26 +9,42 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div v-if="lod === 'pill'" class="node-pill" :style="nodeStyle">
-            <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </KsTooltip>
+        <div v-if="lod === 'pill'" class="node-pill" :style="pillStyle" data-test="topology-task-pill">
+            <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+            </span>
+            <span
+                v-if="statusStyle"
+                class="node-pill-status"
+                :style="pillStatusStyle"
+                data-test="topology-task-pill-status"
+                role="img"
+                :aria-label="state"
+            >
+                <component :is="statusStyle.icon" :size="14" />
+            </span>
         </div>
         <template v-else>
             <div
                 class="node-core"
-                :style="nodeStyle"
+                :style="cardStyle"
                 :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
                     <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                        <slot name="icon-badge" />
                         <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
                             <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                         </KsTooltip>
                         <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     </div>
                     <div class="node-content">
+                        <div v-if="$slots.runner" class="node-runner">
+                            <slot name="runner" />
+                        </div>
                         <div class="node-title">
                             <div class="task-title">
                                 <KsTooltip v-if="extraTooltip" :content="extraTooltip">
@@ -49,6 +65,9 @@
                     <slot name="footer" />
                 </div>
             </div>
+            <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
+                <slot name="status-row" />
+            </div>
             <Transition name="node-details-overlay">
                 <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
                     <slot name="details" />
@@ -59,7 +78,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject} from "vue"
+    import {computed, inject, useSlots} from "vue"
     import {
         KsTooltip,
         useTaskIcon,
@@ -67,10 +86,10 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS} from "../utils/constants"
+    import {EVENTS, NODE_SIZES, PILL_COMPENSATION} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {EXECUTION_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
     interface NodeEntity {
@@ -112,6 +131,9 @@
         EVENTS.TASK_DRAG_START,
         EVENTS.TASK_DRAG_END,
     ])
+
+    const slots = useSlots()
+    const hasStatusRow = computed(() => Boolean(slots["status-row"]) && props.lod !== "pill")
 
     const movable = computed(() => Boolean(props.data?.isMovable))
 
@@ -189,6 +211,23 @@
         }
     })
 
+    const pillCompensation = inject(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => 1))
+
+    const pillStyle = computed(() => {
+        const style = nodeStyle.value
+        if (!style) return undefined
+        return {...style, borderWidth: `${pillCompensation.value}px`}
+    })
+
+    const pillStatusStyle = computed(() => ({
+        color: `var(${statusStyle.value?.textVar})`,
+        transform: `scale(${Math.min(pillCompensation.value, PILL_COMPENSATION.GLYPH_MAX)})`,
+    }))
+
+    const cardStyle = computed(() => (isExecution.value
+        ? {borderColor: statusStyle.value?.border, width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`}
+        : nodeStyle.value))
+
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
     })
@@ -261,6 +300,7 @@
     }
 
     .node-pill {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -270,6 +310,27 @@
         background-color: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
+    .node-pill-icon {
+        display: flex;
+    }
+
+    .node-pill-status {
+        position: absolute;
+        right: calc(var(--ks-spacing-1) * -1);
+        bottom: calc(var(--ks-spacing-1) * -1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        line-height: 1;
+        transform-origin: top left;
+    }
+
+    .node-pill .icon--dimmed {
+        opacity: 0.2;
     }
 
     .node-grip {
@@ -337,6 +398,7 @@
         }
 
         .icon {
+            position: relative;
             flex-shrink: 0;
             border-radius: var(--ks-radius-lg);
             width: 40px;
@@ -354,8 +416,36 @@
         }
     }
 
-    .node-core--execution .main-content {
-        width: 273px;
+    .node-core.node-core--execution {
+        box-sizing: border-box;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2);
+        background-color: var(--ks-bg-surface);
+
+        .main-content {
+            width: auto;
+            height: var(--ks-spacing-7);
+            padding: 0;
+        }
+
+        .icon {
+            border: none;
+            border-radius: var(--ks-radius-base);
+        }
+
+        .node-footer {
+            flex: none;
+            padding: 0;
+        }
+
+        .task-title {
+            font-weight: var(--ks-font-weight-semibold);
+            line-height: var(--ks-line-height-tight);
+        }
+
+        .node-subtitle {
+            line-height: var(--ks-line-height-tight);
+        }
     }
 
     .node-core--with-footer {
@@ -365,6 +455,28 @@
         .main-content {
             flex-shrink: 0;
         }
+    }
+
+    .node-wrapper--with-status-row {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & > .node-core--with-footer {
+            height: auto;
+            flex: 1 1 0;
+            min-height: 0;
+        }
+    }
+
+    .node-status-row {
+        display: flex;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        padding-top: var(--ks-spacing-1);
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-1);
     }
 
     .node-footer {
@@ -391,12 +503,20 @@
         }
     }
 
+    .node-runner {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        font-size: var(--ks-font-size-2xs);
+        line-height: 1;
+    }
+
     .node-subtitle {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
         min-width: 0;
-        font-size: var(--ks-font-size-2xs);
+        font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
     }
 

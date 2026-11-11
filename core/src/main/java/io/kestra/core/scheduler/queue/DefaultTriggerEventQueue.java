@@ -15,8 +15,8 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.events.TriggerEvent;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.vnodes.VNodes;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

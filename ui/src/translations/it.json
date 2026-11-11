@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Crea",
     "create_flow": "Crea Flow",
+    "create_child_namespace": "Crea namespace figlio",
     "from": "Da",
     "to": "A",
     "steps": "Passaggi",

@@ -344,6 +344,7 @@
     "home": "ホーム",
     "create": "作成",
     "create_flow": "フローを作成",
+    "create_child_namespace": "子 namespace を作成",
     "from": "から",
     "to": "まで",
     "steps": "ステップ",

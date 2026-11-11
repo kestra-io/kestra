@@ -344,6 +344,7 @@
     "home": "Startseite",
     "create": "Erstellen",
     "create_flow": "Flow erstellen",
+    "create_child_namespace": "Untergeordneten Namespace erstellen",
     "from": "Von",
     "to": "Bis",
     "steps": "Schritte",

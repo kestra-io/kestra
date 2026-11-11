@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",

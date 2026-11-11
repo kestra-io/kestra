@@ -344,6 +344,7 @@
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
+    "create_child_namespace": "Создать дочерний namespace",
     "from": "От",
     "to": "До",
     "steps": "Шаги",

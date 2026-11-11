@@ -5,6 +5,7 @@ import type {RouteParams} from "vue-router"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {ChatMessage} from "./useAiChat"
 import type {ProposedActionEvent, ThreadSummary} from "./types"
+import type {FlowPreviewBanner} from "../../../stores/flow"
 import {mountGlobal} from "../../../../tests/unit/components/ai/copilot/_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -56,7 +57,7 @@ vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 // CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
 // create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
 // `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
-const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined, previewBanner: undefined as FlowPreviewBanner | undefined})
 vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "./CopilotChat.vue"
@@ -100,6 +101,7 @@ describe("CopilotChat", () => {
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
         flowStore.previewSource = undefined
+        flowStore.previewBanner = undefined
     })
 
     afterEach(() => {
@@ -561,6 +563,19 @@ describe("CopilotChat", () => {
             ]
             mountChat()
             expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
+        })
+
+        it("drops the banner another preview left, so its own draft gets the Copilot banner", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            mountChat()
+            flowStore.previewSource = "id: my-flow\nnamespace: company.team\nlabels:\n  managed-by: governance"
+            flowStore.previewBanner = {message: "Previewing policy changes", actionLabel: "Turn off preview", onAction: vi.fn()}
+
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            await flushPromises()
+
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+            expect(flowStore.previewBanner).toBeUndefined()
         })
 
         it("clears once the pending mutate confirmation is approved", async () => {

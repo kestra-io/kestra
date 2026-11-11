@@ -21,15 +21,15 @@
             </KsButton>
         </div>
         <template v-else>
-            <!-- The editor is forced read-only while a Copilot diff is mirrored in (below) — explain
+            <!-- The editor is forced read-only while a preview is mirrored in (below) — explain
                  why and offer a way out, so the lock never reads as a dead end (kestra-io/kestra#19330
                  review). -->
             <div v-if="previewSource !== undefined" class="preview-banner" data-test="flow-preview-banner">
                 <KsAlert type="info" :closable="false">
                     <div class="preview-banner-body">
-                        <span>{{ $t("ai.copilot.draft.previewBanner") }}</span>
-                        <KsButton size="small" data-test="flow-preview-dismiss" @click="flowStore.declinePreview?.()">
-                            {{ $t("ai.copilot.draft.dismiss") }}
+                        <span>{{ previewBanner.message }}</span>
+                        <KsButton size="small" data-test="flow-preview-dismiss" @click="previewBanner.onAction()">
+                            {{ previewBanner.actionLabel }}
                         </KsButton>
                     </div>
                 </KsAlert>
@@ -94,7 +94,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
+    import {computed, onActivated, onDeactivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
@@ -102,7 +102,7 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type FlowPreviewBanner} from "../../stores/flow"
     import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
@@ -162,6 +162,11 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
 
     const previewSource = computed(() => props.flow ? flowStore.previewSource : undefined)
+    const previewBanner = computed<FlowPreviewBanner>(() => flowStore.previewBanner ?? {
+        message: t("ai.copilot.draft.previewBanner"),
+        actionLabel: t("ai.copilot.draft.dismiss"),
+        onAction: () => flowStore.declinePreview?.(),
+    })
 
     /** 10MB */
     const BIG_FILE_THRESHOLD = 10 * 1024 * 1024
@@ -312,9 +317,35 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
-    useViolationMarkers({
+    const {markers: violationMarkerList, revealNext: revealNextViolation} = useViolationMarkers({
         editor: monacoEditor,
         errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
+    // A parked tab keeps its editor alive in KeepAlive, but the badge must not point at an editor nobody can see.
+    let isTabActive = true
+
+    // Guard needed because keep-alive keeps a FlowFileEditorTab instance per namespace file alive alongside the flow tab's.
+    function syncErrorNavigation() {
+        if (!props.flow) return
+        const count = isTabActive ? violationMarkerList.value.length : 0
+        flowStore.errorNavigation = count ? {count, revealNext: revealNextViolation} : null
+    }
+
+    watch(violationMarkerList, syncErrorNavigation, {immediate: true})
+
+    onActivated(() => {
+        isTabActive = true
+        syncErrorNavigation()
+    })
+
+    onDeactivated(() => {
+        isTabActive = false
+        syncErrorNavigation()
+    })
+
+    onBeforeUnmount(() => {
+        if (props.flow) flowStore.errorNavigation = null
     })
 
     useReadOnlyYamlKeys({

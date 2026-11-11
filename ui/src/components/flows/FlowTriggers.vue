@@ -666,7 +666,7 @@
         const identity = triggerIdentity(trigger)
         TriggersAPI.deleteBackfill(identity)
             .then(() => {
-                toast.saved(identity.triggerId)
+                toast.success(t("delete backfill success", {id: identity.triggerId}))
                 loadDataAfterAction()
             })
     }

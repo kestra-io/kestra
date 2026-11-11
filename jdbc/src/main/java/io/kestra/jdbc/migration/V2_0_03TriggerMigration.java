@@ -18,9 +18,9 @@ import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.scheduler.vnodes.VNodes;
-import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.vnodes.VNodes;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 

@@ -80,7 +80,7 @@
 
     function parseValue(value: unknown): string {
         const date = dateUtils.parseIso(value)
-        return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
+        return date.isValid() ? date.tz(dateUtils.currentTimezone()).format("YYYY-MM-DD") : String(value)
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {

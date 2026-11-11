@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Нет задач, соответствующих выбранным фильтрам.",
     "logs": "Логи",
     "no_logs_data_description": "Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
-    "no_logs_data_title": "Для выбранных фильтров логи не найдены.",
+    "no_logs_data_title": "Логи не найдены",
     "duration": "Длительность",
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
@@ -451,7 +451,7 @@
       "whole_action": "Повторить всю egzekucję вместо этого",
       "whole_title": "Ревизия {revision} может быть повторно воспроизведена как полная egzekucja.",
       "whole_description": "Более ранние результаты не используются повторно, поэтому каждая Task запускается снова в версии {revision}. Исходная egzekucja сохраняется и связывается.",
-      "confirm_from_task": "Повторить с Task",
+      "confirm_from_task": "Повтор с {taskId}",
       "confirm_whole": "Повторить всю egzekucję"
     },
     "change execution state done": "Состояние выполнения обновлено",
@@ -863,7 +863,7 @@
     "last execution date": "Дата последнего выполнения",
     "revisions": "Редакции",
     "no revisions found": "Для этого flow существует только одна редакция",
-    "no revisions": "Нет ревизий",
+    "no revisions": "Ревизии не найдены",
     "side-by-side": "бок о бок",
     "line-by-line": "построчно",
     "template": "Шаблон",
@@ -1339,6 +1339,8 @@
     "pause backfill": "Приостановить заполнение",
     "continue backfills": "Продолжить заполнения",
     "delete backfills": "Удалить заполнения",
+    "delete backfill confirm": "Удалить backfill trigger {id}?",
+    "delete backfill success": "Backfill trigger {id} удалён",
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
@@ -2351,6 +2353,7 @@
       "default": "Панель по умолчанию",
       "set_default": "Установить по умолчанию",
       "empty": "Нет результатов для отображения.",
+      "overdue": "Просрочено — {date}",
       "edition": {
         "label": "Редактировать Dashboard",
         "chart": "Редактировать этот график"
@@ -2373,7 +2376,8 @@
         "paused": "Приостановлено",
         "success": "Успешно",
         "warning": "Предупреждение",
-        "failed": "Ошибка"
+        "failed": "Ошибка",
+        "upcoming": "Предстоящие"
       }
     },
     "setup": {
@@ -2792,7 +2796,8 @@
         "tooltip": "Просмотр тестов flow"
       },
       "errors": {
-        "label": "{count} Ошибка(и)"
+        "label": "{count} Ошибка(и)",
+        "action": "{count} ошибка(и), перейти к следующей ошибке"
       }
     },
     "invalid_source_code": "Недопустимый исходный код",

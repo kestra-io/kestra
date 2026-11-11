@@ -1911,7 +1911,8 @@
       "duplicate": "Этот key уже существует",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
-        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
+        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>",
+        "deleted": "Удалено <code>{count}</code> KV из namespace <code>{namespace}</code>"
       },
       "inherited": "Наследуемые KV пары",
       "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."

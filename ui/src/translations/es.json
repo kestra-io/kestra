@@ -1911,7 +1911,8 @@
       "duplicate": "Esta key ya existe",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
-        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
+        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> kv(s) eliminado(s) del namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV heredados",
       "expiration_hint": "Actualmente expira el {date}. Deja el campo sin tocar para mantener esta expiración; seleccionar una duración la recalcula a partir de ahora, y borrarla la elimina."

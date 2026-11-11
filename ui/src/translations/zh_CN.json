@@ -1911,7 +1911,8 @@
       "duplicate": "此键已存在",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
-        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>",
+        "deleted": "已从 namespace <code>{namespace}</code> 中删除 <code>{count}</code> 个 KV"
       },
       "inherited": "继承的KV对",
       "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"

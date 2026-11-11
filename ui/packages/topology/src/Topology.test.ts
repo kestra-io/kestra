@@ -199,3 +199,14 @@ describe("Topology collapse all", () => {
         expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(false)
     })
 })
+
+describe("Topology on a page without the Kestra UI", () => {
+    it("draws a graph the API returned without clusters", () => {
+        const wrapper = i18nMount(Topology, {
+            props: {id: "no-clusters", source: "", flowGraph: {nodes: FLOW_GRAPH.nodes, edges: FLOW_GRAPH.edges}},
+            global: {stubs: {VueFlow: true, Background: true, Panel: true, Controls: true, ControlButton: true}},
+        })
+
+        expect(wrapper.find(".topology-shell").classes()).toContain("ks-topology")
+    })
+})

@@ -451,7 +451,7 @@
       "whole_action": "Reproducir toda la ejecución en su lugar",
       "whole_title": "La revisión {revision} se puede reproducir como una ejecución completa.",
       "whole_description": "No se reutilizan resultados anteriores, por lo que cada Task se ejecuta de nuevo en la revisión {revision}. La ejecución original se mantiene y se vincula.",
-      "confirm_from_task": "Replay desde la task",
+      "confirm_from_task": "Replay desde {taskId}",
       "confirm_whole": "Reproducir toda la ejecución"
     },
     "change execution state done": "Estado de ejecución actualizado",

@@ -451,7 +451,7 @@
       "whole_action": "इसके बजाय पूरी execution को रीप्ले करें",
       "whole_title": "रिवीजन {revision} को पूरी execution के रूप में फिर से चलाया जा सकता है।",
       "whole_description": "पहले के कोई भी परिणाम दोबारा उपयोग नहीं किए जाते हैं, इसलिए हर Task revision {revision} पर फिर से चलता है। मूल execution को रखा जाता है और लिंक किया जाता है।",
-      "confirm_from_task": "Task से रीप्ले करें",
+      "confirm_from_task": "{taskId} से Replay करें",
       "confirm_whole": "पूरी execution को फिर से चलाएँ"
     },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",

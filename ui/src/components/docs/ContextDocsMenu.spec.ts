@@ -58,4 +58,16 @@ describe("ContextDocsMenu", () => {
         expect(isOpen()).toBe(false)
         expect(document.activeElement).toBe(wrapper!.get("button").element)
     })
+
+    it("stays open on an Escape another component already handled", async () => {
+        await openMenu()
+        const handleEscape = (event: KeyboardEvent) => event.preventDefault()
+        document.body.addEventListener("keydown", handleEscape)
+
+        document.body.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}))
+        await flushPromises()
+        document.body.removeEventListener("keydown", handleEscape)
+
+        expect(isOpen()).toBe(true)
+    })
 })

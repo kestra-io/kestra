@@ -62,8 +62,8 @@
         menuOpen.value = false
     })
 
-    onKeyStroke("Escape", () => {
-        if (!menuOpen.value) return
+    onKeyStroke("Escape", (event) => {
+        if (!menuOpen.value || event.defaultPrevented) return
         const focusWasInMenu = menuWrapper.value?.contains(document.activeElement)
         menuOpen.value = false
         if (focusWasInMenu) menuWrapper.value?.querySelector("button")?.focus()

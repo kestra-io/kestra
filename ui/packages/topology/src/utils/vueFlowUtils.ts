@@ -91,7 +91,7 @@ interface FlowGraphEdge {
 
 export interface FlowGraph {
     nodes: MinimalNode[];
-    /** Absent from graphs that have no flowable tasks on some API versions. */
+    /** The blueprints API leaves it out. */
     clusters?: {
         cluster: Cluster;
         nodes: string[];

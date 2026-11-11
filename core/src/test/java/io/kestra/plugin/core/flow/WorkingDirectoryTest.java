@@ -266,6 +266,12 @@ public class WorkingDirectoryTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure.yaml" })
+    void shouldFailWorkingDirectoryWhenItsOutputFilesCannotBeSaved() throws Exception {
+        suite.outputFilesFailure(runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/working-directory-secret-output.yml" })
     void secretOutputMasking() throws Exception {
         suite.secretOutputMasking(runnerUtils);
@@ -540,6 +546,16 @@ public class WorkingDirectoryTest {
             );
 
             assertThat(execution.getTaskRunList()).hasSize(5);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        }
+
+        public void outputFilesFailure(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure");
+
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory_close").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("after")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("onError")).isNotEmpty();
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         }
 

@@ -66,4 +66,45 @@ describe("KsDrawer", () => {
         expect(document.querySelector(".kel-drawer__header .arrow-collapse-icon")).toBeTruthy()
         wrapper.unmount()
     })
+
+    test("restores the initial size when leaving full screen", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true, size: "40%", title: "Diff"},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+        const drawer = wrapper.findComponent(ElDrawer)
+        expect(drawer.props("size")).toBe("40%")
+
+        const toggle = () => (document.querySelector(".kel-drawer__header .full-screen")!.closest("button") as HTMLElement).click()
+        toggle()
+        await flushPromises()
+        expect(drawer.props("size")).toBe(`${window.innerWidth}px`)
+
+        toggle()
+        await flushPromises()
+        expect(drawer.props("size")).toBe("40%")
+        wrapper.unmount()
+    })
+
+    test("restores the dragged width when leaving full screen", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true, title: "Diff"},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+        const drawer = wrapper.findComponent(ElDrawer)
+        drawer.vm.$emit("resize-end", new MouseEvent("mouseup"), 500)
+        await flushPromises()
+
+        const toggle = () => (document.querySelector(".kel-drawer__header .full-screen")!.closest("button") as HTMLElement).click()
+        toggle()
+        await flushPromises()
+        toggle()
+        await flushPromises()
+        expect(drawer.props("size")).toBe("500px")
+        wrapper.unmount()
+    })
 })

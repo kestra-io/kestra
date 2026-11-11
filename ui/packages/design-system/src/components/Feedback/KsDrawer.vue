@@ -4,7 +4,7 @@
         destroyOnClose
         lockScroll
         :resizable="resizable"
-        :size="resizable ? drawerSize : ''"
+        :size="resizable ? drawerSize : props.size"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
         v-bind="{...filteredProps(), ...$attrs}"
@@ -46,6 +46,7 @@
         isFullScreen?: boolean
         withHeader?: boolean
         resizable?: boolean
+        size?: string | number
         beforeClose?: (done: () => void) => void
         dirty?: boolean
         dirtyMessage?: string
@@ -54,6 +55,7 @@
         isFullScreen: false,
         withHeader: true,
         resizable: false,
+        size: undefined,
         beforeClose: undefined,
         dirty: false,
         dirtyMessage: undefined,
@@ -73,13 +75,14 @@
 
     const fullScreenToggle = ref(props.isFullScreen)
     const drawerWidth = ref<number | null>(null)
+    const widthBeforeFullScreen = ref<number | null>(null)
 
     const resizableFull = computed(() =>
         props.resizable && drawerWidth.value != null && drawerWidth.value >= window.innerWidth * FULLSCREEN_THRESHOLD,
     )
     const fullScreen = computed(() => (props.resizable ? resizableFull.value : fullScreenToggle.value))
 
-    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : (props.size ?? "65%")))
 
     const onResizeEnd = (_event: MouseEvent, size: number) => {
         drawerWidth.value = Math.round(size)
@@ -87,13 +90,18 @@
 
     const toggleFullScreen = () => {
         if (props.resizable) {
-            drawerWidth.value = resizableFull.value ? null : window.innerWidth
+            if (resizableFull.value) {
+                drawerWidth.value = widthBeforeFullScreen.value
+            } else {
+                widthBeforeFullScreen.value = drawerWidth.value
+                drawerWidth.value = window.innerWidth
+            }
         } else {
             fullScreenToggle.value = !fullScreenToggle.value
         }
     }
 
-    const filteredProps = useFilteredProps(props, ["beforeClose", "dirty", "dirtyMessage"])
+    const filteredProps = useFilteredProps(props, ["beforeClose", "dirty", "dirtyMessage", "size"])
 
     const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
     const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))

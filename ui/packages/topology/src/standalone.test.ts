@@ -1,9 +1,9 @@
-// @vitest-environment node
 import fs from "node:fs"
+import path from "node:path"
 import {describe, expect, it} from "vitest"
 
-const script = new URL("../scripts/generate-standalone-css.mjs", import.meta.url).href
-const committed = fs.readFileSync(new URL("./standalone.css", import.meta.url), "utf8")
+const script = path.resolve(__dirname, "../scripts/generate-standalone-css.mjs")
+const committed = fs.readFileSync(path.resolve(__dirname, "standalone.css"), "utf8")
 
 describe("standalone.css", () => {
     it("matches the design system it is generated from", async () => {

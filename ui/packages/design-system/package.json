@@ -25,6 +25,16 @@
   "files": [
     "dist"
   ],
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss",
+    "./src/styleBase.ts",
+    "./src/date/dayjs.ts",
+    "./src/composables/useKsEditor.ts",
+    "./dist/styleBase.js",
+    "./dist/date-*.js",
+    "./dist/components/Form/KsEditor.js"
+  ],
   "publishConfig": {
     "access": "public"
   },

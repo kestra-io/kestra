@@ -136,7 +136,7 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
-export function normalize(type: InputType | undefined, value: any) {
+export function normalize(type: InputType | undefined, value: unknown): unknown {
     let res = value
 
     if (type === "BOOL") {
@@ -149,7 +149,7 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
-        res = dayjs(res).toISOString()
+        res = dayjs(res as dayjs.ConfigType).toISOString()
     } else if (type === "TIME") {
         const [hours, minutes, seconds = "0"] = String(res).split(":")
         res = dayjs()
@@ -170,4 +170,20 @@ export function normalize(type: InputType | undefined, value: any) {
         res = res.toString()
     }
     return res
+}
+
+type RequiredInputLike = {id?: string; type?: string; required?: boolean; inputs?: RequiredInputLike[]}
+
+/**
+ * Values are keyed by leaf id, so FORM children are checked under their dotted id
+ * (`env.region`) instead of the FORM id itself, like `flattenInputs`.
+ */
+export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
+    const leaves = (flowInputs ?? []).flatMap(input =>
+        input?.type === "FORM"
+            ? (input.inputs ?? []).map(child => ({...child, id: `${input.id}.${child.id}`}))
+            : [input],
+    )
+    const requiredIds = leaves.filter(input => input?.required !== false).map(input => input?.id)
+    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
 }

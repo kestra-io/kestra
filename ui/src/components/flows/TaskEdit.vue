@@ -3,10 +3,11 @@
         v-if="presentation !== 'panel'"
         :is="component"
         :icon="CodeTags"
+        :size="buttonSize"
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'KsButton' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ label ?? $t("show task source") }}</span>
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -32,7 +33,8 @@
                     <KsAlert
                         :closable="false"
                         class="task-edit-revision-alert"
-                        v-if="revision && revisions?.length !== revision"
+                        data-test="task-edit-revision-alert"
+                        v-if="isOldRevision"
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
@@ -166,7 +168,7 @@
                 <AlertCircleOutline class="task-edit-required-icon" />
                 <span v-if="unsetRequiredCount === 1">{{ $t("block_editor.required_unset_singular") }}</span>
                 <span v-else>{{ $t("block_editor.required_unset_plural", {count: unsetRequiredCount}) }}</span>
-                <KsButton type="text" size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
+                <KsButton link size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
                     {{ $t("block_editor.required_unset_jump") }}
                 </KsButton>
             </div>
@@ -207,6 +209,9 @@
 
     interface Props {
         component?: string;
+        labeled?: boolean;
+        label?: string;
+        buttonSize?: string;
         task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
@@ -229,6 +234,9 @@
 
     const props = withDefaults(defineProps<Props>(), {
         component: "KsButton",
+        labeled: false,
+        label: undefined,
+        buttonSize: undefined,
         task: undefined,
         taskRaw: undefined,
         taskId: undefined,
@@ -515,9 +523,14 @@
 
     const isLoading = computed(() => taskYaml.value === undefined)
 
+    // Revision numbers are not list indexes: deleting a flow consumes a revision that the list leaves out.
+    const selectedRevision = computed(() => revisions.value?.find(({revision}) => revision === props.revision))
+
+    const isOldRevision = computed(() => Boolean(props.revision) && props.revision !== revisions.value?.at(-1)?.revision)
+
     const source = computed(() => {
         return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
+            ? selectedRevision.value?.source
             : flowStore.flow?.source
     })
 
@@ -528,7 +541,7 @@
             revision: props.revision?.toString(),
         })
         if (props.revision) {
-            if (!revisions.value?.[props.revision - 1]) {
+            if (!selectedRevision.value) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
@@ -606,7 +619,10 @@
         }
 
         taskYaml.value = value
-        timer.value = setTimeout(commitEdit, 500)
+        timer.value = setTimeout(() => {
+            timer.value = undefined
+            commitEdit()
+        }, 500)
     }
 
     const flushPendingEdit = () => {
@@ -632,7 +648,7 @@
         }
         const incoming = raw ?? YAML_UTILS.stringify(newTask)
         const keepLocalEdit = props.presentation === "panel"
-            ? panelHasFocus.value
+            ? normalizeYaml(incoming) === normalizeYaml(taskYaml.value) || (panelHasFocus.value && isDirty.value)
             : normalizeYaml(incoming) === normalizeYaml(taskBaseline.value)
         if (incoming !== taskYaml.value && !keepLocalEdit) {
             taskYaml.value = incoming

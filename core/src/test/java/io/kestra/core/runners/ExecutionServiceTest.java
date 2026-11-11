@@ -44,6 +44,7 @@ import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.io.buffer.ReadBufferFactory;
@@ -187,7 +188,7 @@ class ExecutionServiceTest {
     @LoadFlows({ "flows/valids/working-directory.yaml" })
     void restartDynamic() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -195,6 +196,8 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
 
+        // the whole WorkingDirectory runs again, its internal open and close tasks included
+        assertThat(restart.getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("worker");
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getTaskRunList().getFirst().getState().getHistories()).hasSize(4);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -475,14 +478,14 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
+        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING, PausableTask.Resumed.now());
 
         assertThat(resume.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(resume.getState().getHistories()).hasSize(4);
 
         assertThrows(
             IllegalArgumentException.class,
-            () -> executionService.resume(resume, flow, State.Type.RUNNING, Pause.Resumed.now())
+            () -> executionService.resume(resume, flow, State.Type.RUNNING, PausableTask.Resumed.now())
         );
     }
 
@@ -505,7 +508,7 @@ class ExecutionServiceTest {
         assertThat(((IntInput) values.get(1).input()).getMax()).isEqualTo(5);
         assertThat(values.get(2).value()).isEqualTo("Approved by reviewer");
         assertThat(values.get(2).input().getDescription()).isEqualTo("Explain your decision");
-        assertThat(pause.getOnResume().getFirst().getDescription())
+        assertThat(pause.getInputs().getFirst().getDescription())
             .isEqualTo("{{ outputs.prepare.values.description }} {{ inputs.request }}");
 
         var submitted = Flux.<CompletedPart> just(
@@ -721,6 +724,19 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-parallel-loop-pause.yaml" })
+    void parentExecutionIsPausedWhenLoopIterationPausesViaFailingSiblingApproval() throws Exception {
+        // approvalB's onWait fails after approvalA is already PAUSED, so the PAUSING -> PAUSED transition comes with no PAUSED result in that pass.
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-parallel-loop-pause");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+
+        TaskRun loopTaskRun = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/minimal.yaml" })
     void shouldResumeFromBreakpoint() throws QueueException {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
@@ -759,7 +775,7 @@ class ExecutionServiceTest {
             .withState(State.Type.CREATED);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution is not suspended");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test
@@ -778,7 +794,7 @@ class ExecutionServiceTest {
             .withState(State.Type.BREAKPOINT);
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> executionService.resumeFromBreakpoint(execution, Optional.empty()));
-        assertThat(error.getMessage()).isEqualTo("Execution has no breakpoint");
+        assertThat(error.getMessage()).isEqualTo("Execution is not suspended at a breakpoint");
     }
 
     @Test

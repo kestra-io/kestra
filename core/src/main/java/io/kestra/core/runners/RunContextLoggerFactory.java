@@ -9,7 +9,6 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
@@ -41,8 +40,7 @@ public class RunContextLoggerFactory {
             logEmitter,
             LogEntry.of(workerTask.getTaskRun(), workerTask.getExecutionKind()),
             task.getLogLevel(),
-            // the log file is only uploaded with the attempt of a runnable task, so a WorkingDirectory logs to the queue
-            task instanceof RunnableTask<?> && task.isLogToFile(),
+            task.isLogToFile(),
             mdcLabels(workerLabels(workerTask))
         );
     }

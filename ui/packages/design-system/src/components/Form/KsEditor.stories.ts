@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, watchEffect} from "vue"
+import {themes} from "@kestra-io/plumage"
 import KsEditor from "./KsEditor.vue"
 
 const meta: Meta<typeof KsEditor> = {
@@ -9,7 +10,7 @@ const meta: Meta<typeof KsEditor> = {
     argTypes: {
         lang: {control: "select", options: ["yaml", "json", "python", "javascript", "typescript", "shell", "markdown", "plaintext", "yaml-pebble"]},
         schemaType: {control: "select", options: [undefined, "flow", "dashboard", "app", "testsuites", "section"]},
-        theme: {control: "select", options: ["dark", "light", "vs"]},
+        theme: {control: "select", options: themes.map(theme => theme.name)},
         inline: {control: "boolean"},
         readOnly: {control: "boolean"},
         navbar: {control: "boolean"},

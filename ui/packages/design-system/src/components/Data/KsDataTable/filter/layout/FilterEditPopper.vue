@@ -47,7 +47,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
-    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
+    import {formatFilterDate, formatFilterDateRange, resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -266,6 +266,8 @@
                 props: {
                     modelValue: state.radioValue,
                     options: state.valueOptions,
+                    allLabel: props.filterKey.allLabel,
+                    allDescription: props.filterKey.allDescription,
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.radioValue = value),
@@ -299,7 +301,9 @@
             }
             return ""
         case "radio":
-            return state.radioValue === "ALL" ? "Default selected" : state.radioValue
+            return state.radioValue === "ALL"
+                ? t("filter.option_selected", {label: props.filterKey.allLabel ?? t("filter.hierarchy.all")})
+                : state.radioValue
         default:
             return ""
         }
@@ -315,9 +319,9 @@
             return
         }
 
-        // Falling back to a blank value left the filter with nothing selected, rather than with
-        // the default the page configured (the executions view's 24h interval, for instance).
-        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+        const defaultValue = filterContext
+            ? filterContext.getDefaultValue(props.filterKey)
+            : resolveDefaultVisibleValue(props.filterKey)
 
         Object.assign(state, {
             textValue: typeof defaultValue === "string" ? defaultValue : "",
@@ -362,7 +366,7 @@
                 const endDate = state.endDateValue ?? new Date()
                 return {
                     value: {startDate, endDate},
-                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+                    label: formatFilterDateRange(startDate, endDate),
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -381,7 +385,7 @@
                 const endDate = state.endDateValue ?? new Date()
                 return {
                     value: {startDate, endDate},
-                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+                    label: formatFilterDateRange(startDate, endDate),
                 }
             }
             return {
@@ -402,7 +406,7 @@
         case "date":
             return {
                 value: state.dateValue ?? "",
-                label: state.dateValue?.toLocaleDateString() ?? "",
+                label: state.dateValue ? formatFilterDate(state.dateValue) : "",
             }
         case "radio":
             if (state.radioValue === "ALL") return null
@@ -525,7 +529,7 @@
                         : null
                 break
             case "radio":
-                state.radioValue = typeof filter.value === "string"
+                state.radioValue = typeof filter.value === "string" && state.valueOptions.some(option => option.value === filter.value)
                     ? filter.value
                     : "ALL"
                 break

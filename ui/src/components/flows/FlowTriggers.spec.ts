@@ -59,18 +59,22 @@ vi.mock("../../utils/toast", () => ({
 }))
 
 // trigger-b already ran once (hence the current execution), trigger-a never did
-// (hence no state row and no current execution).
-vi.mock("../../utils/triggers", () => ({
-    searchTriggersForFlow: vi.fn().mockResolvedValue({
+// (hence no state row and no current execution). A test may add fields to trigger-b's state.
+const triggerBState = vi.hoisted(() => ({extra: {} as Record<string, unknown>}))
+
+vi.mock("../../utils/triggers", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../../utils/triggers")>(),
+    searchTriggersForFlow: vi.fn().mockImplementation(() => Promise.resolve({
         results: [
             {
                 triggerId: "trigger-b",
                 namespace: "company.team",
                 flowId: "my-flow",
                 executionId: "execution-for-b",
+                ...triggerBState.extra,
             },
         ],
-    }),
+    })),
 }))
 
 vi.mock("../../stores/productTour", () => ({
@@ -106,12 +110,37 @@ beforeEach(() => {
     sessionStorage.clear()
     searchLogs.mockReset().mockResolvedValue({results: [], total: 0})
     permissions.isAllowed = (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW"
+    triggerBState.extra = {}
 })
 afterEach(() => {
     while (mounted.length) mounted.pop()?.unmount()
     localStorage.clear()
     sessionStorage.clear()
     vi.useRealTimers()
+})
+
+// kestra-ee#10290: a trigger blocked by governance says so in place of its next evaluation date.
+describe("FlowTriggers - governance block", () => {
+    const blockedTooltip = (wrapper: VueWrapper, dataTest = "trigger-blocked") =>
+        wrapper.findAllComponents({name: "KsTooltip"}).find(tooltip => tooltip.find(`[data-test="${dataTest}"]`).exists())
+
+    it("shows the block with a message on the tag and next to the id", async () => {
+        triggerBState.extra = {blockedBy: {reason: "POLICY", ids: ["deny-log"], message: "Log plugin is not allowed by policy"}}
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(blockedTooltip(wrapper)?.props("content")).toBeTruthy()
+        expect(blockedTooltip(wrapper, "trigger-blocked-icon")?.props("content")).toBeTruthy()
+    })
+
+    it("shows no block for a trigger governance accepts", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(wrapper.find("[data-test=\"trigger-blocked\"]").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"trigger-blocked-icon\"]").exists()).toBe(false)
+    })
 })
 
 // Issue #12784: each trigger row links to the flow executions tab pre-filtered
@@ -240,4 +269,92 @@ it("keeps each expanded trigger's logs in its own panel when responses arrive ou
     expect(panels[0].text()).not.toContain("trigger-b evaluated")
     expect(panels[1].text()).toContain("trigger-b evaluated")
     expect(panels[1].text()).not.toContain("trigger-a evaluated")
+})
+
+// https://github.com/kestra-io/kestra/issues/21483: the backfill button stayed disabled whenever an optional input had a value
+describe("FlowTriggers - execute backfill button", () => {
+    const flowInputs = [
+        {id: "region", type: "STRING"},
+        {id: "batchSize", type: "INT", required: false, defaults: 100},
+    ]
+
+    const FlowRunStub = defineComponent({
+        name: "FlowRun",
+        emits: ["update-inputs", "update-inputs-no-default", "update-labels"],
+        setup: () => () => h("div"),
+    })
+
+    const DatePickerStub = defineComponent({
+        name: "KsDatePicker",
+        inheritAttrs: false,
+        props: {modelValue: {type: Date, default: null}},
+        emits: ["update:modelValue"],
+        setup: (_, {emit}) => () => h("button", {type: "button", "data-test": "date-picker", onClick: () => emit("update:modelValue", new Date("2026-01-01T00:00:00Z"))}),
+    })
+
+    afterEach(() => {
+        delete (flowStore.flow as {inputs?: unknown}).inputs
+        // the open dialog locks the body scroll; unmount first so the lock is released, then drop what is left
+        while (mounted.length) mounted.pop()?.unmount()
+        document.body.className = ""
+        document.body.innerHTML = ""
+    })
+
+    async function openBackfill() {
+        permissions.isAllowed = (resource: string, action: string) => resource === "TRIGGER" && action === "BACKFILL"
+        Object.assign(flowStore.flow, {inputs: flowInputs})
+
+        const wrapper = i18nMount(FlowTriggers, {
+            props: {embed: true},
+            attachTo: document.body,
+            global: {
+                plugins: [createPinia()],
+                stubs: {RouterLink: RouterLinkStub, TestEventDialog: true, FlowRun: FlowRunStub, KsDatePicker: DatePickerStub},
+            },
+        })
+        mounted.push(wrapper)
+        await flushPromises()
+
+        const open = wrapper.findAll("button").find(button => button.text() === "backfill executions")
+        await open?.trigger("click")
+        await flushPromises()
+
+        document.querySelector<HTMLButtonElement>("[data-test='date-picker']")?.click()
+        await flushPromises()
+
+        return wrapper
+    }
+
+    const executeButton = () =>
+        [...document.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent?.trim() === "execute backfill")
+
+    const fillInputs = async (wrapper: VueWrapper, inputs: Record<string, unknown>) => {
+        wrapper.findComponent(FlowRunStub).vm.$emit("update-inputs", inputs)
+        await flushPromises()
+    }
+
+    it("stays disabled until the required input has a value", async () => {
+        const wrapper = await openBackfill()
+
+        expect(executeButton()?.disabled).toBe(true)
+
+        await fillInputs(wrapper, {batchSize: 100})
+        expect(executeButton()?.disabled).toBe(true)
+    })
+
+    it("is enabled once the required input is set, with the optional default filled in", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU", batchSize: 100})
+
+        expect(executeButton()?.disabled).toBe(false)
+    })
+
+    it("is enabled once the required input is set, with the optional input left out", async () => {
+        const wrapper = await openBackfill()
+
+        await fillInputs(wrapper, {region: "EU"})
+
+        expect(executeButton()?.disabled).toBe(false)
+    })
 })

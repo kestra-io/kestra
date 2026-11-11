@@ -85,25 +85,4 @@ public class LogToFileTest {
                 .contains("Skipping task execution for task 'hello' as there is an existing cache entry for it");
         }
     }
-
-    @Test
-    @LoadFlows("flows/valids/log-to-file-working-directory.yaml")
-    void shouldNotLoseWorkingDirectoryLogsWhenItLogsToFile() throws Exception {
-        List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.addListener(logs::add);
-
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "log-to-file-working-directory");
-
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        LogEntry subtaskRunIfError = TestsUtils.awaitLog(
-            logs,
-            log -> execution.getId().equals(log.getExecutionId()) && log.getMessage().startsWith("Failed evaluating runIf")
-        );
-        assertThat(subtaskRunIfError).isNotNull();
-        LogEntry workingDirectoryLog = TestsUtils.awaitLog(
-            logs,
-            log -> execution.getId().equals(log.getExecutionId()) && log.getMessage().equals("Cache files didn't change, skip updating it")
-        );
-        assertThat(workingDirectoryLog).isNotNull();
-    }
 }

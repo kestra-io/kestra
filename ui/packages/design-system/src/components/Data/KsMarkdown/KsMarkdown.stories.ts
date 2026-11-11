@@ -7,6 +7,7 @@ const meta: Meta<typeof KsMarkdown> = {
     tags: ["autodocs"],
     argTypes: {
         content: {control: "text"},
+        compact: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -39,6 +40,8 @@ const HTML_EXAMPLE = `
 <div class="video-container">
   <iframe src="https://www.youtube.com/embed/BeQNI2XRddA?si=nvoIqA1SIrMaKyYs" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
+
+<div style="position: relative; padding-bottom: calc(48.9583% + 41px); height: 0px; width: 100%;"><iframe src="https://demo.arcade.software/ts2ZMkTWIBQTH0MyQ8V9?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="AI Copilot | Kestra" allowfullscreen></iframe></div>
 `
 const KITCHEN_SINK = `
 ---
@@ -336,6 +339,14 @@ export const Html: Story = {
     parameters: {controls: {disable: true}},
 }
 
+
+/** Headings kept below a `lg` page title (h1 `lg`, h2 `base`, h3-h6 `sm`), for markdown shown inside a panel. */
+export const Compact: Story = {
+    args: {
+        compact: true,
+        content: "# H1 — Main title\n\n## H2 — Section\n\n### H3 — Subsection\n\n#### H4 — Detail\n\nBody text under the headings.",
+    },
+}
 
 /** Headings H1–H6 with hoverable `#` anchor links. */
 export const HeadingLinks: Story = {

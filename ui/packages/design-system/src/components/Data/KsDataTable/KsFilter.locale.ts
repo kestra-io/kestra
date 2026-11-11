@@ -69,6 +69,7 @@ export default {
             "deselect all": "Deselect All",
             "no options found": "No options found",
             "show default": "Show Default",
+            "option_selected": "{label} selected",
             "operator": "Filter operator",
             "close": "Close",
             "remove_filter": "Remove filter",
@@ -120,6 +121,8 @@ export default {
                 "parent_description": "Show only top-level/root executions",
             },
             "execution_kind": {
+                "standard": "Standard",
+                "standard_description": "Standard execution outside of Playground, Loop or Test",
                 "normal": "Normal",
                 "playground": "Playground",
                 "loop": "Loop",
@@ -294,9 +297,9 @@ export default {
                 "label": "Operation ID",
                 "description": "Filter by async operation identifier",
             },
-            "outputs": {
-                "label": "Searchable outputs",
-                "description": "Filter by the searchable outputs of the execution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filter by the searchable inputs and outputs of the execution",
             },
             "taskRunId": {
                 "label": "Task Run ID",
@@ -482,6 +485,7 @@ export default {
             "deselect all": "Alle abwählen",
             "no options found": "Keine Optionen gefunden",
             "show default": "Standard anzeigen",
+            "option_selected": "{label} ausgewählt",
             "operator": "Filter-Operator",
             "close": "Schließen",
             "remove_filter": "Filter entfernen",
@@ -533,6 +537,8 @@ export default {
                 "parent_description": "Nur Executions der obersten Ebene anzeigen",
             },
             "execution_kind": {
+                "standard": "Standard",
+                "standard_description": "Standard-Execution außerhalb von Playground, Loop oder Test",
                 "normal": "Normal",
                 "playground": "Playground",
                 "loop": "Schleife",
@@ -707,9 +713,9 @@ export default {
                 "label": "Operations-ID",
                 "description": "Nach ID des asynchronen Vorgangs filtern",
             },
-            "outputs": {
-                "label": "Durchsuchbare Outputs",
-                "description": "Nach den durchsuchbaren Outputs der Execution filtern",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtern nach den durchsuchbaren Inputs und Outputs der Execution",
             },
             "taskRunId": {
                 "label": "Task-Run-ID",
@@ -895,6 +901,7 @@ export default {
             "deselect all": "Deseleccionar todo",
             "no options found": "No se encontraron opciones",
             "show default": "Mostrar predeterminado",
+            "option_selected": "{label} seleccionado",
             "operator": "Operador de filtro",
             "close": "Cerrar",
             "remove_filter": "Eliminar filtro",
@@ -946,6 +953,8 @@ export default {
                 "parent_description": "Mostrar solo ejecuciones de nivel superior/raíz",
             },
             "execution_kind": {
+                "standard": "Estándar",
+                "standard_description": "Ejecución estándar fuera de Playground, Loop o Test",
                 "normal": "Normal",
                 "playground": "Área de Pruebas",
                 "loop": "Bucle",
@@ -1120,9 +1129,9 @@ export default {
                 "label": "ID de operación",
                 "description": "Filtrar por identificador de operación asíncrona",
             },
-            "outputs": {
-                "label": "Salidas buscables",
-                "description": "Filtrar por los outputs buscables de la ejecución",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar por los inputs y outputs de la ejecución que se pueden buscar",
             },
             "taskRunId": {
                 "label": "ID de Ejecución de Task",
@@ -1308,6 +1317,7 @@ export default {
             "deselect all": "Tout désélectionner",
             "no options found": "Aucune option trouvée",
             "show default": "Afficher par défaut",
+            "option_selected": "{label} sélectionné",
             "operator": "Opérateur de filtre",
             "close": "Fermer",
             "remove_filter": "Retirer le filtre",
@@ -1359,6 +1369,8 @@ export default {
                 "parent_description": "Afficher uniquement les exécutions de niveau supérieur/racine",
             },
             "execution_kind": {
+                "standard": "Standard",
+                "standard_description": "Exécution standard en dehors de Playground, Loop ou Test",
                 "normal": "Normal",
                 "playground": "Terrain de jeu",
                 "loop": "Boucle",
@@ -1533,9 +1545,9 @@ export default {
                 "label": "ID d'opération",
                 "description": "Filtrer par identifiant d'opération asynchrone",
             },
-            "outputs": {
-                "label": "Sorties interrogeables",
-                "description": "Filtrer par les outputs recherchables de l'exécution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrer par les inputs et outputs recherchables de l'exécution",
             },
             "taskRunId": {
                 "label": "ID d'exécution de Task",
@@ -1721,6 +1733,7 @@ export default {
             "deselect all": "सभी को अचयनित करें",
             "no options found": "कोई विकल्प नहीं मिला",
             "show default": "डिफ़ॉल्ट दिखाएं",
+            "option_selected": "{label} चयनित",
             "operator": "फ़िल्टर ऑपरेटर",
             "close": "बंद करें",
             "remove_filter": "फ़िल्टर हटाएं",
@@ -1772,6 +1785,8 @@ export default {
                 "parent_description": "केवल शीर्ष-स्तरीय/मूल executions दिखाएं",
             },
             "execution_kind": {
+                "standard": "मानक",
+                "standard_description": "Playground, Loop या Test के बाहर मानक execution",
                 "normal": "सामान्य",
                 "playground": "प्लेग्राउंड",
                 "loop": "लूप",
@@ -1946,9 +1961,9 @@ export default {
                 "label": "ऑपरेशन ID",
                 "description": "एसिंक ऑपरेशन ID द्वारा फ़िल्टर करें",
             },
-            "outputs": {
-                "label": "खोजने योग्य आउटपुट",
-                "description": "execution के खोज योग्य output द्वारा फ़िल्टर करें",
+            "searchableData": {
+                "label": "इनपुट और आउटपुट",
+                "description": "execution के खोज योग्य input और output द्वारा फ़िल्टर करें",
             },
             "taskRunId": {
                 "label": "Task रन ID",
@@ -2134,6 +2149,7 @@ export default {
             "deselect all": "Deseleziona tutto",
             "no options found": "Nessuna opzione trovata",
             "show default": "Mostra Predefinito",
+            "option_selected": "{label} selezionato",
             "operator": "Operatore di filtro",
             "close": "Chiudi",
             "remove_filter": "Rimuovi filtro",
@@ -2185,6 +2201,8 @@ export default {
                 "parent_description": "Mostra solo esecuzioni di livello superiore/radice",
             },
             "execution_kind": {
+                "standard": "Standard",
+                "standard_description": "Esecuzione standard al di fuori di Playground, Loop o Test",
                 "normal": "Normale",
                 "playground": "Playground",
                 "loop": "Ciclo",
@@ -2359,9 +2377,9 @@ export default {
                 "label": "ID operazione",
                 "description": "Filtra per identificatore di operazione asincrona",
             },
-            "outputs": {
-                "label": "Output ricercabili",
-                "description": "Filtra in base agli output ricercabili dell'Execution",
+            "searchableData": {
+                "label": "Input e Output",
+                "description": "Filtra in base agli input e output ricercabili dell'Execution",
             },
             "taskRunId": {
                 "label": "ID Esecuzione Task",
@@ -2547,6 +2565,7 @@ export default {
             "deselect all": "すべて選択解除",
             "no options found": "オプションが見つかりません",
             "show default": "デフォルトを表示",
+            "option_selected": "{label} を選択中",
             "operator": "フィルター演算子",
             "close": "閉じる",
             "remove_filter": "フィルターを削除",
@@ -2598,6 +2617,8 @@ export default {
                 "parent_description": "トップレベル/ルートの実行のみを表示",
             },
             "execution_kind": {
+                "standard": "標準",
+                "standard_description": "Playground、Loop、Test 以外の標準実行",
                 "normal": "通常",
                 "playground": "プレイグラウンド",
                 "loop": "ループ",
@@ -2772,9 +2793,9 @@ export default {
                 "label": "オペレーション ID",
                 "description": "非同期操作IDでフィルタリング",
             },
-            "outputs": {
-                "label": "検索可能な出力",
-                "description": "Executionの検索可能なoutputでフィルタリング",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Executionの検索可能なinputとoutputでフィルタリング",
             },
             "taskRunId": {
                 "label": "Task 実行 ID",
@@ -2960,6 +2981,7 @@ export default {
             "deselect all": "모두 선택 해제",
             "no options found": "옵션을 찾을 수 없습니다.",
             "show default": "기본값 표시",
+            "option_selected": "{label} 선택됨",
             "operator": "필터 연산자",
             "close": "닫기",
             "remove_filter": "필터 제거",
@@ -3011,6 +3033,8 @@ export default {
                 "parent_description": "최상위/루트 실행만 표시",
             },
             "execution_kind": {
+                "standard": "표준",
+                "standard_description": "Playground, Loop, Test 외의 표준 실행",
                 "normal": "일반",
                 "playground": "플레이그라운드",
                 "loop": "루프",
@@ -3185,9 +3209,9 @@ export default {
                 "label": "작업 ID",
                 "description": "비동기 작업 ID로 필터링",
             },
-            "outputs": {
-                "label": "검색 가능한 output",
-                "description": "실행의 검색 가능한 output으로 필터링",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "실행의 검색 가능한 input 및 output으로 필터링",
             },
             "taskRunId": {
                 "label": "Task 실행 ID",
@@ -3373,6 +3397,7 @@ export default {
             "deselect all": "Odznacz wszystko",
             "no options found": "Nie znaleziono opcji",
             "show default": "Pokaż domyślne",
+            "option_selected": "Wybrano {label}",
             "operator": "Operator filtrowania",
             "close": "Zamknij",
             "remove_filter": "Usuń filtr",
@@ -3424,6 +3449,8 @@ export default {
                 "parent_description": "Pokaż tylko egzekucje najwyższego poziomu",
             },
             "execution_kind": {
+                "standard": "Standardowy",
+                "standard_description": "Standardowa egzekucja poza Playground, Loop lub Test",
                 "normal": "Normalny",
                 "playground": "Playground",
                 "loop": "Pętla",
@@ -3598,9 +3625,9 @@ export default {
                 "label": "ID operacji",
                 "description": "Filtruj według ID operacji asynchronicznej",
             },
-            "outputs": {
-                "label": "Wyjścia z możliwością wyszukiwania",
-                "description": "Filtruj według przeszukiwalnych outputów egzekucji",
+            "searchableData": {
+                "label": "Inputy i Outputy",
+                "description": "Filtruj według przeszukiwalnych inputów i outputów egzekucji",
             },
             "taskRunId": {
                 "label": "ID Task Runa",
@@ -3786,6 +3813,7 @@ export default {
             "deselect all": "Desmarcar Tudo",
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
+            "option_selected": "{label} selecionado",
             "operator": "Operador de filtro",
             "close": "Fechar",
             "remove_filter": "Remover filtro",
@@ -3837,6 +3865,8 @@ export default {
                 "parent_description": "Mostrar apenas execuções de nível superior/raiz",
             },
             "execution_kind": {
+                "standard": "Padrão",
+                "standard_description": "Execução padrão fora de Playground, Loop ou Test",
                 "normal": "Normal",
                 "playground": "Playground",
                 "loop": "Loop",
@@ -4011,9 +4041,9 @@ export default {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
             },
-            "outputs": {
-                "label": "Saídas pesquisáveis",
-                "description": "Filtrar pelas saídas pesquisáveis da execução",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar pelas entradas e saídas pesquisáveis da Execution",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4199,6 +4229,7 @@ export default {
             "deselect all": "Desmarcar Tudo",
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
+            "option_selected": "{label} selecionado",
             "operator": "Operador de filtro",
             "close": "Fechar",
             "remove_filter": "Remover filtro",
@@ -4250,6 +4281,8 @@ export default {
                 "parent_description": "Mostrar apenas execuções de nível superior/raiz",
             },
             "execution_kind": {
+                "standard": "Padrão",
+                "standard_description": "Execução padrão fora de Playground, Loop ou Test",
                 "normal": "Normal",
                 "playground": "Playground",
                 "loop": "Loop",
@@ -4424,9 +4457,9 @@ export default {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
             },
-            "outputs": {
-                "label": "Outputs pesquisáveis",
-                "description": "Filtrar pelas outputs pesquisáveis da Execution",
+            "searchableData": {
+                "label": "Inputs & Outputs",
+                "description": "Filtrar pelos inputs e outputs pesquisáveis da Execution",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4612,6 +4645,7 @@ export default {
             "deselect all": "Снять выделение со всех",
             "no options found": "Опции не найдены",
             "show default": "Показать по умолчанию",
+            "option_selected": "Выбрано: {label}",
             "operator": "Оператор фильтра",
             "close": "Закрыть",
             "remove_filter": "Удалить фильтр",
@@ -4663,6 +4697,8 @@ export default {
                 "parent_description": "Показать только верхнеуровневые/корневые выполнения",
             },
             "execution_kind": {
+                "standard": "Стандартный",
+                "standard_description": "Стандартное выполнение вне Playground, Loop или Test",
                 "normal": "Обычный",
                 "playground": "Песочница",
                 "loop": "Цикл",
@@ -4837,9 +4873,9 @@ export default {
                 "label": "ID операции",
                 "description": "Фильтровать по ID асинхронной операции",
             },
-            "outputs": {
-                "label": "Выходные данные с возможностью поиска",
-                "description": "Фильтровать по поисковым output'ам Execution",
+            "searchableData": {
+                "label": "Входы и выходы",
+                "description": "Фильтрация по доступным для поиска input и output Execution",
             },
             "taskRunId": {
                 "label": "ID запуска Task",
@@ -5025,6 +5061,7 @@ export default {
             "deselect all": "取消全选",
             "no options found": "未找到选项",
             "show default": "显示默认",
+            "option_selected": "已选择 {label}",
             "operator": "过滤运算符",
             "close": "关闭",
             "remove_filter": "移除过滤器",
@@ -5076,6 +5113,8 @@ export default {
                 "parent_description": "仅显示顶级/根执行",
             },
             "execution_kind": {
+                "standard": "标准",
+                "standard_description": "Playground、Loop 或 Test 之外的标准执行",
                 "normal": "正常",
                 "playground": "游乐场",
                 "loop": "循环",
@@ -5250,9 +5289,9 @@ export default {
                 "label": "操作 ID",
                 "description": "按异步操作 ID 筛选",
             },
-            "outputs": {
-                "label": "可搜索的 output",
-                "description": "按 execution 的可搜索 output 筛选",
+            "searchableData": {
+                "label": "输入与输出",
+                "description": "按 execution 的可搜索 input 和 output 筛选",
             },
             "taskRunId": {
                 "label": "Task 运行 ID",

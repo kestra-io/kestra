@@ -1,0 +1,17 @@
+id: approval-expire-parallel-sibling
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+        timeout: PT2S
+        onApprove:
+          - id: approved
+            type: io.kestra.plugin.core.log.Log
+            message: "Approved"
+      - id: sleep
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT5S

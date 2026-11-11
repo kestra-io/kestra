@@ -131,4 +131,46 @@ class SanityCheckTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_conditional.yaml")
+    void qaLoopConditional(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_errors_finally.yaml")
+    void qaLoopErrorsFinally(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_json_objects.yaml")
+    void qaLoopJsonObjects(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_nested.yaml")
+    void qaLoopNested(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_outputs_basic.yaml")
+    void qaLoopOutputsBasic(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_parallel.yaml")
+    void qaLoopParallel(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/loop_simple_list.yaml")
+    void qaLoopSimpleList(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

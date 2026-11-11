@@ -6,6 +6,7 @@ import java.util.Optional;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -257,7 +258,7 @@ public class McpServerController {
             boolean destructive,
             boolean idempotent,
             boolean returnDirect) {
-            public static Annotations from(McpToolTrigger.Annotations a) {
+            public static Annotations from(McpToolAnnotations a) {
                 if (a == null) {
                     return new Annotations(false, false, false, false, false);
                 }

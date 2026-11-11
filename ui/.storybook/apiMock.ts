@@ -35,8 +35,10 @@ declare global {
     }
 }
 
+export type ApiRouteContext = {body?: unknown; query: URLSearchParams}
+
 /** A payload, or a function of the request context returning one. */
-type ApiRouteHandler = ((context: {body?: unknown}) => unknown) | unknown
+type ApiRouteHandler = ((context: ApiRouteContext) => unknown) | unknown
 
 type ApiRouteHandlers = Record<string, ApiRouteHandler>
 
@@ -72,15 +74,19 @@ const HANDLERS: ApiRouteHandlers = {
     "GET /plugins/inputs": [],
     "GET /plugins/triggers": {results: [], total: 0},
     "GET /plugins/schemas/:type": {},
+    "GET /plugins/:cls": {},
+    "GET /plugins/ticketing-systems": {results: [], total: 0},
     "POST /plugins/pluginUiManifest": {manifest: {}},
 
     // --- flows --------------------------------------------------------------------------------
     "GET /flows/:namespace": [],
     "GET /flows/:namespace/:id/revisions": [],
     "GET /flows/:namespace/:id/dependencies": {nodes: [], edges: []},
+    "POST /flows/validate/task": {index: 0},
 
     // --- namespaces ---------------------------------------------------------------------------
     "POST /namespaces/autocomplete": [],
+    "GET /namespaces/search": {results: [], total: 0},
     "GET /namespaces/:namespace/files/directory": [],
 
     // --- executions ---------------------------------------------------------------------------
@@ -115,8 +121,8 @@ let storyPatterns: RoutePattern[] = []
  * Register handlers for the current story only, taking precedence over the global map — same
  * key/payload contract as {@link HANDLERS}. Call it from a story file's `beforeEach` (which runs
  * after the preview-level `beforeEach` has reset the previous story's registration). This is the
- * story-side mock the warning below refers to: `vi.mock()` cannot intercept the pre-bundled SDK in
- * a story file, so per-story data has to come in at the fetch layer, here.
+ * story-side mock the warning below refers to: story files share one iframe (`isolate: false`), so a
+ * `vi.mock()` in one of them would leak into the files after it, and per-story data comes in here.
  */
 export function mockStoryApiRoutes(handlers: ApiRouteHandlers): void {
     Object.assign(storyHandlers, handlers)
@@ -212,7 +218,8 @@ export function resolveApiRequest(method: string, rawUrl: string, context: {body
             : patterns.find(({segments}) => matchesPattern(segments, requestSegments))?.key
         if (matched !== undefined) {
             const handler = handlers[matched]
-            return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
+            const query = new URL(rawUrl, window.location.href).searchParams
+            return {status: 200, data: typeof handler === "function" ? handler({...context, query}) : handler}
         }
     }
 

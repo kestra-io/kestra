@@ -105,6 +105,11 @@ public class PluginCatalogService {
         return new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
     }
 
+    // A develop (-SNAPSHOT) or release candidate (-rcN) build, never a release.
+    private static boolean isPreRelease() {
+        return Version.of(KestraContext.getContext().getVersion()).qualifier() != null;
+    }
+
     /**
      * Resolves the version for the given artifacts.
      *
@@ -132,7 +137,8 @@ public class PluginCatalogService {
             String resolvedVersion = null;
             if (!versions.isEmpty()) {
                 if (it.version().equalsIgnoreCase("LATEST")) {
-                    resolvedVersion = versions.getFirst();
+                    // pre-release instances also get snapshot versions, listed first: LATEST stays the latest release
+                    resolvedVersion = versions.stream().filter(version -> !version.endsWith("-SNAPSHOT")).findFirst().orElse(null);
                 } else {
                     resolvedVersion = versions.contains(it.version()) ? it.version() : null;
                 }
@@ -322,6 +328,9 @@ public class PluginCatalogService {
         );
         if (oss) {
             request.getParameters().add("license", "OPEN_SOURCE");
+        }
+        if (isPreRelease()) {
+            request.getParameters().add("snapshot", "true");
         }
         try {
             return httpClient

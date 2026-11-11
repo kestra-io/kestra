@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -23,7 +24,7 @@ import jakarta.inject.Singleton;
  * overall state and duration plus one line per task run (with state histories for failed runs).
  */
 @Singleton
-public class ReadExecutionTool implements AiPlatformTool {
+public class ReadExecutionTool implements McpPlatformTool {
     private final ExecutionRepositoryInterface executionRepository;
 
     @Inject
@@ -41,8 +42,13 @@ public class ReadExecutionTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "read-execution",
+        name = "read_execution",
         value = "Read a single Kestra execution: its state, duration and per-task-run breakdown (failed runs include their state history). Read-only; use this to diagnose or inspect a specific run when you already know its id. "
             + "Returns an object { id, namespace, flowId, state, startDate, duration, taskRuns } where each task run is { taskId, state, attempts, value, failedAttempts } and `failedAttempts` (only populated for FAILED runs) is an array of { attempt, stateHistory } whose `stateHistory` entries read \"STATE@date\"."
     )

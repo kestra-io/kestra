@@ -10,6 +10,31 @@ import FilterNumber from "./FilterNumber.vue"
 import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 import FilterFooter from "./FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../utils/filterTypes"
+import filterLocale from "../../KsFilter.locale"
+
+test.each([
+    {allLabel: "Standard", expected: "Standard sélectionné"},
+    {allLabel: undefined, expected: `${filterLocale.fr.filter.hierarchy.all} sélectionné`},
+])("shouldTranslateTheDefaultRadioFooterWithLabel $allLabel", async ({allLabel, expected}) => {
+    const wrapper = i18nMount(FilterEditPopper, {
+        locales: filterLocale,
+        props: {
+            filter: {id: "kind", key: "kind", keyLabel: "Kind", comparator: Comparators.EQUALS, comparatorLabel: "", value: "", valueLabel: ""},
+            filterKey: {
+                key: "kind",
+                label: "Kind",
+                valueType: "radio",
+                comparators: [Comparators.EQUALS],
+                allLabel,
+                valueProvider: async () => [{label: "Playground", value: "PLAYGROUND"}],
+            },
+        },
+    })
+    wrapper.vm.$i18n.locale = "fr"
+    await flushPromises()
+
+    expect(wrapper.text()).toContain(expected)
+})
 
 const levelKey: FilterKeyConfig = {
     key: "level",

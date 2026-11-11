@@ -1,0 +1,29 @@
+id: loop_errors_finally
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Handle iteration failures without aborting the whole loop using `transmitFailed: false`,
+  run cleanup with `errors:` per failed iteration, and run a one-time post-loop block via `finally:`.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - ok
+      - boom
+      - ok
+    transmitFailed: false
+    tasks:
+      - id: maybe_fail
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ item.value == 'boom' }}"
+        errorMessage: "failing on {{ item.value }}"
+    errors:
+      - id: handle_error
+        type: io.kestra.plugin.core.log.Log
+        message: "Iteration {{ item.index }} ({{ item.value }}) failed"
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: "Loop completed (with or without failures)"

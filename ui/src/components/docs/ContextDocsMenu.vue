@@ -1,9 +1,10 @@
 <template>
-    <div class="docsMenuWrapper">
+    <div ref="menuWrapper" class="docsMenuWrapper">
         <KsButton
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
+            :aria-expanded="menuOpen"
         >
             <Menu class="menuIcon" />
             {{ $t("documentationMenu") }}
@@ -42,7 +43,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {onClickOutside, onKeyStroke} from "@vueuse/core"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
 
@@ -54,6 +56,18 @@
     const docStore = useDocStore()
 
     const menuOpen = ref(false)
+    const menuWrapper = useTemplateRef<HTMLElement>("menuWrapper")
+
+    onClickOutside(menuWrapper, () => {
+        menuOpen.value = false
+    })
+
+    onKeyStroke("Escape", () => {
+        if (!menuOpen.value) return
+        const focusWasInMenu = menuWrapper.value?.contains(document.activeElement)
+        menuOpen.value = false
+        if (focusWasInMenu) menuWrapper.value?.querySelector("button")?.focus()
+    })
 
     const rawStructure = ref<Record<string, DocMetadata> | undefined>()
     const currentDocPath = computed(() => docStore.docPath)

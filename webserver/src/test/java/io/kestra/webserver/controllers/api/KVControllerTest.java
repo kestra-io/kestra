@@ -443,7 +443,7 @@ class KVControllerTest {
                 .header("ttl", "not-a-duration")
         )).isInstanceOfSatisfying(
             HttpClientResponseException.class,
-            exception -> assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode())
+            exception -> Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT)
         );
         assertThat(kvStore().exists("my-key")).isFalse();
     }

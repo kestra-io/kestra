@@ -34,6 +34,7 @@ public record Label(
     public static final String FROM = SYSTEM_PREFIX + "from";
     public static final String TEST_SUITE = SYSTEM_PREFIX + "testSuite";
     public static final String KILL_SWITCH = SYSTEM_PREFIX + "killSwitch";
+    public static final String PLAYGROUND_OWNER = SYSTEM_PREFIX + "playgroundOwner";
 
     /** Known values for the {@link #FROM} system label. */
     public enum FromLabel {

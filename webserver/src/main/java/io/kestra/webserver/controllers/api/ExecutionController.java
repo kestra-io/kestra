@@ -1073,6 +1073,9 @@ public class ExecutionController {
         }
 
         List<Label> parsedLabels = parseLabels(labels);
+        if (kind.filter(ExecutionKind.PLAYGROUND::equals).isPresent()) {
+            playgroundService.ownerLabel().ifPresent(parsedLabels::add);
+        }
 
         if (flow.isDraft()) {
             controlDraftExecutableAs(flow, kind.orElse(null));
@@ -1766,6 +1769,10 @@ public class ExecutionController {
     }
 
     private void controlReplayable(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws InternalException {
+        // a replay inherits its source's owner label, so a colleague's Playground run would land in their session
+        if (ExecutionKind.PLAYGROUND == execution.getKind() && !playgroundService.isCallersRun(execution)) {
+            throw new NoSuchElementException("Unable to find the Playground run '%s'.".formatted(execution.getId()));
+        }
         State state = execution.getState();
         // the Playground replays its own execution that is suspended on a breakpoint to reuse the tasks already run
         boolean isSuspendedPlayground = ExecutionKind.PLAYGROUND == execution.getKind() && (state.isBreakpoint() || state.isPaused());

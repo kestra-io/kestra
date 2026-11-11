@@ -5,7 +5,8 @@ import java.util.Optional;
 import jakarta.inject.Singleton;
 
 /**
- * The caller's name as written in the {@code system.username} label of the runs they start; empty when runs carry no owner, so a session spans the whole flow.
+ * The caller's stable, unique id, written in the {@code system.playgroundOwner} label of the runs they start.
+ * Empty when runs carry no owner, so a session spans the whole flow.
  */
 @Singleton
 public class PlaygroundOwnerResolver {

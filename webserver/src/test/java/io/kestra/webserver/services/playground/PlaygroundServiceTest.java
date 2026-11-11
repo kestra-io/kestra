@@ -170,7 +170,7 @@ class PlaygroundServiceTest {
             .flowId("playground")
             .flowRevision(1)
             .kind(ExecutionKind.PLAYGROUND)
-            .labels(List.of(new Label(Label.USERNAME, username)))
+            .labels(List.of(new Label(Label.PLAYGROUND_OWNER, username)))
             .state(State.of(state, List.of(new State.History(State.Type.CREATED, start), new State.History(state, start.plusSeconds(1)))));
     }
 }

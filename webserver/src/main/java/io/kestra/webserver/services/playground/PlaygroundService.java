@@ -150,6 +150,11 @@ public class PlaygroundService {
      * Ends the other runs of {@code newRun}'s user and flow, then deletes the terminated ones beyond the {@value #RETAINED_RUNS} newest.
      * A no-op for any other kind; failures are logged, never thrown, so they cannot fail the run that triggered them.
      */
+    /** The label that ties a new run to the caller's session; empty when sessions span the whole flow. */
+    public Optional<Label> ownerLabel() {
+        return ownerResolver.owner().map(owner -> new Label(Label.PLAYGROUND_OWNER, owner));
+    }
+
     public void onNewRun(Execution newRun) {
         if (ExecutionKind.PLAYGROUND != newRun.getKind()) {
             return;
@@ -302,7 +307,7 @@ public class PlaygroundService {
         }
     }
 
-    private boolean isCallersRun(Execution run) {
+    public boolean isCallersRun(Execution run) {
         if (!ownerResolver.isPerUser()) {
             return true;
         }
@@ -339,8 +344,8 @@ public class PlaygroundService {
             )
         );
         owner.ifPresent(
-            username -> filters.add(
-                QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of(Label.USERNAME, username)).build()
+            id -> filters.add(
+                QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of(Label.PLAYGROUND_OWNER, id)).build()
             )
         );
         return filters;
@@ -349,7 +354,7 @@ public class PlaygroundService {
     private static Optional<String> owner(Execution run) {
         return run.getLabels() == null ? Optional.empty()
             : run.getLabels().stream()
-                .filter(label -> Label.USERNAME.equals(label.key()))
+                .filter(label -> Label.PLAYGROUND_OWNER.equals(label.key()))
                 .map(Label::value)
                 .findFirst();
     }

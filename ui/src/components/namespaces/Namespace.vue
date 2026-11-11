@@ -43,7 +43,7 @@
 
     watch(namespace, loadNamespace)
 
-    watch(activeTabName, (newTab) => {
+    watch([activeTabName, namespace], ([newTab]) => {
         if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 

@@ -183,7 +183,7 @@ public final class HttpUriValidator {
         }
     }
 
-    private static Optional<InetAddress> parseIpLiteral(String host) {
+    static Optional<InetAddress> parseIpLiteral(String host) {
         String candidate = stripTrailingDot(host);
 
         if (candidate.startsWith("[") && candidate.endsWith("]")) {
@@ -282,7 +282,7 @@ public final class HttpUriValidator {
         return true;
     }
 
-    private static void checkResolvedAddresses(
+    static void checkResolvedAddresses(
             String host,
             List<String> deniedList) {
         if (deniedList.isEmpty() || parseIpLiteral(host).isPresent()) {
@@ -354,7 +354,7 @@ public final class HttpUriValidator {
         };
     }
 
-    private static void rejectDeniedAddresses(
+    static void rejectDeniedAddresses(
             String host,
             InetAddress[] addresses,
             List<String> deniedList) {

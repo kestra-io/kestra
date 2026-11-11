@@ -59,6 +59,7 @@ import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
 
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode

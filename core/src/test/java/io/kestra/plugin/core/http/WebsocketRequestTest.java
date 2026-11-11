@@ -5,10 +5,15 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import org.testcontainers.junit.jupiter.Container;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.net.Proxy;
+import io.kestra.core.http.client.configurations.ProxyConfiguration;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -36,441 +41,552 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.kestra.core.http.client.configurations.BearerAuthConfiguration;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
 
 @io.micronaut.context.annotation.Property(name = "kestra.tasks.http.denied-list[0]", value = "dangerous-url.com")
 
 @KestraTest
+@Testcontainers
 class WebsocketRequestTest {
 
-    @Inject
-    private TestRunContextFactory runContextFactory;
+        @SuppressWarnings("resource")
+        @Container
+        static GenericContainer<?> proxy = new GenericContainer<>("kalaksi/tinyproxy")
+                        .withExposedPorts(8888);
 
-    private NioEventLoopGroup bossGroup;
-    private NioEventLoopGroup workerGroup;
-    private Channel serverChannel;
-    private String serverUri;
-    private volatile String receivedAuthorization;
+        @Inject
+        private TestRunContextFactory runContextFactory;
 
-    @BeforeEach
-    void startServer() throws InterruptedException {
-        receivedAuthorization = null;
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup();
+        private NioEventLoopGroup bossGroup;
+        private NioEventLoopGroup workerGroup;
+        private Channel serverChannel;
+        private String serverUri;
+        private volatile String receivedAuthorization;
 
-        ServerBootstrap bootstrap = new ServerBootstrap();
+        @BeforeEach
+        void startServer() throws InterruptedException {
+                receivedAuthorization = null;
+                bossGroup = new NioEventLoopGroup(1);
+                workerGroup = new NioEventLoopGroup();
 
-        bootstrap.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel channel) {
-                        channel.pipeline()
-                                .addLast(new HttpServerCodec())
-                                .addLast(new HttpObjectAggregator(65536))
-                                .addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
-                                    @Override
-                                    protected void channelRead0(
-                                            ChannelHandlerContext ctx,
-                                            FullHttpRequest request) {
-                                        receivedAuthorization = request
-                                                .headers()
-                                                .get("Authorization");
-                                        ctx.fireChannelRead(request.retain());
-                                    }
-                                })
+                ServerBootstrap bootstrap = new ServerBootstrap();
 
-                                .addLast(new WebSocketServerProtocolHandler("/ws"))
-                                .addLast(new SimpleChannelInboundHandler<WebSocketFrame>() {
-                                    @Override
-                                    protected void channelRead0(
-                                            ChannelHandlerContext ctx,
-                                            WebSocketFrame frame) {
+                bootstrap.group(bossGroup, workerGroup)
+                                .channel(NioServerSocketChannel.class)
+                                .childHandler(new ChannelInitializer<SocketChannel>() {
+                                        @Override
+                                        protected void initChannel(SocketChannel channel) {
+                                                channel.pipeline()
+                                                                .addLast(new HttpServerCodec())
+                                                                .addLast(new HttpObjectAggregator(65536))
+                                                                .addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
+                                                                        @Override
+                                                                        protected void channelRead0(
+                                                                                        ChannelHandlerContext ctx,
+                                                                                        FullHttpRequest request) {
+                                                                                receivedAuthorization = request
+                                                                                                .headers()
+                                                                                                .get("Authorization");
+                                                                                ctx.fireChannelRead(request.retain());
+                                                                        }
+                                                                })
 
-                                        if (frame instanceof TextWebSocketFrame textFrame) {
-                                            if ("BINARY".equals(
-                                                    textFrame
-                                                            .text())) {
-                                                ctx.writeAndFlush(
-                                                        new BinaryWebSocketFrame(
-                                                                ctx.alloc().buffer(
-                                                                        3)
-                                                                        .writeBytes(
-                                                                                new byte[] { 1, 2,
-                                                                                        3 })));
-                                            } else if ("CLOSE".equals(
-                                                    textFrame.text())) {
-                                                ctx.writeAndFlush(
-                                                        new io.netty.handler.codec.http.websocketx.CloseWebSocketFrame(
-                                                                1000,
-                                                                "Normal closure"));
-                                            } else if ("JSON".equals(
-                                                    textFrame.text())) {
-                                                ctx.writeAndFlush(
-                                                        new TextWebSocketFrame(
-                                                                "{\"message\":\"Hello Kestra\"}"));
-                                            } else {
-                                                ctx.writeAndFlush(
-                                                        new TextWebSocketFrame(
-                                                                "Echo: " + textFrame
-                                                                        .text()));
-                                            }
+                                                                .addLast(new WebSocketServerProtocolHandler("/ws"))
+                                                                .addLast(new SimpleChannelInboundHandler<WebSocketFrame>() {
+                                                                        @Override
+                                                                        protected void channelRead0(
+                                                                                        ChannelHandlerContext ctx,
+                                                                                        WebSocketFrame frame) {
+
+                                                                                if (frame instanceof TextWebSocketFrame textFrame) {
+                                                                                        if ("BINARY".equals(
+                                                                                                        textFrame
+                                                                                                                        .text())) {
+                                                                                                ctx.writeAndFlush(
+                                                                                                                new BinaryWebSocketFrame(
+                                                                                                                                ctx.alloc().buffer(
+                                                                                                                                                3)
+                                                                                                                                                .writeBytes(
+                                                                                                                                                                new byte[] { 1, 2,
+                                                                                                                                                                                3 })));
+                                                                                        } else if ("CLOSE".equals(
+                                                                                                        textFrame.text())) {
+                                                                                                ctx.writeAndFlush(
+                                                                                                                new io.netty.handler.codec.http.websocketx.CloseWebSocketFrame(
+                                                                                                                                1000,
+                                                                                                                                "Normal closure"));
+                                                                                        } else if ("JSON".equals(
+                                                                                                        textFrame.text())) {
+                                                                                                ctx.writeAndFlush(
+                                                                                                                new TextWebSocketFrame(
+                                                                                                                                "{\"message\":\"Hello Kestra\"}"));
+                                                                                        } else {
+                                                                                                ctx.writeAndFlush(
+                                                                                                                new TextWebSocketFrame(
+                                                                                                                                "Echo: " + textFrame
+                                                                                                                                                .text()));
+                                                                                        }
+                                                                                }
+                                                                        }
+                                                                });
                                         }
-                                    }
                                 });
-                    }
-                });
 
-        serverChannel = bootstrap
-                .bind(new InetSocketAddress("127.0.0.1", 0))
-                .sync()
-                .channel();
+                serverChannel = bootstrap
+                                .bind(new InetSocketAddress("0.0.0.0", 0))
+                                .sync()
+                                .channel();
 
-        int port = ((InetSocketAddress) serverChannel.localAddress()).getPort();
-        serverUri = "ws://127.0.0.1:" + port + "/ws";
-    }
-
-    @AfterEach
-    void stopServer() {
-        if (serverChannel != null) {
-            serverChannel.close().syncUninterruptibly();
+                int port = ((InetSocketAddress) serverChannel.localAddress()).getPort();
+                serverUri = "ws://localhost:" + port + "/ws";
         }
 
-        if (bossGroup != null) {
-            bossGroup.shutdownGracefully().syncUninterruptibly();
+        @AfterEach
+        void stopServer() {
+                if (serverChannel != null) {
+                        serverChannel.close().syncUninterruptibly();
+                }
+
+                if (bossGroup != null) {
+                        bossGroup.shutdownGracefully().syncUninterruptibly();
+                }
+
+                if (workerGroup != null) {
+                        workerGroup.shutdownGracefully().syncUninterruptibly();
+                }
         }
 
-        if (workerGroup != null) {
-            workerGroup.shutdownGracefully().syncUninterruptibly();
+        @Test
+        void shouldSendAndReceiveMessage() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("Hello Kestra")))
+                                .maxMessages(Property.ofValue(1))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                WebsocketRequest.Output output = task.run(runContext);
+
+                assertEquals(1, output.getMessages().size());
+                assertEquals("Echo: Hello Kestra", output.getMessages().get(0));
         }
-    }
 
-    @Test
-    void shouldSendAndReceiveMessage() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("Hello Kestra")))
-                .maxMessages(Property.ofValue(1))
-                .build();
+        @Test
+        void shouldSendAndReceiveMultipleMessages() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-multiple-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(
+                                                Property.ofValue(
+                                                                List.of(
+                                                                                "First message",
+                                                                                "Second message",
+                                                                                "Third message",
+                                                                                "Fourth message",
+                                                                                "Fifth message")))
+                                .maxMessages(Property.ofValue(3))
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
 
-        WebsocketRequest.Output output = task.run(runContext);
+                WebsocketRequest.Output output = task.run(runContext);
 
-        assertEquals(1, output.getMessages().size());
-        assertEquals("Echo: Hello Kestra", output.getMessages().get(0));
-    }
+                assertEquals(3, output.getMessages().size());
+                assertEquals("Echo: First message", output.getMessages().get(0));
+                assertEquals("Echo: Second message", output.getMessages().get(1));
+                assertEquals("Echo: Third message", output.getMessages().get(2));
+        }
 
-    @Test
-    void shouldSendAndReceiveMultipleMessages() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-multiple-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(
-                        Property.ofValue(
-                                List.of(
-                                        "First message",
-                                        "Second message",
-                                        "Third message",
-                                        "Fourth message",
-                                        "Fifth message")))
-                .maxMessages(Property.ofValue(3))
-                .build();
+        @Test
+        void shouldStopAfterMaxDuration() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-timeout-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .maxDuration(Property.ofValue(java.time.Duration.ofSeconds(5)))
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
 
-        WebsocketRequest.Output output = task.run(runContext);
+                long start = System.currentTimeMillis();
 
-        assertEquals(3, output.getMessages().size());
-        assertEquals("Echo: First message", output.getMessages().get(0));
-        assertEquals("Echo: Second message", output.getMessages().get(1));
-        assertEquals("Echo: Third message", output.getMessages().get(2));
-    }
+                WebsocketRequest.Output output = task.run(runContext);
 
-    @Test
-    void shouldStopAfterMaxDuration() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-timeout-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .maxDuration(Property.ofValue(java.time.Duration.ofSeconds(5)))
-                .build();
+                long elapsed = System.currentTimeMillis() - start;
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                assertEquals(0, output.getMessages().size());
+                assertEquals(true, elapsed >= 5000);
+        }
 
-        long start = System.currentTimeMillis();
+        @Test
+        void shouldExtractValuesUsingJq() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-jq-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("JSON")))
+                                .maxMessages(Property.ofValue(1))
+                                .concatJqExpression(Property.ofValue(".message"))
+                                .build();
 
-        WebsocketRequest.Output output = task.run(runContext);
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
 
-        long elapsed = System.currentTimeMillis() - start;
+                WebsocketRequest.Output output = task.run(runContext);
 
-        assertEquals(0, output.getMessages().size());
-        assertEquals(true, elapsed >= 5000);
-    }
+                assertEquals(1, output.getMessages().size());
+                assertEquals("{\"message\":\"Hello Kestra\"}", output.getMessages().get(0));
+                assertEquals("Hello Kestra", output.getResult());
+        }
 
-    @Test
-    void shouldExtractValuesUsingJq() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-jq-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("JSON")))
-                .maxMessages(Property.ofValue(1))
-                .concatJqExpression(Property.ofValue(".message"))
-                .build();
+        @Test
+        void shouldRejectOversizedAccumulatedJqResults() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-jq-size-limit-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("JSON")))
+                                .maxMessages(Property.ofValue(1))
+                                .maxBufferSize(Property.ofValue(5L))
+                                .concatJqExpression(Property.ofValue(".message"))
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+                java.util.concurrent.ExecutionException exception = assertThrows(
+                                java.util.concurrent.ExecutionException.class,
+                                () -> task.run(runContext));
 
-        WebsocketRequest.Output output = task.run(runContext);
+                assertTrue(exception.getCause() instanceof IllegalStateException);
+                assertTrue(exception.getCause().getMessage().contains(
+                                "Accumulated JQ results exceeded maxBufferSize"));
+        }
 
-        assertEquals(1, output.getMessages().size());
-        assertEquals("{\"message\":\"Hello Kestra\"}", output.getMessages().get(0));
-        assertEquals("Hello Kestra", output.getResult());
-    }
+        @Test
+        void shouldStopWhenConditionMatches() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-stop-condition-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("JSON")))
+                                .stopCondition(Property.ofValue(".message == \"Hello Kestra\""))
+                                .build();
 
-    @Test
-    void shouldRejectOversizedAccumulatedJqResults() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-jq-size-limit-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("JSON")))
-                .maxMessages(Property.ofValue(1))
-                .maxBufferSize(Property.ofValue(5L))
-                .concatJqExpression(Property.ofValue(".message"))
-                .build();
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-        java.util.concurrent.ExecutionException exception = assertThrows(
-                java.util.concurrent.ExecutionException.class,
-                () -> task.run(runContext));
+                WebsocketRequest.Output output = task.run(runContext);
 
-        assertTrue(exception.getCause() instanceof IllegalStateException);
-        assertTrue(exception.getCause().getMessage().contains(
-                "Accumulated JQ results exceeded maxBufferSize"));
-    }
+                assertEquals(1, output.getMessages().size());
+                assertEquals("{\"message\":\"Hello Kestra\"}", output.getMessages().get(0));
+        }
 
-    @Test
-    void shouldStopWhenConditionMatches() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-stop-condition-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("JSON")))
-                .stopCondition(Property.ofValue(".message == \"Hello Kestra\""))
-                .build();
+        @Test
+        void shouldHandleServerClose() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-server-close-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("CLOSE")))
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
 
-        WebsocketRequest.Output output = task.run(runContext);
+                WebsocketRequest.Output output = task.run(runContext);
 
-        assertEquals(1, output.getMessages().size());
-        assertEquals("{\"message\":\"Hello Kestra\"}", output.getMessages().get(0));
-    }
+                assertEquals(0, output.getMessages().size());
+                assertEquals(1000, output.getCloseCode());
+                assertEquals("Normal closure", output.getCloseReason());
+        }
 
-    @Test
-    void shouldHandleServerClose() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-server-close-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("CLOSE")))
-                .build();
+        @Test
+        void shouldSendAuthenticationHeader() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-auth-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .headers(
+                                                Property.ofValue(
+                                                                Map.of(
+                                                                                "Authorization", "Bearer test-token")))
+                                .messages(Property.ofValue(List.of("Hello Auth")))
+                                .maxMessages(Property.ofValue(1))
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+                WebsocketRequest.Output output = task.run(runContext);
 
-        WebsocketRequest.Output output = task.run(runContext);
+                assertEquals("Echo: Hello Auth", output.getMessages().get(0));
+                assertEquals("Bearer test-token", receivedAuthorization);
+        }
 
-        assertEquals(0, output.getMessages().size());
-        assertEquals(1000, output.getCloseCode());
-        assertEquals("Normal closure", output.getCloseReason());
-    }
+        @Test
+        void shouldReceiveBinaryMessageAsBase64() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-binary-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("BINARY")))
+                                .maxMessages(Property.ofValue(1))
+                                .build();
 
-    @Test
-    void shouldSendAuthenticationHeader() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-auth-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .headers(
-                        Property.ofValue(
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                WebsocketRequest.Output output = task.run(runContext);
+
+                assertEquals(1, output.getMessages().size());
+                assertEquals("AQID", output.getMessages().get(0));
+        }
+
+        @Test
+        void shouldRejectOversizedTextMessage() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-large-text-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("A".repeat(1024))))
+                                .maxMessages(Property.ofValue(1))
+                                .maxMessageSize(Property.ofValue(100L))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                assertThrows(
+                                Exception.class,
+                                () -> task.run(runContext));
+        }
+
+        @Test
+        void shouldCountUtf8BytesForTextMessageSize() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-utf8-text-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("😀".repeat(30))))
+                                .maxMessages(Property.ofValue(1))
+                                .maxMessageSize(Property.ofValue(100L))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                assertThrows(
+                                Exception.class,
+                                () -> task.run(runContext));
+        }
+
+        @Test
+        void shouldRejectOversizedBinaryMessage() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-large-binary-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("BINARY")))
+                                .maxMessages(Property.ofValue(1))
+                                .maxMessageSize(Property.ofValue(2L))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                assertThrows(
+                                Exception.class,
+                                () -> task.run(runContext));
+        }
+
+        @Test
+        void shouldSpillMessagesToStorageWhenBufferLimitIsExceeded() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-storage-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("First", "Second")))
+                                .maxMessages(Property.ofValue(2))
+                                .maxBufferSize(Property.ofValue(20L))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                WebsocketRequest.Output output = task.run(runContext);
+
+                assertNotNull(output.getMessagesUri());
+                assertEquals(0, output.getMessages().size());
+                assertEquals(2, output.getSize());
+
+                try (var inputStream = runContext.storage().getFile(output.getMessagesUri())) {
+                        String storedContent = new String(
+                                        inputStream.readAllBytes(),
+                                        java.nio.charset.StandardCharsets.UTF_8);
+
+                        assertEquals(
+                                        List.of("\"Echo: First\"", "\"Echo: Second\""),
+                                        storedContent.lines().toList());
+                }
+        }
+
+        @Test
+        void shouldRejectDeniedWebSocketHost() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-ssrf-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue("ws://dangerous-url.com/ws"))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
                                 Map.of(
-                                        "Authorization", "Bearer test-token")))
-                .messages(Property.ofValue(List.of("Hello Auth")))
-                .maxMessages(Property.ofValue(1))
-                .build();
+                                                "kestra.tasks.http.denied-list",
+                                                List.of("dangerous-url.com")));
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-        WebsocketRequest.Output output = task.run(runContext);
+                IllegalArgumentException exception = assertThrows(
+                                IllegalArgumentException.class,
+                                () -> task.run(runContext));
 
-        assertEquals("Echo: Hello Auth", output.getMessages().get(0));
-        assertEquals("Bearer test-token", receivedAuthorization);
-    }
-
-    @Test
-    void shouldReceiveBinaryMessageAsBase64() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-binary-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("BINARY")))
-                .maxMessages(Property.ofValue(1))
-                .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-
-        WebsocketRequest.Output output = task.run(runContext);
-
-        assertEquals(1, output.getMessages().size());
-        assertEquals("AQID", output.getMessages().get(0));
-    }
-
-    @Test
-    void shouldRejectOversizedTextMessage() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-large-text-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("A".repeat(1024))))
-                .maxMessages(Property.ofValue(1))
-                .maxMessageSize(Property.ofValue(100L))
-                .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-
-        assertThrows(
-                Exception.class,
-                () -> task.run(runContext));
-    }
-
-    @Test
-    void shouldCountUtf8BytesForTextMessageSize() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-utf8-text-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("😀".repeat(30))))
-                .maxMessages(Property.ofValue(1))
-                .maxMessageSize(Property.ofValue(100L))
-                .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-
-        assertThrows(
-                Exception.class,
-                () -> task.run(runContext));
-    }
-
-    @Test
-    void shouldRejectOversizedBinaryMessage() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-large-binary-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("BINARY")))
-                .maxMessages(Property.ofValue(1))
-                .maxMessageSize(Property.ofValue(2L))
-                .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-
-        assertThrows(
-                Exception.class,
-                () -> task.run(runContext));
-    }
-
-    @Test
-    void shouldSpillMessagesToStorageWhenBufferLimitIsExceeded() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-storage-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue(serverUri))
-                .messages(Property.ofValue(List.of("First", "Second")))
-                .maxMessages(Property.ofValue(2))
-                .maxBufferSize(Property.ofValue(20L))
-                .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of());
-
-        WebsocketRequest.Output output = task.run(runContext);
-
-        assertNotNull(output.getMessagesUri());
-        assertEquals(0, output.getMessages().size());
-        assertEquals(2, output.getSize());
-
-        try (var inputStream = runContext.storage().getFile(output.getMessagesUri())) {
-            String storedContent = new String(
-                    inputStream.readAllBytes(),
-                    java.nio.charset.StandardCharsets.UTF_8);
-
-            assertEquals(
-                    List.of("\"Echo: First\"", "\"Echo: Second\""),
-                    storedContent.lines().toList());
+                assertEquals(
+                                "The URI ws://dangerous-url.com/ws is in the configured denied list (kestra.tasks.http.denied-list).",
+                                exception.getMessage());
         }
-    }
 
-    @Test
-    void shouldRejectDeniedWebSocketHost() throws Exception {
-        WebsocketRequest task = WebsocketRequest.builder()
-                .id("websocket-ssrf-test")
-                .type("io.kestra.plugin.core.http.WebsocketRequest")
-                .uri(Property.ofValue("ws://dangerous-url.com/ws"))
-                .build();
+        @Test
+        void shouldSendBearerAuthenticationFromOptions() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket_request")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("auth-check")))
+                                .maxMessages(Property.ofValue(1))
+                                .options(HttpConfiguration.builder()
+                                                .auth(BearerAuthConfiguration.builder()
+                                                                .token(Property.ofValue("test-bearer-token"))
+                                                                .build())
+                                                .build())
+                                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(
-                runContextFactory,
-                task,
-                Map.of(
-                        "kestra.tasks.http.denied-list",
-                        List.of("dangerous-url.com")));
+                RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> task.run(runContext));
+                task.run(runContext);
 
-        assertEquals(
-                "The URI ws://dangerous-url.com/ws is in the configured denied list (kestra.tasks.http.denied-list).",
-                exception.getMessage());
-    }
+                assertEquals("Bearer test-bearer-token", receivedAuthorization);
+        }
+
+        @Test
+        void shouldNotFailWhenJqResultIsMissingAndFailureIsDisabled() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket_request")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("JSON")))
+                                .maxMessages(Property.ofValue(1))
+                                .concatJqExpression(Property.ofValue("empty"))
+                                .failedOnMissingJq(Property.ofValue(false))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+                WebsocketRequest.Output output = task.run(runContext);
+
+                assertEquals(1, output.getSize());
+                assertEquals("", output.getResult());
+        }
+
+        @Test
+        void shouldFailWhenStopConditionReceivesNonJsonMessage() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket_request")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("plain-text")))
+                                .maxMessages(Property.ofValue(1))
+                                .stopCondition(Property.ofValue(".message == \"stop\""))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+                assertThrows(Exception.class, () -> task.run(runContext));
+        }
+
+        @Test
+        void shouldFailWhenConcatJqExpressionReceivesNonJsonMessage() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket_request")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri))
+                                .messages(Property.ofValue(List.of("plain-text")))
+                                .maxMessages(Property.ofValue(1))
+                                .concatJqExpression(Property.ofValue(".message"))
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+                assertThrows(Exception.class, () -> task.run(runContext));
+        }
+
+        @Test
+        void shouldConnectThroughProxy() throws Exception {
+                WebsocketRequest task = WebsocketRequest.builder()
+                                .id("websocket-proxy-test")
+                                .type("io.kestra.plugin.core.http.WebsocketRequest")
+                                .uri(Property.ofValue(serverUri.replace("localhost", "host.docker.internal")))
+                                .messages(Property.ofValue(List.of("Hello through proxy")))
+                                .maxMessages(Property.ofValue(1))
+                                .options(HttpConfiguration.builder()
+                                                .proxy(ProxyConfiguration.builder()
+                                                                .type(Property.ofValue(Proxy.Type.HTTP))
+                                                                .address(Property.ofValue(proxy.getHost()))
+                                                                .port(Property.ofValue(proxy.getMappedPort(8888)))
+                                                                .build())
+                                                .build())
+                                .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(
+                                runContextFactory,
+                                task,
+                                Map.of());
+
+                WebsocketRequest.Output output = task.run(runContext);
+
+                assertEquals(1, output.getMessages().size());
+                assertEquals("Echo: Hello through proxy", output.getMessages().get(0));
+        }
+
 }

@@ -11,7 +11,8 @@ test("one rejected request asks to sign in again only once", async ({browser}) =
     }, [PRODUCT_TOUR_STORAGE_KEY, SKIPPED_PRODUCT_TOUR])
     const page = await context.newPage()
 
-    await page.goto(`/ui/${tenant}/executions`)
+    // Without a time range and a user filter in the URL, the list rewrites its own route, and that navigation fails the auth guard once the flag is dropped.
+    await page.goto(`/ui/${tenant}/executions?filters[timeRange][EQUALS]=PT24H&filters[flowId][EQUALS]=session-expiry`)
     const refresh = page.getByRole("button", {name: "Refresh data"})
     await expect(refresh).toBeVisible()
 

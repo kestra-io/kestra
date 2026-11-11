@@ -248,16 +248,19 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        ResolvedTask close = resolveInternalTask(closeTask(), parentTaskRun);
         return FlowableUtils.resolveSequentialState(
             execution,
             ListUtils.concat(List.of(resolveInternalTask(openTask(), parentTaskRun)), this.childTasks(runContext, parentTaskRun)),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            ListUtils.concat(FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun), List.of(resolveInternalTask(closeTask(), parentTaskRun))),
+            ListUtils.concat(FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun), List.of(close)),
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
             this.isAllowWarning()
-        );
+        )
+            // a finally task does not count towards the state, but a failed _close means the output files or the cache were not saved
+            .map(state -> execution.computeFinalState(List.of(close), parentTaskRun, this.isAllowFailure(), this.isAllowWarning(), state));
     }
 
     // the internal tasks are children so the duplicate task id check of the flow also covers their ids

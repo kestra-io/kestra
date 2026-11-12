@@ -43,10 +43,7 @@ class FlowInputOutputAssetTest {
         return (execution, input, value) ->
         {
             RESOLVED_FOR.add(input);
-            if (value instanceof List<?> ids) {
-                return ids.stream().map(id -> Map.of("id", id)).toList();
-            }
-            return Map.of("id", value);
+            return value;
         };
     }
 
@@ -62,7 +59,7 @@ class FlowInputOutputAssetTest {
         List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of("vm", "web-01"));
 
         assertThat(values.getFirst().exceptions()).isNullOrEmpty();
-        assertThat(values.getFirst().value()).isEqualTo(Map.of("id", "web-01"));
+        assertThat(values.getFirst().value()).isEqualTo("web-01");
         assertThat(RESOLVED_FOR).extracting(AssetInput::getAssetType).containsExactly("io.kestra.plugin.ee.assets.VM");
     }
 
@@ -72,17 +69,17 @@ class FlowInputOutputAssetTest {
 
         List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of());
 
-        assertThat(values.getFirst().value()).isEqualTo(Map.of("id", "web-01"));
+        assertThat(values.getFirst().value()).isEqualTo("web-01");
     }
 
     @Test
-    void shouldResolveAListOfAssetsWhenTheInputIsMultiple() {
+    void shouldResolveAListOfAssetIdsWhenTheInputIsMultiple() {
         AssetInput input = AssetInput.builder().id("vms").type(Type.ASSET).multiple(true).build();
 
         List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of("vms", List.of("web-01", "web-02")));
 
         assertThat(values.getFirst().exceptions()).isNullOrEmpty();
-        assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("id", "web-01"), Map.of("id", "web-02")));
+        assertThat(values.getFirst().value()).isEqualTo(List.of("web-01", "web-02"));
     }
 
     @Test
@@ -91,7 +88,7 @@ class FlowInputOutputAssetTest {
 
         List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, EXECUTION, Map.of());
 
-        assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("id", "web-01"), Map.of("id", "web-02")));
+        assertThat(values.getFirst().value()).isEqualTo(List.of("web-01", "web-02"));
     }
 
     @Test

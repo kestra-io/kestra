@@ -27,6 +27,7 @@ const i18n = createI18n({
     messages: {
         en: {
             open: "Open",
+            email: "Email",
             large_outputs: {
                 value_too_large: "This value is {size}. It is too large to render here, download it instead.",
                 download_json: "Download JSON",
@@ -160,6 +161,23 @@ describe("VarValue URI-like values", () => {
 
         expect(wrapper.text()).toContain(value);
         expect(wrapper.text()).not.toContain("Open");
+    });
+
+    // mailto: hands off to the mail client; target=_blank would leave an empty tab behind.
+    test("shows a mailto value as text next to an Email link in the same tab", () => {
+        const value = "mailto:ops@example.com?subject=Invoice%20rejected";
+        const wrapper = shallowMount(VarValue, {
+            props: {value, execution: {id: "exec-1"}},
+            global: {
+                plugins: [i18n],
+                stubs: {...stubs, "el-button": {inheritAttrs: false, template: "<a v-bind=\"$attrs\"><slot /></a>"}},
+            },
+        });
+
+        expect(wrapper.text()).toContain(value);
+        const link = wrapper.find("[data-test=var-value-mailto]");
+        expect(link.attributes("href")).toBe(value);
+        expect(link.attributes("target")).toBeUndefined();
     });
 
     test("shows a web link as text next to its Open button", () => {

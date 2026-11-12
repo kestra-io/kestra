@@ -30,6 +30,18 @@
             {{ $t('open') }}
         </el-button>
     </span>
+    <span v-else-if="mailtoHref && !isTooLarge" class="uri-value">
+        <span>{{ value }}</span>
+        <el-button
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </el-button>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -73,6 +85,7 @@
     import {computed, ref, watch, onMounted} from "vue";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue";
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
@@ -123,6 +136,10 @@
             return false;
         }
     };
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
+    );
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
@@ -210,7 +227,7 @@
 <style scoped lang="scss">
 .uri-value {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     word-break: break-all;
 }

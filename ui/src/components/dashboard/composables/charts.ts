@@ -190,7 +190,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string | 
     return fixedColor(text) ?? paletteColor(hashString(text) % CATEGORICAL_SLOTS, text)
 }
 
-/** Colors of all the values of one chart: values with a configured, status or log level color keep it, and the others get distinct palette slots, picked by hash so a value keeps its slot across charts unless two values collide. */
+/** Colors of all the values of one chart: values with a configured, status or log level color keep it, the others get distinct palette slots, picked by hash so a value keeps its slot across charts unless two values collide, and once every slot is taken a color derived from the value. */
 export function chartCategoryColors(_theme: "light" | "dark", values: (string | undefined)[], colorByValues?: ColorByValue[]): Map<string, string> {
     const result = new Map<string, string>()
     const unlisted: string[] = []
@@ -205,8 +205,12 @@ export function chartCategoryColors(_theme: "light" | "dark", values: (string | 
 
     const taken = new Set<number>()
     for (const value of unlisted.sort()) {
+        if (taken.size === CATEGORICAL_SLOTS) {
+            result.set(value, hashToHexColor(value))
+            continue
+        }
         let slot = hashString(value) % CATEGORICAL_SLOTS
-        for (let i = 0; i < CATEGORICAL_SLOTS && taken.has(slot); i++) {
+        while (taken.has(slot)) {
             slot = (slot + 1) % CATEGORICAL_SLOTS
         }
         taken.add(slot)

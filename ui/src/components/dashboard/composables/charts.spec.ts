@@ -484,6 +484,15 @@ describe("chartCategoryColors", () => {
         expect(new Set(values.map((value) => colors.get(value))).size).toBe(10)
         expect([...colors.values()].every((color) => color.startsWith("#00000"))).toBe(true)
     })
+
+    it("does not repeat a palette color when a chart has more values than palette slots", () => {
+        slots.forEach((slot, i) => root.setProperty(slot, `#00000${i}`))
+        const values = ["prod", "staging", "dev", "qa", "eu", "us", "asia", "batch", "stream", "ml", "edge"]
+
+        const colors = chartCategoryColors("light", values)
+
+        expect(new Set(values.map((value) => colors.get(value))).size).toBe(11)
+    })
 })
 
 describe("byCategoryRank", () => {

@@ -2,6 +2,9 @@ package io.kestra.core.searchable;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import org.slf4j.Logger;
 
@@ -36,7 +39,7 @@ public final class SearchableDataUtils {
             return List.of();
         }
 
-        if (Type.ARRAY == data.getType()) {
+        if (isArray(data)) {
             if (!(value instanceof Collection<?> collection)) {
                 throw new IllegalArgumentException("The value of the searchable array data '%s' is not a list.".formatted(data.getId()));
             }
@@ -83,10 +86,26 @@ public final class SearchableDataUtils {
             throw new IllegalArgumentException("Only scalar items are supported for the searchable array data '%s'.".formatted(data.getId()));
         }
 
-        if (!Data.SEARCHABLE_TYPES.contains(data.getType())) {
-            throw new IllegalArgumentException("The data '%s' cannot be searchable because its type %s is not supported.".formatted(data.getId(), data.getType()));
+        if (!isSearchableType(data)) {
+            throw new IllegalArgumentException("The data '%s' cannot be searchable because its type %s is not supported.".formatted(data.getId(), typeOf(data)));
         }
 
         return value.toString();
+    }
+
+    private static boolean isArray(Data data) {
+        return data instanceof Output output ? OutputType.ARRAY == output.getType() : Type.ARRAY == typeOf(data);
+    }
+
+    private static boolean isSearchableType(Data data) {
+        return data instanceof Output output ? Output.SEARCHABLE_TYPES.contains(output.getType()) : Input.SEARCHABLE_TYPES.contains(typeOf(data));
+    }
+
+    private static Object typeOf(Data data) {
+        return switch (data) {
+            case Output output -> output.getType();
+            case Input<?> input -> input.getType();
+            default -> null;
+        };
     }
 }

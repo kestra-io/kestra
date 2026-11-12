@@ -304,6 +304,24 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldListOnlyOpenSourceOutputTypesWhenGeneratingTheFlowOutputSchema() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var output = definitions.get(io.kestra.core.models.flows.Output.class.getName());
+            var type = (Map<String, Object>) ((Map<String, Object>) output.get("properties")).get("type");
+
+            assertThat((List<String>) type.get("enum"), containsInAnyOrder(
+                "STRING", "INT", "FLOAT", "BOOL", "DATETIME", "DATE", "TIME", "DURATION", "FILE", "JSON", "ION", "URI", "SECRET", "ARRAY", "YAML"
+            ));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void excludedInputTypesLeaveNoBranchOrDefinitionBehind() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {

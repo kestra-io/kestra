@@ -563,7 +563,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      */
     private static Optional<String> literalOutputValueViolation(Output output) {
         Object rawValue = output.getValue();
-        if (rawValue == null) {
+        if (rawValue == null || output.getType() == null || output.getType().parsedAs() == null) {
             return Optional.empty();
         }
 
@@ -573,7 +573,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         try {
-            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+            FlowInputOutput.parseScalarInputValue(output.getType().parsedAs(), rawValue);
         } catch (Exception e) {
             return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
         }

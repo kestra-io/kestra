@@ -540,6 +540,12 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",

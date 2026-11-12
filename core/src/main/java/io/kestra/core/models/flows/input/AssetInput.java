@@ -97,6 +97,15 @@ public class AssetInput extends Input<Object> implements RenderableInput {
                 input
             );
         }
+        if (isList && ((List<?>) input).isEmpty() && !Boolean.FALSE.equals(getRequired())) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "it must contain at least one asset",
+                this,
+                AssetInput.class,
+                getId(),
+                input
+            );
+        }
     }
 
     @Override

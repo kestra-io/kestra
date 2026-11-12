@@ -34,6 +34,17 @@ class AssetInputTest {
     }
 
     @Test
+    void shouldRejectAnEmptyListWhenTheMultipleAssetInputIsRequired() {
+        AssetInput required = AssetInput.builder().id("vms").type(Type.ASSET).multiple(true).build();
+        AssetInput optional = AssetInput.builder().id("vms").type(Type.ASSET).multiple(true).required(false).build();
+
+        optional.validate(List.of());
+        assertThatThrownBy(() -> required.validate(List.of()))
+            .isInstanceOf(ConstraintViolationException.class)
+            .hasMessageContaining("it must contain at least one asset");
+    }
+
+    @Test
     void shouldKeepEveryOtherPropertyWhenRenderingTheFilters() {
         AssetInput input = AssetInput.builder()
             .id("vm")

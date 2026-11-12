@@ -4,7 +4,9 @@ vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
 }))
 
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "./chartDrillDown"
+import type {ColorByValue} from "../types"
 import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, CATEGORICAL_SLOTS, byCategoryRank, categoryDisplayName, chartCategoryColors, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
 
 // @ts-expect-error - plain .mjs module shared with the token linters
@@ -443,7 +445,7 @@ describe("chartCategoryColors", () => {
     const slots = Array.from({length: CATEGORICAL_SLOTS}, (_, i) => `--ks-chart-categorical-${i + 1}`)
 
     afterEach(() => {
-        root.removeProperty("--ks-chart-warning")
+        ["--ks-chart-warning", "--ks-chart-failed", "--ks-chart-success"].forEach((token) => root.removeProperty(token))
         slots.forEach((slot) => root.removeProperty(slot))
     })
 
@@ -461,6 +463,16 @@ describe("chartCategoryColors", () => {
     it("uses the theme color of a configured state name", () => {
         root.setProperty("--ks-chart-warning", "#ffa500")
         expect(chartCategoryColors("light", ["high"], [{value: "high", color: "warning"}]).get("high")).toBe("#ffa500")
+    })
+
+    it("keeps the status color of a state that is not listed or listed with only a label", () => {
+        root.setProperty("--ks-chart-failed", "#cc1d1f")
+        root.setProperty("--ks-chart-success", "#12a072")
+
+        const colors = chartCategoryColors("light", ["FAILED", "SUCCESS"], [{value: "SUCCESS", label: "OK"}])
+
+        expect(colors.get("FAILED")).toBe("#cc1d1f")
+        expect(colors.get("SUCCESS")).toBe("#12a072")
     })
 
     it("gives every value without a color its own palette slot, including listed values with only a label", () => {
@@ -492,5 +504,12 @@ describe("categoryDisplayName", () => {
     it("returns undefined when the value has no label", () => {
         expect(categoryDisplayName("by_priority.low", colorByValues)).toBeUndefined()
         expect(categoryDisplayName("by_priority.medium", colorByValues)).toBeUndefined()
+    })
+
+    it("matches a value the editor preview parsed from YAML as a number", () => {
+        const parsed = YAML_UTILS.parse<ColorByValue[]>("- value: 500\n  label: Server error\n- value: 200\n  label: OK")
+
+        expect(categoryDisplayName("500", parsed)).toBe("Server error")
+        expect(["500", "200"].sort(byCategoryRank(parsed))).toEqual(["500", "200"])
     })
 })

@@ -219,7 +219,7 @@ export function chartCategoryColors(_theme: "light" | "dark", values: (string | 
 /** Position of a value in `colorByValues`, matching a stacked value by its last part too, or undefined when it is not listed. */
 export function categoryRank(value: string, colorByValues?: ColorByValue[]): number | undefined {
     return [value, lastPart(value)]
-        .map((key) => colorByValues?.findIndex((entry) => entry.value === key) ?? -1)
+        .map((key) => colorByValues?.findIndex((entry) => String(entry.value) === key) ?? -1)
         .find((index) => index >= 0)
 }
 
@@ -230,7 +230,7 @@ export function byCategoryRank(colorByValues?: ColorByValue[]): (a: string, b: s
 
 /** The configured label of a value, replacing each part of a stacked value on its own, or undefined when none is configured. */
 export function categoryDisplayName(value: string, colorByValues?: ColorByValue[]): string | undefined {
-    const labelOf = (key: string) => colorByValues?.find((entry) => entry.value === key)?.label
+    const labelOf = (key: string) => colorByValues?.find((entry) => String(entry.value) === key)?.label
     const parts = value.split(", ")
     return labelOf(value) ?? (parts.some((part) => labelOf(part) !== undefined)
         ? parts.map((part) => labelOf(part) ?? part).join(", ")

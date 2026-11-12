@@ -138,7 +138,22 @@ public class ReplayOutputService {
             }
             return;
         }
+        if (expression instanceof GetAttributeExpression attribute) {
+            collectInDynamicChain(attribute, paths);
+            return;
+        }
         children(expression).forEach(child -> collect(child, paths));
+    }
+
+    // a static prefix of a dynamic path is not what the task reads, so only the expressions inside the chain are collected
+    private static void collectInDynamicChain(GetAttributeExpression attribute, Set<List<String>> paths) {
+        collect(attribute.getAttributeNameExpression(), paths);
+        arguments(attribute.getArgumentsNode()).forEach(argument -> collect(argument, paths));
+        if (attribute.getNode() instanceof GetAttributeExpression parent) {
+            collectInDynamicChain(parent, paths);
+        } else {
+            collect(attribute.getNode(), paths);
+        }
     }
 
     private static Optional<List<String>> staticPath(Expression<?> expression) {

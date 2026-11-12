@@ -269,7 +269,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     command.revision(),
                     Optional.ofNullable(command.breakpoints()),
                     true,
-                    command.executionId()
+                    command.executionId(),
+                    ListUtils.emptyOnNull(command.outputOverrides()),
+                    command.actor() == null ? null : command.actor().userId()
                 );
             }
 

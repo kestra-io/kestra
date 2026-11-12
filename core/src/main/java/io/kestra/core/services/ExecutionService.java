@@ -506,6 +506,7 @@ public class ExecutionService {
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
                         if (revision != null) {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
                             taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         }
                         return newTaskRun;
@@ -629,6 +630,23 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, List.of(), null);
+    }
+
+    /**
+     * @param overrides outputs of reused task runs to replace in the new execution, recorded on the replayed task run
+     * @param overriddenBy the user who set the overrides
+     */
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
+        String newExecutionId, List<OutputOverride> overrides, @Nullable String overriddenBy) throws Exception {
+        if (taskRunId == null && !overrides.isEmpty()) {
+            throw new IllegalArgumentException("Cannot replay execution '%s' with overridden outputs: outputs can only be overridden on a replay from a task run.".formatted(execution.getId()));
+        }
+
+        Map<String, Map<List<String>, Object>> patches = new HashMap<>();
+        overrides.forEach(override -> patches.computeIfAbsent(override.taskRunId(), id -> new HashMap<>()).put(override.keys(), override.value()));
+        Instant overriddenAt = Instant.now();
+
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -663,6 +681,15 @@ public class ExecutionService {
                 .map(TaskRun::getId)
                 .forEach(originalTaskRunToRemove::add);
 
+            List<String> notReused = patches.keySet().stream()
+                .filter(id -> originalTaskRunToRemove.contains(id) || execution.findTaskRunByTaskRunIdIfPresent(id).isEmpty())
+                .toList();
+            if (!notReused.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' with overridden outputs: task runs %s are not reused by the replay.".formatted(execution.getId(), notReused)
+                );
+            }
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
@@ -679,7 +706,14 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        if (originalTaskRun.getId().equals(taskRunId) && !overrides.isEmpty()) {
+                            newTaskRun = newTaskRun.withOverrides(
+                                taskOutputService.saveOverrides(newTaskRun, mergeOverrides(taskOutputService.getOverrides(originalTaskRun), overrides), overriddenBy, overriddenAt)
+                            );
+                        } else {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
+                        }
+                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun, patches.getOrDefault(originalTaskRun.getId(), Map.of()));
                         return newTaskRun;
                     }))
                     .toList()
@@ -710,6 +744,14 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    // an output overridden again keeps the value it had before the first override as its original value
+    private static List<OutputOverride> mergeOverrides(List<OutputOverride> previous, List<OutputOverride> overrides) {
+        Map<String, OutputOverride> merged = new LinkedHashMap<>();
+        previous.forEach(override -> merged.put(override.path(), override));
+        overrides.forEach(override -> merged.merge(override.path(), override, (before, now) -> now.withOriginalValue(before.originalValue())));
+        return List.copyOf(merged.values());
     }
 
     private void copySearchableData(Execution original, Execution replayed) {

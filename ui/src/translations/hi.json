@@ -540,6 +540,12 @@
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
     "refresh": "ताज़ा करें",
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",

@@ -14,19 +14,6 @@
     justify-content: center !important;
 }
 
-.align-items-center {
-    align-items: center !important;
-}
-
-.me-2 {
-    margin-right: 0.5rem !important;
-}
-
-.py-3 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-}
-
 .text-success {
     color: inherit !important;
 }

@@ -21,16 +21,16 @@
             <span class="toc-section-title">
                 {{ section.toUpperCase() }}
             </span>
-            <RecursiveToc :parent="{children}" />
+            <RecursiveToc :parent="{children}" :activePath="docPath" />
         </li>
     </ul>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, inject} from "vue"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import RecursiveToc from "./RecursiveToc.vue"
-    import {buildDocsSections, buildDocsToc} from "./docsUtils"
+    import {buildDocsSections, buildDocsToc, DOC_PATH_INJECTION_KEY} from "./docsUtils"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     interface SearchResult {
@@ -39,6 +39,7 @@
     }
 
     const docStore = useDocStore()
+    const docPath = inject(DOC_PATH_INJECTION_KEY, undefined)
 
     const rawStructure = ref<Record<string, DocMetadata> | undefined>(undefined)
     const query = ref<string>("")

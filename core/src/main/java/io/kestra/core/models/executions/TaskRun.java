@@ -76,6 +76,10 @@ public class TaskRun implements TenantInterface {
     @With
     Boolean forceExecution;
 
+    @With
+    @Nullable
+    TaskRunOverrides overrides;
+
     /**
      * @deprecated should only be used inside the pre-2.0 compatibility layer.
      */
@@ -129,6 +133,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.overrides,
             this.outputs
         );
     }
@@ -158,6 +163,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.overrides,
             this.outputs
         );
     }
@@ -206,6 +212,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.overrides,
             this.outputs
         );
     }
@@ -227,6 +234,7 @@ public class TaskRun implements TenantInterface {
             .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
+            .overrides(this.overrides)
             .build();
     }
 

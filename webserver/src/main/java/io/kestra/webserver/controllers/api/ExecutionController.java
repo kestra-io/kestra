@@ -288,6 +288,12 @@ public class ExecutionController {
     private ExecutionCreationService executionCreationService;
 
     @Inject
+    private ReplayOutputService replayOutputService;
+
+    @Inject
+    private TaskOutputService taskOutputService;
+
+    @Inject
     private FileRendererService fileRendererService;
 
     @Inject
@@ -1537,6 +1543,79 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/replay-outputs")
+    @Operation(
+        tags = { "Executions" },
+        summary = "List the outputs of previous tasks that a task run reads through a static path in its own properties, with their current value. Each one can be overridden on a replay from this task run."
+    )
+    public ReplayOutputs replayOutputs(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        Execution execution = findExecutionWithTaskRun(executionId, taskRunId);
+
+        return new ReplayOutputs(replayOutputService.outputs(flowRepository.findByExecution(execution), execution, taskRunId));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the outputs a replay overrode for a task run, with their value before the override. They are read with the same permission as outputs."
+    )
+    public OverriddenOutputs taskRunOverrides(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        TaskRun taskRun = findExecutionWithTaskRun(executionId, taskRunId).findTaskRunByTaskRunId(taskRunId);
+
+        return new OverriddenOutputs(
+            taskOutputService.getOverrides(taskRun).stream()
+                .map(override -> new OverriddenOutput(override.path(), override.value(), override.originalValue()))
+                .toList()
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/replay-with-overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with outputs of previous tasks overridden"
+    )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    @ApiResponse(responseCode = "422", description = "if an output is not read by the task through a static path, or if no value differs from the current one")
+    public HttpResponse<Execution> replayExecutionWithOverrides(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @QueryValue String taskRunId,
+        @RequestBody(description = "The new values, by output path such as outputs.fetch.values.code") @Valid @Body ReplayWithOverridesRequest request) throws Exception {
+        Execution execution = findExecutionWithTaskRun(executionId, taskRunId);
+
+        controlReplayable(execution, taskRunId, null);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()));
+        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
+
+        return blockingReplay(execution, taskRunId, null, Optional.empty(), replayOutputService.overrides(flow, execution, taskRunId, request.overrides()));
+    }
+
+    public record ReplayOutputs(@NotNull List<ReplayOutputService.ReplayOutput> values) {
+    }
+
+    public record OverriddenOutputs(@NotNull List<OverriddenOutput> values) {
+    }
+
+    public record OverriddenOutput(@NotNull String path, @Nullable Object value, @Nullable Object originalValue) {
+    }
+
+    public record ReplayWithOverridesRequest(@NotNull Map<String, Object> overrides) {
+    }
+
+    private Execution findExecutionWithTaskRun(String executionId, String taskRunId) {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
+        return execution;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay/validate")
     @Operation(
         tags = { "Executions" },
@@ -1556,6 +1635,11 @@ public class ExecutionController {
     }
 
     private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        return blockingReplay(execution, taskRunId, revision, breakpoints, List.of());
+    }
+
+    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
+        List<OutputOverride> overrides) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1577,6 +1661,7 @@ public class ExecutionController {
                         // emit Replay command; signals completion via operationId when new execution is created
                         executionCommandQueue.emit(
                             Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
+                                .withOutputOverrides(overrides.isEmpty() ? null : overrides)
                                 .withOperationId(operationId)
                                 .withActor(actor)
                         );

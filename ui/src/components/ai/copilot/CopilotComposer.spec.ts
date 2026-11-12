@@ -61,6 +61,24 @@ describe("CopilotComposer", () => {
         expect(w.emitted("submit")).toBeUndefined()
     })
 
+    it("disables every control and explains why on Send when there is a lasting reason", async () => {
+        const w = mountComposer({disabledReason: "No provider", describedBy: "why", modelValue: "hi"})
+
+        expect(input(w).attributes("disabled")).toBeDefined()
+        expect(input(w).attributes("aria-describedby")).toBe("why")
+        expect(w.find(".copilot-mode-trigger").attributes("disabled")).toBeDefined()
+        expect(sendBtn(w).attributes("disabled")).toBeDefined()
+        expect(sendBtn(w).attributes("aria-describedby")).toBe("why")
+        expect(w.find(".ks-tooltip").attributes("data-tooltip")).toBe("No provider")
+
+        await input(w).trigger("keydown", {key: "Enter"})
+        expect(w.emitted("submit")).toBeUndefined()
+    })
+
+    it("shows no tooltip on Send while the composer is usable", () => {
+        expect(mountComposer().find(".ks-tooltip").attributes("data-tooltip")).toBeUndefined()
+    })
+
     it("hides the mic when the Web Speech API is unavailable (e.g. jsdom)", () => {
         // No SpeechRecognition in jsdom → voice input degrades gracefully to no mic button.
         expect(mountComposer().find("[data-test=\"copilot-mic\"]").exists()).toBe(false)

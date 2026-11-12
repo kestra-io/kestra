@@ -465,12 +465,32 @@ describe("useAiChat", () => {
         expect(chat.messages.value).toHaveLength(0)
     })
 
-    it("surfaces the unavailable state on a 503 mid-stream", async () => {
+    it("rolls the turn back on a 503 mid-stream, keeping earlier messages", async () => {
         const chat = useAiChat()
+        nextFrames = [{event: "token", data: {text: "earlier"}}, {event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "first"})
+        const before = chat.messages.value.map((m) => m.id)
+
+        nextFrames = []
         nextError = new SseHttpError(503, "")
-        await chat.sendChat({prompt: "hi"})
+        await chat.sendChat({prompt: "refused"})
+
         expect(chat.unavailable.value).toBe(true)
         expect(chat.status.value).toBe("IDLE")
+        expect(chat.messages.value.map((m) => m.id)).toEqual(before)
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("clears the unavailable flag when the next send goes through", async () => {
+        const chat = useAiChat()
+        nextError = new SseHttpError(503, "")
+        await chat.sendChat({prompt: "refused"})
+        expect(chat.unavailable.value).toBe(true)
+
+        nextError = null
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "retry"})
+        expect(chat.unavailable.value).toBe(false)
     })
 
     it("reset() clears the transcript and thread back to the empty state", async () => {

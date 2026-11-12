@@ -26,7 +26,7 @@ export const sse = (events: [string, unknown][]) =>
 /**
  * Reports whether an AI provider is configured, patching only that flag on the real `/configs`.
  *
- * With no provider, the copilot turns the first send attempt straight into its "unavailable" state
+ * With no provider, the copilot disables its composer (kestra-io/kestra#21124)
  * instead of running the turn (kestra-io/kestra#18322, kestra-io/kestra-ee#10739) - and the e2e
  * backend has none, so a spec that stubs the turn itself has to say `true` here for the stub to be
  * reached at all. Stubbing it both ways also keeps the specs independent of whatever the instance

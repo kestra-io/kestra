@@ -2527,7 +2527,9 @@
         "unavailable": {
           "title": "AI Copilot não está disponível",
           "detail": "Nenhum provedor de IA está configurado para esta instância. Configure um no seu arquivo de configuração do Kestra para habilitar o AI Copilot.",
-          "docs": "Ver documentação"
+          "docs": "Ver documentação",
+          "sendTooltip": "O envio está desativado porque nenhum provedor de AI está configurado.",
+          "notSent": "Seu prompt não foi enviado"
         },
         "thinkingWords": [
           "Orquestração",

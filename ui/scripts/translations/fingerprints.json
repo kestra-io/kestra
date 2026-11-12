@@ -123,6 +123,8 @@
   "ai|copilot|toolResult|rejected": "22497198c1ed",
   "ai|copilot|unavailable|detail": "fcd357917f4c",
   "ai|copilot|unavailable|docs": "392e16f77e9f",
+  "ai|copilot|unavailable|notSent": "fe2116a5123b",
+  "ai|copilot|unavailable|sendTooltip": "b75637e13a11",
   "ai|copilot|unavailable|title": "b0c18dfbc5fd",
   "ai|copilot|voice|cancel": "a25b089adac0",
   "ai|copilot|voice|start": "4ab80a0bacae",

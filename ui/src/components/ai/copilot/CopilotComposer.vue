@@ -21,15 +21,21 @@
             class="copilot-textarea"
             :rows="rows ?? 1"
             :placeholder="placeholder ?? $t('ai.copilot.placeholder')"
-            :disabled="disabled"
+            :disabled="isDisabled"
+            :aria-describedby="describedBy"
             data-test="copilot-composer-input"
             @keydown="onKeydown"
             @input="autosize"
         />
 
         <div class="copilot-composer-actions">
-            <KsDropdown trigger="click" data-test="copilot-mode-selector">
-                <KsButton size="small" class="copilot-mode-trigger">
+            <KsDropdown trigger="click" :disabled="!!disabledReason" data-test="copilot-mode-selector">
+                <KsButton
+                    size="small"
+                    class="copilot-mode-trigger"
+                    :disabled="!!disabledReason"
+                    :aria-describedby="describedBy"
+                >
                     <span class="copilot-mode-item">
                         <component :is="currentMode?.icon" :size="16" />
                         {{ currentMode?.label }}
@@ -95,7 +101,8 @@
                         v-if="speechSupported"
                         text
                         :icon="Microphone"
-                        :disabled="disabled"
+                        :disabled="isDisabled"
+                        :aria-describedby="describedBy"
                         :aria-label="$t('ai.copilot.voice.start')"
                         data-test="copilot-mic"
                         @click="toggleVoiceInput"
@@ -109,16 +116,21 @@
                         data-test="copilot-stop"
                         @click="emit('stop')"
                     />
-                    <KsButton
-                        v-else
-                        circle
-                        type="primary"
-                        :icon="ArrowUp"
-                        :disabled="!canSubmit"
-                        :aria-label="$t('ai.copilot.send')"
-                        data-test="copilot-send"
-                        @click="submit"
-                    />
+                    <KsTooltip v-else :disabled="!disabledReason" :content="disabledReason">
+                        <!-- A disabled button swallows hover and focus, so the span carries them for the tooltip. -->
+                        <span class="copilot-send-wrapper" :tabindex="disabledReason ? 0 : undefined" data-test="copilot-send-wrapper">
+                            <KsButton
+                                circle
+                                type="primary"
+                                :icon="ArrowUp"
+                                :disabled="!canSubmit"
+                                :aria-describedby="describedBy"
+                                :aria-label="$t('ai.copilot.send')"
+                                data-test="copilot-send"
+                                @click="submit"
+                            />
+                        </span>
+                    </KsTooltip>
                 </template>
             </div>
         </div>
@@ -145,6 +157,10 @@
         mode: AgentMode
         /** Disables input while a turn is streaming or awaiting confirmation. */
         disabled?: boolean
+        /** Disables every control for a lasting reason (no AI provider); shown as the Send tooltip. */
+        disabledReason?: string
+        /** Id of the notice that explains why the controls are disabled, for `aria-describedby`. */
+        describedBy?: string
         /** Replaces send with stop while a turn is streaming. */
         streaming?: boolean
         /** Overrides the placeholder (e.g. the descriptive helper text in the empty state). */
@@ -185,7 +201,9 @@
         return (list.find((p) => p.id === props.provider) ?? list[0])?.displayName
     })
 
-    const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
+    const isDisabled = computed(() => props.disabled || !!props.disabledReason)
+
+    const canSubmit = computed(() => !isDisabled.value && draft.value.trim().length > 0)
 
     // Grow the textarea with its content, up to the CSS max-height (then it scrolls).
     function autosize(): void {
@@ -368,7 +386,7 @@
     }
 
     // If the composer gets disabled mid-dictation (turn started), bail out of voice.
-    watch(() => props.disabled, (value) => {
+    watch(isDisabled, (value) => {
         if (value && isListening.value) cancelVoice()
     })
 
@@ -467,6 +485,11 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
+    }
+
+    .copilot-send-wrapper {
+        display: inline-flex;
+        border-radius: 50%;
     }
 
     /* Figma mode control: a subtle bg-tag pill (label + chevron), not a solid button. */

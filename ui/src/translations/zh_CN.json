@@ -2527,7 +2527,9 @@
         "unavailable": {
           "title": "AI Copilot 不可用",
           "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
-          "docs": "查看文档"
+          "docs": "查看文档",
+          "sendTooltip": "发送已禁用，因为未配置 AI provider。",
+          "notSent": "您的提示未发送"
         },
         "thinkingWords": [
           "编排",

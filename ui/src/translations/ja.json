@@ -2527,7 +2527,9 @@
         "unavailable": {
           "title": "AI Copilot は利用できません",
           "detail": "このインスタンスにはAIプロバイダーが設定されていません。AI Copilotを有効にするには、Kestra設定ファイルでAIプロバイダーを設定してください。",
-          "docs": "ドキュメントを見る"
+          "docs": "ドキュメントを見る",
+          "sendTooltip": "AIプロバイダーが設定されていないため、送信は無効になっています。",
+          "notSent": "プロンプトが送信されませんでした"
         },
         "thinkingWords": [
           "オーケストレーション",

@@ -96,8 +96,9 @@ export function useAiChat() {
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
     /**
-     * True when the copilot has no provider to run on — either the backend said so mid-turn (503) or
-     * the caller knew from `/configs` before sending. Renders the "unavailable" state.
+     * True when the last send was refused because the copilot has no provider to run on (503, or 404
+     * when the agentic endpoints aren't registered). The refused turn is rolled back, never kept in
+     * the transcript, and the flag clears on the next send.
      */
     const unavailable = ref(false)
     /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
@@ -253,14 +254,16 @@ export function useAiChat() {
     async function sendChat(request: ChatTurnRequest): Promise<void> {
         if (!canSend.value) return
 
+        unavailable.value = false
+
         // Thread creation can fail before any stream starts (e.g. 503 when no AI provider
-        // is configured). Surface that as the dedicated "unavailable" state, not a generic error.
+        // is configured). Surface that as the dedicated "unavailable" flag, not a generic error.
         let active: ThreadSummary
         try {
             active = await ensureThread({mode: request.mode})
         } catch (e) {
             // 503 (provider unreachable) or 404 (agentic endpoints not registered — no provider bean)
-            // both mean the copilot can't run: show the "unavailable" state, never a page redirect.
+            // both mean the copilot can't run: flag it, never redirect the page.
             if (is503(e) || is404(e)) unavailable.value = true
             else error.value = toErrorCode(e)
             return
@@ -269,8 +272,13 @@ export function useAiChat() {
         error.value = null
         notice.value = null
         pendingConfirmation.value = null
+        const countBefore = messages.value.length
         push({id: uid(), role: "USER", type: "TEXT", content: request.prompt})
         await runStream(`${base()}/${active.uid}/chat`, request)
+
+        // The provider refused the turn, so it never happened: drop the prompt from the transcript
+        // and let the caller put it back in the composer.
+        if (unavailable.value) messages.value.splice(countBefore)
     }
 
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
@@ -349,7 +357,7 @@ export function useAiChat() {
                     waitForServerIdle = true
                 }
             } else {
-                // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+                // 503 mid-stream (provider removed) → the unavailable flag; otherwise a generic error.
                 if (is503(e)) unavailable.value = true
                 else error.value = toErrorCode(e)
                 // A stream error never leaves us in RUNNING; fall back to a safe resting state.

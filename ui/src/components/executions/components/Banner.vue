@@ -164,7 +164,11 @@
             :title="$t(approvalBanner)"
             :closable="false"
             data-test="approval-banner"
-        />
+        >
+            <template v-if="approvalTaskRun" #action>
+                <ApprovalActions :execution :taskRun="approvalTaskRun" />
+            </template>
+        </KsAlert>
     </div>
 </template>
 
@@ -194,6 +198,7 @@
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
     import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
+    import ApprovalActions from "./ApprovalActions.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -217,6 +222,10 @@
     const {t} = useI18n({useScope: "global"})
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const approvalTaskRun = computed(() =>
+        (findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ?? findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSING))?.taskRun,
+    )
 
     const approvalBanner = computed(() => {
         // the generated SDK StateType does not list PAUSING until the SDK is regenerated

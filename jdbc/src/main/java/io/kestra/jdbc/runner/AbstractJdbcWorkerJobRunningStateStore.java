@@ -89,7 +89,7 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     public void deleteByKey(String key) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(
+            .joinTransactionIfPresent(
                 configuration -> DSL
                     .using(configuration)
                     .deleteFrom(this.jdbcRepository.getTable())

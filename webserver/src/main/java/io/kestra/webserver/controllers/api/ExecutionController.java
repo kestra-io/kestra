@@ -1093,7 +1093,7 @@ public class ExecutionController {
 
                 Create finalCreateCommand = createCommand;
                 return awaitBlockingAction(
-                    executionId, "Create",
+                    tenantId, executionId, "Create",
                     operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
@@ -1952,7 +1952,7 @@ public class ExecutionController {
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
-                    execution.getId(), "Resume",
+                    execution.getTenantId(), execution.getId(), "Resume",
                     operationId -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId))
                 )
             )
@@ -2960,12 +2960,25 @@ public class ExecutionController {
 
     /**
      * Executes a single async operation on an execution.
+     * Must be called on the request thread: it resolves the tenant from the current request.
      */
     private Mono<HttpResponse<Execution>> awaitBlockingAction(
         String executionId,
         String actionName,
         ThrowingConsumer<String> emit) {
-        String tenantId = tenantService.resolveTenant();
+        return awaitBlockingAction(tenantService.resolveTenant(), executionId, actionName, emit);
+    }
+
+    /**
+     * Executes a single async operation on an execution of {@code tenantId}.
+     * Callers that read a request body first may run on a thread with no server request bound, so the tenant must be
+     * resolved by the caller rather than here.
+     */
+    private Mono<HttpResponse<Execution>> awaitBlockingAction(
+        String tenantId,
+        String executionId,
+        String actionName,
+        ThrowingConsumer<String> emit) {
         return asyncOperationWaiter.submit(
             executionId,
             operationId ->

@@ -5,8 +5,8 @@ import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.webserver.models.api.UnsortedPagination;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -14,15 +14,13 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Put;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -45,8 +43,7 @@ public class ConcurrencyLimitController {
     @Get(uri = "/search")
     @Operation(tags = { "Flows" }, summary = "Search for flow, namespace and tenant concurrency limits")
     public PagedResults<ConcurrencyLimitSearchResult> searchConcurrencyLimits(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "25") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size
+        @Valid @RequestBean UnsortedPagination paging
     ) {
         String tenantId = tenantService.resolveTenant();
         List<ConcurrencyLimit> limits = concurrencyLimitRepository.find(tenantId).stream()
@@ -54,8 +51,8 @@ public class ConcurrencyLimitController {
             .toList();
 
         List<ConcurrencyLimitSearchResult> results = limits.stream()
-            .skip((long) (page - 1) * size)
-            .limit(size)
+            .skip((long) (paging.page() - 1) * paging.size())
+            .limit(paging.size())
             .map(limit -> new ConcurrencyLimitSearchResult(
                 limit.getTenantId(),
                 limit.getNamespace(),

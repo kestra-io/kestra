@@ -286,6 +286,18 @@ describe("KsMarkdown", () => {
         expect(link.attributes("href") ?? "").not.toContain("javascript")
     })
 
+    test.each([
+        ["a dot", "text <span data-a.onclick=\"alert(1)\">x</span>", "span", "onclick"],
+        ["a colon", "text <details open data-a:ontoggle=\"alert(1)\">x</details>", "details", "ontoggle"],
+        ["a dot on a void tag", "text <img src=\"/x\" data-a.onerror=\"alert(1)\"></img>", "img", "onerror"],
+    ])("does not turn a data- attribute name holding %s into an event handler", (_, content, tag, handler) => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content}})
+        const element = wrapper.find(tag)
+
+        expect(element.exists()).toBe(true)
+        expect(element.attributes(handler)).toBeUndefined()
+    })
+
     test("sanitizes the inner HTML of a custom component", () => {
         const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
         const wrapper = i18nMount(KsMarkdown, {

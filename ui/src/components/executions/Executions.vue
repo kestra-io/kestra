@@ -463,8 +463,7 @@
 <script setup lang="ts">
     import {filterHiddenLabels} from "../../utils/labels"
     import {useI18n} from "vue-i18n"
-    import {asProblem} from "@kestra-io/kestra-sdk"
-    import {problemBulkBody, problemTitle} from "../../utils/problem"
+    import {useBulkAction} from "../../composables/useBulkAction"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, useTemplateRef} from "vue"
@@ -548,7 +547,7 @@
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import type {ApiAsyncOperationResponse, BulkResponse, QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const {t, te} = useI18n()
+    const {t} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -787,6 +786,7 @@
         selection?: string[];
         queryBulkAction?: boolean;
     }>("dataTable")
+    const {runBulkAction} = useBulkAction(dataTable)
     const chartDefaultDuration = computed(() => defaultTimeRange(miscStore.configs?.chartDefaultDuration))
 
     let hasAttemptedTimeRangeWiden = false
@@ -1089,46 +1089,21 @@
             "bulkKill": executionsStore.bulkKill as BulkActionFn,
         }
 
-        if (queryBulkAction.value) {
-            const query = loadQuery({
-                sort: route.query.sort as string || "state.startDate:desc",
-                state: route.query.state ? [route.query.state] : props.statuses,
-            })
-            let options = {...query, ...actionOptions.value}
-            if (params) {
-                options = {...options, ...params}
-            }
-
-            const ac = actionMap[queryAction]
-            return ac(options)
-                .then((r) => {
-                    const count = affectedCount(r)
-                    toast.success(t(success, {executionCount: count}, count))
-                    toggleAllUnselected()
-                    dataTable.value?.reload()
-                })
-        } else {
-            const selectionData = {executionsId: selection.value}
-            let options = {...selectionData, ...actionOptions.value}
-            if (params) {
-                options = {...options, ...params}
-            }
-
-            const ac = actionMap[byIdAction]
-            return ac(options)
-                .then((r) => {
-                    const count = affectedCount(r)
-                    toast.success(t(success, {executionCount: count}, count))
-                    toggleAllUnselected()
-                    dataTable.value?.reload()
-                }).catch((e: unknown) => {
-                    const problem = asProblem(e)
-                    toast.error(
-                        problemBulkBody(problem, t, te),
-                        problemTitle(problem, t, te),
-                    )
-                })
-        }
+        return runBulkAction({
+            byQuery: () => actionMap[queryAction]({
+                ...loadQuery({
+                    sort: route.query.sort as string || "state.startDate:desc",
+                    state: route.query.state ? [route.query.state] : props.statuses,
+                }),
+                ...actionOptions.value,
+                ...params,
+            }),
+            byIds: () => actionMap[byIdAction]({executionsId: selection.value, ...actionOptions.value, ...params}),
+            success: (response) => {
+                const count = affectedCount(response)
+                return t(success, {executionCount: count}, count)
+            },
+        })
     }
 
     const resumeExecutions = () => {
@@ -1228,14 +1203,6 @@
         )
     }
 
-    const onSetLabelsError = (e: unknown) => {
-        const problem = asProblem(e)
-        toast.error(
-            problemBulkBody(problem, t, te),
-            problemTitle(problem, t, te),
-        )
-    }
-
     const setLabels = () => {
         const filtered = filterValidLabels(executionLabels.value)
 
@@ -1253,34 +1220,20 @@
             t("bulk set labels", {"executionCount": bulkActionCount.value}),
             t("confirmation"),
             {dangerouslyUseHTMLString: true},
-        ).then(() => {
-            if (queryBulkAction.value) {
-                return executionsStore
-                    .querySetLabels({
-                        params: loadQuery({
-                            sort: route.query.sort as string || "state.startDate:desc",
-                            state: route.query.state ? [route.query.state] : props.statuses,
-                        }),
-                        data: filtered.labels,
-                    })
-                    .then((r) => {
-                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    }).catch(onSetLabelsError)
-            } else {
-                return executionsStore
-                    .bulkSetLabels({
-                        executionsId: selection.value,
-                        executionLabels: filtered.labels,
-                    })
-                    .then((r) => {
-                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    }).catch(onSetLabelsError)
-            }
-        },
+        ).then(() => runBulkAction({
+            byQuery: () => executionsStore.querySetLabels({
+                params: loadQuery({
+                    sort: route.query.sort as string || "state.startDate:desc",
+                    state: route.query.state ? [route.query.state] : props.statuses,
+                }),
+                data: filtered.labels,
+            }),
+            byIds: () => executionsStore.bulkSetLabels({
+                executionsId: selection.value,
+                executionLabels: filtered.labels,
+            }),
+            success: (response) => t("Set labels done", {executionCount: affectedCount(response)}),
+        }),
         )
         isOpenLabelsModal.value = false
     }

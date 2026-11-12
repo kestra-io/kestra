@@ -19,6 +19,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
@@ -60,7 +62,9 @@ public class AiAgentController {
     private final AiMessageRepositoryInterface messageStore;
     protected final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
+
     private final AgentPrincipalResolver principalResolver;
+    private final AiUsageService usageService;
     private final int maxTurnsPerThread;
     private final int maxConcurrentTurns;
     private final Semaphore turnGate;
@@ -75,6 +79,7 @@ public class AiAgentController {
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final AgentPrincipalResolver principalResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
@@ -84,6 +89,7 @@ public class AiAgentController {
         this.threadManager = threadManager;
         this.orchestrator = orchestrator;
         this.principalResolver = principalResolver;
+        this.usageService = usageService;
         this.maxTurnsPerThread = configuration.maxTurnsPerThread();
         this.maxConcurrentTurns = configuration.maxConcurrentTurns();
         this.turnGate = new Semaphore(maxConcurrentTurns, false);
@@ -144,13 +150,20 @@ public class AiAgentController {
         }
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
+        // Resolved on the request thread and carried through the turn: a turn need not run on this thread, so a
+        // request-scoped lookup made later would come back empty.
+        AgentPrincipal principal = principalResolver.resolve();
+
+        AiUsageStatus usage = usageService.status(request.providerId(), principal == null ? null : principal.userId());
+        if (usage.isExceeded()) {
+            throw new HttpStatusException(HttpStatus.TOO_MANY_REQUESTS, usage.exceededMessage());
+        }
 
         acquireTurnPermit();
         try {
             AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
                 .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
-            AgentPrincipal principal = principalResolver.resolve();
             return stream(
                 sink -> orchestrator.runTurn(
                     new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink

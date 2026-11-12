@@ -3,6 +3,7 @@ package io.kestra.jdbc;
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.checkpoint.Checkpoint;
+import io.kestra.core.ai.usage.models.AiUsage;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
@@ -178,6 +179,12 @@ public class JdbcTableConfigsFactory {
     @Named("mcpsession")
     public InstantiableJdbcTableConfig mcpSession() {
         return new InstantiableJdbcTableConfig("mcpsession", McpSession.class, "mcp_session");
+    }
+
+    @Bean
+    @Named("aiusage")
+    public InstantiableJdbcTableConfig aiUsage() {
+        return new InstantiableJdbcTableConfig("aiusage", AiUsage.class, "ai_usage");
     }
 
     @Bean

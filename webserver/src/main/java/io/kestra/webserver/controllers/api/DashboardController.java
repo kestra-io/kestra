@@ -221,21 +221,6 @@ public class DashboardController {
         return fetchChartStateCounts(buildChartPreviewDataQuery(previewRequest));
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{id}/charts/{chartId}/state-counts")
-    @Operation(tags = { "Dashboards" }, summary = "Count the executions of a dashboard chart by state")
-    public ChartStateCounts dashboardChartStateCounts(
-        @Parameter(description = "The dashboard id") @PathVariable String id,
-        @Parameter(description = "The chart id") @PathVariable String chartId,
-        @RequestBody(description = "The dashboard filters to apply, some can override chart definition like labels & namespace") @Body ChartFiltersOverrides globalFilter) throws IOException {
-        var fetchChartDataQuery = buildDashboardChardDataQuery(id, chartId, globalFilter);
-        if (fetchChartDataQuery == null) {
-            return null;
-        }
-
-        return fetchChartStateCounts(fetchChartDataQuery);
-    }
-
     private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest) {
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YamlParser.parse(previewRequest.chart(), Chart.class);

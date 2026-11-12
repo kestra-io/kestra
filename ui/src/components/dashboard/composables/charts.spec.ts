@@ -1,11 +1,14 @@
-import {describe, expect, it, vi} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
 }))
 
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "./chartDrillDown"
-import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
+import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, CATEGORICAL_SLOTS, byCategoryRank, categoryDisplayName, chartCategoryColors, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
+
+// @ts-expect-error - plain .mjs module shared with the token linters
+import {knownTokens} from "../../../../scripts/tokens/knownTokens.mjs"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -432,5 +435,62 @@ describe("toEchartsParams", () => {
 
     it.each([undefined, null, "bar", 3])("returns an empty payload for %s", (raw) => {
         expect(toEchartsParams(raw)).toEqual({name: undefined, seriesName: undefined, seriesType: undefined, dataIndex: undefined, value: undefined, percent: undefined})
+    })
+})
+
+describe("chartCategoryColors", () => {
+    const root = document.documentElement.style
+    const slots = Array.from({length: CATEGORICAL_SLOTS}, (_, i) => `--ks-chart-categorical-${i + 1}`)
+
+    afterEach(() => {
+        root.removeProperty("--ks-chart-warning")
+        slots.forEach((slot) => root.removeProperty(slot))
+    })
+
+    it("declares a token for every palette slot", () => {
+        const known: Set<string> = knownTokens()
+        expect(slots.filter((token) => !known.has(token))).toEqual([])
+    })
+
+    it("uses the hex color configured for a value, also for the last part of a stacked value", () => {
+        const colors = chartCategoryColors("light", ["critical", "company.team, critical"], [{value: "critical", color: "#d32f2f"}])
+        expect(colors.get("critical")).toBe("#d32f2f")
+        expect(colors.get("company.team, critical")).toBe("#d32f2f")
+    })
+
+    it("uses the theme color of a configured state name", () => {
+        root.setProperty("--ks-chart-warning", "#ffa500")
+        expect(chartCategoryColors("light", ["high"], [{value: "high", color: "warning"}]).get("high")).toBe("#ffa500")
+    })
+
+    it("gives every value without a color its own palette slot, including listed values with only a label", () => {
+        slots.forEach((slot, i) => root.setProperty(slot, `#00000${i}`))
+        const values = ["prod", "staging", "dev", "qa", "eu", "us", "asia", "batch", "stream", "ml"]
+
+        const colors = chartCategoryColors("light", values, [{value: "prod", label: "Production"}])
+
+        expect(new Set(values.map((value) => colors.get(value))).size).toBe(10)
+        expect([...colors.values()].every((color) => color.startsWith("#00000"))).toBe(true)
+    })
+})
+
+describe("byCategoryRank", () => {
+    it("puts listed values first in list order and keeps the others in place", () => {
+        const order = byCategoryRank([{value: "low"}, {value: "critical"}, {value: "high"}])
+        expect(["x", "high", "y", "critical", "low"].sort(order)).toEqual(["low", "critical", "high", "x", "y"])
+    })
+})
+
+describe("categoryDisplayName", () => {
+    const colorByValues = [{value: "by_priority.critical", label: "Critical"}, {value: "by_priority.low", color: "success"}]
+
+    it("replaces a whole value or each matching part of a stacked value", () => {
+        expect(categoryDisplayName("by_priority.critical", colorByValues)).toBe("Critical")
+        expect(categoryDisplayName("security, by_priority.critical", colorByValues)).toBe("security, Critical")
+    })
+
+    it("returns undefined when the value has no label", () => {
+        expect(categoryDisplayName("by_priority.low", colorByValues)).toBeUndefined()
+        expect(categoryDisplayName("by_priority.medium", colorByValues)).toBeUndefined()
     })
 })

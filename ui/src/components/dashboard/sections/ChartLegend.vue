@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ categoryLabel(item.label) }} ({{ formatCount(item.count) }})
+            {{ item.displayName ?? categoryLabel(item.label) }} ({{ formatCount(item.count) }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">
@@ -21,7 +21,7 @@
                         @click="toggle(item.label)"
                     >
                         <span :style="swatchStyle(item.color)" />
-                        <span style="flex:1;">{{ categoryLabel(item.label) }}</span>
+                        <span style="flex:1;">{{ item.displayName ?? categoryLabel(item.label) }}</span>
                         <span>{{ formatCount(item.count) }}</span>
                     </span>
                 </div>
@@ -50,6 +50,8 @@
         label: string;
         color: string;
         count: number;
+        displayName?: string;
+        rank?: number;
     }
 
     const props = withDefaults(defineProps<{
@@ -74,11 +76,11 @@
     const aggregated = computed<ChartLegendItem[]>(() => {
         const byLabel = new Map<string, ChartLegendItem>()
         for (const item of props.items) {
-            const entry = byLabel.get(item.label) ?? {label: item.label, color: item.color, count: 0}
+            const entry = byLabel.get(item.label) ?? {...item, count: 0}
             entry.count += item.count || 0
             byLabel.set(item.label, entry)
         }
-        return [...byLabel.values()].sort((a, b) => b.count - a.count)
+        return [...byLabel.values()].sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity) || b.count - a.count)
     })
 
     const visible = computed(() => aggregated.value.slice(0, props.maxVisible))

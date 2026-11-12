@@ -1,4 +1,5 @@
 import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
+import {LOG_LEVELS, STATES} from "@kestra-io/design-system"
 import {apiUrlWithoutTenants} from "../override/utils/route"
 import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -99,5 +100,15 @@ export class PebbleAutoCompletion {
 export class YamlAutoCompletion extends PebbleAutoCompletion {
     valueAutoCompletion(_source: string, _parsed: Record<string, unknown> | undefined, _yamlElement: YamlElement | undefined): Promise<string[]> {
         return Promise.resolve([])
+    }
+}
+
+export class DashboardAutoCompletion extends YamlAutoCompletion {
+    valueAutoCompletion(_source: string, _parsed: Record<string, unknown> | undefined, yamlElement: YamlElement | undefined): Promise<string[]> {
+        if (yamlElement?.key !== "color" || yamlElement.path?.at(-1) !== "colorByValues") {
+            return Promise.resolve([])
+        }
+        const names = [...Object.values(STATES).map((state) => state.name), ...LOG_LEVELS].map((name) => name.toLowerCase())
+        return Promise.resolve([...new Set(names)])
     }
 }

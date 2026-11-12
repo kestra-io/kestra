@@ -454,7 +454,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -511,6 +511,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

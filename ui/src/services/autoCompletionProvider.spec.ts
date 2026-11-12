@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {
+    DashboardAutoCompletion,
     PebbleAutoCompletion,
     YamlAutoCompletion,
     fillExpressionCache,
@@ -152,6 +153,19 @@ describe("autoCompletionProvider", () => {
             expect(await provider.functionAutoCompletion(undefined, "", {})).toEqual([])
             expect(await provider.functionAutoCompletion({}, "secret", {namespace: "'company.team'"})).toEqual([])
             expect(axiosGet).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("DashboardAutoCompletion", () => {
+        it("suggests state and log level names only for the color of a colorByValues entry", async () => {
+            const provider = new DashboardAutoCompletion()
+            const element = (key: string) => ({key, value: null, parents: [], path: ["charts", "chartOptions", "colorByValues"]})
+
+            const colorNames = await provider.valueAutoCompletion("", undefined, element("color"))
+
+            expect(colorNames).toEqual(expect.arrayContaining(["failed", "warning", "success", "warn", "info"]))
+            expect(new Set(colorNames).size).toBe(colorNames.length)
+            expect(await provider.valueAutoCompletion("", undefined, element("label"))).toEqual([])
         })
     })
 })

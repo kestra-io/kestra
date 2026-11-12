@@ -1,17 +1,25 @@
 package io.kestra.core.validations.validator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.EnumUtils;
+import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
+import io.kestra.core.models.dashboards.WithColorByValues;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.filters.DurationFilters;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -26,6 +34,8 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class DataChartValidator implements ConstraintValidator<DataChartValidation, DataChart<?, ?>> {
+    private static final Pattern HEX_COLOR = Pattern.compile("#(\\p{XDigit}{3,4}|\\p{XDigit}{6}|\\p{XDigit}{8})");
+
     @Inject
     private RepositoryConfiguration repositoryConfiguration;
 
@@ -51,6 +61,22 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             {
                 if (!dataColumns.contains(column)) {
                     violations.add("Column '" + column + "' is requested by the chart but not present in `data.columns` keys.");
+                }
+            });
+        }
+
+        if (dataChart.getChartOptions() instanceof WithColorByValues withColorByValues) {
+            Set<String> listedValues = new HashSet<>();
+            ListUtils.emptyOnNull(withColorByValues.getColorByValues()).stream().filter(Objects::nonNull).forEach(entry ->
+            {
+                if (entry.getValue() != null && !listedValues.add(entry.getValue())) {
+                    violations.add("Value '%s' is listed more than once in `colorByValues`.".formatted(entry.getValue()));
+                }
+                if (entry.getColor() != null && !isColor(entry.getColor())) {
+                    violations.add(
+                        "Color '%s' of value '%s' is neither a hex color such as #d32f2f nor an execution state or log level name such as failed, warning or success."
+                            .formatted(entry.getColor(), entry.getValue())
+                    );
                 }
             });
         }
@@ -120,4 +146,9 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
         }
     }
 
+    private static boolean isColor(String color) {
+        return HEX_COLOR.matcher(color).matches()
+            || EnumUtils.isValidEnumIgnoreCase(State.Type.class, color)
+            || EnumUtils.isValidEnumIgnoreCase(Level.class, color);
+    }
 }

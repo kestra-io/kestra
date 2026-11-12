@@ -107,4 +107,29 @@ describe("KsDrawer", () => {
         expect(drawer.props("size")).toBe("500px")
         wrapper.unmount()
     })
+
+    test("restores the width held before dragging into full screen", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true, title: "Diff"},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+        const drawer = wrapper.findComponent(ElDrawer)
+        drawer.vm.$emit("resize-end", new MouseEvent("mouseup"), 500)
+        drawer.vm.$emit("resize-end", new MouseEvent("mouseup"), window.innerWidth)
+        await flushPromises()
+
+        const collapse = document.querySelector(".kel-drawer__header .full-screen")!.closest("button") as HTMLElement
+        collapse.click()
+        await flushPromises()
+        expect(drawer.props("size")).toBe("500px")
+        wrapper.unmount()
+    })
+
+    test("leaves the width to the stylesheet when not resizable and no size is given", () => {
+        const wrapper = mount(KsDrawer, {props: {modelValue: true}, global: globalConfig})
+
+        expect(wrapper.findComponent(ElDrawer).props("size")).toBe("")
+    })
 })

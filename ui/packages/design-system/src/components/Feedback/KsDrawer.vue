@@ -4,7 +4,7 @@
         destroyOnClose
         lockScroll
         :resizable="resizable"
-        :size="resizable ? drawerSize : props.size"
+        :size="resizable ? drawerSize : (props.size ?? '')"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
         v-bind="{...filteredProps(), ...$attrs}"
@@ -77,15 +77,19 @@
     const drawerWidth = ref<number | null>(null)
     const widthBeforeFullScreen = ref<number | null>(null)
 
-    const resizableFull = computed(() =>
-        props.resizable && drawerWidth.value != null && drawerWidth.value >= window.innerWidth * FULLSCREEN_THRESHOLD,
-    )
+    const isFullScreenWidth = (width: number | null) => width != null && width >= window.innerWidth * FULLSCREEN_THRESHOLD
+
+    const resizableFull = computed(() => props.resizable && isFullScreenWidth(drawerWidth.value))
     const fullScreen = computed(() => (props.resizable ? resizableFull.value : fullScreenToggle.value))
 
     const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : (props.size ?? "65%")))
 
     const onResizeEnd = (_event: MouseEvent, size: number) => {
-        drawerWidth.value = Math.round(size)
+        const width = Math.round(size)
+        if (!resizableFull.value && isFullScreenWidth(width)) {
+            widthBeforeFullScreen.value = drawerWidth.value
+        }
+        drawerWidth.value = width
     }
 
     const toggleFullScreen = () => {

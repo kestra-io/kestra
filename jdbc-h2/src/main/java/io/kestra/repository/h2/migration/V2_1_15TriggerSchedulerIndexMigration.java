@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import io.kestra.jdbc.migration.AbstractV2_1_07TriggerSchedulerIndexMigration;
+import io.kestra.jdbc.migration.AbstractV2_1_15TriggerSchedulerIndexMigration;
 
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
@@ -15,12 +15,12 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
-public class V2_1_07TriggerSchedulerIndexMigration extends AbstractV2_1_07TriggerSchedulerIndexMigration {
+public class V2_1_15TriggerSchedulerIndexMigration extends AbstractV2_1_15TriggerSchedulerIndexMigration {
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_1_07TriggerSchedulerIndexMigration(final DataSource dataSource) {
+    public V2_1_15TriggerSchedulerIndexMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -31,6 +31,6 @@ public class V2_1_07TriggerSchedulerIndexMigration extends AbstractV2_1_07Trigge
 
     @Override
     public List<String> sqlResources() {
-        return List.of("/migrations/2.1.07-trigger-scheduler-index-h2.sql");
+        return List.of("/migrations/2.1.15-trigger-scheduler-index-h2.sql");
     }
 }

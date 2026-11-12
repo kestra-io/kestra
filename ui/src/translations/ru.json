@@ -344,6 +344,7 @@
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
+    "create_child_namespace": "Создать дочерний namespace",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Эта Task была повторена",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",

@@ -344,6 +344,7 @@
     "home": "홈",
     "create": "생성",
     "create_flow": "Flow 생성",
+    "create_child_namespace": "하위 namespace 생성",
     "from": "시작",
     "to": "종료",
     "steps": "단계",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "refresh": "새로 고침",
     "filter by status": "{status} 상태로 실행 필터링",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",

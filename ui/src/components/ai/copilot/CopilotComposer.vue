@@ -1,5 +1,5 @@
 <template>
-    <div class="copilot-composer">
+    <div class="copilot-composer" :class="{'copilot-composer--locked': !!disabledReason}">
         <!-- While dictating, the live waveform replaces the textarea. -->
         <div v-if="isListening" ref="wavesContainer" class="copilot-voice" data-test="copilot-voice">
             <span
@@ -448,6 +448,18 @@
         color: var(--ks-text-primary);
         font: inherit;
         line-height: 1.5;
+    }
+
+    .copilot-composer--locked {
+        background: var(--ks-bg-inactive);
+        box-shadow: none;
+    }
+
+    .copilot-composer--locked .copilot-textarea,
+    .copilot-composer--locked .copilot-textarea::placeholder,
+    .copilot-composer--locked .copilot-mode-trigger {
+        color: var(--ks-text-inactive);
+        cursor: not-allowed;
     }
 
     .copilot-textarea::placeholder {

@@ -809,6 +809,12 @@
         box-shadow: var(--ks-shadow-element);
     }
 
+    .copilot-suggestion:disabled {
+        background: var(--ks-bg-inactive);
+        color: var(--ks-text-inactive);
+        box-shadow: none;
+    }
+
     /* Wider horizontal breathing room for the transcript; the footer/error keep the same
        inset so bubbles and the composer stay aligned to one gutter. */
     .copilot-body {

@@ -146,12 +146,12 @@ export function useAiChat() {
         if (nextThreadTitle.value) {
             request = {...request, title: nextThreadTitle.value}
         }
-        // The 404 is kept out of the global error toast: when no AI provider is
+        // The 404 and 503 are kept out of the global error toast: when no AI provider is
         // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
-        // bean) aren't registered, so this create 404s — surfaced as the copilot's own
-        // "unavailable" state by sendChat instead.
+        // bean) aren't registered, so this create 404s, and an unreachable provider 503s — both
+        // surfaced as the copilot's own "not sent" alert by sendChat instead.
         const {data} = await client.post<ThreadSummary>(base(), request).catch(e => {
-            handledIf(e, [404])
+            handledIf(e, [404, 503])
             throw e
         })
         thread.value = data

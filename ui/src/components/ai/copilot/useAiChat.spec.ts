@@ -457,9 +457,12 @@ describe("useAiChat", () => {
 
     it("surfaces the unavailable state when thread creation 503s (no provider)", async () => {
         const chat = useAiChat()
-        post.mockRejectedValueOnce({response: {status: 503}})
+        const refused = {response: {status: 503}}
+        post.mockRejectedValueOnce(refused)
         await chat.sendChat({prompt: "hi"})
         expect(chat.unavailable.value).toBe(true)
+        // The copilot reports it itself, so the global error toast must stay out of it.
+        expect(refused).toHaveProperty("__kestra_handled", true)
         expect(chat.error.value).toBeNull()
         // No user message is recorded when the turn can't even start.
         expect(chat.messages.value).toHaveLength(0)

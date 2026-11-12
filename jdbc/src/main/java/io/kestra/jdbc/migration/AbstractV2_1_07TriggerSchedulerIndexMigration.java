@@ -1,7 +1,7 @@
 package io.kestra.jdbc.migration;
 
 /**
- * Abstract base for the 2.1.15 trigger scheduler index migration.
+ * Abstract base for the 2.1.07 trigger scheduler index migration.
  *
  * <p>
  * Adds {@code type} to {@code idx_trigger_scheduler}. The scheduler's eligibility query now excludes the
@@ -10,11 +10,11 @@ package io.kestra.jdbc.migration;
  * them from the index alone, so listing many webhook, MCP or flow triggers no longer costs a heap fetch on
  * every scheduling loop.
  */
-public abstract class AbstractV2_1_15TriggerSchedulerIndexMigration extends AbstractSQLMigrationScript {
+public abstract class AbstractV2_1_07TriggerSchedulerIndexMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String scriptId() {
-        return "2.1.15-trigger-scheduler-index";
+        return "2.1.07-trigger-scheduler-index";
     }
 
     @Override

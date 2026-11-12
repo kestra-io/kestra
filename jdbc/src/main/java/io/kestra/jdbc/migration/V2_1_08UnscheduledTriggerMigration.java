@@ -13,7 +13,7 @@ import org.jooq.Record4;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.migration.AbstractV2_1_16UnscheduledTriggerMigration;
+import io.kestra.core.migration.AbstractV2_1_08UnscheduledTriggerMigration;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.serializers.JacksonMapper;
@@ -26,9 +26,9 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * The JDBC half of the {@code 2.1.16-unscheduled-triggers} back-fill, over the {@code flows} and
+ * The JDBC half of the {@code 2.1.08-unscheduled-triggers} back-fill, over the {@code flows} and
  * {@code triggers} tables. What it creates, and for which triggers, is decided by
- * {@link AbstractV2_1_16UnscheduledTriggerMigration}; this class only reads and writes.
+ * {@link AbstractV2_1_08UnscheduledTriggerMigration}; this class only reads and writes.
  *
  * <p>
  * Flows are streamed through a cursor and their states inserted in batches rather than read and written one
@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 @JdbcRepositoryEnabled
-public class V2_1_16UnscheduledTriggerMigration extends AbstractV2_1_16UnscheduledTriggerMigration {
+public class V2_1_08UnscheduledTriggerMigration extends AbstractV2_1_08UnscheduledTriggerMigration {
 
     /**
      * Rows pulled from the driver at a time. Without it the PostgreSQL driver buffers the whole result set,
@@ -64,7 +64,7 @@ public class V2_1_16UnscheduledTriggerMigration extends AbstractV2_1_16Unschedul
     private final JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    public V2_1_16UnscheduledTriggerMigration(
+    public V2_1_08UnscheduledTriggerMigration(
         final JooqDSLContextWrapper dslContextWrapper,
         final SchedulerConfiguration schedulerConfiguration) {
         super(schedulerConfiguration);

@@ -52,7 +52,6 @@
             :currentPage="currentPage"
             :pageSize="currentSize"
             @page-changed="onPageChanged"
-            @selection-change="onSelectionChange"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             @row-click="onRowClick"
@@ -468,13 +467,13 @@
     import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
-    import {ref, computed, watch, h, useTemplateRef, getCurrentInstance} from "vue"
+    import {ref, computed, watch, useTemplateRef} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {isPlainRowActivation} from "../../utils/rowNavigation"
     import Play from "vue-material-design-icons/Play.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
+    import {KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -499,8 +498,11 @@
 
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import useRestoreUrl from "../../composables/useRestoreUrl"
+    import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
+    import {bulkActionRules, isExecutionTerminated} from "./bulkActionEligibility"
 
     const {loadInit} = useRestoreUrl()
+    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
     import Sections from "../dashboard/sections/Sections.vue"
     import type {Chart} from "../dashboard/types"
     import ExecutionsTimeline from "./timeline/ExecutionsTimeline.vue"
@@ -882,19 +884,13 @@
 
     const selection = computed(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
-    const selectedExecutions = ref(new Map<string, Execution>())
+    const selectedExecutions = computed(() => {
+        const ids = new Set(selection.value as string[])
+        return (executionsStore.executions ?? []).filter(e => ids.has(e.id))
+    })
 
-    const onSelectionChange = (rows: Execution[]) => {
-        const currentPageIds = new Set(
-            executionsStore.executions?.map(execution => execution.id) ?? [],
-        )
-
-        currentPageIds.forEach(id => selectedExecutions.value.delete(id))
-        rows.forEach(execution => selectedExecutions.value.set(execution.id, execution))
-    }
     const toggleAllUnselected = () => {
         dataTable.value?.toggleAllUnselected()
-        selectedExecutions.value.clear()
     }
 
 
@@ -946,49 +942,7 @@
         return isAllowedOnExecutions(action.RESUME)
     })
 
-    const isTerminated = (execution: Execution) => execution.state?.endDate != null
-
-    const bulkActionRules: Record<string, {
-        allowed: (execution: Execution) => boolean;
-        reason: () => string;
-    }> = {
-        [action.UPDATE]: {
-            allowed: execution => isTerminated(execution) && execution.state?.current !== State.KILLED,
-            reason: () => t("bulk action reason not eligible for change state"),
-        },
-        [action.RESTART]: {
-            allowed: execution => execution.state?.current === State.FAILED,
-            reason: () => t("bulk action reason not state", {state: State.FAILED}),
-        },
-        [action.REPLAY]: {
-            allowed: isTerminated,
-            reason: () => t("bulk action reason not terminated"),
-        },
-        [action.KILL]: {
-            allowed: execution => !isTerminated(execution),
-            reason: () => t("bulk action reason terminated"),
-        },
-        [action.PAUSE]: {
-            allowed: execution => execution.state?.current === State.RUNNING,
-            reason: () => t("bulk action reason not state", {state: State.RUNNING}),
-        },
-        [action.RESUME]: {
-            allowed: execution => execution.state?.current === State.PAUSED,
-            reason: () => t("bulk action reason not state", {state: State.PAUSED}),
-        },
-        [action.UNQUEUE]: {
-            allowed: execution => execution.state?.current === State.QUEUED,
-            reason: () => t("bulk action reason not state", {state: State.QUEUED}),
-        },
-        [action.FORCE_RUN]: {
-            allowed: execution => !isTerminated(execution),
-            reason: () => t("bulk action reason terminated"),
-        },
-        [action.CHANGE_LABELS]: {
-            allowed: isTerminated,
-            reason: () => t("bulk action reason not terminated"),
-        },
-    }
+    const isTerminated = isExecutionTerminated
 
     const bulkActionDisabled = (executionAction: string) => {
         if (queryBulkAction.value) {
@@ -1000,7 +954,7 @@
             return false
         }
 
-        return Array.from(selectedExecutions.value.values())
+        return selectedExecutions.value
             .some(execution => !rule.allowed(execution))
     }
 
@@ -1014,11 +968,11 @@
             return undefined
         }
 
-        const selected = Array.from(selectedExecutions.value.values())
+        const selected = selectedExecutions.value
         const invalidCount = selected.filter(execution => !rule.allowed(execution)).length
 
         return invalidCount > 0
-            ? t("bulk action ineligible tooltip", {count: invalidCount, total: selected.length, reason: rule.reason()})
+            ? t(rule.tooltipKey, {count: invalidCount, total: selected.length, ...(rule.tooltipParams ?? {})})
             : undefined
     }
 
@@ -1293,107 +1247,28 @@
     }
 
 
-    interface MessageBoxInstance {
-        confirmButtonDisabled: boolean;
-    }
-
-    const deleteExecutions = () => {
-        const selected = Array.from(selectedExecutions.value.values())
+    const deleteExecutions = async () => {
         const nonTerminatedCount = queryBulkAction.value
             ? 0
-            : selected.filter(execution => !isTerminated(execution)).length
-        const requiresConsent = nonTerminatedCount > 0
-
-        const includeNonTerminated = ref(false)
-        const deleteLogs = ref(true)
-        const deleteMetrics = ref(true)
-        const deleteStorage = ref(true)
-
-        let boxInstance: MessageBoxInstance | null = null
-
-        const syncConfirmDisabled = () => {
-            if (boxInstance) {
-                boxInstance.confirmButtonDisabled = requiresConsent && !includeNonTerminated.value
-            }
-        }
-
-        const message = () => {
-            const current = getCurrentInstance()?.proxy as unknown as MessageBoxInstance | undefined
-            if (current) {
-                boxInstance = current
-                syncConfirmDisabled()
-            }
-
-            return h("div", null, [
-                h(
-                    "p",
-                    {innerHTML: t("bulk delete", {"executionCount": bulkActionCount.value})},
-                ),
-                nonTerminatedCount > 0 ? h(KsAlert, {
-                    title: t("execution-warn-title"),
-                    description: `${t("execution-warn-non-terminated-count", {count: nonTerminatedCount, total: selected.length})} ${t("execution-warn-deleting-still-running")}`,
-                    type: "warning",
-                    closable: false,
-                    class: "my-3",
-                }) : null,
-                h(KsFormItem, {
-                    class: "mt-3",
-                    label: t("execution-include-non-terminated"),
-                }, [
-                    h(KsSwitch, {
-                        modelValue: includeNonTerminated.value,
-                        "onUpdate:modelValue": (val: unknown) => {
-                            includeNonTerminated.value = Boolean(val)
-                            syncConfirmDisabled()
-                        },
-                    }),
-                ]),
-                includeNonTerminated.value && nonTerminatedCount === 0 ? h(KsAlert, {
-                    title: t("execution-warn-title"),
-                    description: t("execution-warn-deleting-still-running"),
-                    type: "warning",
-                    closable: false,
-                }) : null,
-                h(KsCheckbox, {
-                    modelValue: deleteLogs.value,
-                    label: t("execution_deletion.logs"),
-                    "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
-                }),
-                h(KsCheckbox, {
-                    modelValue: deleteMetrics.value,
-                    label: t("execution_deletion.metrics"),
-                    "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
-                }),
-                h(KsCheckbox, {
-                    modelValue: deleteStorage.value,
-                    label: t("execution_deletion.storage"),
-                    "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
-                }),
-            ])
-        }
-
-        KsMessageBox.confirm(message, t("confirmation"), {
-            confirmButtonDisabled: requiresConsent && !includeNonTerminated.value,
-            beforeClose: (boxAction: string, instance: MessageBoxInstance, done: () => void) => {
-                boxInstance = instance
-                if (boxAction === "confirm" && requiresConsent && !includeNonTerminated.value) {
-                    syncConfirmDisabled()
-                    return
-                }
-                done()
-            },
-        }).then(() => {
-            actionOptions.value.includeNonTerminated = includeNonTerminated.value
-            actionOptions.value.deleteLogs = deleteLogs.value
-            actionOptions.value.deleteMetrics = deleteMetrics.value
-            actionOptions.value.deleteStorage = deleteStorage.value
-
-            genericConfirmCallback(
-                "queryDeleteExecution",
-                "bulkDeleteExecution",
-                "executions deleted",
-            )
+            : selectedExecutions.value.filter(execution => !isTerminated(execution)).length
+        const messageHtml = t("bulk delete", {executionCount: bulkActionCount.value})
+        const options = await confirmExecutionDeletion(messageHtml, {
+            offerNonTerminated: true,
+            nonTerminatedCount,
+            total: selectedExecutions.value.length,
         })
+        if (!options) return
+
+        actionOptions.value.includeNonTerminated = options.includeNonTerminated
+        actionOptions.value.deleteLogs = options.deleteLogs
+        actionOptions.value.deleteMetrics = options.deleteMetrics
+        actionOptions.value.deleteStorage = options.deleteStorage
+
+        genericConfirmCallback(
+            "queryDeleteExecution",
+            "bulkDeleteExecution",
+            "executions deleted",
+        )
     }
 
     const killExecutions = () => {

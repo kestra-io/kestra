@@ -10,19 +10,30 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     return {...original, KsMessageBox: {...original.KsMessageBox, confirm}}
 })
 
-import {KsSwitch} from "@kestra-io/design-system"
+import {KsAlert, KsSwitch} from "@kestra-io/design-system"
 import {useExecutionDeletionDialog, type ExecutionDeletionOptions} from "./useExecutionDeletionDialog"
 
-const openDialog = async (offerNonTerminated: boolean) => {
+interface MessageBoxOptionsStub {
+    confirmButtonDisabled?: boolean;
+    beforeClose?: (action: string, instance: {confirmButtonDisabled?: boolean}, done: () => void) => void;
+}
+
+const openDialog = async (offerNonTerminated: boolean, nonTerminatedCount = 0) => {
     let result: Promise<ExecutionDeletionOptions | undefined> | undefined
     i18nMount(defineComponent({
         setup() {
-            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {offerNonTerminated})
+            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {
+                offerNonTerminated,
+                nonTerminatedCount,
+                total: nonTerminatedCount,
+            })
             return () => null
         },
     }))
-    const message = confirm.mock.calls[0][0] as () => VNode
-    return {result: result!, dialog: mount({render: message})}
+    const lastCall = confirm.mock.calls[confirm.mock.calls.length - 1]
+    const message = lastCall[0] as () => VNode
+    const options = lastCall[2] as MessageBoxOptionsStub
+    return {result: result!, dialog: mount({render: message}), options}
 }
 
 describe("execution deletion dialog", () => {
@@ -48,5 +59,34 @@ describe("execution deletion dialog", () => {
         expect((await openDialog(false)).dialog.findComponent(KsSwitch).exists()).toBe(false)
         confirm.mockClear()
         expect((await openDialog(true)).dialog.findComponent(KsSwitch).exists()).toBe(true)
+    })
+
+    it("requires consent when non-terminated executions are selected", async () => {
+        confirm.mockResolvedValue("confirm")
+
+        const withoutConsent = await openDialog(true, 0)
+        expect(withoutConsent.options.confirmButtonDisabled).toBe(false)
+        expect(withoutConsent.dialog.findComponent(KsAlert).exists()).toBe(false)
+
+        const withConsent = await openDialog(true, 2)
+        expect(withConsent.options.confirmButtonDisabled).toBe(true)
+        expect(withConsent.dialog.findComponent(KsAlert).exists()).toBe(true)
+        expect(withConsent.dialog.findComponent(KsAlert).props("description")).toContain("execution-warn-non-terminated-count")
+
+        // beforeClose blocks confirm while switch is false
+        let doneCalled = false
+        const fakeState = {confirmButtonDisabled: false}
+        withConsent.options.beforeClose?.("confirm", fakeState, () => {
+            doneCalled = true
+        })
+        expect(doneCalled).toBe(false)
+        expect(fakeState.confirmButtonDisabled).toBe(true)
+
+        // beforeClose allows confirm once switch is toggled on
+        await withConsent.dialog.findComponent(KsSwitch).vm.$emit("update:modelValue", true)
+        withConsent.options.beforeClose?.("confirm", fakeState, () => {
+            doneCalled = true
+        })
+        expect(doneCalled).toBe(true)
     })
 })

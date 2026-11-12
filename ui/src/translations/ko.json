@@ -1918,7 +1918,8 @@
       "duplicate": "이 키는 이미 존재합니다",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
-        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
+        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code>에서 <code>{count}</code>개의 KV가 삭제되었습니다"
       },
       "inherited": "상속된 KV 쌍",
       "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."

@@ -1066,6 +1066,7 @@
   "killed done": "180e68083de8",
   "kv|add": "4759498ac2a7",
   "kv|delete multiple|confirm": "6e131eec46b5",
+  "kv|delete multiple|deleted": "04e53f92807b",
   "kv|delete multiple|warning": "8f1b702384c2",
   "kv|duplicate": "31f70cb8b6a3",
   "kv|expiration_hint": "8dd012aff671",

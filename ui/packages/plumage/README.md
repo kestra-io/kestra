@@ -249,7 +249,7 @@ A theme is one color per role. Every adapter maps grammar scopes and Monaco toke
 `pebbleBlocks`, the Shiki transformer, the Expressive Code plugin and the VS Code grammar all follow the same rules:
 
 - A block is `{{ … }}`, or `{% … %}` opening on a tag name of two or more characters, so a shell `printf '{%s'` is left alone.
-- A block runs to its first closer, across lines, but never past a line that starts at column 0, so an unclosed block cannot color the rest of a file. A string holding a closer is cut there too, the way the engine would have no say in it once YAML is done escaping.
+- A block runs to its first closer, across lines, but never past a line that starts at column 0, so an unclosed block cannot color the rest of a file. A string holding a closer, `}}` or `%}` alike, is cut there too: after YAML escaping the editor cannot know what the engine will see, so it follows the block.
 - The scan is linear, however many blocks are left unclosed.
 
 Inside a block, `pebbleTokens` and the VS Code grammar give the same role to every character:

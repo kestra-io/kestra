@@ -95,6 +95,7 @@ const STRING_RE = new RegExp(STRING, "y")
 const NUMBER_RE = new RegExp(NUMBER, "y")
 /** Oniguruma's `\w` is Unicode-aware, so the grammar reads `forçado` as one name; the scanner has to as well. */
 const IDENTIFIER_RE = /[A-Za-z_][\p{L}\p{M}\p{Nd}\p{Pc}]*/uy
+const WORD_CHAR_RE = /[\p{L}\p{M}\p{Nd}\p{Pc}]/u
 const OPERATOR_RE = new RegExp(OPERATOR, "y")
 const PUNCTUATION_RE = new RegExp(PUNCTUATION, "y")
 const SPACE_RE = /[ \t\r\n]+/y
@@ -146,7 +147,7 @@ export function pebbleTokens(text: string): PebbleToken[] {
             } else if (char === 95 || (char | 32) >= 97 && (char | 32) <= 122) {
                 next = matchAt(IDENTIFIER_RE, text, at)
                 const word = text.slice(at, next)
-                const standalone: boolean = !afterDot && text.charCodeAt(next) !== 46
+                const standalone: boolean = !afterDot && text.charCodeAt(next) !== 46 && !WORD_CHAR_RE.test(text[at - 1] ?? "")
                 role = afterPipe ? "function"
                     : standalone && KEYWORD_SET.has(word) ? "keyword"
                     : standalone && CONSTANT_SET.has(word) ? "constant"

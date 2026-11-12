@@ -19,8 +19,11 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         lines?: monaco.editor.IModelDeltaDecoration[]
     } = {}
 
+    let painted: {model: monaco.editor.ITextModel, version: number} | undefined
+
     function attach(editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
         collection = editor.createDecorationsCollection()
+        painted = undefined
     }
 
     function apply() {
@@ -29,9 +32,11 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         if (lists.pebble) collection?.append(lists.pebble)
     }
 
+    /** Called on every cursor move, so an unchanged model version keeps the decorations it already has. */
     function highlightPebble() {
         if (!ctx.pebbleEnabled.value) {
             lists.pebble = []
+            painted = undefined
             apply()
             return
         }
@@ -40,11 +45,14 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         const model = editor.getModel?.()
         const text = model?.getValue?.()
         if (!text || !model) return
+        const version = model.getVersionId?.()
+        if (painted && painted.model === model && painted.version === version) return
 
         lists.pebble = pebbleTokens(text).map(([start, end, role]) => ({
             range: monaco.Range.fromPositions(model.getPositionAt(start), model.getPositionAt(end)),
-            options: {inlineClassName: role === "pebble" ? "highlight-pebble" : `highlight-pebble-${role}`},
+            options: {inlineClassName: `highlight-pebble-${role}`},
         }))
+        painted = version === undefined ? undefined : {model, version}
         apply()
     }
 

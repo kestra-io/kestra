@@ -57,9 +57,10 @@ describe("pebbleTokens", () => {
     })
 
     it("reads an accented name whole, as the grammar does", () => {
-        expect(paint("{{ forçado ?? orçamento() | inégal }} {{ trueño }}")).toEqual([
+        expect(paint("{{ forçado ?? orçamento() | inégal }} {{ trueño }} {{ éif }}")).toEqual([
             "pebble:{{ forçado ", "operator:??", "pebble: ", "function:orçamento", "punctuation:()", "pebble: ", "operator:|", "pebble: ", "function:inégal", "pebble: }}",
             "pebble:{{ trueño }}",
+            "pebble:{{ éif }}",
         ])
     })
 

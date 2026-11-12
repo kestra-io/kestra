@@ -349,7 +349,7 @@
         }
     }
 
-    .highlight-pebble {
+    .highlight-pebble-pebble {
         color: var(--code-pebble) !important;
     }
 

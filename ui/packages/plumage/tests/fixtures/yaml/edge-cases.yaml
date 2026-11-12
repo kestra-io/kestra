@@ -19,7 +19,7 @@ variables:
   pebble_comment: "before {# a pebble comment #} after"
   escaped: "{{ \"quoted \\\" inside\" | upper }}"
   trim_empty: "{{-}}"
-  accented: "{{ forçado ?? orçamento() | inégal }} {{ étape.for }} {{ 日本語 }}"
+  accented: "{{ forçado ?? orçamento() | inégal }} {{ étape.for }} {{ éif }} {{ 日本語 }}"
   wrapped_pipe: "{{ inputs.list |
     join(', ') |
     upper }}"

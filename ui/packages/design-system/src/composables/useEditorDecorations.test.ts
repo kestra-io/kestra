@@ -101,14 +101,34 @@ describe("useEditorDecorations", () => {
         dec.highlightPebble()
 
         expect(harness.collection.decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endColumn])).toEqual([
-            ["highlight-pebble", 2, 9, 22],
-            ["highlight-pebble", 3, 14, 17],
+            ["highlight-pebble-pebble", 2, 9, 22],
+            ["highlight-pebble-pebble", 3, 14, 17],
             ["highlight-pebble-keyword", 3, 17, 19],
-            ["highlight-pebble", 3, 19, 30],
-            ["highlight-pebble", 3, 33, 36],
+            ["highlight-pebble-pebble", 3, 19, 30],
+            ["highlight-pebble-pebble", 3, 33, 36],
             ["highlight-pebble-keyword", 3, 36, 41],
-            ["highlight-pebble", 3, 41, 44],
+            ["highlight-pebble-pebble", 3, 41, 44],
         ])
+    })
+
+    test("an unchanged model version keeps its decorations instead of rebuilding them on every cursor move", () => {
+        const harness = createEditorHarness("{{ first }} and {{ second }}")
+        let version = 1
+        const model = harness.editor.getModel() as unknown as {getVersionId?: () => number}
+        model.getVersionId = () => version
+        const dec = useEditorDecorations(createHarnessContext(harness))
+
+        dec.attach(harness.editor)
+        dec.highlightPebble()
+        dec.highlightPebble()
+        expect(harness.collection.clear).toHaveBeenCalledTimes(1)
+        expect(harness.collection.length).toBe(2)
+
+        version = 2
+        harness.setText("only {{ single }}")
+        dec.highlightPebble()
+        expect(harness.collection.clear).toHaveBeenCalledTimes(2)
+        expect(harness.collection.length).toBe(1)
     })
 
     test("applying lines range creates a collection entry for the specified range", () => {
@@ -171,7 +191,7 @@ describe("useEditorDecorations", () => {
 
         dec.clearLinesRangeHighlights()
         expect(harness.collection.length).toBe(1)
-        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble")
+        expect(harness.collection.decorations[0].options.inlineClassName).toBe("highlight-pebble-pebble")
 
         pebbleEnabled.value = false
         dec.highlightPebble()

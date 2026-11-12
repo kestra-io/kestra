@@ -256,10 +256,10 @@ describe("KsEditor / useEditorDecorations", () => {
         dec.highlightPebble()
 
         expect(decorations.map(({options, range}) => [options.inlineClassName, range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn])).toEqual([
-            ["highlight-pebble", 1, 20, 1, 23],
+            ["highlight-pebble-pebble", 1, 20, 1, 23],
             ["highlight-pebble-keyword", 1, 23, 1, 25],
-            ["highlight-pebble", 1, 25, 1, 36],
-            ["highlight-pebble", 1, 50, 1, 67],
+            ["highlight-pebble-pebble", 1, 25, 1, 36],
+            ["highlight-pebble-pebble", 1, 50, 1, 67],
         ])
     })
 })

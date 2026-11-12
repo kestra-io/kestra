@@ -111,7 +111,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", IdUtils.create(), 0, null, "a", null, false);
-        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, IdUtils.create(), State.Type.KILLED, null, null));
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, IdUtils.create(), State.Type.KILLED, null, null, null, null));
 
         // Then
         assertThat(maybeExecutor).isEmpty();

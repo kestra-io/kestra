@@ -2377,6 +2377,9 @@
         "csv": "Экспорт в CSV"
       },
       "ignoredFilters": "Фильтр {filters} не применяется к этому графику. | Фильтры {filters} не применяются к этому графику.",
+      "dataFrom": "Обновлено {date}",
+      "dataUnavailable": "Данные недоступны",
+      "dataTruncated": "Выходной файл был усечен до первых {rows} строк",
       "show_all_statuses": "Показать все статусы",
       "quick_filters": {
         "all": "Все",

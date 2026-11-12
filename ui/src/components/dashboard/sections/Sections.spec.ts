@@ -10,10 +10,11 @@ vi.mock("vue-router", () => ({
     useRoute: () => ({name: "dashboards", params: {}, query: {}}),
 }))
 
-const {exportChart, warning, ignoredFiltersReporter} = vi.hoisted(() => ({
+const {exportChart, warning, ignoredFiltersReporter, noticeReporter} = vi.hoisted(() => ({
     exportChart: vi.fn(),
     warning: vi.fn(),
     ignoredFiltersReporter: {report: undefined as ((fields: QueryFilterField[]) => void) | undefined},
+    noticeReporter: {report: undefined as ((notice: {metadata?: {executionId: string; date: string; state: string; rowsRead: number; truncated: boolean}; warning?: string}) => void) | undefined},
 }))
 
 vi.mock("../../../stores/dashboard", () => ({
@@ -26,7 +27,7 @@ vi.mock("../../../utils/toast", () => ({
 
 vi.mock("../dashboard-types", async () => {
     const {defineComponent, h, inject} = await import("vue")
-    const {IGNORED_FILTERS_INJECTION_KEY} = await import("../composables/useDashboards")
+    const {IGNORED_FILTERS_INJECTION_KEY, CHART_NOTICE_INJECTION_KEY} = await import("../composables/useDashboards")
 
     return {
         TYPES: {
@@ -60,6 +61,8 @@ vi.mock("../dashboard-types", async () => {
                 setup(props) {
                     const report = inject(IGNORED_FILTERS_INJECTION_KEY)
                     ignoredFiltersReporter.report = (fields) => report?.(props.chart.id, fields)
+                    const reportNotice = inject(CHART_NOTICE_INJECTION_KEY)
+                    noticeReporter.report = (notice) => reportNotice?.(props.chart.id, notice)
 
                     return () => h("div")
                 },
@@ -144,5 +147,48 @@ describe("dashboard Sections.vue ignored filters", () => {
 
         expect(warning).toHaveBeenCalledTimes(2)
         expect(warning).toHaveBeenLastCalledWith(expect.stringContaining("doesn't apply to this chart"), "Logs by level")
+    })
+})
+
+describe("dashboard Sections.vue chart notice", () => {
+    const chart = {id: "rejected", type: "reporting-type", chartOptions: {width: 6, displayName: "Rejected orders"}}
+
+    it("shows under the title which run the rows come from", async () => {
+        const wrapper = mountSections([chart])
+        await flushPromises()
+
+        noticeReporter.report?.({metadata: {executionId: "e1", date: "2026-11-09T10:00:00Z", state: "SUCCESS", rowsRead: 4, truncated: false}})
+        await flushPromises()
+
+        expect(wrapper.get(".chart-metadata").text()).toContain("Updated")
+        expect(wrapper.find("[data-test=chart-title-warning]").exists()).toBe(false)
+        expect(wrapper.find(".chart-warning").exists()).toBe(false)
+    })
+
+    it("warns next to the date that the rows were cut at the data source limit", async () => {
+        const wrapper = mountSections([chart])
+        await flushPromises()
+
+        noticeReporter.report?.({metadata: {executionId: "e1", date: "2026-11-09T10:00:00Z", state: "SUCCESS", rowsRead: 10000, truncated: true}})
+        await flushPromises()
+
+        expect(wrapper.get("[data-test=chart-title-warning]").attributes("aria-label")).toBe("Output file has been truncated to its 10000 first rows. See documentation for further details.")
+    })
+
+    it("shows the warning of a chart that has no data to read, and removes it when it clears", async () => {
+        const wrapper = mountSections([chart])
+        await flushPromises()
+
+        noticeReporter.report?.({warning: "The file of the output 'rejected' was deleted by the retention."})
+        await flushPromises()
+        expect(wrapper.get(".chart-warning").text()).toContain("deleted by the retention")
+        expect(wrapper.get("[data-test=chart-title-warning]").attributes("aria-label")).toContain("deleted by the retention")
+        expect(wrapper.get(".chart-body").classes()).toContain("is-hidden")
+        expect(wrapper.find(".chart-metadata").exists()).toBe(false)
+
+        noticeReporter.report?.({})
+        await flushPromises()
+        expect(wrapper.find(".chart-warning").exists()).toBe(false)
+        expect(wrapper.get(".chart-body").classes()).not.toContain("is-hidden")
     })
 })

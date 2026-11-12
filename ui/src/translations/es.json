@@ -2377,6 +2377,9 @@
         "csv": "Exportar a CSV"
       },
       "ignoredFilters": "El filtro {filters} no se aplica a este gráfico. | Los filtros {filters} no se aplican a este gráfico.",
+      "dataFrom": "Actualizado {date}",
+      "dataUnavailable": "Datos no disponibles",
+      "dataTruncated": "El archivo de salida se ha truncado a sus primeras {rows} filas",
       "show_all_statuses": "Mostrar todos los estados",
       "quick_filters": {
         "all": "Todos",

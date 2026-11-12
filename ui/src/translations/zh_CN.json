@@ -2377,6 +2377,9 @@
         "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
+      "dataFrom": "更新于 {date}",
+      "dataUnavailable": "数据不可用",
+      "dataTruncated": "输出文件已截断为前 {rows} 行",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",

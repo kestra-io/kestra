@@ -2377,6 +2377,9 @@
         "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
+      "dataFrom": "Zaktualizowano {date}",
+      "dataUnavailable": "Dane niedostępne",
+      "dataTruncated": "Plik wyjściowy został obcięty do pierwszych {rows} wierszy",
       "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",

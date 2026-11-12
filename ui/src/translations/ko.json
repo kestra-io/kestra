@@ -2377,6 +2377,9 @@
         "csv": "CSV로 내보내기"
       },
       "ignoredFilters": "{filters} 필터는 이 차트에 적용되지 않습니다. | {filters} 필터는 이 차트에 적용되지 않습니다.",
+      "dataFrom": "업데이트됨 {date}",
+      "dataUnavailable": "데이터를 사용할 수 없음",
+      "dataTruncated": "출력 파일이 처음 {rows}개 행으로 잘렸습니다.",
       "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",

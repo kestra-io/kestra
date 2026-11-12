@@ -550,7 +550,7 @@ public class FlowInputOutput {
                 }
             } else {
                 try {
-                    var parsedInput = parseData(execution, input, value);
+                    var parsedInput = parseData(execution, input, input.getType(), value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
                         table.validateSubmittedRows(rows);
@@ -688,7 +688,7 @@ public class FlowInputOutput {
                             throw InputOutputValidationException.of("Output '" + output.getId() + "' is required", output);
                         }
                     }
-                    return parseData(execution, output, current);
+                    return parseData(execution, output, output.getType() == null ? null : output.getType().parsedAs(), current);
                 } catch (IllegalArgumentException | ConstraintViolationException e) {
                     throw InputOutputValidationException.of(e.getMessage(), output);
                 } catch (Exception e) {
@@ -706,8 +706,9 @@ public class FlowInputOutput {
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(
         final Execution execution,
         final Data data,
+        final Type type,
         final Object current) throws Exception {
-        if (data.getType() == null) {
+        if (type == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
 
@@ -716,7 +717,7 @@ public class FlowInputOutput {
         return Optional.of(
             new AbstractMap.SimpleEntry<>(
                 data.getId(),
-                parseType(execution, data.getType(), data.getId(), elementType, current, data)
+                parseType(execution, type, data.getId(), elementType, current, data)
             )
         );
     }

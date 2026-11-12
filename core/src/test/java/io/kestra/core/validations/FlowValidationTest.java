@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +19,7 @@ import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
@@ -33,6 +36,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class FlowValidationTest {
@@ -945,6 +949,29 @@ class FlowValidationTest {
             .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.")
             .contains("Input 'disks' of type TABLE is only available in Enterprise Edition.")
             .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"TABLE", "FORM", "REUSABLE_INPUTS", "SELECT", "MULTISELECT", "EMAIL"})
+    void shouldLoadButRejectAFlowOutputWhenItsTypeIsInputOnly(String type) {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: out
+                type: %s
+                value: hi
+            """.formatted(type), Flow.class);
+
+        assertThat(flow.getOutputs().getFirst().getType()).isEqualTo(OutputType.UNKNOWN);
+        assertThat(modelValidator.isValid(flow)).hasValueSatisfying(violation -> assertThat(violation.getMessage())
+            .contains("The output 'out' has an unknown type")
+            .contains("STRING")
+            .doesNotContain("is not a valid"));
     }
 
     @Test

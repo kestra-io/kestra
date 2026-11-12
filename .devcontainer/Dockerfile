@@ -64,6 +64,8 @@ RUN apt install -y python3 pip python3-venv
 # --------------------------------------
 # Non-root user: everything below lives in its home directory
 # --------------------------------------
+# Local storage path of the standalone setup in README.md
+RUN mkdir -p /app/storage && chown -R ${USERNAME}:${USERNAME} /app
 USER ${USERNAME}
 ENV HOME="/home/${USERNAME}"
 WORKDIR ${HOME}

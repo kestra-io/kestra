@@ -1097,7 +1097,11 @@
     "invalid label key": "Key de label inválida. Uma key válida deve começar com uma letra minúscula e conter apenas letras minúsculas, números, hífens (-), sublinhados (_) ou pontos (.)",
     "feeds": {
       "heading": "Tudo sobre Kestra.",
-      "subheading": "As últimas atualizações, guias e histórias"
+      "subheading": "As últimas atualizações, guias e histórias",
+      "releases": {
+        "heading": "Novas versões de patch",
+        "title": "Kestra {version} está disponível"
+      }
     },
     "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Esta execution ainda está em execução, excluí-la não a interromperá.<br />Você precisa killar a execution para pará-la.</div>",
     "restore": "Restaurar",

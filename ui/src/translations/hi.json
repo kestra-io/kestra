@@ -1097,7 +1097,11 @@
     "invalid label key": "अमान्य लेबल key. मान्य key एक लोअरकेस अक्षर से शुरू होनी चाहिए और इसमें केवल लोअरकेस अक्षर, अंक, हाइफ़न (-), अंडरस्कोर (_) या पीरियड (.) होने चाहिए.",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
-      "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ"
+      "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ",
+      "releases": {
+        "heading": "नए पैच रिलीज़",
+        "title": "Kestra {version} उपलब्ध है"
+      }
     },
     "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">यह execution अभी भी चल रहा है, इसे हटाने से यह रुकेगा नहीं।<br />इसे रोकने के लिए आपको execution को समाप्त करना होगा।</div>",
     "restore": "पुनर्स्थापित करें",

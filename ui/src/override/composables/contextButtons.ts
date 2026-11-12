@@ -19,6 +19,7 @@ import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
 import BellOutline from "vue-material-design-icons/BellOutline.vue"
 import {storageKeys} from "../../utils/constants"
+import {latestNewsDate} from "../../utils/releases"
 
 const ContextNews = defineAsyncComponent(() => import("../../components/layout/ContextNews.vue"))
 const ContextDocs = defineAsyncComponent(() => import("../../components/docs/ContextDocs.vue"))
@@ -46,10 +47,10 @@ export function useContextButtons() {
     const apiStore = useApiStore()
     const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     const newsUnread = computed<boolean>(() => {
-        const feeds = apiStore.feeds
+        const latest = latestNewsDate(apiStore.feeds, apiStore.releases)
         return Boolean(
             lastNewsReadDate.value === null ||
-            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate))),
+            (latest !== null && new Date(lastNewsReadDate.value) < new Date(latest)),
         )
     })
 

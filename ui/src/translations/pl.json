@@ -1097,7 +1097,11 @@
     "invalid label key": "Nieprawidłowy key etykiety. Prawidłowy key musi zaczynać się małą literą i zawierać tylko małe litery, cyfry, myślniki (-), podkreślenia (_) lub kropki (.)",
     "feeds": {
       "heading": "Wszystko o Kestra.",
-      "subheading": "Najnowsze aktualizacje, przewodniki i historie"
+      "subheading": "Najnowsze aktualizacje, przewodniki i historie",
+      "releases": {
+        "heading": "Nowe wydania poprawek",
+        "title": "Dostępna jest Kestra {version}"
+      }
     },
     "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Ta egzekucja nadal trwa, jej usunięcie jej nie zatrzyma.<br />Musisz zabić egzekucję, aby ją zatrzymać.</div>",
     "restore": "Przywróć",

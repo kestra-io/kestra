@@ -1,8 +1,9 @@
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 import {defineComponent} from "vue"
 const mockFeeds: {value: Array<{publicationDate: string}>} = {value: []}
+const mockReleases: {value: Array<{publicationDate: string}>} = {value: []}
 vi.mock("../../stores/api", () => ({
-    useApiStore: () => ({feeds: mockFeeds.value}),
+    useApiStore: () => ({feeds: mockFeeds.value, releases: mockReleases.value}),
 }))
 
 const mockUnreadCount = {value: 0}
@@ -38,6 +39,7 @@ describe("useContextButtons news unread", () => {
     beforeEach(() => {
         localStorage.clear()
         mockFeeds.value = []
+        mockReleases.value = []
         mockUnreadCount.value = 0
     })
 
@@ -59,6 +61,16 @@ describe("useContextButtons news unread", () => {
         const {buttons} = mountButtons()
 
         expect(buttons.notifications.unread?.value).toBe(false)
+    })
+
+    it("is unread when a patch release is newer than the stored read date", () => {
+        localStorage.setItem("feeds", "2024-06-01T00:00:00Z")
+        mockFeeds.value = [{publicationDate: "2024-01-01T00:00:00Z"}]
+        mockReleases.value = [{publicationDate: "2024-07-01T00:00:00Z"}]
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.news.unread?.value).toBe(true)
     })
 
     it("is unread when no read date has been stored yet", () => {

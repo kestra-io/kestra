@@ -8,6 +8,7 @@ import {sendPosthogEvent} from "../utils/analytics/posthogEvents"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {PageInfo} from "../utils/eventsRouter"
 import {publicFetch, publicFetchJson} from "../utils/publicApi"
+import {patchReleasesFor, type Release, type ReleaseResponse} from "../utils/releases"
 
 export const API_URL = "https://api.kestra.io"
 
@@ -83,6 +84,7 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
+    const releases = ref<Release[]>([])
 
     const miscStore = useMiscStore()
 
@@ -103,6 +105,21 @@ export const useApiStore = defineStore("api", () => {
         feeds.value = data.feeds
 
         return data
+    }
+
+    // Sends only the version, no instance or user identifier, and swallows failures so an offline instance is unaffected.
+    async function loadReleases(options: { version: string }) {
+        try {
+            const data = await publicFetchJson<ReleaseResponse>(`${API_URL}/v1/releases`, {
+                params: {version: options.version},
+            })
+
+            releases.value = patchReleasesFor(data.releases ?? [], options.version)
+        } catch {
+            releases.value = []
+        }
+
+        return releases.value
     }
 
     async function loadConfig() {
@@ -180,6 +197,8 @@ export const useApiStore = defineStore("api", () => {
     return {
         feeds,
         loadFeeds,
+        releases,
+        loadReleases,
         loadConfig,
         flushQueuedEvents,
         events,

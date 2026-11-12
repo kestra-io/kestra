@@ -106,6 +106,8 @@
                     uid: uid,
                 })
             }
+
+            void apiStore.loadReleases({version: config.version})
         }
 
         void initPosthogIfEnabled(config)

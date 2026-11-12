@@ -4,6 +4,27 @@
             <h4>{{ $t("feeds.heading") }}</h4>
             <p>{{ $t("feeds.subheading") }}</p>
         </header>
+        <section v-if="releases.length > 0" class="releases" data-test="news-releases">
+            <h5 class="releasesHeading">{{ $t("feeds.releases.heading") }}</h5>
+            <a
+                v-for="release in releases"
+                :key="release.version"
+                class="post"
+                :href="releaseNotesUrl(release)"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-test="news-release"
+            >
+                <div class="metaBlock">
+                    <KsDateAgo className="news-date" :inverted="true" :date="release.publicationDate" format="LL" :showTooltip="false" />
+                    <h5>{{ $t("feeds.releases.title", {version: release.version}) }}</h5>
+                    <KsText v-if="release.summary" size="small" type="secondary">
+                        {{ release.summary }}
+                    </KsText>
+                </div>
+                <OpenInNew class="openInNewIcon" aria-hidden="true" />
+            </a>
+        </section>
         <a
             class="post"
             :class="{
@@ -39,15 +60,17 @@
 
     import {useApiStore} from "../../stores/api"
     import {storageKeys} from "../../utils/constants"
+    import {latestNewsDate, releaseNotesUrl} from "../../utils/releases"
 
     const apiStore = useApiStore()
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
     const feeds = computed(() => apiStore.feeds)
+    const releases = computed(() => apiStore.releases)
 
     const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     onMounted(() => {
-        lastNewsReadDate.value = feeds.value[0].publicationDate
+        lastNewsReadDate.value = latestNewsDate(feeds.value, releases.value)
     })
 
     const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
@@ -70,6 +93,24 @@
             color: var(--ks-text-secondary);
             margin: 0;
         }
+    }
+
+    .releases {
+        margin: var(--ks-spacing-4) 1rem;
+        padding-bottom: var(--ks-spacing-3);
+        border-bottom: 1px solid var(--ks-border-default);
+
+        .post {
+            margin: 0;
+        }
+    }
+
+    .releasesHeading {
+        margin: 0 0 var(--ks-spacing-2) 0.75rem;
+        font-size: var(--ks-font-size-2xs);
+        font-weight: var(--ks-font-weight-semibold);
+        color: var(--ks-text-secondary);
+        text-transform: uppercase;
     }
 
     .post {

@@ -1097,7 +1097,11 @@
     "invalid label key": "Ungültiger Label-Key. Ein gültiger Key muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen, Bindestriche (-), Unterstriche (_) oder Punkte (.) enthalten.",
     "feeds": {
       "heading": "Alles rund um Kestra.",
-      "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
+      "subheading": "Die neuesten Updates, Anleitungen und Beiträge",
+      "releases": {
+        "heading": "Neue Patch-Releases",
+        "title": "Kestra {version} ist verfügbar"
+      }
     },
     "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Diese Execution läuft noch. Das Löschen stoppt sie nicht.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
     "restore": "Wiederherstellen",

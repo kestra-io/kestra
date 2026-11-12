@@ -3,7 +3,7 @@
         ref="elInputRef"
         v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         :modelValue="modelValue"
-        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless}"
+        :class="{'ks-input--reserve-clear': reserveClearSpace, 'ks-input--borderless': borderless, 'ks-input--highlight': highlight}"
         @update:modelValue="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
@@ -52,6 +52,8 @@
         rows?: number
         /** Drops the border, background and side padding, for a search field that sits flush in a list row. */
         borderless?: boolean
+        /** Pulses the focus ring once, to point at the field a page has just opened on. */
+        highlight?: boolean
     }>()
 
     // ElInput emits strings only, whatever type the bound value has.
@@ -67,7 +69,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["borderless", "modelValue"])
+    const filteredProps = useFilteredProps(props, ["borderless", "highlight", "modelValue"])
 
     const reserveClearSpace = computed(() =>
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
@@ -139,6 +141,14 @@
             }
         }
 
+        &.ks-input--highlight .kel-input__wrapper {
+            animation: ks-input-highlight 1.2s ease-out 2;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
         &.ks-input--reserve-clear {
             & .kel-input__inner {
                 padding-inline-end: var(--ks-spacing-5);
@@ -149,6 +159,18 @@
                 inset-block: 0;
                 inset-inline-end: var(--ks-spacing-3);
             }
+        }
+    }
+
+    @keyframes ks-input-highlight {
+        from {
+            background-color: color-mix(in srgb, var(--ks-border-focus) 15%, var(--ks-bg-input));
+            box-shadow: 0 0 0 2px var(--ks-border-focus) inset;
+        }
+
+        to {
+            background-color: var(--ks-bg-input);
+            box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
         }
     }
 </style>

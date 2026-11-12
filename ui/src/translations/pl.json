@@ -344,6 +344,7 @@
     "home": "Strona główna",
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
+    "create_child_namespace": "Utwórz podrzędny namespace",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Ten Task został ponowiony",
       "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",

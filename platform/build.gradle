@@ -50,6 +50,8 @@ dependencies {
     api platform("io.qameta.allure:allure-bom:2.35.5")
 
     constraints {
+        // security tower (Trivy): transitive libraries pinned to their fixed version
+        api("at.yawk.lz4:lz4-java:1.11.4") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc
         api("com.google.protobuf:protobuf-java:$protobufVersion")

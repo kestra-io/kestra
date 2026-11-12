@@ -22,12 +22,12 @@ function httpError(status: number, problem: object) {
     return Object.assign(new Error(`Request failed with ${status}`), {status, problem, response: {data: problem, status}})
 }
 
-function mountBulkAction(queryBulkAction: boolean) {
+function mountBulkAction(queryBulkAction: boolean, options: Parameters<typeof useBulkAction>[1] = {}) {
     const table = ref({queryBulkAction, toggleAllUnselected: vi.fn(), reload: vi.fn()})
     let bulk!: ReturnType<typeof useBulkAction>
     i18nMount(defineComponent({
         setup() {
-            bulk = useBulkAction(table)
+            bulk = useBulkAction(table, options)
             return () => h("div")
         },
     }))
@@ -56,6 +56,17 @@ describe("useBulkAction", () => {
         expect(table.reload).toHaveBeenCalledOnce()
     })
 
+    it("refreshes with the page's own refresh instead of reloading the table when one is given", async () => {
+        const refresh = vi.fn()
+        const {table, runBulkAction} = mountBulkAction(false, {refresh})
+        const done = () => Promise.resolve({count: 1})
+
+        await runBulkAction({byQuery: done, byIds: done, success: () => "done"})
+
+        expect(refresh).toHaveBeenCalledOnce()
+        expect(table.reload).not.toHaveBeenCalled()
+    })
+
     it.each([true, false])("lists each refused item and keeps the selection when the server refuses the batch (every match: %s)", async (queryBulkAction) => {
         const {table, runBulkAction} = mountBulkAction(queryBulkAction)
         const refused = () => Promise.reject(httpError(400, BULK_REFUSED))
@@ -69,11 +80,14 @@ describe("useBulkAction", () => {
     })
 
     it("adds no second toast for a failure the global error toast already reports", async () => {
-        const {runBulkAction} = mountBulkAction(false)
+        const {table, runBulkAction} = mountBulkAction(false)
         const failed = () => Promise.reject(httpError(500, {type: "about:blank", title: "Internal Server Error", status: 500}))
 
         await runBulkAction({byQuery: failed, byIds: failed, success: () => "done"})
 
         expect(error).not.toHaveBeenCalled()
+        expect(success).not.toHaveBeenCalled()
+        expect(table.toggleAllUnselected).not.toHaveBeenCalled()
+        expect(table.reload).not.toHaveBeenCalled()
     })
 })

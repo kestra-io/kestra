@@ -47,6 +47,7 @@ const i18n = createI18n({
     messages: {
         en: {
             copy: "Copy",
+            open: "Open",
             copied: "Copied",
             large_outputs: {
                 value_truncated: "Showing a truncated preview of this {size} value.",
@@ -85,6 +86,37 @@ function editorContent(wrapper: ReturnType<typeof mountVarValue>) {
 }
 
 describe("VarValue", () => {
+    // new URL() accepts any `scheme:` prefix; such identifiers must stay readable text (Pylon 2622).
+    it.each([
+        "iso6523-actorid-upis::0088:5798000000001",
+        "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+        "arn:aws:s3:::my-bucket",
+        "mailto:someone@example.com",
+    ])("should show %s as text without an Open link", (value) => {
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        expect(wrapper.text()).not.toContain("Open")
+    })
+
+    it("should cap a very long web link like any other string", () => {
+        const value = "https://example.com/?q=" + "x".repeat(400 * 1024)
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text().length).toBeLessThan(value.length)
+        expect(wrapper.text()).toContain("Open")
+    })
+
+    it("should show a web link as text next to its Open button", () => {
+        const value = "https://kestra.io/docs"
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        expect(wrapper.text()).toContain("Open")
+    })
+
     it("should render an empty string as quoted text so the cell is not blank", () => {
         const wrapper = mountVarValue("")
 

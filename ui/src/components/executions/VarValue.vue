@@ -37,18 +37,21 @@
             {{ $t('file unavailable') }}
         </KsButton>
     </KsTooltip>
-    <KsButtonGroup v-else-if="uriHref">
+    <!-- Show the text too: a link alone hides the value and offers no way to copy it. -->
+    <span v-else-if="uriHref" class="uri-value">
+        <span>{{ displayText }}</span>
         <KsButton
             type="primary"
             tag="a"
             size="small"
             :href="uriHref"
             target="_blank"
+            rel="noopener noreferrer"
             :icon="OpenInNew"
         >
             {{ $t('open') }}
         </KsButton>
-    </KsButtonGroup>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -117,13 +120,14 @@
     const props = withDefaults(defineProps<{
         value?: string | object | boolean | number | null;
         execution?: Execution;
+        /** Offer an Open button only for http(s) values; any `scheme:` string parses as a URL otherwise. */
         restrictUri?: boolean;
         /** Output key this value came from, used to name the download of a truncated value. */
         name?: string;
     }>(), {
         // No default for `value`: defaulting to "" made an omitted prop look like an empty string.
         execution: () => ({id: ""}),
-        restrictUri: false,
+        restrictUri: true,
         name: "output",
     })
 
@@ -287,6 +291,13 @@
 </script>
 
 <style scoped>
+.uri-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    word-break: break-all;
+}
+
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

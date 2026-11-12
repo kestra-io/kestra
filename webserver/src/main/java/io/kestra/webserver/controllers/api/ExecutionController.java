@@ -1515,7 +1515,7 @@ public class ExecutionController {
         this.restartCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Restart",
+            execution.getTenantId(), executionId, "Restart", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId).withActor(actor))
         );
     }
@@ -1941,7 +1941,7 @@ public class ExecutionController {
         this.changeTaskRunStateCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change task run state",
+            execution.getTenantId(), executionId, "Change task run state", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId).withActor(actor))
         );
     }
@@ -1972,7 +1972,7 @@ public class ExecutionController {
         this.changeStatusCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change status",
+            execution.getTenantId(), executionId, "Change status", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2128,7 +2128,7 @@ public class ExecutionController {
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
 
         return awaitBlockingAction(
-            execution.getId(), "Kill",
+            execution.getTenantId(), execution.getId(), "Kill", actorResolver.resolve(),
             (operationId, actor) -> killQueue.emit(
                 ExecutionKilledExecution
                     .builder()
@@ -2237,7 +2237,7 @@ public class ExecutionController {
         io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
 
         return awaitBlockingAction(
-            execution.getId(), "Cancel approval",
+            execution.getTenantId(), execution.getId(), "Cancel approval", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed, false).withOperationId(operationId))
         ).map(r -> (HttpResponse<?>) r);
     }
@@ -2414,7 +2414,7 @@ public class ExecutionController {
         this.resumeFromBreakpointCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Resume from breakpoint",
+            execution.getTenantId(), executionId, "Resume from breakpoint", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2500,7 +2500,7 @@ public class ExecutionController {
         this.pauseCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Pause",
+            execution.getTenantId(), executionId, "Pause", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2864,7 +2864,7 @@ public class ExecutionController {
         this.updateLabelsCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Set labels",
+            execution.getTenantId(), executionId, "Set labels", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId).withActor(actor))
         )
             .map(r -> (HttpResponse<?>) r);
@@ -2962,7 +2962,7 @@ public class ExecutionController {
         this.unqueueCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Unqueue",
+            execution.getTenantId(), executionId, "Unqueue", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3033,7 +3033,7 @@ public class ExecutionController {
         this.forceRunCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Force run",
+            execution.getTenantId(), executionId, "Force run", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3060,7 +3060,7 @@ public class ExecutionController {
         this.rescheduleCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Reschedule",
+            execution.getTenantId(), executionId, "Reschedule", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Reschedule.from(execution, scheduleDate.toInstant()).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3583,17 +3583,6 @@ public class ExecutionController {
         RESUME,
         SET_LABELS,
         UNQUEUE
-    }
-
-    /**
-     * Executes a single async operation on an execution, on behalf of the actor of the current request.
-     * Must be called on the request thread: it resolves the tenant and the actor from the current request.
-     */
-    private Mono<HttpResponse<Execution>> awaitBlockingAction(
-        String executionId,
-        String actionName,
-        ThrowingBiConsumer<String, Actor> emit) {
-        return awaitBlockingAction(tenantService.resolveTenant(), executionId, actionName, actorResolver.resolve(), emit);
     }
 
     /**

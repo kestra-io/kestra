@@ -17,8 +17,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.vnodes.VNodes;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;

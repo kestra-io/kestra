@@ -1,7 +1,7 @@
 <template>
     <span v-if="required" class="required-mark">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
-    <div class="wrapper" :class="[props.margin, props.class]">
+    <div class="wrapper" :class="[{'no-margin': props.noMargin}, props.class]">
         <KsInput
             ref="elInputRef"
             :modelValue="(input as string | number | undefined)"
@@ -44,7 +44,7 @@
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
         readonly: {type: Boolean, default: false},
-        margin: {type: String, default: ""},
+        noMargin: {type: Boolean, default: false},
         class: {type: String, default: undefined},
         haveError: {type: Boolean, default: false},
         inputStyle: {type: Object, default: () => ({})},
@@ -74,6 +74,10 @@
 .wrapper {
     margin-top: var(--ks-spacing-1);
     margin-bottom: var(--ks-spacing-2);
+}
+
+.no-margin {
+    margin: 0;
 }
 
 :deep(.kel-input__icon) {

@@ -21,15 +21,15 @@
             </KsButton>
         </div>
         <template v-else>
-            <!-- The editor is forced read-only while a Copilot diff is mirrored in (below) — explain
+            <!-- The editor is forced read-only while a preview is mirrored in (below) — explain
                  why and offer a way out, so the lock never reads as a dead end (kestra-io/kestra#19330
                  review). -->
             <div v-if="previewSource !== undefined" class="preview-banner" data-test="flow-preview-banner">
                 <KsAlert type="info" :closable="false">
                     <div class="preview-banner-body">
-                        <span>{{ $t("ai.copilot.draft.previewBanner") }}</span>
-                        <KsButton size="small" data-test="flow-preview-dismiss" @click="flowStore.declinePreview?.()">
-                            {{ $t("ai.copilot.draft.dismiss") }}
+                        <span>{{ previewBanner.message }}</span>
+                        <KsButton size="small" data-test="flow-preview-dismiss" @click="previewBanner.onAction()">
+                            {{ previewBanner.actionLabel }}
                         </KsButton>
                     </div>
                 </KsAlert>
@@ -102,7 +102,7 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type FlowPreviewBanner} from "../../stores/flow"
     import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
@@ -162,6 +162,11 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
 
     const previewSource = computed(() => props.flow ? flowStore.previewSource : undefined)
+    const previewBanner = computed<FlowPreviewBanner>(() => flowStore.previewBanner ?? {
+        message: t("ai.copilot.draft.previewBanner"),
+        actionLabel: t("ai.copilot.draft.dismiss"),
+        onAction: () => flowStore.declinePreview?.(),
+    })
 
     /** 10MB */
     const BIG_FILE_THRESHOLD = 10 * 1024 * 1024

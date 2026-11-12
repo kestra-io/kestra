@@ -178,6 +178,7 @@ describe("autoCompletionProvider", () => {
             const colorNames = await suggestionsAfter("color: ")
 
             expect(colorNames).toEqual(expect.arrayContaining(["failed", "warning", "success", "warn", "info"]))
+            expect(colorNames).not.toEqual(expect.arrayContaining(["submitted"]))
             expect(new Set(colorNames).size).toBe(colorNames.length)
             expect(await suggestionsAfter("label: ")).toEqual([])
             expect(await suggestionsAfter("legend:\n        color: ")).toEqual([])

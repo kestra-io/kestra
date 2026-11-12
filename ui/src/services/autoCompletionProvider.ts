@@ -104,11 +104,13 @@ export class YamlAutoCompletion extends PebbleAutoCompletion {
 }
 
 export class DashboardAutoCompletion extends YamlAutoCompletion {
+    /** Suggests the state and log level names that have a chart color, the same ones the backend accepts for `colorByValues`. */
     valueAutoCompletion(_source: string, _parsed: Record<string, unknown> | undefined, yamlElement: YamlElement | undefined): Promise<string[]> {
         if (yamlElement?.key !== "color" || yamlElement.path?.at(-1) !== "colorByValues") {
             return Promise.resolve([])
         }
-        const names = [...Object.values(STATES).map((state) => state.name), ...LOG_LEVELS].map((name) => name.toLowerCase())
+        const states = Object.values(STATES).map((state) => state.name).filter((name) => !["SUBMITTED", "PAUSING", "RESUBMITTED"].includes(name))
+        const names = [...states, ...LOG_LEVELS].map((name) => name.toLowerCase())
         return Promise.resolve([...new Set(names)])
     }
 }

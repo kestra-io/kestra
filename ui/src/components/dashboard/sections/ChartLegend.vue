@@ -80,7 +80,7 @@
             entry.count += item.count || 0
             byLabel.set(item.label, entry)
         }
-        return [...byLabel.values()].sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity) || b.count - a.count)
+        return [...byLabel.values()].sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) || b.count - a.count)
     })
 
     const visible = computed(() => aggregated.value.slice(0, props.maxVisible))

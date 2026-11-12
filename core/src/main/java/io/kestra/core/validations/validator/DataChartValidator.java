@@ -1,6 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DataChartValidator implements ConstraintValidator<DataChartValidation, DataChart<?, ?>> {
     private static final Pattern HEX_COLOR = Pattern.compile("#(\\p{XDigit}{3,4}|\\p{XDigit}{6}|\\p{XDigit}{8})");
+    /** The UI themes give these states no color, so a chart would silently ignore one named as a color. */
+    private static final Set<State.Type> STATES_WITHOUT_COLOR = EnumSet.of(State.Type.SUBMITTED, State.Type.PAUSING, State.Type.RESUBMITTED);
 
     @Inject
     private RepositoryConfiguration repositoryConfiguration;
@@ -74,7 +77,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
                 }
                 if (entry.getColor() != null && !isColor(entry.getColor())) {
                     violations.add(
-                        "Color '%s' of value '%s' is neither a hex color such as #d32f2f nor an execution state or log level name such as failed, warning or success."
+                        "Color '%s' of value '%s' is neither a hex color such as #d32f2f nor the name of an execution state or log level that has a color, such as failed, warning or success."
                             .formatted(entry.getColor(), entry.getValue())
                     );
                 }
@@ -147,8 +150,9 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
     }
 
     private static boolean isColor(String color) {
+        State.Type state = EnumUtils.getEnumIgnoreCase(State.Type.class, color);
         return HEX_COLOR.matcher(color).matches()
-            || EnumUtils.isValidEnumIgnoreCase(State.Type.class, color)
+            || (state != null && !STATES_WITHOUT_COLOR.contains(state))
             || EnumUtils.isValidEnumIgnoreCase(Level.class, color);
     }
 }

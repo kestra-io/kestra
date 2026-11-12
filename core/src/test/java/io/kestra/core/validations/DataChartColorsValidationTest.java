@@ -51,6 +51,17 @@ class DataChartColorsValidationTest {
     }
 
     @Test
+    void shouldRejectStateThatHasNoColor() {
+        Optional<ConstraintViolationException> violation = validate("""
+            - value: queued
+              color: submitted
+            """);
+
+        assertThat(violation).isPresent();
+        assertThat(violation.get().getMessage()).contains("Color 'submitted' of value 'queued'");
+    }
+
+    @Test
     void shouldRejectValueListedTwice() {
         Optional<ConstraintViolationException> violation = validate("""
             - value: critical

@@ -155,7 +155,7 @@ function hashToHexColor(value: string): string {
 }
 
 function lastPart(value: string): string {
-    return value.includes(",") ? value.split(",").pop()?.trim() ?? "" : value
+    return value.split(", ").at(-1) ?? value
 }
 
 function fixedColor(value: string, colorByValues?: ColorByValue[]): string | undefined {

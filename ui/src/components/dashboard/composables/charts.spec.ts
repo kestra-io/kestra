@@ -515,6 +515,15 @@ describe("categoryDisplayName", () => {
         expect(categoryDisplayName("by_priority.medium", colorByValues)).toBeUndefined()
     })
 
+    it("treats only the separator of stacked values as a split, for the label and for the rank alike", () => {
+        const west = [{value: "west", label: "West"}]
+
+        expect(categoryDisplayName("eu, west", west)).toBe("eu, West")
+        expect(["x", "eu, west"].sort(byCategoryRank(west))).toEqual(["eu, west", "x"])
+        expect(categoryDisplayName("eu,west", west)).toBeUndefined()
+        expect(["x", "eu,west"].sort(byCategoryRank(west))).toEqual(["x", "eu,west"])
+    })
+
     it("matches a value the editor preview parsed from YAML as a number", () => {
         const parsed = YAML_UTILS.parse<ColorByValue[]>("- value: 500\n  label: Server error\n- value: 200\n  label: OK")
 

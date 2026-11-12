@@ -161,7 +161,7 @@ public abstract class AbstractJdbcRepository<T> {
      * @see #update(T, DSLContext, Map)
      */
     public void persist(T entity, Map<Field<Object>, Object> fields) {
-        dslContextWrapper.transaction(
+        dslContextWrapper.joinTransactionIfPresent(
             configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }
@@ -225,7 +225,7 @@ public abstract class AbstractJdbcRepository<T> {
      * @see #persist(Object, DSLContext, Map)
      */
     public void update(T entity, Map<Field<Object>, Object> fields) {
-        dslContextWrapper.transaction(
+        dslContextWrapper.joinTransactionIfPresent(
             configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }

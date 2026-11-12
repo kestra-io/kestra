@@ -344,6 +344,7 @@
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
+    "create_child_namespace": "Создать дочерний namespace",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -451,7 +452,7 @@
       "whole_action": "Повторить всю egzekucję вместо этого",
       "whole_title": "Ревизия {revision} может быть повторно воспроизведена как полная egzekucja.",
       "whole_description": "Более ранние результаты не используются повторно, поэтому каждая Task запускается снова в версии {revision}. Исходная egzekucja сохраняется и связывается.",
-      "confirm_from_task": "Повторить с Task",
+      "confirm_from_task": "Повтор с {taskId}",
       "confirm_whole": "Повторить всю egzekucję"
     },
     "change execution state done": "Состояние выполнения обновлено",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Эта Task была повторена",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",

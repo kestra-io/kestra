@@ -237,7 +237,7 @@
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
-                    <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
+                    <template v-else-if="col.prop === 'namespace'">
                         <KsEntityLink
                             v-if="scope.row?.namespace"
                             entity="namespace"
@@ -245,7 +245,7 @@
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
                         />
                     </template>
-                    <template v-else-if="col.prop === 'flowId' && routeFamily($route.name) !== 'flows/update'">
+                    <template v-else-if="col.prop === 'flowId'">
                         <KsEntityLink
                             v-if="scope.row?.flowId"
                             entity="flow"

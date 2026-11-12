@@ -1,7 +1,5 @@
 {
   "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
   "src/components/no-code/components/tasks/TaskDict.vue": 5,
-  "src/stores/executions.bulkRestart.spec.ts": 1,
-  "src/utils/flowableBlockOps.spec.ts": 8,
-  "src/utils/recipeToYaml.spec.ts": 14
+  "src/stores/executions.bulkRestart.spec.ts": 1
 }

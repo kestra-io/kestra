@@ -52,6 +52,18 @@
             {{ $t('open') }}
         </KsButton>
     </span>
+    <span v-else-if="mailtoHref" class="uri-value">
+        <span>{{ displayText }}</span>
+        <KsButton
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </KsButton>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -103,6 +115,7 @@
     import {useI18n} from "vue-i18n"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
@@ -160,6 +173,10 @@
     // Narrow for the template: `value` stays optional, so v-if type guards do not satisfy vue-tsc alone.
     const uriHref = computed(() =>
         isURI(props.value) && !Utils.isFile(props.value) ? props.value : undefined,
+    )
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
     )
 
     const isComplexValue = (value: unknown): boolean => {
@@ -293,7 +310,7 @@
 <style scoped>
 .uri-value {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     word-break: break-all;
 }

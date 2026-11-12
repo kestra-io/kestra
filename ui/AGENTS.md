@@ -485,6 +485,7 @@ If your `<style>` block needs to exist:
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
+- `sortFromQuery(route.query.sort, fallback)`: the `defaultSort` of a URL-driven `KsDataTable`, so its sort arrow matches the rows after a refresh
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
 - `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, and the render of what they loaded, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import

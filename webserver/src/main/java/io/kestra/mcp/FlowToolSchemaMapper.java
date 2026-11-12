@@ -94,7 +94,7 @@ public class FlowToolSchemaMapper {
     public Map<String, Object> convert(Output output) {
         Map<String, Object> outputSchema = new HashMap<>();
         if (OutputType.ASSET == output.getType()) {
-            outputSchema.put("type", "object");
+            outputSchema.put("description", "The id of a Kestra asset, or a list of asset ids.");
         } else if (output.getType().parsedAs() != null) {
             outputSchema.put("type", getJsonSchemaType(output.getType().parsedAs()));
         }

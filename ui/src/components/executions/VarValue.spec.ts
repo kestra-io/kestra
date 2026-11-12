@@ -48,6 +48,7 @@ const i18n = createI18n({
         en: {
             copy: "Copy",
             open: "Open",
+            email: "Email",
             copied: "Copied",
             large_outputs: {
                 value_truncated: "Showing a truncated preview of this {size} value.",
@@ -97,6 +98,18 @@ describe("VarValue", () => {
 
         expect(wrapper.text()).toContain(value)
         expect(wrapper.text()).not.toContain("Open")
+    })
+
+    // mailto: hands off to the mail client; target=_blank would leave an empty tab behind.
+    it("should show a mailto value as text next to an Email link in the same tab", () => {
+        const value = "mailto:ops@example.com?subject=Invoice%20rejected"
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        const link = wrapper.find("[data-test=var-value-mailto]")
+        expect(link.attributes("href")).toBe(value)
+        expect(link.attributes("target")).toBeUndefined()
     })
 
     it("should cap a very long web link like any other string", () => {

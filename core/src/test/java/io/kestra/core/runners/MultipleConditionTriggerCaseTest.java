@@ -58,6 +58,18 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    public void flowTriggerOnPausing() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests.trigger.pausing", "flow-trigger-pausing-flow");
+        assertThat(execution.getState().getHistories()).extracting(State.History::getState).contains(State.Type.PAUSING);
+
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.pausing", "flow-trigger-pausing-listen"
+        );
+
+        assertThat(triggerExecution.getTrigger().getVariables().get("state")).isEqualTo(State.Type.PAUSING.name());
+    }
+
     public void flowTriggerMultipleConditions() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions",

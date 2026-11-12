@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -45,7 +46,6 @@ import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.IdUtils;
@@ -53,6 +53,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.core.vnodes.VNodes;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
@@ -260,6 +261,7 @@ public class TriggerScheduler {
      */
     public int onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         metricScheduleLoopCounter.increment();
+        long startNanos = System.nanoTime();
 
         ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduledTime, clock.getZone());
 
@@ -276,7 +278,7 @@ public class TriggerScheduler {
         schedulableTriggers.forEach(triggerEvaluationContext -> evaluate(clock, zoneScheduleTime, triggerEvaluationContext));
 
         // Record metrics
-        metricEvaluationLoopDuration.record(Duration.between(scheduledTime, clock.instant()));
+        metricEvaluationLoopDuration.record(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
 
         return schedulableTriggers.size();
     }

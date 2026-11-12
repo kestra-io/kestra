@@ -35,11 +35,8 @@ public final class Enums {
         if (value == null)
             throw new IllegalArgumentException("Unsupported value 'null'");
 
-        T[] values = enumType.getEnumConstants();
-        return Arrays.stream(values)
-            .filter(e -> e.name().equals(value.toUpperCase(Locale.ROOT)))
-            .findFirst()
-            .orElse(defaultValue);
+        T found = findByName(enumType.getEnumConstants(), value.toUpperCase(Locale.ROOT));
+        return found != null ? found : defaultValue;
     }
 
     /**
@@ -73,26 +70,36 @@ public final class Enums {
         if (value == null)
             throw new IllegalArgumentException("Unsupported value 'null'");
 
-        final Map<String, T> fallbackMap = fallback.entrySet()
-            .stream()
-            .collect(Collectors.toMap(entry -> entry.getKey().toUpperCase(Locale.ROOT), Map.Entry::getValue));
-
         T[] values = enumType.getEnumConstants();
-        return Arrays.stream(values)
-            .filter(e -> e.name().equals(value.toUpperCase(Locale.ROOT)))
-            .findFirst()
-            .or(() -> Optional.ofNullable(fallbackMap.get(value.toUpperCase(Locale.ROOT))))
-            .orElseThrow(
-                () -> new IllegalArgumentException(
-                    String.format(
-                        "Unsupported enum value '%s'. Expected one of: %s",
-                        value,
-                        Arrays.stream(values)
-                            .map(Enum::name)
-                            .collect(Collectors.joining(", ", "[", "]"))
-                    )
-                )
-            );
+        String name = value.toUpperCase(Locale.ROOT);
+        T found = findByName(values, name);
+        if (found != null) {
+            return found;
+        }
+        for (Map.Entry<String, T> entry : fallback.entrySet()) {
+            if (entry.getKey().toUpperCase(Locale.ROOT).equals(name)) {
+                return entry.getValue();
+            }
+        }
+        throw new IllegalArgumentException(
+            String.format(
+                "Unsupported enum value '%s'. Expected one of: %s",
+                value,
+                Arrays.stream(values)
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", ", "[", "]"))
+            )
+        );
+    }
+
+    // runs for every gRPC message (MessageFormat.resolve), hence no stream: see EnumsBenchmark in jmh-benchmarks
+    private static <T extends Enum<T>> T findByName(T[] values, String name) {
+        for (T candidate : values) {
+            if (candidate.name().equals(name)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     /**

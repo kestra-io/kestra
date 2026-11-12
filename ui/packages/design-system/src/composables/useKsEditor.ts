@@ -17,7 +17,7 @@ import * as monaco from "monaco-editor/editor/editor.api"
 import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
 import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
-import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {codeThemeOf, configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
 import {useTaskIcon} from "./taskIcon"
 import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
@@ -174,13 +174,21 @@ export function useKsEditor(
         duplicateTaskIdMarkers: () => mergedOptions.value.duplicateTaskIdMarkers,
         value: () => props.modelValue,
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
+        duplicateTaskIdMessage: (ids) => t("ks_editor.duplicate_task_id", {ids}),
     })
+
+    const codeTheme = computed(() => codeThemeOf(props.theme))
 
     const containerClass = computed(() => [
         !props.inline ? "" : "single-line",
         "theme-" + props.theme,
-        props.theme === "dark" ? "custom-dark-vs-theme" : "",
+        codeTheme.value.kind === "dark" ? "custom-dark-vs-theme" : "",
     ])
+
+    const containerStyle = computed(() => ({
+        "--code-pebble": codeTheme.value.syntax.pebble,
+        ...(props.inline ? {} : {"--code-background": codeTheme.value.editor.background}),
+    }))
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
@@ -438,6 +446,10 @@ export function useKsEditor(
             const triggerSuggestionsOnCursorSettle = debounce(() => {
                 if (!localEditor.value) return
                 const enteredPebble = pebbleEntryTracker.consumeEntered()
+                if (localEditor.value.getSelection()?.isEmpty() === false) {
+                    if (suggestController!.model.state !== 0) suggestController!.cancelSuggestWidget()
+                    return
+                }
                 if (suggestController!.model.state !== 0) {
                     suggestController!.cancelSuggestWidget()
                     localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {})
@@ -721,6 +733,7 @@ export function useKsEditor(
         t,
         icon,
         containerClass,
+        containerStyle,
         showPlaceholder,
         textAreaValue,
         showWidgetContent,

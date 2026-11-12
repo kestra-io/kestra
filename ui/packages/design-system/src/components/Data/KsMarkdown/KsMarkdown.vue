@@ -1,5 +1,5 @@
 <template>
-    <div class="ks-markdown">
+    <div class="ks-markdown" :class="{'ks-markdown--compact': compact}">
         <component :is="renderContent()" />
     </div>
 </template>
@@ -14,6 +14,7 @@
     import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
     import type {ThemedTokenWithVariants} from "@shikijs/types"
+    import {kestraDark, kestraLight, paintPebble} from "@kestra-io/plumage"
     import xss, {escapeAttrValue} from "xss"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -36,6 +37,8 @@
             content?: string
             html?: boolean
             xssProtection?: boolean
+            /** Scales headings down to the UI type scale, for markdown rendered inside a panel rather than as a page. */
+            compact?: boolean
             /** Tag name → component, for HTML elements (`a`, `img`) and PascalCase custom tags (`ChildCard`). */
             components?: Record<string, Component>
         }>(),
@@ -43,6 +46,7 @@
             content: undefined,
             html: true,
             xssProtection: true,
+            compact: false,
             components: () => ({}),
         },
     )
@@ -207,7 +211,8 @@
                 }
             },
             onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
-                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                // The name must be one parseAttributes reads whole: it ends a name at "." or ":", so `data-a.onclick` would come back as `onclick`.
+                if (/^(data|aria)-[\w-]+$/.test(name)) {
                     return `${name}="${escapeAttrValue(value)}"`
                 }
 
@@ -487,11 +492,24 @@
             }, {default: () => renderNodes(node.children)})
 
         case "leafDirective":
-        case "textDirective":
             return null
+
+        // No inline directive is supported, so this is a colon in plain text, such as `10:45` or `plugin-dbt:2.5.4`.
+        case "textDirective":
+            return (props.content ?? "").slice(node.position?.start.offset, node.position?.end.offset)
 
         default:
             return "children" in node && Array.isArray(node.children) ? h("div", renderNodes(node.children)) : null
+        }
+    }
+
+    function paintPebbleVariants(token: ThemedTokenWithVariants): ThemedTokenWithVariants {
+        return {
+            ...token,
+            variants: {
+                light: {...token.variants.light, color: kestraLight.syntax.pebble},
+                dark: {...token.variants.dark, color: kestraDark.syntax.pebble},
+            },
         }
     }
 
@@ -518,10 +536,11 @@
             }
 
             try {
-                result.set(key, highlighter.codeToTokensWithThemes(value, {
+                const tokens = highlighter.codeToTokensWithThemes(value, {
                     lang: !lang || unavailable.has(lang) ? "text" : lang,
-                    themes: {light: "github-light", dark: "github-dark"},
-                }))
+                    themes: {light: "kestra-light", dark: "kestra-dark"},
+                })
+                result.set(key, ["yaml", "yml"].includes(lang) ? paintPebble(value, tokens, paintPebbleVariants) : tokens)
             } catch {
                 continue
             }
@@ -628,6 +647,20 @@
 
         & h6 {
             font-size: var(--ks-font-size-base);
+        }
+
+        &.ks-markdown--compact {
+            & h1 {
+                font-size: var(--ks-font-size-lg);
+            }
+
+            & h2 {
+                font-size: var(--ks-font-size-base);
+            }
+
+            & h3, & h4, & h5, & h6 {
+                font-size: var(--ks-font-size-sm);
+            }
         }
 
         & .anchor {

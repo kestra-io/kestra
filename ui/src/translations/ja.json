@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
-    "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
+    "no_logs_data_title": "ログが見つかりません",
     "duration": "期間",
     "total_duration": "合計時間",
     "running duration": "実行期間",
@@ -344,6 +344,7 @@
     "home": "ホーム",
     "create": "作成",
     "create_flow": "フローを作成",
+    "create_child_namespace": "子 namespace を作成",
     "from": "から",
     "to": "まで",
     "steps": "ステップ",
@@ -451,7 +452,7 @@
       "whole_action": "代わりにExecution全体をリプレイする",
       "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
       "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",
-      "confirm_from_task": "Taskからリプレイ",
+      "confirm_from_task": "{taskId}からReplay",
       "confirm_whole": "Execution全体をリプレイ"
     },
     "change execution state done": "実行状態が更新されました",
@@ -488,17 +489,21 @@
         "decision": "決定",
         "by": "決定者",
         "on": "決定済み",
+        "cancelled by": "キャンセル者",
+        "cancelled on": "キャンセル日時",
         "decisions": {
           "approved": "承認済み",
           "denied": "拒否されました",
-          "expired": "期限切れ"
+          "expired": "期限切れ",
+          "cancelled": "キャンセル済み",
+          "killed": "強制終了"
         }
       },
       "cancel request": "リクエストをキャンセル",
       "cancel confirm": "実行 {id} の承認リクエストをキャンセルしてもよろしいですか？決定ブランチは実行されません。",
       "cancel done": "承認リクエストはキャンセルされました",
       "banner": {
-        "pausing": "このExecutionは承認リクエストを準備しており、レビューのために一時停止します。",
+        "pausing": "このExecutionは一時停止中です。すべてのonWait Taskが完了すると、承認リクエストを確認できます。",
         "paused": "このExecutionはレビューを待機しています。続行するには承認または拒否してください。"
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
@@ -863,7 +874,7 @@
     "last execution date": "最後の実行日",
     "revisions": "リビジョン",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
-    "no revisions": "リビジョンなし",
+    "no revisions": "リビジョンが見つかりません",
     "side-by-side": "並列表示",
     "line-by-line": "行ごと表示",
     "template": "テンプレート",
@@ -1209,6 +1220,9 @@
     "unlock trigger": {
       "success": "triggerのロックが解除されました"
     },
+    "trigger blocked": "ブロック済み",
+    "trigger blocked policy check failed": "ガバナンスポリシーを確認できませんでした。",
+    "trigger blocked unknown": "不明な理由によりブロックされました。",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger enable dialog": {
       "title": "trigger を有効化",
@@ -1336,6 +1350,8 @@
     "pause backfill": "backfillを一時停止",
     "continue backfills": "backfillを続行",
     "delete backfills": "backfillを削除",
+    "delete backfill confirm": "trigger {id} のbackfillを削除しますか？",
+    "delete backfill success": "trigger {id} のbackfillを削除しました",
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
@@ -1357,8 +1373,18 @@
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
-      "noResults": "検索に一致するプラグインがありません。",
-      "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",
+      "loadErrorTitle": "プラグインリストを読み込めませんでした",
+      "loadErrorDescription": "Flowは引き続き実行されます。このページはプラグインのリストのみを読み取ります。",
+      "showAll": "すべてのPluginを表示",
+      "view": {
+        "cards": "カード",
+        "table": "テーブル",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "フィルターに一致するpluginがありません",
+        "description": "別の検索語を試すか、カテゴリフィルターをクリアしてください。"
+      },
       "notFound": "このプラグインが見つかりませんでした。",
       "elementType": {
         "tasks": "タスク",
@@ -1404,6 +1430,19 @@
         "enterpriseEdition": "エンタープライズエディション",
         "certified": "認定済み",
         "back": "プラグインに戻る"
+      },
+      "management": {
+        "upload": "アップロード",
+        "addPlugin": "プラグインを追加",
+        "lockedTitle": "Pluginバージョン管理",
+        "lockedDescription": "Enterprise Edition を使用すると、イメージを再構築することなく、複数のバージョンの plugin を並行してインストールおよびアップグレードできます。",
+        "learnMore": "詳細はこちら",
+        "includedWithKestra": "Kestraに同梱",
+        "gateNote": "プラグインのインストールとアップグレードはEnterprise Editionで利用できます。",
+        "upsellTitle": "Pluginのバージョン管理はEnterprise機能です",
+        "upsellDescription": "以下のすべてのpluginは、このKestraイメージに同梱されており、Flowですぐに使用できます。Enterprise Editionでは、バンドルされていないpluginをインストールしたり、pluginごとにバージョンを固定したり、イメージを再構築せずにアップグレードしたりすることもできます。",
+        "talkToUs": "お問い合わせ",
+        "readTheDocs": "ドキュメントを読む"
       }
     },
     "no inputs": "このflowにはinputがありません。",
@@ -1464,11 +1503,13 @@
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
             "color_mode": "カラーモード",
+            "editor_dark_theme": "ダークモードのエディタテーマ",
             "editor_folding_stratgy": "エディターでのコードの自動折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "editor_pebble_hover": "Pebbleリファレンスにカーソルを合わせると定義が表示されます",
+            "editor_light_theme": "ライトモードのエディタテーマ",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
@@ -1492,6 +1533,8 @@
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "editor_pebble_hover": "FlowエディターでPebble参照にカーソルを合わせたときに、input、output、variable、label、またはtrigger variableの定義とドキュメントを表示します。",
+            "editor_dark_theme": "カラーモードがダーク 1.0 またはダーク 2.0 のときのコードエディタの構文の色。",
+            "editor_light_theme": "カラーモードがライトのときのコードエディタの構文の色。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
@@ -1500,6 +1543,9 @@
             "small": "小",
             "medium": "中",
             "large": "大"
+          },
+          "editor_theme_options": {
+            "match_app": "アプリのテーマに合わせる"
           }
         },
         "localization": {
@@ -1807,9 +1853,9 @@
         },
         "errors": {
           "first_execution": "最初の実行は成功せず、{state}として終了しました。理由を確認するには、このページのlogsを開き、もう一度お試しください。",
-          "expected_failure": "この実行は{state}で終了したため、まだ修正すべき失敗はありません。flowにまだ<code>notify</code> taskがあることを確認し、もう一度お試しください。",
+          "expected_failure": "このExecutionは{state}で終了したため、まだ修正すべき失敗はありません。Flowに{task} Taskがあることを確認してから、もう一度お試しください。",
           "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
-          "replay": "リプレイは {state} で終了しました。このページで log を開いて `notify` の報告内容を確認し、もう一度お試しください。",
+          "replay": "リプレイは{state}として終了しました。このページのlogを開いて{task}が報告した内容を確認し、もう一度試してください。",
           "save_flow": "ツアー flow は保存できませんでした。{reason}",
           "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
         },
@@ -1876,7 +1922,8 @@
       "duplicate": "このキーは既に存在します",
       "delete multiple": {
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
-        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code> から <code>{count}</code> 件のKVが削除されました"
       },
       "inherited": "継承されたKVペア",
       "expiration_hint": "現在、{date}に期限切れになります。この期限を維持するには、フィールドをそのままにしておきます。期間を選択すると、現在から再計算され、クリアすると削除されます。"
@@ -2038,7 +2085,6 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
-      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -2319,6 +2365,7 @@
       "default": "デフォルトダッシュボード",
       "set_default": "デフォルトに設定",
       "empty": "表示する結果がありません。",
+      "overdue": "期限切れ — {date}",
       "edition": {
         "label": "ダッシュボードを編集",
         "chart": "このチャートを編集"
@@ -2341,7 +2388,8 @@
         "paused": "一時停止中",
         "success": "成功",
         "warning": "警告",
-        "failed": "失敗"
+        "failed": "失敗",
+        "upcoming": "近日公開"
       }
     },
     "setup": {
@@ -2561,7 +2609,7 @@
     "reject": "拒否",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
-    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: {name}",
     "no_file_choosen": "ファイルが選択されていません",
     "dependency": {
       "controls": {
@@ -2760,7 +2808,8 @@
         "tooltip": "フローテストを表示"
       },
       "errors": {
-        "label": "{count} エラー"
+        "label": "{count} エラー",
+        "action": "{count} 件のエラー、次のエラーに移動"
       }
     },
     "invalid_source_code": "無効なソースコード",

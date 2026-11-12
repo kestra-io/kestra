@@ -391,7 +391,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
@@ -405,7 +405,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace) |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -445,9 +445,10 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
+| `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
 
 ### Charts
 

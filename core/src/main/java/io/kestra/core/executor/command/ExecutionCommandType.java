@@ -12,6 +12,7 @@ public enum ExecutionCommandType {
     PAUSE,
     RESCHEDULE,
     RESTART,
+    RESTART_WORKING_DIRECTORY,
     RESUME,
     RESUME_FROM_BREAKPOINT,
     UNQUEUE,

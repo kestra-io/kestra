@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["es2023"],
+        "moduleDetection": "force",
+        "module": "preserve",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "types": ["node"],
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "erasableSyntaxOnly": true,
+        "skipLibCheck": true,
+        "allowImportingTsExtensions": true
+    },
+    "include": ["src", "tests", "scripts", "tsdown.config.ts", "vitest.unit.config.ts"]
+}

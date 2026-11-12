@@ -87,7 +87,7 @@ class McpPlatformControllerTest {
 
         String body = client.toBlocking().retrieve(mcpPost(TOOLS_LIST_REQUEST, sessionId), String.class);
 
-        assertThat(body).contains("\"read-flow\"", "\"restart-execution\"", "\"tenant\"", "\"readOnlyHint\":true");
+        assertThat(body).contains("\"read_flow\"", "\"restart_execution\"", "\"tenant\"", "\"readOnlyHint\":true");
     }
 
     @Test
@@ -95,7 +95,7 @@ class McpPlatformControllerTest {
         String flowId = saveFlow();
         String sessionId = initialize();
 
-        String body = callTool(sessionId, "read-flow", Map.of("tenant", TenantService.MAIN_TENANT, "namespace", "io.kestra.test", "flowId", flowId));
+        String body = callTool(sessionId, "read_flow", Map.of("tenant", TenantService.MAIN_TENANT, "namespace", "io.kestra.test", "flowId", flowId));
 
         assertThat(body).contains(flowId).doesNotContain("\"isError\":true");
     }
@@ -105,7 +105,7 @@ class McpPlatformControllerTest {
         String flowId = saveFlow();
         String sessionId = initialize();
 
-        String body = callTool(sessionId, "read-flow", Map.of("namespace", "io.kestra.test", "flowId", flowId));
+        String body = callTool(sessionId, "read_flow", Map.of("namespace", "io.kestra.test", "flowId", flowId));
 
         assertThat(body).contains(flowId).doesNotContain("\"isError\":true");
     }
@@ -114,7 +114,7 @@ class McpPlatformControllerTest {
     void shouldReturnErrorResultWhenTenantCannotBeReached() {
         String sessionId = initialize();
 
-        String body = callTool(sessionId, "read-flow", Map.of("tenant", "another-tenant", "namespace", "io.kestra.test", "flowId", "any"));
+        String body = callTool(sessionId, "read_flow", Map.of("tenant", "another-tenant", "namespace", "io.kestra.test", "flowId", "any"));
 
         assertThat(body).contains("\"isError\":true", "You cannot act on tenant 'another-tenant' through this server.");
     }

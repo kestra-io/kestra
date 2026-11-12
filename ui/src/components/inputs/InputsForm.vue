@@ -197,7 +197,12 @@
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
                         >
-                        <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
+                        <span class="file-placeholder">
+                            <i18n-t v-if="namespaceFileName(inputsValues[input.id])" keypath="defaultsToNamespaceFile" tag="span" scope="global">
+                                <template #name><code>{{ namespaceFileName(inputsValues[input.id]) }}</code></template>
+                            </i18n-t>
+                            <template v-else>{{ chosenFileName(inputsValues[input.id]) ?? $t("no_file_choosen") }}</template>
+                        </span>
                     </div>
                 </div>
                 <div
@@ -365,10 +370,10 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage, KsEditor, State, debounce, escapeHtml, dateUtils, dayjs} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, State, debounce, dateUtils, dayjs} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, type Ref, getCurrentInstance, nextTick} from "vue"
     import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -441,7 +446,7 @@
 
     const inputsValues = reactive<Record<string, unknown>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, unknown>>({})
-    const inputsMetaData = ref<InputMetaData[]>([])
+    const inputsMetaData: Ref<InputMetaData[]> = ref([])
     const multiSelectInputs = reactive<Record<string, unknown[]>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
@@ -985,14 +990,14 @@
         updateArrayValue(input)
     }
 
-    function getFilePlaceholder(value: unknown): string {
-        if (typeof value === "string" && value.startsWith("nsfile://")) {
-            return t("defaultsToNamespaceFile", {name: escapeHtml(value.substring(10))})
-        }
-        if (value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string") {
-            return escapeHtml((value as {name: string}).name)
-        }
-        return t("no_file_choosen")
+    function namespaceFileName(value: unknown): string | undefined {
+        return typeof value === "string" && value.startsWith("nsfile://") ? value.substring(10) : undefined
+    }
+
+    function chosenFileName(value: unknown): string | undefined {
+        return value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string"
+            ? (value as {name: string}).name
+            : undefined
     }
 
     function inputRefExpression(id: string): string {

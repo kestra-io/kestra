@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -214,9 +215,14 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                 jsonrpcRequest.params(),
                 typeReference
             );
+            // The session id is always issued here: one sent by the client is ignored, so a caller can neither
+            // pick an id nor land on someone else's session by sending it.
+            KestraMcpTransportContext sessionContext = transportContext.toBuilder()
+                .sessionId(UUID.randomUUID().toString())
+                .build();
             McpStreamableServerSession.McpStreamableServerSessionInit init = this.sessionFactory
                 .startSession(initializeRequest);
-            mcpSessionService.addProxyForMcpStreamableServerSession(transportContext, init.session());
+            mcpSessionService.addProxyForMcpStreamableServerSession(sessionContext, init.session());
             return init.initResult().map(
                 initializeResult -> new McpSchema.JSONRPCResponse(
                     McpSchema.JSONRPC_VERSION,
@@ -226,7 +232,7 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                 )
             ).map(
                 response -> HttpResponse.ok()
-                    .header(HttpHeaders.MCP_SESSION_ID, transportContext.getSessionId())
+                    .header(HttpHeaders.MCP_SESSION_ID, sessionContext.getSessionId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(response)
             );
@@ -338,7 +344,13 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
             );
         }
 
-        mcpSessionService.close(transportContext);
+        if (!mcpSessionService.close(transportContext)) {
+            return buildErrorResponse(
+                "Session not found.",
+                HttpStatus.NOT_FOUND,
+                McpSchema.ErrorCodes.RESOURCE_NOT_FOUND
+            );
+        }
 
         return Mono.just(HttpResponse.ok());
     }

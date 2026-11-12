@@ -344,6 +344,7 @@
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
+    "create_child_namespace": "Создать дочерний namespace",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -451,7 +452,7 @@
       "whole_action": "Повторить всю egzekucję вместо этого",
       "whole_title": "Ревизия {revision} может быть повторно воспроизведена как полная egzekucja.",
       "whole_description": "Более ранние результаты не используются повторно, поэтому каждая Task запускается снова в версии {revision}. Исходная egzekucja сохраняется и связывается.",
-      "confirm_from_task": "Повторить с Task",
+      "confirm_from_task": "Повтор с {taskId}",
       "confirm_whole": "Повторить всю egzekucję"
     },
     "change execution state done": "Состояние выполнения обновлено",
@@ -488,17 +489,21 @@
         "decision": "Решение",
         "by": "Решено",
         "on": "Принято решение",
+        "cancelled by": "Отменено",
+        "cancelled on": "Отменено в",
         "decisions": {
           "approved": "Одобрено",
           "denied": "Отказано",
-          "expired": "Истекший"
+          "expired": "Истекший",
+          "cancelled": "Отменено",
+          "killed": "Убито"
         }
       },
       "cancel request": "Отменить запрос",
       "cancel confirm": "Вы уверены, что хотите отменить запрос на одобрение execution {id}? Ни одна ветка решения не будет запущена.",
       "cancel done": "Запрос на утверждение отменен",
       "banner": {
-        "pausing": "Эта egzekucja готовит запрос на утверждение и будет приостановлена для проверки.",
+        "pausing": "Эта Execution приостанавливается. Запрос на утверждение можно будет рассмотреть, как только все onWait Task'и завершатся.",
         "paused": "Эта egzekucja ожидает проверки. Одобрите или отклоните ее, чтобы продолжить."
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Эта Task была повторена",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "Этот key уже существует",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
-        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
+        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>",
+        "deleted": "Удалено <code>{count}</code> KV из namespace <code>{namespace}</code>"
       },
       "inherited": "Наследуемые KV пары",
       "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."

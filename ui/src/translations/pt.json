@@ -344,6 +344,7 @@
     "home": "Início",
     "create": "Criar",
     "create_flow": "Criar Flow",
+    "create_child_namespace": "Criar namespace filho",
     "from": "De",
     "to": "Para",
     "steps": "Passos",
@@ -451,7 +452,7 @@
       "whole_action": "Reproduzir a execução inteira em vez disso",
       "whole_title": "A revisão {revision} pode ser reproduzida como uma execução completa.",
       "whole_description": "Nenhum resultado anterior é reutilizado, então cada Task é executada novamente na revisão {revision}. A execução original é mantida e vinculada.",
-      "confirm_from_task": "Replay da Task",
+      "confirm_from_task": "Replay de {taskId}",
       "confirm_whole": "Reproduzir toda a execução"
     },
     "change execution state done": "Estado de execução atualizado",
@@ -488,17 +489,21 @@
         "decision": "Decisão",
         "by": "Decidido por",
         "on": "Decidido em",
+        "cancelled by": "Cancelado por",
+        "cancelled on": "Cancelado em",
         "decisions": {
           "approved": "Aprovado",
           "denied": "Negado",
-          "expired": "Expirado"
+          "expired": "Expirado",
+          "cancelled": "Cancelado",
+          "killed": "Morto"
         }
       },
       "cancel request": "Cancelar solicitação",
       "cancel confirm": "Tem certeza de que deseja cancelar a solicitação de aprovação da execução {id}? Nenhuma ramificação de decisão será executada.",
       "cancel done": "A solicitação de aprovação foi cancelada",
       "banner": {
-        "pausing": "Esta egzekucja está preparando uma solicitação de aprovação e será pausada para revisão.",
+        "pausing": "Esta execução está pausando. A solicitação de aprovação pode ser revisada assim que todas as tasks onWait terminarem.",
         "paused": "Esta egzekucja aguarda uma revisão. Aprova ou nega para continuar."
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "refresh": "Atualizar",
     "filter by status": "Filtrar execuções pelo status {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task foi repetida",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "Esta key já existe",
       "delete multiple": {
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
-        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
+        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deletado(s) do namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV herdados",
       "expiration_hint": "Atualmente expira em {date}. Deixe o campo intocado para manter esta expiração; escolher uma duração a recalcula a partir de agora, e limpá-la a remove."

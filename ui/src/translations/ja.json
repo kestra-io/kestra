@@ -344,6 +344,7 @@
     "home": "ホーム",
     "create": "作成",
     "create_flow": "フローを作成",
+    "create_child_namespace": "子 namespace を作成",
     "from": "から",
     "to": "まで",
     "steps": "ステップ",
@@ -451,7 +452,7 @@
       "whole_action": "代わりにExecution全体をリプレイする",
       "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
       "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",
-      "confirm_from_task": "Taskからリプレイ",
+      "confirm_from_task": "{taskId}からReplay",
       "confirm_whole": "Execution全体をリプレイ"
     },
     "change execution state done": "実行状態が更新されました",
@@ -488,17 +489,21 @@
         "decision": "決定",
         "by": "決定者",
         "on": "決定済み",
+        "cancelled by": "キャンセル者",
+        "cancelled on": "キャンセル日時",
         "decisions": {
           "approved": "承認済み",
           "denied": "拒否されました",
-          "expired": "期限切れ"
+          "expired": "期限切れ",
+          "cancelled": "キャンセル済み",
+          "killed": "強制終了"
         }
       },
       "cancel request": "リクエストをキャンセル",
       "cancel confirm": "実行 {id} の承認リクエストをキャンセルしてもよろしいですか？決定ブランチは実行されません。",
       "cancel done": "承認リクエストはキャンセルされました",
       "banner": {
-        "pausing": "このExecutionは承認リクエストを準備しており、レビューのために一時停止します。",
+        "pausing": "このExecutionは一時停止中です。すべてのonWait Taskが完了すると、承認リクエストを確認できます。",
         "paused": "このExecutionはレビューを待機しています。続行するには承認または拒否してください。"
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "このキーは既に存在します",
       "delete multiple": {
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
-        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code> から <code>{count}</code> 件のKVが削除されました"
       },
       "inherited": "継承されたKVペア",
       "expiration_hint": "現在、{date}に期限切れになります。この期限を維持するには、フィールドをそのままにしておきます。期間を選択すると、現在から再計算され、クリアすると削除されます。"

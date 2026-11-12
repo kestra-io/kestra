@@ -344,6 +344,7 @@
     "home": "Inicio",
     "create": "Crear",
     "create_flow": "Crear Flow",
+    "create_child_namespace": "Crear namespace secundario",
     "from": "Desde",
     "to": "Hasta",
     "steps": "Pasos",
@@ -451,7 +452,7 @@
       "whole_action": "Reproducir toda la ejecución en su lugar",
       "whole_title": "La revisión {revision} se puede reproducir como una ejecución completa.",
       "whole_description": "No se reutilizan resultados anteriores, por lo que cada Task se ejecuta de nuevo en la revisión {revision}. La ejecución original se mantiene y se vincula.",
-      "confirm_from_task": "Replay desde la task",
+      "confirm_from_task": "Replay desde {taskId}",
       "confirm_whole": "Reproducir toda la ejecución"
     },
     "change execution state done": "Estado de ejecución actualizado",
@@ -488,17 +489,21 @@
         "decision": "Decisión",
         "by": "Decidido por",
         "on": "Decidido en",
+        "cancelled by": "Cancelado por",
+        "cancelled on": "Cancelado el",
         "decisions": {
           "approved": "Aprobado",
           "denied": "Denegado",
-          "expired": "Caducado"
+          "expired": "Caducado",
+          "cancelled": "Cancelado",
+          "killed": "Terminado"
         }
       },
       "cancel request": "Cancelar solicitud",
       "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución {id}? No se ejecutará ninguna rama de decisión.",
       "cancel done": "La solicitud de aprobación ha sido cancelada",
       "banner": {
-        "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",
+        "pausing": "Esta ejecución se está pausando. La solicitud de aprobación se puede revisar tan pronto como todas las tareas onWait finalicen.",
         "paused": "Esta ejecución está esperando una revisión. Apruébala o deniégala para continuar."
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "refresh": "Actualizar",
     "filter by status": "Filtrar ejecuciones por estado {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task se reintentó",
       "artifacts": "ningún artifact | {count} artifact | {count} artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "Esta key ya existe",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
-        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
+        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> kv(s) eliminado(s) del namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV heredados",
       "expiration_hint": "Actualmente expira el {date}. Deja el campo sin tocar para mantener esta expiración; seleccionar una duración la recalcula a partir de ahora, y borrarla la elimina."

@@ -344,6 +344,7 @@
     "home": "Startseite",
     "create": "Erstellen",
     "create_flow": "Flow erstellen",
+    "create_child_namespace": "Untergeordneten Namespace erstellen",
     "from": "Von",
     "to": "Bis",
     "steps": "Schritte",
@@ -451,7 +452,7 @@
       "whole_action": "Die gesamte Execution stattdessen wiederholen",
       "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
       "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
-      "confirm_from_task": "Replay ab Task",
+      "confirm_from_task": "Replay ab {taskId}",
       "confirm_whole": "Ganze Execution wiederholen"
     },
     "change execution state done": "Execution-Status aktualisiert",
@@ -488,17 +489,21 @@
         "decision": "Entscheidung",
         "by": "Entschieden durch",
         "on": "Entschieden am",
+        "cancelled by": "Abgebrochen von",
+        "cancelled on": "Abgebrochen am",
         "decisions": {
           "approved": "Genehmigt",
           "denied": "Verweigert",
-          "expired": "Abgelaufen"
+          "expired": "Abgelaufen",
+          "cancelled": "Abgebrochen",
+          "killed": "Gekillt"
         }
       },
       "cancel request": "Anfrage abbrechen",
       "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution {id} wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
       "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
       "banner": {
-        "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",
+        "pausing": "Diese Execution wird pausiert. Die Genehmigungsanfrage kann überprüft werden, sobald alle onWait-Tasks abgeschlossen sind.",
         "paused": "Diese Execution wartet auf eine Überprüfung. Genehmige oder lehne sie ab, um fortzufahren."
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "Füge zuerst einen Trigger zu deinem Flow hinzu",
     "refresh": "Aktualisieren",
     "filter by status": "Executions nach Status {status} filtern",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Dieser Task wurde wiederholt",
       "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "Dieser Key existiert bereits",
       "delete multiple": {
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
-        "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
+        "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV-Paar(e) aus dem Namespace <code>{namespace}</code> gelöscht"
       },
       "inherited": "Geerbte KV-Paare",
       "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."

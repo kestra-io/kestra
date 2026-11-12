@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #actions v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
@@ -492,7 +492,7 @@
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
     import Counter from "vue-material-design-icons/Counter.vue"
 
-    import {KsId} from "@kestra-io/design-system"
+    import {KsId, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import {State} from "@kestra-io/design-system"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
@@ -531,6 +531,7 @@
     import resource from "../../models/resource"
 
     import useRouteContext from "../../composables/useRouteContext"
+    import {useIterationsListInfo} from "../../composables/useLoopLineage"
     import {useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
@@ -875,7 +876,8 @@
         dataTable.value?.resetAndReload()
     })
 
-    const routeInfo = computed(() => ({title: props.title ?? t("executions")}))
+    const iterationsListInfo = useIterationsListInfo(() => !props.embed && !props.title)
+    const routeInfo = computed<{title: string; breadcrumb?: KsBreadcrumbItem[]}>(() => iterationsListInfo.value ?? {title: props.title ?? t("executions")})
     useRouteContext(routeInfo, props.embed)
 
     const selection = computed(() => dataTable.value?.selection ?? [])

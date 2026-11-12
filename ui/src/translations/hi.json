@@ -344,6 +344,7 @@
     "home": "होम",
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
+    "create_child_namespace": "चाइल्ड namespace बनाएँ",
     "from": "से",
     "to": "तक",
     "steps": "चरण",
@@ -451,7 +452,7 @@
       "whole_action": "इसके बजाय पूरी execution को रीप्ले करें",
       "whole_title": "रिवीजन {revision} को पूरी execution के रूप में फिर से चलाया जा सकता है।",
       "whole_description": "पहले के कोई भी परिणाम दोबारा उपयोग नहीं किए जाते हैं, इसलिए हर Task revision {revision} पर फिर से चलता है। मूल execution को रखा जाता है और लिंक किया जाता है।",
-      "confirm_from_task": "Task से रीप्ले करें",
+      "confirm_from_task": "{taskId} से Replay करें",
       "confirm_whole": "पूरी execution को फिर से चलाएँ"
     },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
     "refresh": "ताज़ा करें",
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
@@ -1911,7 +1918,8 @@
       "duplicate": "यह key पहले से मौजूद है",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
-        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
+        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code> से <code>{count}</code> kv(s) हटाए गए"
       },
       "inherited": "विरासत में मिले KV जोड़े",
       "expiration_hint": "वर्तमान में {date} को समाप्त होता है। इस समाप्ति को बनाए रखने के लिए फ़ील्ड को अछूता छोड़ दें; अवधि चुनने से यह अब से पुनर्गणना करता है, और इसे साफ़ करने से यह हट जाता है।"

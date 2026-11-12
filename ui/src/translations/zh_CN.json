@@ -344,6 +344,7 @@
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
+    "create_child_namespace": "创建子 namespace",
     "from": "从",
     "to": "到",
     "steps": "步骤",
@@ -451,7 +452,7 @@
       "whole_action": "改为重放整个 execution",
       "whole_title": "版本 {revision} 可以作为整个执行进行重放。",
       "whole_description": "没有重用早期结果，因此每个 Task 都会在版本 {revision} 上再次运行。原始 Execution 将被保留并链接。",
-      "confirm_from_task": "从 Task 重放",
+      "confirm_from_task": "从 {taskId} Replay",
       "confirm_whole": "重放整个 Execution"
     },
     "change execution state done": "执行状态已更新",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "refresh": "刷新",
     "filter by status": "按{status}状态筛选执行",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "此 task 已重试",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
@@ -1911,7 +1918,8 @@
       "duplicate": "此键已存在",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
-        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>",
+        "deleted": "已从 namespace <code>{namespace}</code> 中删除 <code>{count}</code> 个 KV"
       },
       "inherited": "继承的KV对",
       "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"

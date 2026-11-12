@@ -131,7 +131,7 @@ class FlowInputOutputAssetTest {
 
         Map<String, Object> outputs = flowInputOutput.typedOutputs(flow, EXECUTION, Map.of("vm", "web-01"));
 
-        assertThat(outputs).isEqualTo(Map.of("vm", Map.of("id", "web-01")));
+        assertThat(outputs).isEqualTo(Map.of("vm", "web-01"));
         assertThat(RESOLVED_FOR).containsExactly((AssetInput) null);
     }
 }

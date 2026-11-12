@@ -1,12 +1,15 @@
 import {execFileSync} from "node:child_process"
 import {existsSync, readdirSync, readFileSync, writeFileSync} from "node:fs"
-import {dirname, join, resolve} from "node:path"
+import {join, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
 
-const RUNTIME_ROOTS = ["src", "packages/design-system/src", "packages/topology/src"]
+const DEFAULT_ROOTS = ["src", "packages/design-system/src", "packages/topology/src"]
 const NOT_RUNTIME = /(\.spec\.|\.test\.|\.stories\.|[\\/]tests?[\\/]|\.storybook)/
 const SOURCE = /\.(vue|ts|tsx|js|mjs|jsx|css|scss)$/
 const IMPORT = /(?:from\s+|import\s*\(?\s*|require\(\s*|@use\s+|@import\s+)["']([^"'./][^"']*)["']/g
+
+/** ui-ee bundles the OSS tree through its `kestra` alias, so the OSS runtime sources count as its own. */
+export const EE_ROOTS = ["src", ...DEFAULT_ROOTS.map((root) => `../../kestra/ui/${root}`)]
 
 /** Packages that are not imported by runtime code but must stay in `dependencies`, each with the reason. */
 export const ALLOWED_RUNTIME = {}
@@ -16,7 +19,7 @@ function packageName(specifier) {
     return specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]
 }
 
-export function importedByRuntime(uiRoot) {
+export function importedByRuntime(uiRoot, roots = DEFAULT_ROOTS) {
     const names = new Set()
     const walk = (dir) => {
         if (!existsSync(dir)) return
@@ -29,13 +32,13 @@ export function importedByRuntime(uiRoot) {
             }
         }
     }
-    RUNTIME_ROOTS.forEach((root) => walk(join(uiRoot, root)))
+    roots.forEach((root) => walk(join(uiRoot, root)))
     return names
 }
 
-export function analyze(uiRoot) {
+export function analyze(uiRoot, roots = DEFAULT_ROOTS) {
     const pkg = JSON.parse(readFileSync(join(uiRoot, "package.json"), "utf8"))
-    const imported = importedByRuntime(uiRoot)
+    const imported = importedByRuntime(uiRoot, roots)
     const dependencies = Object.keys(pkg.dependencies ?? {})
     const devDependencies = Object.keys(pkg.devDependencies ?? {})
     return {
@@ -57,9 +60,9 @@ function move(pkg, names, from, to) {
 }
 
 function main() {
-    const uiRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..")
+    const uiRoot = process.cwd()
     const write = process.argv.includes("--write")
-    const {pkg, toDependencies, toDevDependencies, staleAllowed} = analyze(uiRoot)
+    const {pkg, toDependencies, toDevDependencies, staleAllowed} = analyze(uiRoot, process.argv.includes("--ee") ? EE_ROOTS : DEFAULT_ROOTS)
 
     if (staleAllowed.length) {
         console.error(`Remove from ALLOWED_RUNTIME in scripts/dependency-split/check.mjs:\n${staleAllowed.join("\n")}`)

@@ -831,7 +831,7 @@ public class FlowInputOutput {
                     }
                 }
                 case TABLE -> parseTable(execution, (TableInput) data, current);
-                case ASSET -> assetInputResolver.resolve(execution, (AssetInput) data, current);
+                case ASSET -> assetInputResolver.resolve(execution, data instanceof AssetInput assetInput ? assetInput : null, current);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {

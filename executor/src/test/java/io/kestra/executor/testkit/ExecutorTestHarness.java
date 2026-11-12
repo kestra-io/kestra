@@ -31,6 +31,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.runners.DisabledAssetInputResolver;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -248,7 +249,8 @@ public final class ExecutorTestHarness {
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander(),
             new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
-            Mockito.mock(SearchableDataRepositoryInterface.class)
+            Mockito.mock(SearchableDataRepositoryInterface.class),
+            new DisabledAssetInputResolver()
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {

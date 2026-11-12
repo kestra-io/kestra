@@ -77,9 +77,9 @@
     import {State} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import PlayBoxEditOutline from "vue-material-design-icons/PlayBoxEditOutline.vue"
+    import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import type {Execution} from "../../stores/executions"
     import type {ExecutionTaskRun} from "./executionTaskRun"
-    import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
@@ -97,7 +97,6 @@
     const {t} = useI18n()
     const router = useRouter()
     const toast = useToast()
-    const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
 
@@ -142,10 +141,10 @@
     async function replay() {
         sending.value = true
         try {
-            const replayed = await executionsStore.replayExecutionWithOverrides({
+            const replayed = await ExecutionsAPI.replayExecutionWithOverrides({
                 executionId: props.execution.id,
                 taskRunId: props.taskRun.id,
-                overrides: overrides.value,
+                overrides: overrides.value as Parameters<typeof ExecutionsAPI.replayExecutionWithOverrides>[0]["overrides"],
             })
             isOpen.value = false
             toast.success(t("replayed"))

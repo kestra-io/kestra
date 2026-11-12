@@ -44,7 +44,7 @@
     import {ref} from "vue"
     import type {ExecutionControllerOverriddenOutput, TaskRunOverrides} from "@kestra-io/kestra-sdk"
     import {asProblem} from "@kestra-io/kestra-sdk"
-    import {useExecutionsStore} from "../../stores/executions"
+    import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import {handled} from "../../utils/kestraHttp"
     import {date as dateFilter} from "../../utils/filters"
     import {formatValue} from "./replayOverrides"
@@ -55,8 +55,6 @@
         overrides: TaskRunOverrides
     }>()
 
-    const executionsStore = useExecutionsStore()
-
     const loading = ref(false)
     const hidden = ref(false)
     const values = ref<Record<string, ExecutionControllerOverriddenOutput>>()
@@ -65,7 +63,7 @@
         if (values.value || hidden.value || loading.value) return
         loading.value = true
         try {
-            const overrides = await executionsStore.loadTaskRunOverrides({executionId: props.executionId, taskRunId: props.taskRunId})
+            const {values: overrides} = await ExecutionsAPI.taskRunOverrides({executionId: props.executionId, taskRunId: props.taskRunId})
             values.value = Object.fromEntries(overrides.map(override => [override.path, override]))
         } catch (error) {
             if (asProblem(error)?.status !== 403) throw error

@@ -1,10 +1,12 @@
 import {describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import en from "../../translations/en.json"
-import {useExecutionsStore} from "../../stores/executions"
 import TaskRunOverrides from "./TaskRunOverrides.vue"
+
+const {taskRunOverrides} = vi.hoisted(() => ({taskRunOverrides: vi.fn()}))
+
+vi.mock("@kestra-io/kestra-sdk/executions", () => ({taskRunOverrides}))
 
 const PopoverOpenedOnMount = {
     emits: ["show"],
@@ -15,9 +17,7 @@ const PopoverOpenedOnMount = {
 }
 
 async function mountOverrides(loadTaskRunOverrides: () => Promise<unknown>) {
-    setActivePinia(createPinia())
-    const executionsStore = useExecutionsStore()
-    executionsStore.loadTaskRunOverrides = vi.fn(loadTaskRunOverrides) as typeof executionsStore.loadTaskRunOverrides
+    taskRunOverrides.mockImplementation(loadTaskRunOverrides)
 
     const wrapper = i18nMount(TaskRunOverrides, {
         locales: en,
@@ -34,7 +34,7 @@ async function mountOverrides(loadTaskRunOverrides: () => Promise<unknown>) {
 
 describe("TaskRunOverrides", () => {
     it("shows each original value next to the value the replay used", async () => {
-        const wrapper = await mountOverrides(() => Promise.resolve([{path: "outputs.fetch.values.code", value: "KR-0412", originalValue: "KR-0412 "}]))
+        const wrapper = await mountOverrides(() => Promise.resolve({values: [{path: "outputs.fetch.values.code", value: "KR-0412", originalValue: "KR-0412 "}]}))
 
         expect(wrapper.find("[data-test='task-run-overrides']").text()).toBe("1 overridden output")
         expect(wrapper.find("tbody").text()).toContain("\"KR-0412 \"")

@@ -26,7 +26,8 @@ const ASYNC_LOADER = "__asyncLoader"
 type AsyncWrapper = Component & {[ASYNC_LOADER]?: () => Promise<unknown>}
 const STARTED_LOADS_KEY = Symbol.for("kestra.designSystem.startedAsyncComponents")
 const startedAsyncComponents: Set<AsyncWrapper> = ((globalThis as Record<symbol, unknown>)[STARTED_LOADS_KEY] ??= new Set<AsyncWrapper>()) as Set<AsyncWrapper>
-const asyncComponent = (name: string, loader: AsyncComponentLoader) => {
+// Pure so a consumer that never renders these components drops their lazy chunks from its build.
+const asyncComponent = /* @__NO_SIDE_EFFECTS__ */ (name: string, loader: AsyncComponentLoader) => {
     const wrapper: AsyncWrapper = defineAsyncComponent(() => {
         startedAsyncComponents.add(wrapper)
         return loader()

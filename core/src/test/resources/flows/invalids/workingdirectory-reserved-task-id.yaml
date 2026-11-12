@@ -1,0 +1,13 @@
+id: workingdirectory-reserved-task-id
+namespace: io.kestra.tests
+
+tasks:
+  - id: build
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: build
+  - id: build_close
+    type: io.kestra.plugin.core.log.Log
+    message: close

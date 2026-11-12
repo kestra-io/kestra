@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
@@ -1958,6 +1959,19 @@ public class QueryFilterTest {
 
         // Then
         assertThat(filter.field()).isEqualTo(Field.FLOW_ID);
+    }
+
+    @Test
+    void shouldDeclareJsonPropertyMatchingWireValueForEveryField() throws Exception {
+        for (Field field : Field.values()) {
+            JsonProperty annotation = Field.class.getField(field.name()).getAnnotation(JsonProperty.class);
+
+            assertThat(annotation)
+                .as("Field.%s must carry @JsonProperty so that the OpenAPI enum lists its wire value", field.name())
+                .isNotNull();
+            assertThat(annotation.value()).isEqualTo(field.value());
+            assertThat(Field.fromString(annotation.value())).isEqualTo(field);
+        }
     }
 
     @Test

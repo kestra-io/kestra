@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "logs": "Logs",
     "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
-    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
+    "no_logs_data_title": "No se encontraron logs",
     "duration": "Duración",
     "total_duration": "Duración total",
     "running duration": "Duración en ejecución",
@@ -344,6 +344,7 @@
     "home": "Inicio",
     "create": "Crear",
     "create_flow": "Crear Flow",
+    "create_child_namespace": "Crear namespace secundario",
     "from": "Desde",
     "to": "Hasta",
     "steps": "Pasos",
@@ -451,7 +452,7 @@
       "whole_action": "Reproducir toda la ejecución en su lugar",
       "whole_title": "La revisión {revision} se puede reproducir como una ejecución completa.",
       "whole_description": "No se reutilizan resultados anteriores, por lo que cada Task se ejecuta de nuevo en la revisión {revision}. La ejecución original se mantiene y se vincula.",
-      "confirm_from_task": "Replay desde la task",
+      "confirm_from_task": "Replay desde {taskId}",
       "confirm_whole": "Reproducir toda la ejecución"
     },
     "change execution state done": "Estado de ejecución actualizado",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "refresh": "Actualizar",
     "filter by status": "Filtrar ejecuciones por estado {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task se reintentó",
       "artifacts": "ningún artifact | {count} artifact | {count} artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "Fecha de última ejecución",
     "revisions": "Revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
-    "no revisions": "Sin revisiones",
+    "no revisions": "No se encontraron revisiones",
     "side-by-side": "lado a lado",
     "line-by-line": "línea por línea",
     "template": "Plantilla",
@@ -1339,6 +1346,8 @@
     "pause backfill": "Pausar el backfill",
     "continue backfills": "Continuar backfills",
     "delete backfills": "Eliminar backfills",
+    "delete backfill confirm": "¿Eliminar el backfill del trigger {id}?",
+    "delete backfill success": "Se eliminó el backfill del trigger {id}",
     "pause backfills": "Pausar backfills",
     "backfill executions": "Ejecuciones de backfill",
     "execute backfill": "Ejecutar backfill",
@@ -1909,7 +1918,8 @@
       "duplicate": "Esta key ya existe",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
-        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
+        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> kv(s) eliminado(s) del namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV heredados",
       "expiration_hint": "Actualmente expira el {date}. Deja el campo sin tocar para mantener esta expiración; seleccionar una duración la recalcula a partir de ahora, y borrarla la elimina."
@@ -2336,10 +2346,10 @@
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "no_results": {
       "executions": "No se encontraron ejecuciones",
-      "triggers": "No se encontraron Triggers",
-      "flows": "No se encontraron Flows",
-      "kv_pairs": "No se encontraron pares Key-Value",
-      "secrets": "No se encontraron Secrets",
+      "triggers": "No se encontraron triggers",
+      "flows": "No se encontraron flows",
+      "kv_pairs": "No se encontraron pares key-value",
+      "secrets": "No se encontraron secrets",
       "all_columns_hidden": "Todas las columnas están ocultas",
       "all_columns_hidden_description": "Vuelve a activar al menos una columna en Personalizar columnas de tabla para ver los datos de nuevo."
     },
@@ -2351,6 +2361,7 @@
       "default": "Dashboard predeterminado",
       "set_default": "Establecer como predeterminado",
       "empty": "No hay resultados para mostrar.",
+      "overdue": "Atrasado — {date}",
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Editar este gráfico"
@@ -2373,7 +2384,8 @@
         "paused": "Pausado",
         "success": "Éxito",
         "warning": "Advertencia",
-        "failed": "Fallido"
+        "failed": "Fallido",
+        "upcoming": "Próximo"
       }
     },
     "setup": {
@@ -2799,7 +2811,8 @@
         "tooltip": "Ver pruebas de flow"
       },
       "errors": {
-        "label": "{count} Error(es)"
+        "label": "{count} Error(es)",
+        "action": "{count} error(es), ir al siguiente error"
       }
     },
     "invalid_source_code": "Código fuente no válido",

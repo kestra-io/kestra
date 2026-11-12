@@ -14,7 +14,7 @@
                         :ref="el => { if (el) keyInputRefs[index] = el }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
-                        margin="m-0"
+                        noMargin
                         :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                     />
@@ -45,7 +45,7 @@
                         :ref="el => { if (el) keyInputRefs[index] = el }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
-                        margin="m-0"
+                        noMargin
                         :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                         :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"

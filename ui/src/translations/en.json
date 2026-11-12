@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
-    "no_logs_data_title": "No logs found for the selected filters.",
+    "no_logs_data_title": "No logs found",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -451,7 +452,7 @@
         "whole_action": "Replay the whole execution instead",
         "whole_title": "Revision {revision} can be replayed as a whole execution.",
         "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
-        "confirm_from_task": "Replay from task",
+        "confirm_from_task": "Replay from {taskId}",
         "confirm_whole": "Replay whole execution"
     },
     "change execution state done": "Execution state updated",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "This task was retried",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "Last execution date",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
-    "no revisions": "No Revisions",
+    "no revisions": "No revisions found",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
     "template": "Template",
@@ -1339,6 +1346,8 @@
     "pause backfill": "Pause the backfill",
     "continue backfills": "Continue backfills",
     "delete backfills": "Delete backfills",
+    "delete backfill confirm": "Delete the backfill of trigger {id}?",
+    "delete backfill success": "The backfill of trigger {id} has been deleted",
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
@@ -1909,7 +1918,8 @@
       "duplicate": "This key already exists",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
@@ -2335,11 +2345,11 @@
     "test-badge-text": "Test",
     "test-badge-tooltip": "This execution was created by a Test",
     "no_results": {
-      "executions": "No Executions Found",
-      "triggers": "No Triggers Found",
-      "flows": "No Flows Found",
-      "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found",
+      "executions": "No executions found",
+      "triggers": "No triggers found",
+      "flows": "No flows found",
+      "kv_pairs": "No key-value pairs found",
+      "secrets": "No secrets found",
       "all_columns_hidden": "All columns are hidden",
       "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
@@ -2351,6 +2361,7 @@
       "default": "Default Dashboard",
       "set_default": "Set as default",
       "empty": "There are no results to be shown.",
+      "overdue": "Overdue — {date}",
       "edition": {
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
@@ -2373,7 +2384,8 @@
         "paused": "Paused",
         "success": "Success",
         "warning": "Warning",
-        "failed": "Failed"
+        "failed": "Failed",
+        "upcoming": "Upcoming"
       }
     },
     "setup": {
@@ -2799,7 +2811,8 @@
         "tooltip": "View flow tests"
       },
       "errors": {
-        "label": "{count} Error(s)"
+        "label": "{count} Error(s)",
+        "action": "{count} error(s), go to the next error"
       }
     },
     "invalid_source_code": "Invalid source code",

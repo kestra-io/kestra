@@ -120,6 +120,12 @@ type SourceSearchOptions = {
  */
 export type FlowRevision = FlowWithSource & {revision: number}
 
+export interface FlowPreviewBanner {
+    message: string
+    actionLabel: string
+    onAction: () => void
+}
+
 /** `subflows` lists the subflow paths whose own graph is expanded inline. */
 type GraphSubflows = {params?: {subflows?: string | string[]}}
 
@@ -162,6 +168,11 @@ export const useFlowStore = defineStore("flow", () => {
      *  read-only-preview banner can decline the active `previewSource` without depending on the AI
      *  dock's internal state directly. */
     const declinePreview = ref<(() => void) | null>(null)
+    /** Set with `previewSource` by a preview that is not a Copilot draft; unset, the banner falls back to Copilot's. */
+    const previewBanner = ref<FlowPreviewBanner>()
+    /** Registered by `FlowFileEditorTab.vue` (mirrors `filesSaveAll`'s pattern) so the toolbar's
+     *  error status can step through the violations the editor underlines without reaching into Monaco. */
+    const errorNavigation = ref<{count: number; revealNext: () => void} | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
 
@@ -183,7 +194,7 @@ export const useFlowStore = defineStore("flow", () => {
         saveAttempted.value = false
     })
 
-    watch(haveChange, (newValue) => {
+    watch(() => haveChange.value || hasDirtyEditorFiles.value, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
@@ -575,6 +586,7 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
+        previewBanner.value = undefined
         readonlyToastShown.value = false
 
         return data
@@ -1096,6 +1108,8 @@ function deleteFlowAndDependencies() {
         saveAttempted,
         previewSource,
         declinePreview,
+        previewBanner,
+        errorNavigation,
         haveChange,
         expandedSubflows,
         addTrigger,

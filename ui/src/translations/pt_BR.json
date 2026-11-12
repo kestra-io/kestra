@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
     "logs": "Logs",
     "no_logs_data_description": "Tente ajustar seus filtros, alterar o intervalo de tempo ou verificar se o flow foi executado recentemente.",
-    "no_logs_data_title": "Nenhum log encontrado para os filtros selecionados.",
+    "no_logs_data_title": "Nenhum log encontrado",
     "duration": "Duração",
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
@@ -344,6 +344,7 @@
     "home": "Início",
     "create": "Criar",
     "create_flow": "Criar Flow",
+    "create_child_namespace": "Criar namespace filho",
     "from": "De",
     "to": "Para",
     "steps": "Passos",
@@ -451,7 +452,7 @@
       "whole_action": "Reproduzir a execução inteira em vez disso",
       "whole_title": "A versão {revision} pode ser reproduzida como uma execução completa.",
       "whole_description": "Nenhum resultado anterior é reutilizado, então cada Task é executada novamente na revisão {revision}. A execução original é mantida e vinculada.",
-      "confirm_from_task": "Replay a partir da Task",
+      "confirm_from_task": "Replay a partir de {taskId}",
       "confirm_whole": "Repetir toda a execução"
     },
     "change execution state done": "Estado de execução atualizado",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "refresh": "Atualizar",
     "filter by status": "Filtrar execuções pelo status {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task foi retried",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "Data da última execução",
     "revisions": "Revisões",
     "no revisions found": "Existe apenas uma revisão para este flow",
-    "no revisions": "Sem revisões",
+    "no revisions": "Nenhuma revisão encontrada",
     "side-by-side": "lado a lado",
     "line-by-line": "linha por linha",
     "template": "Template",
@@ -1339,6 +1346,8 @@
     "pause backfill": "Pausar o backfill",
     "continue backfills": "Continuar backfills",
     "delete backfills": "Excluir backfills",
+    "delete backfill confirm": "Excluir o backfill do trigger {id}?",
+    "delete backfill success": "O backfill do trigger {id} foi excluído",
     "pause backfills": "Pausar backfills",
     "backfill executions": "Execuções de backfill",
     "execute backfill": "Executar backfill",
@@ -1909,7 +1918,8 @@
       "duplicate": "Esta key já existe",
       "delete multiple": {
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
-        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
+        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deletado(s) do namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV herdados",
       "expiration_hint": "Atualmente expira em {date}. Deixe o campo intocado para manter esta expiração; escolher uma duração a recalcula a partir de agora, e limpá-la a remove."
@@ -2335,11 +2345,11 @@
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "no_results": {
-      "executions": "Nenhuma Execução Encontrada",
-      "triggers": "Nenhum Trigger Encontrado",
-      "flows": "Nenhum Flow Encontrado",
-      "kv_pairs": "Nenhum par de Key-Value encontrado",
-      "secrets": "Nenhum Secret Encontrado",
+      "executions": "Nenhuma execução encontrada",
+      "triggers": "Nenhum trigger encontrado",
+      "flows": "Nenhum flow encontrado",
+      "kv_pairs": "Nenhum par de key-value encontrado",
+      "secrets": "Nenhum secret encontrado",
       "all_columns_hidden": "Todas as colunas estão ocultas",
       "all_columns_hidden_description": "Ative pelo menos uma coluna novamente em Personalizar colunas da tabela para ver os dados novamente."
     },
@@ -2351,6 +2361,7 @@
       "default": "Dashboard Padrão",
       "set_default": "Definir como padrão",
       "empty": "Não há resultados para serem exibidos.",
+      "overdue": "Atrasado — {date}",
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Edite este gráfico"
@@ -2373,7 +2384,8 @@
         "paused": "Pausado",
         "success": "Sucesso",
         "warning": "Aviso",
-        "failed": "Falhou"
+        "failed": "Falhou",
+        "upcoming": "Próximos"
       }
     },
     "setup": {
@@ -2799,7 +2811,8 @@
         "tooltip": "Visualizar testes de flow"
       },
       "errors": {
-        "label": "{count} Erro(s)"
+        "label": "{count} Erro(s)",
+        "action": "{count} erro(s), ir para o próximo erro"
       }
     },
     "invalid_source_code": "Código-fonte inválido",

@@ -9,7 +9,7 @@
                             v-model="query"
                             :placeholder="$t('jump to...')"
                             clearable
-                            @keydown.esc="closeSearch"
+                            @keydown.esc.prevent="closeSearch"
                             @keydown="onInputKeydown"
                         >
                             <template v-if="scopePrefix" #prefix>

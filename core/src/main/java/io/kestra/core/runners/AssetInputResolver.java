@@ -26,23 +26,4 @@ public interface AssetInputResolver {
     default List<String> unknownIds(String tenantId, String flowNamespace, AssetInput input, List<String> ids) {
         return List.of();
     }
-
-    /**
-     * Refuses an edit that {@link #store} could not write, before any input is stored, so that an edit refused here
-     * leaves no other edit written. The writes are not transactional: one that fails later in {@link #store}, or an
-     * execution that is never emitted, can leave the edits stored before it in place.
-     */
-    default void checkWrite(Execution execution, AssetInput input, Object resolved) {
-    }
-
-    /**
-     * Reduces a resolved value to what the execution being created stores. Only called on a real execution creation,
-     * never to validate the inputs, and once every input and flow check has passed.
-     *
-     * @param write whether to persist the edits made in the form as {@code persistOverrides} asks; when {@code false},
-     *              as for a test run, the edits are dropped and only the asset id is stored
-     */
-    default Object store(Execution execution, AssetInput input, Object resolved, boolean write) {
-        return AssetInput.storedValue(resolved);
-    }
 }

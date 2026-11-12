@@ -990,48 +990,6 @@ class FlowValidationTest {
     }
 
     @Test
-    void shouldRejectEditablePropertiesWhenMultipleOrWithoutAnUpdateOrClonePersistMode() {
-        Flow flow = YamlParser.parse("""
-            id: test
-            namespace: unittest
-            inputs:
-              - id: multiple
-                type: ASSET
-                multiple: true
-                editableProperties: true
-              - id: unknown
-                type: ASSET
-                editableProperties: true
-                persistOverrides: MERGE
-              - id: none
-                type: ASSET
-                editableProperties: true
-                persistOverrides: NONE
-              - id: missing
-                type: ASSET
-                editableProperties: true
-              - id: clone
-                type: ASSET
-                editableProperties: true
-                persistOverrides: clone
-            tasks:
-              - id: hello
-                type: io.kestra.plugin.core.log.Log
-                message: hi
-            """, Flow.class);
-
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getMessage())
-            .contains("inputs[multiple]: `editableProperties` cannot be used with `multiple`")
-            .contains("inputs[unknown]: `persistOverrides` must be UPDATE or CLONE")
-            .contains("inputs[none]: `persistOverrides` must be UPDATE or CLONE")
-            .contains("inputs[missing]: `persistOverrides` is required when `editableProperties` is true")
-            .doesNotContain("inputs[clone]");
-    }
-
-    @Test
     void shouldRejectAssetWhenUsedAsAnArrayOrMultiselectItemType() {
         Flow flow = YamlParser.parse("""
             id: test

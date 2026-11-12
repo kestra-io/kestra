@@ -11,12 +11,10 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.AssetInputValidation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -82,19 +80,6 @@ public class AssetInput extends Input<Object> implements RenderableInput {
         }
         return resolved;
     }
-
-    @Schema(
-        title = "Whether the properties of the picked asset can be edited in the execution form."
-    )
-    @NotNull
-    @Builder.Default
-    private Boolean editableProperties = false;
-
-    @Schema(
-        title = "What happens to the properties edited in the execution form, required when `editableProperties` is true.",
-        description = "`UPDATE` saves them onto the picked asset when the execution is created, and `CLONE` creates a new asset from the picked one with the edits on top; the input's value is then the new asset's id."
-    )
-    private PersistOverrides persistOverrides;
 
     /** The filters are always rendered, since a submitted id is checked against them. */
     @JsonIgnore
@@ -180,8 +165,6 @@ public class AssetInput extends Input<Object> implements RenderableInput {
             .prefill(getPrefill())
             .displayName(getDisplayName())
             .multiple(multiple)
-            .editableProperties(editableProperties)
-            .persistOverrides(persistOverrides)
             .assetType(renderString(assetType, renderer))
             .assetId(renderString(assetId, renderer))
             .namespace(renderString(namespace, renderer))
@@ -205,16 +188,5 @@ public class AssetInput extends Input<Object> implements RenderableInput {
         }
         Object rendered = renderer.apply(value);
         return rendered == null ? null : rendered.toString();
-    }
-
-    public enum PersistOverrides {
-        UPDATE,
-        CLONE,
-        UNKNOWN;
-
-        @JsonCreator
-        public static PersistOverrides fromString(final String value) {
-            return Enums.getForNameIgnoreCase(value, PersistOverrides.class, UNKNOWN);
-        }
     }
 }

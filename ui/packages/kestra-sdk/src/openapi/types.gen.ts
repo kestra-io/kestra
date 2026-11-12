@@ -1758,6 +1758,7 @@ export type Notification = {
     resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
+    url?: string | null;
     succeededItems?: number | null;
     failedItems?: number | null;
     totalItems?: number | null;

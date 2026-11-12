@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
-import {defineComponent, h, ref} from "vue"
-import {mount, VueWrapper} from "@vue/test-utils"
-import {createRouter, createMemoryHistory, type Router, type RouteLocation} from "vue-router"
-import useRestoreUrl, {getRestoredQuery} from "./useRestoreUrl"
+import {defineComponent, h, onMounted, ref} from "vue"
+import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
+import {createRouter, createMemoryHistory, RouterView, useRoute, type LocationQuery, type Router, type RouteLocation} from "vue-router"
+import useRestoreUrl, {getRestoredQuery, restoreUrlGuard} from "./useRestoreUrl"
 
 const SAVED_QUERY = {"filters[timeRange][EQUALS]": "PT24H"}
 
@@ -189,5 +189,61 @@ describe("useRestoreUrl", () => {
 
         expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, "filters[state][IN]": "FAILED"})
         expect(JSON.parse(window.sessionStorage.getItem(key) as string)).toMatchObject(SAVED_QUERY)
+    })
+
+    describe("restoreUrlGuard", () => {
+        const loads: LocationQuery[] = []
+
+        const ListPage = defineComponent({
+            setup() {
+                const route = useRoute()
+                const {loadInit} = useRestoreUrl()
+                const sortAtSetup = route.query.sort
+                onMounted(() => {
+                    if (loadInit.value) loads.push({...route.query})
+                })
+                return () => h("div", String(sortAtSetup))
+            },
+        })
+
+        function createGuardedRouter(): Router {
+            const router = createRouter({
+                history: createMemoryHistory(),
+                routes: [
+                    {name: "flows/list", path: "/:tenant?/flows", component: ListPage},
+                    {name: "executions/list", path: "/:tenant?/executions", component: {render: () => h("div")}},
+                ],
+            })
+            router.beforeEach(restoreUrlGuard)
+            return router
+        }
+
+        beforeEach(() => {
+            loads.length = 0
+        })
+
+        it("sets a page up from its saved sort and loads it when the page is entered with no query", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc", page: "3"}))
+            wrapper = mount(RouterView, {global: {plugins: [router]}})
+
+            await router.push({name: "flows/list", params: {tenant: "main"}})
+            await flushPromises()
+
+            expect(router.currentRoute.value.query).toEqual({sort: "namespace:asc"})
+            expect(wrapper.text()).toBe("namespace:asc")
+            expect(loads).toEqual([{sort: "namespace:asc"}])
+        })
+
+        it("lets the page clear its own query instead of putting the saved one back", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "flows/list", params: {tenant: "main"}, query: {sort: "namespace:asc"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({query: {}})
+
+            expect(router.currentRoute.value.query).toEqual({})
+        })
     })
 })

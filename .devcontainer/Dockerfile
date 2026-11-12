@@ -3,32 +3,18 @@ FROM ubuntu:24.04
 ARG BUILDPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive
 
+# System-wide tools are installed as root; the container then runs as the
+# image's non-root "ubuntu" user (uid 1000), see "Non-root user" below.
 USER root
-WORKDIR /root
+WORKDIR /tmp
 
 RUN apt update && apt install -y \
   apt-transport-https ca-certificates gnupg \
   curl wget git zip unzip less zsh net-tools iputils-ping jq lsof ripgrep
 
-ENV HOME="/root"
-
-# --------------------------------------
-# Git
-# --------------------------------------
-# Need to add the devcontainer workspace folder as a safe directory to enable git
-# version control system to be enabled in the containers file system.
-RUN git config --global --add safe.directory "/workspaces/kestra"
-# --------------------------------------
-
-# --------------------------------------
-# Oh my zsh
-# --------------------------------------
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" -- \
-  -t robbyrussell \
-  -p git -p node -p npm
-
+ARG USERNAME=ubuntu
+RUN chsh -s /bin/zsh ${USERNAME}
 ENV SHELL=/bin/zsh
-# --------------------------------------
 
 # --------------------------------------
 # Java
@@ -73,14 +59,41 @@ RUN npx playwright install-deps
 # Python
 # --------------------------------------
 RUN apt install -y python3 pip python3-venv
-# Install uv
+# --------------------------------------
+
+# --------------------------------------
+# Non-root user: everything below lives in its home directory
+# --------------------------------------
+USER ${USERNAME}
+ENV HOME="/home/${USERNAME}"
+WORKDIR ${HOME}
+
+# --------------------------------------
+# Git
+# --------------------------------------
+# Need to add the devcontainer workspace folder as a safe directory to enable git
+# version control system to be enabled in the containers file system.
+RUN git config --global --add safe.directory "/workspaces/kestra"
+# --------------------------------------
+
+# --------------------------------------
+# Oh my zsh
+# --------------------------------------
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" -- \
+  --unattended
+# --------------------------------------
+
+# --------------------------------------
+# uv
+# --------------------------------------
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="${HOME}/.local/bin:$PATH"
 # --------------------------------------
 
 # --------------------------------------
 # SSH
 # --------------------------------------
-RUN mkdir -p ~/.ssh
+RUN mkdir -p -m 700 ~/.ssh
 RUN touch ~/.ssh/config
 RUN echo "Host github.com" >> ~/.ssh/config \
   && echo "    IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config

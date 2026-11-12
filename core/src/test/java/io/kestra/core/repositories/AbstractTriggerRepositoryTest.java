@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -29,6 +30,7 @@ import io.kestra.core.notification.NotificationItemRepositoryInterface;
 import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
@@ -267,6 +269,26 @@ public abstract class AbstractTriggerRepositoryTest {
     }
 
     @Test
+    void shouldKeepStatesDistinctWhenFlowIdsDifferOnlyByCase() {
+        // GIVEN
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState upper = trigger(tenant).flowId("Flow").triggerId("trigger").build();
+        TriggerState lower = trigger(tenant).flowId("flow").triggerId("trigger").build();
+        triggerStateStore.save(upper);
+        triggerStateStore.save(lower);
+
+        // WHEN
+        Optional<TriggerState> foundUpper = triggerStateStore.findByIdWithoutAcl(upper);
+        Optional<TriggerState> foundLower = triggerStateStore.findByIdWithoutAcl(lower);
+        Optional<TriggerState> foundOtherCase = triggerStateStore.findByIdWithoutAcl(trigger(tenant).flowId("FLOW").triggerId("trigger").build());
+
+        // THEN
+        assertThat(foundUpper.map(TriggerState::getFlowId)).contains("Flow");
+        assertThat(foundLower.map(TriggerState::getFlowId)).contains("flow");
+        assertThat(foundOtherCase).isEmpty();
+    }
+
+    @Test
     void shouldUpdateStateSavingExistingState() {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -284,6 +306,24 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(updated));
         assertThat(result.get().getUpdatedAt()).isEqualTo(updatedAt);
+    }
+
+    @Test
+    void shouldKeepTheBlockWhenSavingABlockedState() {
+        // GIVEN a state blocked by governance
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Blocker block = new Blocker(Blocker.Reason.POLICY, List.of("deny-log"), "Log plugin is not allowed by policy");
+        TriggerState blocked = triggerStateStore.save(trigger(tenant).build().blockedBy(Clock.systemUTC(), block));
+
+        // WHEN the block is saved, then cleared
+        Optional<TriggerState> whileBlocked = triggerStateStore.findByIdWithoutAcl(blocked);
+        triggerStateStore.save(blocked.blockedBy(Clock.systemUTC(), null));
+        Optional<TriggerState> afterUnblock = triggerStateStore.findByIdWithoutAcl(blocked);
+
+        // THEN
+        assertThat(whileBlocked.map(TriggerState::getBlockedBy)).contains(block);
+        assertThat(afterUnblock).isPresent();
+        assertThat(afterUnblock.get().getBlockedBy()).isNull();
     }
 
     @Test

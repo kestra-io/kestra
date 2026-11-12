@@ -1,6 +1,6 @@
 <template>
     <KsButton
-        v-if="isFlowContext"
+        v-if="aiEnabled && isFlowContext"
         @click="fixWithAi"
         size="small"
     >
@@ -33,6 +33,7 @@
     import {useI18n} from "vue-i18n"
     import AiIcon from "vue-material-design-icons/Creation.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {useAiEnabled} from "../composables/useAiEnabled"
     import type {ProblemFieldError} from "@kestra-io/kestra-sdk"
     import {problemFieldLabel, problemFieldMessage} from "../utils/problem"
 
@@ -54,6 +55,8 @@
     const route = useRoute()
     const {t, te} = useI18n()
     const miscStore = useMiscStore()
+
+    const aiEnabled = useAiEnabled()
 
     const isFlowContext = computed(() => {
         const routeName = String(route?.name ?? "")
@@ -82,7 +85,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .fix-with-ai-icon {
         margin-inline-end: var(--ks-spacing-1);
     }
@@ -94,7 +97,6 @@
     }
 
     .problem-error-item {
-        font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         margin-top: var(--ks-spacing-2);
     }

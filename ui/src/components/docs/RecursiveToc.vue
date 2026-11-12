@@ -13,7 +13,7 @@
                         {{ child.title.capitalize() }}
                     </span>
                     <slot v-else v-bind="child" :class="`depth-${depth}`">
-                        <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
+                        <RouterLink :to="docRoute(child.path)" :class="`depth-${depth}`">
                             {{ child.title.capitalize() }}
                         </RouterLink>
                     </slot>
@@ -22,6 +22,7 @@
                     :parent="{children: child.children}"
                     :makeIndexNavigable="makeIndexNavigable"
                     :depth="depth + 1"
+                    :activePath="activePath"
                 >
                     <template #default="subChild">
                         <slot v-bind="subChild" />
@@ -30,7 +31,7 @@
             </KsCollapseItem>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
-                    <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
+                    <RouterLink :to="docRoute(child.path)" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </RouterLink>
                 </slot>
@@ -40,7 +41,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, type VNode} from "vue"
+    import {computed, ref, watch, type VNode} from "vue"
+    import {useRoute} from "vue-router"
     import {DISABLED_PAGES} from "./docsUtils"
 
     defineOptions({
@@ -65,19 +67,34 @@
         }
         depth?: number
         makeIndexNavigable?: boolean
+        activePath?: string
     }>(), {
         makeIndexNavigable: true,
         depth: 0,
+        activePath: undefined,
     })
+
+    const route = useRoute()
 
     const filteredChildren = computed(() => {
         return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
     })
 
+    const docRoute = (path: string) => ({
+        path: route.params.tenant ? `/${route.params.tenant}/${path}` : `/${path}`,
+    })
+
     const openedDocs = ref<string>("")
+
+    watch(() => props.activePath, (activePath) => {
+        const section = props.parent.children.find(({path, children}) =>
+            children && (activePath === path || activePath?.startsWith(`${path}/`)),
+        )
+        if (section) openedDocs.value = section.path
+    }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kel-collapse {
         --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
@@ -87,19 +104,19 @@
         border-bottom: none;
         background-color: transparent;
 
-        > * {
+        & > * {
             font-size: var(--kel-collapse-header-font-size);
         }
 
-        :deep(> .kel-collapse-item) {
-            > .kel-collapse-item__header {
+        & :deep(> .kel-collapse-item) {
+            & > .kel-collapse-item__header {
                 padding: 0;
                 border-bottom: none;
                 min-height: 32px;
                 line-height: 1.2;
             }
 
-            > button {
+            & > button {
                 padding: 0;
             }
 
@@ -109,18 +126,14 @@
 
             a {
                 color: var(--ks-text-primary);
-
-                &.RouterLink-exact-active {
-                    font-weight: 700;
-                }
             }
         }
 
-        :deep(.kel-collapse-item__content) {
+        & :deep(.kel-collapse-item__content) {
             padding: 0;
         }
 
-        :deep(.kel-collapse-item__arrow) {
+        & :deep(.kel-collapse-item__arrow) {
             margin: 0 8px;
         }
     }

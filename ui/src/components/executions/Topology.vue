@@ -2,6 +2,7 @@
     <KsCard>
         <div class="vueflow">
             <LowCodeEditor
+                ref="editor"
                 :key="execution.id"
                 v-if="execution && flowGraph"
                 :flowId="execution.flowId"
@@ -23,10 +24,12 @@
     </KsCard>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onUnmounted} from "vue"
-    import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
+    import {ref, computed, watch, onMounted, onUnmounted, useTemplateRef} from "vue"
+    import {stringUtils, State, throttle} from "@kestra-io/design-system"
+    import {isLoopTaskType} from "@kestra-io/topology"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {deepestEnclosingPath} from "../../utils/loopScope"
     import {useFlowStore} from "../../stores/flow"
 
     withDefaults(defineProps<{
@@ -42,72 +45,20 @@
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
 
+    const editor = useTemplateRef<InstanceType<typeof LowCodeEditor>>("editor")
+
+    defineExpose({focusTask: (taskId: string) => editor.value?.focusTask(taskId)})
+
     const execution = computed(() => executionsStore.execution)
-    const flowGraph = computed(() => executionsStore.flowGraph)
+    const flowGraph = computed(() => executionsStore.scopedFlowGraph)
 
     const loading = ref(true)
     const previousExecutionId = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const previousExpandedSubflows = ref<string[]>([])
     const sseBySubflow = ref<Record<string, {close: () => void}>>({})
-
-    // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
-    // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
-    // time — metrics/outputs only materialise once the task run completes.
-    let progressSSE: EventSource | undefined
-    // followLogs() resolves asynchronously; if the component unmounts in that window, the
-    // EventSource would land in a ref no one closes again. Guard against it explicitly instead
-    // of relying on onUnmounted alone.
     let unmounted = false
     const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
-
-    function closeProgressSSE() {
-        progressSSE?.close()
-        progressSSE = undefined
-    }
-
-    function followProgress() {
-        closeProgressSSE()
-        const id = execution.value?.id
-        if (!id) return
-        executionsStore.followLogs({id, params: levelToRequestParams({value: "INFO", direction: "min"})}).then((sse: EventSource) => {
-            if (unmounted) {
-                sse.close()
-                return
-            }
-            progressSSE = sse
-            sse.onmessage = (event: MessageEvent) => {
-                if (event.lastEventId === "start") return
-                const data = JSON.parse(event.data)
-                if (!data.progress) return
-                executionsStore.addProgressEvent({
-                    taskId: data.taskId,
-                    taskRunId: data.taskRunId,
-                    step: data.progress,
-                    timestamp: data.timestamp,
-                })
-            }
-            // No onerror handler: closing here on a transient drop is what previously froze the
-            // stepper (kestra-io/kestra#16982's leak fear doesn't apply — closeProgressSSE()
-            // below still runs once the execution terminates). Let EventSource auto-reconnect;
-            // the historical replay it gets on reconnect is idempotent thanks to the dedup in
-            // addProgressEvent, so a reconnect can only ever catch up, never regress.
-        })
-    }
-
-    const isExecutionRunning = computed(() => {
-        const current = execution.value?.state?.current
-        return !!current && State.isRunning(current)
-    })
-
-    watch(
-        [() => execution.value?.id, isExecutionRunning],
-        ([id, running]) => {
-            if (id && running) followProgress()
-            else closeProgressSSE()
-        },
-        {immediate: true},
-    )
 
     // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
     type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
@@ -139,7 +90,6 @@
         unmounted = true
         sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
-        closeProgressSSE()
     })
 
     function closeSSE(subflow: string) {
@@ -156,7 +106,7 @@
     function loadFlowSource() {
         const exec = execution.value
         if (!exec || flowStore.flow?.id === exec.flowId && flowStore.flow?.namespace === exec.namespace) return
-        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId})
+        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId, optional: true})
     }
 
     function loadGraph(force?: boolean) {
@@ -217,14 +167,18 @@
             return
         }
 
-        let parentExecution: Execution | undefined = execution.value
+        const parentPath = deepestEnclosingPath(subflow, [
+            ...expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + ".")),
+            ...loopUids.value,
+        ])
 
-        const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
-            .sort((s1, s2) => s2.length - s1.length)
-
-        if (parentSubflows.length > 0) {
-            parentExecution = executionsStore.subflowsExecutions[parentSubflows[0]]
+        if (parentPath && loopUids.value.includes(parentPath) && !executionsStore.scopedIterations[parentPath]) {
+            return
         }
+
+        const parentExecution: Execution | undefined = !parentPath
+            ? execution.value
+            : executionsStore.subflowsExecutions[parentPath] ?? executionsStore.scopedIterations[parentPath]
 
         if (!parentExecution) {
             delaySSE(!!generateGraphOnWaiting, subflow)
@@ -260,6 +214,30 @@
         })
     }
 
+    const loopUids = computed(() => (executionsStore.flowGraph?.clusters ?? [])
+        .map(({cluster}) => cluster.taskNode)
+        .filter((taskNode) => taskNode && isLoopTaskType(taskNode.task.type))
+        .map((taskNode) => taskNode!.uid))
+
+    const scopedIterationsKey = computed(() => Object.entries(executionsStore.scopedIterations)
+        .map(([lane, iteration]) => `${lane}=${iteration.id}`)
+        .sort()
+        .join("|"))
+
+    watch(scopedIterationsKey, () => {
+        const subflowsInLoops = expandedSubflows.value.filter(subflow => loopUids.value.some(uid => subflow.startsWith(uid + ".")))
+        if (!subflowsInLoops.length) return
+
+        subflowsInLoops.forEach(subflow => {
+            clearTimeout(sseRetries.get(subflow))
+            sseRetries.delete(subflow)
+            closeSubExecutionSSE(subflow)
+            executionsStore.removeSubflowExecution(subflow)
+        })
+        loadGraph(true)
+        subflowsInLoops.forEach(subflow => addSSE(subflow))
+    })
+
     function closeSubExecutionSSE(subflow: string) {
         const sse = sseBySubflow.value[subflow]
         if (sse) {
@@ -268,15 +246,15 @@
         }
     }
 </script>
-<style scoped lang="scss">
+<style scoped>
     .kel-card {
-        // A fixed height left most of a tall viewport unused:
-        // https://github.com/kestra-io/kestra/issues/19685.
+        /* A fixed height left most of a tall viewport unused: */
+        /* https://github.com/kestra-io/kestra/issues/19685. */
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             height: 100%;
             display: flex;
             padding: 0;

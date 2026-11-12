@@ -27,7 +27,10 @@ vi.mock("../../utils/notificationRoute", () => ({
 
 const router = createRouter({
     history: createWebHistory(),
-    routes: [{path: "/mock/:tenant?/:caseId?", name: "cases/view", component: {render: () => null}}],
+    routes: [
+        {path: "/mock/:tenant?/:caseId?", name: "cases/view", component: {render: () => null}},
+        {path: "/:pathMatch(.*)*", component: {render: () => null}},
+    ],
 })
 const push = vi.spyOn(router, "push").mockResolvedValue(undefined)
 

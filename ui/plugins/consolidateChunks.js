@@ -425,6 +425,7 @@ const GROUPS = [
     // is left to that group on purpose, since it reaches grammars only
     // dynamically and riding along there saves an exotic fence a request.
     {
+        debugName: "shiki-lang",
         name: (id) => {
             if (!isRealModule(id)) return null
             if (!LANG_MODULE.test(id) || staticLangs.has(id)) return null
@@ -490,6 +491,7 @@ const GROUPS = [
     // Everything reached only through a dynamic import, planned per page by
     // {@link planAsyncChunks} instead of left to fragment into hundreds of files.
     {
+        debugName: "async-page",
         name: (id) => asyncChunk.get(id) ?? null,
         priority: -50,
         includeDependenciesRecursively: false,
@@ -509,6 +511,7 @@ const GROUPS = [
  */
 export function consolidateChunks({pages = {}} = {}) {
     pageGroups = PAGE_GROUPS.map((page) => pages[page.name]
+        // nosemgrep: detect-non-literal-regexp -- build-time join of two RegExp sources from the Vite config.
         ? {...page, pattern: new RegExp(`${page.pattern.source}|${pages[page.name].source}`)}
         : page)
     return {

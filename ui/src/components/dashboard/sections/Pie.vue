@@ -39,10 +39,11 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, toEchartsParams, type EchartsParams} from "../composables/charts"
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
+    import {getLanguageTag} from "../../../utils/utils"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
@@ -79,7 +80,7 @@
 
     function parseValue(value: unknown): string {
         const date = dateUtils.parseIso(value)
-        return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
+        return date.isValid() ? date.tz(dateUtils.currentTimezone()).format("YYYY-MM-DD") : String(value)
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {
@@ -102,7 +103,7 @@
     const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
     const totalValue = computed(() =>
-        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(),
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(getLanguageTag()),
     )
 
     const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
@@ -136,8 +137,8 @@
     })
 
     function onSegmentClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
-        if (!params?.name) return
+        const params = toEchartsParams(rawParams)
+        if (!params.name) return
         drillDown([{column: dimensionColumn.value, value: params.name}])
     }
 
@@ -147,10 +148,10 @@
 
     defineExpose({refresh})
 
-    watch(() => route.params.filters, () => refresh(), {deep: true})
+    watch(() => route.fullPath, () => refresh())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .pie {
         display: flex;
         flex-direction: column;
@@ -184,17 +185,17 @@
         max-width: min(52%, 7rem);
         text-align: center;
         line-height: 1.2;
+    }
 
-        &__total {
-            font-size: var(--ks-font-size-3xl);
-            color: var(--ks-text-primary);
-            font-weight: 700;
-            white-space: nowrap;
-        }
+    .pie-center-label__total {
+        font-size: var(--ks-font-size-3xl);
+        color: var(--ks-text-primary);
+        font-weight: 700;
+        white-space: nowrap;
+    }
 
-        &__success {
-            font-size: var(--ks-font-size-2xs);
-            color: var(--ks-text-success);
-        }
+    .pie-center-label__success {
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-success);
     }
 </style>

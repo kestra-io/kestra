@@ -33,6 +33,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageSplitInterface;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.RegexUtils;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
@@ -86,11 +87,8 @@ public abstract class StorageService {
     }
 
     private static String extensionOf(URI from) {
-        String fromPath = from.getPath();
-        if (fromPath.indexOf('.') >= 0) {
-            return fromPath.substring(fromPath.lastIndexOf('.'));
-        }
-        return ".tmp";
+        String extension = FileUtils.getExtension(from);
+        return extension != null ? extension : ".tmp";
     }
 
     private static long parseBytes(RunContext runContext, StorageSplitInterface storageSplitInterface) throws IllegalVariableEvaluationException {
@@ -102,11 +100,11 @@ public abstract class StorageService {
 
     // region split operations (format-agnostic, parameterized by a SplitStrategy)
 
-    private static List<Path> splitByPredicate(RunContext runContext, String extension, SplitStrategy strategy, BiFunction<Integer, Integer, Boolean> predicate)
+    private static List<Path> splitByPredicate(RunContext runContext, String extension, SplitStrategy strategy, BiFunction<Long, Integer, Boolean> predicate)
         throws IOException {
         List<Path> files = new ArrayList<>();
         RecordWriter writer = null;
-        int totalBytes = 0;
+        long totalBytes = 0;
         int totalRows = 0;
 
         try {

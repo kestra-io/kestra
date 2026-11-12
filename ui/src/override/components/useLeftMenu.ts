@@ -27,6 +27,7 @@ import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 import Monitor from "vue-material-design-icons/Monitor.vue"
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
+import KeyOutline from "vue-material-design-icons/KeyOutline.vue"
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
@@ -34,6 +35,7 @@ import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
 import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
+import {useAiEnabled} from "../../composables/useAiEnabled"
 
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
@@ -59,6 +61,7 @@ export function useLeftMenu() {
     const $router = useRouter()
 
     const {t} = useI18n({useScope: "global"})
+    const aiEnabled = useAiEnabled()
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -94,7 +97,7 @@ export function useLeftMenu() {
         const generated = [
             {
                 id: "workspace",
-                title: "Workspace",
+                title: t("workspace"),
                 child: [
                     {
                         id: "dashboards",
@@ -117,6 +120,7 @@ export function useLeftMenu() {
                         icon: {
                             element: AiMenuIcon,
                         },
+                        hidden: !aiEnabled.value,
                     },
                     {
                         id: "flows",
@@ -183,7 +187,7 @@ export function useLeftMenu() {
             },
             {
                 id: "resources",
-                title: "Resources",
+                title: t("resources"),
                 child: [
                     {
                         id: "namespaces",
@@ -301,6 +305,20 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: LockOutline,
+                        },
+                    },
+                    {
+                        id: "credentials",
+                        title: t("demos.credentials.label"),
+                        routes: routeStartWith("credentials"),
+                        href: {
+                            name: "credentials/list",
+                        },
+                        icon: {
+                            element: KeyOutline,
+                        },
+                        attributes: {
+                            locked: true,
                         },
                     },
                     {

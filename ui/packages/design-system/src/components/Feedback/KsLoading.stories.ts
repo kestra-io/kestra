@@ -7,6 +7,7 @@ const meta: Meta = {
     title: "Components/Feedback/KsLoading",
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {description: {component: "KsLoading is the Kestra design-system abstraction over `vLoading` from Element Plus. Use the `v-ks-loading` directive on any element to overlay a loading spinner. Accepts a boolean or a `LoadingOptions` object."}},
     },
 }

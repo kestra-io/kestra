@@ -11,7 +11,7 @@
         <!-- Errors -->
         <KsTooltip
             v-if="errors"
-            popperClass="p-0 bg-transparent"
+            popperClass="validation-error-tooltip-popper"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
@@ -19,15 +19,30 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <AlertCircle class="align-middle error" />
-                        <span class="align-middle">
+                        <AlertCircle class="validation-error-icon error" />
+                        <span class="validation-error-label">
                             {{ $t("error detected") }}
                         </span>
                     </KsHeader>
                     <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
                 </KsContainer>
             </template>
+            <button
+                v-if="activatable"
+                type="button"
+                class="error-status-action"
+                data-test="validation-error-next"
+                :aria-label="$t('flow_editor_stats.errors.action', {count: errors.length})"
+                @click="$emit('activate')"
+            >
+                <KsCodeStatus
+                    status="error"
+                    :iconOnly="iconOnly"
+                    :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
+                />
+            </button>
             <KsCodeStatus
+                v-else
                 status="error"
                 :iconOnly="iconOnly"
                 :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
@@ -37,7 +52,7 @@
         <!-- Warnings -->
         <KsTooltip
             v-if="warnings"
-            popperClass="p-0 bg-transparent"
+            popperClass="validation-error-tooltip-popper"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
@@ -45,8 +60,8 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <Alert class="align-middle warning" />
-                        <span class="align-middle">
+                        <Alert class="validation-error-icon warning" />
+                        <span class="validation-error-label">
                             {{ $t("warning detected") }}
                         </span>
                     </KsHeader>
@@ -71,7 +86,7 @@
         <!-- Infos -->
         <KsTooltip
             v-if="infos && !warnings"
-            popperClass="p-0 bg-transparent"
+            popperClass="validation-error-tooltip-popper"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
@@ -79,8 +94,8 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <Alert class="align-middle info" />
-                        <span class="align-middle">
+                        <Alert class="validation-error-icon info" />
+                        <span class="validation-error-label">
                             {{ $t("informative notice") }}
                         </span>
                     </KsHeader>
@@ -113,6 +128,11 @@
         size?: "default" | "small";
         tooltipPlacement?: string;
         iconOnly?: boolean;
+        activatable?: boolean;
+    }>()
+
+    defineEmits<{
+        activate: [];
     }>()
 
     const rootContainer = ref<HTMLSpanElement>()
@@ -123,10 +143,10 @@
         }
         const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label")
 
-        buttonLabels.forEach(el => el.classList.remove("d-none"))
+        buttonLabels.forEach(el => el.classList.remove("validation-error-label-hidden"))
         nextTick(() => {
             if(rootContainer.value && rootContainer.value.offsetLeft + rootContainer.value.offsetWidth > maxWidth) {
-                buttonLabels.forEach(el => el.classList.add("d-none"))
+                buttonLabels.forEach(el => el.classList.add("validation-error-label-hidden"))
             }
         })
     }
@@ -136,7 +156,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .validation-tooltip {
         padding: 0;
         width: fit-content;
@@ -149,7 +169,7 @@
         display:flex;
         flex-direction: column;
 
-        > * {
+        & > * {
             height: fit-content;
             margin: 0;
         }
@@ -189,5 +209,34 @@
 
     .info {
         color: var(--ks-status-info);
+    }
+
+    .error-status-action {
+        display: inline-flex;
+        padding: 0;
+        border: none;
+        background: none;
+        border-radius: var(--ks-radius-sm);
+        cursor: pointer;
+
+        &:hover {
+            background: var(--ks-bg-error);
+        }
+
+        &:focus-visible {
+            outline: var(--ks-border-width-thin) solid var(--ks-border-focus);
+            outline-offset: var(--ks-spacing-1);
+        }
+    }
+    .validation-error-icon,
+    .validation-error-label {
+        vertical-align: middle;
+    }
+    :global(.validation-error-tooltip-popper) {
+        padding: 0 !important;
+        background-color: transparent !important;
+    }
+    :global(.validation-error-label-hidden) {
+        display: none;
     }
 </style>

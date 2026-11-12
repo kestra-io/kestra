@@ -1,20 +1,33 @@
 <template>
-    <TopNavBar :title="title" />
+    <TopNavBar :title="title">
+        <template v-if="catalogExtension.pageActions" #actions>
+            <component :is="catalogExtension.pageActions" />
+        </template>
+    </TopNavBar>
 
-    <KsAlert v-if="loadError" type="error">
-        {{ $t("pluginPage.loadError") }}
-    </KsAlert>
+    <div v-if="loadError" class="plugins-load-error">
+        <KsAlert type="error" :closable="false" :title="$t('pluginPage.loadErrorTitle')" data-test="plugins-load-error">
+            {{ $t("pluginPage.loadErrorDescription") }}
+            <div class="plugins-load-error-action">
+                <KsButton size="small" :icon="Refresh" @click="loadPlugins">
+                    {{ $t("retry") }}
+                </KsButton>
+            </div>
+        </KsAlert>
+    </div>
 
     <section v-else-if="!filteredPlugins" class="plugins-container plugins-container--loading">
         <KsSkeleton v-for="n in 8" :key="n" animated :rows="4" class="plugin-skeleton" />
     </section>
 
     <template v-else>
+        <component :is="catalogExtension.banner" v-if="catalogExtension.banner" :catalog="baseList" />
+
         <div class="filter-toolbar">
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
+                    :placeholder="totalPlugins ? $t('pluginPage.search', {count: totalPlugins}) : $t('search')"
                     clearable
                 />
             </div>
@@ -23,40 +36,58 @@
                 <KsCheckTag
                     v-for="category in availableCategories"
                     :key="category"
+                    class="category-tag"
                     pill
                     :checked="selectedCategories.includes(category)"
                     @change="toggleCategory(category)"
                 >
                     <template #icon>
-                        <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="16" />
+                        <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="14" />
                     </template>
                     <span class="category-label">{{ category }}</span>
                 </KsCheckTag>
             </div>
 
-            <div class="sort-by">
-                <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
-                <KsSelect v-model="sortBy" size="small" class="sort-select">
-                    <KsOption
-                        v-for="option in sortOptions"
-                        :key="option.value"
-                        :value="option.value"
-                        :label="option.label"
-                    />
-                </KsSelect>
+            <div class="filter-toolbar-end">
+                <component :is="catalogExtension.toolbar" v-if="catalogExtension.toolbar" :catalog="baseList" />
+
+                <div class="sort-by">
+                    <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
+                    <KsSelect v-model="sortBy" size="small" class="sort-select">
+                        <KsOption
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            :value="option.value"
+                            :label="option.label"
+                        />
+                    </KsSelect>
+                </div>
             </div>
         </div>
 
-        <KsNoData
-            v-if="pluginsList.length === 0"
-            :description="$t('pluginPage.noResults')"
+        <div v-if="pluginsList.length === 0 && extraCardCount === 0" class="plugins-empty" data-test="plugins-empty">
+            <KsNoData :title="emptyCopy.title">
+                {{ emptyCopy.description }}
+            </KsNoData>
+            <KsButton data-test="plugins-show-all" @click="showAllPlugins">
+                {{ $t("pluginPage.showAll") }}
+            </KsButton>
+        </div>
+
+        <component
+            :is="catalogExtension.table"
+            v-else-if="catalogExtension.table && view === 'table'"
+            :plugins="pluginsList"
+            :catalog="baseList"
+            :search="searchInput"
+            :categories="selectedCategories"
         />
 
         <section v-else class="plugins-container">
             <KsTooltip
                 v-for="plugin in pluginsList"
                 :showAfter="1000"
-                :key="`${plugin.name}-${plugin.subGroup ?? ''}`"
+                :key="plugin.name"
             >
                 <template #content>
                     <div class="tasks-tooltips">
@@ -82,41 +113,57 @@
                     </div>
                 </template>
                 <PluginCard
-                    :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
+                    :iconCls="plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
-                    :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
+                    :title="displayTitle(plugin)"
                     :description="plugin.description"
                     :categories="plugin.categories"
                     :taskCount="taskCount(plugin)"
                     :blueprintCount="blueprintCount(plugin)"
                     @click="openGroup(plugin)"
-                />
+                >
+                    <template v-if="catalogExtension.cardStatus" #status>
+                        <component :is="catalogExtension.cardStatus" :plugin />
+                    </template>
+                </PluginCard>
             </KsTooltip>
+            <component
+                :is="catalogExtension.extraCards"
+                v-if="catalogExtension.extraCards"
+                :catalog="baseList"
+                :search="searchInput"
+                :categories="selectedCategories"
+            />
         </section>
     </template>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
+    import {ref, computed, markRaw, onBeforeUnmount, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsButton, KsSkeleton, debounce} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
-    import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {usePluginView, useQueryChoice} from "./pluginView"
+    import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginDisplayTitle, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
+    import {usePluginCatalogExtension} from "override/components/plugins/pluginCatalogExtension"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
+    import Refresh from "vue-material-design-icons/Refresh.vue"
     import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
     import CloudOutline from "vue-material-design-icons/CloudOutline.vue"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Creation from "vue-material-design-icons/Creation.vue"
+    import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
     import TagOutline from "vue-material-design-icons/TagOutline.vue"
+    import WrenchOutline from "vue-material-design-icons/WrenchOutline.vue"
 
     const route = useRoute()
     const router = useRouter()
@@ -125,6 +172,8 @@
     const miscStore = useMiscStore()
     const enrichmentStore = usePluginsEnrichmentStore()
     const {totalPlugins} = usePluginsCount()
+    const catalogExtension = usePluginCatalogExtension()
+    const view = usePluginView()
 
     const title = computed(() => t("plugins.names"))
     const routeInfo = computed(() => ({title: title.value, breadcrumb: undefined}))
@@ -137,11 +186,28 @@
         ...pluginsStore.icons,
         ...pluginsStore.groupIcons,
     }))
-    const searchText = ref("")
-    const selectedCategories = ref<string[]>([])
+    const queryQ = (): string => typeof route.query.q === "string" ? route.query.q : ""
+    const searchText = ref(queryQ())
+    let writtenQ = searchText.value
+    const writeSearchToRoute = debounce((q: string) => {
+        writtenQ = q
+        if (q !== queryQ()) router.replace({query: {...route.query, q: q || undefined}})
+    }, 300)
+    watch(searchText, (q) => writeSearchToRoute(q))
+    watch(queryQ, (q) => {
+        if (q === writtenQ) return
+        writeSearchToRoute.cancel()
+        writtenQ = q
+        searchText.value = q
+    })
+    onBeforeUnmount(() => writeSearchToRoute.cancel())
+    const selectedCategories = computed<string[]>(() =>
+        [route.query.categories ?? []].flat().filter((category): category is string => typeof category === "string"),
+    )
 
-    type SortKey = "nameAsc" | "nameDesc" | "newest" | "mostUsed"
-    const sortBy = ref<SortKey>("nameAsc")
+    const SORT_KEYS = ["nameAsc", "nameDesc", "newest", "mostUsed"] as const
+    type SortKey = typeof SORT_KEYS[number]
+    const sortBy = useQueryChoice("sort", SORT_KEYS)
 
     const sortOptions = computed<{value: SortKey, label: string}[]>(() => [
         {value: "nameAsc", label: t("pluginPage.sort.nameAsc")},
@@ -152,47 +218,47 @@
 
     const searchInput = computed(() => searchText.value.toLowerCase())
 
-    const pluginTitle = (plugin: Plugin): string => String(plugin?.manifest?.["X-Kestra-Title"] ?? plugin?.title ?? "").toLowerCase()
+    const displayTitle = (plugin: Plugin): string => pluginDisplayTitle(plugin, enrichmentStore.getEnrichment(plugin))
+    const pluginTitle = (plugin: Plugin): string => displayTitle(plugin).toLowerCase()
 
     const baseList = computed<Plugin[]>(() => {
-        const source = filteredPlugins.value ?? []
-        const grouped = source.reduce((acc: Record<string, Plugin[]>, plugin) => {
-            (acc[plugin.group] ??= []).push(plugin)
-            return acc
-        }, {})
-
-        const filtered = Object.values(grouped).flatMap(group => {
-            const subGroups = group.filter(p => p.subGroup && isVisible(p))
-            return subGroups.length ? subGroups : group.filter(p => !p.subGroup)
-        })
-
-        return filtered
-            .filter((plugin, index, self) =>
-                index === self.findIndex(p => p.name === plugin.name && p.subGroup === plugin.subGroup),
-            )
-            .filter(plugin => isVisible(plugin))
+        return latestVersionEntries(filteredPlugins.value ?? [])
+            .filter(plugin => !plugin.subGroup && isVisible(plugin))
     })
 
     const CATEGORY_ICONS: Record<string, Component> = markRaw({
         AI: Creation,
         BUSINESS: BriefcaseOutline,
         CLOUD: CloudOutline,
-        CORE: Creation,
+        CORE: PackageVariantClosed,
         DATA: SourceBranch,
         INFRASTRUCTURE: CogOutline,
+        TOOL: WrenchOutline,
     })
 
     const availableCategories = computed<string[]>(() =>
-        [...new Set((filteredPlugins.value ?? []).flatMap(p => p.categories ?? []))].sort(),
+        [...new Set(baseList.value.flatMap(p => p.categories ?? []))].sort(),
     )
 
-    const toggleCategory = (category: string) => {
-        const idx = selectedCategories.value.indexOf(category)
-        if (idx === -1) {
-            selectedCategories.value.push(category)
-        } else {
-            selectedCategories.value.splice(idx, 1)
+    const subGroupTitlesByName = computed(() => {
+        const titles = new Map<string, string[]>()
+        for (const plugin of filteredPlugins.value ?? []) {
+            if (plugin.subGroup && plugin.title) {
+                titles.set(plugin.name, [...(titles.get(plugin.name) ?? []), plugin.title.toLowerCase()])
+            }
         }
+        return titles
+    })
+
+    const matchesSearch = (plugin: Plugin): boolean =>
+        isPluginMatched(plugin, searchInput.value)
+        || (subGroupTitlesByName.value.get(plugin.name) ?? []).some(title => title.includes(searchInput.value))
+
+    const toggleCategory = (category: string) => {
+        const categories = selectedCategories.value.includes(category)
+            ? selectedCategories.value.filter(selected => selected !== category)
+            : [...selectedCategories.value, category]
+        router.replace({query: {...route.query, categories: categories.length > 0 ? categories : undefined}})
     }
 
     const matchesSelectedCategories = (plugin: Plugin): boolean => {
@@ -233,10 +299,34 @@
 
     const pluginsList = computed<Plugin[]>(() => {
         return baseList.value
-            .filter(plugin => isPluginMatched(plugin, searchInput.value))
+            .filter(plugin => matchesSearch(plugin))
             .filter(plugin => matchesSelectedCategories(plugin))
+            .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
             .sort(comparators[sortBy.value])
     })
+
+    const extraCardCount = computed(() => catalogExtension.extraCardCount?.(baseList.value, searchInput.value, selectedCategories.value) ?? 0)
+
+    const isFiltered = computed(() => searchInput.value !== "" || selectedCategories.value.length > 0)
+
+    const emptyCopy = computed(() => catalogExtension.emptyCopy?.(isFiltered.value) ?? {
+        title: t("pluginPage.empty.title"),
+        description: t("pluginPage.empty.description"),
+    })
+
+    const showAllPlugins = async () => {
+        searchText.value = ""
+        await router.replace({query: {...route.query, q: undefined, categories: undefined}})
+        catalogExtension.reset?.()
+    }
+
+    const loadPlugins = () => {
+        loadError.value = false
+        pluginsStore.ensurePlugins().catch((err) => {
+            console.error("Failed to load plugins", err)
+            loadError.value = true
+        })
+    }
 
     const loadPluginIcons = async () => {
         try {
@@ -248,18 +338,10 @@
 
     const openGroup = (plugin: Plugin) => {
         if (!plugin?.name) return
-        const params: Record<string, string> = {...route.params as Record<string, string>, name: plugin.name}
-        if (plugin.subGroup) params.subGroup = plugin.subGroup
-        router.push({name: "plugins/group", params})
+        router.push({name: "plugins/group", params: {...route.params as Record<string, string>, name: plugin.name}})
     }
 
-    const isVisible = (plugin: Plugin) => {
-        return allElements(plugin).length > 0
-    }
-
-    const hasIcon = (cls: string | undefined) => {
-        return cls !== undefined && icons.value[cls] !== undefined
-    }
+    const isVisible = (plugin: Plugin) => taskCount(plugin) > 0
 
     const allElementsByTypeEntries = (plugin: Plugin): [string, string[]][] => {
         return Object.entries(plugin)
@@ -270,11 +352,7 @@
             ])
     }
 
-    const allElements = (plugin: Plugin): string[] => {
-        return allElementsByTypeEntries(plugin).flatMap(([, classes]) => classes)
-    }
-
-    const taskCount = (plugin: Plugin): number => allElements(plugin).length
+    const taskCount = (plugin: Plugin): number => pluginElementClasses(plugin).length
 
     const blueprintCount = (plugin: Plugin): number => {
         return enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0
@@ -298,34 +376,64 @@
         loadPluginIcons()
         pluginsStore.fetchIcons()
         miscStore.loadConfigs()
-        pluginsStore.ensurePlugins().catch((err) => {
-            console.error("Failed to load plugins", err)
-            loadError.value = true
-        })
+        loadPlugins()
         enrichmentStore.fetchEnrichment()
+        catalogExtension.load?.()
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .plugins-load-error {
+        padding: var(--ks-spacing-6);
+    }
+
+    .plugins-load-error-action {
+        margin-top: var(--ks-spacing-2);
+    }
+
+    .plugins-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-6);
+    }
+
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
         gap: var(--ks-spacing-3);
         width: 100%;
         padding: var(--ks-spacing-6);
+    }
 
-        &__search {
-            min-width: 17rem;
-        }
+    .filter-toolbar__search {
+        flex: 0 1 17rem;
+        min-width: 12rem;
+    }
 
+    .filter-toolbar-end {
+        flex: 1 1 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-3);
+    }
+
+    .filter-toolbar {
         .category-tags {
             display: flex;
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
-            flex: 1 1 auto;
             min-width: 0;
+        }
+
+        .category-tag {
+            gap: var(--ks-spacing-1);
+            padding: var(--ks-spacing-1) var(--ks-spacing-3);
+            font-weight: normal;
         }
 
         .category-label {
@@ -360,10 +468,10 @@
         gap: var(--ks-spacing-4);
         grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
+    }
 
-        &--loading {
-            margin-top: var(--ks-spacing-4);
-        }
+    .plugins-container--loading {
+        margin-top: var(--ks-spacing-4);
     }
 
     .plugin-skeleton {

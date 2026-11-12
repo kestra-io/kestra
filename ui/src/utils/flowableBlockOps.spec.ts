@@ -13,7 +13,9 @@ import {
     duplicateBlockAtPath,
     errorsLaneTarget,
     flattenTaskIds,
+    upstreamTaskIds,
     groupValidationIssuesByTask,
+    errorsToShow,
     healDagRemoval,
     isFlowableType,
     isWrappedLaneItem,
@@ -1571,6 +1573,152 @@ afterExecution:
         })
     })
 
+    describe("upstreamTaskIds", () => {
+        const flow = {
+            tasks: [
+                {id: "fetch", type: "io.kestra.plugin.core.log.Log"},
+                {id: "loop", type: "io.kestra.plugin.core.flow.Sequential", tasks: [
+                    {id: "inner_a", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "inner_b", type: "io.kestra.plugin.core.log.Log"},
+                ]},
+                {id: "notify", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            errors: [{id: "on_error", type: "io.kestra.plugin.core.log.Log"}],
+            finally: [{id: "cleanup", type: "io.kestra.plugin.core.log.Log"}],
+        }
+
+        it("lists nothing before the first task", () => {
+            expect(upstreamTaskIds(flow, "fetch")).toEqual([])
+        })
+
+        it("lists only earlier siblings and their descendants", () => {
+            expect(upstreamTaskIds(flow, "notify")).toEqual(["fetch", "loop", "inner_a", "inner_b"])
+        })
+
+        it("lists preceding tasks of enclosing flowables and earlier siblings inside", () => {
+            expect(upstreamTaskIds(flow, "inner_b")).toEqual(["fetch", "inner_a"])
+        })
+
+        it("offers every main task to errors and finally tasks", () => {
+            expect(upstreamTaskIds(flow, "on_error")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify"])
+            expect(upstreamTaskIds(flow, "cleanup")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error"])
+        })
+
+        it("follows dependsOn transitively inside a Dag", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "before", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_c", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_b"]},
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        {task: {id: "d_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                        {task: {id: "d_x", type: "io.kestra.plugin.core.log.Log"}},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "d_c")).toEqual(["before", "d_b", "d_a"])
+        })
+
+        it("does not offer concurrent siblings to each other", () => {
+            const concurrentFlow = {
+                tasks: [
+                    {id: "fetch", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "par", type: "io.kestra.plugin.core.flow.Parallel", tasks: [
+                        {id: "p_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "p_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                    {id: "each", type: "io.kestra.plugin.core.flow.ForEach", concurrencyLimit: 0, values: [1], tasks: [
+                        {id: "e_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "e_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                    {id: "seq_each", type: "io.kestra.plugin.core.flow.ForEach", values: [1], tasks: [
+                        {id: "s_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "s_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(concurrentFlow, "p_b")).toEqual(["fetch"])
+            expect(upstreamTaskIds(concurrentFlow, "e_b")).toEqual(["fetch", "par", "p_a", "p_b"])
+            expect(upstreamTaskIds(concurrentFlow, "s_b")).toEqual(["fetch", "par", "p_a", "p_b", "each", "e_a", "e_b", "s_a"])
+        })
+
+        it("offers a flowable's tasks to its own errors and finally", () => {
+            const nestedFlow = {
+                tasks: [
+                    {id: "before", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "wrap", type: "io.kestra.plugin.core.flow.Sequential",
+                        tasks: [{id: "w_task", type: "io.kestra.plugin.core.log.Log"}],
+                        errors: [{id: "w_err", type: "io.kestra.plugin.core.log.Log"}],
+                        finally: [{id: "w_fin", type: "io.kestra.plugin.core.log.Log"}],
+                    },
+                ],
+            }
+
+            expect(upstreamTaskIds(nestedFlow, "w_err")).toEqual(["before", "w_task"])
+            expect(upstreamTaskIds(nestedFlow, "w_fin")).toEqual(["before", "w_task", "w_err"])
+        })
+
+        it("tolerates a null entry in a Dag", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        null,
+                        {task: {id: "d_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "d_b")).toEqual(["d_a"])
+        })
+
+        it("offers a Switch's defaults to its own errors and finally", () => {
+            const switchFlow = {
+                tasks: [
+                    {id: "route", type: "io.kestra.plugin.core.flow.Switch", value: "x",
+                        cases: {prod: [{id: "c_prod", type: "io.kestra.plugin.core.log.Log"}]},
+                        defaults: [{id: "c_default", type: "io.kestra.plugin.core.log.Log"}],
+                        errors: [{id: "s_err", type: "io.kestra.plugin.core.log.Log"}],
+                        finally: [{id: "s_fin", type: "io.kestra.plugin.core.log.Log"}],
+                    },
+                ],
+            }
+
+            expect(upstreamTaskIds(switchFlow, "s_err")).toEqual(["c_prod", "c_default"])
+            expect(upstreamTaskIds(switchFlow, "s_fin")).toEqual(["c_prod", "c_default", "s_err"])
+        })
+
+        it("falls back to every other task when the task is not in the flow yet", () => {
+            expect(upstreamTaskIds(flow, "brand_new")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error", "cleanup"])
+        })
+
+        it("locates the edited task by its path while its id is cleared", () => {
+            const renamingFlow = {
+                ...flow,
+                tasks: [flow.tasks[0], flow.tasks[1], {id: "", type: "io.kestra.plugin.core.log.Log"}, {id: "after", type: "io.kestra.plugin.core.log.Log"}],
+            }
+
+            expect(upstreamTaskIds(renamingFlow, "", "tasks[2]")).toEqual(["fetch", "loop", "inner_a", "inner_b"])
+        })
+
+        it("locates an id-less Dag task by its item or task path", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        {task: {type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                        {task: {id: "d_c", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "", "tasks[0].tasks[1]")).toEqual(["d_a"])
+            expect(upstreamTaskIds(dagFlow, "", "tasks[0].tasks[1].task")).toEqual(["d_a"])
+        })
+    })
+
     describe("buildMinimalTask", () => {
         it("produces an object with the given type", () => {
             // Given
@@ -1983,6 +2131,37 @@ afterExecution:
 
         const group = (...errors: {pointer?: string, detail: string}[]) => groupValidationIssuesByTask(errors, flow)
 
+        const saved = `
+tasks:
+  - id: fetch_data
+    type: io.kestra.plugin.core.http.Request
+`.trim()
+
+        const errors = [
+            {pointer: "/tasks/0/uri", detail: "must not be null"},
+            {pointer: "/tasks/1/then/0/message", detail: "must not be null"},
+        ]
+
+        it("holds back the errors of a block the saved flow does not have yet", () => {
+            const shown = errorsToShow(errors, flow, saved, false)
+
+            expect(shown.map(e => e.pointer)).toEqual(["/tasks/0/uri"])
+        })
+
+        it("shows every error once a save has been attempted", () => {
+            expect(errorsToShow(errors, flow, saved, true)).toHaveLength(2)
+        })
+
+        it("holds back every block error while the flow has never been saved", () => {
+            expect(errorsToShow(errors, flow, "", false)).toEqual([])
+        })
+
+        it("keeps a flow-level error, which belongs to no block", () => {
+            const flowLevel = [{pointer: "/namespace", detail: "must not be blank"}]
+
+            expect(errorsToShow(flowLevel, flow, "", false)).toEqual(flowLevel)
+        })
+
         it("names the missing field after the task that lacks it", () => {
             expect(group({pointer: "/tasks/0/uri", detail: "must not be null"}).get("fetch_data")).toEqual(["uri: must not be null"])
         })
@@ -2209,7 +2388,7 @@ tasks:
                 const result = addBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks", wrapAsDagTask(newTask))
 
                 // Then
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(3)
                 expect(parsed.tasks[0].tasks[2].task.id).toBe("c")
                 expect(parsed.tasks[0].tasks[2].dependsOn).toBeUndefined()
@@ -2221,7 +2400,7 @@ tasks:
         describe("extractBlockWithPath / updateBlockAtPath through .task", () => {
             it("reads the inner task's YAML via the .task suffix", () => {
                 const extracted = flowYamlUtils.extractBlockWithPath({source: FLOW_WITH_DAG, path: "tasks[0].tasks[0].task"})
-                const parsed = flowYamlUtils.parse<any>(extracted!)
+                const parsed = parseBlock(extracted!)
                 expect(parsed.id).toBe("a")
                 expect(parsed.type).toBe("io.kestra.plugin.core.log.Log")
             })
@@ -2231,7 +2410,7 @@ tasks:
 
                 const result = updateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[1].task", updatedYaml)
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[1].task.message).toBe("Updated")
                 expect(parsed.tasks[0].tasks[1].dependsOn).toEqual(["a"])
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("a")
@@ -2246,7 +2425,7 @@ tasks:
                     newContent: flowYamlUtils.stringify(["b"]),
                 })
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[0].dependsOn).toEqual(["b"])
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("a")
             })
@@ -2258,7 +2437,7 @@ tasks:
                     newContent: "",
                 })
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks[1].dependsOn).toBeUndefined()
                 expect(parsed.tasks[0].tasks[1].task.id).toBe("b")
             })
@@ -2268,7 +2447,7 @@ tasks:
             it("removes the whole {task, dependsOn} entry, not just the inner task", () => {
                 const result = deleteBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[0]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(1)
                 expect(parsed.tasks[0].tasks[0].task.id).toBe("b")
             })
@@ -2278,7 +2457,7 @@ tasks:
             it("duplicates the wrapper, renaming only the inner task's id", () => {
                 const result = duplicateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[0]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 expect(parsed.tasks[0].tasks).toHaveLength(3)
                 const copy = parsed.tasks[0].tasks[1]
                 expect(String(copy.task.id)).toMatch(/^a_copy/)
@@ -2290,7 +2469,7 @@ tasks:
             it("preserves the duplicate's own dependsOn value", () => {
                 const result = duplicateBlockAtPath(FLOW_WITH_DAG, "tasks[0].tasks[1]")
 
-                const parsed = flowYamlUtils.parse<any>(result)
+                const parsed = parseBlock(result)
                 const copy = parsed.tasks[0].tasks[2]
                 expect(String(copy.task.id)).toMatch(/^b_copy/)
                 expect(copy.dependsOn).toEqual(["a"])

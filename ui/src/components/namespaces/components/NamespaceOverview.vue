@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useExecutionsStore} from "../../../stores/executions"
     
@@ -22,17 +22,19 @@
     const total = ref(0)
     const loaded = ref(false)
 
-    onMounted(() => {
-        if (namespace.value) {
-            executionsStore
-                .findExecutions({"filters[namespace][PREFIX]": namespace.value, onlyTotal: true})
-                .then((response) => {
-                    total.value = response as number
-                    loaded.value = true
-                })
-                .catch(() => {
-                    loaded.value = true
-                })
-        }
-    })
+    watch(namespace, (current) => {
+        if (!current) return
+        loaded.value = false
+        total.value = 0
+        executionsStore
+            .findExecutions({"filters[namespace][PREFIX]": current, onlyTotal: true})
+            .then((response) => {
+                if (current !== namespace.value) return
+                total.value = response as number
+                loaded.value = true
+            })
+            .catch(() => {
+                if (current === namespace.value) loaded.value = true
+            })
+    }, {immediate: true})
 </script>

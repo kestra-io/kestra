@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block">
+        <div class="task-icon">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -26,7 +26,7 @@
         </div>
 
         <div
-            class="task-id flex-grow-1"
+            class="task-id"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
             <KsTooltip>
@@ -42,7 +42,7 @@
                     {{ formatAttemptDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
-                    <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
+                    <span class="task-id-title">{{ currentTaskRun.taskId }}</span>
                     <small v-if="currentTaskRun.value">
                         {{ currentTaskRun.value }}
                     </small>
@@ -50,10 +50,18 @@
             </KsTooltip>
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
+        </div>
+
+        <div v-if="executionsStore.isReusedTaskRun(followedExecution.id, currentTaskRun.id)">
+            <KsTooltip :content="$t('reused_task_run.tooltip', {date: formatAttemptDate(currentTaskRun.state.startDate)})">
+                <KsTag size="small" data-test="task-run-reused">
+                    {{ $t("reused_task_run.label") }}
+                </KsTag>
+            </KsTooltip>
         </div>
 
         <div class="task-status">
@@ -81,7 +89,7 @@
     </div>
     <div class="attempt-header" :class="{'attempt-header--flush': hideHeader}">
         <KsSelect
-            class="d-none d-md-inline-block attempt-select"
+            class="attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
@@ -101,8 +109,8 @@
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration
                     :histories="selectedAttempt(currentTaskRun).state.histories"
                     :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
@@ -126,9 +134,10 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
     import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
-    import type {Execution} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
 
     const pluginsStore = usePluginsStore()
+    const executionsStore = useExecutionsStore()
     const {navigateToStateFilter} = useStateFilter()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
@@ -238,7 +247,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -247,22 +256,30 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        & > * {
             display: flex;
             align-items: center;
         }
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs)
+            font-size: var(--ks-font-size-xs);
         }
 
-        .task-duration small {
-            white-space: nowrap;
-            color: var(--ks-text-secondary);
-            line-height: 1;
-        }
+        .task-duration {
+            display: none;
 
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+
+            small {
+                white-space: nowrap;
+                color: var(--ks-text-secondary);
+                line-height: 1;
+                margin-inline-end: var(--ks-spacing-1);
+            }
+        }
     }
 
     .taskrun-header {
@@ -270,13 +287,19 @@
         padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
+            display: none;
             flex-shrink: 0;
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
             border-radius: var(--ks-radius-base);
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
         }
 
         .task-id {
+            flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -285,6 +308,19 @@
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
             }
+
+            .task-id-title {
+                margin-inline-end: var(--ks-spacing-1);
+                font-weight: var(--ks-font-weight-bold);
+            }
+        }
+    }
+
+    @media (max-width: 767px) {
+        .taskrun-header .task-id {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
         }
     }
 
@@ -295,11 +331,19 @@
     }
 
     .attempt-header {
+        .attempt-select {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+        }
+
         .kel-select {
             width: 115px;
             height: 32px;
 
-            :deep(.kel-select__wrapper) {
+            & :deep(.kel-select__wrapper) {
                 height: 32px;
                 min-height: 32px;
             }

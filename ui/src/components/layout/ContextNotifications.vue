@@ -53,7 +53,6 @@
                     :key="item.id"
                     :item="item"
                     :active="active"
-                    :sizeDependencies="[item.title, item.read, item.referenceId, item.totalItems]"
                     :data-index="item.id"
                 >
                     <NotificationRow
@@ -124,7 +123,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         display: flex;
         align-items: center;

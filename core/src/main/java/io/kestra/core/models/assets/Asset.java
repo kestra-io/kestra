@@ -6,15 +6,18 @@ import java.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
 
@@ -22,6 +25,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -43,8 +47,22 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
 
+    public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
+
+    public static final String METADATA_PREFIX = "metadata.";
+
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
+
+    public static final String ID_PATTERN = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*";
+
+    private static final String FULL_ID_PATTERN = "^[a-zA-Z0-9/][a-zA-Z0-9._:/-]*";
+
+    /** The audit log detail id embeds the asset id, so the asset id has to stay this short. */
+    public static final int ID_MAX_LENGTH = 150;
+
+    /** The id an asset was given, when {@link #normalizeId(String)} changed it. */
+    public static final String FULL_ID_METADATA_KEY = SYSTEM_METADATA_PREFIX + "fullId";
 
     @Hidden
     @TenantId
@@ -55,8 +73,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String namespace;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
-    @Size(min = 1, max = 150)
+    @Pattern(regexp = ID_PATTERN)
+    @Size(min = 1, max = ID_MAX_LENGTH)
     protected String id;
 
     @NotBlank
@@ -70,7 +88,13 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(max = 100)
-    @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
+    @Schema(
+        title = "The day-2 actions offered on this asset, each backing onto a flow.",
+        description = "Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. " +
+            "When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. " +
+            "When it is omitted, the stored actions are kept. " +
+            "It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API."
+    )
     private List<@Valid FlowAction> assetActions;
 
     @Nullable
@@ -108,11 +132,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
-        this.id = id;
+        this.id = normalizeId(id);
         this.type = type;
         this.displayName = displayName;
         this.description = description;
         this.metadata = Optional.ofNullable(metadata).map(HashMap::new).orElse(new HashMap<>());
+        if (!Objects.equals(id, this.id)) {
+            this.metadata.put(FULL_ID_METADATA_KEY, id);
+        }
         Instant now = Instant.now();
         this.created = Optional.ofNullable(created).orElse(now);
         this.updated = Optional.ofNullable(updated).orElse(now);
@@ -250,7 +277,31 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     }
 
     public static String uid(String tenantId, String id) {
-        return IdUtils.fromParts(tenantId, id);
+        return IdUtils.fromParts(tenantId, normalizeId(id));
+    }
+
+    /**
+     * The id an asset is stored and looked up by. Reverse proxies refuse or decode a slash in a URL path, so slashes
+     * become colons: those at either end are dropped, and a run of slashes with the colons around it becomes one
+     * colon, which leaves the colons of an id without slashes alone, such as the empty fields of an ARN. An id still
+     * longer than {@link #ID_MAX_LENGTH} keeps its beginning and ends with a hash of the whole id, so that it fits,
+     * stays readable and is the same wherever it is computed. A normalized id is left as it is, so the function can be
+     * applied to an id whatever its origin.
+     */
+    public static String normalizeId(String id) {
+        if (id == null) {
+            return null;
+        }
+        String converted = id.contains("/") ? id.replaceAll("^/+|/+$", "").replaceAll(":?/+:?", ":") : id;
+        if (converted.length() <= ID_MAX_LENGTH) {
+            return converted;
+        }
+        String hash = IdUtils.from(converted);
+        int end = ID_MAX_LENGTH - hash.length() - 1;
+        if (Character.isHighSurrogate(converted.charAt(end - 1))) {
+            end--;
+        }
+        return converted.substring(0, end) + ":" + hash;
     }
 
     public Asset withTenantId(String tenantId) {
@@ -261,6 +312,23 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
         return this;
+    }
+
+    @AssertTrue(message = "the full id must match \"" + FULL_ID_PATTERN + "\"")
+    @JsonIgnore
+    public boolean isFullIdMatchingThePattern() {
+        Object fullId = metadata == null ? null : metadata.get(FULL_ID_METADATA_KEY);
+        return fullId == null || fullId.toString().matches(FULL_ID_PATTERN);
+    }
+
+    @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")
+    @JsonIgnore
+    public boolean isEveryConditionFieldReadable() {
+        return ListUtils.emptyOnNull(assetActions).stream()
+            .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
+            .map(FieldCondition::field)
+            .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
+                || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
     }
 
     public Asset withAssetActions(List<FlowAction> assetActions) {

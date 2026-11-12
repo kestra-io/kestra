@@ -1,6 +1,28 @@
 import {describe, expect, test} from "vitest"
 import * as YamlUtils from "./positions.ts"
 
+describe("localizeElementAtIndex", () => {
+    test.each(["", "  "])("localizes the key on a sequence-item line with indentation %j", (indent) => {
+        const source = `tasks:
+${indent}- id: first
+${indent}  type: io.kestra.plugin.core.log.Log
+${indent}- id: second
+${indent}  type: io.kestra.plugin.core.log.Log
+`
+        const cursorIndex = source.indexOf("second") + "second".length
+
+        expect(YamlUtils.localizeElementAtIndex(source, cursorIndex)).toMatchObject({
+            key: "id",
+            value: "second",
+            path: ["tasks"],
+            parents: expect.arrayContaining([{
+                id: "second",
+                type: "io.kestra.plugin.core.log.Log",
+            }]),
+        })
+    })
+})
+
 describe("get lines infos", () => {
     test("get tasks lines", () => {
         const yamlString = `# this count as an empty line
@@ -186,5 +208,97 @@ describe("getTypeAtPosition", () => {
         `
         const result = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 2, column:5}, ["type1"]) // line 2, column 5 is 'tasks' field
         expect(result).toBeNull()
+    })
+})
+
+describe("getTypeAtPosition with nested taskRunner", () => {
+    // No trailing newline: the YAML source ends exactly at the end of the
+    // last property, so an end-of-line cursor must still fall inside its map.
+    const yamlString = `
+tasks:
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: test
+    script: test`
+    const validTypes = [
+        "io.kestra.plugin.scripts.python.Script",
+        "io.kestra.plugin.scripts.runner.docker.Docker",
+    ]
+
+    test("cursor inside taskRunner.type resolves to the task runner type", () => {
+        const result = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 6, column: 10}, validTypes)
+        expect(result).toBe("io.kestra.plugin.scripts.runner.docker.Docker")
+    })
+
+    test("sibling property after taskRunner resolves to the parent task type", () => {
+        const containerImage = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 7, column: 10}, validTypes)
+        expect(containerImage).toBe("io.kestra.plugin.scripts.python.Script")
+
+        const script = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 8, column: 10}, validTypes)
+        expect(script).toBe("io.kestra.plugin.scripts.python.Script")
+    })
+
+    test("cursor at the end of the nested taskRunner.type line still resolves to the task runner type", () => {
+        const nestedLastYaml = `
+tasks:
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker`
+        // line 6 is 57 chars, so the Monaco end-of-line column is 58
+        const result = YamlUtils.getTypeAtPosition(nestedLastYaml, {lineNumber: 6, column: 58}, validTypes)
+        expect(result).toBe("io.kestra.plugin.scripts.runner.docker.Docker")
+    })
+
+    test("cursor at the end of the parent's last property still resolves to the parent task type", () => {
+        // line 8 is 16 chars, so the Monaco end-of-line column is 17
+        const result = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 8, column: 17}, validTypes)
+        expect(result).toBe("io.kestra.plugin.scripts.python.Script")
+    })
+})
+
+describe("getVersionAtPosition with nested taskRunner", () => {
+    // No trailing newline: the YAML source ends exactly at the end of the
+    // last property, so an end-of-line cursor must still fall inside its map.
+    const yamlString = `
+tasks:
+  - id: versioned
+    type: parent.Type
+    version: 1.0.0
+    taskRunner:
+      type: runner.Type
+      version: 2.0.0
+    containerImage: test`
+
+    test("cursor inside taskRunner.version resolves to the task runner version", () => {
+        const result = YamlUtils.getVersionAtPosition(yamlString, {lineNumber: 8, column: 10})
+        expect(result).toBe("2.0.0")
+    })
+
+    test("sibling property after taskRunner resolves to the parent version", () => {
+        const result = YamlUtils.getVersionAtPosition(yamlString, {lineNumber: 9, column: 10})
+        expect(result).toBe("1.0.0")
+    })
+
+    test("cursor at the end of the nested taskRunner.version line still resolves to the task runner version", () => {
+        const nestedLastYaml = `
+tasks:
+  - id: versioned
+    type: parent.Type
+    version: 1.0.0
+    taskRunner:
+      type: runner.Type
+      version: 2.0.0`
+        // line 8 is 20 chars, so the Monaco end-of-line column is 21
+        const result = YamlUtils.getVersionAtPosition(nestedLastYaml, {lineNumber: 8, column: 21})
+        expect(result).toBe("2.0.0")
+    })
+
+    test("cursor at the end of the parent property after taskRunner still resolves to the parent version", () => {
+        // line 9 is 24 chars, so the Monaco end-of-line column is 25
+        const result = YamlUtils.getVersionAtPosition(yamlString, {lineNumber: 9, column: 25})
+        expect(result).toBe("1.0.0")
     })
 })

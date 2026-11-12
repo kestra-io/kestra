@@ -371,9 +371,12 @@
     // whatever's pending yet (nothing, since `messages`/`pendingConfirmation` start empty) — a harmless
     // `undefined` write in the common case, but it's what clears a stale `previewSource` left over from a
     // prior CopilotChat instance sharing this same (persistent) flow store.
-    watch(activeFlowPreview, (value) => {
-        flowStore.previewSource = value
-    }, {immediate: true})
+    function mirrorEditorPreview(source: string | undefined): void {
+        flowStore.previewSource = source
+        flowStore.previewBanner = undefined
+    }
+
+    watch(activeFlowPreview, mirrorEditorPreview, {immediate: true})
 
     /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back
      *  to my own editing" action behind both the transcript card's Dismiss button and the main editor's
@@ -383,7 +386,7 @@
         // confirmation takes priority in `activeFlowPreview`, and declining that one goes through its
         // own Reject action on the interactive card, not this shared "drop the preview" shortcut.
         if (!pendingConfirmationFlowSource.value && pendingDraft.value) dismissDraft(pendingDraft.value.draftId)
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     }
 
     flowStore.declinePreview = declineActivePreview
@@ -488,7 +491,7 @@
         // A new turn drops the editor's diff preview even before it resolves: `sendChat` already nulls
         // `pendingConfirmation` (self-clearing `pendingConfirmationFlowSource`), but a past draft card
         // stays in the transcript forever with no such reset, so it must be cleared here explicitly.
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
         sendChat({
             prompt,
             mode: mode.value,
@@ -501,7 +504,7 @@
      *  otherwise survives into the fresh conversation since `reset()` clears the transcript, not the
      *  editor. */
     function onNewChat(): void {
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
         resetDraftTracking()
         reset()
     }
@@ -637,7 +640,7 @@
         cancel()
         // The editor's diff preview must not outlive this panel — e.g. closing the copilot dock
         // while a draft/proposal is still pending.
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     })
 </script>
 
@@ -691,7 +694,7 @@
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+    /* `ui/src/styles/app.css` themes only the WebKit scrollbar, so Firefox needs this to avoid
        a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
        because Chromium ignores those rules as soon as `scrollbar-color` is set. */
     @supports not selector(::-webkit-scrollbar) {

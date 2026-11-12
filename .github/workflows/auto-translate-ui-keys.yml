@@ -13,9 +13,16 @@ on:
           - "true"
         default: "false"
         required: false
+      # Keep these options in step with the branch list in the `plan` job.
       branch:
-        description: "Run for this branch only (default: every branch in the list)"
-        type: string
+        description: "Branch to translate, or all for every branch in the list"
+        type: choice
+        options:
+          - "develop"
+          - "releases/v2.0.x"
+          - "releases/v1.3.x"
+          - "all"
+        default: "develop"
         required: false
 
 # Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
@@ -29,7 +36,7 @@ jobs:
   # A schedule always fires from the default branch, so this one workflow file drives every branch
   # in the list below: each gets its own checkout, its own generator run and its own bot PR. Adding a
   # release branch is a one-line change here, once that branch has the translation toolset (the
-  # fingerprints and the shared scripts). A manual run can be narrowed to one branch.
+  # fingerprints and the shared scripts). A manual run translates one branch (develop by default), or all of them.
   plan:
     name: Branches
     runs-on: ubuntu-latest
@@ -41,7 +48,7 @@ jobs:
         env:
           ONLY: ${{ inputs.branch }}
         run: |
-          if [ -n "$ONLY" ]; then
+          if [ -n "$ONLY" ] && [ "$ONLY" != "all" ]; then
             echo "branches=$(printf '%s' "$ONLY" | jq -R -c '[.]')" >> "$GITHUB_OUTPUT"
           else
             echo 'branches=["develop","releases/v2.0.x","releases/v1.3.x"]' >> "$GITHUB_OUTPUT"

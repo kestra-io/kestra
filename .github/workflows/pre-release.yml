@@ -19,6 +19,11 @@ jobs:
   build-artifacts:
     name: Build Artifacts
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
@@ -28,11 +33,33 @@ jobs:
       # Embed the plugin schema bundle in the jar, so the zip/tar and executable published
       # to the GitHub release carry it just like the Docker images do.
       embed-plugins-schema-bundle: true
+      sbom: true
+
+  check-green-commit:
+    name: Check green commit
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+    outputs:
+      already-green: ${{ steps.check.outputs.already-green }}
+    steps:
+      - id: check
+        # on any error already-green stays unset, so the tests run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          COUNT=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs?per_page=100" --paginate \
+            --jq '.check_runs[] | select(.name == "Backend tests / Backend - Tests" and .conclusion == "success") | .id' | wc -l)
+          echo "Successful 'Backend tests / Backend - Tests' check runs on ${{ github.sha }}: $COUNT"
+          echo "already-green=$([ "$COUNT" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   backend-tests:
     name: Backend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    needs: [check-green-commit]
+    if: ${{ needs.check-green-commit.outputs.already-green != 'true' && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
@@ -44,6 +71,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   design-system-frontend-tests:
@@ -51,6 +79,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-maven:
@@ -107,6 +136,8 @@ jobs:
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
     secrets: inherit
+    with:
+      sbom: true
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

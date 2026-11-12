@@ -12,6 +12,7 @@ function buildRouter() {
             {path: "/new", name: "new", meta: {tab: "new-tab"}, component: {template: "<div/>"}},
             {path: "/both/:tab", name: "both", meta: {tab: "meta-tab"}, component: {template: "<div/>"}},
             {path: "/empty", name: "empty", component: {template: "<div/>"}},
+            {path: "/:pathMatch(.*)*", component: {template: "<div/>"}},
         ],
     })
 }

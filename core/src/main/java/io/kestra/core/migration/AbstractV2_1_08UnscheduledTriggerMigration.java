@@ -12,7 +12,7 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 

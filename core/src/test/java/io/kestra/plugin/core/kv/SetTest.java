@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.kv;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,6 +35,26 @@ class SetTest {
 
     @Inject
     TestRunContextFactory runContextFactory;
+
+    @Test
+    void shouldKeepPebbleExpressionWhenRenderedValueContainsOne() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var runContext = this.runContextFactory.of(
+            namespaceId, Map.of("inputs", Map.of("payload", "{{ 1 + 1 }}"))
+        );
+
+        var set = Set.builder()
+            .id(Set.class.getSimpleName())
+            .type(Set.class.getName())
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("test-key"))
+            .value(Property.ofExpression("{{ inputs.payload }}"))
+            .build();
+
+        set.run(runContext);
+
+        assertThat(runContext.namespaceKv(namespaceId).getValue("test-key").orElseThrow().value()).isEqualTo("{{ 1 + 1 }}");
+    }
 
     @Test
     void shouldSetKVGivenNoNamespace() throws Exception {
@@ -220,7 +241,10 @@ class SetTest {
     void typeSpecified() throws Exception {
         String key = "specified_key";
         KVStore kv = createAndPerformSetTask(key, "123.45", KVType.NUMBER);
-        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(123.45);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(new BigDecimal("123.45"));
+
+        kv = createAndPerformSetTask(key, "42", KVType.NUMBER);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(42);
 
         kv = createAndPerformSetTask(key, "true", KVType.BOOLEAN);
         assertThat((Boolean) kv.getValue(key).orElseThrow().value()).isTrue();
@@ -240,6 +264,9 @@ class SetTest {
 
         kv = createAndPerformSetTask(key, "[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(List.of(Map.of("some", "value"), Map.of("another", "value")));
+
+        kv = createAndPerformSetTask(key, "{\"amount\": 12345678.90}", KVType.JSON);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Map.of("amount", new BigDecimal("12345678.90")));
 
         kv = createAndPerformSetTask(key, "{{ 200 }}", KVType.STRING);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo("200");

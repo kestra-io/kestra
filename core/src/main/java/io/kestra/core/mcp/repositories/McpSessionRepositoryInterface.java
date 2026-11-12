@@ -23,7 +23,12 @@ public interface McpSessionRepositoryInterface {
 
     McpSession save(McpSession session);
 
-    Optional<McpSession> delete(String tenantId, String sessionId);
+    /**
+     * Deletes every row of the given session, whatever key it was stored under.
+     *
+     * @return the deleted session, or empty when none matched
+     */
+    Optional<McpSession> delete(String tenantId, String serverId, String sessionId);
 
     /**
      * Deletes all sessions whose {@code created_at} timestamp is before the given threshold.

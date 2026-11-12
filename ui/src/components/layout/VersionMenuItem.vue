@@ -38,7 +38,7 @@
     const configs = computed(() => miscStore.configs)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .version-item {
         display: flex;
         align-items: center;

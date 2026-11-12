@@ -1,10 +1,13 @@
 package io.kestra.core.storages.kv;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import io.kestra.core.models.kv.KVType;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -12,8 +15,11 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public class KVMetadata {
+    private static final String TYPE_KEY = "type";
+
     private String description;
     private Instant expirationDate;
+    private KVType type;
 
     public KVMetadata(String description, Duration ttl) {
         if (ttl != null && ttl.isNegative()) {
@@ -22,7 +28,14 @@ public class KVMetadata {
 
         this.description = description;
         if (ttl != null) {
-            this.expirationDate = Instant.now().plus(ttl);
+            try {
+                this.expirationDate = Instant.now().plus(ttl);
+            } catch (ArithmeticException | DateTimeException e) {
+                throw new IllegalArgumentException(
+                    String.format("ttl '%s' is too large: the expiration date would be beyond the latest supported date", ttl),
+                    e
+                );
+            }
         }
     }
 
@@ -40,6 +53,15 @@ public class KVMetadata {
         this.expirationDate = Optional.ofNullable(metadata.get("expirationDate"))
             .map(Instant::parse)
             .orElse(null);
+        this.type = Optional.ofNullable(metadata.get(TYPE_KEY))
+            .map(KVType::valueOf)
+            .orElse(null);
+    }
+
+    public KVMetadata withType(final KVType type) {
+        KVMetadata copy = new KVMetadata(this.description, this.expirationDate);
+        copy.type = type;
+        return copy;
     }
 
     public Map<String, String> toMap() {
@@ -49,6 +71,9 @@ public class KVMetadata {
         }
         if (expirationDate != null) {
             map.put("expirationDate", expirationDate.toString());
+        }
+        if (type != null) {
+            map.put(TYPE_KEY, type.name());
         }
         return map;
     }

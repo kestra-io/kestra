@@ -109,7 +109,7 @@
     onUnmounted(() => close())
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .error-toast {
         display: none;
     }

@@ -545,6 +545,38 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldResumeBackfillFromPendingDateWhenReEnablingTriggerWithoutRecovery() {
+        // GIVEN: a trigger disabled in the middle of a backfill, whose pending date is also the backfill's current date
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusDays(2);
+        ZonedDateTime pendingDate = evaluatedAt.plusMinutes(15);
+        Backfill backfill = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(3))
+            .end(SchedulerClock.now().minusDays(1))
+            .currentDate(evaluatedAt)
+            .paused(false)
+            .build();
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .backfill(CLOCK, backfill)
+                .updateForNextEvaluationDate(CLOCK, pendingDate)
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(pendingDate.toInstant());
+        assertThat(updated.get().getBackfill().getCurrentDate().toInstant()).isEqualTo(pendingDate.toInstant());
+    }
+
+    @Test
     void shouldSkipMissedSchedulesWhenReEnablingNeverEvaluatedTriggerWithRecoverTrueAndConfiguredLast() {
         // GIVEN: a trigger never evaluated (e.g. created disabled), configured with recoverMissedSchedules: LAST
         triggerStateStore.save(

@@ -87,7 +87,7 @@
     const timezones = timeZones()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .schedule-panel {
         display: flex;
         flex-direction: column;

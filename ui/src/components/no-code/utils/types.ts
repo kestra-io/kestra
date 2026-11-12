@@ -11,6 +11,9 @@ export type Schemas = {
     };
 };
 
+/** The value a single no-code form field can hold, for any schema-driven task/flow property. */
+export type FieldValue = Record<string, unknown> | string | number | boolean | unknown[];
+
 export type Field = {
     component: ReturnType<typeof defineComponent>;
     value: unknown;

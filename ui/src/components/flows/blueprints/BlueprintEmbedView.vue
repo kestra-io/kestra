@@ -90,7 +90,7 @@
     onMounted(ensureInstalledPluginsLoaded)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         margin: 0 0 var(--ks-spacing-4);
 
@@ -132,7 +132,7 @@
         gap: var(--ks-spacing-4);
         min-height: 100%;
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
         }
 

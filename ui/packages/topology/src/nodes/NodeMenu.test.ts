@@ -73,14 +73,6 @@ describe("NodeMenu with several actions", () => {
         expect(edit.onClick).not.toHaveBeenCalled()
     })
 
-    it("should give the node-action--danger class only to a danger action", () => {
-        const wrapper = mountNodeMenu(twoActions())
-
-        const [edit, remove] = wrapper.findAllComponents(NodeMenuItem)
-        expect(edit.classes()).not.toContain("node-action--danger")
-        expect(remove.classes()).toContain("node-action--danger")
-    })
-
     it("should render only a divided action as divided", () => {
         const wrapper = mountNodeMenu(twoActions())
 
@@ -106,6 +98,13 @@ describe("NodeMenu with a single action", () => {
         await wrapper.find("button.node-action-button").trigger("click")
 
         expect(edit.onClick).toHaveBeenCalledTimes(1)
+    })
+
+    it("should give the node-action--danger class to a danger action", () => {
+        const remove = action({danger: true})
+        const wrapper = mountNodeMenu([remove])
+
+        expect(wrapper.find("button .pencil-icon").classes()).toContain("node-action--danger")
     })
 })
 

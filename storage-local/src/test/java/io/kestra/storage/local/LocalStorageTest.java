@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -148,5 +149,82 @@ class LocalStorageTest extends StorageTestSuite {
             .resolve(tenantId)
             .resolve("file.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
+    }
+
+    @Test
+    void shouldDeleteByPrefixSingleFileWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/single.txt"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+
+        List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/single.txt"));
+        assertThat(deleted, notNullValue());
+        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/single.txt")));
+
+        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
+        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("single.txt.metadata");
+        assertFalse(Files.exists(orphanMetadataPath));
+    }
+
+    @Test
+    void shouldDeleteByPrefixDirectoryWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/dir/file1.txt"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/dir/file2.txt"),
+            new StorageObject(Map.of("otherMetadata", "otherValue"), new ByteArrayInputStream("data2".getBytes()))
+        );
+
+        List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/dir/"));
+        assertThat(deleted, notNullValue());
+        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file1.txt")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file2.txt")));
+
+        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
+        Path orphanMetadata1 = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("dir/file1.txt.metadata");
+        Path orphanMetadata2 = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("dir/file2.txt.metadata");
+        assertFalse(Files.exists(orphanMetadata1));
+        assertFalse(Files.exists(orphanMetadata2));
+    }
+
+    @Test
+    void existsInstanceResourceShouldDetectDirectories() throws IOException {
+        var dir = "/exists-instance-" + IdUtils.create();
+        storageInterface.createInstanceDirectory(null, URI.create(dir));
+
+        assertTrue(storageInterface.existsInstanceResource(null, URI.create(dir)));
+        assertTrue(storageInterface.existsInstanceResource(null, URI.create(dir + "/")));
+    }
+
+    @Test
+    void existsInstanceResourceShouldReturnFalseWhenMissing() {
+        assertFalse(storageInterface.existsInstanceResource(null, URI.create("/missing-" + IdUtils.create())));
+    }
+
+    @Test
+    void existsInstanceResourceShouldRejectParentTraversal() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.existsInstanceResource(null, URI.create("kestra:///a/../../etc/passwd"))
+        );
     }
 }

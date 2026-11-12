@@ -37,12 +37,14 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
+    import {useI18n} from "vue-i18n"
     import type {RouteLocationRaw} from "vue-router"
     import MagnifyPlusOutline from "vue-material-design-icons/MagnifyPlusOutline.vue"
     import MagnifyMinusOutline from "vue-material-design-icons/MagnifyMinusOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
 
     const props = defineProps<{
         field: string
@@ -55,6 +57,9 @@
         filter: [{field: string, value: string, negate: boolean}]
     }>()
 
+    const {t} = useI18n()
+    const toast = useToast()
+
     const open = ref(false)
 
     const apply = (negate: boolean) => {
@@ -62,13 +67,14 @@
         open.value = false
     }
 
-    const copyValue = () => {
-        Utils.copy(props.value)
+    const copyValue = async () => {
         open.value = false
+        await Utils.copy(props.value)
+        toast.success(t("copied"))
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .log-value-trigger {
         cursor: pointer;
         color: var(--ks-text-secondary);

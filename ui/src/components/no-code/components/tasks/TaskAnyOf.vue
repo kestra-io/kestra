@@ -255,7 +255,7 @@
     const {getBlockComponent} = useBlockComponent()
 
     const currentSchemaType = computed(() =>
-        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
+        currentSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
     )
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
@@ -423,8 +423,17 @@
         onInput(value)
     }
 
+    function isModelValue(value: unknown): value is ModelValue {
+        return value === undefined
+            || typeof value === "string"
+            || typeof value === "number"
+            || typeof value === "boolean"
+            || Array.isArray(value)
+            || isPlainObject(value)
+    }
+
     function onInput(value: unknown) {
-        model.value = value as ModelValue
+        model.value = isModelValue(value) ? value : undefined
     }
 
     function resetSelectType() {
@@ -439,7 +448,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-form {
     width: 100%;
 }

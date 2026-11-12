@@ -13,6 +13,7 @@ import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRejected;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
 import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.server.ServiceType;
 import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
 import io.kestra.scheduler.utils.TestVNodeAssignmentListener;
 
@@ -136,6 +137,31 @@ class DefaultVNodesAssignerTest {
         assertThat(listener.revokedCount()).isEqualTo(1);
         assertThat(listener.assigned().size()).isEqualTo(1);
         assertThat(listener.assigned().getFirst()).isEqualTo(Set.of(1, 2));
+    }
+
+    @Test
+    void shouldOnlyRevokeAndAssignSameServiceTypeWhenReceivingRebalanceGivenAnotherServiceType() {
+        // GIVEN
+        TestVNodeAssignmentListener scheduler = new TestVNodeAssignmentListener();
+        TestVNodeAssignmentListener executor = new TestVNodeAssignmentListener();
+        assigner.subscribe(TEST_SCHEDULER_1, scheduler);
+        assigner.subscribe(ServiceType.EXECUTOR, "executor-1", executor);
+        assigner.start();
+
+        Instant epoch = Instant.now();
+        // WHEN
+        queue.send(new VNodesAssignmentRequest(Instant.now(), TEST_CONTROLLER_1, epoch, Set.of("executor-1"), ServiceType.EXECUTOR));
+        queue.send(new VNodesAssignmentRelease(Instant.now(), TEST_CONTROLLER_1, epoch, Map.of("executor-1", Set.of(1, 2)), ServiceType.EXECUTOR));
+
+        // THEN
+        assertThat(scheduler.revokedCount()).isEqualTo(0);
+        assertThatList(scheduler.assigned()).isEmpty();
+        assertThat(executor.revokedCount()).isEqualTo(1);
+        assertThatList(executor.assigned()).containsExactly(Set.of(1, 2));
+
+        SchedulerEvent reply = queue.sentEvents().get(1);
+        assertThat(reply).isInstanceOf(SchedulerEvent.VNodesAssignmentReply.class);
+        assertThat(((SchedulerEvent.VNodesAssignmentReply) reply).serviceType()).isEqualTo(ServiceType.EXECUTOR);
     }
 
     @Test

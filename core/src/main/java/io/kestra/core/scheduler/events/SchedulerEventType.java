@@ -14,6 +14,12 @@ public enum SchedulerEventType {
     VNODES_ASSIGNMENT_RELEASE,
     VNODES_ASSIGNMENT_REJECTED,
 
+    // the same events for another service type than the scheduler
+    SERVICE_VNODES_ASSIGNMENT_REQUEST,
+    SERVICE_VNODES_ASSIGNMENT_REPLY,
+    SERVICE_VNODES_ASSIGNMENT_RELEASE,
+    SERVICE_VNODES_ASSIGNMENT_REJECTED,
+
     // ERROR
     INVALID;
 

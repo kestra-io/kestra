@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.vnodes.VNodeConsistentHashRing;
 import io.kestra.core.scheduler.vnodes.VNodesAssigner;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
 
 import io.micronaut.context.annotation.Requires;
@@ -27,7 +28,7 @@ public class StaticVNodesAssigner implements VNodesAssigner {
 
     private final SchedulerConfiguration schedulerConfiguration;
 
-    private final Map<String, VNodeAssignmentListener> listeners = new ConcurrentHashMap<>();
+    private final Map<ServiceType, Map<String, VNodeAssignmentListener>> listeners = new ConcurrentHashMap<>();
 
     /**
      * Creates a new {@link StaticVNodesAssigner} instance.
@@ -40,21 +41,22 @@ public class StaticVNodesAssigner implements VNodesAssigner {
 
     /** {@inheritDoc} **/
     @Override
-    public Disposable subscribe(String service, VNodeAssignmentListener listener) {
-        // Register the new listener
-        listeners.put(service, new LoggerTriggerAssignmentListener(listener, LOG, service));
+    public synchronized Disposable subscribe(ServiceType serviceType, String service, VNodeAssignmentListener listener) {
+        // Register the new listener among the services of its type, which share the vNodes on their own
+        Map<String, VNodeAssignmentListener> sameType = listeners.computeIfAbsent(serviceType, type -> new ConcurrentHashMap<>());
+        sameType.put(service, new LoggerTriggerAssignmentListener(listener, LOG, service));
 
-        // Re-compute all VNodes assignments
+        // Re-compute the VNodes assignments of this service type
         Map<String, Set<Integer>> assignments = VNodeConsistentHashRing.of(schedulerConfiguration.vnodes())
-            .addNodes(listeners.keySet())
+            .addNodes(sameType.keySet())
             .assignVNodes();
 
-        // Revoke vNodes for all listeners
-        listeners.forEach((s, l) -> l.onVNodesRevoked());
+        // Revoke vNodes for all listeners of this service type
+        sameType.forEach((s, l) -> l.onVNodesRevoked());
 
-        // Assign vNodes for all listeners
-        listeners.forEach((s, l) -> l.onVNodesAssigned(assignments.get(service)));
+        // Assign vNodes for all listeners of this service type
+        sameType.forEach((s, l) -> l.onVNodesAssigned(assignments.get(s)));
 
-        return Disposable.of(() -> this.listeners.remove(service));
+        return Disposable.of(() -> sameType.remove(service));
     }
 }

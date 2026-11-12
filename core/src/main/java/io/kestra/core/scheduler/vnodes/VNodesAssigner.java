@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
 
 /**
@@ -32,7 +33,22 @@ public interface VNodesAssigner {
      * 
      * @return a {@link Disposable} to stop listening for VNode re-assignment.
      */
-    Disposable subscribe(String service, VNodeAssignmentListener listener);
+    default Disposable subscribe(String service, VNodeAssignmentListener listener) {
+        return subscribe(ServiceType.SCHEDULER, service, listener);
+    }
+
+    /**
+     * Subscribes a {@link VNodeAssignmentListener} to the vNode assignment of a service of another type than the scheduler,
+     * which a {@link VNodeController.VNodesGroup} bean must declare for its vNodes to be rebalanced.
+     * <p>
+     * The services of each type share all the vNodes, independently of the other types.
+     *
+     * @param serviceType the type of the subscribing service; must not be {@code null}
+     * @param service the unique identifier of the subscribing service, as reported to the liveness store; must not be {@code null}
+     * @param listener the listener that will receive the assignment notifications; must not be {@code null}
+     * @return a {@link Disposable} to stop listening for VNode re-assignment.
+     */
+    Disposable subscribe(ServiceType serviceType, String service, VNodeAssignmentListener listener);
 
     /**
      * Interface for listening on trigger vNodes assignment changes.

@@ -16,6 +16,7 @@ import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
 import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.vnodes.VNodesAssigner;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
 
 import io.micronaut.context.annotation.Requires;
@@ -25,7 +26,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Default implementation of {@link VNodesAssigner} that assigns virtual nodes (vNodes) to active scheduler services.
+ * Default implementation of {@link VNodesAssigner} that assigns virtual nodes (vNodes) to the active services sharing them.
  */
 @Singleton
 @Requires(property = "kestra.server-type")
@@ -62,7 +63,8 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
      * {@inheritDoc}
      */
     @Override
-    public Disposable subscribe(String service, VNodeAssignmentListener listener) {
+    public Disposable subscribe(ServiceType serviceType, String service, VNodeAssignmentListener listener) {
+        Objects.requireNonNull(serviceType, "serviceType must not be null");
         Objects.requireNonNull(service, "serviceId must not be null");
         Objects.requireNonNull(listener, "listener must not be null");
 
@@ -74,7 +76,7 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
             throw new IllegalStateException("Service [" + service + "] has already subscribed to vNodes (re)assignment.");
         }
 
-        this.subscriptions.put(service, new VNodeAssignmentSubscription(null, service, new LoggerTriggerAssignmentListener(listener, LOG, service)));
+        this.subscriptions.put(service, new VNodeAssignmentSubscription(null, serviceType, service, new LoggerTriggerAssignmentListener(listener, LOG, service)));
 
         return Disposable.of(() -> this.subscriptions.remove(service));
     }
@@ -88,6 +90,11 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
             !(event instanceof SchedulerEvent.VNodesAssignmentEvent vNodesAssignmentEvent) ||
                 event instanceof SchedulerEvent.VNodesAssignmentRejected
         ) {
+            return;
+        }
+
+        // A rebalance of another service type neither revokes nor assigns the vNodes of this one.
+        if (vNodesAssignmentEvent.resolvedServiceType() != subscription.serviceType()) {
             return;
         }
 
@@ -115,7 +122,8 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
                     new SchedulerEvent.VNodesAssignmentRejected(
                         Instant.now(),
                         vNodesAssignmentEvent.controllerId(),
-                        vNodesAssignmentEvent.controllerEpoch()
+                        vNodesAssignmentEvent.controllerEpoch(),
+                        vNodesAssignmentEvent.serviceType()
                     )
                 );
                 return;
@@ -163,7 +171,8 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
                 Instant.now(),
                 request.controllerId(),
                 request.controllerEpoch(),
-                subscription.serviceId()
+                subscription.serviceId(),
+                request.serviceType()
             )
         );
     }
@@ -230,15 +239,17 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
      * Represents a subscription for VNode assignments.
      *
      * @param controllerIdAndEpoch the controller metadata.
+     * @param serviceType the type of the service.
      * @param serviceId the service identifier.
      * @param listener the vNode rebalance listener.
      */
     private record VNodeAssignmentSubscription(
         ControllerIdAndEpoch controllerIdAndEpoch,
+        ServiceType serviceType,
         String serviceId,
         VNodeAssignmentListener listener) {
         public VNodeAssignmentSubscription controllerIdAndEpoch(ControllerIdAndEpoch controllerIdAndEpoch) {
-            return new VNodeAssignmentSubscription(controllerIdAndEpoch, serviceId, listener);
+            return new VNodeAssignmentSubscription(controllerIdAndEpoch, serviceType, serviceId, listener);
         }
     }
 

@@ -308,7 +308,8 @@ public class AgentOrchestrator {
                     return;
                 }
 
-                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
+                // A draft already proposed this turn is the outcome, not a plan: asking to approve its summary would only replay the authoring.
+                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get() && !hasDraftInTurn(ctx)) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
                 }
@@ -580,6 +581,11 @@ public class AgentOrchestrator {
         return (int) log.stream()
             .filter(m -> m.type() == AgentMessageType.TOOL_CALL && traceId.equals(m.traceId()))
             .count();
+    }
+
+    private boolean hasDraftInTurn(final AgentLoopContext ctx) {
+        return threadManager.load(ctx.thread().tenant(), ctx.thread().uid()).stream()
+            .anyMatch(m -> AgentMessageType.ARTEFACT_DRAFT == m.type() && ctx.traceId().equals(m.traceId()));
     }
 
     private void abortCancelled(final AgentLoopContext ctx) {

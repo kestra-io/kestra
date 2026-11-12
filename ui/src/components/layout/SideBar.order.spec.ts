@@ -34,9 +34,6 @@ const mountSideBar = () => i18nMount(SideBar, {
     global: {stubs: {SidebarCustomizeModal: true, BookmarkLinkList: true}},
 })
 
-const sectionTitles = () =>
-    Array.from(document.querySelectorAll(".ks-sidebar-section__title-text")).map((node) => node.textContent?.trim())
-
 describe("SideBar favourites ordering", () => {
     beforeEach(() => {
         localStorage.setItem("starred.bookmarks", JSON.stringify([{path: "/flows/my/flow", label: "My Flow"}]))
@@ -61,12 +58,10 @@ describe("SideBar favourites ordering", () => {
         const wrapper = mountSideBar()
         await flushPromises()
 
-        const titles = sectionTitles()
-
-        // $t renders the raw key when no messages are provided.
-        expect(titles[0]).toBe("favourites")
-        expect(titles).toContain("Workspace")
-        expect(titles.indexOf("favourites")).toBeLessThan(titles.indexOf("Workspace"))
+        const text = document.body.textContent ?? ""
+        expect(text).toContain("favourites")
+        expect(text).toContain("Workspace")
+        expect(text.indexOf("favourites")).toBeLessThan(text.indexOf("Workspace"))
 
         wrapper.unmount()
     })

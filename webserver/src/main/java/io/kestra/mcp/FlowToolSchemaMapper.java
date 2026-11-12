@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.serializers.JacksonMapper;
@@ -91,11 +92,10 @@ public class FlowToolSchemaMapper {
     }
 
     public Map<String, Object> convert(Output output) {
-        Map<String, Object> outputSchema = new HashMap<>(
-            Map.of(
-                "type", getJsonSchemaType(output.getType())
-            )
-        );
+        Map<String, Object> outputSchema = new HashMap<>();
+        if (output.getType().parsedAs() != null) {
+            outputSchema.put("type", getJsonSchemaType(output.getType().parsedAs()));
+        }
 
         if (output.getDescription() != null) {
             outputSchema.put("description", output.getDescription());

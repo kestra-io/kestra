@@ -33,13 +33,31 @@ export class FilesEditor {
     private pendingFileReads = 0
 
     constructor(public readonly page: Page) {
-        const isFileRead = (request: Request) => request.method() === "GET" && /\/files(\/stats)?\?path=/.test(request.url())
-        const settled = (request: Request) => {
-            if (isFileRead(request)) this.pendingFileReads--
+        /** A tab reads a file right after its stats, so a finished stats request stays in flight until that read starts. */
+        const readsAfterStats = new Map<string, number>()
+        const fileRequest = (request: Request) => {
+            const match = request.method() === "GET" ? /\/files(\/stats)?\?path=([^&]*)/.exec(request.url()) : null
+            return match ? {stats: match[1] !== undefined, path: match[2]} : undefined
         }
         page.on("request", (request) => {
-            if (isFileRead(request)) this.pendingFileReads++
+            const file = fileRequest(request)
+            if (!file) return
+            this.pendingFileReads++
+            const awaited = readsAfterStats.get(file.path) ?? 0
+            if (!file.stats && awaited > 0) {
+                readsAfterStats.set(file.path, awaited - 1)
+                this.pendingFileReads--
+            }
         })
+        const settled = (request: Request) => {
+            const file = fileRequest(request)
+            if (!file) return
+            if (file.stats) {
+                readsAfterStats.set(file.path, (readsAfterStats.get(file.path) ?? 0) + 1)
+            } else {
+                this.pendingFileReads--
+            }
+        }
         page.on("requestfinished", settled)
         page.on("requestfailed", settled)
     }

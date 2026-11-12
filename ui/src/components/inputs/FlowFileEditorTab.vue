@@ -157,6 +157,8 @@
     const sourceNS = ref("")
     const savedSourceNS = ref("")
     let pendingContent = props.content
+    /** Only a tab that has loaded once has a saved copy to keep text typed during a reload against. */
+    let fileLoaded = false
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value)
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
@@ -208,6 +210,8 @@
             return
         }
 
+        if (fileLoaded && isDirty.value) return
+
         if (result.content) {
             sourceNS.value = result.content
             savedSourceNS.value = result.content
@@ -215,6 +219,7 @@
         if (pendingContent !== undefined) {
             sourceNS.value = pendingContent
         }
+        fileLoaded = true
     }
 
     const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => false)

@@ -26,6 +26,7 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
+            open: "Open",
             large_outputs: {
                 value_too_large: "This value is {size}. It is too large to render here, download it instead.",
                 download_json: "Download JSON",
@@ -144,5 +145,27 @@ describe("VarValue oversized complex values", () => {
 
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+    });
+});
+
+describe("VarValue URI-like values", () => {
+    // new URL() accepts any `scheme:` prefix; such identifiers must stay readable text (Pylon 2622).
+    test.each([
+        "iso6523-actorid-upis::0088:5798000000001",
+        "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+        "arn:aws:s3:::my-bucket",
+        "mailto:someone@example.com",
+    ])("shows %s as text without an Open link", (value) => {
+        const wrapper = mountValue(value);
+
+        expect(wrapper.text()).toContain(value);
+        expect(wrapper.text()).not.toContain("Open");
+    });
+
+    test("shows a web link as text next to its Open button", () => {
+        const wrapper = mountValue("https://kestra.io/docs");
+
+        expect(wrapper.text()).toContain("https://kestra.io/docs");
+        expect(wrapper.text()).toContain("Open");
     });
 });

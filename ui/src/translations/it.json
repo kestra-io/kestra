@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Crea",
     "create_flow": "Crea Flow",
+    "create_child_namespace": "Crea namespace figlio",
     "from": "Da",
     "to": "A",
     "steps": "Passaggi",
@@ -451,7 +452,7 @@
       "whole_action": "Riproduci l'intera Execution invece",
       "whole_title": "La revisione {revision} può essere riprodotta come un'intera esecuzione.",
       "whole_description": "Nessun risultato precedente viene riutilizzato, quindi ogni task viene eseguito di nuovo sulla revisione {revision}. L'esecuzione originale viene mantenuta e collegata.",
-      "confirm_from_task": "Replay dal Task",
+      "confirm_from_task": "Replay da {taskId}",
       "confirm_whole": "Riproduci l'intera Execution"
     },
     "change execution state done": "Stato di esecuzione aggiornato",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
     "refresh": "Aggiorna",
     "filter by status": "Filtra le esecuzioni per stato {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Questo Task è stato ritentato",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",

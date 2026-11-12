@@ -168,6 +168,9 @@ public class KVController {
         @Parameter(description = "The description of the key") @Nullable @Header("description") String description,
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
         KVMetadata metadata = new KVMetadata(description, ttl);
+        if (value != null && value.stripLeading().startsWith("\"")) {
+            metadata = metadata.withType(KVType.STRING);
+        }
         try {
             try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
                 JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);

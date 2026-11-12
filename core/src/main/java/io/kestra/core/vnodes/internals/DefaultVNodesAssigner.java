@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler.vnodes.internals;
+package io.kestra.core.vnodes.internals;
 
 import java.time.Instant;
 import java.util.Map;
@@ -11,47 +11,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.kestra.core.scheduler.events.SchedulerEvent;
-import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
-import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodesAssigner;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.vnodes.VNodesAssigner;
+import io.kestra.core.vnodes.VNodesAssignmentChannel;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
 
-import io.micronaut.context.annotation.Requires;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
- * Default implementation of {@link VNodesAssigner} that assigns virtual nodes (vNodes) to active scheduler services.
+ * Default implementation of {@link VNodesAssigner} that assigns virtual nodes (vNodes) to the active services of one
+ * {@link VNodesAssignmentChannel}.
  */
-@Singleton
-@Requires(property = "kestra.server-type")
 public class DefaultVNodesAssigner implements VNodesAssigner {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultVNodesAssigner.class);
 
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-    private final SchedulerEventQueue queue;
+    private final VNodesAssignmentChannel channel;
 
     private final Map<String, VNodeAssignmentSubscription> subscriptions = new ConcurrentHashMap<>();
 
     private volatile Disposable disposable;
 
-    /**
-     * Creates a new DefaultTriggerAssigner with the default vNode count of 16.
-     */
-    @Inject
-    public DefaultVNodesAssigner(SchedulerEventQueue queue) {
-        this.queue = Objects.requireNonNull(queue, "queue must not be null");
+    public DefaultVNodesAssigner(VNodesAssignmentChannel channel) {
+        this.channel = Objects.requireNonNull(channel, "channel must not be null");
     }
 
-    @PostConstruct
     public void start() {
-        this.disposable = queue.subscribe(
+        this.disposable = channel.subscribe(
             event -> subscriptions.values().forEach(
                 subscription -> handle(event, subscription)
             )
@@ -79,43 +66,41 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         return Disposable.of(() -> this.subscriptions.remove(service));
     }
 
-    private void handle(SchedulerEvent event, VNodeAssignmentSubscription subscription) {
+    private void handle(VNodesAssignmentEvent event, VNodeAssignmentSubscription subscription) {
 
         final ControllerIdAndEpoch currentControllerIdAndEpoch = subscription.controllerIdAndEpoch();
 
         // Check whether the event must be ignored
-        if (
-            !(event instanceof SchedulerEvent.VNodesAssignmentEvent vNodesAssignmentEvent) ||
-                event instanceof SchedulerEvent.VNodesAssignmentRejected
-        ) {
+        if (event instanceof VNodesAssignmentEvent.VNodesAssignmentRejected) {
             return;
         }
 
         // Check whether the received event is stale.
         // Note: 'currentControllerIdAndEpoch' is null when no vNode rebalance is in progress for the current subscription.
         if (currentControllerIdAndEpoch != null) {
-            boolean sameController = vNodesAssignmentEvent.controllerId().equals(currentControllerIdAndEpoch.controllerId());
-            boolean newerEpoch = vNodesAssignmentEvent.controllerEpoch().isAfter(currentControllerIdAndEpoch.controllerEpoch());
+            boolean sameController = event.controllerId().equals(currentControllerIdAndEpoch.controllerId());
+            boolean newerEpoch = event.controllerEpoch().isAfter(currentControllerIdAndEpoch.controllerEpoch());
             /*
              * Stale if one of these conditions is true :
              * - Different controller, epoch ≤ current
              * - Same controller, epoch < current
              */
-            boolean stale = (!sameController && !newerEpoch) || (sameController && vNodesAssignmentEvent.controllerEpoch().isBefore(currentControllerIdAndEpoch.controllerEpoch()));
+            boolean stale = (!sameController && !newerEpoch) || (sameController && event.controllerEpoch().isBefore(currentControllerIdAndEpoch.controllerEpoch()));
 
             if (stale) {
                 LOG.warn(
                     "Received '{}' event from out-dated controller [id={}, epoch={}]. Ignored",
-                    VNodesAssignmentRelease.class.getSimpleName(),
-                    vNodesAssignmentEvent.controllerId(),
-                    vNodesAssignmentEvent.controllerEpoch()
+                    VNodesAssignmentEvent.VNodesAssignmentRelease.class.getSimpleName(),
+                    event.controllerId(),
+                    event.controllerEpoch()
                 );
 
-                queue.send(
-                    new SchedulerEvent.VNodesAssignmentRejected(
+                channel.send(
+                    new VNodesAssignmentEvent.VNodesAssignmentRejected(
                         Instant.now(),
-                        vNodesAssignmentEvent.controllerId(),
-                        vNodesAssignmentEvent.controllerEpoch()
+                        channel.serviceType(),
+                        event.controllerId(),
+                        event.controllerEpoch()
                     )
                 );
                 return;
@@ -123,11 +108,11 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         }
 
         switch (event) {
-            case SchedulerEvent.VNodesAssignmentRequest request -> {
+            case VNodesAssignmentEvent.VNodesAssignmentRequest request -> {
                 onAssignmentRequest(subscription, request);
             }
 
-            case SchedulerEvent.VNodesAssignmentRelease release -> {
+            case VNodesAssignmentEvent.VNodesAssignmentRelease release -> {
                 onAssignmentRelease(subscription, release, currentControllerIdAndEpoch);
             }
 
@@ -137,14 +122,15 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         }
     }
 
-    private void onAssignmentRequest(VNodeAssignmentSubscription subscription, VNodesAssignmentRequest request) {
+    private void onAssignmentRequest(VNodeAssignmentSubscription subscription, VNodesAssignmentEvent.VNodesAssignmentRequest request) {
         subscription.listener().onVNodesRevoked();
 
-        if (!request.schedulers().contains(subscription.serviceId())) {
+        if (!request.services().contains(subscription.serviceId())) {
             LOG.warn(
-                "Received '{}' event from controller {} for a rebalance this scheduler is not part of. Ignored",
-                VNodesAssignmentRequest.class.getSimpleName(),
-                request.controllerId()
+                "Received '{}' event from controller {} for a rebalance this {} service is not part of. Ignored",
+                VNodesAssignmentEvent.VNodesAssignmentRequest.class.getSimpleName(),
+                request.controllerId(),
+                channel.serviceType()
             );
             return;
         }
@@ -158,9 +144,10 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
             )
         );
 
-        queue.send(
-            new SchedulerEvent.VNodesAssignmentReply(
+        channel.send(
+            new VNodesAssignmentEvent.VNodesAssignmentReply(
                 Instant.now(),
+                channel.serviceType(),
                 request.controllerId(),
                 request.controllerEpoch(),
                 subscription.serviceId()
@@ -168,13 +155,13 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         );
     }
 
-    private void onAssignmentRelease(VNodeAssignmentSubscription subscription, VNodesAssignmentRelease release, ControllerIdAndEpoch currentController) {
+    private void onAssignmentRelease(VNodeAssignmentSubscription subscription, VNodesAssignmentEvent.VNodesAssignmentRelease release, ControllerIdAndEpoch currentController) {
         ControllerIdAndEpoch incoming = new ControllerIdAndEpoch(release.controllerId(), release.controllerEpoch());
 
         if (currentController == null) {
             LOG.warn(
                 "Received '{}' event from unknown controller {}. Ignored",
-                VNodesAssignmentRelease.class.getSimpleName(), incoming
+                VNodesAssignmentEvent.VNodesAssignmentRelease.class.getSimpleName(), incoming
             );
             return;
         }
@@ -182,7 +169,7 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         if (!currentController.equals(incoming)) {
             LOG.warn(
                 "Received '{}' event from invalid controller. Expected {}, but was {}.",
-                VNodesAssignmentRelease.class.getSimpleName(), currentController, incoming
+                VNodesAssignmentEvent.VNodesAssignmentRelease.class.getSimpleName(), currentController, incoming
             );
 
             if (incoming.controllerEpoch().isAfter(currentController.controllerEpoch())) {
@@ -203,7 +190,7 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
         } else {
             LOG.warn(
                 "Received '{}' from controller {} with no vNode assignment.",
-                VNodesAssignmentRelease.class.getSimpleName(), currentController
+                VNodesAssignmentEvent.VNodesAssignmentRelease.class.getSimpleName(), currentController
             );
         }
 
@@ -215,7 +202,6 @@ public class DefaultVNodesAssigner implements VNodesAssigner {
      * <p>
      * This method is idempotent and safe to call multiple times.
      */
-    @PreDestroy
     public void stop() {
         if (!stopped.compareAndSet(false, true)) {
             return; // Already stopped

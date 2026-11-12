@@ -188,7 +188,7 @@ class ExecutionServiceTest {
     @LoadFlows({ "flows/valids/working-directory.yaml" })
     void restartDynamic() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -196,6 +196,8 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
 
+        // the whole WorkingDirectory runs again, its internal open and close tasks included
+        assertThat(restart.getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("worker");
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getTaskRunList().getFirst().getState().getHistories()).hasSize(4);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));

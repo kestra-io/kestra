@@ -51,11 +51,7 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
             var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
             deleteByKey(dslContext, key);
         } else {
-            this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
-            {
-                var dslContext = DSL.using(configuration);
-                deleteByKey(dslContext, key);
-            });
+            deleteByKey(key);
         }
     }
 

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
-    "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",
+    "no_logs_data_title": "Nie znaleziono logów",
     "duration": "Czas trwania",
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas działania",
@@ -344,6 +344,7 @@
     "home": "Strona główna",
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
+    "create_child_namespace": "Utwórz podrzędny namespace",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",
@@ -451,7 +452,7 @@
       "whole_action": "Zamiast tego powtórz całą egzekucję",
       "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
       "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
-      "confirm_from_task": "Replay z Taska",
+      "confirm_from_task": "Replay od {taskId}",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
     "change execution state done": "Status egzekucji zaktualizowany",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Ten Task został ponowiony",
       "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
@@ -863,7 +870,7 @@
     "last execution date": "Data ostatniej egzekucji",
     "revisions": "Wersje",
     "no revisions found": "Dla tego Flow istnieje tylko jedna wersja",
-    "no revisions": "Brak wersji",
+    "no revisions": "Nie znaleziono wersji",
     "side-by-side": "obok siebie",
     "line-by-line": "linia po linii",
     "template": "Szablon",
@@ -1339,6 +1346,8 @@
     "pause backfill": "Wstrzymaj Backfill",
     "continue backfills": "Kontynuuj Backfille",
     "delete backfills": "Usuń Backfille",
+    "delete backfill confirm": "Usunąć backfill triggera {id}?",
+    "delete backfill success": "Backfill triggera {id} został usunięty",
     "pause backfills": "Wstrzymaj Backfille",
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
@@ -1909,7 +1918,8 @@
       "duplicate": "Ten Key już istnieje",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
-        "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
+        "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>",
+        "deleted": "Usunięto <code>{count}</code> par KV z namespace'u <code>{namespace}</code>"
       },
       "inherited": "Odziedziczone pary KV",
       "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."
@@ -2351,6 +2361,7 @@
       "default": "Domyślny Dashboard",
       "set_default": "Ustaw jako domyślny",
       "empty": "Brak wyników do wyświetlenia.",
+      "overdue": "Zaległe — {date}",
       "edition": {
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
@@ -2373,7 +2384,8 @@
         "paused": "Wstrzymane",
         "success": "Sukces",
         "warning": "Ostrzeżenie",
-        "failed": "Nieudane"
+        "failed": "Nieudane",
+        "upcoming": "Nadchodzące"
       }
     },
     "setup": {
@@ -2792,7 +2804,8 @@
         "tooltip": "Zobacz testy Flow"
       },
       "errors": {
-        "label": "{count} Błąd(y)"
+        "label": "{count} Błąd(y)",
+        "action": "{count} błąd(y), przejdź do następnego błędu"
       }
     },
     "invalid_source_code": "Nieprawidłowy kod źródłowy",

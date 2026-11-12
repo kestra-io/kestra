@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
-    "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
+    "no_logs_data_title": "로그를 찾을 수 없음",
     "duration": "지속 시간",
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
@@ -344,6 +344,7 @@
     "home": "홈",
     "create": "생성",
     "create_flow": "Flow 생성",
+    "create_child_namespace": "하위 namespace 생성",
     "from": "시작",
     "to": "종료",
     "steps": "단계",
@@ -451,7 +452,7 @@
       "whole_action": "대신 전체 Execution을 Replay합니다.",
       "whole_title": "Revision {revision}을 전체 Execution으로 Replay할 수 있습니다.",
       "whole_description": "이전 결과는 재사용되지 않으므로 모든 Task는 revision {revision}에서 다시 실행됩니다. 원본 Execution은 유지되고 연결됩니다.",
-      "confirm_from_task": "Task에서 Replay",
+      "confirm_from_task": "{taskId}부터 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
     "change execution state done": "실행 상태가 업데이트되었습니다",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "refresh": "새로 고침",
     "filter by status": "{status} 상태로 실행 필터링",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
@@ -863,7 +870,7 @@
     "last execution date": "마지막 실행 날짜",
     "revisions": "수정본들",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
-    "no revisions": "리비전 없음",
+    "no revisions": "리비전을 찾을 수 없음",
     "side-by-side": "나란히",
     "line-by-line": "줄별로",
     "template": "템플릿",
@@ -1339,6 +1346,8 @@
     "pause backfill": "backfill 일시 중지",
     "continue backfills": "backfill 계속",
     "delete backfills": "backfill 삭제",
+    "delete backfill confirm": "trigger {id}의 backfill을 삭제하시겠습니까?",
+    "delete backfill success": "trigger {id}의 backfill이 삭제되었습니다",
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
@@ -1909,7 +1918,8 @@
       "duplicate": "이 키는 이미 존재합니다",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
-        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
+        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code>에서 <code>{count}</code>개의 KV가 삭제되었습니다"
       },
       "inherited": "상속된 KV 쌍",
       "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."
@@ -2351,6 +2361,7 @@
       "default": "기본 대시보드",
       "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
+      "overdue": "기한 초과 — {date}",
       "edition": {
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
@@ -2373,7 +2384,8 @@
         "paused": "일시 중지됨",
         "success": "성공",
         "warning": "경고",
-        "failed": "실패"
+        "failed": "실패",
+        "upcoming": "예정됨"
       }
     },
     "setup": {
@@ -2792,7 +2804,8 @@
         "tooltip": "flow 테스트 보기"
       },
       "errors": {
-        "label": "{count} 오류"
+        "label": "{count} 오류",
+        "action": "{count}개의 오류, 다음 오류로 이동"
       }
     },
     "invalid_source_code": "잘못된 소스 코드",

@@ -59,6 +59,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -491,6 +492,23 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void shouldActOnEveryExecutionWhenBulkActionByQueryMatchesMoreThanOneBatch() {
+        String namespace = "io.kestra.tests.bulk-multiple-batches";
+        int executionCount = 250;
+        for (int i = 0; i < executionCount; i++) {
+            seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "flow", namespace);
+        }
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST("/api/v1/main/executions/labels/by-query?filters[namespace][EQUALS]=" + namespace, List.of(new Label("bulk", "true"))),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(executionCount);
+    }
+
+    @Test
     void searchShouldFilterByOutputs() {
         String tenant = MAIN_TENANT;
         String namespace = "io.kestra.outputs-search-test";
@@ -815,6 +833,57 @@ class ExecutionControllerTest {
 
         // Then
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenInputDefaultChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "").replace("type: STRING\n", "type: STRING\n    defaults: eu\n");
+        Execution execution = seedReplayExecution(source, "first", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace("defaults: eu", "defaults: us"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("input 'name' defaults have changed");
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenInputWasAdded() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "");
+        Execution execution = seedReplayExecution(source, "first", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace("variables:", "  - id: region\n    type: STRING\nvariables:"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("input 'region' has been added");
+    }
+
+    @Test
+    void shouldRejectReplayValidationAsMovedWhenTaskInsertedBeforeFirstTask() {
+        // Given
+        String flowId = IdUtils.create();
+        String source = flowSource(flowId, "first", "hello", "");
+        Execution execution = seedReplayExecution(source, "second", State.Type.SUCCESS);
+        updateFlow(flowId, source.replace(
+            "tasks:\n",
+            "tasks:\n  - id: inserted\n    type: io.kestra.plugin.core.log.Log\n    message: new\n"
+        ));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("task 'first' has been moved").doesNotContain("has been removed");
     }
 
     @Test

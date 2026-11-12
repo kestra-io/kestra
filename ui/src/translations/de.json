@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
-    "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
+    "no_logs_data_title": "Keine Logs gefunden",
     "duration": "Dauer",
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
@@ -344,6 +344,7 @@
     "home": "Startseite",
     "create": "Erstellen",
     "create_flow": "Flow erstellen",
+    "create_child_namespace": "Untergeordneten Namespace erstellen",
     "from": "Von",
     "to": "Bis",
     "steps": "Schritte",
@@ -451,7 +452,7 @@
       "whole_action": "Die gesamte Execution stattdessen wiederholen",
       "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
       "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
-      "confirm_from_task": "Replay ab Task",
+      "confirm_from_task": "Replay ab {taskId}",
       "confirm_whole": "Ganze Execution wiederholen"
     },
     "change execution state done": "Execution-Status aktualisiert",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Füge zuerst einen Trigger zu deinem Flow hinzu",
     "refresh": "Aktualisieren",
     "filter by status": "Executions nach Status {status} filtern",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Dieser Task wurde wiederholt",
       "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "Letztes Execution-Datum",
     "revisions": "Revisionen",
     "no revisions found": "Für diesen Flow existiert nur eine Revision",
-    "no revisions": "Keine Revisionen",
+    "no revisions": "Keine Revisionen gefunden",
     "side-by-side": "Nebeneinander",
     "line-by-line": "Zeile für Zeile",
     "template": "Vorlage",
@@ -1911,7 +1918,8 @@
       "duplicate": "Dieser Key existiert bereits",
       "delete multiple": {
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
-        "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
+        "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV-Paar(e) aus dem Namespace <code>{namespace}</code> gelöscht"
       },
       "inherited": "Geerbte KV-Paare",
       "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
@@ -2353,6 +2361,7 @@
       "default": "Standard-Dashboard",
       "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
+      "overdue": "Überfällig — {date}",
       "edition": {
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
@@ -2375,7 +2384,8 @@
         "paused": "Pausiert",
         "success": "Erfolg",
         "warning": "Warnung",
-        "failed": "Fehlgeschlagen"
+        "failed": "Fehlgeschlagen",
+        "upcoming": "Bevorstehend"
       }
     },
     "setup": {

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
     "logs": "Logs",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
-    "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",
+    "no_logs_data_title": "कोई logs नहीं मिले",
     "duration": "अवधि",
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
@@ -344,6 +344,7 @@
     "home": "होम",
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
+    "create_child_namespace": "चाइल्ड namespace बनाएँ",
     "from": "से",
     "to": "तक",
     "steps": "चरण",
@@ -451,7 +452,7 @@
       "whole_action": "इसके बजाय पूरी execution को रीप्ले करें",
       "whole_title": "रिवीजन {revision} को पूरी execution के रूप में फिर से चलाया जा सकता है।",
       "whole_description": "पहले के कोई भी परिणाम दोबारा उपयोग नहीं किए जाते हैं, इसलिए हर Task revision {revision} पर फिर से चलता है। मूल execution को रखा जाता है और लिंक किया जाता है।",
-      "confirm_from_task": "Task से रीप्ले करें",
+      "confirm_from_task": "{taskId} से Replay करें",
       "confirm_whole": "पूरी execution को फिर से चलाएँ"
     },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
     "refresh": "ताज़ा करें",
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "अंतिम निष्पादन तिथि",
     "revisions": "पुनरीक्षण",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
-    "no revisions": "कोई संशोधन नहीं",
+    "no revisions": "कोई संशोधन नहीं मिले",
     "side-by-side": "साइड-बाय-साइड",
     "line-by-line": "लाइन-बाय-लाइन",
     "template": "टेम्पलेट",
@@ -1911,7 +1918,8 @@
       "duplicate": "यह key पहले से मौजूद है",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
-        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
+        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code> से <code>{count}</code> kv(s) हटाए गए"
       },
       "inherited": "विरासत में मिले KV जोड़े",
       "expiration_hint": "वर्तमान में {date} को समाप्त होता है। इस समाप्ति को बनाए रखने के लिए फ़ील्ड को अछूता छोड़ दें; अवधि चुनने से यह अब से पुनर्गणना करता है, और इसे साफ़ करने से यह हट जाता है।"
@@ -2337,11 +2345,11 @@
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "no_results": {
-      "executions": "कोई Executions नहीं मिला",
-      "triggers": "कोई Triggers नहीं मिले",
-      "flows": "कोई Flows नहीं मिला",
-      "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले",
+      "executions": "कोई executions नहीं मिले",
+      "triggers": "कोई triggers नहीं मिले",
+      "flows": "कोई flows नहीं मिले",
+      "kv_pairs": "कोई key-value जोड़े नहीं मिले",
+      "secrets": "कोई secrets नहीं मिले",
       "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
       "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
@@ -2353,6 +2361,7 @@
       "default": "डिफ़ॉल्ट डैशबोर्ड",
       "set_default": "डिफ़ॉल्ट के रूप में सेट करें",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
+      "overdue": "देय तिथि से अधिक — {date}",
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
         "chart": "इस चार्ट को संपादित करें"
@@ -2375,7 +2384,8 @@
         "paused": "रुका हुआ",
         "success": "सफलता",
         "warning": "चेतावनी",
-        "failed": "विफल"
+        "failed": "विफल",
+        "upcoming": "आगामी"
       }
     },
     "setup": {

@@ -18,16 +18,8 @@
     align-items: center !important;
 }
 
-.m-0 {
-    margin: 0 !important;
-}
-
 .me-2 {
     margin-right: 0.5rem !important;
-}
-
-.p-3 {
-    padding: 1rem !important;
 }
 
 .py-3 {

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
     "logs": "Fichiers journaux",
     "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
-    "no_logs_data_title": "Aucun log trouvé pour les filtres sélectionnés.",
+    "no_logs_data_title": "Aucun log trouvé",
     "duration": "Durée",
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
@@ -344,6 +344,7 @@
     "home": "Accueil",
     "create": "Créer",
     "create_flow": "Créer Flow",
+    "create_child_namespace": "Créer un namespace enfant",
     "from": "De",
     "to": "à",
     "steps": "Étapes",
@@ -451,7 +452,7 @@
       "whole_action": "Rejouer toute l'exécution à la place",
       "whole_title": "La version {revision} peut être rejouée comme une exécution complète.",
       "whole_description": "Aucun résultat antérieur n'est réutilisé, donc chaque Task s'exécute à nouveau sur la révision {revision}. L'exécution originale est conservée et liée.",
-      "confirm_from_task": "Replay à partir de la tâche",
+      "confirm_from_task": "Rejouer à partir de {taskId}",
       "confirm_whole": "Rejouer l'exécution entière"
     },
     "change execution state done": "État d'exécution mis à jour",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
     "refresh": "Rafraîchir",
     "filter by status": "Filtrer les exécutions par statut {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Cette tâche a été relancée",
       "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
@@ -863,7 +870,7 @@
     "last execution date": "Dernière exécution",
     "revisions": "Révisions",
     "no revisions found": "Une seule révision existe pour ce flow",
-    "no revisions": "Aucune révision",
+    "no revisions": "Aucune révision trouvée",
     "side-by-side": "côte à côte",
     "line-by-line": "ligne par ligne",
     "template": "Template",
@@ -1911,7 +1918,8 @@
       "duplicate": "Cette clé existe déjà",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
-        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) supprimé(s) du namespace <code>{namespace}</code>"
       },
       "inherited": "Paires KV héritées",
       "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."
@@ -2338,7 +2346,7 @@
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "no_results": {
       "executions": "Aucune exécution trouvée",
-      "triggers": "Aucun Trigger trouvé",
+      "triggers": "Aucun trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
       "secrets": "Aucun secret trouvé",
@@ -2353,6 +2361,7 @@
       "default": "Tableau de bord par défaut",
       "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
+      "overdue": "En retard — {date}",
       "edition": {
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
@@ -2375,7 +2384,8 @@
         "paused": "En pause",
         "success": "Succès",
         "warning": "Avertissement",
-        "failed": "Échoué"
+        "failed": "Échoué",
+        "upcoming": "À venir"
       }
     },
     "setup": {

@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.kv.KVType;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -100,7 +101,7 @@ public class InternalKVStore implements KVStore {
         return this.getRawValue(key).map(throwFunction(raw ->
         {
             Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
-            if (value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches()) {
+            if (value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches() && !isDeclaredString(key)) {
                 return new KVValue(Duration.parse(valueStr));
             }
             return new KVValue(value);
@@ -146,5 +147,12 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         return this.backend.get(this.tenant, this.namespace, key);
+    }
+
+    private boolean isDeclaredString(String key) throws IOException {
+        return this.backend.getMetadata(this.tenant, this.namespace, key)
+            .map(KVMetadata::getType)
+            .filter(KVType.STRING::equals)
+            .isPresent();
     }
 }

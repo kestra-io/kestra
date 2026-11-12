@@ -12,6 +12,7 @@
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
+        selectable
         :showSelection="!paneView"
         :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
@@ -694,7 +695,7 @@
     }
 
     function removeKv(namespace: string, key: string) {
-        toast.confirm(t("delete confirm"), async () => {
+        toast.confirm(t("delete confirm", {name: key}), async () => {
             return namespacesStore
                 .deleteKv({namespace, key: key})
                 .then(() => {
@@ -711,13 +712,13 @@
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))
         toast.confirm(
             t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, group) => count + group.length, 0)}) +
-                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning")),
+                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning", {namespaces: withoutDeletePermissionNamespaces.join(", ")})),
             async () => {
                 Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, group]) => {
                     namespacesStore
                         .deleteKvs({namespace, request: {keys: group.flatMap(item => item.key ? [item.key] : [])}})
                         .then(() => {
-                            toast.deleted(`${group.length} KV(s) from ${namespace} namespace`)
+                            toast.success(t("kv.delete multiple.deleted", {count: group.length, namespace}), t("deleted"))
                             toggleAllUnselected()
                             dataTable.value?.reload()
                         })

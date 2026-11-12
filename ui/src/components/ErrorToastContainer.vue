@@ -94,7 +94,6 @@
     }
 
     .problem-error-item {
-        font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         margin-top: var(--ks-spacing-2);
     }

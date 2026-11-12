@@ -405,7 +405,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace) |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -448,7 +448,7 @@ If your `<style>` block needs to exist:
 | `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
 
 ### Charts
 

@@ -93,7 +93,9 @@ public class FlowToolSchemaMapper {
 
     public Map<String, Object> convert(Output output) {
         Map<String, Object> outputSchema = new HashMap<>();
-        if (output.getType().parsedAs() != null) {
+        if (OutputType.ASSET == output.getType()) {
+            outputSchema.put("type", "object");
+        } else if (output.getType().parsedAs() != null) {
             outputSchema.put("type", getJsonSchemaType(output.getType().parsedAs()));
         }
 

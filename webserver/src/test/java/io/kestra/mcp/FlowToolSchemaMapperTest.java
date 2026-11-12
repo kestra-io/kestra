@@ -224,6 +224,10 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string", "description", "An output"))
             .build(),
         OutputConversionTestCase.builder()
+            .output(Output.builder().id("o").type(OutputType.ASSET).value("v").build())
+            .expectedSchema(Map.of("type", "object"))
+            .build(),
+        OutputConversionTestCase.builder()
             .output(Output.builder().id("o").type(OutputType.UNKNOWN).value("v").build())
             .expectedSchema(Map.of())
             .build(),

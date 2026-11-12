@@ -856,7 +856,7 @@ class FlowTriggerServiceTest {
     private FlowTriggerService flowTriggerServiceReturningOutputsOf(Execution... executions) throws Exception {
         var outputService = mock(ExecutionOutputService.class);
         for (Execution execution : executions) {
-            when(outputService.getOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
+            when(outputService.getStoredOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
                 .thenReturn(execution.getOutputs());
         }
         return new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, outputService, executionDepthConfiguration);

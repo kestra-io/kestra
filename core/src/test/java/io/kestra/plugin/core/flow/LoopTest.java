@@ -10,8 +10,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.InputAndOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
@@ -243,6 +248,27 @@ class LoopTest {
         assertThat(result.totalCount()).isEqualTo(3);
         assertThat(result.limit()).isEqualTo(2);
         assertThat(result.values().isRight()).isTrue();
+    }
+
+    @Test
+    void shouldKeepOnlyTheIdOfAnAssetOutputOfAnIteration() throws Exception {
+        List<Output> outputs = List.of(Output.builder().id("vm").type(OutputType.ASSET).value("web-01").build());
+        InputAndOutput inputAndOutput = Mockito.mock(InputAndOutput.class);
+        Mockito.when(inputAndOutput.renderOutputs(outputs)).thenReturn(Map.of("vm", "web-01"));
+        Mockito.when(inputAndOutput.typedOutputs(Mockito.eq(outputs), Mockito.any(), Mockito.anyMap()))
+            .thenReturn(Map.of("vm", Map.of("id", "web-01", "displayName", "Web")));
+        RunContext runContext = Mockito.mock(RunContext.class);
+        Mockito.when(runContext.inputAndOutput()).thenReturn(inputAndOutput);
+        Loop loop = Loop.builder()
+            .id("loop")
+            .type(Loop.class.getName())
+            .values(List.of("placeholder"))
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("x")).build()))
+            .outputs(outputs)
+            .fetchType(Loop.FetchType.FETCH)
+            .build();
+
+        assertThat(loop.computeIterationOutput(runContext, Execution.builder().id("execution").build())).isEqualTo(Map.of("vm", "web-01"));
     }
 
     private Loop loop(int concurrencyLimit) {

@@ -242,7 +242,7 @@ public class FlowTriggerService {
 
     private Map<String, Object> executionOutputs(Execution execution) {
         try {
-            return executionOutputService.getOutputs(execution);
+            return executionOutputService.getStoredOutputs(execution);
         } catch (InternalException e) {
             throw new KestraRuntimeException(e);
         }

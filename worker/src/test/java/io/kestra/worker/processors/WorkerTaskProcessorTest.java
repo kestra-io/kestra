@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -122,6 +123,23 @@ class WorkerTaskProcessorTest {
         assertThat(results)
             .as("an interrupted task's failure must be deferred for resubmission, not reported")
             .noneMatch(result -> result.getTaskRun().getState().isFailed());
+    }
+
+    @Test
+    void shouldNotSignalStopToTaskWhenWorkerStoppedBeforeTheTaskStarted() {
+        // Given a worker stopping after it picked up the task, but before the task started
+        StopRecording task = StopRecording.builder()
+            .type(StopRecording.class.getName())
+            .id("stop-recording")
+            .build();
+        WorkerTaskProcessor processor = newProcessor(new InMemoryWorkerQueue<>(100));
+        processor.stop();
+
+        // When the task runs
+        processor.process(workerTaskFor(task));
+
+        // Then it runs through the drain window without being asked to stop
+        assertThat(StopRecording.STOP_REQUESTED.get()).isFalse();
     }
 
     @Test
@@ -671,6 +689,23 @@ class WorkerTaskProcessorTest {
         @Override
         public VoidOutput run(RunContext runContext) {
             throw new RuntimeException("simulated task failure during shutdown drain");
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class StopRecording extends Task implements RunnableTask<VoidOutput> {
+        static final AtomicBoolean STOP_REQUESTED = new AtomicBoolean(false);
+
+        @Override
+        public VoidOutput run(RunContext runContext) {
+            return null;
+        }
+
+        @Override
+        public void stop() {
+            STOP_REQUESTED.set(true);
         }
     }
 

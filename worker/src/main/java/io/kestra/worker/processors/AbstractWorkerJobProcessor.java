@@ -13,6 +13,7 @@ import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.AbstractWorkerCallable;
+import io.kestra.worker.processors.internals.WorkerTriggerRealtimeCallable;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.opentelemetry.api.common.Attributes;
@@ -85,7 +86,8 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
             workerJobCallable.kill(pendingState);
         } else if (pendingTimeoutKill.get()) {
             workerJobCallable.kill(null);
-        } else if (stopped.get()) {
+        } else if (stopped.get() && workerJobCallable instanceof WorkerTriggerRealtimeCallable) {
+            // A kill supersedes a stop; tasks are left out because one picked up by a stopping worker is meant to run through the drain.
             workerJobCallable.signalStop();
         }
         try {

@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -141,22 +144,45 @@ class WorkerTriggerProcessorTest {
     }
 
     @Test
-    void shouldEndRealtimeTriggerWhenStoppedBeforeTheEvaluationStarted() throws Exception {
-        // Given a worker stopping after it picked up a realtime trigger, but before the evaluation started
+    void shouldEndRealtimeTriggerWhenStoppedBetweenRegisterAndCallJob() throws Exception {
+        // Given a worker stopping after the job was registered, but before its callable was published
         WorkerTrigger workerTrigger = workerTrigger(
             StoppableRealtimeTrigger.builder().id("realtime").type(StoppableRealtimeTrigger.class.getName()).build()
         );
         WorkerQueue<WorkerTriggerResult> results = new InMemoryWorkerQueue<>(10);
-        WorkerTriggerProcessor processor = processor(results);
-        processor.stop();
+        AtomicReference<WorkerTriggerProcessor> processor = new AtomicReference<>();
+        ExecutionKilledManager stoppingOnRegister = mock(ExecutionKilledManager.class);
+        doAnswer(invocation ->
+        {
+            processor.get().stop();
+            return null;
+        }).when(stoppingOnRegister).register(any(), any(), any());
+        processor.set(processor(results, stoppingOnRegister));
 
-        // When the job finally runs
-        submit(() -> processor.process(workerTrigger)).get(10, TimeUnit.SECONDS);
+        // When the job runs
+        submit(() -> processor.get().process(workerTrigger)).get(10, TimeUnit.SECONDS);
 
         // Then the stream ends at once with a terminal result, instead of running until the worker is forced down
         WorkerTriggerResult result = results.poll(Duration.ofSeconds(1));
         assertThat(result).isNotNull();
         assertThat(result.evaluation()).isNull();
+    }
+
+    @Test
+    void shouldKillRatherThanStopRealtimeTriggerWhenBothArrivedBeforeTheEvaluationStarted() throws Exception {
+        WorkerTrigger workerTrigger = workerTrigger(
+            StoppableRealtimeTrigger.builder().id("realtime").type(StoppableRealtimeTrigger.class.getName()).build()
+        );
+        WorkerQueue<WorkerTriggerResult> results = new InMemoryWorkerQueue<>(10);
+        WorkerTriggerProcessor processor = processor(results);
+        processor.kill();
+        processor.stop();
+
+        submit(() -> processor.process(workerTrigger)).get(10, TimeUnit.SECONDS);
+
+        StoppableRealtimeTrigger trigger = (StoppableRealtimeTrigger) workerTrigger.getTrigger();
+        assertThat(trigger.isKilled()).isTrue();
+        assertThat(trigger.isStopped()).isFalse();
     }
 
     @Test
@@ -205,6 +231,10 @@ class WorkerTriggerProcessorTest {
     }
 
     private WorkerTriggerProcessor processor(WorkerQueue<WorkerTriggerResult> results) {
+        return processor(results, executionKilledManager);
+    }
+
+    private WorkerTriggerProcessor processor(WorkerQueue<WorkerTriggerResult> results, ExecutionKilledManager executionKilledManager) {
         return new WorkerTriggerProcessor(
             WorkerGroups.DEFAULT_ID,
             metricRegistry,

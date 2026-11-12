@@ -312,7 +312,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             if (event instanceof TriggerReceived) {
                 receivedLatch.countDown();
             }
-            if (event instanceof TriggerExecutionTerminated terminated && State.Type.FAILED == terminated.executionState()) {
+            // No execution id: the worker's own release marker, not a FAILED "Realtime trigger failed to be created" execution.
+            if (event instanceof TriggerExecutionTerminated terminated && terminated.executionId() == null && State.Type.FAILED == terminated.executionState()) {
                 releasedLatch.countDown();
             }
         });

@@ -1,6 +1,10 @@
 package io.kestra.core.tasks.test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.reactivestreams.Publisher;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -36,8 +40,35 @@ public class StoppableRealtimeTrigger extends AbstractTrigger implements Realtim
         return stopSignal.asMono();
     }
 
+    @Getter(AccessLevel.NONE)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final transient AtomicBoolean stopped = new AtomicBoolean(false);
+
+    @Getter(AccessLevel.NONE)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final transient AtomicBoolean killed = new AtomicBoolean(false);
+
     @Override
     public void stop() {
+        stopped.set(true);
         stopSignal.tryEmitEmpty();
+    }
+
+    @Override
+    public void kill() {
+        killed.set(true);
+        stopSignal.tryEmitEmpty();
+    }
+
+    @JsonIgnore
+    public boolean isStopped() {
+        return stopped.get();
+    }
+
+    @JsonIgnore
+    public boolean isKilled() {
+        return killed.get();
     }
 }

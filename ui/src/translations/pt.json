@@ -455,6 +455,31 @@
       "confirm_from_task": "Replay de {taskId}",
       "confirm_whole": "Reproduzir toda a execução"
     },
+    "replayOverrides": {
+      "action": "Reproduzir com overrides",
+      "dialog_title": "Replay {taskId} com substituições",
+      "revision_note": "O replay é executado na revisão {revision}, a mesma em que esta execução foi executada.",
+      "task_code": "Definição de {taskId}",
+      "code_error": "Não foi possível carregar a definição de {taskId}.",
+      "title": "Substituir outputs",
+      "description": "As saídas de Tasks anteriores que a Task {taskId} lê. Defina uma para replay com esse valor: as Tasks anteriores não são executadas novamente, e {taskId} e todas as Tasks posteriores leem o novo valor.",
+      "load_error": "Não foi possível carregar os outputs que a Task {taskId} lê.",
+      "empty": "A Task {taskId} não lê nenhuma saída de uma Task anterior através de um caminho estático em suas próprias propriedades.",
+      "current": "Valor atual {value}",
+      "confirm": "Replay com {count} substituição | Replay com {count} substituições",
+      "error": {
+        "number": "Insira um número.",
+        "boolean": "Insira verdadeiro ou falso.",
+        "json": "Insira um JSON válido."
+      },
+      "recorded": "{count} output substituído | {count} outputs substituídos",
+      "recorded_title": "Outputs substituídos na repetição",
+      "recorded_path": "Output",
+      "recorded_original": "Valor original",
+      "recorded_value": "Reproduzido com",
+      "recorded_by": "Definido por {user} em {date}",
+      "recorded_hidden": "A leitura dos valores requer permissão para ler os outputs."
+    },
     "change execution state done": "Estado de execução atualizado",
     "mark as": "Marcar como {status}",
     "unqueue as": "Desenfileirar como {status}",

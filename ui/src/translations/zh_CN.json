@@ -455,6 +455,31 @@
       "confirm_from_task": "从 {taskId} Replay",
       "confirm_whole": "重放整个 Execution"
     },
+    "replayOverrides": {
+      "action": "使用覆盖重放",
+      "dialog_title": "使用覆盖重放 {taskId}",
+      "revision_note": "重放运行在修订版 {revision} 上，即此 Execution 运行的修订版。",
+      "task_code": "{taskId} 的定义",
+      "code_error": "无法加载 {taskId} 的定义。",
+      "title": "覆盖输出",
+      "description": "Task {taskId} 读取的先前 Task 的输出。设置一个以该值进行重放：它之前的 Task 不会再次运行，并且 {taskId} 和每个后续 Task 都读取新值。",
+      "load_error": "无法加载 task {taskId} 读取的 output。",
+      "empty": "Task {taskId} 通过其自身属性中的静态路径读取不到前一个 Task 的 output。",
+      "current": "当前值 {value}",
+      "confirm": "使用 {count} 个覆盖项重放",
+      "error": {
+        "number": "输入一个数字。",
+        "boolean": "输入 true 或 false。",
+        "json": "输入有效的 JSON。"
+      },
+      "recorded": "{count} 覆盖的 output | {count} 覆盖的 outputs",
+      "recorded_title": "重放时覆盖的输出",
+      "recorded_path": "输出",
+      "recorded_original": "原始值",
+      "recorded_value": "已重放，使用",
+      "recorded_by": "由 {user} 在 {date} 设置",
+      "recorded_hidden": "读取值需要读取 output 的权限。"
+    },
     "change execution state done": "执行状态已更新",
     "mark as": "标记为 {status}",
     "unqueue as": "取消排队为{status}",

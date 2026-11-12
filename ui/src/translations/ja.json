@@ -455,6 +455,31 @@
       "confirm_from_task": "{taskId}からReplay",
       "confirm_whole": "Execution全体をリプレイ"
     },
+    "replayOverrides": {
+      "action": "オーバーライドでReplay",
+      "dialog_title": "オーバーライドで {taskId} をReplay",
+      "revision_note": "リプレイは、このExecutionが実行されたリビジョン {revision} で実行されます。",
+      "task_code": "{taskId}の定義",
+      "code_error": "{taskId} の定義を読み込めませんでした。",
+      "title": "出力のオーバーライド",
+      "description": "タスク {taskId} が読み取る以前のタスクの output。代わりにその値でリプレイするように設定します。その前のタスクは再度実行されず、{taskId} とそれ以降のすべてのタスクが新しい値を読み取ります。",
+      "load_error": "Task {taskId} が読み取る output をロードできませんでした。",
+      "empty": "Task {taskId} は、自身のプロパティ内の静的パスを介して、以前の Task の output を読み取りません。",
+      "current": "現在の値 {value}",
+      "confirm": "{count} 件のオーバーライドでリプレイ",
+      "error": {
+        "number": "数値を入力してください。",
+        "boolean": "true または false を入力してください。",
+        "json": "有効なJSONを入力してください。"
+      },
+      "recorded": "{count} 上書きされた出力",
+      "recorded_title": "リプレイで上書きされたOutput",
+      "recorded_path": "出力",
+      "recorded_original": "元の値",
+      "recorded_value": "リプレイ元",
+      "recorded_by": "{date}に{user}によって設定",
+      "recorded_hidden": "値の読み取りには、outputを読み取る権限が必要です。"
+    },
     "change execution state done": "実行状態が更新されました",
     "mark as": "{status}としてマーク",
     "unqueue as": "{status}としてキューから外す",

@@ -455,6 +455,31 @@
       "confirm_from_task": "Rejouer à partir de {taskId}",
       "confirm_whole": "Rejouer l'exécution entière"
     },
+    "replayOverrides": {
+      "action": "Rejouer avec des remplacements",
+      "dialog_title": "Replay {taskId} avec des overrides",
+      "revision_note": "Le replay s'exécute sur la révision {revision}, celle sur laquelle cette exécution a été exécutée.",
+      "task_code": "Définition de {taskId}",
+      "code_error": "Impossible de charger la définition de {taskId}.",
+      "title": "Remplacer les outputs",
+      "description": "Les outputs des tâches précédentes que la tâche {taskId} lit. Définissez-en un pour rejouer avec cette valeur à la place : les tâches précédentes ne sont pas exécutées à nouveau, et {taskId} ainsi que toutes les tâches ultérieures liront la nouvelle valeur.",
+      "load_error": "Impossible de charger les outputs lus par la task {taskId}.",
+      "empty": "La Task {taskId} ne lit aucune sortie d'une Task précédente via un chemin statique dans ses propres propriétés.",
+      "current": "Valeur actuelle {value}",
+      "confirm": "Rejouer avec {count} remplacement | Rejouer avec {count} remplacements",
+      "error": {
+        "number": "Entrez un nombre.",
+        "boolean": "Entrez vrai ou faux.",
+        "json": "Entrez un JSON valide."
+      },
+      "recorded": "{count} sortie remplacée | {count} sorties remplacées",
+      "recorded_title": "Sorties écrasées lors du replay",
+      "recorded_path": "Output",
+      "recorded_original": "Valeur d'origine",
+      "recorded_value": "Rejoué avec",
+      "recorded_by": "Défini par {user} le {date}",
+      "recorded_hidden": "La lecture des valeurs nécessite la permission de lire les outputs."
+    },
     "change execution state done": "État d'exécution mis à jour",
     "mark as": "Marquer comme {status}",
     "unqueue as": "Se désenfile en tant que {status}",

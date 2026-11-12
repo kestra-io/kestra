@@ -455,6 +455,31 @@
       "confirm_from_task": "{taskId}부터 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
+    "replayOverrides": {
+      "action": "오버라이드하여 Replay",
+      "dialog_title": "재정의로 {taskId} Replay",
+      "revision_note": "리플레이는 이 실행이 실행된 리비전 {revision}에서 실행됩니다.",
+      "task_code": "{taskId}의 정의",
+      "code_error": "{taskId}의 정의를 로드할 수 없습니다.",
+      "title": "출력 재정의",
+      "description": "task {taskId}가 읽는 이전 Task의 output입니다. 해당 값으로 다시 재생하려면 하나를 설정하세요. 이전 Task는 다시 실행되지 않으며, {taskId} 및 이후의 모든 Task는 새 값을 읽습니다.",
+      "load_error": "Task {taskId}가 읽는 output을 로드할 수 없습니다.",
+      "empty": "Task {taskId}는 자체 속성의 정적 경로를 통해 이전 Task의 output을 읽지 않습니다.",
+      "current": "현재 값 {value}",
+      "confirm": "{count}개 재정의로 Replay | {count}개 재정의로 Replay",
+      "error": {
+        "number": "숫자를 입력하세요.",
+        "boolean": "true 또는 false를 입력하세요.",
+        "json": "유효한 JSON을 입력하세요."
+      },
+      "recorded": "{count} 재정의된 output | {count} 재정의된 output",
+      "recorded_title": "재실행 시 덮어쓴 Output",
+      "recorded_path": "Output",
+      "recorded_original": "원본 값",
+      "recorded_value": "다음으로 Replay됨",
+      "recorded_by": "{date}에 {user}가 설정함",
+      "recorded_hidden": "값을 읽으려면 output을 읽을 권한이 필요합니다."
+    },
     "change execution state done": "실행 상태가 업데이트되었습니다",
     "mark as": "{status}로 표시",
     "unqueue as": "{status}로 대기열에서 제거",

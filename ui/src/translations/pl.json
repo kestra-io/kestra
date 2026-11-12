@@ -455,6 +455,31 @@
       "confirm_from_task": "Replay od {taskId}",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
+    "replayOverrides": {
+      "action": "Replay z nadpisaniami",
+      "dialog_title": "Replay {taskId} z nadpisaniami",
+      "revision_note": "Replay działa na wersji {revision}, tej samej, na której działała ta egzekucja.",
+      "task_code": "Definicja {taskId}",
+      "code_error": "Nie można załadować definicji Taska {taskId}.",
+      "title": "Nadpisz outputy",
+      "description": "Wyjścia poprzednich Tasków, które Task {taskId} odczytuje. Ustaw jedno, aby odtworzyć z tą wartością: poprzedzające Taski nie zostaną ponownie uruchomione, a {taskId} i każdy późniejszy Task odczytają nową wartość.",
+      "load_error": "Nie można załadować outputów, które odczytuje Task {taskId}.",
+      "empty": "Task {taskId} nie odczytuje żadnych outputów poprzedniego Taska poprzez statyczną ścieżkę we własnych właściwościach.",
+      "current": "Bieżąca wartość {value}",
+      "confirm": "Replay z {count} nadpisaniem | Replay z {count} nadpisaniami | Replay z {count} nadpisaniami",
+      "error": {
+        "number": "Wprowadź liczbę.",
+        "boolean": "Wprowadź wartość true lub false.",
+        "json": "Wprowadź prawidłowy JSON."
+      },
+      "recorded": "{count} nadpisany output | {count} nadpisane outputy | {count} nadpisanych outputów",
+      "recorded_title": "Outputy nadpisane podczas Replayu",
+      "recorded_path": "Output",
+      "recorded_original": "Oryginalna wartość",
+      "recorded_value": "Odtworzono z",
+      "recorded_by": "Ustawione przez {user} dnia {date}",
+      "recorded_hidden": "Odczytanie wartości wymaga uprawnień do odczytu outputów."
+    },
     "change execution state done": "Status egzekucji zaktualizowany",
     "mark as": "Oznacz jako {status}",
     "unqueue as": "Usuń z kolejki jako {status}",

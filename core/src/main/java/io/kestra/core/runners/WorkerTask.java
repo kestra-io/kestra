@@ -27,6 +27,7 @@ public class WorkerTask extends WorkerJob {
     private TaskRun taskRun;
 
     @NotNull
+    @With
     private Task task;
 
     @NotNull
@@ -34,6 +35,12 @@ public class WorkerTask extends WorkerJob {
 
     @Nullable
     private ExecutionKind executionKind;
+
+    /**
+     * The id of the task run of the enclosing WorkingDirectory, whose folder this task runs in.
+     */
+    @Nullable
+    private String workingDirectoryId;
 
     /**
      * {@inheritDoc}

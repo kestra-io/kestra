@@ -4,12 +4,14 @@ import {configureClient} from "@kestra-io/kestra-sdk"
 import useFlowsBulkActions from "./useFlowsBulkActions"
 
 const downloads: Array<{url: string, filename: string}> = []
+const {error} = vi.hoisted(() => ({error: vi.fn()}))
 
-vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
+vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key, te: () => false})}))
 vi.mock("../../utils/toast", () => ({
     useToast: () => ({
         confirm: (_message: string, callback: () => Promise<unknown>) => callback(),
         success: vi.fn(),
+        error,
     }),
 }))
 vi.mock("../../stores/flow", () => ({useFlowStore: () => ({total: 2})}))
@@ -80,5 +82,38 @@ describe("useFlowsBulkActions exportFlows", () => {
         // Then
         expect(downloads).toEqual([{url: "blob:flows", filename: "flows.zip"}])
         expect(Array.from(await readBytes(createdBlobs[0]))).toEqual(Array.from(ZIP_BYTES))
+    })
+})
+
+describe("useFlowsBulkActions deleteFlows", () => {
+    const refused = {
+        type: "https://kestra.io/problems/bulk-validation-failed",
+        title: "Bulk validation failed",
+        status: 400,
+        detail: "One or more flows could not be deleted.",
+        errors: [{detail: "flow not found", path: "qa.followup.export_a"}],
+    }
+
+    beforeAll(() => {
+        configureClient({
+            baseUrl: "http://localhost",
+            fetch: async () => new Response(JSON.stringify(refused), {status: 400, headers: {"Content-Type": "application/problem+json"}}),
+        })
+    })
+
+    afterAll(() => {
+        configureClient({fetch: undefined})
+    })
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    test("lists the refused flows when the server refuses a bulk delete", async () => {
+        const {deleteFlows} = mountBulkActions(false)
+
+        deleteFlows()
+
+        await vi.waitFor(() => expect(error).toHaveBeenCalledWith([{message: "flow not found"}], "Bulk validation failed"))
     })
 })

@@ -29,13 +29,23 @@
         />
 
         <div class="copilot-composer-actions">
-            <KsDropdown trigger="click" :disabled="!!disabledReason" data-test="copilot-mode-selector">
-                <KsButton
-                    size="small"
-                    class="copilot-mode-trigger"
-                    :disabled="!!disabledReason"
-                    :aria-describedby="describedBy"
-                >
+            <!-- The dropdown owns `aria-describedby` on its trigger, so a locked composer renders a plain button that can point at the notice. -->
+            <KsButton
+                v-if="disabledReason"
+                size="small"
+                class="copilot-mode-trigger"
+                disabled
+                :aria-describedby="describedBy"
+                data-test="copilot-mode-selector"
+            >
+                <span class="copilot-mode-item">
+                    <component :is="currentMode?.icon" :size="16" />
+                    {{ currentMode?.label }}
+                    <ChevronDown class="copilot-mode-chevron" />
+                </span>
+            </KsButton>
+            <KsDropdown v-else trigger="click" data-test="copilot-mode-selector">
+                <KsButton size="small" class="copilot-mode-trigger">
                     <span class="copilot-mode-item">
                         <component :is="currentMode?.icon" :size="16" />
                         {{ currentMode?.label }}
@@ -116,9 +126,17 @@
                         data-test="copilot-stop"
                         @click="emit('stop')"
                     />
-                    <KsTooltip v-else :disabled="!disabledReason" :content="disabledReason">
+                    <KsTooltip v-else trigger="manual" :visible="sendTipVisible" :disabled="!disabledReason" :content="disabledReason">
                         <!-- A disabled button swallows hover and focus, so the span carries them for the tooltip. -->
-                        <span class="copilot-send-wrapper" :tabindex="disabledReason ? 0 : undefined" data-test="copilot-send-wrapper">
+                        <span
+                            class="copilot-send-wrapper"
+                            :tabindex="disabledReason ? 0 : undefined"
+                            data-test="copilot-send-wrapper"
+                            @mouseenter="sendHovered = true"
+                            @mouseleave="sendHovered = false"
+                            @focus="sendFocused = true"
+                            @blur="sendFocused = false"
+                        >
                             <KsButton
                                 circle
                                 type="primary"
@@ -202,6 +220,10 @@
     })
 
     const isDisabled = computed(() => props.disabled || !!props.disabledReason)
+
+    const sendHovered = ref(false)
+    const sendFocused = ref(false)
+    const sendTipVisible = computed(() => !!props.disabledReason && (sendHovered.value || sendFocused.value))
 
     const canSubmit = computed(() => !isDisabled.value && draft.value.trim().length > 0)
 

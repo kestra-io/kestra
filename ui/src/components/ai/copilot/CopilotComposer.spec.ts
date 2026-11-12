@@ -66,13 +66,30 @@ describe("CopilotComposer", () => {
 
         expect(input(w).attributes("disabled")).toBeDefined()
         expect(input(w).attributes("aria-describedby")).toBe("why")
-        expect(w.find(".copilot-mode-trigger").attributes("disabled")).toBeDefined()
+        const mode = w.find(".copilot-mode-trigger")
+        expect(mode.attributes("disabled")).toBeDefined()
+        expect(mode.attributes("aria-describedby")).toBe("why")
         expect(sendBtn(w).attributes("disabled")).toBeDefined()
         expect(sendBtn(w).attributes("aria-describedby")).toBe("why")
         expect(w.find(".ks-tooltip").attributes("data-tooltip")).toBe("No provider")
 
         await input(w).trigger("keydown", {key: "Enter"})
         expect(w.emitted("submit")).toBeUndefined()
+    })
+
+    it("shows the Send tooltip on hover and on keyboard focus, and hides it once both leave", async () => {
+        const w = mountComposer({disabledReason: "No provider"})
+        const wrapper = w.find("[data-test=\"copilot-send-wrapper\"]")
+        const visible = () => w.find(".ks-tooltip").attributes("data-visible")
+        expect(visible()).toBe("false")
+
+        await wrapper.trigger("focus")
+        expect(visible()).toBe("true")
+        await wrapper.trigger("mouseenter")
+        await wrapper.trigger("blur")
+        expect(visible()).toBe("true")
+        await wrapper.trigger("mouseleave")
+        expect(visible()).toBe("false")
     })
 
     it("shows no tooltip on Send while the composer is usable", () => {

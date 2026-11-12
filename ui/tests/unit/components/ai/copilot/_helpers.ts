@@ -42,7 +42,7 @@ export const ksStubs = {
     KsIcon: {name: "KsIcon", template: "<i><slot /></i>"},
     KsTag: {name: "KsTag", props: ["size"], template: "<span class=\"ks-tag\"><slot /></span>"},
     KsAlert: {name: "KsAlert", props: ["type", "closable", "title"], template: "<div class=\"ks-alert\" :data-type=\"type\"><strong v-if=\"title\">{{ title }}</strong><slot /></div>"},
-    KsTooltip: {name: "KsTooltip", props: ["content", "disabled"], template: "<div class=\"ks-tooltip\" :data-tooltip=\"disabled ? undefined : content\"><slot /></div>"},
+    KsTooltip: {name: "KsTooltip", props: ["content", "disabled", "visible", "trigger"], template: "<div class=\"ks-tooltip\" :data-tooltip=\"disabled ? undefined : content\" :data-visible=\"visible ? 'true' : 'false'\"><slot /></div>"},
     KsCodeStatus: {name: "KsCodeStatus", props: ["status", "label", "iconOnly"], template: "<span class=\"ks-code-status\" :data-status=\"status\"><slot>{{ label }}</slot></span>"},
     KsScrollbar: {name: "KsScrollbar", template: "<div><slot /></div>"},
     KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div class=\"ks-markdown\">{{ content }}</div>"},

@@ -344,6 +344,7 @@
     "home": "Início",
     "create": "Criar",
     "create_flow": "Criar Flow",
+    "create_child_namespace": "Criar namespace filho",
     "from": "De",
     "to": "Para",
     "steps": "Passos",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "refresh": "Atualizar",
     "filter by status": "Filtrar execuções pelo status {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task foi repetida",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",

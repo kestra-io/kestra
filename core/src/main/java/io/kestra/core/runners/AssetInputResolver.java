@@ -39,8 +39,8 @@ public interface AssetInputResolver {
      * Reduces a resolved value to what the execution being created stores. Only called on a real execution creation,
      * never to validate the inputs, and once every input and flow check has passed.
      *
-     * @param write whether to persist the edits made in the form when {@code persistOverrides} asks for it; when
-     *              {@code false}, the edits are kept on the execution instead, so a replay submits them again
+     * @param write whether to persist the edits made in the form as {@code persistOverrides} asks; when {@code false},
+     *              as for a test run, the edits are dropped and only the asset id is stored
      */
     default Object store(Execution execution, AssetInput input, Object resolved, boolean write) {
         return AssetInput.storedValue(resolved);

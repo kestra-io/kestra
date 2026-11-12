@@ -91,12 +91,10 @@ public class AssetInput extends Input<Object> implements RenderableInput {
     private Boolean editableProperties = false;
 
     @Schema(
-        title = "What happens to the properties edited in the execution form.",
-        description = "`NONE` applies them to this execution only, `UPDATE` saves them onto the picked asset when the execution is created, and `CLONE` creates a new asset from the picked one with the edits on top."
+        title = "What happens to the properties edited in the execution form, required when `editableProperties` is true.",
+        description = "`UPDATE` saves them onto the picked asset when the execution is created, and `CLONE` creates a new asset from the picked one with the edits on top; the input's value is then the new asset's id."
     )
-    @NotNull
-    @Builder.Default
-    private PersistOverrides persistOverrides = PersistOverrides.NONE;
+    private PersistOverrides persistOverrides;
 
     /** The filters are always rendered, since a submitted id is checked against them. */
     @JsonIgnore
@@ -210,7 +208,6 @@ public class AssetInput extends Input<Object> implements RenderableInput {
     }
 
     public enum PersistOverrides {
-        NONE,
         UPDATE,
         CLONE,
         UNKNOWN;

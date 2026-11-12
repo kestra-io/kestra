@@ -26,7 +26,10 @@ public class AssetInputValidator implements ConstraintValidator<AssetInputValida
             violation = Optional.of("`editableProperties` cannot be used with `multiple`");
         }
         if (violation.isEmpty() && AssetInput.PersistOverrides.UNKNOWN == value.getPersistOverrides()) {
-            violation = Optional.of("`persistOverrides` must be one of NONE, UPDATE or CLONE");
+            violation = Optional.of("`persistOverrides` must be UPDATE or CLONE");
+        }
+        if (violation.isEmpty() && Boolean.TRUE.equals(value.getEditableProperties()) && value.getPersistOverrides() == null) {
+            violation = Optional.of("`persistOverrides` is required when `editableProperties` is true");
         }
         if (violation.isEmpty()) {
             return true;

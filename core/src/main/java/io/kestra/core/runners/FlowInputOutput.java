@@ -715,7 +715,7 @@ public class FlowInputOutput {
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
         Map<String, Object> flatInputs = dependencies.entrySet()
             .stream()
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll);
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), visibleValue(v.getValue())), HashMap::putAll);
         // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
         // RunContextFactory from attempting to render them when absent, which could
         // otherwise cause an exception if a Pebble expression is involved.
@@ -1082,12 +1082,17 @@ public class FlowInputOutput {
         }
 
         /**
-         * The typed values, as the flow checks see them: an {@code ASSET} input is the asset, edits included.
+         * The typed values, as the flow checks see them: an {@code ASSET} input is the picked asset id, edits not included.
          */
         public Map<String, Object> typed() {
             Map<String, Object> typed = new HashMap<>();
-            values.forEach(it -> typed.put(it.input().getId(), it.value()));
+            values.forEach(it -> typed.put(it.input().getId(), visibleValue(it)));
             return MapUtils.flattenToNestedMap(typed);
         }
+    }
+
+    // Dependent inputs and flow checks run before the edits of an ASSET input are written, so they see the picked asset id.
+    private static Object visibleValue(InputAndValue inputAndValue) {
+        return inputAndValue.input() instanceof AssetInput ? AssetInput.storedValue(inputAndValue.value()) : inputAndValue.value();
     }
 }

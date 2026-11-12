@@ -344,6 +344,7 @@
     "home": "Início",
     "create": "Criar",
     "create_flow": "Criar Flow",
+    "create_child_namespace": "Criar namespace filho",
     "from": "De",
     "to": "Para",
     "steps": "Passos",

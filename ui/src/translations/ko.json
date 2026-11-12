@@ -344,6 +344,7 @@
     "home": "홈",
     "create": "생성",
     "create_flow": "Flow 생성",
+    "create_child_namespace": "하위 namespace 생성",
     "from": "시작",
     "to": "종료",
     "steps": "단계",

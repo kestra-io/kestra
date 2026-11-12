@@ -344,6 +344,7 @@
     "home": "Inicio",
     "create": "Crear",
     "create_flow": "Crear Flow",
+    "create_child_namespace": "Crear namespace secundario",
     "from": "Desde",
     "to": "Hasta",
     "steps": "Pasos",

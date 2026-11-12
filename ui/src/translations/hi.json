@@ -344,6 +344,7 @@
     "home": "होम",
     "create": "बनाएँ",
     "create_flow": "फ़्लो बनाएं",
+    "create_child_namespace": "चाइल्ड namespace बनाएँ",
     "from": "से",
     "to": "तक",
     "steps": "चरण",

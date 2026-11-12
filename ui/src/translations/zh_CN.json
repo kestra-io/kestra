@@ -344,6 +344,7 @@
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
+    "create_child_namespace": "创建子 namespace",
     "from": "从",
     "to": "到",
     "steps": "步骤",

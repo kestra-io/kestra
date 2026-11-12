@@ -2500,7 +2500,7 @@
           "planTitle": "計画案",
           "actionTitle": "提案アクション",
           "approve": "承認",
-          "approveExecute": "承認して実行",
+          "approvePlan": "プランを承認",
           "reject": "拒否",
           "pending": "承認待ち",
           "revise": "修正に返信"

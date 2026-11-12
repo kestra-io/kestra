@@ -2500,7 +2500,7 @@
           "planTitle": "제안된 계획",
           "actionTitle": "제안된 조치",
           "approve": "승인",
-          "approveExecute": "승인 및 실행",
+          "approvePlan": "계획 승인",
           "reject": "거부",
           "pending": "승인 대기 중",
           "revise": "수정하려면 답장"

@@ -2500,7 +2500,7 @@
           "planTitle": "建议计划",
           "actionTitle": "建议操作",
           "approve": "批准",
-          "approveExecute": "批准并执行",
+          "approvePlan": "批准计划",
           "reject": "拒绝",
           "pending": "待批准",
           "revise": "回复以修改"

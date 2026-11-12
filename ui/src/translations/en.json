@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "This task was retried",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
@@ -1911,7 +1918,8 @@
       "duplicate": "This key already exists",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."

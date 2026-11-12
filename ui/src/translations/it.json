@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Crea",
     "create_flow": "Crea Flow",
+    "create_child_namespace": "Crea namespace figlio",
     "from": "Da",
     "to": "A",
     "steps": "Passaggi",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
     "refresh": "Aggiorna",
     "filter by status": "Filtra le esecuzioni per stato {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Questo Task è stato ritentato",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
@@ -1911,7 +1918,8 @@
       "duplicate": "Questo key esiste già",
       "delete multiple": {
         "confirm": "Sei sicuro di voler eliminare: <code>{name}</code> KV?",
-        "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
+        "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV eliminati dal namespace <code>{namespace}</code>"
       },
       "inherited": "Coppie KV ereditate",
       "expiration_hint": "Attualmente scade il {date}. Lascia il campo intatto per mantenere questa scadenza; la selezione di una durata la ricalcola da ora, e la sua cancellazione la rimuove."

@@ -52,6 +52,18 @@
             {{ $t('open') }}
         </KsButton>
     </span>
+    <span v-else-if="mailtoHref" class="uri-value">
+        <span>{{ value }}</span>
+        <KsButton
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </KsButton>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -84,6 +96,7 @@
     import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsEditor} from "@kestra-io/design-system"
@@ -131,6 +144,10 @@
             return false
         }
     }
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
+    )
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
@@ -224,7 +241,7 @@
 <style scoped lang="scss">
 .uri-value {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     word-break: break-all;
 }

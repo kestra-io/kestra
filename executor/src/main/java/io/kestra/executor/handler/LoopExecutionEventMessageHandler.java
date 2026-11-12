@@ -104,6 +104,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         {
             try {
                 final FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                // the Loop task run was removed by a WorkingDirectory that runs again, which killed its iterations
+                if (execution.findTaskRunByTaskRunIdIfPresent(message.loopRun().taskRunId()).isEmpty()) {
+                    log.warn("Ignoring loop execution event for sub-execution {} as its Loop task run no longer exists", message.executionId());
+                    return null;
+                }
                 ExecutorContext executor = new ExecutorContext(execution, flow);
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());

@@ -28,6 +28,8 @@ public class ServerCommandValidator {
         "kestra.storage.type", "https://kestra.io/docs/configuration-guide/setup#internal-storage-configuration"
     );
 
+    private static final String STORAGE_WORKER_ACCESS = "kestra.storage.worker-access";
+
     /**
      * Database properties a worker inherits from a shared configuration but never uses: it owns no
      * repository and reaches the rest of the cluster over gRPC.
@@ -104,7 +106,7 @@ public class ServerCommandValidator {
      * @return the outcome of each required-property check, never {@code null}
      */
     public static List<ConfigValidationResult> validateServerConfiguration(final Environment environment, final ServerType serverType) {
-        final Map<String, String> required = ServerType.WORKER.equals(serverType) ? WORKER_REQUIRED_PROPERTIES : ALL_REQUIRED_PROPERTIES;
+        final Map<String, String> required = ServerType.WORKER.equals(serverType) ? workerRequiredProperties(environment) : ALL_REQUIRED_PROPERTIES;
 
         return required.entrySet().stream()
             .map(
@@ -113,6 +115,13 @@ public class ServerCommandValidator {
                     : ConfigValidationResult.invalid(property.getKey(), missingPropertyMessage(property.getKey(), property.getValue()))
             )
             .toList();
+    }
+
+    private static Map<String, String> workerRequiredProperties(final Environment environment) {
+        boolean storageFromController = environment.getProperty(STORAGE_WORKER_ACCESS, String.class)
+            .map("CONTROLLER"::equalsIgnoreCase)
+            .orElse(false);
+        return storageFromController ? Map.of() : WORKER_REQUIRED_PROPERTIES;
     }
 
     private static String missingPropertyMessage(final String key, final String documentationUrl) {

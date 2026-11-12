@@ -91,7 +91,8 @@ interface FlowGraphEdge {
 
 export interface FlowGraph {
     nodes: MinimalNode[];
-    clusters: {
+    /** The blueprints API leaves it out. */
+    clusters?: {
         cluster: Cluster;
         nodes: string[];
         parents: string[];
@@ -101,7 +102,7 @@ export interface FlowGraph {
     edges: FlowGraphEdge[];
 }
 
-export type FlowGraphCluster = FlowGraph["clusters"][number];
+export type FlowGraphCluster = NonNullable<FlowGraph["clusters"]>[number];
 
 type EdgeReplacer = Record<string, string>;
 
@@ -496,7 +497,7 @@ export function isTrueFlowableCluster(cluster: Cluster): boolean {
  *  the lane header — stops rendering as a second blank dot in the same gap. A collapsed lane is
  *  excluded: there that uid is what the "collapsedcluster" placeholder renders as. */
 export function getFlowableGateAliases(
-    clusters: FlowGraph["clusters"],
+    clusters: FlowGraphCluster[],
     collapsed: Set<string> = new Set(),
     edgeReplacer: EdgeReplacer = {},
 ): Record<string, string> {
@@ -511,7 +512,7 @@ export function getFlowableGateAliases(
 }
 
 export function getTriggersJoinAlias(
-    clusters: FlowGraph["clusters"],
+    clusters: FlowGraphCluster[],
     nodes: MinimalNode[],
     edges: FlowGraphEdge[],
     collapsed: Set<string> = new Set(),
@@ -662,7 +663,7 @@ export function getEdgeColor(
  *  branch, it hangs directly off the (invisible) root — so the frontend synthesizes one lane
  *  wrapping every such task, the same way the backend already synthesizes the `Triggers` cluster
  *  (kestra-io/kestra#19666). Returns `flowGraph.clusters` unchanged when there is nothing to wrap. */
-export function withSyntheticErrorsLane(flowGraph: {nodes: MinimalNode[]; clusters?: FlowGraph["clusters"]}): FlowGraph["clusters"] {
+export function withSyntheticErrorsLane(flowGraph: {nodes: MinimalNode[]; clusters?: FlowGraphCluster[]}): FlowGraphCluster[] {
     const clusters = flowGraph.clusters ?? []
     const clusteredUids = new Set(clusters.flatMap((c) => c.nodes))
     const rootErrorUids = flowGraph.nodes
@@ -671,7 +672,7 @@ export function withSyntheticErrorsLane(flowGraph: {nodes: MinimalNode[]; cluste
 
     if (!rootErrorUids.length) return clusters
 
-    const errorsLane: FlowGraph["clusters"][number] = {
+    const errorsLane: FlowGraphCluster = {
         cluster: {
             uid: CLUSTER_PREFIX + ERRORS_NODE_UID,
             type: "io.kestra.core.models.hierarchies.GraphCluster",

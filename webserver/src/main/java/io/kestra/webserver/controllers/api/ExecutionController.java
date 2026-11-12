@@ -561,7 +561,7 @@ public class ExecutionController {
     }
 
     private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
-        try {
+        try (PropagatedContext.Scope _ = Actor.propagate(actorResolver.resolve())) {
             executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
         } catch (RuntimeException e) {
             log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);

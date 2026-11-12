@@ -228,9 +228,6 @@ public class ExecutionController {
     private ExecutionOutputService executionOutputService;
 
     @Inject
-    private AssetInputResolver assetInputResolver;
-
-    @Inject
     private ExecutionStreamingService streamingService;
 
     @Inject
@@ -373,7 +370,7 @@ public class ExecutionController {
             dateFilter
         );
         var apiExecution = executions.stream()
-            .map(ApiLightExecution::of)
+            .map(execution -> ApiLightExecution.of(execution))
             .toList();
         return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
@@ -520,7 +517,6 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
-            .map(this::withAssets)
             .map(ApiExecution::of)
             .orElse(null);
     }
@@ -628,7 +624,7 @@ public class ExecutionController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
         var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
         var apiExecution = executions.stream()
-            .map(ApiLightExecution::of)
+            .map(execution -> ApiLightExecution.of(execution))
             .toList();
         return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
@@ -1162,17 +1158,15 @@ public class ExecutionController {
                     (operationId, _) -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
-                    Execution created;
                     try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
                         eventPublisher.publishEvent(CrudEvent.create(res.body()));
-                        created = withAssets(res.body());
                     }
 
                     var executionUrl = executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
                         return Mono.just(
                             ExecutionResponse.fromExecution(
-                                created,
+                                res.body(),
                                 executionUrl
                             )
                         );
@@ -1193,9 +1187,9 @@ public class ExecutionController {
                         .last()
                         .map(Event::getData)
                         .map(execution -> {
-                            try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
+                            try {
                                 return ExecutionResponse.fromExecution(
-                                    withAssets(execution),
+                                    execution,
                                     executionOutputService.getOutputs(execution),
                                     executionUrl
                                 );
@@ -1207,10 +1201,6 @@ public class ExecutionController {
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
             });
-    }
-
-    private Execution withAssets(Execution execution) {
-        return assetInputResolver.expandInputs(List.of(execution)).getFirst();
     }
 
     private URI executionUrl(ExecutionId executionId) {
@@ -1730,10 +1720,10 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(withAssets(
+        return HttpResponse.ok(
             executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
                 .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
-        ));
+        );
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)
@@ -2722,16 +2712,10 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         String subscriberId = UUID.randomUUID().toString();
         String tenant = tenantService.resolveTenant();
-        // inputs never change during an execution, so they are read live once, in the context of the request that carries the user
-        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        AtomicReference<Map<String, Object>> liveInputs = new AtomicReference<>();
         Flux<Event<Execution>> flux = awaitExecution(tenant, executionId).flatMapMany(found -> Flux.<Event<Execution>> create(emitter ->
         {
             try {
                 Execution execution = found;
-                try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
-                    liveInputs.set(withAssets(execution).getInputs());
-                }
 
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
@@ -2783,9 +2767,6 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER))
-            .map(event -> liveInputs.get() == null || event.getData().getInputs() == null
-                ? event
-                : Event.of(event.getData().withInputs(liveInputs.get())).id(event.getId()))
             // emitted on subscription, before the lazy execution lookup, so the SSE connection is established immediately
             .startWith(Event.of(Execution.builder().id(executionId).build()).id("start"))
             .take(Duration.ofHours(1)); // heartbeats stop a between-item timeout from firing, so cap the lifetime instead
@@ -3623,7 +3604,6 @@ public class ExecutionController {
         @Nullable Actor actor,
         ThrowingBiConsumer<String, Actor> emit) {
         String tenantId = tenantService.resolveTenant();
-        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return asyncOperationWaiter.submit(
             executionId,
             operationId ->
@@ -3663,12 +3643,7 @@ public class ExecutionController {
                         )
                     );
             })
-            .map(execution ->
-            {
-                try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
-                    return HttpResponse.ok(withAssets(execution));
-                }
-            });
+            .map(HttpResponse::ok);
     }
 
     /**

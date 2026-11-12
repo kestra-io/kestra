@@ -59,14 +59,14 @@ public class AssetInput extends Input<Object> implements RenderableInput {
 
     @Schema(
         title = "Whether several assets can be selected.",
-        description = "The value is then a list of assets."
+        description = "The value is then a list of asset ids."
     )
     @NotNull
     @Builder.Default
     private Boolean multiple = false;
 
     /**
-     * Reduces a resolved value to what an execution stores: the asset id, or the list of ids when {@code multiple}.
+     * Reduces a value to what an execution stores: the asset id, or the list of ids when {@code multiple}; an asset given as a map keeps only its id.
      */
     public static Object storedValue(Object resolved) {
         if (resolved instanceof List<?> list) {

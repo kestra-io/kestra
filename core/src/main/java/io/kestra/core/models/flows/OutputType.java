@@ -23,6 +23,7 @@ public enum OutputType {
     SECRET(Type.SECRET),
     ARRAY(Type.ARRAY),
     YAML(Type.YAML),
+    ASSET(Type.ASSET),
     /** A type this version does not know, such as an input-only type, kept so the flow still loads and runs. */
     UNKNOWN(null);
 

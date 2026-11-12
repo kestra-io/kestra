@@ -274,21 +274,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.validateReplayExecution(options)
     }
 
-    const loadReplayOutputs = (options: { executionId: string; taskRunId: string }) => {
-        return ExecutionsAPI.replayOutputs(options).then(response => response.values ?? [])
-    }
-
-    const loadTaskRunOverrides = (options: { executionId: string; taskRunId: string }) => {
-        return ExecutionsAPI.taskRunOverrides(options).then(response => response.values ?? [])
-    }
-
-    const replayExecutionWithOverrides = (options: { executionId: string; taskRunId: string; overrides: Record<string, unknown> }): Promise<Execution> => {
-        return ExecutionsAPI.replayExecutionWithOverrides({
-            ...options,
-            overrides: options.overrides as Parameters<typeof ExecutionsAPI.replayExecutionWithOverrides>[0]["overrides"],
-        })
-    }
-
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post<Execution>(
@@ -1052,9 +1037,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryChangeExecutionStatus,
         replayExecution,
         validateReplay,
-        loadReplayOutputs,
-        loadTaskRunOverrides,
-        replayExecutionWithOverrides,
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,

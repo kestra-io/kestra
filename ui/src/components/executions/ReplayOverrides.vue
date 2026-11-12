@@ -47,7 +47,7 @@
     import {computed, onMounted, reactive, ref, watch} from "vue"
     import {isDeepEqual} from "@kestra-io/design-system"
     import type {ReplayOutputServiceReplayOutput} from "@kestra-io/kestra-sdk"
-    import {useExecutionsStore} from "../../stores/executions"
+    import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import {editableText, formatValue, parseOverride, type ParsedOverride} from "./replayOverrides"
 
     const props = defineProps<{
@@ -58,8 +58,6 @@
 
     const overridesModel = defineModel<Record<string, unknown>>("overrides", {required: true})
     const invalid = defineModel<boolean>("invalid", {default: false})
-
-    const executionsStore = useExecutionsStore()
 
     const loading = ref(true)
     const loadFailed = ref(false)
@@ -81,7 +79,7 @@
 
     onMounted(async () => {
         try {
-            outputs.value = await executionsStore.loadReplayOutputs({executionId: props.executionId, taskRunId: props.taskRunId})
+            outputs.value = (await ExecutionsAPI.replayOutputs({executionId: props.executionId, taskRunId: props.taskRunId})).values
             outputs.value.forEach(output => texts[output.path] = editableText(output.value))
         } catch {
             loadFailed.value = true

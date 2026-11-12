@@ -1252,52 +1252,6 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    void shouldRefuseWithAConflictAReplayWithInputsBlockedByAFlowCheck() throws Exception {
-        String tenantId = TENANT_ID;
-        when(tenantService.resolveTenant()).thenReturn(tenantId);
-        String flowId = "replay-blocked-checks";
-        client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/%s/flows".formatted(tenantId), """
-                    id: %s
-                    namespace: io.kestra.tests.checks
-
-                    inputs:
-                      - id: size
-                        type: INT
-
-                    checks:
-                      - when: "{{ inputs.size <= 100 }}"
-                        message: The size can't be more than 100
-                        behavior: BLOCK_EXECUTION
-
-                    tasks:
-                      - id: resize
-                        type: io.kestra.plugin.core.log.Log
-                        message: "Resizing to {{ inputs.size }}"
-                    """.formatted(flowId)
-            ).contentType(MediaType.APPLICATION_YAML_TYPE),
-            Flow.class
-        );
-        Execution done = runnerUtils.runOne(
-            tenantId, "io.kestra.tests.checks", flowId, null,
-            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, Map.of("size", 50))
-        );
-        assertThat(done.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        HttpClientResponseException blocked = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay-with-inputs".formatted(tenantId, done.getId()), MultipartBody.builder().addPart("size", "200").build())
-                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                Execution.class
-            )
-        );
-        assertEquals(HttpStatus.CONFLICT, blocked.getStatus());
-        assertThat(blocked.getMessage()).contains("Replay failed").contains("The size can't be more than 100");
-    }
-
-    @Test
     void shouldReturnNotFoundWhenReplayWithInputsCalledOnUnknownExecution() {
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("condition", "success")

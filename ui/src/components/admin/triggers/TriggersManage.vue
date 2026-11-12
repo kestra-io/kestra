@@ -15,7 +15,7 @@
             :rowKey="(row: TriggerRow) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
         >
             <template #navbar>
@@ -95,6 +95,11 @@
                 <template #default="scope">
                     <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
+                        <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                            <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                                <AlertCircle />
+                            </KsIcon>
+                        </KsTooltip>
                     </div>
                 </template>
             </KsTableColumn>
@@ -163,8 +168,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -383,9 +397,10 @@
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
+    import {usePageSize} from "../../../composables/usePageSize"
     import {hasMissingRequiredInputs} from "../../../utils/inputs"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
+    import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
@@ -625,7 +640,12 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
         const parts = typeof sort === "string" ? sort.split(":") : []
@@ -775,7 +795,7 @@
             flowId: row.flowId,
             triggerId: row.triggerId,
         }).then(() => {
-            toast.saved(row.triggerId)
+            toast.success(t("delete backfill success", {id: row.triggerId}))
             triggerLoadDataAfterBulkEditAction()
         })
     }
@@ -1031,6 +1051,9 @@
     }
 
     .trigger-id-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
         white-space: nowrap;
     }
 

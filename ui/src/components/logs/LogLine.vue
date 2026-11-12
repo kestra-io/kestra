@@ -5,9 +5,6 @@
         :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
-        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
-            <MenuRight />
-        </KsIcon>
         <span
             class="log-level"
             :class="{'log-level--clickable': clickableLevel}"
@@ -18,7 +15,9 @@
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
-        >{{ levelLabel }}</span>
+        ><KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
+            <MenuRight />
+        </KsIcon>{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
                 <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
@@ -42,6 +41,7 @@
                 :value="structured"
                 :defaultExpanded="logsExpandByDefault"
             />
+            <!-- nosemgrep: kestra-vue-avoid-v-html -- renderedHtml passes the message through xss() before adding ANSI colours, links and highlights. -->
             <pre v-else ref="lineContent" class="log-message" :style="messageStyle" v-html="renderedHtml" />
         </div>
         <CopyToClipboard class="log-copy" :text="`${log.level} ${log.timestamp} ${log.message}`" link />
@@ -93,14 +93,12 @@
     const levelLower = computed(() => (props.log?.level ?? "info").toLowerCase())
 
     const rowStyle = computed(() => {
-        const tinted = levelLower.value === "error" || levelLower.value === "warn"
         const pad = DENSITY_PADDING[logsDensity.value]
         return {
             fontSize: `${logsFontSize.value}px`,
             paddingTop: pad,
             paddingBottom: pad,
             borderLeftColor: `var(--ks-log-border-${levelLower.value})`,
-            ...(tinted ? {background: `color-mix(in srgb, var(--ks-log-${levelLower.value}) 6%, transparent)`} : {}),
         }
     })
 
@@ -228,6 +226,14 @@ div.line {
         background: var(--ks-bg-hover);
     }
 
+    &.log-row-error:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-error) 6%, transparent);
+    }
+
+    &.log-row-warn:not(.selected) {
+        background: color-mix(in srgb, var(--ks-log-warn) 6%, transparent);
+    }
+
     &.selected {
         background: var(--ks-bg-tag-hover);
     }
@@ -240,14 +246,8 @@ div.line {
         border-top: 0;
     }
 
-    .icon_container {
-        position: absolute;
-        left: -0.6rem;
-        top: 0.5rem;
-        z-index: 1;
-    }
-
     .log-level {
+        position: relative;
         flex: none;
         width: 3.5rem;
         padding-top: 1px;
@@ -266,6 +266,15 @@ div.line {
         &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .icon_container {
+        position: absolute;
+        top: 50%;
+        left: calc(-0.6rem - var(--ks-spacing-3));
+        transform: translateY(-50%);
+        z-index: 1;
+        pointer-events: none;
     }
 
     .log-time {
@@ -405,6 +414,10 @@ div.line {
             border-radius: var(--ks-radius-xs);
             font-size: var(--ks-font-size-2xs);
             line-height: 1.4;
+        }
+
+        .icon_container {
+            left: calc(-0.6rem - var(--ks-spacing-3) - 1px);
         }
 
         .log-header {

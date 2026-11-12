@@ -44,7 +44,7 @@
                     <span class="k">{{ $t("start date") }}</span>
                     <span class="v">{{ formattedStart }}</span>
                 </div>
-                <div class="popover-row">
+                <div v-if="!execution.ongoing" class="popover-row">
                     <span class="k">{{ $t("end date") }}</span>
                     <span class="v">{{ formattedEnd }}</span>
                 </div>
@@ -372,6 +372,10 @@
         flex-direction: column;
         gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-3);
+
+        & > * {
+            margin-left: 0;
+        }
     }
 }
 </style>

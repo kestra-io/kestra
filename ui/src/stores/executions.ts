@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX, LOG_LEVELS, isDeepEqual, throttle, type LevelFilterValue} from "@kestra-io/design-system"
@@ -31,7 +31,8 @@ import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
-import {handled} from "../utils/kestraHttp"
+import {handled, sseData} from "../utils/kestraHttp"
+import {toFlowGraph} from "../utils/flowGraph"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
@@ -78,6 +79,8 @@ export interface InputMetaData {
     allowCustomValue?: boolean;
     min?: number;
     max?: number;
+    after?: string;
+    before?: string;
     allowedFileExtensions?: string[];
     accept?: string;
     prefill?: unknown;
@@ -146,6 +149,11 @@ type GraphOptions = {
 
 type FlowGraphNode = FlowGraph["nodes"][number]
 
+/** The generated downloads are typed as a `Blob` whatever `parseAs` asks for, while `parseAs: "text"` yields the string itself. */
+async function asText(body: Blob | string): Promise<string> {
+    return typeof body === "string" ? body : body.text()
+}
+
 /** Renders an ION preview of scalar rows as text, a workaround for https://github.com/kestra-io/plugin-aws/issues/456. */
 export function normalizeFilePreview(data: FilePreview): FilePreview {
     const rows = data?.content
@@ -179,23 +187,30 @@ function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue |
     }
 }
 
+const FOLLOW_RETRY_DELAY_MS = 1000
+const FOLLOW_MAX_RETRY_DELAY_MS = 30_000
+const FOLLOW_MAX_RECONNECTS = 6
+const FOLLOW_RECONNECT_WINDOW_MS = 120_000
+/** 2.5 server heartbeats (ExecutionController.FOLLOW_HEARTBEAT_INTERVAL), so one late heartbeat is not a stall. */
+const FOLLOW_IDLE_TIMEOUT_MS = 75_000
+
 export const useExecutionsStore = defineStore("executions", () => {
-    const executions = ref<Execution[] | undefined>(undefined)
-    const execution = ref<Execution | undefined>(undefined)
+    const executions: Ref<Execution[] | undefined> = ref(undefined)
+    const execution: Ref<Execution | undefined> = ref(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
     /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
     const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
-    const subflowsExecutions = ref<Record<string, Execution>>({})
-    const scopedIterations = ref<Record<string, Execution>>({})
+    const subflowsExecutions: Ref<Record<string, Execution>> = ref({})
+    const scopedIterations: Ref<Record<string, Execution>> = ref({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
-    const flow = ref<FlowForExecution | undefined>(undefined)
+    const flow: Ref<FlowForExecution | undefined> = ref(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
     const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
-    const flowsExecutable = ref<FlowForExecution[]>([])
+    const flowsExecutable: Ref<FlowForExecution[]> = ref([])
 
     watch(execution, (newExecution) => {
         if(!newExecution){
@@ -210,8 +225,8 @@ export const useExecutionsStore = defineStore("executions", () => {
     const axios = useClient()
     const route = useRoute()
 
-    const restartExecution = (options: { executionId: string }) => {
-        return ExecutionsAPI.restartExecution({executionId: options.executionId}) as unknown as Promise<Execution>
+    const restartExecution = (options: { executionId: string }): Promise<Execution> => {
+        return ExecutionsAPI.restartExecution({executionId: options.executionId})
     }
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
@@ -246,13 +261,13 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(options), newStatus: options.newStatus})
     }
 
-    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
+    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }): Promise<Execution> => {
         return ExecutionsAPI.replayExecution({
             executionId: options.executionId,
             taskRunId: options.taskRunId,
             revision: options.revision,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-        }) as unknown as Promise<Execution>
+        })
     }
 
     const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
@@ -273,16 +288,16 @@ export const useExecutionsStore = defineStore("executions", () => {
             }).then(response => response.data)
     }
 
-    const changeExecutionStatus = (options: { executionId: string; state: string }) => {
-        return ExecutionsAPI.updateExecutionStatus({executionId: options.executionId, status: options.state as Parameters<typeof ExecutionsAPI.updateExecutionStatus>[0]["status"]}) as unknown as Promise<Execution>
+    const changeExecutionStatus = (options: { executionId: string; state: string }): Promise<Execution> => {
+        return ExecutionsAPI.updateExecutionStatus({executionId: options.executionId, status: options.state as Parameters<typeof ExecutionsAPI.updateExecutionStatus>[0]["status"]})
     }
 
-    const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
+    const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }): Promise<Execution> => {
         return ExecutionsAPI.updateTaskRunState({
             executionId: options.executionId,
             taskRunId: options.taskRunId!,
             state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
-        }) as unknown as Promise<Execution>
+        })
     }
 
     const interrupt = (options: { executionId: string; taskRunId: string; state: string }) => {
@@ -298,8 +313,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return updated
     }
 
-    const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return ExecutionsAPI.killExecution({executionId: options.id, isOnKillCascade: options.isOnKillCascade}) as unknown as Promise<Execution>
+    const kill = (options: { id: string; isOnKillCascade?: boolean }): Promise<Execution> => {
+        return ExecutionsAPI.killExecution({executionId: options.id, isOnKillCascade: options.isOnKillCascade})
     }
 
     const bulkKill = (options: { executionsId: string[] }) => {
@@ -367,15 +382,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         }).then(response => response.data)
     }
 
-    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }): Promise<Execution> => {
         return ExecutionsAPI.resumeExecutionFromBreakpoint({
             executionId: options.id,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-        }) as unknown as Promise<Execution>
+        })
     }
 
-    const pause = (options: { id: string }) => {
-        return ExecutionsAPI.pauseExecution({executionId: options.id}) as unknown as Promise<Execution>
+    const pause = (options: { id: string }): Promise<Execution> => {
+        return ExecutionsAPI.pauseExecution({executionId: options.id})
     }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
@@ -421,7 +436,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
             if (options.commit !== false && search === latestExecutionsSearch) {
-                executions.value = response.results as unknown as Execution[]
+                executions.value = response.results
                 total.value = response.total ?? 0
             }
 
@@ -471,6 +486,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.createExecution({
             namespace: options.namespace,
             id: options.id,
+            // The endpoint reads the inputs as multipart parts keyed by input id, which the generated body type (an array of blobs) cannot express.
             body: options.formData as unknown as Parameters<typeof ExecutionsAPI.createExecution>[0]["body"],
             labels: options.labels ?? [],
             scheduleDate: options.scheduleDate,
@@ -549,8 +565,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }, 500)
 
-    /** Follows an execution through the SDK stream, skipping the first id-only event. `onEnd` fires once,
-     *  and `onError` too when the stream stops before its "end" event (a 404 or a lost connection). */
+    /** Follows an execution through the SDK stream, skipping the id-only start and heartbeat events. `onEnd` fires once,
+     *  and `onError` too when the stream stops before its "end" event and cannot be resumed (a 404 or a lost connection). */
     function subscribeToExecution(
         executionId: string,
         handlers: {
@@ -559,10 +575,14 @@ export const useExecutionsStore = defineStore("executions", () => {
             onEnd?: () => void;
         },
     ): { close: () => void } {
-        const controller = new AbortController()
+        let connection: AbortController | undefined
+        let retryTimer: ReturnType<typeof setTimeout> | undefined
+        let idleTimer: ReturnType<typeof setTimeout> | undefined
         let closed = false
         let finished = false
-        let receivedEnd = false
+        let receivedExecution = false
+        let consecutiveFailures = 0
+        const reconnects: number[] = []
 
         const finish = (errored: boolean) => {
             if (finished || closed) return
@@ -574,31 +594,67 @@ export const useExecutionsStore = defineStore("executions", () => {
         const close = () => {
             if (closed) return
             closed = true
-            controller.abort()
+            clearTimeout(retryTimer)
+            clearTimeout(idleTimer)
+            connection?.abort()
         }
 
-        ExecutionsAPI.followExecution(
-            {executionId},
-            {
-                signal: controller.signal,
-                /** No auto-reconnect: each reconnect leaked off-heap Netty buffers (kestra-io/kestra#16982). */
-                sseMaxRetryAttempts: 1,
-                onSseEvent: (event: { id?: string }) => {
-                    if (event.id === "end") receivedEnd = true
+        /** Unbounded reconnects leaked off-heap Netty buffers (kestra-io/kestra#16982), hence the cap per time window. */
+        const reconnect = () => {
+            const now = Date.now()
+            while (reconnects.length > 0 && now - reconnects[0] > FOLLOW_RECONNECT_WINDOW_MS) reconnects.shift()
+            if (reconnects.length >= FOLLOW_MAX_RECONNECTS) {
+                finish(true)
+                return
+            }
+            reconnects.push(now)
+            const delay = Math.min(FOLLOW_RETRY_DELAY_MS * 2 ** consecutiveFailures, FOLLOW_MAX_RETRY_DELAY_MS)
+            consecutiveFailures++
+            retryTimer = setTimeout(connect, delay)
+        }
+
+        const follow = async (controller: AbortController) => {
+            let receivedEnd = false
+            const armIdleTimeout = () => {
+                clearTimeout(idleTimer)
+                idleTimer = setTimeout(() => controller.abort(), FOLLOW_IDLE_TIMEOUT_MS)
+            }
+            armIdleTimeout()
+            const {stream} = await ExecutionsAPI.followExecution(
+                {executionId},
+                {
+                    signal: controller.signal,
+                    sseMaxRetryAttempts: 1,
+                    onSseEvent: (event: { id?: string }) => {
+                        armIdleTimeout()
+                        if (event.id === "end") receivedEnd = true
+                    },
                 },
-                onSseError: () => finish(true),
-            },
-        )
-            .then(async ({stream}) => {
-                for await (const event of stream) {
-                    if (closed) break
-                    const executionEvent = event as unknown as Execution
-                    if (!executionEvent.state) continue
-                    handlers.onExecution(executionEvent)
-                }
-                finish(!receivedEnd)
-            })
-            .catch(() => finish(true))
+            )
+            for await (const executionEvent of sseData(stream)) {
+                if (closed) break
+                if (!executionEvent.state) continue
+                receivedExecution = true
+                handlers.onExecution(executionEvent)
+            }
+            return receivedEnd
+        }
+
+        const connect = async () => {
+            connection = new AbortController()
+            const connectedAt = Date.now()
+            const receivedEnd = await follow(connection).catch(() => false)
+            clearTimeout(idleTimer)
+            // the server sends progress on every connect, so only a connection that held resets the backoff
+            if (Date.now() - connectedAt > FOLLOW_MAX_RETRY_DELAY_MS) consecutiveFailures = 0
+            if (closed) return
+            if (receivedEnd) finish(false)
+            // no execution ever received is most likely a 404, which a retry cannot fix
+            else if (!receivedExecution) finish(true)
+            else reconnect()
+        }
+
+        connect()
 
         return {close}
     }
@@ -694,7 +750,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** The whole file as text, unlike `filePreview` which caps rows and bytes, so an HTML preview gets a valid document. */
     const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
-        return ExecutionsAPI.downloadFileFromExecution(options, {parseAs: "text"}) as unknown as Promise<string>
+        return ExecutionsAPI.downloadFileFromExecution(options, {parseAs: "text"}).then(asText)
     }
 
     const setLabels = (options: { executionId: string; labels: Label[] }) => {
@@ -709,8 +765,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.setLabelsOnTerminatedExecutionsByIds(options)
     }
 
-    const unqueue = (options: { id: string; state: string }) => {
-        return ExecutionsAPI.unqueueExecution({executionId: options.id, state: options.state as Parameters<typeof ExecutionsAPI.unqueueExecution>[0]["state"]}) as unknown as Promise<Execution>
+    const unqueue = (options: { id: string; state: string }): Promise<Execution> => {
+        return ExecutionsAPI.unqueueExecution({executionId: options.id, state: options.state as Parameters<typeof ExecutionsAPI.unqueueExecution>[0]["state"]})
     }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: StateType }) => {
@@ -724,8 +780,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const forceRun = (options: { id: string }) => {
-        return ExecutionsAPI.forceRunExecution({executionId: options.id}) as unknown as Promise<Execution>
+    const forceRun = (options: { id: string }): Promise<Execution> => {
+        return ExecutionsAPI.forceRunExecution({executionId: options.id})
     }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
@@ -755,7 +811,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const fetchGraph = (options: GraphOptions): Promise<FlowGraph> => {
-        return ExecutionsAPI.executionFlowGraph({executionId: options.id, subflows: options.params?.subflows}, {withCredentials: true}) as unknown as Promise<FlowGraph>
+        return ExecutionsAPI.executionFlowGraph({executionId: options.id, subflows: options.params?.subflows}, {withCredentials: true}).then(toFlowGraph)
     }
 
     function loadGraph(options: GraphOptions) {
@@ -947,7 +1003,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
         return ExecutionsAPI.searchExecutionsByFlowId({namespace, flowId}).then(data => {
-            executions.value = data.results as unknown as Execution[]
+            executions.value = data.results
             total.value = data.total ?? 0
             return data
         })

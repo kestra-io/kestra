@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
     "logs": "Logs",
     "no_logs_data_description": "Tente ajustar seus filtros, alterar o intervalo de tempo ou verificar se o flow foi executado recentemente.",
-    "no_logs_data_title": "Nenhum log encontrado para os filtros selecionados.",
+    "no_logs_data_title": "Nenhum log encontrado",
     "duration": "Duração",
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
@@ -451,7 +451,7 @@
       "whole_action": "Reproduzir a execução inteira em vez disso",
       "whole_title": "A versão {revision} pode ser reproduzida como uma execução completa.",
       "whole_description": "Nenhum resultado anterior é reutilizado, então cada Task é executada novamente na revisão {revision}. A execução original é mantida e vinculada.",
-      "confirm_from_task": "Replay a partir da Task",
+      "confirm_from_task": "Replay a partir de {taskId}",
       "confirm_whole": "Repetir toda a execução"
     },
     "change execution state done": "Estado de execução atualizado",
@@ -728,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
-      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
+      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido.",
+      "queued": "Em fila",
+      "save_error": "Falha ao atualizar o limite de Concurrency, o valor anterior foi mantido."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -861,7 +863,7 @@
     "last execution date": "Data da última execução",
     "revisions": "Revisões",
     "no revisions found": "Existe apenas uma revisão para este flow",
-    "no revisions": "Sem revisões",
+    "no revisions": "Nenhuma revisão encontrada",
     "side-by-side": "lado a lado",
     "line-by-line": "linha por linha",
     "template": "Template",
@@ -1090,7 +1092,7 @@
       "heading": "Tudo sobre Kestra.",
       "subheading": "As últimas atualizações, guias e histórias"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">Esta execution ainda está em execução, excluí-la não a interromperá.<br />Você precisa \"kill\" a execution para pará-la.</div>",
     "restore": "Restaurar",
     "restore confirm": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
     "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
@@ -1207,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger desbloqueado"
     },
+    "trigger blocked": "Bloqueado",
+    "trigger blocked policy check failed": "Não foi possível verificar as políticas de governança.",
+    "trigger blocked unknown": "Bloqueado por um motivo desconhecido.",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
     "trigger enable dialog": {
       "title": "Habilitar trigger",
@@ -1334,6 +1339,8 @@
     "pause backfill": "Pausar o backfill",
     "continue backfills": "Continuar backfills",
     "delete backfills": "Excluir backfills",
+    "delete backfill confirm": "Excluir o backfill do trigger {id}?",
+    "delete backfill success": "O backfill do trigger {id} foi excluído",
     "pause backfills": "Pausar backfills",
     "backfill executions": "Execuções de backfill",
     "execute backfill": "Executar backfill",
@@ -1355,8 +1362,18 @@
     "pluginPage": {
       "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
-      "noResults": "Nenhum plugin corresponde à sua pesquisa.",
-      "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",
+      "loadErrorTitle": "Não foi possível carregar a lista de plugins",
+      "loadErrorDescription": "Seus Flows continuam em execução. Esta página apenas lê a lista de plugins.",
+      "showAll": "Mostrar todos os plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Tabela",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "Nenhum plugin corresponde aos seus filtros",
+        "description": "Tente um termo de busca diferente ou limpe os filtros de categoria."
+      },
       "notFound": "Este plugin não pôde ser encontrado.",
       "elementType": {
         "tasks": "Tarefa",
@@ -1365,8 +1382,13 @@
         "taskRunners": "Executor de task",
         "charts": "Gráfico",
         "apps": "Aplicativo",
+        "appBlocks": "Bloco de App",
+        "dataFilters": "Filtro de dados",
+        "dataFiltersKPI": "Filtro de dados de KPI",
         "logExporters": "Exportador de log",
-        "secrets": "Secreto"
+        "secrets": "Secreto",
+        "assets": "Tipo de Asset",
+        "additionalPlugins": "Plugin adicional"
       },
       "sortBy": "Ordenar por",
       "sort": {
@@ -1397,6 +1419,19 @@
         "enterpriseEdition": "Edição Enterprise",
         "certified": "Certificado",
         "back": "Voltar para plugins"
+      },
+      "management": {
+        "upload": "Upload",
+        "addPlugin": "Adicionar plugin",
+        "lockedTitle": "Gerenciamento de versão de Plugin",
+        "lockedDescription": "Instale plugins, mantenha várias versões lado a lado e atualize-os sem reconstruir a imagem, com a Enterprise Edition.",
+        "learnMore": "Saiba mais",
+        "includedWithKestra": "Incluído com Kestra",
+        "gateNote": "A instalação e atualização de plugins está disponível na Enterprise Edition.",
+        "upsellTitle": "O versionamento de Plugin é um recurso Enterprise",
+        "upsellDescription": "Todos os plugins abaixo são fornecidos com esta imagem do Kestra e estão prontos para uso em um flow. Na Enterprise Edition, você também pode instalar um plugin que não está incluído, fixar uma versão por plugin e fazer upgrade sem reconstruir a imagem.",
+        "talkToUs": "Fale conosco",
+        "readTheDocs": "Leia a documentação"
       }
     },
     "no inputs": "Este flow não tem inputs.",
@@ -1457,10 +1492,13 @@
           "fields": {
             "app_font_size": "Tamanho de fonte do aplicativo",
             "color_mode": "Modo de cor",
+            "editor_dark_theme": "Tema do editor no modo escuro",
             "editor_folding_stratgy": "Recolhimento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
+            "editor_pebble_hover": "Passe o mouse sobre a referência do Pebble para ver sua definição",
+            "editor_light_theme": "Tema do editor no modo claro",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
@@ -1483,6 +1521,9 @@
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
+            "editor_pebble_hover": "Mostra a definição e a documentação de um input, output, variável, label ou variável de Trigger ao passar o mouse sobre sua referência Pebble no editor de Flow.",
+            "editor_dark_theme": "Cores de sintaxe do editor de código quando o modo de cor é Escuro 1.0 ou Dark 2.0.",
+            "editor_light_theme": "Cores de sintaxe do editor de código quando o modo de cor é Claro.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."
@@ -1491,6 +1532,9 @@
             "small": "Pequeno",
             "medium": "Médio",
             "large": "Grande"
+          },
+          "editor_theme_options": {
+            "match_app": "Seguir o tema do app"
           }
         },
         "localization": {
@@ -1798,9 +1842,9 @@
         },
         "errors": {
           "first_execution": "A primeira execução terminou como {state} em vez de ter sucesso. Abra os logs nesta página para ver o porquê, depois tente novamente.",
-          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o flow ainda tem a task <code>notify</code>, então tente novamente.",
+          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o Flow ainda tem a Task {task}, então tente novamente.",
           "no_execution_to_replay": "Não há execução para reproduzir ainda. Execute o flow na etapa anterior e tente novamente.",
-          "replay": "A reprodução foi concluída como {state}. Abra os logs nesta página para ver o que <code>notify</code> relatou e tente novamente.",
+          "replay": "O replay terminou como {state}. Abra os logs nesta página para ver o que a {task} relatou e tente novamente.",
           "save_flow": "O flow do tour não pôde ser salvo. {reason}",
           "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente."
         },
@@ -1923,6 +1967,11 @@
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
     "scheduleDateInPast": "A data do agendamento deve ser no futuro",
+    "inputs_date_range": {
+      "between": "O valor mais antigo é {after}, o valor mais recente é {before}.",
+      "after": "O valor mais antigo é {after}.",
+      "before": "O valor mais recente é {before}."
+    },
     "warning": "Aviso",
     "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",
@@ -2024,7 +2073,6 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
-      "task_details": "Detalhes da task",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",
@@ -2136,6 +2184,11 @@
       "decrease_fontsize": "Diminuir tamanho da fonte do editor",
       "increase_fontsize": "Aumentar o tamanho da fonte do editor",
       "reset_fontsize": "Redefinir tamanho da fonte do editor"
+    },
+    "pebble_hover": {
+      "toggle": "Alternar documentação flutuante do Pebble",
+      "enabled": "Documentação do Pebble hover está ativada.",
+      "disabled": "A documentação flutuante do Pebble está desativada."
     },
     "instance": "Instância",
     "something_went_wrong": {
@@ -2284,11 +2337,11 @@
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "no_results": {
-      "executions": "Nenhuma Execução Encontrada",
-      "triggers": "Nenhum Trigger Encontrado",
-      "flows": "Nenhum Flow Encontrado",
-      "kv_pairs": "Nenhum par de Key-Value encontrado",
-      "secrets": "Nenhum Secret Encontrado",
+      "executions": "Nenhuma execução encontrada",
+      "triggers": "Nenhum trigger encontrado",
+      "flows": "Nenhum flow encontrado",
+      "kv_pairs": "Nenhum par de key-value encontrado",
+      "secrets": "Nenhum secret encontrado",
       "all_columns_hidden": "Todas as colunas estão ocultas",
       "all_columns_hidden_description": "Ative pelo menos uma coluna novamente em Personalizar colunas da tabela para ver os dados novamente."
     },
@@ -2300,6 +2353,7 @@
       "default": "Dashboard Padrão",
       "set_default": "Definir como padrão",
       "empty": "Não há resultados para serem exibidos.",
+      "overdue": "Atrasado — {date}",
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Edite este gráfico"
@@ -2322,7 +2376,8 @@
         "paused": "Pausado",
         "success": "Sucesso",
         "warning": "Aviso",
-        "failed": "Falhou"
+        "failed": "Falhou",
+        "upcoming": "Próximos"
       }
     },
     "setup": {
@@ -2542,7 +2597,7 @@
     "reject": "Rejeitar",
     "last modified": "Última modificação",
     "run task in playground": "Executar task no playground",
-    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Padrões para o arquivo do namespace: {name}",
     "no_file_choosen": "Nenhum arquivo selecionado",
     "dependency": {
       "controls": {
@@ -2741,7 +2796,8 @@
         "tooltip": "Visualizar testes de flow"
       },
       "errors": {
-        "label": "{count} Erro(s)"
+        "label": "{count} Erro(s)",
+        "action": "{count} erro(s), ir para o próximo erro"
       }
     },
     "invalid_source_code": "Código-fonte inválido",

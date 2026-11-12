@@ -97,6 +97,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.kestra.core.junit.assertions.Problems;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.exceptions.ResponseClosedException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -113,6 +114,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
@@ -809,6 +811,33 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(executionsAfter.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldSendStartEventBeforeLookupWhenFollowingUnknownExecution() {
+        String tenantId = "followunknownexecution";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        for (String endpoint : List.of("/follow", "/follow-dependencies")) {
+            List<Event<ExecutionStatusEvent>> received = new CopyOnWriteArrayList<>();
+            AtomicReference<Long> startedAfter = new AtomicReference<>();
+            long begin = System.currentTimeMillis();
+
+            assertThatThrownBy(() -> sseClient
+                .eventStream("/api/v1/%s/executions/does-not-exist%s".formatted(tenantId, endpoint), ExecutionStatusEvent.class)
+                .doOnNext(event ->
+                {
+                    received.add(event);
+                    startedAfter.compareAndSet(null, System.currentTimeMillis() - begin);
+                })
+                .collectList()
+                .block(Duration.ofSeconds(30)))
+                .isInstanceOf(ResponseClosedException.class);
+
+            assertThat(received).extracting(Event::getId).containsExactly("start");
+            // the start event must not wait for the 10s lookup, otherwise the connection is only established once it ends
+            assertThat(startedAfter.get()).isLessThan(5_000L);
+        }
     }
 
     @Test
@@ -2400,6 +2429,27 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml", "flows/valids/pause-test.yaml" }, tenantId = "shouldbulkresumepausedandbreakpoint")
+    void shouldResumePausedAndBreakpointExecutionsWhenBulkResumedTogether() throws QueueException {
+        String tenantId = "shouldbulkresumepausedandbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution paused = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        Execution triggered = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution suspended = awaitExecution(tenantId, triggered.getId(), exec -> exec.getState().isBreakpoint());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/resume/by-ids", List.of(paused.getId(), suspended.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+        awaitExecution(tenantId, paused.getId(), exec -> !exec.getState().isPaused());
+        Execution resumed = awaitExecution(tenantId, suspended.getId(), exec -> exec.getState().isTerminated());
+        assertThat(resumed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = "resumeexecutionbyquery")
     void shouldReturn202WhenResumeExecutionsByQueryCalled() throws QueueException {
         String tenantId = "resumeexecutionbyquery";
@@ -3799,20 +3849,17 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresume")
-    void shouldSuspendAtBreakpointThenResume() {
-        String tenantId = "shouldsuspendatbreakpointthenresume";
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresumewhenasked")
+    void shouldSuspendAtBreakpointWhenTriggeredThenResumeWhenAsked() {
+        String tenantId = "shouldsuspendatbreakpointthenresumewhenasked";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
-        assertThat(execution).isNotNull();
-        assertThat(execution.getState().getCurrent()).isIn(State.Type.CREATED, State.Type.RUNNING, State.Type.BREAKPOINT);
-
-        // check that the execution is suspended
         Execution suspended = awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+
+        // the execution must have stopped exactly where we expect before it gets resumed
         assertThat(suspended.getTaskRunList()).hasSize(1);
         assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
-        // resume the suspended execution
         HttpResponse<Execution> resume = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + suspended.getId() + "/actions/resume-from-breakpoint", null),
             Execution.class
@@ -3829,6 +3876,52 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(terminated.getTaskRunList()).hasSize(1);
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldresumebreakpointexecutionswhenbulkresumedbyids")
+    void shouldResumeBreakpointExecutionsWhenBulkResumedByIds() {
+        String tenantId = "shouldresumebreakpointexecutionswhenbulkresumedbyids";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution1 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution execution2 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution suspended1 = awaitExecution(tenantId, execution1.getId(), exec -> exec.getState().isBreakpoint());
+        Execution suspended2 = awaitExecution(tenantId, execution2.getId(), exec -> exec.getState().isBreakpoint());
+
+        HttpResponse<ApiAsyncOperationResponse> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/" + tenantId + "/executions/resume/by-ids",
+                List.of(execution1.getId(), execution2.getId())
+            ),
+            ApiAsyncOperationResponse.class
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(resumeResponse.body().operationId()).isNotBlank();
+        assertThat(resumeResponse.body().totalItems()).isEqualTo(2);
+
+        Execution terminated1 = runnerUtils.awaitExecution(
+            it -> execution1.getId().equals(it.getId()) && it.getState().isTerminated(),
+            suspended1,
+            Duration.ofSeconds(30)
+        );
+        Execution terminated2 = runnerUtils.awaitExecution(
+            it -> execution2.getId().equals(it.getId()) && it.getState().isTerminated(),
+            suspended2,
+            Duration.ofSeconds(30)
+        );
+        assertThat(terminated1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(terminated2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/" + tenantId + "/executions/resume/by-ids",
+                    List.of(execution1.getId(), execution2.getId())
+                )
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @FlakyTest(description = "SSE event stream race: Thread.sleep workaround can miss 'end' events under CI load")
@@ -3954,6 +4047,43 @@ class ExecutionControllerRunnerTest {
         assertThat(eventsForFlow(terminatedEvents, childFlowId)).extracting(Event::getId).containsExactly("end");
         assertThat(eventsForFlow(terminatedEvents, parentFlowId)).extracting(Event::getId).containsExactly("end");
         assertThat(terminatedEvents.getLast().getId()).isEqualTo("end-all");
+    }
+
+    @Test
+    @LoadFlows(
+        value = { "flows/valids/follow-dependencies-loop-parent.yaml",
+            "flows/valids/follow-dependencies-partial-child.yaml" },
+        tenantId = "followdependenciesloopiterations"
+    )
+    void shouldIgnoreLoopIterationsWhenFollowingDependencies() {
+        // Given: a parent that is paused after its subflow and all its Loop iterations terminated.
+        // The iterations share the parent's flow and correlation id but are not the parent.
+        String tenantId = "followdependenciesloopiterations";
+        String parentFlowId = "follow-dependencies-loop-parent";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution parent = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, parentFlowId, null, false);
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isPaused());
+
+        // When: following the dependencies of the still-paused parent
+        List<Event<ExecutionStatusEvent>> events = new CopyOnWriteArrayList<>();
+        Disposable subscription = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .subscribe(events::add);
+
+        try {
+            await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(250))
+                .untilAsserted(() -> assertThat(eventsForFlow(events, parentFlowId)).isNotEmpty());
+
+            // Then: only the parent reports for its flow, and the stream stays open since it is still paused.
+            assertThat(eventsForFlow(events, parentFlowId)).extracting(event -> event.getData().executionId()).containsOnly(parent.getId());
+            assertThat(eventsForFlow(events, parentFlowId).getFirst().getId()).isEqualTo("progress");
+            assertThat(events).extracting(Event::getId).doesNotContain("end-all");
+        } finally {
+            subscription.dispose();
+        }
     }
 
     private static List<Event<ExecutionStatusEvent>> eventsForFlow(List<Event<ExecutionStatusEvent>> events, String flowId) {

@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
-    "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
+    "no_logs_data_title": "로그를 찾을 수 없음",
     "duration": "지속 시간",
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
@@ -451,7 +451,7 @@
       "whole_action": "대신 전체 Execution을 Replay합니다.",
       "whole_title": "Revision {revision}을 전체 Execution으로 Replay할 수 있습니다.",
       "whole_description": "이전 결과는 재사용되지 않으므로 모든 Task는 revision {revision}에서 다시 실행됩니다. 원본 Execution은 유지되고 연결됩니다.",
-      "confirm_from_task": "Task에서 Replay",
+      "confirm_from_task": "{taskId}부터 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
     "change execution state done": "실행 상태가 업데이트되었습니다",
@@ -728,7 +728,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
-      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."
+      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다.",
+      "queued": "대기 중",
+      "save_error": "동시성 limit 업데이트에 실패했습니다. 이전 value가 유지됩니다."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -861,7 +863,7 @@
     "last execution date": "마지막 실행 날짜",
     "revisions": "수정본들",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
-    "no revisions": "리비전 없음",
+    "no revisions": "리비전을 찾을 수 없음",
     "side-by-side": "나란히",
     "line-by-line": "줄별로",
     "template": "템플릿",
@@ -1090,7 +1092,7 @@
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">이 Execution은 아직 실행 중이며, 삭제해도 중지되지 않습니다.<br />중지하려면 Execution을 kill해야 합니다.</div>",
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
@@ -1207,6 +1209,9 @@
     "unlock trigger": {
       "success": "Trigger가 잠금 해제되었습니다"
     },
+    "trigger blocked": "차단됨",
+    "trigger blocked policy check failed": "거버넌스 정책을 확인할 수 없습니다.",
+    "trigger blocked unknown": "알 수 없는 이유로 차단됨.",
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
@@ -1334,6 +1339,8 @@
     "pause backfill": "backfill 일시 중지",
     "continue backfills": "backfill 계속",
     "delete backfills": "backfill 삭제",
+    "delete backfill confirm": "trigger {id}의 backfill을 삭제하시겠습니까?",
+    "delete backfill success": "trigger {id}의 backfill이 삭제되었습니다",
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
@@ -1355,8 +1362,18 @@
     "pluginPage": {
       "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
-      "noResults": "검색어와 일치하는 플러그인이 없습니다.",
-      "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",
+      "loadErrorTitle": "플러그인 목록을 로드할 수 없습니다.",
+      "loadErrorDescription": "Flow는 계속 실행됩니다. 이 페이지는 플러그인 목록만 읽습니다.",
+      "showAll": "모든 plugin 표시",
+      "view": {
+        "cards": "카드",
+        "table": "테이블",
+        "plugin": "플러그인"
+      },
+      "empty": {
+        "title": "필터와 일치하는 Plugin이 없습니다.",
+        "description": "다른 검색어를 시도하거나 카테고리 필터를 지우세요."
+      },
       "notFound": "이 플러그인을 찾을 수 없습니다.",
       "elementType": {
         "tasks": "작업",
@@ -1365,8 +1382,13 @@
         "taskRunners": "작업 실행기",
         "charts": "차트",
         "apps": "앱",
+        "appBlocks": "App 블록",
+        "dataFilters": "데이터 필터",
+        "dataFiltersKPI": "KPI 데이터 필터",
         "logExporters": "로그 익스포터",
-        "secrets": "비밀"
+        "secrets": "비밀",
+        "assets": "Asset 유형",
+        "additionalPlugins": "추가 plugin"
       },
       "sortBy": "정렬 기준",
       "sort": {
@@ -1397,6 +1419,19 @@
         "enterpriseEdition": "엔터프라이즈 에디션",
         "certified": "인증됨",
         "back": "플러그인으로 돌아가기"
+      },
+      "management": {
+        "upload": "업로드",
+        "addPlugin": "플러그인 추가",
+        "lockedTitle": "플러그인 버전 관리",
+        "lockedDescription": "Enterprise Edition으로 플러그인을 설치하고 여러 버전을 나란히 유지하며 이미지를 다시 빌드하지 않고 업그레이드하세요.",
+        "learnMore": "자세히 알아보기",
+        "includedWithKestra": "Kestra에 포함됨",
+        "gateNote": "Enterprise Edition에서 플러그인 설치 및 업그레이드를 사용할 수 있습니다.",
+        "upsellTitle": "Plugin 버전 관리는 Enterprise 기능입니다.",
+        "upsellDescription": "아래의 모든 plugin은 이 Kestra 이미지와 함께 제공되며 flow에서 바로 사용할 수 있습니다. Enterprise Edition에서는 번들로 제공되지 않는 plugin을 설치하고, plugin별로 버전을 고정하며, 이미지를 다시 빌드하지 않고도 업그레이드할 수 있습니다.",
+        "talkToUs": "문의하기",
+        "readTheDocs": "문서 읽기"
       }
     },
     "no inputs": "이 flow에는 입력이 없습니다.",
@@ -1457,10 +1492,13 @@
           "fields": {
             "app_font_size": "앱 글꼴 크기",
             "color_mode": "색상 모드",
+            "editor_dark_theme": "다크 모드 편집기 테마",
             "editor_folding_stratgy": "에디터에서 코드 자동 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
+            "editor_pebble_hover": "Pebble 참조에 마우스를 올리면 정의를 볼 수 있습니다.",
+            "editor_light_theme": "라이트 모드 편집기 테마",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "environment_name_tooltip": "이 환경 이름은 config에서 설정되었지만 변경할 수 있습니다.",
@@ -1483,6 +1521,9 @@
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
+            "editor_pebble_hover": "Flow 편집기에서 Pebble 참조에 마우스를 올리면 input, output, variable, label 또는 trigger variable의 정의와 문서를 표시합니다.",
+            "editor_dark_theme": "색상 모드가 다크 1.0 또는 다크 2.0일 때 코드 편집기의 구문 색상.",
+            "editor_light_theme": "색상 모드가 라이트일 때 코드 편집기의 구문 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다."
@@ -1491,6 +1532,9 @@
             "small": "작게",
             "medium": "보통",
             "large": "크게"
+          },
+          "editor_theme_options": {
+            "match_app": "앱 테마에 맞춤"
           }
         },
         "localization": {
@@ -1798,9 +1842,9 @@
         },
         "errors": {
           "first_execution": "첫 번째 실행이 성공하는 대신 {state} 상태로 완료되었습니다. 이유를 확인하려면 이 페이지에서 log를 열고 다시 시도하세요.",
-          "expected_failure": "이 실행은 {state}로 완료되었으므로, 아직 수정할 실패가 없습니다. flow에 여전히 <code>notify</code> task가 있는지 확인한 다음 다시 시도하세요.",
+          "expected_failure": "이 Execution은 {state}로 완료되었으므로 아직 수정할 실패가 없습니다. Flow에 {task} Task가 있는지 확인한 다음 다시 시도하세요.",
           "no_execution_to_replay": "아직 재실행할 실행 내역이 없습니다. 이전 단계에서 flow를 실행한 다음 다시 시도하세요.",
-          "replay": "재실행이 {state} 상태로 완료되었습니다. <code>notify</code>가 무엇을 보고했는지 확인하려면 이 페이지에서 log를 열고 다시 시도하십시오.",
+          "replay": "Replay가 {state}로 완료되었습니다. 이 페이지에서 log를 열어 {task}가 보고한 내용을 확인한 다음 다시 시도하세요.",
           "save_flow": "투어 flow를 저장할 수 없습니다. {reason}",
           "test_event": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인한 다음, 다시 시도하세요."
         },
@@ -1923,6 +1967,11 @@
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
     "scheduleDateInPast": "예약 날짜는 미래여야 합니다.",
+    "inputs_date_range": {
+      "between": "가장 이른 값은 {after}이고, 가장 늦은 값은 {before}입니다.",
+      "after": "가장 이른 값은 {after}입니다.",
+      "before": "가장 늦은 값은 {before}입니다."
+    },
     "warning": "경고",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "docs": "문서",
@@ -2024,7 +2073,6 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
-      "task_details": "작업 세부 정보",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
@@ -2136,6 +2184,11 @@
       "decrease_fontsize": "편집기 글꼴 크기 줄이기",
       "increase_fontsize": "에디터 글꼴 크기 증가",
       "reset_fontsize": "편집기 글꼴 크기 재설정"
+    },
+    "pebble_hover": {
+      "toggle": "Pebble 호버 문서 토글",
+      "enabled": "Pebble 호버 문서가 켜져 있습니다.",
+      "disabled": "Pebble 호버 문서가 꺼져 있습니다."
     },
     "instance": "인스턴스",
     "something_went_wrong": {
@@ -2300,6 +2353,7 @@
       "default": "기본 대시보드",
       "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
+      "overdue": "기한 초과 — {date}",
       "edition": {
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
@@ -2322,7 +2376,8 @@
         "paused": "일시 중지됨",
         "success": "성공",
         "warning": "경고",
-        "failed": "실패"
+        "failed": "실패",
+        "upcoming": "예정됨"
       }
     },
     "setup": {
@@ -2542,7 +2597,7 @@
     "reject": "거부",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
-    "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
+    "defaultsToNamespaceFile": "기본값은 namespace 파일: {name}",
     "no_file_choosen": "파일이 선택되지 않음",
     "dependency": {
       "controls": {
@@ -2741,7 +2796,8 @@
         "tooltip": "flow 테스트 보기"
       },
       "errors": {
-        "label": "{count} 오류"
+        "label": "{count} 오류",
+        "action": "{count}개의 오류, 다음 오류로 이동"
       }
     },
     "invalid_source_code": "잘못된 소스 코드",

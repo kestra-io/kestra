@@ -9,7 +9,7 @@
             :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"
@@ -242,6 +242,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import type {ListSecretsData} from "@kestra-io/kestra-sdk"
     import {useAuthStore} from "override/stores/auth"
@@ -513,7 +514,12 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query

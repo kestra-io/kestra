@@ -1,6 +1,7 @@
 package io.kestra.core.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ListUtils {
@@ -77,5 +78,15 @@ public class ListUtils {
             parts.add(list.subList(i, Math.min(i + size, list.size())));
         }
         return parts;
+    }
+
+    /**
+     * @return a list containing the duplicate strings of the list in parameter
+     */
+    public static List<String> getDuplicates(List<String> list) {
+        return list.stream()
+            .distinct()
+            .filter(entry -> Collections.frequency(list, entry) > 1)
+            .toList();
     }
 }

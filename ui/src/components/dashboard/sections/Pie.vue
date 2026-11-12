@@ -39,7 +39,7 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, toEchartsParams, type EchartsParams} from "../composables/charts"
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
@@ -80,7 +80,7 @@
 
     function parseValue(value: unknown): string {
         const date = dateUtils.parseIso(value)
-        return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
+        return date.isValid() ? date.tz(dateUtils.currentTimezone()).format("YYYY-MM-DD") : String(value)
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {
@@ -137,8 +137,8 @@
     })
 
     function onSegmentClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
-        if (!params?.name) return
+        const params = toEchartsParams(rawParams)
+        if (!params.name) return
         drillDown([{column: dimensionColumn.value, value: params.name}])
     }
 

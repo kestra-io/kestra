@@ -734,6 +734,27 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldRejectAnAssetOutputInTheOpenSourceEdition() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: vm
+                type: ASSET
+                value: web-01
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.map(ConstraintViolationException::getMessage).orElse(""))
+            .contains("Output 'vm' of type ASSET is only available in Enterprise Edition.");
+    }
+
+    @Test
     void eeAllowsDefiningAssets() {
         Flow flow = Flow.builder()
             .id(TestsUtils.randomString())

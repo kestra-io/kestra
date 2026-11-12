@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -116,5 +119,19 @@ class FlowInputOutputAssetTest {
         assertThat(rendered.getNamespace()).isEqualTo("prod.compute");
         assertThat(rendered.getMetadata()).isEqualTo(Map.of("deployment", "prod", "replicas", 3));
         assertThat(values.get(1).input()).isInstanceOfSatisfying(AssetInput.class, input -> assertThat(input.getNamespace()).isEqualTo("prod.compute"));
+    }
+
+    @Test
+    void shouldResolveAnAssetOutputWithoutFilters() {
+        Flow flow = Flow.builder()
+            .id("flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(Output.builder().id("vm").type(OutputType.ASSET).value("{{ inputs.vm }}").build()))
+            .build();
+
+        Map<String, Object> outputs = flowInputOutput.typedOutputs(flow, EXECUTION, Map.of("vm", "web-01"));
+
+        assertThat(outputs).isEqualTo(Map.of("vm", "web-01"));
+        assertThat(RESOLVED_FOR).containsExactly((AssetInput) null);
     }
 }

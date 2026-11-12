@@ -276,7 +276,13 @@
                     <template v-else-if="col.prop === 'inputs'">
                         <KsTooltip>
                             <template #content>
-                                <pre class="inputs-preview">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
+                                <ExecutionInputsPreview
+                                    v-if="scope.row?.inputs"
+                                    :namespace="scope.row.namespace"
+                                    :flowId="scope.row.flowId"
+                                    :flowRevision="scope.row.flowRevision"
+                                    :inputs="scope.row.inputs"
+                                />
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="inputs-icon" />
@@ -479,6 +485,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Import from "vue-material-design-icons/Import.vue"
+    import ExecutionInputsPreview from "./ExecutionInputsPreview.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
@@ -1318,10 +1325,6 @@
 <style scoped>
 .stat-charts {
     margin-bottom: var(--ks-spacing-5);
-}
-
-.inputs-preview {
-    margin-bottom: 0;
 }
 
 .inputs-icon {

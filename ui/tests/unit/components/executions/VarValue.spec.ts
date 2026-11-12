@@ -48,3 +48,33 @@ describe("VarValue download link", () => {
             .toBe("http://localhost:8080/api/v1/main/executions/exec-1/file?path=kestra%3A%2F%2F%2Fcompany%2Fe1%2Fabc-a%2523b%2Bc.txt")
     })
 })
+
+describe("VarValue URI-like values", () => {
+    const mountValue = (value: string) => shallowMount(VarValue, {
+        props: {value},
+        global: {
+            plugins: [i18n],
+            stubs: {KsButton: {template: "<a><slot /></a>"}},
+        },
+    })
+
+    // new URL() accepts any `scheme:` prefix; such identifiers must stay readable text (Pylon 2622).
+    test.each([
+        "iso6523-actorid-upis::0088:5798000000001",
+        "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+        "arn:aws:s3:::my-bucket",
+        "mailto:someone@example.com",
+    ])("shows %s as text without an Open link", (value) => {
+        const wrapper = mountValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        expect(wrapper.text()).not.toContain("Open")
+    })
+
+    test("shows a web link as text next to its Open button", () => {
+        const wrapper = mountValue("https://kestra.io/docs")
+
+        expect(wrapper.text()).toContain("https://kestra.io/docs")
+        expect(wrapper.text()).toContain("Open")
+    })
+})

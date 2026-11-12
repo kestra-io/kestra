@@ -282,12 +282,11 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.taskRunOverrides(options).then(response => response.values ?? [])
     }
 
-    const replayExecutionWithOverrides = (options: { executionId: string; taskRunId: string; overrides: Record<string, unknown> }) => {
+    const replayExecutionWithOverrides = (options: { executionId: string; taskRunId: string; overrides: Record<string, unknown> }): Promise<Execution> => {
         return ExecutionsAPI.replayExecutionWithOverrides({
-            executionId: options.executionId,
-            taskRunId: options.taskRunId,
+            ...options,
             overrides: options.overrides as Parameters<typeof ExecutionsAPI.replayExecutionWithOverrides>[0]["overrides"],
-        }) as unknown as Promise<Execution>
+        })
     }
 
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */

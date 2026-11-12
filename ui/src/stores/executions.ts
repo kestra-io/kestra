@@ -105,7 +105,7 @@ export interface InputMetaData {
     multiple?: boolean;
     status?: string;
     editableProperties?: boolean;
-    persistOverrides?: "NONE" | "UPDATE" | "CLONE";
+    persistOverrides?: "UPDATE" | "CLONE";
 }
 
 export interface TableFilter {

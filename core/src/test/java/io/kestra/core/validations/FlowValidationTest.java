@@ -990,7 +990,7 @@ class FlowValidationTest {
     }
 
     @Test
-    void shouldRejectEditablePropertiesWhenMultipleOrWithAnUnknownPersistMode() {
+    void shouldRejectEditablePropertiesWhenMultipleOrWithoutAnUpdateOrClonePersistMode() {
         Flow flow = YamlParser.parse("""
             id: test
             namespace: unittest
@@ -1003,6 +1003,13 @@ class FlowValidationTest {
                 type: ASSET
                 editableProperties: true
                 persistOverrides: MERGE
+              - id: none
+                type: ASSET
+                editableProperties: true
+                persistOverrides: NONE
+              - id: missing
+                type: ASSET
+                editableProperties: true
               - id: clone
                 type: ASSET
                 editableProperties: true
@@ -1018,7 +1025,9 @@ class FlowValidationTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage())
             .contains("inputs[multiple]: `editableProperties` cannot be used with `multiple`")
-            .contains("inputs[unknown]: `persistOverrides` must be one of NONE, UPDATE or CLONE")
+            .contains("inputs[unknown]: `persistOverrides` must be UPDATE or CLONE")
+            .contains("inputs[none]: `persistOverrides` must be UPDATE or CLONE")
+            .contains("inputs[missing]: `persistOverrides` is required when `editableProperties` is true")
             .doesNotContain("inputs[clone]");
     }
 

@@ -1918,7 +1918,8 @@
       "duplicate": "Esta key já existe",
       "delete multiple": {
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
-        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
+        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deletado(s) do namespace <code>{namespace}</code>"
       },
       "inherited": "Pares KV herdados",
       "expiration_hint": "Atualmente expira em {date}. Deixe o campo intocado para manter esta expiração; escolher uma duração a recalcula a partir de agora, e limpá-la a remove."

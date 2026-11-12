@@ -344,6 +344,7 @@
     "home": "Inicio",
     "create": "Crear",
     "create_flow": "Crear Flow",
+    "create_child_namespace": "Crear namespace secundario",
     "from": "Desde",
     "to": "Hasta",
     "steps": "Pasos",
@@ -451,7 +452,7 @@
       "whole_action": "Reproducir toda la ejecución en su lugar",
       "whole_title": "La revisión {revision} se puede reproducir como una ejecución completa.",
       "whole_description": "No se reutilizan resultados anteriores, por lo que cada Task se ejecuta de nuevo en la revisión {revision}. La ejecución original se mantiene y se vincula.",
-      "confirm_from_task": "Replay desde la task",
+      "confirm_from_task": "Replay desde {taskId}",
       "confirm_whole": "Reproducir toda la ejecución"
     },
     "change execution state done": "Estado de ejecución actualizado",
@@ -540,6 +541,12 @@
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "refresh": "Actualizar",
     "filter by status": "Filtrar ejecuciones por estado {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Esta Task se reintentó",
       "artifacts": "ningún artifact | {count} artifact | {count} artifacts",

@@ -144,7 +144,7 @@ describe("Restart (replay revision check)", () => {
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(true))
 
         expect(executionsStore.validateReplay).toHaveBeenCalledWith({executionId: "exec1", taskRunId: "tr1", revision: 2})
-        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from transform")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
     })
 
@@ -172,7 +172,7 @@ describe("Restart (replay revision check)", () => {
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-error']").exists()).toBe(true))
 
         expect(wrapper.find("[data-test='replay-check-refused']").exists()).toBe(false)
-        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from transform")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
     })
 

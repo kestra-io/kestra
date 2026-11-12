@@ -184,9 +184,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             );
 
             return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
-        } catch (RuntimeException | Error failure) {
-            handleGenerationFailure(ctx, failure);
-            throw failure;
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "FlowGenerationError", Map.of(), "", "generatedFlow");
+            throw e;
         }
     }
 
@@ -209,9 +209,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             );
 
             return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
-        } catch (RuntimeException | Error failure) {
-            handleGenerationFailure(ctx, failure);
-            throw failure;
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "DashboardGenerationError", Map.of(), "", "generatedDashboard");
+            throw e;
         }
     }
 
@@ -221,25 +221,6 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public ExpressionContextService expressionContextService() {
         return expressionContextService;
-    }
-
-    private void handleGenerationFailure(@Nullable GenerationContext context, Throwable failure) {
-        try {
-            this.onGenerationFailure(context, failure);
-        } catch (RuntimeException | Error cleanupFailure) {
-            if (cleanupFailure != failure) {
-                failure.addSuppressed(cleanupFailure);
-            }
-        }
-    }
-
-    private void clearConversationMetadata(@Nullable GenerationContext context) {
-        if (context != null && context.conversationId() != null) {
-            metadataByConversationId.computeIfPresent(
-                context.conversationId(),
-                (conversationId, metadata) -> Objects.equals(metadata.parentSpanId(), context.parentSpanId()) ? null : metadata
-            );
-        }
     }
 
     private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
@@ -319,7 +300,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
             return result;
         }
-        clearConversationMetadata(context);
+        metadataByConversationId.remove(context.conversationId());
         Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
             context.uid(), "$ai_span", Map.of(
@@ -332,11 +313,6 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         );
 
         return result;
-    }
-
-    @Override
-    public void onGenerationFailure(@Nullable GenerationContext context, Throwable failure) {
-        clearConversationMetadata(context);
     }
 
     public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {

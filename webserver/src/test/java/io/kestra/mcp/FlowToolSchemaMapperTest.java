@@ -225,7 +225,7 @@ class FlowToolSchemaMapperTest {
             .build(),
         OutputConversionTestCase.builder()
             .output(Output.builder().id("o").type(OutputType.ASSET).value("v").build())
-            .expectedSchema(Map.of("type", "object"))
+            .expectedSchema(Map.of("description", "The id of a Kestra asset, or a list of asset ids."))
             .build(),
         OutputConversionTestCase.builder()
             .output(Output.builder().id("o").type(OutputType.UNKNOWN).value("v").build())

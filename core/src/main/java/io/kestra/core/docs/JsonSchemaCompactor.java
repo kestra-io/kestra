@@ -28,6 +28,7 @@ public final class JsonSchemaCompactor {
     };
     private static final String DEFINITIONS_REF = "#/definitions/";
     private static final String SHARED_KEY_PREFIX = "shared-property-";
+    private static final String SHARED_SUBTYPES_KEY = "shared-subtypes";
     // Below this serialized size, the $ref and its definition key cost about as much as the copy they replace.
     private static final int MIN_SHARED_LENGTH = 128;
 
@@ -95,36 +96,98 @@ public final class JsonSchemaCompactor {
         Set<JsonNode> hoisted = Collections.newSetFromMap(new IdentityHashMap<>());
         definitions.properties().forEach(entry ->
         {
-            if (isBareSubtypeList(entry.getValue()) && refBySubtypes.putIfAbsent(entry.getValue().get("anyOf"), DEFINITIONS_REF + entry.getKey()) == null) {
+            if (SubtypeSite.of(entry.getValue()) instanceof SubtypeSite site && site.annotation() == null
+                && refBySubtypes.putIfAbsent(site.subtypes(), DEFINITIONS_REF + entry.getKey()) == null) {
                 hoisted.add(entry.getValue());
             }
         });
+
+        Map<JsonNode, Integer> occurrences = new LinkedHashMap<>();
+        countSubtypeLists(schema, hoisted, occurrences);
+        Set<String> usedKeys = new HashSet<>();
+        definitions.fieldNames().forEachRemaining(usedKeys::add);
+        Map<String, ObjectNode> added = new LinkedHashMap<>();
+        occurrences.forEach((subtypes, count) ->
+        {
+            if (count >= 2 && !refBySubtypes.containsKey(subtypes) && subtypes.toString().length() >= MIN_SHARED_LENGTH) {
+                String key = uniqueKey(SHARED_SUBTYPES_KEY, usedKeys);
+                added.put(key, MAPPER.createObjectNode().set("anyOf", subtypes));
+                refBySubtypes.put(subtypes, DEFINITIONS_REF + key);
+            }
+        });
+
         if (!refBySubtypes.isEmpty()) {
             replaceSubtypeLists(schema, refBySubtypes, hoisted);
+            definitions.setAll(added);
         }
+    }
+
+    private static void countSubtypeLists(JsonNode node, Set<JsonNode> hoisted, Map<JsonNode, Integer> occurrences) {
+        if (hoisted.contains(node)) {
+            return;
+        }
+        if (SubtypeSite.of(node) instanceof SubtypeSite site) {
+            occurrences.merge(site.subtypes(), 1, Integer::sum);
+            return;
+        }
+        node.forEach(child -> countSubtypeLists(child, hoisted, occurrences));
     }
 
     private static void replaceSubtypeLists(JsonNode node, Map<JsonNode, String> refBySubtypes, Set<JsonNode> hoisted) {
         if (hoisted.contains(node)) {
             return;
         }
-        if (isBareSubtypeList(node) && refBySubtypes.get(node.get("anyOf")) instanceof String ref) {
-            ((ObjectNode) node).removeAll().put("$ref", ref);
+        if (SubtypeSite.of(node) instanceof SubtypeSite site) {
+            if (refBySubtypes.get(site.subtypes()) instanceof String ref) {
+                ObjectNode replaced = ((ObjectNode) node).removeAll();
+                if (site.annotation() == null) {
+                    replaced.put("$ref", ref);
+                } else {
+                    // Kept as a one-branch anyOf beside the annotation: the language service then completes the key and hovers it as before.
+                    replaced.setAll(site.annotation());
+                    replaced.putArray("anyOf").addObject().put("$ref", ref);
+                }
+            }
             return;
         }
         node.forEach(child -> replaceSubtypeLists(child, refBySubtypes, hoisted));
     }
 
-    private static boolean isBareSubtypeList(JsonNode node) {
-        if (!(node instanceof ObjectNode object) || object.size() != 1 || !(object.get("anyOf") instanceof ArrayNode anyOf) || anyOf.isEmpty()) {
-            return false;
-        }
-        for (JsonNode branch : anyOf) {
-            if (branch.size() != 1 || !branch.path("$ref").isTextual()) {
-                return false;
+    /**
+     * An {@code anyOf} holding nothing but one branch per subtype: either a bare {@code $ref}, or {@code allOf: [$ref, annotation]}
+     * where every branch repeats the same annotation, which is what the generator emits for a property typed as a single subtype.
+     */
+    private record SubtypeSite(ArrayNode subtypes, ObjectNode annotation) {
+        static SubtypeSite of(JsonNode node) {
+            if (!(node instanceof ObjectNode object) || object.size() != 1 || !(object.get("anyOf") instanceof ArrayNode anyOf) || anyOf.isEmpty()) {
+                return null;
             }
+            if (isBareRef(anyOf.get(0))) {
+                for (JsonNode branch : anyOf) {
+                    if (!isBareRef(branch)) {
+                        return null;
+                    }
+                }
+                return new SubtypeSite(anyOf, null);
+            }
+
+            if (!(anyOf.get(0).path("allOf").path(1) instanceof ObjectNode annotation) || annotation.has("anyOf") || annotation.has("$ref")) {
+                return null;
+            }
+            ArrayNode subtypes = MAPPER.createArrayNode();
+            for (JsonNode branch : anyOf) {
+                if (branch.size() != 1 || !(branch.get("allOf") instanceof ArrayNode allOf) || allOf.size() != 2
+                    || !isBareRef(allOf.get(0)) || !allOf.get(1).equals(annotation)) {
+                    return null;
+                }
+                subtypes.add(allOf.get(0));
+            }
+            return new SubtypeSite(subtypes, annotation);
         }
-        return true;
+
+        private static boolean isBareRef(JsonNode node) {
+            return node.size() == 1 && node.path("$ref").isTextual();
+        }
     }
 
     // Follows schema keywords only: a literal under `default`, `const` or `enum` may hold a `properties` key that is not a schema.

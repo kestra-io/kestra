@@ -12,7 +12,7 @@ describe("CopilotMcpTip", () => {
     it("links to the MCP server documentation", () => {
         const w = mount(CopilotMcpTip, {global: mountGlobal})
 
-        expect(w.find("[data-test=\"copilot-mcp-tip-docs\"]").attributes("href")).toContain("kestra.io/docs/ai-tools/mcp-server")
+        expect(w.find("[data-test=\"copilot-mcp-tip-docs\"]").attributes("href")).toBe("https://kestra.io/docs/ai-orchestration/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-mcp#platform-mcp-server")
     })
 
     it("stays hidden on later mounts once dismissed", async () => {

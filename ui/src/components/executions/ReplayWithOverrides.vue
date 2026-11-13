@@ -36,6 +36,7 @@
                 <div v-else-if="taskSource" class="code" data-test="replay-with-overrides-code">
                     <KsEditor
                         :modelValue="taskSource"
+                        :path="`replay-task-${taskRun.id}`"
                         lang="yaml"
                         readOnly
                         :navbar="false"

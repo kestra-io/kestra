@@ -20,6 +20,7 @@
                     <KsEditor
                         :ref="editorRef(reader.taskId)"
                         :modelValue="sources[reader.taskId]"
+                        :path="`replay-reader-${reader.taskId}`"
                         lang="yaml"
                         readOnly
                         :navbar="false"

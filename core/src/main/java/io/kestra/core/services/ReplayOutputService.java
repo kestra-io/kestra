@@ -81,13 +81,14 @@ public class ReplayOutputService {
      * Each one names the other tasks the replay may run that read it, or a key in it, through a static path.
      */
     public ReplayOutputs outputs(Flow flow, Execution execution, String taskRunId) throws InternalException {
-        List<Candidate> candidates = candidates(flow, execution, taskRunId);
+        ExecutionService.ReplayScope scope = executionService.replayScope(execution, flow, taskRunId);
+        List<Candidate> candidates = candidates(flow, execution, taskRunId, scope);
         if (candidates.isEmpty()) {
             return new ReplayOutputs(List.of(), List.of());
         }
 
         Map<String, Reads> reads = new LinkedHashMap<>();
-        for (Task task : tasksRunByReplay(flow, execution, execution.findTaskRunByTaskRunId(taskRunId))) {
+        for (Task task : tasksRunByReplay(flow, execution, execution.findTaskRunByTaskRunId(taskRunId), scope)) {
             reads.put(task.getId(), reads(task, 2));
         }
 
@@ -105,7 +106,7 @@ public class ReplayOutputService {
      * @throws IllegalArgumentException if a key is not an output the task reads, or if no value differs from the current one
      */
     public List<OutputOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
-        Map<String, Candidate> candidates = candidates(flow, execution, taskRunId).stream()
+        Map<String, Candidate> candidates = candidates(flow, execution, taskRunId, executionService.replayScope(execution, flow, taskRunId)).stream()
             .collect(Collectors.toMap(Candidate::path, Function.identity()));
 
         List<OutputOverride> overrides = new ArrayList<>(requested.size());
@@ -125,7 +126,7 @@ public class ReplayOutputService {
         return overrides;
     }
 
-    private List<Candidate> candidates(Flow flow, Execution execution, String taskRunId) throws InternalException {
+    private List<Candidate> candidates(Flow flow, Execution execution, String taskRunId, ExecutionService.ReplayScope scope) throws InternalException {
         TaskRun replayed = execution.findTaskRunByTaskRunId(taskRunId);
         Set<List<String>> paths = reads(flow.findTaskByTaskId(replayed.getTaskId()), 3).paths;
         if (paths.isEmpty()) {
@@ -136,18 +137,18 @@ public class ReplayOutputService {
         List<Candidate> candidates = new ArrayList<>(paths.size());
         for (List<String> path : paths) {
             target(execution, path)
-                .filter(target -> !isReplayed(execution, target.getKey(), replayed))
+                .filter(target -> !isReplayed(execution, target.getKey(), replayed) && !scope.toRemove().contains(target.getKey().getId()))
                 .ifPresent(target -> candidates.add(new Candidate(format(path), path, target.getKey(), target.getValue(), valueAt(outputs, path.subList(1, path.size())))));
         }
         return candidates;
     }
 
-    private List<Task> tasksRunByReplay(Flow flow, Execution execution, TaskRun replayed) throws InternalException {
-        Set<String> notReused = executionService.taskRunsNotReusedByReplay(execution, flow, replayed.getId());
+    private static List<Task> tasksRunByReplay(Flow flow, Execution execution, TaskRun replayed, ExecutionService.ReplayScope scope) {
         Map<String, Task> tasks = new LinkedHashMap<>();
         for (Task task : flow.allTasksWithChilds()) {
             List<TaskRun> taskRuns = execution.findTaskRunsByTaskId(task.getId());
-            if (!task.getId().equals(replayed.getTaskId()) && (taskRuns.isEmpty() || taskRuns.stream().anyMatch(taskRun -> notReused.contains(taskRun.getId())))) {
+            boolean runs = taskRuns.isEmpty() || taskRuns.stream().anyMatch(taskRun -> scope.toRestart().contains(taskRun.getId()) || scope.toRemove().contains(taskRun.getId()));
+            if (!task.getId().equals(replayed.getTaskId()) && runs) {
                 tasks.putIfAbsent(task.getId(), task);
             }
         }

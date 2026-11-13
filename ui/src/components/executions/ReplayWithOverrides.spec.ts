@@ -70,7 +70,7 @@ async function openDialog(dynamicReaders: string[] = []) {
                 KsDropdownItem: {template: "<button><slot /></button>"},
                 KsDialog: {template: "<div><slot /><slot name='footer' /></div>"},
                 KsDrawer: {template: "<div><slot name='header' /><slot /></div>"},
-                KsEditor: {props: ["modelValue"], template: "<pre>{{ modelValue }}</pre>"},
+                KsEditor: {props: ["modelValue", "path"], template: "<pre :data-path='path'>{{ modelValue }}</pre>"},
             },
         },
     })
@@ -126,6 +126,8 @@ describe("ReplayWithOverrides", () => {
         const readers = wrapper.findAll("[data-test='replay-output-reader']")
         expect(readers.map(reader => reader.find("code").text())).toEqual(["notify", "alert"])
         expect(readers[1].text()).toContain("message: \"{{ outputs.fetch_store.values }}\"")
+        const paths = wrapper.findAll("pre").map(editor => editor.attributes("data-path"))
+        expect(new Set(paths).size).toBe(paths.length)
     })
 
     it("warns that tasks reading outputs dynamically may read an override", async () => {

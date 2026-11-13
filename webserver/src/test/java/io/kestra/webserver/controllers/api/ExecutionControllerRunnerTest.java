@@ -1164,6 +1164,14 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/replay-output-readers.yaml" })
+    void shouldNotListOutputsOfTaskRunsTheReplayRemoves() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-readers");
+
+        assertThat(replayOutputs(failed, "alert").values()).isEmpty();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/replay-output-overrides.yaml" })
     void shouldReadOverriddenOutputsInReplayedAndLaterTasksWithoutRunningUpstreamTaskAgain() throws Exception {
         Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");

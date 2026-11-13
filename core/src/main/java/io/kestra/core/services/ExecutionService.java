@@ -719,16 +719,9 @@ public class ExecutionService {
     }
 
     /**
-     * The task runs a replay from {@code taskRunId} does not reuse as they are: the ones it restarts and the ones it removes.
+     * The ids of the task runs a replay from {@code taskRunId} restarts and of the ones it removes; it reuses the others as they are.
      */
-    public Set<String> taskRunsNotReusedByReplay(Execution execution, Flow flow, String taskRunId) throws InternalException {
-        ReplayScope scope = this.replayScope(execution, flow, taskRunId);
-        Set<String> notReused = new HashSet<>(scope.toRestart());
-        notReused.addAll(scope.toRemove());
-        return notReused;
-    }
-
-    private ReplayScope replayScope(Execution execution, Flow flow, String taskRunId) throws InternalException {
+    public ReplayScope replayScope(Execution execution, Flow flow, String taskRunId) throws InternalException {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -2014,6 +2007,6 @@ public class ExecutionService {
         return unqueued;
     }
 
-    private record ReplayScope(Set<String> toRestart, Set<String> toRemove) {
+    public record ReplayScope(Set<String> toRestart, Set<String> toRemove) {
     }
 }

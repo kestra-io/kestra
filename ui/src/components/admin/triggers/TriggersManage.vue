@@ -377,7 +377,6 @@
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
-    import {asProblem} from "@kestra-io/kestra-sdk"
     import type {
         AbstractTrigger,
         ApiAsyncOperationResponse,
@@ -388,8 +387,8 @@
         TriggerControllerApiCreateBackfillRequest,
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
-    import {problemBulkBody, problemTitle} from "../../../utils/problem"
-    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {useBulkAction} from "../../../composables/useBulkAction"
+    import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
@@ -403,7 +402,7 @@
     import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -429,7 +428,7 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const {t, te} = useI18n({useScope: "global"})
+    const {t} = useI18n({useScope: "global"})
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
@@ -608,7 +607,6 @@
 
     const selection = computed<TriggerControllerApiTriggerId[]>(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed<boolean>(() => dataTable.value?.queryBulkAction ?? false)
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = <T extends object>(base: T): T => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
@@ -647,14 +645,7 @@
         router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
-    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
-        const parts = typeof sort === "string" ? sort.split(":") : []
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            return {prop: "triggerId", order: "ascending"}
-        }
-        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
-    }
-    const defaultSort = sortFromQuery(route.query.sort)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "triggerId", order: "ascending"})
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
@@ -919,58 +910,45 @@
     const BULK_ACTIONS = {
         unpauseBackfill: {
             byQuery: options => TriggersAPI.unpauseBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.unpauseBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.unpauseBackfillByIds({body: ids}),
         },
         pauseBackfill: {
             byQuery: options => TriggersAPI.pauseBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.pauseBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.pauseBackfillByIds({body: ids}),
         },
         deleteBackfill: {
             byQuery: options => TriggersAPI.deleteBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.deleteBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.deleteBackfillByIds({body: ids}),
         },
         unlock: {
             byQuery: options => TriggersAPI.unlockTriggersByQuery(options),
-            byIds: triggers => TriggersAPI.unlockTriggersByIds({body: triggers}),
+            byIds: ids => TriggersAPI.unlockTriggersByIds({body: ids}),
         },
         setDisabled: {
             byQuery: options => TriggersAPI.disabledTriggersByQuery(options),
-            byIds: (triggers, data) => TriggersAPI.disabledTriggersByIds({
-                triggers,
+            byIds: (ids, data) => TriggersAPI.disabledTriggersByIds({
+                triggers: ids,
                 disabled: data?.disabled ?? false,
                 recoverMissedSchedules: data?.recoverMissedSchedules,
             }),
         },
         delete: {
             byQuery: options => TriggersAPI.deleteTriggersByQuery(options),
-            byIds: triggers => TriggersAPI.deleteTriggersByIds({body: triggers}),
+            byIds: ids => TriggersAPI.deleteTriggersByIds({body: ids}),
         },
     } satisfies Record<string, BulkAction>
 
     type BulkActionName = keyof typeof BULK_ACTIONS
 
+    const {runBulkAction} = useBulkAction(dataTable, {refresh: triggerLoadDataAfterBulkEditAction})
+
     const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData) => {
-        const action = BULK_ACTIONS[actionName]
-        const onSubmitted = (response: ApiAsyncOperationResponse) => {
-            toast.success(t(success, {count: response.totalItems}))
-            toggleAllUnselected()
-            triggerLoadDataAfterBulkEditAction()
-        }
-
-        if (queryBulkAction.value) {
-            const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
-            return action.byQuery({...query, ...data}).then(onSubmitted)
-        }
-
-        return action.byIds(selection.value, data)
-            .then(onSubmitted)
-            .catch((e: unknown) => {
-                const problem = asProblem(e)
-                toast.error(
-                    problemBulkBody(problem, t, te),
-                    problemTitle(problem, t, te),
-                )
-            })
+        const bulkAction = BULK_ACTIONS[actionName]
+        return runBulkAction({
+            byQuery: () => bulkAction.byQuery({...loadQuery({filters: routeQueryToQueryFilters(route.query)}), ...data}),
+            byIds: () => bulkAction.byIds(selection.value, data),
+            success: (response) => t(success, {count: response.totalItems}),
+        })
     }
 
     const unpauseBackfills = () => {

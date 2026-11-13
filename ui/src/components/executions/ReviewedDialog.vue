@@ -20,10 +20,10 @@
                 <KsDescriptionsItem :label="$t('approval.reviewed.decision')">
                     <span data-test="reviewed-decision">{{ $t(decisionKey) }}</span>
                 </KsDescriptionsItem>
-                <KsDescriptionsItem v-if="by" :label="$t('approval.reviewed.by')">
+                <KsDescriptionsItem v-if="by" :label="closed ? $t('approval.reviewed.cancelled by') : $t('approval.reviewed.by')">
                     <span data-test="reviewed-by">{{ by }}</span>
                 </KsDescriptionsItem>
-                <KsDescriptionsItem v-if="on" :label="$t('approval.reviewed.on')">
+                <KsDescriptionsItem v-if="on" :label="closed ? $t('approval.reviewed.cancelled on') : $t('approval.reviewed.on')">
                     <span data-test="reviewed-on">{{ on }}</span>
                 </KsDescriptionsItem>
                 <KsDescriptionsItem v-if="comment" :label="$t('approval.comment')">
@@ -58,10 +58,17 @@
         EXPIRED: "approval.reviewed.decisions.expired",
     }
 
+    const CLOSED_KEYS: Record<string, string> = {
+        CANCELLED: "approval.reviewed.decisions.cancelled",
+        KILLED: "approval.reviewed.decisions.killed",
+    }
+
     const loading = ref(false)
     const outputs = ref<Record<string, unknown>>({})
 
-    const decisionKey = computed(() => DECISION_KEYS[String(outputs.value.decision)])
+    const taskRunState = computed(() => props.execution.taskRunList?.find(taskRun => taskRun.id === props.taskRun.id)?.state?.current)
+    const closed = computed(() => !DECISION_KEYS[String(outputs.value.decision)] && !!CLOSED_KEYS[String(taskRunState.value)])
+    const decisionKey = computed(() => DECISION_KEYS[String(outputs.value.decision)] ?? CLOSED_KEYS[String(taskRunState.value)])
     const by = computed(() => typeof outputs.value.by === "string" ? outputs.value.by : undefined)
     const on = computed(() => typeof outputs.value.on === "string" ? dateUtils.dateFilter(outputs.value.on) : undefined)
     const comment = computed(() => typeof outputs.value.comment === "string" ? outputs.value.comment : undefined)

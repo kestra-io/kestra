@@ -1,4 +1,5 @@
 import semver from "semver"
+import {capitalize} from "./global"
 
 export type PluginElement = {
     cls: string;
@@ -80,6 +81,11 @@ export function isPluginMatched(plugin: Plugin, search: string): boolean {
         plugin.manifest?.["X-Kestra-Title"],
     ].some(field => field?.toLowerCase().includes(q)) ||
         pluginElementClasses(plugin).some(cls => cls.toLowerCase().includes(q))
+}
+
+/** The title a plugin is shown and sorted under: its title on the plugins API when known, else its own. */
+export function pluginDisplayTitle(plugin: Plugin, enrichment: {title?: string} | null | undefined): string {
+    return enrichment?.title ?? capitalize(plugin.title)
 }
 
 export function pluginElementClasses(plugin: Plugin): string[] {

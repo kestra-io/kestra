@@ -34,6 +34,9 @@ dependencies {
     // OTLP metrics
     implementation "io.micronaut.micrometer:micronaut-micrometer-registry-otlp"
 
+    // Flyway, for the 'sys database plan' command to inspect pending schema migrations
+    implementation "io.micronaut.flyway:micronaut-flyway"
+
     // aether still use javax.inject
     compileOnly 'javax.inject:javax.inject:1'
 

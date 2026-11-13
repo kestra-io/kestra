@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {themes} from "./index.ts"
+import {PEBBLE_ROLES} from "../pebble.ts"
 
 function luminance(hex: string) {
     const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -39,6 +40,14 @@ describe("contrast", () => {
         const failing = (["function", "parameter"] as const).flatMap(role => (["text", "value"] as const)
             .map(plain => [role, plain, Math.round(difference(syntax[role], syntax[plain]))] as const))
             .filter(([, , delta]) => delta < 25)
+        expect(failing).toEqual([])
+    })
+
+    it.each(themes.map(theme => [theme.name, theme] as const))("%s keeps the code inside a Pebble block apart from the block color", (_, theme) => {
+        const {syntax} = theme
+        const failing = PEBBLE_ROLES.filter(role => !["pebble", "constant", "operator", "punctuation"].includes(role))
+            .map(role => [role, Math.round(difference(syntax[role], syntax.pebble))] as const)
+            .filter(([, delta]) => delta < 25)
         expect(failing).toEqual([])
     })
 })

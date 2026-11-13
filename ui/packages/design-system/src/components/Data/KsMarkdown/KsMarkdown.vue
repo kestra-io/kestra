@@ -14,7 +14,7 @@
     import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
     import type {ThemedTokenWithVariants} from "@shikijs/types"
-    import {kestraDark, kestraLight, paintPebble} from "@kestra-io/plumage"
+    import {kestraDark, kestraLight, paintPebble, type PebbleRole} from "@kestra-io/plumage"
     import xss, {escapeAttrValue} from "xss"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -503,12 +503,12 @@
         }
     }
 
-    function paintPebbleVariants(token: ThemedTokenWithVariants): ThemedTokenWithVariants {
+    function paintPebbleVariants(token: ThemedTokenWithVariants, role: PebbleRole): ThemedTokenWithVariants {
         return {
             ...token,
             variants: {
-                light: {...token.variants.light, color: kestraLight.syntax.pebble},
-                dark: {...token.variants.dark, color: kestraDark.syntax.pebble},
+                light: {...token.variants.light, color: kestraLight.syntax[role]},
+                dark: {...token.variants.dark, color: kestraDark.syntax[role]},
             },
         }
     }

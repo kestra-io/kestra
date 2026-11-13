@@ -417,55 +417,6 @@ public class JsonSchemaGenerator {
     }
 
     /**
-     * Returns a copy of {@code schema} where each bare {@code anyOf} repeating a definition's subtype list is a {@code $ref} to that definition.
-     * It validates identically; {@link #schemas} inlines the full list at every site, which grows with sites times subtypes.
-     */
-    public Map<String, Object> hoistSubtypeLists(Map<String, Object> schema) {
-        ObjectNode root = MAPPER.convertValue(schema, ObjectNode.class);
-        if (!(root.get("definitions") instanceof ObjectNode definitions)) {
-            return schema;
-        }
-
-        Map<JsonNode, String> refBySubtypes = new HashMap<>();
-        Set<JsonNode> hoisted = Collections.newSetFromMap(new IdentityHashMap<>());
-        definitions.properties().forEach(entry ->
-        {
-            if (isBareSubtypeList(entry.getValue()) && refBySubtypes.putIfAbsent(entry.getValue().get("anyOf"), "#/definitions/" + entry.getKey()) == null) {
-                hoisted.add(entry.getValue());
-            }
-        });
-        if (refBySubtypes.isEmpty()) {
-            return schema;
-        }
-
-        replaceSubtypeLists(root, refBySubtypes, hoisted);
-        return MAPPER.convertValue(root, MAP_TYPE_REFERENCE);
-    }
-
-    private static void replaceSubtypeLists(JsonNode node, Map<JsonNode, String> refBySubtypes, Set<JsonNode> hoisted) {
-        if (hoisted.contains(node)) {
-            return;
-        }
-        if (isBareSubtypeList(node) && refBySubtypes.get(node.get("anyOf")) instanceof String ref) {
-            ((ObjectNode) node).removeAll().put("$ref", ref);
-            return;
-        }
-        node.forEach(child -> replaceSubtypeLists(child, refBySubtypes, hoisted));
-    }
-
-    private static boolean isBareSubtypeList(JsonNode node) {
-        if (!(node instanceof ObjectNode object) || object.size() != 1 || !(object.get("anyOf") instanceof ArrayNode anyOf) || anyOf.isEmpty()) {
-            return false;
-        }
-        for (JsonNode branch : anyOf) {
-            if (branch.size() != 1 || !branch.path("$ref").isTextual()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * For a polymorphic property, the generator emits two definitions per subtype: a plain
      * {@code <Class>} object, and a {@code <Class>-2} wrapper ({@code allOf: [{$ref: <Class>-1}, {
      * required: ["type"], ...}]}) carrying the discriminator {@code required} needed to use it as

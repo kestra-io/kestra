@@ -64,14 +64,14 @@ public class JsonSchemaCache {
     }
 
     /**
-     * Returns the schema of {@link #getSchemaForType} with its repeated subtype lists hoisted, for consumers that resolve {@code $ref} themselves.
+     * Returns the schema of {@link #getSchemaForType} compacted by {@link JsonSchemaCompactor}, for consumers that resolve {@code $ref} themselves.
      * The same instance is returned until the plugin registry changes.
      */
     public Map<String, Object> getCompactSchemaForType(final SchemaType type, final boolean arrayOf) {
         Map<String, Object> schema = getSchemaForType(type, arrayOf);
         return compactSchemaCache.compute(
             new CacheKey(type, arrayOf),
-            (key, cached) -> cached != null && cached.source() == schema ? cached : new CompactSchema(schema, jsonSchemaGenerator.hoistSubtypeLists(schema))
+            (key, cached) -> cached != null && cached.source() == schema ? cached : new CompactSchema(schema, JsonSchemaCompactor.compact(schema))
         ).schema();
     }
 

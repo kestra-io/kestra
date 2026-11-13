@@ -168,16 +168,23 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldReferenceTheTaskDefinitionWhenItsSubtypeListIsRepeatedInline() {
+    void shouldCompactTheFlowSchemaWithoutLosingTheSharedContent() {
         Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
 
-        Map<String, Object> compact = jsonSchemaGenerator.hoistSubtypeLists(schema);
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
 
-        Map<String, Object> inlineItems = flowTasksItems(schema);
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
         var compactDefinitions = (Map<String, Map<String, Object>>) compact.get("definitions");
+        Map<String, Object> inlineItems = flowTasksItems(schema);
         assertThat(flowTasksItems(compact), is(Map.of("$ref", "#/definitions/" + Task.class.getName())));
         assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
         assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
+
+        // `retry` is inherited by every task: one shared definition, holding exactly what each task carried inline.
+        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
+        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
+        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), is(properties(definitions.get(Log.class.getName())).get("retry")));
     }
 
     @SuppressWarnings("unchecked")

@@ -9,7 +9,6 @@ import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.services.KVService;
 import io.kestra.core.storages.kv.configuration.KVPurgeConfiguration;
@@ -32,9 +31,6 @@ public class KVPurgeCleaner {
 
     @Inject
     private KVService kvService;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
 
     @Inject
     private KvMetadataRepositoryInterface kvMetadataRepository;
@@ -86,8 +82,12 @@ public class KVPurgeCleaner {
         }
     }
 
+    /**
+     * Namespaces that hold KV entries. This is taken from the KV metadata, not from flows: keys can live in a
+     * namespace that has no flow (written to a parent namespace, or added through the API).
+     */
     protected List<String> findNamespaces(String tenant) {
-        return flowRepository.findDistinctNamespace(tenant);
+        return kvMetadataRepository.findDistinctNamespace(tenant).stream().sorted().toList();
     }
 
     protected List<String> findTenants() {

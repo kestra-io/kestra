@@ -367,7 +367,7 @@
     }
 
     .check-icon-success {
-        color: var(--ks-text-success);
+        color: var(--ks-icon-success);
     }
 
     .copy {

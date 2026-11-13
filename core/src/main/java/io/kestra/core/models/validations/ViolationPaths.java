@@ -1,12 +1,15 @@
 package io.kestra.core.models.validations;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.plugin.core.flow.AbstractBranch;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ElementKind;
@@ -15,7 +18,8 @@ import jakarta.validation.Path;
 /**
  * Renders the two locators a bean-validation violation can be reported with, because neither alone is enough.
  *
- * <p>{@code toJsonPointer} is a valid RFC 6901 JSON Pointer, which a client can resolve mechanically against
+ * <p>
+ * {@code toJsonPointer} is a valid RFC 6901 JSON Pointer, which a client can resolve mechanically against
  * the document it submitted. {@code toFriendlyPath} names tasks and inputs by id rather than by array index,
  * which is what a human editing the YAML needs — and is precisely why it is not a valid JSON Pointer.
  */
@@ -26,11 +30,13 @@ public final class ViolationPaths {
     /**
      * The RFC 6901 JSON Pointer addressing the offending value in the submitted document.
      *
-     * <p>Nodes describing the Java call rather than the document — the method, its parameters, a constructor,
+     * <p>
+     * Nodes describing the Java call rather than the document — the method, its parameters, a constructor,
      * a return value — reset the pointer, so method-level validation of a request body produces a pointer
      * relative to that body instead of one prefixed with {@code /createFlow/flow}.
      *
-     * <p>Handles both shapes of path Kestra produces. Bean validation supplies one node per property with the
+     * <p>
+     * Handles both shapes of path Kestra produces. Bean validation supplies one node per property with the
      * index or map key held separately, whereas {@link ManualConstraintViolation} supplies a single node whose
      * name is the whole expression, e.g. {@code tasks[0].type} — so each node name is itself decomposed.
      */
@@ -97,8 +103,25 @@ public final class ViolationPaths {
     public static String toFriendlyPath(final ConstraintViolation<?> violation) {
         String raw = violation.getPropertyPath().toString();
         try {
-            if (violation.getLeafBean() instanceof Task task) {
-                return replaceIndexWithId(raw, "tasks", task.getId());
+            if (violation.getLeafBean() instanceof Task) {
+                FlowWithSource flowWithSource = (FlowWithSource) violation.getRootBean();
+                List<Task> tasks = flowWithSource.getTasks();
+                Iterator<Path.Node> iterator = violation.getPropertyPath().iterator();
+
+                while (iterator.hasNext()) {
+                    Path.Node node = iterator.next();
+                    // container node
+                    if (node.isInIterable()) {
+                        Integer nodeIndex = node.getIndex();
+                        Task task = tasks.get(nodeIndex);
+
+                        // Task which contains other tasks - nested
+                        if (task instanceof AbstractBranch<?> branchTask) {
+                            tasks = branchTask.getTasks();
+                        }
+                        raw = replaceIndexWithId(raw, "tasks", task.getId());
+                    }
+                }
             }
             if (violation.getLeafBean() instanceof Input<?> input) {
                 return replaceIndexWithId(raw, "inputs", input.getId());
@@ -113,7 +136,7 @@ public final class ViolationPaths {
     static String replaceIndexWithId(final String path, final String collection, final String id) {
         return Pattern.compile(Pattern.quote(collection) + "\\[\\d+]")
             .matcher(path)
-            .replaceAll(Matcher.quoteReplacement(collection + "[" + id + "]"));
+            .replaceFirst(Matcher.quoteReplacement(collection + "[" + id + "]"));
     }
 
     private static boolean isJavaCallNode(final Path.Node node) {

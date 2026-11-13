@@ -7,14 +7,20 @@ import PluginViewToggle from "../../../components/plugins/PluginViewToggle.vue"
 import PluginCatalogTable from "../../../components/plugins/PluginCatalogTable.vue"
 import type {Plugin} from "../../../utils/pluginUtils"
 
+/** A card for an artifact with no catalog entry, sorted among the catalog cards by its title. */
+export interface PluginCatalogExtraEntry {
+    key: string;
+    title: string;
+}
+
 export interface PluginCatalogExtension {
     pageActions?: Component;
     banner?: Component;
     toolbar?: Component;
     table?: Component;
     matches?: (plugin: Plugin) => boolean;
-    extraCards?: Component;
-    extraCardCount?: (catalog: Plugin[], search: string, categories: string[]) => number;
+    extraEntries?: (catalog: Plugin[], search: string, categories: string[]) => PluginCatalogExtraEntry[];
+    extraCard?: Component;
     cardStatus?: Component;
     emptyCopy?: (filtered: boolean) => {title: string, description: string} | undefined;
     reset?: () => void;

@@ -16,8 +16,17 @@ const {scoped, extra, reset} = await vi.hoisted(async () => {
 const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(",")
 
 const PluginList = (testId: string) => defineComponent({
-    props: {plugins: {type: Array as PropType<Plugin[]>, default: () => []}, catalog: {type: Array as PropType<Plugin[]>, default: () => []}},
-    setup: (props) => () => h("div", {"data-test": testId, "data-plugins": names(props.plugins), "data-catalog": names(props.catalog)}),
+    props: {
+        plugins: {type: Array as PropType<Plugin[]>, default: () => []},
+        catalog: {type: Array as PropType<Plugin[]>, default: () => []},
+        entries: {type: Array as PropType<{key: string}[]>, default: () => []},
+    },
+    setup: (props) => () => h("div", {
+        "data-test": testId,
+        "data-plugins": names(props.plugins),
+        "data-catalog": names(props.catalog),
+        "data-entries": props.entries.map(entry => entry.key).join(","),
+    }),
 })
 
 vi.mock("override/components/plugins/pluginCatalogExtension", async () => {
@@ -26,8 +35,8 @@ vi.mock("override/components/plugins/pluginCatalogExtension", async () => {
         usePluginCatalogExtension: () => ({
             toolbar: markRaw(PluginList("toolbar")),
             table: markRaw(PluginList("table")),
-            extraCards: markRaw({setup: () => () => extra.value.map(title => h("h5", {"data-test": "extra-card"}, title))}),
-            extraCardCount: () => extra.value.length,
+            extraEntries: () => extra.value.map(title => ({key: title, title})),
+            extraCard: markRaw({props: ["entry"], setup: (props: {entry: {title: string}}) => () => h("h5", {"data-test": "extra-card"}, props.entry.title)}),
             matches: () => !scoped.value,
             emptyCopy: (filtered: boolean) => scoped.value && !filtered ? {title: "Nothing added", description: "Add one"} : undefined,
             reset: () => {
@@ -115,11 +124,24 @@ describe("PluginCatalog extension", () => {
         expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT"])
     })
 
-    test("appends the extension cards after the catalog cards, and shows them instead of the empty state", async () => {
-        extra.value = ["storage-s3"]
+    test("sorts the extension cards among the catalog cards, in both views", async () => {
+        extra.value = ["Cloudflare R2"]
         const wrapper = await mountCatalog()
 
-        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "DBT", "storage-s3"])
+        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["AWS", "Cloudflare R2", "DBT"])
+
+        useRoute().query = {sort: "nameDesc"}
+        await flushPromises()
+        expect(wrapper.findAll("h5").map(title => title.text())).toEqual(["DBT", "Cloudflare R2", "AWS"])
+
+        useRoute().query = {sort: "nameDesc", view: "table"}
+        await flushPromises()
+        expect(wrapper.find("[data-test=table]").attributes("data-entries")).toBe("plugin-dbt,Cloudflare R2,plugin-aws")
+    })
+
+    test("shows the extension cards instead of the empty state", async () => {
+        extra.value = ["storage-s3"]
+        const wrapper = await mountCatalog()
 
         scoped.value = true
         await wrapper.find("input").setValue("aws")

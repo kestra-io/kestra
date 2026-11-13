@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
@@ -39,7 +42,10 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.logs.LogRecord;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.tasks.retrys.Constant;
+import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -641,22 +647,54 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    static Stream<AbstractRetry> retrySubtypes() {
+        return Stream.of(new Constant(), new Exponential(), new Random());
+    }
+
     @SuppressWarnings("unchecked")
-    @Test
-    void subtypesTypePropertyAsConst() {
+    @ParameterizedTest
+    @MethodSource("retrySubtypes")
+    void subtypesTypePropertyAsConstInDocsSchema(AbstractRetry subtype) {
         List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
         Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+        String subtypeClass = subtype.getClass().getName();
+        String typeValue = subtype.getType();
 
-        // Assert that properties that are part of type resolution are set as const from their default value
-        Map<String, Object> generate = jsonSchemaGenerator.properties(null, cls);
-        assertThat(
-            ((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
-                .get("io.kestra.core.models.tasks.retrys.Constant")
-                .get("properties"))
-                .get("type")
-                .get("const"),
-            is(new Constant().getType())
-        );
+        // Docs schema (DRAFT_2019_09), from properties(null, cls)
+        Map<String, Object> docsSchema = jsonSchemaGenerator.properties(null, cls);
+        var defs = (Map<String, Map<String, Object>>) docsSchema.get("$defs");
+        var subtypeDocsProps = properties(defs.get(subtypeClass));
+        var docsTypeProp = subtypeDocsProps.get("type");
+
+        // Docs schema: assert discriminator type, const, title, and description
+        assertThat(docsTypeProp.get("type"), is("string"));
+        assertThat(docsTypeProp.get("const"), is(typeValue));
+        assertThat(docsTypeProp.get("title"), is("The retry type."));
+        assertThat(docsTypeProp.get("description"), notNullValue());
+        assertThat((String) docsTypeProp.get("description"), containsString(typeValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    @ParameterizedTest
+    @MethodSource("retrySubtypes")
+    void subtypesTypePropertyAsConstInEditorSchema(AbstractRetry subtype) {
+        List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
+        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+        String subtypeKey = subtype.getClass().getName() + "-2";
+        String typeValue = subtype.getType();
+
+        // Editor schema (DRAFT_7), from schemas(cls)
+        Map<String, Object> editorSchema = jsonSchemaGenerator.schemas(cls);
+        var editorDefs = (Map<String, Map<String, Object>>) editorSchema.get("definitions");
+        var subtypeEditorProps = properties(editorDefs.get(subtypeKey));
+        var editorTypeProp = subtypeEditorProps.get("type");
+
+        // Editor schema: assert discriminator type, const, markdownDescription, and absence of plain description
+        assertThat(editorTypeProp.get("type"), is("string"));
+        assertThat(editorTypeProp.get("const"), is(typeValue));
+        assertThat(editorTypeProp.get("markdownDescription"), notNullValue());
+        assertThat((String) editorTypeProp.get("markdownDescription"), containsString(typeValue));
+        assertThat(editorTypeProp, not(hasKey("description")));
     }
 
     @SuppressWarnings("unchecked")

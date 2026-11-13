@@ -116,7 +116,7 @@
                     :iconCls="plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
-                    :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
+                    :title="displayTitle(plugin)"
                     :description="plugin.description"
                     :categories="plugin.categories"
                     :taskCount="taskCount(plugin)"
@@ -146,7 +146,7 @@
     import {KsSearch, KsAlert, KsButton, KsSkeleton, debounce} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import {usePluginView, useQueryChoice} from "./pluginView"
-    import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, isPluginMatched, latestVersionEntries, pluginDisplayTitle, pluginElementClasses, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
@@ -218,7 +218,8 @@
 
     const searchInput = computed(() => searchText.value.toLowerCase())
 
-    const pluginTitle = (plugin: Plugin): string => String(plugin?.manifest?.["X-Kestra-Title"] ?? plugin?.title ?? "").toLowerCase()
+    const displayTitle = (plugin: Plugin): string => pluginDisplayTitle(plugin, enrichmentStore.getEnrichment(plugin))
+    const pluginTitle = (plugin: Plugin): string => displayTitle(plugin).toLowerCase()
 
     const baseList = computed<Plugin[]>(() => {
         return latestVersionEntries(filteredPlugins.value ?? [])

@@ -139,6 +139,12 @@ describe("resolveNotificationRoute", () => {
 
         expect(await resolveNotificationRoute(buildNotification({type: "ASYNC_OPERATION", referenceId: "op-4"}))).toBeNull()
     })
+
+    it("returns null for an ASYNC_OPERATION targeting plugins, which have no operation-filtered list", async () => {
+        const {resolveNotificationRoute} = await import("./notificationRoute")
+
+        expect(await resolveNotificationRoute(buildNotification({type: "ASYNC_OPERATION", resourceType: "PLUGIN", referenceId: "op-5"}))).toBeNull()
+    })
 })
 
 describe("isNotificationLinkable", () => {

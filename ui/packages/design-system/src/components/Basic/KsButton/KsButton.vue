@@ -43,7 +43,7 @@
 
 <script lang="ts">
     import type {ButtonProps, ButtonType} from "element-plus"
-    import type {RouteLocationRaw, RouterLinkProps} from "vue-router"
+    import type {RouteLocationRaw} from "vue-router"
 
     export type KsButtonType = ButtonType
 
@@ -56,13 +56,9 @@
         href?: string
         target?: string
         rel?: string
-        /** With `:tag="RouterLink"` (or `tag="router-link"`), like the RouterLink props below. */
+        /** With `:tag="RouterLink"` (or `tag="router-link"`). */
         to?: RouteLocationRaw
         replace?: boolean
-        activeClass?: string
-        exactActiveClass?: string
-        ariaCurrentValue?: RouterLinkProps["ariaCurrentValue"]
-        viewTransition?: boolean
     }
 
     interface KsButtonTone {
@@ -90,8 +86,8 @@
 
     defineOptions({inheritAttrs: false})
 
-    // Left undefined so a plain button does not render replace="false" and viewTransition="false" attributes.
-    const props = withDefaults(defineProps<KsButtonProps>(), {replace: undefined, viewTransition: undefined})
+    // Left undefined so a plain button does not render a replace="false" attribute.
+    const props = withDefaults(defineProps<KsButtonProps>(), {replace: undefined})
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

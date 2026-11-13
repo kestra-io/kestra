@@ -378,7 +378,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and the other RouterLink props |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |

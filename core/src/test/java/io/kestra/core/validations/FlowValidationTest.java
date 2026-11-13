@@ -19,6 +19,7 @@ import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.models.validations.ValidationError;
@@ -782,6 +783,31 @@ class FlowValidationTest {
             "Task 'hello' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN),
             "Trigger 'schedule' declares an invalid asset in `assets.outputs`: `id` must match \"%s\".".formatted(Asset.ID_PATTERN)
         );
+    }
+
+    @Test
+    void shouldStillLoadATriggerThatSetsAssetFailureBehavior() throws Exception {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 1 1 *"
+                assets:
+                  assetFailureBehavior: FAIL
+                  outputs:
+                    - id: table
+                      type: TABLE
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+        assertThat(Property.asStaticList(flow.getTriggers().getFirst().getAssets().getOutputs(), Asset.class))
+            .hasValueSatisfying(outputs -> assertThat(outputs).extracting(Asset::getId).containsExactly("table"));
     }
 
     @Test

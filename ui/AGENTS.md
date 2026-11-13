@@ -68,6 +68,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
 - Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`.
+- Type the HTML attributes a wrapper forwards through `$attrs` with a `@vue-ignore` intersection, `defineProps<KsButtonProps & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, keyof KsButtonProps>>()`: vue-tsc still checks every attribute a caller passes, while the compiler leaves them out of the runtime props so they stay in `$attrs`. `NativeAttributes` drops Vue's `on*` listener types, which would otherwise retype the wrapper's own events (`@change` receiving an `Event`). The type cannot see whether the template forwards them, so `htmlAttributes.test.ts` mounts each such wrapper and checks the attributes reach the DOM; add new wrappers to it.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.
@@ -241,7 +242,7 @@ Rules:
 
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
-- Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- Put the icon component in `KsIcon`'s default slot (`<KsIcon><InformationOutline /></KsIcon>`); `KsIcon` has no `name` prop. Size and color come from props or the surrounding token context — don't override with inline `style`.
 - **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
@@ -380,7 +381,7 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
-| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
+| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type` |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |

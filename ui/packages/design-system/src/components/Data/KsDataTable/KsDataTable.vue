@@ -82,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -123,7 +124,7 @@
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
         mobileColumns?: KsDataTableMobileColumns
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         data: () => [],
         total: 0,
         currentPage: 1,

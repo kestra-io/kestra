@@ -1,6 +1,6 @@
 <template>
     <div class="table-root">
-        <TableQuickFilter :chart="props.chart" :showUpcoming @change="onQuickFilterChange" />
+        <TableQuickFilter :chart="props.chart" :showUpcoming :counts="tabCounts" @change="onQuickFilterChange" />
 
         <Motion
             as="div"
@@ -60,7 +60,7 @@
     import type {Chart, ChartResults, Column} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
-    import {UPCOMING_TAB, hasQuickFilters, stateFilterForTab, upcomingChartFor, type TabKey} from "./quickFilters"
+    import {UPCOMING_TAB, countsByTab, hasQuickFilters, stateFilterForTab, upcomingChartFor, type TabKey} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
@@ -186,6 +186,22 @@
 
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, chartSource, false)
 
+    // The counts always describe the executions chart, whichever tab is showing.
+    const {generateStateCounts} = useChartGenerator(props.dashboardId, props, false)
+
+    const tabCounts = ref<Partial<Record<TabKey, number>>>({})
+
+    const getTabCounts = async () => {
+        if (!hasQuickFilters(props.chart)) return
+
+        try {
+            const result = await generateStateCounts()
+            tabCounts.value = result ? countsByTab(result.counts) : {}
+        } catch {
+            tabCounts.value = {}
+        }
+    }
+
     // A fast All -> Upcoming -> All sequence can still resolve out of order behind the load queue,
     // so a response is only kept when the tab that asked for it is still the active one.
     let pendingRequest = 0
@@ -224,7 +240,9 @@
     }
 
     function refresh() {
-        return getData()
+        const loaded = getData()
+        loaded.then(getTabCounts, () => undefined)
+        return loaded
     }
 
     function exportParameters() {

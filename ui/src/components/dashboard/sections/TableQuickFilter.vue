@@ -6,10 +6,19 @@
                 :key="tab.key"
                 class="quick-filter-tab"
                 :class="{active: activeTab === tab.key}"
+                :disabled="isTabDisabled(tab.key)"
                 :style="{'--tab-color': `var(${tab.token})`}"
                 @click="selectTab(tab.key)"
             >
                 {{ $t(`dashboards.quick_filters.${tab.key}`) }}
+                <KsBadge
+                    v-if="counts?.[tab.key]"
+                    :value="counts[tab.key]"
+                    :max="MAX_BADGE_COUNT"
+                    type="neutral"
+                    inline
+                    class="tab-count"
+                />
                 <Motion
                     v-if="activeTab === tab.key"
                     as="span"
@@ -37,7 +46,14 @@
         stateFilterForTab,
     } from "./quickFilters"
 
-    const props = defineProps<{chart: Chart; showUpcoming?: boolean}>()
+    const MAX_BADGE_COUNT = 999
+
+    const props = defineProps<{
+        chart: Chart;
+        showUpcoming?: boolean;
+        /** Number of executions behind each tab. A tab with no entry is still loading and stays selectable. */
+        counts?: Partial<Record<TabKey, number>>;
+    }>()
 
     const emit = defineEmits<{change: [filter: QueryFilter | null, tab: TabKey]}>()
 
@@ -49,6 +65,10 @@
     )
 
     const activeTab = ref<TabKey>("all")
+
+    // The active tab stays enabled even if a refresh empties it, otherwise the selection would look broken.
+    const isTabDisabled = (key: TabKey) =>
+        activeTab.value !== key && props.counts?.[key] === 0
 
     const selectTab = (key: TabKey) => {
         if (activeTab.value === key) return
@@ -84,9 +104,16 @@
         position: relative;
         transition: color var(--ks-duration-fast);
 
-        &:hover,
+        gap: var(--ks-spacing-2);
+
+        &:hover:not(:disabled),
         &.active {
             color: var(--tab-color);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
         }
     }
 

@@ -29,6 +29,7 @@ import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.trace.propagation.TracePropagation;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -211,15 +212,7 @@ public class WebhookService {
      *         arrives within the configured timeout
      */
     public Mono<AsyncOperationProcessedEvent> startExecution(Execution execution) {
-        Optional<String> traceParent = openTelemetry
-            .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator)
-            .map(propagator ->
-            {
-                Map<String, String> carrier = new HashMap<>();
-                propagator.inject(Context.current(), carrier, Map::put);
-                return carrier.get("traceparent");
-            });
+        Optional<String> traceParent = TracePropagation.traceParent(openTelemetry, Context.current());
 
         Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
             .withKind(execution.getKind())

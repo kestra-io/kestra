@@ -1,0 +1,19 @@
+id: greeting
+namespace: io.kestra.tests.ai
+
+inputs:
+  - id: name
+    type: STRING
+
+tasks:
+  - id: say
+    type: io.kestra.plugin.core.debug.Return
+    format: "hello {{ inputs.name }}"
+  - id: big
+    type: io.kestra.plugin.core.debug.Return
+    format: "{% for i in range(1, 600) %}0123456789{% endfor %}"
+
+outputs:
+  - id: greeting
+    type: STRING
+    value: "{{ outputs.say.value }}"

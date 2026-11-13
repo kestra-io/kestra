@@ -1,6 +1,6 @@
 <template>
     <ElFormItem
-        :class="{'is-inline-row': inline}"
+        :class="{'is-inline-row': inline, 'is-stacked': stacked}"
         v-bind="({...filteredProps(), ...$attrs} as FormItemProps)"
     >
         <template v-if="$slots.default" #default>
@@ -33,6 +33,8 @@
         showMessage?: boolean
         /** Lay the item out as a single row: label on the left, control pushed to the right. */
         inline?: boolean
+        /** Put each child of the content on its own full-width line instead of wrapping them in a row. */
+        stacked?: boolean
     }>(), {
         label: undefined,
         for: undefined,
@@ -41,10 +43,13 @@
         labelWidth: undefined,
         error: undefined,
         showMessage: undefined,
+        // Left undefined: a forwarded `false` makes ElFormItem turn every required rule off.
+        required: undefined,
         inline: false,
+        stacked: false,
     })
 
-    const filteredProps = useFilteredProps(props, ["inline"])
+    const filteredProps = useFilteredProps(props, ["inline", "stacked"])
 
     defineSlots<{
         default?(): unknown
@@ -92,6 +97,10 @@
             & .kel-form-item__content {
                 flex: 0 0 auto;
             }
+        }
+
+        &.is-stacked .kel-form-item__content {
+            display: block;
         }
     }
 </style>

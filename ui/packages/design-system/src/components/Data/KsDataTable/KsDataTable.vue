@@ -253,6 +253,7 @@
         getSelectionRows: () => DataRow[]
         toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
         setScrollTop: (top: number) => void
+        sort: (prop: string, order: string) => void
         $el?: HTMLElement
     }
     const tableRef = ref<KsTableHandle>()
@@ -484,8 +485,23 @@
         emit("page-changed", {page: 1, size})
     }
 
+    let lastSort: {prop?: string; order?: string} | undefined
+    let restoringSort = false
+
+    /** Element Plus clears the sort when the active caret is clicked again, even on a column whose sortOrders leave out null, so that sort is put back. */
     const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
+        if (restoringSort) {
+            restoringSort = false
+            return
+        }
+        const previous = lastSort ?? (attrs.defaultSort as {prop?: string; order?: string} | undefined)
+        if (!sort.order && sort.prop && previous?.prop === sort.prop && previous.order && !sort.column?.sortOrders?.includes(null)) {
+            restoringSort = true
+            tableRef.value?.sort(sort.prop, previous.order)
+            return
+        }
         if (sort.prop && sort.order) {
+            lastSort = {prop: sort.prop, order: sort.order}
             const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
             internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {

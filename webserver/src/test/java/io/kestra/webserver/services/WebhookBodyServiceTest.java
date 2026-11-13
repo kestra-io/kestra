@@ -234,6 +234,50 @@ class WebhookBodyServiceTest {
     }
 
     @Test
+    void shouldDeleteStoredPartsWhenALaterPartFails() throws IOException {
+        // Given
+        StorageInterface storage = mock(StorageInterface.class);
+        when(storage.put(eq(FLOW.getTenantId()), eq(FLOW.getNamespace()), any(URI.class), any(InputStream.class)))
+            .thenReturn(URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/ok.txt"))
+            .thenThrow(new IOException("Storage failure"));
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(
+            fileUpload("first", "ok.txt", MediaType.TEXT_PLAIN, new byte[] { 1 }),
+            fileUpload("second", "second.txt", MediaType.TEXT_PLAIN, new byte[] { 2 })
+        );
+
+        // When
+        assertThatThrownBy(() -> service.collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA).block())
+            .hasRootCauseInstanceOf(IOException.class);
+
+        // Then
+        verify(storage).deleteByPrefix(
+            FLOW.getTenantId(),
+            FLOW.getNamespace(),
+            URI.create("///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook")
+        );
+    }
+
+    @Test
+    void shouldStoreFilePartWhenItsFilenameHoldsCharactersAURIRejects() throws IOException {
+        // Given
+        StorageInterface storage = storage();
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(fileUpload("file", "bad%.txt", MediaType.TEXT_PLAIN, new byte[] { 1 }));
+
+        // When
+        List<MultipartFormDataRequestBody.Part> parts = service
+            .collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA)
+            .block()
+            .getContent();
+
+        // Then
+        MultipartFormDataRequestBody.FilePart part = (MultipartFormDataRequestBody.FilePart) parts.getFirst();
+        assertThat(part.filename()).isEqualTo("bad%.txt");
+        assertThat(part.uri().getPath()).endsWith("/webhook/0/bad%.txt");
+    }
+
+    @Test
     void shouldDeleteEverythingStoredForTheExecutionWhenCallCreatesNone() throws IOException {
         // Given
         StorageInterface storage = storage();
@@ -491,7 +535,7 @@ class WebhookBodyServiceTest {
             .thenAnswer(invocation ->
             {
                 invocation.getArgument(3, InputStream.class).transferTo(captured);
-                return URI.create("kestra://" + invocation.getArgument(2, URI.class).getPath());
+                return URI.create("kestra://" + invocation.getArgument(2, URI.class).getRawPath());
             });
         return storage;
     }

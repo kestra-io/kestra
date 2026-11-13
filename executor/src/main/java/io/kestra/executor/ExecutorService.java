@@ -432,7 +432,7 @@ public class ExecutorService {
         final FlowWithSource flow = executor.getFlow();
 
         Execution newExecution = executor.getExecution()
-            .withState(executor.getExecution().guessFinalState(flow));
+            .withState(executor.getExecution().computeFinalState(flow));
 
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());

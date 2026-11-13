@@ -1,11 +1,16 @@
-import {describe, expect, it, vi} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
 }))
 
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "./chartDrillDown"
-import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
+import type {ColorByValue} from "../types"
+import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, CATEGORICAL_SLOTS, byCategoryRank, categoryDisplayName, chartCategoryColors, fillTimeBucketLabels, rankStackedBars, toEchartsParams} from "./charts"
+
+// @ts-expect-error - plain .mjs module shared with the token linters
+import {knownTokens} from "../../../../scripts/tokens/knownTokens.mjs"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -432,5 +437,97 @@ describe("toEchartsParams", () => {
 
     it.each([undefined, null, "bar", 3])("returns an empty payload for %s", (raw) => {
         expect(toEchartsParams(raw)).toEqual({name: undefined, seriesName: undefined, seriesType: undefined, dataIndex: undefined, value: undefined, percent: undefined})
+    })
+})
+
+describe("chartCategoryColors", () => {
+    const root = document.documentElement.style
+    const slots = Array.from({length: CATEGORICAL_SLOTS}, (_, i) => `--ks-chart-categorical-${i + 1}`)
+
+    afterEach(() => {
+        ["--ks-chart-warning", "--ks-chart-failed", "--ks-chart-success"].forEach((token) => root.removeProperty(token))
+        slots.forEach((slot) => root.removeProperty(slot))
+    })
+
+    it("declares a token for every palette slot", () => {
+        const known: Set<string> = knownTokens()
+        expect(slots.filter((token) => !known.has(token))).toEqual([])
+    })
+
+    it("uses the hex color configured for a value, also for the last part of a stacked value", () => {
+        const colors = chartCategoryColors("light", ["critical", "company.team, critical"], [{value: "critical", color: "#d32f2f"}])
+        expect(colors.get("critical")).toBe("#d32f2f")
+        expect(colors.get("company.team, critical")).toBe("#d32f2f")
+    })
+
+    it("uses the theme color of a configured state name", () => {
+        root.setProperty("--ks-chart-warning", "#ffa500")
+        expect(chartCategoryColors("light", ["high"], [{value: "high", color: "warning"}]).get("high")).toBe("#ffa500")
+    })
+
+    it("keeps the status color of a state that is not listed or listed with only a label", () => {
+        root.setProperty("--ks-chart-failed", "#cc1d1f")
+        root.setProperty("--ks-chart-success", "#12a072")
+
+        const colors = chartCategoryColors("light", ["FAILED", "SUCCESS"], [{value: "SUCCESS", label: "OK"}])
+
+        expect(colors.get("FAILED")).toBe("#cc1d1f")
+        expect(colors.get("SUCCESS")).toBe("#12a072")
+    })
+
+    it("gives every value without a color its own palette slot, including listed values with only a label", () => {
+        slots.forEach((slot, i) => root.setProperty(slot, `#00000${i}`))
+        const values = ["prod", "staging", "dev", "qa", "eu", "us", "asia", "batch", "stream", "ml"]
+
+        const colors = chartCategoryColors("light", values, [{value: "prod", label: "Production"}])
+
+        expect(new Set(values.map((value) => colors.get(value))).size).toBe(10)
+        expect([...colors.values()].every((color) => color.startsWith("#00000"))).toBe(true)
+    })
+
+    it("does not repeat a palette color when a chart has more values than palette slots", () => {
+        slots.forEach((slot, i) => root.setProperty(slot, `#00000${i}`))
+        const values = ["prod", "staging", "dev", "qa", "eu", "us", "asia", "batch", "stream", "ml", "edge"]
+
+        const colors = chartCategoryColors("light", values)
+
+        expect(new Set(values.map((value) => colors.get(value))).size).toBe(11)
+    })
+})
+
+describe("byCategoryRank", () => {
+    it("puts listed values first in list order and keeps the others in place", () => {
+        const order = byCategoryRank([{value: "low"}, {value: "critical"}, {value: "high"}])
+        expect(["x", "high", "y", "critical", "low"].sort(order)).toEqual(["low", "critical", "high", "x", "y"])
+    })
+})
+
+describe("categoryDisplayName", () => {
+    const colorByValues = [{value: "by_priority.critical", label: "Critical"}, {value: "by_priority.low", color: "success"}]
+
+    it("replaces a whole value or each matching part of a stacked value", () => {
+        expect(categoryDisplayName("by_priority.critical", colorByValues)).toBe("Critical")
+        expect(categoryDisplayName("security, by_priority.critical", colorByValues)).toBe("security, Critical")
+    })
+
+    it("returns undefined when the value has no label", () => {
+        expect(categoryDisplayName("by_priority.low", colorByValues)).toBeUndefined()
+        expect(categoryDisplayName("by_priority.medium", colorByValues)).toBeUndefined()
+    })
+
+    it("treats only the separator of stacked values as a split, for the label and for the rank alike", () => {
+        const west = [{value: "west", label: "West"}]
+
+        expect(categoryDisplayName("eu, west", west)).toBe("eu, West")
+        expect(["x", "eu, west"].sort(byCategoryRank(west))).toEqual(["eu, west", "x"])
+        expect(categoryDisplayName("eu,west", west)).toBeUndefined()
+        expect(["x", "eu,west"].sort(byCategoryRank(west))).toEqual(["x", "eu,west"])
+    })
+
+    it("matches a value the editor preview parsed from YAML as a number", () => {
+        const parsed = YAML_UTILS.parse<ColorByValue[]>("- value: 500\n  label: Server error\n- value: 200\n  label: OK")
+
+        expect(categoryDisplayName("500", parsed)).toBe("Server error")
+        expect(["500", "200"].sort(byCategoryRank(parsed))).toEqual(["500", "200"])
     })
 })

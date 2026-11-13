@@ -56,6 +56,19 @@ describe("useBulkAction", () => {
         expect(table.reload).toHaveBeenCalledOnce()
     })
 
+    it("leaves the outcome to the page's own report when one is given", async () => {
+        const {table, runBulkAction} = mountBulkAction(false)
+        const report = vi.fn()
+        const done = () => Promise.resolve({count: 0})
+
+        await runBulkAction({byQuery: done, byIds: done, report})
+
+        expect(report).toHaveBeenCalledWith({count: 0})
+        expect(success).not.toHaveBeenCalled()
+        expect(table.toggleAllUnselected).toHaveBeenCalledOnce()
+        expect(table.reload).toHaveBeenCalledOnce()
+    })
+
     it("refreshes with the page's own refresh instead of reloading the table when one is given", async () => {
         const refresh = vi.fn()
         const {table, runBulkAction} = mountBulkAction(false, {refresh})

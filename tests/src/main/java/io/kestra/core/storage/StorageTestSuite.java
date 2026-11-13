@@ -50,6 +50,24 @@ public abstract class StorageTestSuite {
 
         path = storageInterface.getPath(MAIN_TENANT, URI.create("/folder1/folder2"));
         AssertionsForClassTypes.assertThat(path).isEqualTo("main/folder1/folder2");
+
+        path = storageInterface.getPath(null, null);
+        AssertionsForClassTypes.assertThat(path).isEqualTo("");
+
+        path = storageInterface.getPath(null, URI.create("/folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("folder1/folder2");
+
+        path = storageInterface.getPath(URI.create("///folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("folder1/folder2");
+
+        path = storageInterface.getPath(MAIN_TENANT, URI.create("///folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("main/folder1/folder2");
+
+        path = storageInterface.getPath(URI.create("kestra:////folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("folder1/folder2");
+
+        path = storageInterface.getPath(MAIN_TENANT, URI.create("kestra:////folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("main/folder1/folder2");
     }
 
     //region test GET

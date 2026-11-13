@@ -3,7 +3,11 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.title" #title>
+        <template v-if="$slots.action" #title>
+            <span class="ks-alert-title-text"><slot name="title">{{ title }}</slot></span>
+            <span class="ks-alert-action"><slot name="action" /></span>
+        </template>
+        <template v-else-if="$slots.title" #title>
             <slot name="title" />
         </template>
 
@@ -57,6 +61,7 @@
     defineSlots<{
         default?(): unknown
         title?(): unknown
+        action?(): unknown
     }>()
 </script>
 
@@ -89,6 +94,30 @@
 
         & .kel-alert__title {
             line-height: var(--ks-line-height-base);
+        }
+
+        &:has(.ks-alert-action:not(:empty)) {
+            align-items: center;
+
+            & .kel-alert__content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            & .kel-alert__title {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: var(--ks-spacing-2) var(--ks-spacing-4);
+            }
+        }
+
+        & .ks-alert-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            flex-shrink: 0;
         }
 
         & .kel-alert__description {

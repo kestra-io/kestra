@@ -40,6 +40,17 @@ describe("KsAlert", () => {
         expect(wrapper.text()).toContain("Test Alert Title")
     })
 
+    test("renders the action slot inside the title row, next to the title text", () => {
+        const wrapper = mount(KsAlert, {
+            props: {type: "info", title: "Waiting for a review"},
+            slots: {action: "<button data-test=\"act\">Review</button>"},
+            global: globalConfig,
+        })
+        const title = wrapper.find(".kel-alert__title")
+        expect(title.find(".ks-alert-title-text").text()).toBe("Waiting for a review")
+        expect(title.find(".ks-alert-action [data-test='act']").exists()).toBe(true)
+    })
+
     test("declares the border, background, text and icon token of every type", () => {
         const known: Set<string> = knownTokens()
         const missing = KS_ALERT_TYPES

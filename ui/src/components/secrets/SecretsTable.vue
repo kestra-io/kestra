@@ -157,8 +157,6 @@
                     <NamespaceSelect
                         v-model="secret.namespace"
                         :readOnly="secret.update"
-                        :includeSystemNamespace="true"
-                        all
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">

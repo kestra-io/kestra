@@ -166,8 +166,6 @@
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
-                    :includeSystemNamespace="true"
-                    all
                 />
             </KsFormItem>
 

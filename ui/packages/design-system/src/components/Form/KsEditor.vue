@@ -56,7 +56,6 @@
                     <textarea
                         data-testid="monaco-editor-hidden-synced-textarea"
                         style="height: 0; width: 0; opacity: 0;"
-                        type="text"
                         v-model="textAreaValue"
                     />
                 </div>

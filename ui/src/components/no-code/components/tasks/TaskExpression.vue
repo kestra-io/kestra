@@ -6,6 +6,7 @@
         :navbar="false"
         :options="{fullHeight: false, largeSuggestions: false}"
         :inline="true"
+        :readOnly="disabled"
         lang="yaml"
         :placeholder="$t('no_code.expression_placeholder', {field: root || 'value'})"
         @update:model-value="editorInput"
@@ -33,6 +34,10 @@
         root: {
             type: String,
             default: undefined,
+        },
+        disabled: {
+            type: Boolean,
+            default: false,
         },
     })
 

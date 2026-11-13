@@ -28,7 +28,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="true" class="unqueue-status" :status="state" />
+                        <KsExecutionStatus size="small" class="unqueue-status" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>

@@ -113,8 +113,6 @@
                     v-bind="triggerProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                     @delete="emit(EVENTS.DELETE, $event)"
                     @edit="emit(EVENTS.EDIT, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
@@ -151,12 +149,9 @@
             <template #edge-edge="EdgeProps">
                 <EdgeNode
                     v-bind="EdgeProps"
-                    :yamlSource="source"
                     @add-task="emit(EVENTS.ADD_TASK, $event)"
                     @drag-over-edge="dropEdgeId = $event"
                     @drop-task="onDropTask"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                 />
             </template>
 

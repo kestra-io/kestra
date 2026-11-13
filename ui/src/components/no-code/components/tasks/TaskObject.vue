@@ -86,7 +86,6 @@
                 "
                 :root
                 :schema="schema ?? {}"
-                :required
             />
         </template>
     </KsForm>

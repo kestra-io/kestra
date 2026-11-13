@@ -27,7 +27,7 @@
                     data-test="change-password-new"
                 />
             </KsFormItem>
-            <KsPasswordRequirements v-model:valid="isPasswordValid" :password="form.password" />
+            <KsPasswordRequirements @update:valid="isPasswordValid = $event" :password="form.password" />
             <KsFormItem :label="$t('confirm password')">
                 <KsInput
                     v-model="confirmPassword"

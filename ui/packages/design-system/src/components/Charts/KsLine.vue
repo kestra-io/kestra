@@ -8,7 +8,6 @@
         :tooltipType="tooltipType"
         :disableFeatures="disableFeatures"
         :renderer="renderer"
-        type="line"
         :data="data"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"

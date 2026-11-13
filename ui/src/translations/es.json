@@ -466,6 +466,12 @@
       "load_error": "No se pudieron cargar los outputs que lee la task {taskId}.",
       "empty": "La Task {taskId} no lee ningún output de una Task anterior a través de una ruta estática en sus propias propiedades.",
       "current": "Valor actual {value}",
+      "readers_count": "También leído por {count} otra Task de la Replay | También leído por {count} otras Tasks de la Replay",
+      "readers_tooltip": "También leído por estas Tasks del Replay. Haz clic para ver sus definiciones.",
+      "readers_title": "Tasks que también leen {path}",
+      "readers_reads": "Lee {paths}",
+      "impact": "Estas anulaciones también cambian lo que {tasks} leen en la reproducción.",
+      "dynamic_readers": "{tasks} leen los outputs a través de una ruta dinámica o en un bloque, y también pueden leer los nuevos valores.",
       "confirm": "Replay con {count} override | Replay con {count} overrides",
       "error": {
         "number": "Introduce un número.",

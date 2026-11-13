@@ -61,9 +61,13 @@ describe("FilterEditPopover", () => {
         await toggle(popover)
         expect(popover.vm.isDialogVisible).toBe(true)
         expect(popper(popover).exists()).toBe(true)
+        const overlay = document.body.querySelector(".edit-overlay")
+        expect(overlay).not.toBeNull()
+        expect(popover.element.contains(overlay)).toBe(false)
 
         await toggle(popover)
         expect(popover.vm.isDialogVisible).toBe(false)
+        expect(document.body.querySelector(".edit-overlay")).toBeNull()
         expect(popper(popover).exists()).toBe(false)
     })
 

@@ -2,11 +2,17 @@ package io.kestra.executor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
 
 import io.kestra.core.executor.command.Create;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -42,10 +48,9 @@ class FlowTriggerInvalidWhenCycleTest {
             """);
     }
 
-    @Test
-    void anUnrenderableTriggerWhenIsLoggedOnBothSidesAndDoesNotFire() {
-        // Given an upstream flow and a listener whose trigger-level `when` references `namespace`,
-        // which is not available at trigger time and therefore cannot be rendered
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ nmespace }}", "{{ nmespace == 'production' }}", "{{ labels.env == }}" })
+    void anUnrenderableTriggerWhenIsLoggedOnBothSidesAndDoesNotFire(String when) {
         FlowWithSource upstream = upstream();
         FlowWithSource listener = Flows.yaml("""
             id: invalid-when-listener
@@ -54,12 +59,12 @@ class FlowTriggerInvalidWhenCycleTest {
               - id: on_upstream
                 type: io.kestra.plugin.core.trigger.Flow
                 states: [SUCCESS]
-                when: "{{ namespace }}"
+                when: "%s"
             tasks:
               - id: noop
                 type: io.kestra.plugin.core.log.Log
                 message: never reached
-            """);
+            """.formatted(when));
         harness.registerFlow(upstream);
         harness.registerFlow(listener);
 
@@ -83,8 +88,9 @@ class FlowTriggerInvalidWhenCycleTest {
             .anyMatch(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()));
     }
 
-    @Test
-    void anUnrenderableDependsOnWhenIsLoggedAndDoesNotFire() {
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ nmespace }}", "{{ nmespace == 'production' }}", "{{ labels.env == }}" })
+    void anUnrenderableDependsOnWhenIsLoggedAndDoesNotFire(String when) {
         // Given an upstream flow and a listener whose dependsOn entry has an unrenderable `when`
         FlowWithSource upstream = upstream();
         FlowWithSource listener = Flows.yaml("""
@@ -97,12 +103,12 @@ class FlowTriggerInvalidWhenCycleTest {
                   - namespace: io.kestra.tests
                     flowId: invalid-when-upstream
                     states: [SUCCESS]
-                    when: "{{ namespace }}"
+                    when: "%s"
             tasks:
               - id: noop
                 type: io.kestra.plugin.core.log.Log
                 message: never reached
-            """);
+            """.formatted(when));
         harness.registerFlow(upstream);
         harness.registerFlow(listener);
 
@@ -121,5 +127,106 @@ class FlowTriggerInvalidWhenCycleTest {
         // and the unrenderable dependsOn `when` is logged as an ERROR on the flow that owns the trigger
         assertThat(harness.logs())
             .anyMatch(log -> log.getLevel() == Level.ERROR && "invalid-dependson-when-listener".equals(log.getFlowId()));
+        assertThat(harness.logs())
+            .anyMatch(log -> log.getLevel() == Level.WARN && upstream.getId().equals(log.getFlowId()));
+    }
+
+    @Test
+    void shouldSilentlyIgnoreThreeUnrelatedExecutionsWhenListenerReadsMissingLabel() {
+        FlowWithSource upstream = upstream();
+        FlowWithSource listener = Flows.yaml("""
+            id: listener
+            namespace: company.team
+            triggers:
+              - id: on_prod
+                type: io.kestra.plugin.core.trigger.Flow
+                when: "{{ labels.env == 'production' }}"
+                dependsOn:
+                  - namespace: company.team
+                    flowId: extract
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ trigger.executionId }}"
+            """);
+        harness.registerFlow(upstream);
+        harness.registerFlow(listener);
+
+        for (int i = 0; i < 3; i++) {
+            Execution created = Executions.created(upstream);
+            Trace trace = harness.run(created, ScriptedWorker.succeeding(T0));
+            assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+            assertListenerNotTriggered(trace, listener);
+        }
+
+        assertThat(harness.logs()).noneMatch(log -> log.getLevel() == Level.WARN || log.getLevel() == Level.ERROR);
+    }
+
+    @ParameterizedTest
+    @MethodSource("missingAttributeConditions")
+    void shouldSilentlyRejectMissingAttributesWhenEvaluatingFlowConditions(String triggerWhen, String dependencyWhen) {
+        FlowWithSource upstream = upstream();
+        FlowWithSource listener = listener(triggerWhen, dependencyWhen);
+        harness.registerFlow(upstream);
+        harness.registerFlow(listener);
+
+        Execution created = Executions.created(upstream);
+        Trace trace = harness.run(created, ScriptedWorker.succeeding(T0));
+
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+        assertListenerNotTriggered(trace, listener);
+        assertThat(harness.logs()).noneMatch(log -> log.getLevel() == Level.WARN || log.getLevel() == Level.ERROR);
+    }
+
+    static Stream<Arguments> missingAttributeConditions() {
+        return Stream.of("{{ labels.env == 'production' }}", "{{ execution.outputs.x }}", "{{ labels.evn }}")
+            .flatMap(when -> Stream.of(Arguments.of(when, "true"), Arguments.of("true", when)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldTriggerOnlyForMatchingLabelsWhenEvaluatingFlowConditions(boolean dependencyCondition) {
+        String when = "{{ labels.env == 'production' }}";
+        FlowWithSource upstream = upstream();
+        FlowWithSource listener = listener(dependencyCondition ? "true" : when, dependencyCondition ? when : "true");
+        harness.registerFlow(upstream);
+        harness.registerFlow(listener);
+
+        Execution staging = Executions.created(upstream).withLabels(List.of(new Label("env", "staging")));
+        assertListenerNotTriggered(harness.run(staging, ScriptedWorker.succeeding(T0)), listener);
+
+        Execution production = Executions.created(upstream).withLabels(List.of(new Label("env", "production")));
+        Trace trace = harness.run(production, ScriptedWorker.succeeding(T0));
+        assertThat(trace.emitted("executionCommand").map(emission -> emission.as(Create.class).flowId()))
+            .containsExactly(listener.getId());
+        assertThat(harness.logs()).noneMatch(log -> log.getLevel() == Level.WARN || log.getLevel() == Level.ERROR);
+    }
+
+    private static FlowWithSource listener(String triggerWhen, String dependencyWhen) {
+        return Flows.yaml("""
+            id: missing-attribute-listener
+            namespace: io.kestra.tests
+            triggers:
+              - id: on_upstream
+                type: io.kestra.plugin.core.trigger.Flow
+                states: [SUCCESS]
+                when: "%s"
+                dependsOn:
+                  - namespace: io.kestra.tests
+                    flowId: invalid-when-upstream
+                    states: [SUCCESS]
+                    when: "%s"
+            tasks:
+              - id: noop
+                type: io.kestra.plugin.core.log.Log
+                message: triggered
+            """.formatted(triggerWhen, dependencyWhen));
+    }
+
+    private static void assertListenerNotTriggered(Trace trace, FlowWithSource listener) {
+        assertThat(trace.emitted("execution").map(emission -> emission.as(Execution.class).getFlowId()))
+            .doesNotContain(listener.getId());
+        assertThat(trace.emitted("executionCommand").map(emission -> emission.as(Create.class).flowId()))
+            .doesNotContain(listener.getId());
     }
 }

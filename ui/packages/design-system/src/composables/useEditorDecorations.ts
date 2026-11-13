@@ -32,7 +32,7 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         if (lists.pebble) collection?.append(lists.pebble)
     }
 
-    /** Called on every cursor move, so an unchanged model version keeps the decorations it already has. */
+    // Called on every cursor move, so an unchanged model version keeps the decorations it already has.
     function highlightPebble() {
         if (!ctx.pebbleEnabled.value) {
             lists.pebble = []

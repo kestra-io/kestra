@@ -1116,6 +1116,7 @@
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "bulk action ineligible change state": "{count} of {total} selected executions are not eligible for a state change.",
     "bulk action ineligible not state": "{count} of {total} selected executions are not in {state} state.",
+    "bulk action ineligible not pausable": "{count} of {total} selected executions cannot be paused.",
     "bulk action ineligible not terminated": "{count} of {total} selected executions have not terminated.",
     "bulk action ineligible already terminated": "{count} of {total} selected executions have already terminated.",
     "cancel": "Cancel",
@@ -3168,3 +3169,4 @@
     }
   }
 }
+

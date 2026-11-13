@@ -1114,6 +1114,11 @@
     "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई {executionCount} निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
+    "bulk action ineligible change state": "{total} में से {count} चुने गए executions का state नहीं बदला जा सकता।",
+    "bulk action ineligible not state": "{total} में से {count} चुने गए executions {state} state में नहीं हैं।",
+    "bulk action ineligible not pausable": "{total} में से {count} चुने गए executions को pause नहीं किया जा सकता।",
+    "bulk action ineligible not terminated": "{total} में से {count} चुने गए executions समाप्त नहीं हुए हैं।",
+    "bulk action ineligible already terminated": "{total} में से {count} चुने गए executions पहले ही समाप्त हो चुके हैं।",
     "cancel": "रद्द करें",
     "errorLogs": "त्रुटि लॉग",
     "product_tour": "उत्पाद यात्रा",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
+    "execution-warn-non-terminated-count": "{total} में से {count} चयनित execution(s) समाप्त नहीं हैं।",
     "pluginPage": {
       "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

@@ -1114,6 +1114,11 @@
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie `{executionCount}` egzekucji?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane egzekucje Tasków.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
     "bulk restart": "Czy na pewno chcesz ponownie uruchomić {executionCount} egzekucji?",
     "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
+    "bulk action ineligible change state": "Nie można zmienić stanu {count} z {total} wybranych egzekucji.",
+    "bulk action ineligible not state": "{count} z {total} wybranych egzekucji nie jest w stanie {state}.",
+    "bulk action ineligible not pausable": "Nie można wstrzymać {count} z {total} wybranych egzekucji.",
+    "bulk action ineligible not terminated": "{count} z {total} wybranych egzekucji nie zostało zakończonych.",
+    "bulk action ineligible already terminated": "{count} z {total} wybranych egzekucji zostało już zakończonych.",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
     "product_tour": "Przewodnik po produkcie",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "Uwzględnić niezakończone egzekucje?",
     "execution-warn-title": "Ważne ostrzeżenie!",
     "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zabicie najpierw wszystkich trwających egzekucji. Usunięcie niezakończonych egzekucji może prowadzić do problemów z Concurrency, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
+    "execution-warn-non-terminated-count": "{count} z {total} wybranych egzekucji nie zostało zakończonych.",
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

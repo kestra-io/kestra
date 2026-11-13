@@ -65,15 +65,13 @@ export function useExecutionDeletionDialog() {
 
         const confirmed = await KsMessageBox.confirm(message, t("confirmation"), {
             customStyle: {minWidth: "600px"},
-            confirmButtonDisabled: requiresConsent,
-            beforeClose: (action: string, instance: {confirmButtonDisabled?: boolean}, done: () => void) => {
+            beforeClose: (action, _instance, done) => {
                 if (action === "confirm" && requiresConsent && !options.includeNonTerminated) {
-                    instance.confirmButtonDisabled = true
                     return
                 }
                 done()
             },
-        } as unknown as Parameters<typeof KsMessageBox.confirm>[2])
+        })
             .then(() => true)
             .catch(() => false)
 
@@ -82,3 +80,4 @@ export function useExecutionDeletionDialog() {
 
     return {confirmExecutionDeletion}
 }
+

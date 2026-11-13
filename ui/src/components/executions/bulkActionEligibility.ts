@@ -2,6 +2,8 @@ import {State} from "@kestra-io/design-system"
 import action from "../../models/action"
 import type {Execution} from "../../stores/executions"
 
+const PAUSABLE_STATES = [State.RUNNING, State.PAUSING, State.KILLING]
+
 export const isExecutionTerminated = (execution: Execution): boolean => {
     return State.isTerminated(execution.state?.current ?? "")
 }
@@ -31,9 +33,8 @@ export const bulkActionRules: Record<string, BulkActionRule> = {
         tooltipKey: "bulk action ineligible already terminated",
     },
     [action.PAUSE]: {
-        allowed: (execution: Execution) => execution.state?.current === State.RUNNING,
-        tooltipKey: "bulk action ineligible not state",
-        tooltipParams: {state: State.RUNNING},
+        allowed: (execution: Execution) => PAUSABLE_STATES.includes(execution.state?.current ?? ""),
+        tooltipKey: "bulk action ineligible not pausable",
     },
     [action.RESUME]: {
         allowed: (execution: Execution) => execution.state?.current === State.PAUSED,
@@ -54,4 +55,5 @@ export const bulkActionRules: Record<string, BulkActionRule> = {
         tooltipKey: "bulk action ineligible not terminated",
     },
 }
+
 

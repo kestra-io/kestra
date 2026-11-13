@@ -1114,6 +1114,11 @@
     "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "{executionCount}件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
+    "bulk action ineligible change state": "選択した実行{total}件のうち{count}件は状態を変更できません。",
+    "bulk action ineligible not state": "選択した実行{total}件のうち{count}件は{state}状態ではありません。",
+    "bulk action ineligible not pausable": "選択した実行{total}件のうち{count}件は一時停止できません。",
+    "bulk action ineligible not terminated": "選択した実行{total}件のうち{count}件は終了していません。",
+    "bulk action ineligible already terminated": "選択した実行{total}件のうち{count}件はすでに終了しています。",
     "cancel": "キャンセル",
     "errorLogs": "エラーログ",
     "product_tour": "プロダクトツアー",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "終了していない実行を含めますか？",
     "execution-warn-title": "重要なWarning!",
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-non-terminated-count": "選択したexecution {total}件のうち{count}件は終了していません。",
     "pluginPage": {
       "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

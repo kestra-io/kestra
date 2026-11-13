@@ -129,16 +129,17 @@ describe("bulk action eligibility rules", () => {
     describe("PAUSE", () => {
         const rule = bulkActionRules[action.PAUSE]
 
-        it("allows only RUNNING executions", () => {
+        it("allows RUNNING and transitional executions", () => {
             expect(rule.allowed(makeExecution(State.RUNNING))).toBe(true)
+            expect(rule.allowed(makeExecution(State.PAUSING))).toBe(true)
+            expect(rule.allowed(makeExecution(State.KILLING))).toBe(true)
 
             expect(rule.allowed(makeExecution(State.PAUSED))).toBe(false)
             expect(rule.allowed(makeExecution(State.SUCCESS))).toBe(false)
         })
 
-        it("has expected tooltip key and params", () => {
-            expect(rule.tooltipKey).toBe("bulk action ineligible not state")
-            expect(rule.tooltipParams).toEqual({state: State.RUNNING})
+        it("has expected tooltip key", () => {
+            expect(rule.tooltipKey).toBe("bulk action ineligible not pausable")
         })
     })
 
@@ -205,4 +206,5 @@ describe("bulk action eligibility rules", () => {
         })
     })
 })
+
 

@@ -1114,6 +1114,11 @@
     "bulk force run": "您确定要强制运行 `{executionCount}` 个执行吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 执行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
     "bulk restart": "确定要重新开始 {executionCount} 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
+    "bulk action ineligible change state": "所选 {total} 个执行中有 {count} 个不符合状态更改条件。",
+    "bulk action ineligible not state": "所选 {total} 个执行中有 {count} 个不处于 {state} 状态。",
+    "bulk action ineligible not pausable": "所选 {total} 个执行中有 {count} 个无法暂停。",
+    "bulk action ineligible not terminated": "所选 {total} 个执行中有 {count} 个尚未终止。",
+    "bulk action ineligible already terminated": "所选 {total} 个执行中有 {count} 个已经终止。",
     "cancel": "取消",
     "errorLogs": "错误 logs",
     "product_tour": "产品导览",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "包括未终止的执行？",
     "execution-warn-title": "重要警告！",
     "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
+    "execution-warn-non-terminated-count": "所选 {total} 个执行中有 {count} 个尚未终止。",
     "pluginPage": {
       "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

@@ -113,18 +113,26 @@
             </template>
 
             <template #bulk-actions>
-                <KsButton v-if="canUpdate" :icon="StateMachine" :disabled="bulkActionDisabled(action.UPDATE)" :tooltip="bulkActionTooltip(action.UPDATE)" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                    {{ $t("change state") }}
-                </KsButton>
-                <KsButton v-if="canRestart" :icon="Restart" :disabled="bulkActionDisabled(action.RESTART)" :tooltip="bulkActionTooltip(action.RESTART)" @click="isOpenRestartModal = !isOpenRestartModal">
-                    {{ $t("restart") }}
-                </KsButton>
-                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" :disabled="bulkActionDisabled(action.REPLAY)" :tooltip="bulkActionTooltip(action.REPLAY)" @click="isOpenReplayModal = !isOpenReplayModal">
-                    {{ $t("replay") }}
-                </KsButton>
-                <KsButton v-if="canKill" :icon="StopCircleOutline" :disabled="bulkActionDisabled(action.KILL)" :tooltip="bulkActionTooltip(action.KILL)" @click="killExecutions()">
-                    {{ $t("kill") }}
-                </KsButton>
+                <KsTooltip v-if="canUpdate" :content="bulkActionTooltip(action.UPDATE)" :disabled="!bulkActionTooltip(action.UPDATE)">
+                    <KsButton :icon="StateMachine" :disabled="bulkActionDisabled(action.UPDATE)" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                        {{ $t("change state") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canRestart" :content="bulkActionTooltip(action.RESTART)" :disabled="!bulkActionTooltip(action.RESTART)">
+                    <KsButton :icon="Restart" :disabled="bulkActionDisabled(action.RESTART)" @click="isOpenRestartModal = !isOpenRestartModal">
+                        {{ $t("restart") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canReplay" :content="bulkActionTooltip(action.REPLAY)" :disabled="!bulkActionTooltip(action.REPLAY)">
+                    <KsButton :icon="PlayBoxMultiple" :disabled="bulkActionDisabled(action.REPLAY)" @click="isOpenReplayModal = !isOpenReplayModal">
+                        {{ $t("replay") }}
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip v-if="canKill" :content="bulkActionTooltip(action.KILL)" :disabled="!bulkActionTooltip(action.KILL)">
+                    <KsButton :icon="StopCircleOutline" :disabled="bulkActionDisabled(action.KILL)" @click="killExecutions()">
+                        {{ $t("kill") }}
+                    </KsButton>
+                </KsTooltip>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                     {{ $t("delete") }}
                 </KsButton>
@@ -472,7 +480,7 @@
     import Play from "vue-material-design-icons/Play.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
+    import {KsMessageBox, KsTooltip, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -1384,3 +1392,4 @@
     color: var(--ks-text-link);
 }
 </style>
+

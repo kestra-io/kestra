@@ -1114,6 +1114,11 @@
     "bulk force run": "¿Estás seguro de que quieres forzar la ejecución de `{executionCount}` ejecución(es)?\n\nADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de Task duplicadas.\n\nSe realizarán las siguientes transiciones:\n\n- Los Tasks CREATED se moverán al estado RUNNING.\n- Los Tasks RUNNING se volverán a enviar.\n- Los Tasks QUEUED se des-encolarán.\n- Los Tasks PAUSED se reanudarán.",
     "bulk restart": "¿Estás seguro de que quieres reiniciar {executionCount} ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
+    "bulk action ineligible change state": "{count} de {total} ejecuciones seleccionadas no pueden cambiar de estado.",
+    "bulk action ineligible not state": "{count} de {total} ejecuciones seleccionadas no están en el estado {state}.",
+    "bulk action ineligible not pausable": "{count} de {total} ejecuciones seleccionadas no se pueden pausar.",
+    "bulk action ineligible not terminated": "{count} de {total} ejecuciones seleccionadas no han terminado.",
+    "bulk action ineligible already terminated": "{count} de {total} ejecuciones seleccionadas ya han terminado.",
     "cancel": "Cancelar",
     "errorLogs": "Logs de error",
     "product_tour": "Recorrido del Producto",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "¿Incluir ejecuciones no terminadas?",
     "execution-warn-title": "¡Advertencia Importante!",
     "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
+    "execution-warn-non-terminated-count": "{count} de {total} ejecución(es) seleccionadas no han terminado.",
     "pluginPage": {
       "search": "Buscar entre {count}+ plugins",
       "searchTasks": "Buscar {count} tasks",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

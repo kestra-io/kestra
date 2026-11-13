@@ -1114,6 +1114,11 @@
     "bulk force run": "Sei sicuro di voler forzare l'esecuzione di `{executionCount}` esecuzione/i?\n\nATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.\n\nVerranno effettuate le seguenti transizioni:\n\n- I task CREATED verranno spostati nello stato RUNNING.\n- I task RUNNING verranno nuovamente inviati.\n- I task QUEUED verranno rimossi dalla coda.\n- I task PAUSED verranno ripresi.",
     "bulk restart": "Sei sicuro di voler riavviare {executionCount} esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
+    "bulk action ineligible change state": "{count} di {total} esecuzioni selezionate non possono cambiare stato.",
+    "bulk action ineligible not state": "{count} di {total} esecuzioni selezionate non sono nello stato {state}.",
+    "bulk action ineligible not pausable": "{count} di {total} esecuzioni selezionate non possono essere messe in pausa.",
+    "bulk action ineligible not terminated": "{count} di {total} esecuzioni selezionate non sono terminate.",
+    "bulk action ineligible already terminated": "{count} di {total} esecuzioni selezionate sono già terminate.",
     "cancel": "Annulla",
     "errorLogs": "Log di errore",
     "product_tour": "Tour del prodotto",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "Includere esecuzioni non terminate?",
     "execution-warn-title": "Avviso Importante!",
     "execution-warn-deleting-still-running": "Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concorrenza, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
+    "execution-warn-non-terminated-count": "{count} di {total} execution selezionate non sono terminate.",
     "pluginPage": {
       "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
@@ -3163,3 +3169,4 @@
     }
   }
 }
+

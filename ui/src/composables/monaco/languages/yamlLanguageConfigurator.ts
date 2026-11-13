@@ -328,8 +328,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
-            // Monaco YAML derives property suggestions from the union of every task type, so a task
-            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
             let scopedSuggestions = mergeDuplicatePropertySuggestions({
                 suggestions,
                 propertyKind: monaco.languages.CompletionItemKind.Property,
@@ -339,12 +337,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                // Monaco YAML requests the union of every plugin property for a bare task.
-                // Re-scoping hits the backend to fetch the specific plugin's properties, but
-                // the flow root has other id+type lists that are task-shaped (e.g. sla:).
+                // The flow schema describes a single version of each plugin, so a task pinning a
+                // `version` is scoped against that version's documentation instead.
                 // Guard on dotted FQCNs to skip 404s for enum types like MAX_DURATION.
                 const isPluginType = task?.type.includes(".")
-                const scopeKey = task && isPluginType ? `${task.type}@${task.version ?? ""}` : undefined
+                const scopeKey = task?.version && isPluginType ? `${task.type}@${task.version}` : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`

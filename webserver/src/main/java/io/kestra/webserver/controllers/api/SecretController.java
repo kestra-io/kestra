@@ -9,22 +9,21 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.secret.SecretService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.Pagination;
 import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
-import io.kestra.webserver.utils.PageableUtils;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}/secrets")
 public class SecretController<META extends ApiSecretMeta> {
@@ -45,13 +44,11 @@ public class SecretController<META extends ApiSecretMeta> {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Search secrets of all namespaces")
     public HttpResponse<ApiSecretListResponse<META>> listSecrets(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Filters") @QueryFilterFormat(Resource.SECRET_METADATA) List<QueryFilter> filters) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();
 
-        Pageable pageable = PageableUtils.from(page, size, sort, this::sortMapper);
+        Pageable pageable = paging.toPageable(this::sortMapper);
 
         ArrayListTotal<String> items = secretService.list(pageable, tenantId, filters);
         //noinspection unchecked

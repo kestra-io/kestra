@@ -22,6 +22,7 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.Pagination;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
@@ -34,10 +35,9 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Max;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}")
 public class KVController {
@@ -94,17 +94,10 @@ public class KVController {
     @Get("/kv")
     @Operation(tags = { "KV" }, summary = "List all keys")
     public PagedResults<KVEntry> listAllKeys(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by key in ascending order", value = "key:asc"),
-                @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
-            }
-        ) @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters)
         throws IOException {
-        return PagedResults.of(kvService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
+        return PagedResults.of(kvService.list(paging.toPageable(this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 
     @ExecuteOn(TaskExecutors.IO)

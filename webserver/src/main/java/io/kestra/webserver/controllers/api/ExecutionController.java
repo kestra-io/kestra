@@ -113,6 +113,8 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.models.api.Pagination;
+import io.kestra.webserver.models.api.UnsortedPagination;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Value;
@@ -140,7 +142,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -335,14 +336,7 @@ public class ExecutionController {
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
     public PagedResults<ApiLightExecution> searchExecutions(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
-                @ExampleObject(name = "Sort by namespace in descending order", value = "namespace:desc"),
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -352,7 +346,7 @@ public class ExecutionController {
     ) {
         var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
-            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            paging.toPageable(executionRepository.sortMapping()),
             tenantId,
             searchableDataFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
@@ -608,9 +602,8 @@ public class ExecutionController {
     public PagedResults<ApiLightExecution> searchExecutionsByFlowId(
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
+        @Valid @RequestBean UnsortedPagination paging) {
+        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, paging.toPageable());
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))
             .toList();

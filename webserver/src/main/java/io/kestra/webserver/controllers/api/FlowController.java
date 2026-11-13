@@ -544,6 +544,18 @@ public class FlowController {
             );
         }
 
+        // Validate all flows before performing any deletions or updates
+        for (GenericFlow flow : flows) {
+            try {
+                flowService.validateFlow(flow);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    throw cve;
+                }
+                throw e;
+            }
+        }
+
         deleted.forEach(flowService::delete);
 
         // update or create flows

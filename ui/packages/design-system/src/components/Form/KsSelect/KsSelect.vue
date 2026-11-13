@@ -49,7 +49,7 @@
     // Clearing a single select emits undefined (Element Plus valueOnClear), a multiple one emits [].
     type ClearedValue<V, Clearable> = true extends Clearable ? (V extends readonly unknown[] ? V : V | undefined) : V
 
-    const props = withDefaults(defineProps<{
+    type KsSelectProps = {
         modelValue?: T
         placeholder?: string
         disabled?: boolean
@@ -75,7 +75,9 @@
         colorMap?: KsSelectColorMap
         selectAll?: boolean
         singleLineTags?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+    }
+
+    const props = withDefaults(defineProps<KsSelectProps & /* @vue-ignore */ Omit<NativeAttributes<SelectPropsPublic & HTMLAttributes>, keyof KsSelectProps>>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,

@@ -2,6 +2,9 @@
     <KsDropdownItem
         v-if="asItem"
         :icon="icon"
+        :disabled="disabled"
+        :divided="divided"
+        :danger="danger"
         v-bind="$attrs"
         @click="onClick"
     >
@@ -30,6 +33,7 @@
         v-else
         :type="type ?? 'default'"
         :icon="icon"
+        :disabled="disabled"
         v-bind="{...$attrs, ...linkAttrs}"
         :tag="tag"
         :to="props.to"
@@ -58,6 +62,9 @@
         to?: RouteLocationRaw;
         href?: string;
         download?: string;
+        disabled?: boolean;
+        divided?: boolean;
+        danger?: boolean;
     }>()
 
     const emit = defineEmits<{(e: "click"): void}>()

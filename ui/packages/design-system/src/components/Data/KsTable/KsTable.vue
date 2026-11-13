@@ -20,41 +20,25 @@
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ref} from "vue"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElTable} from "element-plus"
     import type {TableColumnCtx, TableInstance, TableProps} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
     type TableRow = NonNullable<TableProps["data"]>[number]
 
-    const props = withDefaults(defineProps<{
+    type KsTableProps = Omit<TableProps<TableRow>, "data" | "rowKey" | "cellClassName" | "rowClassName"> & {
         data?: T[]
-        tableLayout?: "fixed" | "auto"
-        size?: "large" | "default" | "small"
         rowKey?: string | ((row: T) => string)
-        emptyText?: string
-        defaultSort?: {prop: string; order: "ascending" | "descending" | null}
-        showHeader?: boolean
-        maxHeight?: string | number
-        fit?: boolean
         cellClassName?: string | ((data: {row: T; rowIndex: number; column: TableColumnCtx<TableRow>; columnIndex: number}) => string)
         rowClassName?: string | ((data: {row: T; rowIndex: number}) => string)
-    }>(), {
-        data: undefined,
-        tableLayout: undefined,
-        size: undefined,
-        rowKey: undefined,
-        emptyText: undefined,
-        defaultSort: undefined,
-        showHeader: undefined,
-        maxHeight: undefined,
-        fit: undefined,
-        cellClassName: undefined,
-        rowClassName: undefined,
-    })
+    }
+
+    const props = defineProps<KsTableProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps>>()
 
     const emit = defineEmits<{
         selectionChange: [selection: T[]]
@@ -71,7 +55,7 @@
 
     const tableRef = ref<TableInstance>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),

@@ -229,6 +229,34 @@ class MapUtilsTest {
     }
 
     @Test
+    void shouldIgnoreWholeEntryWhenParentKeyHoldsAValue() {
+        Map<String, Object> oneLevel = new LinkedHashMap<>();
+        oneLevel.put("foo", 1);
+        oneLevel.put("foo.bar", 2);
+        assertThat(MapUtils.flattenToNestedMap(oneLevel)).isEqualTo(Map.of("foo", 1));
+
+        Map<String, Object> twoLevels = new LinkedHashMap<>();
+        twoLevels.put("foo", 1);
+        twoLevels.put("foo.bar.baz", 2);
+        assertThat(MapUtils.flattenToNestedMap(twoLevels)).isEqualTo(Map.of("foo", 1));
+
+        Map<String, Object> nestedParent = new LinkedHashMap<>();
+        nestedParent.put("a.b", 1);
+        nestedParent.put("a.b.c.d", 2);
+        assertThat(MapUtils.flattenToNestedMap(nestedParent)).isEqualTo(Map.of("a", Map.of("b", 1)));
+    }
+
+    @Test
+    void shouldKeepUnrelatedKeyWhenIgnoringConflictingEntry() {
+        Map<String, Object> flatMap = new LinkedHashMap<>();
+        flatMap.put("foo", 1);
+        flatMap.put("foo.bar", 2);
+        flatMap.put("bar", 9);
+
+        assertThat(MapUtils.flattenToNestedMap(flatMap)).isEqualTo(Map.of("foo", 1, "bar", 9));
+    }
+
+    @Test
     void shouldReportFullDottedKeyPathOnConflict() {
         // Given an appender capturing MapUtils warnings
         Logger logger = (Logger) LoggerFactory.getLogger(MapUtils.class);

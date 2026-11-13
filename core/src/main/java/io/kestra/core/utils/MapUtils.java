@@ -184,16 +184,17 @@ public class MapUtils {
 
     /**
      * Utility method that nests a flattened map.
+     * <p>
+     * When two keys conflict (for example <code>foo</code> and <code>foo.bar</code>), the first one met wins:
+     * the other entry is ignored as a whole and a warning is logged.
      *
      * @param flatMap the flattened map.
      * @return the nested map.
-     *
-     * @throws IllegalArgumentException if the given map contains conflicting keys.
      */
     public static Map<String, Object> flattenToNestedMap(@NotNull Map<String, ?> flatMap) {
         Map<String, Object> result = new HashMap<>();
 
-        for (Map.Entry<String, ?> entry : flatMap.entrySet()) {
+        entries: for (Map.Entry<String, ?> entry : flatMap.entrySet()) {
             String[] keys = entry.getKey().split("\\.");
             Map<String, Object> currentMap = result;
 
@@ -204,7 +205,8 @@ public class MapUtils {
                 } else if (!(currentMap.get(key) instanceof Map)) {
                     var invalidKey = String.join(".", Arrays.copyOfRange(keys, 0, i + 1));
                     log.warn(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
-                    continue;
+                    // skipping only this segment would graft the rest of the path onto the current level
+                    continue entries;
                 }
                 currentMap = (Map<String, Object>) currentMap.get(key);
             }

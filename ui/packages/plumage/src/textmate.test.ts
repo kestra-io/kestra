@@ -1,6 +1,6 @@
 import {beforeAll, describe, expect, it} from "vitest"
 import type {HighlighterCore} from "shiki/core"
-import {pebbleBlocks} from "./index.ts"
+import {pebbleTokens} from "./index.ts"
 import type {SyntaxRole} from "./index.ts"
 import {languageCorpus, yamlCorpus} from "../tests/corpus.ts"
 import {highlighter} from "../tests/highlighter.ts"
@@ -33,17 +33,21 @@ beforeAll(async () => {
 })
 
 describe("VS Code Pebble grammar and theme coverage on YAML", () => {
+    /** The grammar skips YAML comments, so a block starting in one, and the tokens that follow it, are left out. */
     it.each(yaml.map(file => [file.path, file] as const))("%s", (_, {code}) => {
         const roles = rolesPerChar(js, code, "yaml")
         const failures: string[] = []
         const inPebble = new Uint8Array(code.length)
 
-        for (const [start, end] of pebbleBlocks(code)) {
-            if (roles[start] === "comment") continue
+        for (const [start, end, role] of pebbleTokens(code)) {
+            if (roles[start] === "comment" || inPebble[start - 1] === 2) {
+                inPebble.fill(2, start, end)
+                continue
+            }
             inPebble.fill(1, start, end)
             for (let i = start; i < end; i++) {
-                if (!/\s/.test(code[i]!) && roles[i] !== "pebble") {
-                    failures.push(`expected pebble, got ${roles[i]} at ${where(code, i)}`)
+                if (!/\s/.test(code[i]!) && roles[i] !== role) {
+                    failures.push(`expected ${role}, got ${roles[i]} at ${where(code, i)}`)
                     break
                 }
             }

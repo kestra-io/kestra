@@ -18,6 +18,7 @@ import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
 import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {codeThemeOf, configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {PEBBLE_ROLES} from "@kestra-io/plumage"
 import {useTaskIcon} from "./taskIcon"
 import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
@@ -186,7 +187,7 @@ export function useKsEditor(
     ])
 
     const containerStyle = computed(() => ({
-        "--code-pebble": codeTheme.value.syntax.pebble,
+        ...Object.fromEntries(PEBBLE_ROLES.map(role => [`--code-${role}`, codeTheme.value.syntax[role]])),
         ...(props.inline ? {} : {"--code-background": codeTheme.value.editor.background}),
     }))
 

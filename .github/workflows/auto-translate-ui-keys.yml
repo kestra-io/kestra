@@ -79,7 +79,7 @@ jobs:
             node-version: "24.x"
 
         - name: Install Node dependencies
-          run: npm ci
+          run: npm ci --ignore-scripts
           working-directory: ui
 
         - name: Authenticate to Google Cloud

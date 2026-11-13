@@ -190,7 +190,7 @@ jobs:
 
       - name: Install Node dependencies
         if: env.HAS_GCP_CREDENTIALS == 'true'
-        run: npm ci
+        run: npm ci --ignore-scripts
         working-directory: ui
 
       - name: Authenticate to Google Cloud

@@ -2381,6 +2381,9 @@
         "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
+      "dataFrom": "Updated {date}",
+      "dataUnavailable": "Data unavailable",
+      "dataTruncated": "Output file has been truncated to its {rows} first rows. See documentation for further details.",
       "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",

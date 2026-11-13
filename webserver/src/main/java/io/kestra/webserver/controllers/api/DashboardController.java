@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.contexts.configuration.DashboardsConfiguration;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.ChartMetadata;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -28,6 +29,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ChartRows;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.YamlParser;
@@ -360,10 +362,11 @@ public class DashboardController {
      * A page of chart rows.
      *
      * @param ignoredFilters the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     * @param metadata what the data source tells about the rows (execution they come from, truncation), when it reads an execution output
      */
-    public record ChartData(@NotNull List<Map<String, Object>> results, @NotNull Long total, List<QueryFilter.Field> ignoredFilters) {
+    public record ChartData(@NotNull List<Map<String, Object>> results, @NotNull Long total, List<QueryFilter.Field> ignoredFilters, @Nullable ChartMetadata metadata) {
         static ChartData of(ArrayListTotal<Map<String, Object>> rows, List<QueryFilter.Field> ignoredFilters) {
-            return new ChartData(rows, rows.getTotal(), ignoredFilters);
+            return new ChartData(rows, rows.getTotal(), ignoredFilters, rows instanceof ChartRows chartRows ? chartRows.getMetadata() : null);
         }
     }
 

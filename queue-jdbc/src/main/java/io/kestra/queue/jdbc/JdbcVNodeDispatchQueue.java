@@ -23,9 +23,9 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+    public JdbcVNodeDispatchQueue(Class<T> cls, int vNodeCount, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
-        super(cls, queueService, executorsUtils, metricRegistry);
+        super(cls, vNodeCount, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
@@ -36,7 +36,7 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
     protected void doEmit(byte[] message, String key) throws QueueException {
         jdbcQueueClient.publish(
             this.queueName(),
-            this.vNodeRoutingKey(this.queueService.computeVNode(key)),
+            this.vNodeRoutingKey(this.computeVNode(key)),
             key,
             new String(message, StandardCharsets.UTF_8)
         );
@@ -51,7 +51,7 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
                 .map(
                     e -> new JdbcQueueClient.PublishedMessage(
                         queueName,
-                        this.vNodeRoutingKey(this.queueService.computeVNode(e.key())),
+                        this.vNodeRoutingKey(this.computeVNode(e.key())),
                         e.key(),
                         new String(e.value(), StandardCharsets.UTF_8)
                     )

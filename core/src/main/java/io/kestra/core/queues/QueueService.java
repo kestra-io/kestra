@@ -15,11 +15,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.event.Event;
-import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.vnodes.VNodes;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -35,9 +33,6 @@ public class QueueService {
     private final MetricRegistry metricRegistry;
 
     @Getter
-    private final int vNodeCount;
-
-    @Getter
     protected final ExecutorService subscriberExecutorService;
 
     @Getter
@@ -49,13 +44,12 @@ public class QueueService {
     private volatile KestraContext kestraContext; // volatile field as tests swap it
 
     @Inject
-    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration,
+    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry,
         KestraContext kestraContext) {
         // this executor service is used to execute subscribers, as subscribers can be CPU bound, it is not a good idea to use a virtual thread here
         this.subscriberExecutorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
-        this.vNodeCount = schedulerConfiguration.vnodes();
         this.kestraContext = kestraContext;
     }
 
@@ -74,10 +68,6 @@ public class QueueService {
 
     public void execute(Runnable runnable) {
         this.subscriberExecutorService.execute(runnable);
-    }
-
-    public int computeVNode(String key) {
-        return VNodes.computeVNode(this.vNodeCount, key);
     }
 
     public <T extends Event> byte[] serialize(Class<T> cls, T message) throws QueueException {

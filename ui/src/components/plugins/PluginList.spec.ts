@@ -88,6 +88,18 @@ describe("PluginList", () => {
         expect(wrapper.text()).not.toContain("Core")
     })
 
+    test("shouldClearTheBreadcrumbWhenTheEditorTypeMatchesNoListedPlugin", async () => {
+        usePluginsStore().editorPlugin = {cls: "io.kestra.plugin.core.log.Log", schema: SCHEMA}
+        const wrapper = mountList()
+        await flushPromises()
+        expect(wrapper.text()).toContain("Core")
+
+        usePluginsStore().editorPlugin = {cls: "io.kestra.plugin.unknown.Mystery", schema: SCHEMA}
+        await flushPromises()
+
+        expect(wrapper.text()).not.toContain("Core")
+    })
+
     test("shouldKeepThePinnedVersionWhenDocumentationIsReloaded", async () => {
         usePluginsStore().editorPlugin = {cls: CANONICAL, version: "1.2.0", schema: SCHEMA}
         const wrapper = mountList()

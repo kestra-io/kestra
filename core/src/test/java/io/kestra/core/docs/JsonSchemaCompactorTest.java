@@ -88,6 +88,32 @@ class JsonSchemaCompactorTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldDropUiHintsFromSchemasButNotFromPropertyNamesOrLiterals() throws Exception {
+        // Given: `$group` is a hint on `level`, a property name on the definition, and data inside a default
+        Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
+            {
+              "definitions": {
+                "a.Task": {"properties": {
+                  "level": {"type": "string", "$dynamic": true, "$group": "main", "default": {"$group": "kept"}},
+                  "$group": {"type": "string"},
+                  "nested": {"type": "array", "items": {"anyOf": [{"type": "string", "$dynamic": false}]}}
+                }}
+              }
+            }
+            """, Map.class);
+
+        // When
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
+
+        // Then
+        Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) compact.get("definitions")).get("a.Task").get("properties");
+        assertThat(properties.get("level")).isEqualTo(Map.of("type", "string", "default", Map.of("$group", "kept")));
+        assertThat(properties.get("$group")).isEqualTo(Map.of("type", "string"));
+        assertThat(properties.get("nested").get("items")).isEqualTo(Map.of("anyOf", List.of(Map.of("type", "string"))));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldLeaveLiteralValuesAloneWhenTheyLookLikeASchema() throws Exception {
         // Given: two defaults that are data, each holding a `properties` key with a repeated, large value
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""

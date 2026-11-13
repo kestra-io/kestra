@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,15 +30,18 @@ public final class JsonSchemaCompactor {
     private static final String DEFINITIONS_REF = "#/definitions/";
     private static final String SHARED_KEY_PREFIX = "shared-property-";
     private static final String SHARED_SUBTYPES_KEY = "shared-subtypes";
+    // Read by the no-code editor from the plain schema only; a $ref-resolving JSON Schema consumer ignores them.
+    private static final Set<String> UI_HINTS = Set.of("$dynamic", "$group");
     // Below this serialized size, the $ref and its definition key cost about as much as the copy they replace.
     private static final int MIN_SHARED_LENGTH = 128;
 
     private JsonSchemaCompactor() {
     }
 
-    /** Returns a compacted copy of {@code schema}: subtype lists hoisted, then repeated property schemas shared. */
+    /** Returns a compacted copy of {@code schema}: UI hints dropped, subtype lists hoisted, then repeated property schemas shared. */
     public static Map<String, Object> compact(Map<String, Object> schema) {
         ObjectNode root = MAPPER.convertValue(schema, ObjectNode.class);
+        stripUiHints(root);
         hoistSubtypeLists(root);
         sharePropertySchemas(root);
         return MAPPER.convertValue(root, MAP_TYPE);
@@ -140,7 +144,7 @@ public final class JsonSchemaCompactor {
         if (SubtypeSite.of(node) instanceof SubtypeSite site) {
             if (refBySubtypes.get(site.subtypes()) instanceof String ref) {
                 ObjectNode replaced = ((ObjectNode) node).removeAll();
-                if (site.annotation() == null) {
+                if (site.annotation() == null || site.annotation().isEmpty()) {
                     replaced.put("$ref", ref);
                 } else {
                     // Kept as a one-branch anyOf beside the annotation: the language service then completes the key and hovers it as before.
@@ -190,7 +194,17 @@ public final class JsonSchemaCompactor {
         }
     }
 
-    // Follows schema keywords only: a literal under `default`, `const` or `enum` may hold a `properties` key that is not a schema.
+    private static void stripUiHints(JsonNode schema) {
+        if (!(schema instanceof ObjectNode object)) {
+            return;
+        }
+        object.remove(UI_HINTS);
+        if (object.get("properties") instanceof ObjectNode properties) {
+            properties.forEach(JsonSchemaCompactor::stripUiHints);
+        }
+        forEachSubschema(object, JsonSchemaCompactor::stripUiHints);
+    }
+
     private static void walkProperties(JsonNode schema, BiPredicate<String, ObjectNode> shouldDescend) {
         if (!(schema instanceof ObjectNode object)) {
             return;
@@ -203,15 +217,22 @@ public final class JsonSchemaCompactor {
                 }
             });
         }
-        if (object.get("definitions") instanceof ObjectNode definitions) {
-            definitions.forEach(definition -> walkProperties(definition, shouldDescend));
+        forEachSubschema(object, subschema -> walkProperties(subschema, shouldDescend));
+    }
+
+    // Follows schema keywords only: a literal under `default`, `const` or `enum` may hold keys that look like schema keywords.
+    private static void forEachSubschema(ObjectNode schema, Consumer<JsonNode> action) {
+        if (schema.get("definitions") instanceof ObjectNode definitions) {
+            definitions.forEach(action);
         }
         for (String keyword : List.of("items", "additionalProperties", "not")) {
-            walkProperties(object.get(keyword), shouldDescend);
+            if (schema.get(keyword) instanceof ObjectNode subschema) {
+                action.accept(subschema);
+            }
         }
         for (String keyword : List.of("anyOf", "allOf", "oneOf")) {
-            if (object.get(keyword) instanceof ArrayNode branches) {
-                branches.forEach(branch -> walkProperties(branch, shouldDescend));
+            if (schema.get(keyword) instanceof ArrayNode branches) {
+                branches.forEach(action);
             }
         }
     }

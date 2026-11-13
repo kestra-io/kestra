@@ -231,8 +231,10 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
 **compact local** schema (installed plugins, `JsonSchemaCache.getCompactSchemaForType`), produced
-by `JsonSchemaCompactor` in three steps:
+by `JsonSchemaCompactor` in four steps:
 
+- `$dynamic` and `$group` are dropped: they are hints for the no-code editor, which reads the
+  plain endpoint, and the YAML language service ignores them;
 - the generator inlines the full subtype list at every `tasks` / `errors` / `finally` site, 17 of
   them in the flow schema, so each type costs one `$ref` branch per site. Every bare `anyOf` that
   repeats a definition's list becomes a `$ref` to that definition, and a list repeated with no

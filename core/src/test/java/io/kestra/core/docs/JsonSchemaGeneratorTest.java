@@ -185,11 +185,15 @@ class JsonSchemaGeneratorTest {
         assertThat(dagTask.get("anyOf"), is(List.of(Map.of("$ref", "#/definitions/" + Task.class.getName()))));
         assertThat(dagTask, hasEntry("title", "The task within the DAG"));
 
-        // `timeout` is inherited by every task: one shared definition, holding exactly what each task carried inline.
-        String timeoutRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("timeout").get("$ref");
-        assertThat(timeoutRef, startsWith("#/definitions/shared-property-timeout"));
-        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("timeout"), is(Map.of("$ref", timeoutRef)));
-        assertThat(compactDefinitions.get(timeoutRef.substring("#/definitions/".length())), is(properties(definitions.get(Log.class.getName())).get("timeout")));
+        // `retry` is inherited by every task: one shared definition, referenced from each of them.
+        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
+        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
+        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), hasEntry("title", "Retry"));
+
+        // The hints only the no-code editor reads are gone from the compact schema, and still in the plain one.
+        assertThat(properties(definitions.get(Log.class.getName())).get("timeout").toString(), containsString("$dynamic"));
+        assertThat(compact.toString(), not(anyOf(containsString("$dynamic"), containsString("$group"))));
     }
 
     @SuppressWarnings("unchecked")

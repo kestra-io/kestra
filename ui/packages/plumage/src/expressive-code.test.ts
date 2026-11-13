@@ -1,7 +1,7 @@
 import {beforeAll, describe, expect, it} from "vitest"
 import {ExpressiveCode, ExpressiveCodeTheme} from "expressive-code"
 import type {Element, Nodes} from "expressive-code/hast"
-import {kestraDark, kestraLight, pebbleBlocks, toTextMateTheme} from "./index.ts"
+import {kestraDark, kestraLight, pebbleTokens, toTextMateTheme} from "./index.ts"
 import {pluginPebble} from "./expressive-code.ts"
 import {yamlCorpus} from "../tests/corpus.ts"
 
@@ -13,6 +13,9 @@ beforeAll(() => {
         plugins: [pluginPebble()],
     })
 })
+
+/** The block color of each variant: anything outside a block painted with it is a block that leaked. */
+const PEBBLE_COLORS = new Set([kestraDark.syntax.pebble, kestraLight.syntax.pebble])
 
 const isLine = (node: Element) => [node.properties?.className].flat().includes("ec-line")
 
@@ -38,20 +41,21 @@ function renderedLines(root: Nodes) {
 }
 
 describe("pluginPebble", () => {
-    it.each(yamlCorpus().map(file => [file.path, file] as const))("paints exactly the Pebble blocks of %s", async (_, {code: source}) => {
+    it.each(yamlCorpus().map(file => [file.path, file] as const))("paints exactly the Pebble tokens of %s", async (_, {code: source}) => {
         const {renderedGroupAst} = await ec.render({code: source, language: "yaml"})
         const lines = renderedLines(renderedGroupAst)
         const code = lines.map(line => line.text).join("\n")
 
         const colors = lines.flatMap(line => [...line.colors, []])
-        const inBlock = new Uint8Array(code.length)
-        for (const [start, end] of pebbleBlocks(code)) inBlock.fill(1, start, end)
-        const pebble = [kestraDark.syntax.pebble, kestraLight.syntax.pebble]
+        const wanted = new Array<string[] | undefined>(code.length)
+        for (const [start, end, role] of pebbleTokens(code)) wanted.fill([kestraDark.syntax[role], kestraLight.syntax[role]], start, end)
         const wrong: string[] = []
         for (let i = 0; i < colors.length && wrong.length < 3; i++) {
             if (/\s/.test(code[i]!)) continue
-            const painted = colors[i]![0] === pebble[0] && colors[i]![1] === pebble[1]
-            if (painted !== Boolean(inBlock[i])) wrong.push(`${JSON.stringify(code.slice(i, i + 30))}: ${colors[i]}`)
+            const painted = colors[i]!.length > 0 && colors[i]!.every(color => PEBBLE_COLORS.has(color))
+            if (wanted[i] ? colors[i]![0] !== wanted[i]![0] || colors[i]![1] !== wanted[i]![1] : painted) {
+                wrong.push(`${JSON.stringify(code.slice(i, i + 30))}: ${colors[i]}, wanted ${wanted[i] ?? "the YAML color"}`)
+            }
         }
         expect(wrong).toEqual([])
     })

@@ -114,8 +114,8 @@ export const BulkActionEligibility: Story = {
     },
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement)
-        const runningRow = canvas.getByText("Running", {exact: true}).closest("tr")
-        const failedRow = canvas.getByText("Failed", {exact: true}).closest("tr")
+        const runningRow = canvas.getByText("Running", {exact: true}).closest<HTMLTableRowElement>("tr")
+        const failedRow = canvas.getByText("Failed", {exact: true}).closest<HTMLTableRowElement>("tr")
 
         if (!runningRow || !failedRow) {
             throw new Error("Expected execution rows were not rendered")

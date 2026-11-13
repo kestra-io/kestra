@@ -13,6 +13,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -41,8 +43,6 @@ import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -445,7 +445,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     }
 
     private static URI outputsFile(URI contextBaseURI) {
-        return URI.create("kestra://" + contextBaseURI + "/").resolve(OUTPUTS_FILE);
+        return StorageContext.toKestraUri(StorageContext.logicalPath(contextBaseURI) + "/" + OUTPUTS_FILE);
     }
 
     /**

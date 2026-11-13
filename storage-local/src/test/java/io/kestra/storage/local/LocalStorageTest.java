@@ -14,6 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.storage.StorageTestSuite;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
 
@@ -22,7 +23,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,9 +40,35 @@ class LocalStorageTest extends StorageTestSuite {
             new ByteArrayInputStream("Hello World".getBytes())
         );
 
-        assertThat(put.getPath(), not(longObjectName));
-        String suffix = put.getPath().substring(7); // we remove the random 5 char + '-'
+        String returned = StorageContext.logicalPath(put);
+        assertThat(returned, not(longObjectName));
+        String suffix = returned.substring(7); // leading slash, 5 random chars, and '-'
         assertTrue(longObjectName.endsWith(suffix));
+    }
+
+    @Test
+    void shouldStoreCanonicalUriAtTheSameDiskPathAsLegacyUri() throws IOException {
+        String tenantId = IdUtils.create();
+        URI canonical = URI.create("kestra://namespace/folder/sub/script.py");
+        storageInterface.put(tenantId, "namespace", canonical, new ByteArrayInputStream("same".getBytes()));
+
+        Path stored = Path.of("/tmp/unittest", tenantId, "namespace/folder/sub/script.py");
+        Path droppedAuthority = Path.of("/tmp/unittest", tenantId, "folder/sub/script.py");
+        assertTrue(Files.exists(stored));
+        assertFalse(Files.exists(droppedAuthority));
+        assertTrue(storageInterface.exists(tenantId, "namespace", URI.create("kestra:///namespace/folder/sub/script.py")));
+    }
+
+    @Test
+    void shouldRejectTraversalHiddenInTheAuthority() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.get(IdUtils.create(), null, URI.create("kestra://../etc/passwd"))
+        );
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.get(IdUtils.create(), null, URI.create("kestra://..%2F..%2Fetc/passwd"))
+        );
     }
 
     // GHSA-qw4v-6w32-xx9h: a Windows-style backslash traversal must not escape the storage
@@ -144,10 +170,7 @@ class LocalStorageTest extends StorageTestSuite {
         assertFalse(storageInterface.exists(tenantId, null, new URI("/file.txt")));
 
         // list() excludes metadata files, so verify the file directly.
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("file.txt.metadata");
+        Path orphanMetadataPath = Path.of("/tmp/unittest", tenantId, "file.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
     }
 
@@ -163,13 +186,10 @@ class LocalStorageTest extends StorageTestSuite {
 
         List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/single.txt"));
         assertThat(deleted, notNullValue());
-        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(deleted.stream().anyMatch(uri -> StorageContext.logicalPath(uri).endsWith(".metadata")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/single.txt")));
 
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("single.txt.metadata");
+        Path orphanMetadataPath = Path.of("/tmp/unittest", tenantId, "single.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
     }
 
@@ -191,17 +211,12 @@ class LocalStorageTest extends StorageTestSuite {
 
         List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/dir/"));
         assertThat(deleted, notNullValue());
-        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(deleted.stream().anyMatch(uri -> StorageContext.logicalPath(uri).endsWith(".metadata")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file1.txt")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file2.txt")));
 
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadata1 = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("dir/file1.txt.metadata");
-        Path orphanMetadata2 = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("dir/file2.txt.metadata");
+        Path orphanMetadata1 = Path.of("/tmp/unittest", tenantId, "dir/file1.txt.metadata");
+        Path orphanMetadata2 = Path.of("/tmp/unittest", tenantId, "dir/file2.txt.metadata");
         assertFalse(Files.exists(orphanMetadata1));
         assertFalse(Files.exists(orphanMetadata2));
     }

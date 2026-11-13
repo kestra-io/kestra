@@ -33,6 +33,13 @@ dependencies {
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
     api platform("io.micronaut.platform:micronaut-platform:4.10.22")
+    // security tower (Trivy): Micronaut 4.10's tracing imports opentelemetry-bom 1.54.1, opentelemetry-api < 1.62.0 has
+    // CVE-2026-45292 (SEC-0387). 1.62.0 is the highest version Micronaut 4.10 runs on: its opentelemetry-instrumentation 2.20.1
+    // calls io.opentelemetry.api.internal.InstrumentationUtil (gone in 1.63), and the instrumentation releases that stopped
+    // calling it also dropped PeerServiceAttributesExtractor, a bean of micronaut-tracing 7.2. CVE-2026-118259 (fixed in
+    // 1.67.0) therefore needs Micronaut 5 (develop).
+    api platform("io.opentelemetry:opentelemetry-bom:1.62.0")
+    api platform("io.opentelemetry:opentelemetry-bom-alpha:1.62.0-alpha")
     // json-schema-validator brings Jackson 3 (tools.jackson) 3.1.4: CVE-2026-89407, CVE-2026-89425, CVE-2026-68497... fixed in 3.1.7
     api platform("tools.jackson:jackson-bom:3.1.7")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
@@ -143,7 +150,7 @@ dependencies {
         api "de.siegmar:fastcsv:4.4.0"
         // Json Diff
         api "com.github.java-json-tools:json-patch:1.13"
-        api 'com.rabbitmq:amqp-client:5.35.0'
+        api 'com.rabbitmq:amqp-client:5.37.0' // CVE-2026-106121, CVE-2026-106122 (SEC-2250)
         api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:7.7.0.RELEASE'
 

@@ -1093,7 +1093,7 @@ public class ExecutionController {
 
                 Create finalCreateCommand = createCommand;
                 return awaitBlockingAction(
-                    executionId, "Create",
+                    tenantId, executionId, "Create",
                     operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
@@ -1449,7 +1449,7 @@ public class ExecutionController {
         this.restartCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Restart",
+            execution.getTenantId(), executionId, "Restart",
             operationId -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId))
         );
     }
@@ -1710,7 +1710,7 @@ public class ExecutionController {
         this.changeTaskRunStateCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change task run state",
+            execution.getTenantId(), executionId, "Change task run state",
             operationId -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId))
         );
     }
@@ -1741,7 +1741,7 @@ public class ExecutionController {
         this.changeStatusCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change status",
+            execution.getTenantId(), executionId, "Change status",
             operationId -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId))
         );
     }
@@ -1837,7 +1837,7 @@ public class ExecutionController {
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
 
         return awaitBlockingAction(
-            execution.getId(), "Kill",
+            execution.getTenantId(), execution.getId(), "Kill",
             operationId -> killQueue.emit(
                 ExecutionKilledExecution
                     .builder()
@@ -1952,7 +1952,7 @@ public class ExecutionController {
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
-                    execution.getId(), "Resume",
+                    execution.getTenantId(), execution.getId(), "Resume",
                     operationId -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId))
                 )
             )
@@ -1982,7 +1982,7 @@ public class ExecutionController {
         this.resumeFromBreakpointCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Resume from breakpoint",
+            execution.getTenantId(), executionId, "Resume from breakpoint",
             operationId -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId))
         );
     }
@@ -2058,7 +2058,7 @@ public class ExecutionController {
         this.pauseCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Pause",
+            execution.getTenantId(), executionId, "Pause",
             operationId -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId))
         );
     }
@@ -2375,7 +2375,7 @@ public class ExecutionController {
         this.updateLabelsCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Set labels",
+            execution.getTenantId(), executionId, "Set labels",
             operationId -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId))
         )
             .map(r -> (HttpResponse<?>) r);
@@ -2485,7 +2485,7 @@ public class ExecutionController {
         this.unqueueCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Unqueue",
+            execution.getTenantId(), executionId, "Unqueue",
             operationId -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId))
         );
     }
@@ -2561,7 +2561,7 @@ public class ExecutionController {
         this.forceRunCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Force run",
+            execution.getTenantId(), executionId, "Force run",
             operationId -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId))
         );
     }
@@ -2959,13 +2959,15 @@ public class ExecutionController {
     }
 
     /**
-     * Executes a single async operation on an execution.
+     * Executes a single async operation on an execution of {@code tenantId}.
+     * Callers that read a request body first may run on a thread with no server request bound, so the tenant must be
+     * resolved by the caller rather than here.
      */
     private Mono<HttpResponse<Execution>> awaitBlockingAction(
+        String tenantId,
         String executionId,
         String actionName,
         ThrowingConsumer<String> emit) {
-        String tenantId = tenantService.resolveTenant();
         return asyncOperationWaiter.submit(
             executionId,
             operationId ->

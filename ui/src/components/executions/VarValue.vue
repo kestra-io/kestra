@@ -37,18 +37,33 @@
             {{ $t('file unavailable') }}
         </KsButton>
     </KsTooltip>
-    <KsButtonGroup v-else-if="isURI(value) && !Utils.isFile(value)">
+    <!-- Show the text too: a link alone hides the value and offers no way to copy it. -->
+    <span v-else-if="isURI(value) && !Utils.isFile(value)" class="uri-value">
+        <span>{{ value }}</span>
         <KsButton
             type="primary"
             tag="a"
             size="small"
             :href="value"
             target="_blank"
+            rel="noopener noreferrer"
             :icon="OpenInNew"
         >
             {{ $t('open') }}
         </KsButton>
-    </KsButtonGroup>
+    </span>
+    <span v-else-if="mailtoHref" class="uri-value">
+        <span>{{ value }}</span>
+        <KsButton
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </KsButton>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -81,6 +96,7 @@
     import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsEditor} from "@kestra-io/design-system"
@@ -97,11 +113,12 @@
     const props = withDefaults(defineProps<{
         value?: string | object | boolean | number;
         execution?: Execution;
+        /** Offer an Open button only for http(s) values; any `scheme:` string parses as a URL otherwise. */
         restrictUri?: boolean;
     }>(), {
         value: "",
         execution: () => ({id: ""}),
-        restrictUri: false,
+        restrictUri: true,
     })
 
     const editorBindings = useEditorBindings()
@@ -127,6 +144,10 @@
             return false
         }
     }
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
+    )
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
@@ -218,6 +239,13 @@
 </script>
 
 <style scoped lang="scss">
+.uri-value {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    word-break: break-all;
+}
+
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

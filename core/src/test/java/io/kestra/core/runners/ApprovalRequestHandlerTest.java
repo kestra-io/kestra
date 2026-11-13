@@ -6,13 +6,16 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.event.Level;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.MapUtils;
@@ -25,8 +28,11 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -50,6 +56,9 @@ class ApprovalRequestHandlerTest {
 
     @Inject
     TaskOutputService taskOutputService;
+
+    @Inject
+    LogDataStoreInterface logRepository;
 
     @MockBean
     @Replaces(ApprovalRequestHandler.NoopApprovalRequestHandler.class)
@@ -83,6 +92,18 @@ class ApprovalRequestHandlerTest {
 
     @Test
     @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldLogTheOpenedApprovalWhenACaseBacksTheRequest() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+            assertThat(logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.INFO))
+                .extracting(LogEntry::getMessage)
+                .contains("Approval case-1 opened.")
+        );
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
     void shouldNotifyTheDecisionAndKeepTheCaseInTheOutputs() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository.findByExecution(execution);
@@ -96,15 +117,16 @@ class ApprovalRequestHandlerTest {
 
     @Test
     @LoadFlows({ "flows/valids/approval-basic.yaml" })
-    void shouldCloseTheRequestWhenItIsCancelled() throws Exception {
+    void shouldCloseTheRequestWithWhoCancelledItWhenCancelledInBulk() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository.findByExecution(execution);
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
-        executionService.cancelApproval(execution, flow, taskRunId, null);
+        PausableTask.Resumed resumed = PausableTask.Resumed.now("alice");
+        executionService.cancelApproval(execution, flow, taskRunId, resumed, true);
 
         ArgumentCaptor<TaskRun> closedTaskRun = ArgumentCaptor.forClass(TaskRun.class);
-        verify(handler, times(1)).closed(any(), closedTaskRun.capture(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(handler, times(1)).closed(any(), closedTaskRun.capture(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), eq(resumed), eq(true));
         assertThat(taskOutputService.getOutputs(closedTaskRun.getValue()).get("caseId")).isEqualTo("case-1");
     }
 
@@ -116,7 +138,7 @@ class ApprovalRequestHandlerTest {
 
         executionService.cancelOpenApprovals(execution, flow);
 
-        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), anyBoolean());
     }
 
     @Test
@@ -127,7 +149,7 @@ class ApprovalRequestHandlerTest {
 
         executionService.cancelOpenApprovals(parent.withState(State.Type.SUCCESS), flow);
 
-        verify(handler, never()).closed(any(), any(), any(), any());
+        verify(handler, never()).closed(any(), any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -139,7 +161,7 @@ class ApprovalRequestHandlerTest {
         executionService.cancelOpenApprovals(parent, flow);
 
         ArgumentCaptor<Execution> closedExecution = ArgumentCaptor.forClass(Execution.class);
-        verify(handler, times(1)).closed(closedExecution.capture(), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(handler, times(1)).closed(closedExecution.capture(), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), anyBoolean());
         assertThat(closedExecution.getValue().getParentId()).isEqualTo(parent.getId());
     }
 
@@ -152,7 +174,7 @@ class ApprovalRequestHandlerTest {
         Execution killing = executionService.kill(execution, flow);
 
         assertThat(killing.getState().getCurrent()).isEqualTo(State.Type.KILLING);
-        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED));
+        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED), isNull(), eq(false));
     }
 
     @Test
@@ -168,7 +190,7 @@ class ApprovalRequestHandlerTest {
         Execution killing = executionService.kill(execution, flow);
 
         assertThat(killing.getState().getCurrent()).isEqualTo(State.Type.KILLING);
-        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED));
+        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED), any(), anyBoolean());
     }
 
     @Test
@@ -182,7 +204,7 @@ class ApprovalRequestHandlerTest {
 
         executionService.kill(execution, flow);
 
-        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED));
+        verify(handler, times(1)).closed(any(), any(), any(), eq(ApprovalRequestHandler.Resolution.KILLED), any(), anyBoolean());
     }
 
     @Test

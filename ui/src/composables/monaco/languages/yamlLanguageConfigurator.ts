@@ -35,6 +35,7 @@ import {
 } from "./subflowLinkProvider"
 import {
     filterMissingRequiredTaskProperties,
+    mergeDuplicatePropertySuggestions,
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
@@ -329,7 +330,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
             // Monaco YAML derives property suggestions from the union of every task type, so a task
             // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
-            let scopedSuggestions = suggestions
+            let scopedSuggestions = mergeDuplicatePropertySuggestions({
+                suggestions,
+                propertyKind: monaco.languages.CompletionItemKind.Property,
+            })
             if (!isTypeValueContext) {
                 const task = taskIdentityAtCursor({
                     source: model.getValue(),
@@ -353,7 +357,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         })
                         const properties = pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
-                            suggestions,
+                            suggestions: scopedSuggestions,
                             validPropertyKeys: properties ? Object.keys(properties) : undefined,
                             propertyKind: monaco.languages.CompletionItemKind.Property,
                         })

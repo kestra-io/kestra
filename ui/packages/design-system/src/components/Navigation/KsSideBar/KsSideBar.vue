@@ -33,7 +33,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: visible;
+    overflow: hidden;
     background-color: var(--ks-bg-sidebar);
     border-right: 1px solid var(--ks-border-default);
     padding: var(--ks-spacing-6) 0 var(--ks-spacing-4);
@@ -52,5 +52,9 @@
 
 .ks-sidebar__footer {
     flex: 0 0 auto;
+}
+
+.ks-sidebar__body :deep(.kel-scrollbar__wrap) {
+    overflow-x: visible;
 }
 </style>

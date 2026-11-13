@@ -466,6 +466,12 @@
       "load_error": "Task {taskId}가 읽는 output을 로드할 수 없습니다.",
       "empty": "Task {taskId}는 자체 속성의 정적 경로를 통해 이전 Task의 output을 읽지 않습니다.",
       "current": "현재 값 {value}",
+      "readers_count": "리플레이의 다른 {count}개 Task에서도 읽음 | 리플레이의 다른 {count}개 Task에서도 읽음",
+      "readers_tooltip": "또한 replay의 다음 Task에서 읽습니다. 정의를 보려면 클릭하세요.",
+      "readers_title": "{path}도 읽는 Task",
+      "readers_reads": "{paths} 읽기",
+      "impact": "이 재정의는 replay에서 task {tasks}가 읽는 값도 변경합니다.",
+      "dynamic_readers": "Task {tasks}는 동적 경로를 통해 또는 블록으로 출력을 전체적으로 읽을 수 있으며, 새 값도 읽을 수 있습니다.",
       "confirm": "{count}개 재정의로 Replay | {count}개 재정의로 Replay",
       "error": {
         "number": "숫자를 입력하세요.",

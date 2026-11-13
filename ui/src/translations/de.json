@@ -466,6 +466,12 @@
       "load_error": "Die Outputs, die Task {taskId} liest, konnten nicht geladen werden.",
       "empty": "Task {taskId} liest keine Ausgabe eines vorherigen Tasks über einen statischen Pfad in seinen eigenen Eigenschaften.",
       "current": "Aktueller Wert {value}",
+      "readers_count": "Auch gelesen von {count} anderem Task des Replays | Auch gelesen von {count} anderen Tasks des Replays",
+      "readers_tooltip": "Wird auch von diesen Tasks des Replays gelesen. Klicke, um ihre Definitionen zu sehen.",
+      "readers_title": "Tasks, die auch {path} lesen",
+      "readers_reads": "Liest {paths}",
+      "impact": "Diese Overrides ändern auch die Werte, die Tasks {tasks} beim Replay lesen.",
+      "dynamic_readers": "Tasks {tasks} lesen Outputs als Ganzes, über einen dynamischen Pfad oder in einem Block, und können auch die neuen Werte lesen.",
       "confirm": "Replay mit {count} Override | Replay mit {count} Overrides",
       "error": {
         "number": "Gib eine Zahl ein.",

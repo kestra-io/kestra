@@ -1,3 +1,6 @@
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import type {ReplayOutputServiceOutputReader} from "@kestra-io/kestra-sdk"
+
 export type ParsedOverride = {value?: unknown, error?: "number" | "boolean" | "json"}
 
 /** Strings are quoted so that leading or trailing spaces stay visible. */
@@ -32,4 +35,33 @@ export function parseOverride(original: unknown, text: string): ParsedOverride {
         }
     }
     return {value: text}
+}
+
+const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
+
+export function taskSource(flowSource: string, taskId: string): string | undefined {
+    for (const section of TASK_SECTIONS) {
+        const block = YAML_UTILS.extractBlock({source: flowSource, section, key: taskId})
+        if (block !== undefined) return block
+    }
+    return undefined
+}
+
+/** The first line of a task definition that reads one of the paths, 1-based. */
+export function firstReadingLine(source: string, paths: string[]): number | undefined {
+    const index = source.split("\n").findIndex(line => paths.some(path => readsPath(line, path)))
+    return index === -1 ? undefined : index + 1
+}
+
+function readsPath(line: string, path: string): boolean {
+    for (let index = line.indexOf(path); index !== -1; index = line.indexOf(path, index + 1)) {
+        if (!/[\w-]/.test(line.charAt(index + path.length))) return true
+    }
+    return false
+}
+
+export function groupReaders(readers: ReplayOutputServiceOutputReader[]): {taskId: string, paths: string[]}[] {
+    const grouped = new Map<string, string[]>()
+    readers.forEach(reader => grouped.set(reader.taskId, [...(grouped.get(reader.taskId) ?? []), reader.path]))
+    return [...grouped].map(([taskId, paths]) => ({taskId, paths}))
 }

@@ -466,6 +466,12 @@
       "load_error": "Não foi possível carregar os outputs que a task {taskId} lê.",
       "empty": "A Task {taskId} não lê nenhuma output de uma Task anterior através de um caminho estático em suas próprias propriedades.",
       "current": "Valor atual {value}",
+      "readers_count": "Também lido por {count} outra task do replay | Também lido por {count} outras tasks do replay",
+      "readers_tooltip": "Também lido por estas Tasks do replay. Clique para ver suas definições.",
+      "readers_title": "Tasks que também leem {path}",
+      "readers_reads": "Lê {paths}",
+      "impact": "Essas substituições também alteram os valores que as Tasks {tasks} leem no replay.",
+      "dynamic_readers": "Tasks {tasks} leem outputs como um todo, através de um caminho dinâmico ou em um bloco, e também podem ler os novos valores.",
       "confirm": "Replay com {count} override | Replay com {count} overrides",
       "error": {
         "number": "Digite um número.",

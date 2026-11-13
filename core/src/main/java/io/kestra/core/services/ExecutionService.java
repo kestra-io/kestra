@@ -649,37 +649,9 @@ public class ExecutionService {
 
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            Set<String> taskRunToRestart = this.taskRunToRestart(
-                execution,
-                taskRun -> taskRun.getId().equals(taskRunId)
-            );
-
-            TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
-            GraphCluster graphCluster = GraphUtils.of(flow, execution);
-            if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
-                throw new IllegalArgumentException(
-                    "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
-                        .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
-                );
-            }
-
-            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
-                .stream()
-                .filter(task -> task instanceof AbstractGraphTask)
-                .map(task -> ((AbstractGraphTask) task))
-                .filter(task -> task.getTaskRun() != null)
-                .map(task -> task.getTaskRun().getId())
-                .filter(id -> !taskRunToRestart.contains(id))
-                .collect(Collectors.toCollection(HashSet::new));
-
-            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, taskRunToRestart));
-
-            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
-            execution.getTaskRunList()
-                .stream()
-                .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
-                .map(TaskRun::getId)
-                .forEach(originalTaskRunToRemove::add);
+            ReplayScope scope = this.replayScope(execution, flow, taskRunId);
+            Set<String> taskRunToRestart = scope.toRestart();
+            Set<String> originalTaskRunToRemove = scope.toRemove();
 
             List<String> notReused = patches.keySet().stream()
                 .filter(id -> originalTaskRunToRemove.contains(id) || execution.findTaskRunByTaskRunIdIfPresent(id).isEmpty())
@@ -744,6 +716,44 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    /**
+     * The ids of the task runs a replay from {@code taskRunId} restarts and of the ones it removes; it reuses the others as they are.
+     */
+    public ReplayScope replayScope(Execution execution, Flow flow, String taskRunId) throws InternalException {
+        Set<String> taskRunToRestart = this.taskRunToRestart(
+            execution,
+            taskRun -> taskRun.getId().equals(taskRunId)
+        );
+
+        TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        GraphCluster graphCluster = GraphUtils.of(flow, execution);
+        if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
+            throw new IllegalArgumentException(
+                "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
+                    .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
+            );
+        }
+
+        Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+            .stream()
+            .filter(task -> task instanceof AbstractGraphTask)
+            .map(task -> ((AbstractGraphTask) task))
+            .filter(task -> task.getTaskRun() != null)
+            .map(task -> task.getTaskRun().getId())
+            .filter(id -> !taskRunToRestart.contains(id))
+            .collect(Collectors.toCollection(HashSet::new));
+
+        originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, taskRunToRestart));
+
+        Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
+        execution.getTaskRunList()
+            .stream()
+            .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
+            .map(TaskRun::getId)
+            .forEach(originalTaskRunToRemove::add);
+        return new ReplayScope(taskRunToRestart, originalTaskRunToRemove);
     }
 
     // an output overridden again keeps the value it had before the first override as its original value
@@ -1995,5 +2005,8 @@ public class ExecutionService {
         Execution unqueued = concurrencyLimitService.unqueue(execution, newState);
         eventPublisher.publishEvent(CrudEvent.of(execution, unqueued));
         return unqueued;
+    }
+
+    public record ReplayScope(Set<String> toRestart, Set<String> toRemove) {
     }
 }

@@ -466,6 +466,12 @@
       "load_error": "Nie można załadować outputów, które odczytuje Task {taskId}.",
       "empty": "Task {taskId} nie odczytuje żadnych outputów poprzedniego Taska poprzez statyczną ścieżkę we własnych właściwościach.",
       "current": "Bieżąca wartość {value}",
+      "readers_count": "Odczytano również przez {count} inne Taski Replaya | Odczytano również przez {count} inne Taski Replaya | Odczytano również przez {count} innych Tasków Replaya",
+      "readers_tooltip": "Odczytane również przez te Taski Replaya. Kliknij, aby zobaczyć ich definicje.",
+      "readers_title": "Taski, które również odczytują {path}",
+      "readers_reads": "Odczytuje {paths}",
+      "impact": "Te nadpisania zmieniają również wartości, które Taski {tasks} odczytują w Replayu.",
+      "dynamic_readers": "Taski {tasks} odczytują Outputy w całości, poprzez dynamiczną ścieżkę lub w bloku, a także mogą odczytywać nowe wartości.",
       "confirm": "Replay z {count} nadpisaniem | Replay z {count} nadpisaniami | Replay z {count} nadpisaniami",
       "error": {
         "number": "Wprowadź liczbę.",

@@ -23,6 +23,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -34,6 +35,7 @@ import io.pebbletemplates.pebble.node.NamedArgumentNode;
 import io.pebbletemplates.pebble.node.PositionalArgumentNode;
 import io.pebbletemplates.pebble.node.PrintNode;
 import io.pebbletemplates.pebble.node.RootNode;
+import io.pebbletemplates.pebble.node.TextNode;
 import io.pebbletemplates.pebble.node.expression.ArrayExpression;
 import io.pebbletemplates.pebble.node.expression.BinaryExpression;
 import io.pebbletemplates.pebble.node.expression.ContextVariableExpression;
@@ -65,28 +67,47 @@ public class ReplayOutputService {
 
     private final PebbleEngine pebbleEngine;
     private final TaskOutputService taskOutputService;
+    private final ExecutionService executionService;
 
     @Inject
-    public ReplayOutputService(PebbleEngineFactory pebbleEngineFactory, TaskOutputService taskOutputService) {
+    public ReplayOutputService(PebbleEngineFactory pebbleEngineFactory, TaskOutputService taskOutputService, ExecutionService executionService) {
         this.pebbleEngine = Objects.requireNonNull(pebbleEngineFactory).create();
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
+        this.executionService = Objects.requireNonNull(executionService);
     }
 
     /**
      * The outputs the task of {@code taskRunId} reads in its own properties, outside {@code {% %}} blocks and not in the
      * tasks nested in it, with their value in the execution. Only outputs of task runs a replay reuses are listed.
+     * Each one names the other tasks the replay may run that read it, or a key in it, through a static path.
      */
-    public List<ReplayOutput> outputs(Flow flow, Execution execution, String taskRunId) throws InternalException {
-        return candidates(flow, execution, taskRunId).stream()
-            .map(candidate -> new ReplayOutput(candidate.path(), candidate.value()))
+    public ReplayOutputs outputs(Flow flow, Execution execution, String taskRunId) throws InternalException {
+        ExecutionService.ReplayScope scope = executionService.replayScope(execution, flow, taskRunId);
+        List<Candidate> candidates = candidates(flow, execution, taskRunId, scope);
+        if (candidates.isEmpty()) {
+            return new ReplayOutputs(List.of(), List.of());
+        }
+
+        Map<String, Reads> reads = new LinkedHashMap<>();
+        for (Task task : tasksRunByReplay(flow, execution, execution.findTaskRunByTaskRunId(taskRunId), scope)) {
+            reads.put(task.getId(), reads(task, 2));
+        }
+
+        List<ReplayOutput> values = candidates.stream()
+            .map(candidate -> new ReplayOutput(candidate.path(), candidate.value(), readers(candidate.segments(), reads)))
             .toList();
+        List<String> dynamicReaders = reads.entrySet().stream()
+            .filter(entry -> entry.getValue().dynamic)
+            .map(Map.Entry::getKey)
+            .toList();
+        return new ReplayOutputs(values, dynamicReaders);
     }
 
     /**
      * @throws IllegalArgumentException if a key is not an output the task reads, or if no value differs from the current one
      */
     public List<OutputOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
-        Map<String, Candidate> candidates = candidates(flow, execution, taskRunId).stream()
+        Map<String, Candidate> candidates = candidates(flow, execution, taskRunId, executionService.replayScope(execution, flow, taskRunId)).stream()
             .collect(Collectors.toMap(Candidate::path, Function.identity()));
 
         List<OutputOverride> overrides = new ArrayList<>(requested.size());
@@ -106,16 +127,9 @@ public class ReplayOutputService {
         return overrides;
     }
 
-    private List<Candidate> candidates(Flow flow, Execution execution, String taskRunId) throws InternalException {
+    private List<Candidate> candidates(Flow flow, Execution execution, String taskRunId, ExecutionService.ReplayScope scope) throws InternalException {
         TaskRun replayed = execution.findTaskRunByTaskRunId(taskRunId);
-        Task task = flow.findTaskByTaskId(replayed.getTaskId());
-
-        Set<List<String>> paths = new LinkedHashSet<>();
-        for (String template : templates(task)) {
-            parse(template).ifPresent(root -> root.getBody().getChildren().stream()
-                .filter(PrintNode.class::isInstance)
-                .forEach(print -> collect(((PrintNode) print).getExpression(), paths)));
-        }
+        Set<List<String>> paths = reads(flow.findTaskByTaskId(replayed.getTaskId()), 3).paths;
         if (paths.isEmpty()) {
             return List.of();
         }
@@ -124,35 +138,88 @@ public class ReplayOutputService {
         List<Candidate> candidates = new ArrayList<>(paths.size());
         for (List<String> path : paths) {
             target(execution, path)
-                .filter(target -> !isReplayed(execution, target.getKey(), replayed))
-                .ifPresent(target -> candidates.add(new Candidate(format(path), target.getKey(), target.getValue(), valueAt(outputs, path.subList(1, path.size())))));
+                .filter(target -> !isReplayed(execution, target.getKey(), replayed) && !scope.toRemove().contains(target.getKey().getId()))
+                .ifPresent(target -> candidates.add(new Candidate(format(path), path, target.getKey(), target.getValue(), valueAt(outputs, path.subList(1, path.size())))));
         }
         return candidates;
     }
 
-    private static void collect(Expression<?> expression, Set<List<String>> paths) {
+    private static List<Task> tasksRunByReplay(Flow flow, Execution execution, TaskRun replayed, ExecutionService.ReplayScope scope) {
+        Map<String, List<TaskRun>> taskRuns = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .collect(Collectors.groupingBy(TaskRun::getTaskId));
+        Map<String, Task> tasks = new LinkedHashMap<>();
+        for (Task task : flow.allTasksWithChilds()) {
+            if (!task.getId().equals(replayed.getTaskId()) && mayRun(flow, task, taskRuns, scope)) {
+                tasks.putIfAbsent(task.getId(), task);
+            }
+        }
+        return List.copyOf(tasks.values());
+    }
+
+    // a task that never ran may still run, unless its parent ran and the replay reuses it as it is
+    private static boolean mayRun(Flow flow, Task task, Map<String, List<TaskRun>> taskRuns, ExecutionService.ReplayScope scope) {
+        List<TaskRun> runs = taskRuns.getOrDefault(task.getId(), List.of());
+        if (!runs.isEmpty()) {
+            return runs.stream().anyMatch(taskRun -> scope.toRestart().contains(taskRun.getId()) || scope.toRemove().contains(taskRun.getId()));
+        }
+        Task parent = flow.findParentTasksByTaskId(task.getId());
+        return parent == null || mayRun(flow, parent, taskRuns, scope);
+    }
+
+    // a reader of the path, of a map holding it, or of a key inside it sees the overridden value
+    private static List<OutputReader> readers(List<String> path, Map<String, Reads> reads) {
+        List<OutputReader> readers = new ArrayList<>();
+        reads.forEach((taskId, read) -> read.paths.stream()
+            .filter(other -> isPrefix(other, path) || isPrefix(path, other))
+            .forEach(other -> readers.add(new OutputReader(taskId, format(other)))));
+        return readers;
+    }
+
+    private static boolean isPrefix(List<String> prefix, List<String> path) {
+        return prefix.size() <= path.size() && path.subList(0, prefix.size()).equals(prefix);
+    }
+
+    private Reads reads(Task task, int minSize) {
+        Reads reads = new Reads(minSize);
+        for (String template : templates(task)) {
+            parse(template).ifPresent(root -> root.getBody().getChildren().forEach(node -> {
+                if (node instanceof PrintNode print) {
+                    collect(print.getExpression(), reads);
+                } else if (!(node instanceof TextNode) && template.contains(OUTPUTS)) {
+                    reads.dynamic = true;
+                }
+            }));
+        }
+        return reads;
+    }
+
+    private static void collect(Expression<?> expression, Reads reads) {
+        if (expression instanceof ContextVariableExpression variable && OUTPUTS.equals(variable.getName())) {
+            reads.dynamic = true;
+            return;
+        }
         Optional<List<String>> path = expression instanceof GetAttributeExpression ? staticPath(expression) : Optional.empty();
         if (path.isPresent()) {
-            if (path.get().size() > 2 && OUTPUTS.equals(path.get().getFirst())) {
-                paths.add(path.get());
+            if (path.get().size() >= reads.minSize && OUTPUTS.equals(path.get().getFirst())) {
+                reads.paths.add(path.get());
             }
             return;
         }
         if (expression instanceof GetAttributeExpression attribute) {
-            collectInDynamicChain(attribute, paths);
+            collectInDynamicChain(attribute, reads);
             return;
         }
-        children(expression).forEach(child -> collect(child, paths));
+        children(expression).forEach(child -> collect(child, reads));
     }
 
     // a static prefix of a dynamic path is not what the task reads, so only the expressions inside the chain are collected
-    private static void collectInDynamicChain(GetAttributeExpression attribute, Set<List<String>> paths) {
-        collect(attribute.getAttributeNameExpression(), paths);
-        arguments(attribute.getArgumentsNode()).forEach(argument -> collect(argument, paths));
+    private static void collectInDynamicChain(GetAttributeExpression attribute, Reads reads) {
+        collect(attribute.getAttributeNameExpression(), reads);
+        arguments(attribute.getArgumentsNode()).forEach(argument -> collect(argument, reads));
         if (attribute.getNode() instanceof GetAttributeExpression parent) {
-            collectInDynamicChain(parent, paths);
+            collectInDynamicChain(parent, reads);
         } else {
-            collect(attribute.getNode(), paths);
+            collect(attribute.getNode(), reads);
         }
     }
 
@@ -290,12 +357,34 @@ public class ReplayOutputService {
     }
 
     /**
+     * @param dynamicReaders tasks the replay may run that read outputs as a whole, through a dynamic path or in a {@code {% %}} block
+     */
+    public record ReplayOutputs(@NotNull List<ReplayOutput> values, @NotNull List<String> dynamicReaders) {
+    }
+
+    /**
      * @param path the path as the task reads it, with bracket notation for a key that is not an identifier
      * @param value the output in the execution, {@code null} when the task run produced no such output
      */
-    public record ReplayOutput(@NotNull String path, @Nullable Object value) {
+    public record ReplayOutput(@NotNull String path, @Nullable Object value, @NotNull List<OutputReader> readers) {
     }
 
-    private record Candidate(String path, TaskRun taskRun, List<String> keys, @Nullable Object value) {
+    /**
+     * @param path the path the task reads: this output, a map holding it, or a key inside it
+     */
+    public record OutputReader(@NotNull String taskId, @NotNull String path) {
+    }
+
+    private record Candidate(String path, List<String> segments, TaskRun taskRun, List<String> keys, @Nullable Object value) {
+    }
+
+    private static final class Reads {
+        private final int minSize;
+        private final Set<List<String>> paths = new LinkedHashSet<>();
+        private boolean dynamic;
+
+        private Reads(int minSize) {
+            this.minSize = minSize;
+        }
     }
 }

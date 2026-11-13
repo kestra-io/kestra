@@ -466,6 +466,12 @@
       "load_error": "无法加载 task {taskId} 读取的 output。",
       "empty": "Task {taskId} 通过其自身属性中的静态路径读取不到前一个 Task 的 output。",
       "current": "当前值 {value}",
+      "readers_count": "也被回放的 {count} 个其他 Task 读取 | 也被回放的 {count} 个其他 Task 读取",
+      "readers_tooltip": "重放的这些 Task 也会读取。点击查看它们的定义。",
+      "readers_title": "也读取 {path} 的 Tasks",
+      "readers_reads": "读取 {paths}",
+      "impact": "这些覆盖还会更改 Task {tasks} 在重放中读取的值。",
+      "dynamic_readers": "Tasks {tasks} 整体读取 output，通过动态路径或在 block 中，也可能读取新值。",
       "confirm": "使用 {count} 个覆盖项重放",
       "error": {
         "number": "输入一个数字。",

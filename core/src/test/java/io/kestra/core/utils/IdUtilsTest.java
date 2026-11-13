@@ -29,11 +29,29 @@ class IdUtilsTest {
     void fromParts() {
         String id = IdUtils.fromParts("namespace", "flow");
         assertThat(id).isNotNull();
-        assertThat(id).isEqualTo("namespace_flow");
+        assertThat(id).isEqualTo("9:namespace4:flow");
 
         String idWithNull = IdUtils.fromParts(null, "namespace", "flow");
         assertThat(idWithNull).isNotNull();
-        assertThat(idWithNull).isEqualTo("namespace_flow");
+        assertThat(idWithNull).isEqualTo("9:namespace4:flow");
+    }
+
+    @Test
+    void shouldNotCollidWhenPartsContainSeparator() {
+        assertThat(IdUtils.fromParts("team", "x_y"))
+            .isNotEqualTo(IdUtils.fromParts("team_x", "y"));
+    }
+
+    @Test
+    void shouldSkipNullPartsIdentically() {
+        assertThat(IdUtils.fromParts(null, "namespace", "flow"))
+            .isEqualTo(IdUtils.fromParts("namespace", "flow"));
+
+        assertThat(IdUtils.fromParts("tenant", null, "namespace"))
+            .isEqualTo(IdUtils.fromParts("tenant", "namespace"));
+
+        assertThat(IdUtils.fromParts(null, null, "only"))
+            .isEqualTo(IdUtils.fromParts("only"));
     }
 
     @Test

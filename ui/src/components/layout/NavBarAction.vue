@@ -37,7 +37,9 @@
         :aria-label="iconOnly ? label : undefined"
         @click="onClick"
     >
-        <slot v-if="!iconOnly">{{ label }}</slot>
+        <template v-if="!iconOnly" #default>
+            <slot>{{ label }}</slot>
+        </template>
     </KsButton>
 </template>
 

@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import io.kestra.core.checkpoint.Checkpoint;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -243,9 +244,15 @@ public class CommandsWrapper implements TaskCommands {
         List<String> effectiveBeforeCommands = this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands;
         if (!renderedBeforeCommands.isEmpty()) {
             List<String> marked = new ArrayList<>();
-            marked.add("echo '##kestra:log:debug##'");
-            marked.addAll(effectiveBeforeCommands);
-            marked.add("echo '##kestra:log:info##'");
+            if (isCmdExe(renderedInterpreter)) {
+                marked.add("echo ##kestra:log:debug##");
+                marked.addAll(effectiveBeforeCommands);
+                marked.add("echo ##kestra:log:info##");
+            } else {
+                marked.add("echo '##kestra:log:debug##'");
+                marked.addAll(effectiveBeforeCommands);
+                marked.add("echo '##kestra:log:info##'");
+            }
             effectiveBeforeCommands = marked;
         }
 
@@ -436,5 +443,21 @@ public class CommandsWrapper implements TaskCommands {
     // kotlp is a single portable binary; Windows only needs it renamed with an '.exe' extension.
     private String kotlpBinaryName() {
         return this.isWindowsTarget() ? KotlpUtils.WINDOWS_BINARY_NAME : KotlpUtils.BINARY_NAME;
+    }
+
+    private static boolean isCmdExe(List<String> interpreter) {
+        if (interpreter == null || interpreter.isEmpty()) {
+            return false;
+        }
+        String first = interpreter.getFirst();
+        if (first == null) {
+            return false;
+        }
+        String name = StringUtils.strip(first, "\"");
+        int lastSeparator = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+        if (lastSeparator >= 0) {
+            name = name.substring(lastSeparator + 1);
+        }
+        return "cmd".equalsIgnoreCase(name) || "cmd.exe".equalsIgnoreCase(name);
     }
 }

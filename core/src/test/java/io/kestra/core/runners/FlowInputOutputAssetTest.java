@@ -11,6 +11,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.FormInput;
@@ -136,5 +138,19 @@ class FlowInputOutputAssetTest {
         );
 
         assertThat(resolved).isEqualTo(Map.of("target", Map.of("vm", "web-01")));
+    }
+
+    @Test
+    void shouldResolveAnAssetOutputWithoutFilters() {
+        Flow flow = Flow.builder()
+            .id("flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(Output.builder().id("vm").type(OutputType.ASSET).value("{{ inputs.vm }}").build()))
+            .build();
+
+        Map<String, Object> outputs = flowInputOutput.typedOutputs(flow, EXECUTION, Map.of("vm", "web-01"));
+
+        assertThat(outputs).isEqualTo(Map.of("vm", "web-01"));
+        assertThat(RESOLVED_FOR).containsExactly((AssetInput) null);
     }
 }

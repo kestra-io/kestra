@@ -62,7 +62,7 @@
 <script setup lang="ts">
     import {computed, type Component} from "vue"
 
-    import {ElButton} from "element-plus"
+    import {ElButton, type Placement} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
@@ -87,7 +87,7 @@
         color?: string
         tag?: string | Component
         tooltip?: string
-        tooltipPlacement?: string
+        tooltipPlacement?: Placement
     }>()
 
     const emit = defineEmits<{

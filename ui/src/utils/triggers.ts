@@ -1,4 +1,5 @@
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+import {downloadBlob} from "./utils"
 
 interface TriggerSearchOptions {
     sort?: string;
@@ -39,14 +40,7 @@ export async function exportTriggersAsCSV(options: TriggerExportOptions) {
     }, {
         headers: {Accept: "text/csv"},
     })
-    const url = window.URL.createObjectURL(new Blob([response as string], {type: "text/csv"}))
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", "triggers.csv")
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
+    downloadBlob(new Blob([response as string], {type: "text/csv"}), "triggers.csv")
 }
 
 export function blockerMessage(blocker: {reason?: string, message?: string}, t: (key: string) => string) {

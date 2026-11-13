@@ -309,6 +309,12 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
                     )
             );
+            // JSONRPCMessage is no longer sealed since MCP SDK 2.x, so the switch needs a fallback.
+            default -> buildErrorResponse(
+                "Unexpected message type.",
+                HttpStatus.BAD_REQUEST,
+                McpSchema.ErrorCodes.INVALID_REQUEST
+            ).map(r -> r);
         };
 
         return response

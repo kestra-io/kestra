@@ -83,6 +83,16 @@
     --ks-chart-trace: #6f6f7b;
     --ks-chart-warn: var(--ks-orange-600);
     --ks-chart-warning: var(--ks-orange-600);
+    --ks-chart-categorical-1: #6929c4;
+    --ks-chart-categorical-2: #1192e8;
+    --ks-chart-categorical-3: #005d5d;
+    --ks-chart-categorical-4: #9f1853;
+    --ks-chart-categorical-5: #002d9c;
+    --ks-chart-categorical-6: #ee538b;
+    --ks-chart-categorical-7: #b28600;
+    --ks-chart-categorical-8: #009d9a;
+    --ks-chart-categorical-9: #8a3800;
+    --ks-chart-categorical-10: #a56eff;
 
     /* dependencies */
     --ks-dependencies-edge-default: var(--ks-gray-neutral-300);

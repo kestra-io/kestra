@@ -48,6 +48,9 @@ public class ProblemResponseFilter implements Ordered {
 
     @ResponseFilter
     public void fillProblemBody(@NonNull HttpRequest<?> request, @NonNull MutableHttpResponse<?> response) {
+        if (request.getAttribute("kestra.webhook.forwarding", Boolean.class).orElse(false)) {
+            return;
+        }
         if (400 > response.status().getCode()) {
             return;
         }

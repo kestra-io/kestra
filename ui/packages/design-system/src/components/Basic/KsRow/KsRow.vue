@@ -7,18 +7,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRow} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {HTMLAttributes} from "vue"
+    import {ElRow, type RowProps} from "element-plus"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        gutter?: number
-        justify?: "start" | "end" | "center" | "space-around" | "space-between" | "space-evenly"
-        align?: "top" | "middle" | "bottom"
-    }>()
+    const props = defineProps<RowProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof RowProps>>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineSlots<{
         default?(): unknown

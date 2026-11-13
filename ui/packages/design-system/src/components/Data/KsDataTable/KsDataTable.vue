@@ -82,7 +82,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import type {TableProps} from "element-plus"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -100,7 +102,7 @@
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
-    const props = withDefaults(defineProps<{
+    export interface KsDataTableProps {
         data?: any[]
         total?: number
         currentPage?: number
@@ -123,7 +125,10 @@
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
         mobileColumns?: KsDataTableMobileColumns
-    }>(), {
+    }
+
+    // Rows are untyped here; `never` lets a forwarded callback such as rowClassName annotate its own row type.
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<never> & HTMLAttributes>, keyof KsDataTableProps>>(), {
         data: () => [],
         total: 0,
         currentPage: 1,
@@ -196,17 +201,17 @@
         return Array.from(new Set([...userKeys, ...forced]))
     })
 
-    type CellStyleArg = {column: {property?: string; columnKey?: string}}
-    type CellStyle = Record<string, string | number> | undefined
+    type CellStyle = TableProps["cellStyle"]
+    type CellStyleArg = Parameters<Extract<NonNullable<CellStyle>, (...args: never[]) => unknown>>[0]
 
-    const composedCellStyle = computed(() => {
-        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as ((arg: CellStyleArg) => CellStyle) | CellStyle
+    const composedCellStyle = computed((): CellStyle => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as CellStyle
         const columns = props.mobileColumns
         if (!columns) return userStyle
         return (arg: CellStyleArg) => {
             const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
             const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
-            return order === undefined ? own : {...own, "--ks-mobile-order": order}
+            return order === undefined ? (own ?? {}) : {...own, "--ks-mobile-order": order}
         }
     })
 

@@ -16,18 +16,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {ElTabs, type TabsProps} from "element-plus"
+    import {computed, type HTMLAttributes} from "vue"
+    import {ElTabs, type TabsProps, type TabsPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<string>()
 
-    const props = defineProps<{
+    export interface KsTabsProps {
         type?: "" | "card" | "border-card" | "box" | "segmented"
         paneScroll?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsTabsProps & /* @vue-ignore */ Omit<NativeAttributes<TabsPropsPublic & HTMLAttributes>, keyof KsTabsProps | "modelValue">>()
 
     defineSlots<{
         default?(): unknown

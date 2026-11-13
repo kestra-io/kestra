@@ -15,6 +15,7 @@
     import {computed, inject} from "vue"
     import {ElTableColumn, type TableColumnCtx, type TableColumnInstance, type TableProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {MOBILE_COLUMNS_KEY, mobileColumnClass} from "../KsDataTable/mobileColumns"
 
     defineOptions({inheritAttrs: false})
@@ -22,7 +23,7 @@
     type TableRow = NonNullable<TableProps["data"]>[number]
     type ColumnProps = TableColumnInstance["$props"]
 
-    const props = withDefaults(defineProps<{
+    export interface KsTableColumnProps {
         type?: string
         prop?: string
         label?: string
@@ -34,7 +35,12 @@
         className?: string
         fixed?: boolean | "left" | "right"
         reserveSelection?: boolean
-    }>(), {
+    }
+
+    // Rows are untyped here; `never` lets a formatter annotate its own row type.
+    type ForwardedColumnProps = Omit<NativeAttributes<ColumnProps>, keyof KsTableColumnProps | "formatter"> & {formatter?: TableColumnCtx<never>["formatter"]}
+
+    const props = withDefaults(defineProps<KsTableColumnProps & /* @vue-ignore */ ForwardedColumnProps>(), {
         type: undefined,
         prop: undefined,
         label: undefined,

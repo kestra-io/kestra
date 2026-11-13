@@ -9,6 +9,7 @@
         :disableFeatures="disableFeatures"
         :renderer="renderer"
         :maxPixelRatio="maxPixelRatio"
+        :seriesLabel="seriesLabel"
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
@@ -56,6 +57,8 @@
             renderer?: ChartRenderer
             /** Upper bound for the canvas pixel ratio; see KsEchart. */
             maxPixelRatio?: number
+            /** Tooltip text of a series; see KsEchart. */
+            seriesLabel?: (name: string) => string | undefined
         }>(),
         {
             data: null,

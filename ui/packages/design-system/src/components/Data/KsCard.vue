@@ -13,17 +13,17 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCard, type CardProps} from "element-plus"
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        shadow?: "always" | "hover" | "never"
-    }>()
+    const props = defineProps<CardProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof CardProps>>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineSlots<{
         default?(): unknown

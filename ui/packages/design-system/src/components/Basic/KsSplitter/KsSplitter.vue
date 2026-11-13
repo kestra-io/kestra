@@ -1,5 +1,5 @@
 <template>
-    <ElSplitter v-bind="$attrs">
+    <ElSplitter v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,9 +7,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSplitter} from "element-plus"
+    import type {HTMLAttributes} from "vue"
+    import {ElSplitter, type SplitterProps} from "element-plus"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
+
+    const props = defineProps<SplitterProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof SplitterProps>>()
+
+    const filteredProps = usePassedProps(props)
 
     defineSlots<{
         default?(): unknown

@@ -15,10 +15,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
-    import {ElDropdown, type DropdownInstance} from "element-plus"
+    import {ref, type ExtractPublicPropTypes, type HTMLAttributes} from "vue"
+    import {ElDropdown, dropdownProps, type DropdownInstance} from "element-plus"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
+
+    defineProps</* @vue-ignore */ NativeAttributes<ExtractPublicPropTypes<typeof dropdownProps> & HTMLAttributes>>()
 
     const POPPER_OPTIONS = {
         modifiers: [

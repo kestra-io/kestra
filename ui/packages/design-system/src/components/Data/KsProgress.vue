@@ -1,37 +1,24 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as ProgressProps)">
+    <ElProgress :strokeLinecap="strokeLinecap" v-bind="({...filteredProps(), ...$attrs} as ProgressProps)">
         <slot/>
     </ElProgress>
 </template>
 
 <script setup lang="ts">
     import {ElProgress, type ProgressProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
-    import {computed} from "vue"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import {computed, type HTMLAttributes} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+
+    export interface KsProgressProps extends ProgressProps {
+        left?: number
+        radius?: number | string
+    }
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        left?: number
-        percentage?: number
-        type?: "line" | "circle" | "dashboard"
-        strokeWidth?: number
-        color?: string | object | ((pct: number) => string)
-        showText?: boolean
-        status?: "" | "success" | "exception" | "warning"
-        striped?: boolean
-        stripedFlow?: boolean
-        radius?: number | string
-    }>(), {
-        left: undefined,
-        percentage: undefined,
-        type: undefined,
-        strokeWidth: undefined,
-        color: undefined,
-        showText: undefined,
-        status: undefined,
+    const props = withDefaults(defineProps<KsProgressProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsProgressProps>>(), {
         strokeLinecap: "square",
-        radius: undefined,
     })
 
     const left = computed(() => `${props.left ?? 0}%`)
@@ -41,7 +28,7 @@
             : typeof props.radius === "number" ? `${props.radius}px` : props.radius,
     )
 
-    const filteredProps = useFilteredProps(props, ["radius"])
+    const filteredProps = usePassedProps(props, ["left", "radius"])
 </script>
 
 <style lang="scss">

@@ -10,13 +10,13 @@
         <component
             :is="actions[0].icon"
             :class="{'node-action--danger': actions[0].danger}"
-            :alt="actions[0].label"
+            :title="actions[0].label"
         />
     </KsIconButton>
 
     <KsDropdown v-else-if="actions.length > 1" trigger="click" placement="right-start" @click.stop>
         <KsIconButton :aria-label="$t('more actions')" class="node-action-button">
-            <DotsVertical :alt="$t('more actions')" />
+            <DotsVertical :title="$t('more actions')" />
         </KsIconButton>
         <template #dropdown>
             <KsDropdownMenu>

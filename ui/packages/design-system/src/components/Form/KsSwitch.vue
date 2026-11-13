@@ -7,38 +7,24 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElSwitch, type SwitchProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<boolean | string | number>()
 
-    const props = withDefaults(defineProps<{
-        disabled?: boolean
-        activeText?: string
-        inactiveText?: string
-        activeActionIcon?: Component | string
-        inactiveActionIcon?: Component | string
-        size?: "large" | "default" | "small"
-        activeValue?: boolean | string | number
-        inactiveValue?: boolean | string | number
-    }>(), {
-        activeText: undefined,
-        inactiveText: undefined,
-        activeActionIcon: undefined,
-        inactiveActionIcon: undefined,
-        size: undefined,
-        activeValue: undefined,
-        inactiveValue: undefined,
-    })
+    export type KsSwitchProps = Omit<SwitchProps, "modelValue">
+
+    const props = defineProps<KsSwitchProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsSwitchProps>>()
 
     const emit = defineEmits<{
         change: [value: boolean | string | number]
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 </script>
 
 <style lang="scss">

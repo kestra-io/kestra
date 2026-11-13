@@ -36,7 +36,8 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, ref, type HTMLAttributes} from "vue"
     import {ElInput} from "element-plus"
     import {usePassedProps} from "../../utils/filteredProps"
 
@@ -50,7 +51,7 @@
         select: () => elInputRef.value?.select(),
     })
 
-    const props = defineProps<KsInputProps>()
+    const props = defineProps<KsInputProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsInputProps>>()
 
     // ElInput emits strings only, whatever type the bound value has.
     const emit = defineEmits<{

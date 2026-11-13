@@ -249,6 +249,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations/secretsFilter"
+    import {latestRequest} from "../../utils/latestRequest"
     import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
@@ -471,7 +472,10 @@
     const namespaceFilter = (namespace: string) =>
         [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
@@ -483,6 +487,7 @@
             ],
         }))
 
+        if (!isLatest()) return
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
 
         let allSecrets = secretsResponse.results ?? []
@@ -506,6 +511,7 @@
             }
         }
 
+        if (!isLatest()) return
         hasData.value = (allSecrets.length ?? 0) !== 0
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets

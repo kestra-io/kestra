@@ -326,6 +326,7 @@
     import {storageKeys} from "../../utils/constants"
     import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
+    import {latestRequest} from "../../utils/latestRequest"
 
     import {dateUtils, dayjs, sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
@@ -360,8 +361,11 @@
     const namespaceFilter = (namespace: string): QueryFilter[] =>
         [{field: "namespace", operation: "EQUALS", value: namespace}]
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
+        const isLatest = startLoad()
         const activeFilters = routeQueryToQueryFilters(route.query)
         const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
@@ -394,6 +398,7 @@
             }
         }
 
+        if (!isLatest()) return
         kvs.value = allKvs
         total.value = kvsResponse.total ?? 0
     }

@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.test.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../node_modules/.tmp/unknown-props/test.tsbuildinfo"
+  },
+  "references": [{"path": "./tsconfig.app.json"}],
+  "vueCompilerOptions": {"checkUnknownProps": true, "dataAttributes": ["data-*"], "htmlAttributes": []}
+}

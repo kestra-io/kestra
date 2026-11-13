@@ -5,8 +5,8 @@
         v-bind="tooltipPlacement ? {placement: tooltipPlacement} : {}"
     >
         <ElButton
-            :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs})"
+            :aria-label="ariaLabel ?? tooltip"
+            v-bind="({...nativeAttrs, ...filteredProps(), ...$attrs})"
             :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
             @click="emit('click', $event)"
             plain
@@ -24,7 +24,8 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs})"
+        :aria-label="ariaLabel"
+        v-bind="({...nativeAttrs, ...filteredProps(), ...$attrs})"
         :class="{'is-square': square, 'is-block': block, 'kel-button--toned': tone}"
         @click="emit('click', $event)"
         plain
@@ -52,6 +53,17 @@
         block?: boolean
         tooltip?: string
         tooltipPlacement?: Placement
+        /** Rendered as `aria-label` on the button; defaults to `tooltip` when there is one. */
+        ariaLabel?: string
+        /** Native attributes callers set on the button, bound on it rather than forwarded to ElButton. */
+        title?: string
+        id?: string
+        role?: string
+        draggable?: boolean | "true" | "false"
+        download?: string
+        ariaPressed?: boolean
+        ariaExpanded?: boolean
+        ariaChecked?: boolean
         /** With `tag="a"`. */
         href?: string
         target?: string
@@ -86,8 +98,14 @@
 
     defineOptions({inheritAttrs: false})
 
-    // Left undefined so a plain button does not render a replace="false" attribute.
-    const props = withDefaults(defineProps<KsButtonProps>(), {replace: undefined})
+    // Left undefined so a plain button does not render replace="false" or aria-pressed="false".
+    const props = withDefaults(defineProps<KsButtonProps>(), {
+        replace: undefined,
+        draggable: undefined,
+        ariaPressed: undefined,
+        ariaExpanded: undefined,
+        ariaChecked: undefined,
+    })
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -99,7 +117,19 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block"])
+    const NATIVE_PROPS = ["ariaLabel", "title", "id", "role", "draggable", "download", "ariaPressed", "ariaExpanded", "ariaChecked"] as const
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block", ...NATIVE_PROPS])
+
+    const nativeAttrs = computed(() => ({
+        title: props.title,
+        id: props.id,
+        role: props.role,
+        draggable: props.draggable,
+        download: props.download,
+        "aria-pressed": props.ariaPressed,
+        "aria-expanded": props.ariaExpanded,
+        "aria-checked": props.ariaChecked,
+    }))
 
     const tone = computed(() => (props.type ? KS_BUTTON_TONES[props.type] : undefined))
 </script>

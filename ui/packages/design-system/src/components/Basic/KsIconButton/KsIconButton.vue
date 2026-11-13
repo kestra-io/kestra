@@ -35,7 +35,7 @@
 <script setup lang="ts">
     import {computed, useAttrs} from "vue"
     import type {Placement} from "element-plus"
-    import KsButton from "../KsButton/KsButton.vue"
+    import KsButton, {type KsButtonType} from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     type IconSize = "xs" | "sm" | "base" | "lg" | "xl"
@@ -51,6 +51,10 @@
         replace?: boolean
         filled?: boolean
         size?: IconSize
+        type?: KsButtonType
+        tabindex?: number | string
+        ariaPressed?: boolean
+        ariaExpanded?: boolean
     }>(), {
         tooltip: "",
         placement: "left",
@@ -60,6 +64,10 @@
         replace: false,
         filled: false,
         size: "sm",
+        type: undefined,
+        tabindex: undefined,
+        ariaPressed: undefined,
+        ariaExpanded: undefined,
     })
 
     defineSlots<{
@@ -69,6 +77,10 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
+        type: props.type,
+        tabindex: props.tabindex,
+        "aria-pressed": props.ariaPressed,
+        "aria-expanded": props.ariaExpanded,
         class: [
             "ks-icon-button",
             `ks-icon-button--${props.size}`,

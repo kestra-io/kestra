@@ -21,6 +21,5 @@
     "paths": {
       "override/*": ["./src/override/*"]
     }
-  },
-  "vueCompilerOptions": {"checkUnknownProps": true, "dataAttributes": ["data-*"]}
+  }
 }

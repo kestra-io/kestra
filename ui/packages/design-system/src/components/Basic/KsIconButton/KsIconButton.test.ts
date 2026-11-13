@@ -16,6 +16,18 @@ describe("KsIconButton", () => {
         expect(wrapper.find(".ks-icon-button").exists()).toBe(true)
     })
 
+    test("forwards tabindex, aria-pressed and type to the button", () => {
+        const wrapper = mount(KsIconButton, {
+            attrs: {"aria-label": "Copilot", tabindex: "-1", "aria-pressed": false, type: "primary"},
+            slots: {default: StarIcon},
+            global: globalConfig,
+        })
+        const button = wrapper.find("button.ks-icon-button")
+        expect(button.attributes("tabindex")).toBe("-1")
+        expect(button.attributes("aria-pressed")).toBe("false")
+        expect(button.classes()).toContain("kel-button--primary")
+    })
+
     test("renders slot content", () => {
         const wrapper = mount(KsIconButton, {
             slots: {default: "<span data-testid=\"icon\">★</span>"},

@@ -172,4 +172,18 @@ describe("KsButton", () => {
         const wrapper = mount(KsButton, {global: globalConfig})
         expect(wrapper.find("button.kel-button").attributes("replace")).toBeUndefined()
     })
+
+    test("binds the native attributes a caller passes and renders none it omits", () => {
+        const wrapper = mount(KsButton, {attrs: {"aria-pressed": true, title: "Filter"}, global: globalConfig})
+        const button = wrapper.find("button.kel-button")
+        expect(button.attributes("aria-pressed")).toBe("true")
+        expect(button.attributes("title")).toBe("Filter")
+        expect(button.attributes("aria-expanded")).toBeUndefined()
+        expect(button.attributes("draggable")).toBeUndefined()
+    })
+
+    test("keeps a caller's aria-label on the button now that ariaLabel is a prop", () => {
+        const wrapper = mount(KsButton, {attrs: {"aria-label": "Close"}, global: globalConfig})
+        expect(wrapper.find("button.kel-button").attributes("aria-label")).toBe("Close")
+    })
 })

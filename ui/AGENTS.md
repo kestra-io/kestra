@@ -307,6 +307,8 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
+`npm run check:types` also counts the props and attributes passed to a component that does not declare them, per file, against `scripts/unknown-props/baseline.json`. It runs the usual three projects through `scripts/unknown-props/tsconfig.*.json`, which add `checkUnknownProps`, so the editor does not show these yet. `htmlAttributes: []` there makes `aria-label` on a component match an `ariaLabel` prop, as it does at runtime. A file that gains one fails the check: declare the prop on the component (the way `KsButton` declares its native attributes) or stop passing it. A file that loses one fails too until `npm run check:types -- --write` lowers the baseline. The same rule as for `any` applies: never raise it, and never pass `--accept-new-props` to get a green check.
+
 Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
 Two escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced. There is deliberately no whole-file opt-out, and a `-start` with no `-end` is reported instead of muting the rest of the file.
@@ -379,8 +381,8 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
-| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel` / `download`, or `:tag="RouterLink"` + `to` and `replace`; `ariaLabel`, `ariaPressed`, `ariaExpanded`, `ariaChecked`, `title`, `id`, `role` and `draggable` are props bound on the button |
+| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`), which also takes `type`, `tabindex`, `ariaPressed` and `ariaExpanded` |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |

@@ -1,3 +1,6 @@
+ext.leakTestIncludes = ['io/kestra/webserver/**']
+ext.leakTestExcludes = ['**/McpServerAuthenticationFilterTest*', '**/McpToolControllerTest*', '**/WebhookBodyServiceTest*']
+
 configurations {
     implementation.extendsFrom(micronaut)
 }
@@ -44,6 +47,7 @@ dependencies {
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing"
+    testRuntimeOnly "io.micronaut.test:micronaut-test-netty-leak"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')

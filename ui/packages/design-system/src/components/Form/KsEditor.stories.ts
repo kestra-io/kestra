@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref, watchEffect} from "vue"
+import {themes} from "@kestra-io/plumage"
 import KsEditor from "./KsEditor.vue"
 
 const meta: Meta<typeof KsEditor> = {
@@ -9,7 +10,7 @@ const meta: Meta<typeof KsEditor> = {
     argTypes: {
         lang: {control: "select", options: ["yaml", "json", "python", "javascript", "typescript", "shell", "markdown", "plaintext", "yaml-pebble"]},
         schemaType: {control: "select", options: [undefined, "flow", "dashboard", "app", "testsuites", "section"]},
-        theme: {control: "select", options: ["dark", "light", "vs"]},
+        theme: {control: "select", options: themes.map(theme => theme.name)},
         inline: {control: "boolean"},
         readOnly: {control: "boolean"},
         navbar: {control: "boolean"},
@@ -28,6 +29,28 @@ tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
     message: "Hello, {{ flow.id }}!"
+`
+
+const PEBBLE_SAMPLE = `id: pebble
+namespace: company.team
+inputs:
+  - id: name
+    type: STRING
+    defaults: World
+variables:
+  greeting: "{{ 'Hello, ' ~ inputs.name | upper }}"
+  when: "{{ now() | date('yyyy-MM-dd', timeZone='Europe/Paris') }}"
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      {% for row in outputs.fetch.rows %}
+      {{ loop.index }}: {{ row['id'] ?? 0 }} {{ row.value | json }}
+      {% endfor %}
+  - id: files
+    type: io.kestra.plugin.scripts.shell.Commands
+    commands:
+      - echo "{{ secret('API_KEY') }}" > {{ workingDir }}/key.txt
 `
 
 const JSON_SAMPLE = `{
@@ -61,10 +84,10 @@ export const Default: Story = {
 export const FlowSchema: Story = {
     render: () => ({
         components: {KsEditor},
-        setup() { return {value: ref(YAML_SAMPLE)} },
+        setup() { return {value: ref(PEBBLE_SAMPLE)} },
         template: "<div style=\"padding:24px;height:420px\"><ks-editor v-model=\"value\" lang=\"yaml\" schemaType=\"flow\" /></div>",
     }),
-    parameters: {controls: {disable: true}, docs: {description: {story: "With `schemaType=flow`, pebble `{{ }}` highlighting is auto-enabled and duplicate task-id markers are added on parse errors. Autocompletion is wired by the consumer via `configureLanguage` prop."}}},
+    parameters: {controls: {disable: true}, docs: {description: {story: "With `schemaType=flow`, pebble `{{ }}` highlighting is auto-enabled, with keywords, strings, numbers, functions and filters inside a block in the theme's code colors, and duplicate task-id markers are added on parse errors. Autocompletion is wired by the consumer via `configureLanguage` prop."}}},
 }
 
 export const Inline: Story = {
@@ -111,8 +134,8 @@ export const LightTheme: Story = {
     parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsEditor},
-        setup() { return {value: ref(YAML_SAMPLE)} },
-        template: "<div style=\"padding:24px;height:360px;background:#fff\"><ks-editor v-model=\"value\" lang=\"yaml\" theme=\"light\" /></div>",
+        setup() { return {value: ref(PEBBLE_SAMPLE)} },
+        template: "<div style=\"padding:24px;height:420px;background:#fff\"><ks-editor v-model=\"value\" lang=\"yaml\" theme=\"light\" schemaType=\"flow\" /></div>",
     }),
 }
 

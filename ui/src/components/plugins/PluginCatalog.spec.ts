@@ -1,12 +1,16 @@
 import {describe, test, expect, beforeEach, afterEach, vi} from "vitest"
 import {ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
+import {useRoute, type LocationQuery} from "vue-router"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginCatalog from "./PluginCatalog.vue"
+import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
 import "../../utils/global"
+
+const navigation = vi.hoisted(() => ({delayMs: 0, replaces: 0}))
 
 vi.mock("../../utils/publicApi", () => ({
     publicFetchJson: vi.fn().mockResolvedValue([]),
@@ -82,17 +86,21 @@ vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({theme: "light", loadConfigs: vi.fn()}),
 }))
 
-vi.mock("vue-router", () => ({
-    useRoute: () => ({params: {}, query: {}}),
-    useRouter: () => ({push: vi.fn()}),
-}))
+vi.mock("vue-router", async () => {
+    const {reactive} = await import("vue")
+    const route = reactive({params: {}, query: {} as LocationQuery})
+    return {
+        useRoute: () => route,
+        useRouter: () => ({push: vi.fn(), replace: vi.fn(async ({query}: {query: LocationQuery}) => {
+            navigation.replaces++
+            await new Promise(resolve => setTimeout(resolve, navigation.delayMs))
+            route.query = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined)) as LocationQuery
+        })}),
+    }
+})
 
 vi.mock("../../composables/usePluginsCount", () => ({
     usePluginsCount: () => ({totalPlugins: ref(900)}),
-}))
-
-vi.mock("../../stores/pluginsEnrichment", () => ({
-    usePluginsEnrichmentStore: () => ({fetchEnrichment: vi.fn(), getEnrichment: () => undefined}),
 }))
 
 async function mountCatalog() {
@@ -109,6 +117,9 @@ async function mountCatalog() {
 describe("PluginCatalog", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+        useRoute().query = {}
+        navigation.delayMs = 0
+        navigation.replaces = 0
     })
 
     afterEach(() => {
@@ -126,12 +137,63 @@ describe("PluginCatalog", () => {
         expect(pythonCard.text()).toContain("4")
     })
 
-    test("shows only the subgroup cards of a plugin with visible subgroups", async () => {
+    test("shows one card per plugin artifact, not one per subgroup", async () => {
         const wrapper = await mountCatalog()
         const titles = wrapper.findAll("h5").map(t => t.text())
 
-        expect(titles).toContain("Dbt CLI")
-        expect(titles).toContain("Dbt Cloud")
-        expect(titles).not.toContain("DBT")
+        expect(titles).toEqual(["DBT", "Python"])
+    })
+
+    test("finds the artifact card when searching for a task of one of its subgroups", async () => {
+        const wrapper = await mountCatalog()
+
+        await wrapper.find("input").setValue("cloud.triggerrun")
+        await flushPromises()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("finds the artifact card when searching for the title of one of its subgroups", async () => {
+        const wrapper = await mountCatalog()
+
+        await wrapper.find("input").setValue("dbt cloud")
+        await flushPromises()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("keeps every character typed while a navigation is pending, and writes the search to the URL once typing pauses", async () => {
+        navigation.delayMs = 50
+        const wrapper = await mountCatalog()
+        const input = wrapper.find("input")
+
+        for (const text of ["d", "db", "dbt"]) {
+            (input.element as HTMLInputElement).value = text
+            await input.trigger("input")
+        }
+        await new Promise(resolve => setTimeout(resolve, 400))
+        await flushPromises()
+
+        expect((input.element as HTMLInputElement).value).toBe("dbt")
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+        expect(useRoute().query.q).toBe("dbt")
+        expect(navigation.replaces).toBe(1)
+    })
+
+    test("restores the search and the sort from the URL when the catalog is opened again", async () => {
+        useRoute().query = {q: "dbt", sort: "nameDesc"}
+
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.find("input").element.value).toBe("dbt")
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("sorts the cards by the title they show", async () => {
+        usePluginsEnrichmentStore().enrichments["io.kestra.plugin.dbt"] = {title: "Zeta dbt"}
+
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["Python", "Zeta dbt"])
     })
 })

@@ -1,5 +1,8 @@
-import {describe, expect, it} from "vitest"
-import {errorsByFieldPath, errorsOnFieldOrItems, fieldPathOf, hasErrorUnder} from "./validationErrors"
+import {afterEach, describe, expect, it} from "vitest"
+import {createI18n} from "vue-i18n"
+import editorLocale from "../../packages/design-system/src/components/Form/KsEditor.locale"
+import {globalI18n} from "../translations/i18n"
+import {errorsByFieldPath, errorsOnFieldOrItems, fieldPathOf, hasErrorUnder, validationErrorLines} from "./validationErrors"
 
 describe("fieldPathOf", () => {
     it("should render list indices in brackets and keys in dots", () => {
@@ -81,5 +84,25 @@ describe("errorsOnFieldOrItems", () => {
 
     it("should gather errors on the field and its direct items only", () => {
         expect(errorsOnFieldOrItems(errors, "stopAfter")).toEqual(["on field", "on item"])
+    })
+})
+
+describe("validationErrorLines", () => {
+    afterEach(() => {
+        globalI18n.value = undefined
+    })
+
+    it("should show the backend duplicate task id error in the UI language", () => {
+        globalI18n.value = createI18n({legacy: false, locale: "de", messages: editorLocale}).global as never
+
+        expect(validationErrorLines([{detail: "Duplicate task id with name [hello, bye]", path: "tasks"}]))
+            .toEqual(["tasks: Doppelte task id: \"hello\", \"bye\""])
+    })
+
+    it("should keep other backend errors as they are", () => {
+        globalI18n.value = createI18n({legacy: false, locale: "de", messages: editorLocale}).global as never
+
+        expect(validationErrorLines([{detail: "must not be null", path: "tasks[0].message"}]))
+            .toEqual(["tasks[0].message: must not be null"])
     })
 })

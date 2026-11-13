@@ -1,7 +1,6 @@
 import {getCurrentScope, onScopeDispose, watch, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-
-const PEBBLE_BLOCK_PATTERN = "\\{\\{([\\s\\S]*?)\\}\\}|\\{%([\\s\\S]*?)%\\}"
+import {pebbleTokens} from "@kestra-io/plumage"
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
 
@@ -20,8 +19,11 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         lines?: monaco.editor.IModelDeltaDecoration[]
     } = {}
 
+    let painted: {model: monaco.editor.ITextModel, version: number} | undefined
+
     function attach(editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
         collection = editor.createDecorationsCollection()
+        painted = undefined
     }
 
     function apply() {
@@ -30,9 +32,11 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         if (lists.pebble) collection?.append(lists.pebble)
     }
 
+    // Called on every cursor move, so an unchanged model version keeps the decorations it already has.
     function highlightPebble() {
         if (!ctx.pebbleEnabled.value) {
             lists.pebble = []
+            painted = undefined
             apply()
             return
         }
@@ -41,24 +45,14 @@ export function useEditorDecorations(ctx: EditorDecorationsContext) {
         const model = editor.getModel?.()
         const text = model?.getValue?.()
         if (!text || !model) return
+        const version = model.getVersionId?.()
+        if (painted && painted.model === model && painted.version === version) return
 
-        const regex = new RegExp(PEBBLE_BLOCK_PATTERN, "g")
-        const found: monaco.editor.IModelDeltaDecoration[] = []
-        let match
-        while ((match = regex.exec(text)) !== null) {
-            const startPos = model.getPositionAt(match.index)
-            const endPos = model.getPositionAt(match.index + match[0].length)
-            found.push({
-                range: {
-                    startLineNumber: startPos.lineNumber,
-                    startColumn: startPos.column,
-                    endLineNumber: endPos.lineNumber,
-                    endColumn: endPos.column,
-                },
-                options: {inlineClassName: "highlight-pebble"},
-            })
-        }
-        lists.pebble = found
+        lists.pebble = pebbleTokens(text).map(([start, end, role]) => ({
+            range: monaco.Range.fromPositions(model.getPositionAt(start), model.getPositionAt(end)),
+            options: {inlineClassName: `highlight-pebble-${role}`},
+        }))
+        painted = version === undefined ? undefined : {model, version}
         apply()
     }
 

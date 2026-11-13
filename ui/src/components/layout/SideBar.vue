@@ -16,6 +16,16 @@
             />
         </template>
 
+        <KsSideBarSection
+            v-if="bookmarksStore.pages?.length"
+            :title="$t('favourites')"
+            collapsible
+            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
+            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+        >
+            <BookmarkLinkList :pages="bookmarksStore.pages" />
+        </KsSideBarSection>
+
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
             <div v-if="!section.child" class="top-level-link">
                 <MenuLink
@@ -43,16 +53,6 @@
             </KsSideBarSection>
         </template>
 
-        <KsSideBarSection
-            v-if="bookmarksStore.pages?.length"
-            :title="$t('favourites')"
-            collapsible
-            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
-            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
-        >
-            <BookmarkLinkList :pages="bookmarksStore.pages" />
-        </KsSideBarSection>
-
         <template #footer>
             <slot name="footer" />
         </template>
@@ -66,7 +66,7 @@
         @click="onCollapse(true)"
     />
 
-    <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
+    <SidebarCustomizeModal v-if="customizeModalLoaded" v-model="showCustomizeModal" :menu="menu" />
 
     <Teleport to="body">
         <div
@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent, onUnmounted, nextTick, watch} from "vue"
+    import {computed, h, ref, defineAsyncComponent, defineComponent, onUnmounted, nextTick, watch} from "vue"
 
     defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
@@ -97,7 +97,6 @@
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
-    import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useFeatureSpotlightStore} from "../../stores/featureSpotlight"
@@ -129,7 +128,9 @@
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
     const featureSpotlightStore = useFeatureSpotlightStore()
+    const SidebarCustomizeModal = defineAsyncComponent(() => import("./SidebarCustomizeModal.vue"))
     const showCustomizeModal = ref(false)
+    const customizeModalLoaded = ref(false)
     const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
     const contextMenuItem = ref<HTMLButtonElement | null>(null)
 
@@ -163,6 +164,7 @@
 
     function openCustomizeFromContextMenu() {
         hideContextMenu()
+        customizeModalLoaded.value = true
         showCustomizeModal.value = true
     }
 

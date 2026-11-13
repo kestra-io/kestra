@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
-    "no_logs_data_title": "No logs found for the selected filters.",
+    "no_logs_data_title": "No logs found",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -451,7 +452,7 @@
         "whole_action": "Replay the whole execution instead",
         "whole_title": "Revision {revision} can be replayed as a whole execution.",
         "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
-        "confirm_from_task": "Replay from task",
+        "confirm_from_task": "Replay from {taskId}",
         "confirm_whole": "Replay whole execution"
     },
     "change execution state done": "Execution state updated",
@@ -488,17 +489,21 @@
         "decision": "Decision",
         "by": "Decided by",
         "on": "Decided on",
+        "cancelled by": "Cancelled by",
+        "cancelled on": "Cancelled on",
         "decisions": {
           "approved": "Approved",
           "denied": "Denied",
-          "expired": "Expired"
+          "expired": "Expired",
+          "cancelled": "Cancelled",
+          "killed": "Killed"
         }
       },
       "cancel request": "Cancel request",
       "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
       "cancel done": "The approval request has been cancelled",
       "banner": {
-        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "pausing": "This execution is pausing. The approval request can be reviewed as soon as all onWait tasks finish.",
         "paused": "This execution is waiting for a review. Approve or deny it to continue."
       }
     },
@@ -540,7 +545,15 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
+      "retried": "This task was retried",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
@@ -610,6 +623,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "not started"
       }
     },
     "show task logs": "Show task logs",
@@ -669,6 +686,16 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Task details",
+      "count_error": "Could not load the count",
+      "load_error": "Could not load this view.",
+      "retry": "Retry",
+      "child_runs_capped": "Showing the logs of the first {count} child task runs only.",
+      "no_artifacts": "This task does not provide an artifact.",
+      "task_source": "Task source",
+      "worker_info": "Worker info"
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "No task of this flow provides an artifact.",
@@ -679,6 +706,7 @@
       "exit_fullscreen": "Exit fullscreen"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
@@ -711,7 +739,9 @@
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
+      "queued": "Queued",
+      "save_error": "Failed to update the concurrency limit, the previous value is kept."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -844,7 +874,7 @@
     "last execution date": "Last execution date",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
-    "no revisions": "No Revisions",
+    "no revisions": "No revisions found",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
     "template": "Template",
@@ -1073,7 +1103,7 @@
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
+    "delete execution running": "<div style=\"margin-top: var(--ks-spacing-2)\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
@@ -1190,6 +1220,9 @@
     "unlock trigger": {
       "success": "Trigger is unlocked"
     },
+    "trigger blocked": "Blocked",
+    "trigger blocked policy check failed": "Governance policies could not be checked.",
+    "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
     "trigger enable dialog": {
       "title": "Enable trigger",
@@ -1317,6 +1350,8 @@
     "pause backfill": "Pause the backfill",
     "continue backfills": "Continue backfills",
     "delete backfills": "Delete backfills",
+    "delete backfill confirm": "Delete the backfill of trigger {id}?",
+    "delete backfill success": "The backfill of trigger {id} has been deleted",
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
@@ -1338,8 +1373,18 @@
     "pluginPage": {
       "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
-      "noResults": "No plugins match your search.",
-      "loadError": "Could not load plugins. Please try again.",
+      "loadErrorTitle": "Could not load the plugin list",
+      "loadErrorDescription": "Your flows keep running. This page only reads the list of plugins.",
+      "showAll": "Show all plugins",
+      "view": {
+        "cards": "Cards",
+        "table": "Table",
+        "plugin": "Plugin"
+      },
+      "empty": {
+        "title": "No plugin matches your filters",
+        "description": "Try a different search term, or clear the category filters."
+      },
       "notFound": "This plugin could not be found.",
       "elementType": {
         "tasks": "Task",
@@ -1348,8 +1393,13 @@
         "taskRunners": "Task runner",
         "charts": "Chart",
         "apps": "App",
+        "appBlocks": "App block",
+        "dataFilters": "Data filter",
+        "dataFiltersKPI": "KPI data filter",
         "logExporters": "Log exporter",
-        "secrets": "Secret"
+        "secrets": "Secret",
+        "assets": "Asset type",
+        "additionalPlugins": "Additional plugin"
       },
       "sortBy": "Sort by",
       "sort": {
@@ -1380,6 +1430,19 @@
         "enterpriseEdition": "Enterprise Edition",
         "certified": "Certified",
         "back": "Back to plugins"
+      },
+      "management": {
+        "upload": "Upload",
+        "addPlugin": "Add plugin",
+        "lockedTitle": "Plugin version management",
+        "lockedDescription": "Install plugins, keep several versions side by side and upgrade them without rebuilding the image, with the Enterprise Edition.",
+        "learnMore": "Learn more",
+        "includedWithKestra": "Included with Kestra",
+        "gateNote": "Installing and upgrading plugins is available on the Enterprise Edition.",
+        "upsellTitle": "Plugin versioning is an Enterprise feature",
+        "upsellDescription": "Every plugin below ships with this Kestra image and is ready to use in a flow. On the Enterprise Edition you can also install a plugin that is not bundled, pin a version per plugin, and upgrade without rebuilding the image.",
+        "talkToUs": "Talk to us",
+        "readTheDocs": "Read the docs"
       }
     },
     "no inputs": "This flow has no inputs.",
@@ -1440,10 +1503,13 @@
           "fields": {
             "app_font_size": "App Font Size",
             "color_mode": "Color mode",
+            "editor_dark_theme": "Editor Theme in Dark Mode",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_font_family": "Editor Font Family",
             "editor_font_size": "Editor Font Size",
             "editor_hover_description": "Hover on property to see description",
+            "editor_pebble_hover": "Hover on Pebble reference to see its definition",
+            "editor_light_theme": "Editor Theme in Light Mode",
             "environment_color": "Environment Color",
             "environment_name": "Environment Name",
             "environment_name_tooltip": "This environment name is set from the config but can be changed.",
@@ -1466,6 +1532,9 @@
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "editor_pebble_hover": "Show the definition and docs of an input, output, variable, label or trigger variable when hovering its Pebble reference in the flow editor.",
+            "editor_dark_theme": "Syntax colors of the code editor when the color mode is Dark 1.0 or Dark 2.0.",
+            "editor_light_theme": "Syntax colors of the code editor when the color mode is Light.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
             "environment_color": "Accent color used for the current environment in the navigation.",
             "app_font_size": "Scale factor applied to all interface font sizes."
@@ -1474,6 +1543,9 @@
             "small": "Small",
             "medium": "Medium",
             "large": "Large"
+          },
+          "editor_theme_options": {
+            "match_app": "Match the app theme"
           }
         },
         "localization": {
@@ -1781,9 +1853,9 @@
         },
         "errors": {
           "first_execution": "The first execution finished as {state} instead of succeeding. Open the logs on this page to see why, then try again.",
-          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the <code>notify</code> task, then try again.",
+          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the {task} task, then try again.",
           "no_execution_to_replay": "There is no execution to replay yet. Run the flow on the previous step, then try again.",
-          "replay": "The replay finished as {state}. Open the logs on this page to see what <code>notify</code> reported, then try again.",
+          "replay": "The replay finished as {state}. Open the logs on this page to see what {task} reported, then try again.",
           "save_flow": "The tour flow could not be saved. {reason}",
           "test_event": "The webhook responded with {status}. Check that the flow is saved and the trigger is enabled, then try again."
         },
@@ -1850,7 +1922,8 @@
       "duplicate": "This key already exists",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
@@ -1906,6 +1979,11 @@
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
     "scheduleDateInPast": "Schedule date must be in the future",
+    "inputs_date_range": {
+      "between": "Earliest value is {after}, latest value is {before}.",
+      "after": "Earliest value is {after}.",
+      "before": "Latest value is {before}."
+    },
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -2007,7 +2085,6 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
-      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -2119,6 +2196,11 @@
       "decrease_fontsize": "Decrease editor font size",
       "increase_fontsize": "Increase editor font size",
       "reset_fontsize": "Reset editor font size"
+    },
+    "pebble_hover": {
+      "toggle": "Toggle Pebble hover docs",
+      "enabled": "Pebble hover docs are on.",
+      "disabled": "Pebble hover docs are off."
     },
     "instance": "Instance",
     "something_went_wrong": {
@@ -2257,7 +2339,8 @@
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
       "fullscreen": "Fullscreen",
-      "split_panel": "Split panel"
+      "split_panel": "Split panel",
+      "split_panel_no_room": "Not enough room for another panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
@@ -2266,11 +2349,11 @@
     "test-badge-text": "Test",
     "test-badge-tooltip": "This execution was created by a Test",
     "no_results": {
-      "executions": "No Executions Found",
-      "triggers": "No Triggers Found",
-      "flows": "No Flows Found",
-      "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found",
+      "executions": "No executions found",
+      "triggers": "No triggers found",
+      "flows": "No flows found",
+      "kv_pairs": "No key-value pairs found",
+      "secrets": "No secrets found",
       "all_columns_hidden": "All columns are hidden",
       "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
@@ -2282,6 +2365,7 @@
       "default": "Default Dashboard",
       "set_default": "Set as default",
       "empty": "There are no results to be shown.",
+      "overdue": "Overdue — {date}",
       "edition": {
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
@@ -2304,7 +2388,8 @@
         "paused": "Paused",
         "success": "Success",
         "warning": "Warning",
-        "failed": "Failed"
+        "failed": "Failed",
+        "upcoming": "Upcoming"
       }
     },
     "setup": {
@@ -2446,7 +2531,9 @@
         "unavailable": {
           "title": "AI Copilot isn't available",
           "detail": "No AI provider is configured for this instance. Configure one in your Kestra configuration file to enable AI Copilot.",
-          "docs": "View documentation"
+          "docs": "View documentation",
+          "sendTooltip": "Sending is disabled because no AI provider is configured.",
+          "notSent": "Your prompt was not sent"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -2524,7 +2611,7 @@
     "reject": "Reject",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
-    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "defaultsToNamespaceFile": "Defaults to namespace file: {name}",
     "no_file_choosen": "No file chosen",
     "dependency": {
       "controls": {
@@ -2723,7 +2810,8 @@
         "tooltip": "View flow tests"
       },
       "errors": {
-        "label": "{count} Error(s)"
+        "label": "{count} Error(s)",
+        "action": "{count} error(s), go to the next error"
       }
     },
     "invalid_source_code": "Invalid source code",

@@ -34,7 +34,9 @@
                 </div>
                 <DocsLayout>
                     <template #content>
+                        <!-- A new page gets new components: embedded ones like ChildCard load their data once, when they mount. -->
                         <KsMarkdown
+                            :key="renderedDocPath"
                             class="markdown"
                             :content="markdownContent"
                             :components="markdownComponents"
@@ -48,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, onUnmounted} from "vue"
+    import {ref, watch, computed, onUnmounted, provide} from "vue"
     import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -59,7 +61,7 @@
     import ContextDocsSearch from "./ContextDocsSearch.vue"
     import ContextInfoContent from "../ContextInfoContent.vue"
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue"
-    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
+    import {DOC_PATH_INJECTION_KEY, removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
@@ -110,10 +112,12 @@
     const docHistory = ref<string[]>([])
     const currentHistoryIndex = ref(-1)
     const markdownContent = ref<string>("")
+    const renderedDocPath = ref("docs")
 
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    provide(DOC_PATH_INJECTION_KEY, computed(() => renderedDocPath.value))
     const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({
@@ -143,7 +147,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value]
     }
 
-    async function setDocPageFromResponse(response: {metadata?: DocMetadata, content: string}) {
+    async function setDocPageFromResponse(path: string, response: {metadata?: DocMetadata, content: string}) {
         docStore.pageMetadata = response.metadata
         let content = response.content
         if (!("canShare" in navigator)) {
@@ -154,6 +158,7 @@
 
         const {content: cleanedContent, removedComponents: _} = extractMultilineJSXComponents(content)
 
+        renderedDocPath.value = path.replace(/^\/?(.*?)\/?$/, "$1") || "docs"
         markdownContent.value = replaceSelfClosingTagsWithOpenClose(cleanedContent)
     }
 
@@ -169,7 +174,7 @@
             const response = await docStore.fetchDocId(docId)
             if (docId !== docStore.docId) return
             if (response) {
-                await setDocPageFromResponse(response)
+                await setDocPageFromResponse(response.metadata?.parsedUrl ?? "docs", response)
                 // Add the default page to history
                 addToHistory("docs")
             } else {
@@ -185,7 +190,7 @@
         const response = await docStore.fetchResource(path)
         if (path !== (docStore.docPath || "docs")) return
 
-        await setDocPageFromResponse(response)
+        await setDocPageFromResponse(path, response)
         addToHistory(path)
     }
 

@@ -38,7 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `kestra-tokens/no-undeclared-css-token` (eslint, `@eslint/css`) covers `.css` and plain `<style>` blocks, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and `ks/no-undeclared-custom-property` (stylelint) covers the design system's remaining SCSS. All three propose a replacement, and `npm run lint` runs them all. See [scripts/tokens/README.md](scripts/tokens/README.md).
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
-13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.css` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
+13. **Bootstrap is gone; don't use its utility classes.** Write layout and spacing as scoped CSS with `--ks-*` tokens. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on any Bootstrap utility class and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -67,6 +67,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
+- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.
@@ -378,10 +379,10 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
-| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
+| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
 | `KsContainer` / `KsHeader` / `KsMain` | Page layout shell |
 | `KsRow` / `KsCol` | Responsive grid |
@@ -391,7 +392,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
@@ -405,7 +406,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace) |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -419,7 +420,7 @@ If your `<style>` block needs to exist:
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |
-| `KsForm` / `KsFormItem` | Form container with validation |
+| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields) |
 
 ### Data Display
 
@@ -445,15 +446,16 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
+| `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
 
 ### Charts
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -484,8 +486,10 @@ If your `<style>` block needs to exist:
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
+- `sortFromQuery(route.query.sort, fallback)`: the `defaultSort` of a URL-driven `KsDataTable`, so its sort arrow matches the rows after a refresh
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
+- `designSystemAsyncComponentsReady()` — the lazy imports of `KsMarkdown`, the charts and `KsEditor` still in flight, and the render of what they loaded, awaited by the unit setup after each test so a spec that mounts one is not torn down mid-import
 
 ## Composables
 
@@ -509,6 +513,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

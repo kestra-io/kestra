@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
+import io.kestra.core.async.AsyncOperationProcessedEvent.Progress;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.notification.model.NotificationItemOutcome;
@@ -61,6 +62,20 @@ class AsyncOperationAggregatorTest {
             assertThat(counts.get(NotificationItemOutcome.SUCCEEDED)).isEqualTo(2L);
             assertThat(counts.get(NotificationItemOutcome.FAILED)).isEqualTo(1L);
         });
+    }
+
+    @Test
+    void shouldIgnoreProgressEventsAndRecordTerminalOutcomes() throws Exception {
+        String operationId = TestsUtils.randomString(this.getClass().getSimpleName());
+        notificationService.notifyAsyncOperation("test-user", null, operationId, CoreAsyncOperationType.EXECUTION_KILL, List.of("item-1", "item-2"));
+
+        asyncOperationQueue.emit(new AsyncOperationProcessedEvent(operationId, null, "item-1", Outcome.RUNNING, null, new Progress(5, 10), Instant.now()));
+        asyncOperationQueue.emit(new AsyncOperationProcessedEvent(operationId, null, "item-2", Outcome.FAILED, "boom", Instant.now()));
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(
+            () -> assertThat(notificationItemRepository.findResourceIds(null, operationId, NotificationItemOutcome.FAILED)).containsExactly("item-2")
+        );
+        assertThat(notificationItemRepository.findResourceIds(null, operationId, NotificationItemOutcome.PENDING)).containsExactly("item-1");
     }
 
     @Test

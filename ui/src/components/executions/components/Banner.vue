@@ -102,7 +102,7 @@
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -127,10 +127,10 @@
                     <div class="list">
                         <span
                             v-for="(output, index) in searchableOutputs"
-                            :key="`${output.outputId}-${index}`"
+                            :key="`${output.dataId}-${index}`"
                             class="label-tag searchable-tag"
-                            :title="`${output.outputId}: ${output.value}`"
-                        >{{ output.outputId }}: {{ output.value }}</span>
+                            :title="`${output.dataId}: ${output.value}`"
+                        >{{ output.dataId }}: {{ output.value }}</span>
                         <span v-if="remainingSearchableOutputs > 0" class="more-searchable" data-test="more-searchable-outputs">
                             {{ $t("execution_banner.more_searchable_values", {count: $n(remainingSearchableOutputs)}) }}
                         </span>
@@ -164,7 +164,11 @@
             :title="$t(approvalBanner)"
             :closable="false"
             data-test="approval-banner"
-        />
+        >
+            <template v-if="approvalTaskRun" #action>
+                <ApprovalActions :execution :taskRun="approvalTaskRun" />
+            </template>
+        </KsAlert>
     </div>
 </template>
 
@@ -173,8 +177,8 @@
     import {useI18n} from "vue-i18n"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
-    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
-    import type {OutputControllerSearchableOutputInformation} from "@kestra-io/kestra-sdk"
+    import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
+    import type {SearchableDataControllerSearchableDataInformation} from "@kestra-io/kestra-sdk"
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
@@ -183,6 +187,7 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
+    import {useAiEnabled} from "../../../composables/useAiEnabled"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -194,6 +199,7 @@
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
     import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
+    import ApprovalActions from "./ApprovalActions.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -218,6 +224,10 @@
     const executionsStore = useExecutionsStore()
     const toast = useToast()
 
+    const approvalTaskRun = computed(() =>
+        (findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ?? findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSING))?.taskRun,
+    )
+
     const approvalBanner = computed(() => {
         // the generated SDK StateType does not list PAUSING until the SDK is regenerated
         if ((props.execution.state.current as string) === State.PAUSING) {
@@ -227,6 +237,7 @@
         return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
     })
 
+    const aiEnabled = useAiEnabled()
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
@@ -258,7 +269,7 @@
 
     const SEARCHABLE_OUTPUTS_LIMIT = 10
 
-    const searchableOutputs = ref<OutputControllerSearchableOutputInformation[]>([])
+    const searchableOutputs = ref<SearchableDataControllerSearchableDataInformation[]>([])
     const searchableOutputsTotal = ref(0)
     const remainingSearchableOutputs = computed(() => searchableOutputsTotal.value - searchableOutputs.value.length)
 
@@ -276,7 +287,7 @@
                 superseded = true
             })
 
-            const page = await OutputsAPI.listSearchableOutputs({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
+            const page = await SearchableDataAPI.listSearchableData({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
                 .catch((e: unknown) => {
                     handledIf(e, [403, 404])
                     return undefined

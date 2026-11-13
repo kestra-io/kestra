@@ -11,7 +11,7 @@
                     :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
                 >
-                    <template v-if="!iconOnly">
+                    <template v-if="!iconOnly" #default>
                         {{ actionLabel }}
                     </template>
                 </KsButton>
@@ -203,7 +203,7 @@
     function onClick() {
         trackExecutionAction("open_modal")
         if (checkForTrigger.value) {
-            toast.confirm(FlowWarningDialog as unknown as string, () => toggleModal(), true as unknown as "warning", null as unknown as boolean)
+            toast.confirm(FlowWarningDialog, () => toggleModal(), false, false)
         } else if (computedNamespace.value !== undefined && computedFlowId.value !== undefined) {
             toggleModal(true)
         } else {

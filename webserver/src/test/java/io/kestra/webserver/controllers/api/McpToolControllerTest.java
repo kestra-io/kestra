@@ -105,6 +105,19 @@ class McpToolControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenConnectingToPlatformServerThatIsNotEnabled() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/mcp", "")
+                    .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     void shouldReturnServiceUnavailableWhenConnectingToDisabledServer() {
         // Given
         String serverId = saveServer(true, null);
@@ -223,6 +236,27 @@ class McpToolControllerTest {
         // Then — server metadata from the Mcp record is reflected in the protocol response
         Map<String, Object> result = (Map<String, Object>) response.body().get("result");
         assertThat(result.get("instructions")).isEqualTo(instructions);
+    }
+
+    @Test
+    void shouldIgnoreClientSessionIdWhenInitializing() {
+        // Given
+        String serverId = saveServer(false, null);
+        String clientChosen = IdUtils.create();
+
+        // When — the client sends its own session id with initialize
+        HttpResponse<Map> response = client.toBlocking().exchange(
+            mcpPost(serverId, INITIALIZE_REQUEST, clientChosen), Map.class
+        );
+
+        // Then — the server issues a different one, and the client's id opens nothing
+        String issued = response.getHeaders().get(HttpHeaders.MCP_SESSION_ID);
+        assertThat(issued).isNotBlank().isNotEqualTo(clientChosen);
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(mcpPost(serverId, TOOLS_LIST_REQUEST, clientChosen))
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test

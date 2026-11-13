@@ -29,6 +29,7 @@
                 :options="echartsOption"
                 :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
                 :tooltipType="TooltipType.EXTERNAL"
+                :seriesLabel="seriesLabel"
                 @echarts-click="onChartClick"
             />
         </div>
@@ -53,7 +54,7 @@
     import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, rankStackedBars, useLegendToggle, toEchartsParams, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -84,6 +85,9 @@
     const expanded = ref(false)
 
     const {data, chartOptions} = props.chart
+    const colorByValues = computed(() => props.chart.chartOptions?.colorByValues)
+    const byRank = computed(() => byCategoryRank(colorByValues.value))
+    const seriesLabel = (name: string) => categoryDisplayName(name, colorByValues.value)
     const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg)
@@ -117,9 +121,13 @@
         return parsedData.value.othersCount > 0 ? [...cats, othersLabel.value] : cats
     })
 
+    const orderedSeries = computed(() => [...parsedData.value.series].sort((a, b) => byRank.value(a.name, b.name)))
+
+    const seriesColors = computed(() => chartCategoryColors(theme.value, parsedData.value.series.map((s) => s.name), colorByValues.value))
+
     const seriesData = computed<KsChartSeriesItem[]>(() => {
         const hasOthers = parsedData.value.othersCount > 0
-        return parsedData.value.series.map((s) => ({
+        return orderedSeries.value.map((s) => ({
             name: s.name,
             data: s.data.map((v, idx) => {
                 if (hasOthers && idx === s.data.length - 1) {
@@ -129,7 +137,7 @@
             }),
             barWidth: 12,
             itemStyle: {
-                color: getConsistentHEXColor(theme.value, s.name),
+                color: seriesColors.value.get(s.name),
                 borderColor: cssVar("--ks-bg-surface"),
                 borderWidth: 1,
                 borderRadius: 2,
@@ -148,8 +156,10 @@
     const legendItems = computed(() =>
         parsedData.value.series.map((s) => ({
             label: s.name,
-            color: getConsistentHEXColor(theme.value, s.name),
+            color: seriesColors.value.get(s.name) ?? "",
             count: s.data.reduce((acc, n) => acc + n, 0),
+            displayName: seriesLabel(s.name),
+            rank: categoryRank(s.name, colorByValues.value),
         })),
     )
 
@@ -240,7 +250,7 @@
     })
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
+        const params = toEchartsParams(rawParams)
         const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
         if (isOthers) {
             expanded.value = true

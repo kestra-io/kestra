@@ -220,7 +220,7 @@
                 {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
-                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task", {taskId: replayTaskRun.taskId}) : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -249,11 +249,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, inject} from "vue"
+    import {ref, computed, watch, inject, type PropType} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/design-system"
+    import {State, type KsTooltipProps} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -280,7 +280,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"},
+        tooltipPosition: {type: String as PropType<KsTooltipProps["placement"]>, default: "bottom"},
         trigger: {type: Boolean, default: true},
     })
 

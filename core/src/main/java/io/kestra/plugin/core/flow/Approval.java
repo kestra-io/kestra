@@ -32,6 +32,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.Services;
@@ -40,6 +41,7 @@ import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.UriProvider;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -199,22 +201,46 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         return errors;
     }
 
+    /**
+     * Tasks run before anything is decided, none by default: {@code autoApprove} is rendered, and the request opened,
+     * only once they all succeeded, so both can read their outputs.
+     */
+    protected List<Task> beforeDecision() {
+        return null;
+    }
+
+    /** The tasks run once approved, {@code onApprove} unless a subclass runs its own first. */
+    protected List<Task> approveTasks() {
+        return this.onApprove;
+    }
+
+    /** The tasks run last whatever happened, {@code finally} unless a subclass runs its own first. */
+    protected List<Task> finallyTasks() {
+        return this._finally;
+    }
+
+    /** Whether the request is approved without a review, {@code autoApprove} unless a subclass decides it from elsewhere. */
+    protected boolean autoApproved(RunContext runContext) throws IllegalVariableEvaluationException {
+        return runContext.render(this.autoApprove).as(Boolean.class).orElse(false);
+    }
+
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.CHOICE);
-        if (ListUtils.isEmpty(this.onWait) && ListUtils.isEmpty(this.onApprove) && ListUtils.isEmpty(this.onDeny)) {
+        List<Task> beforeBranch = ListUtils.emptyOnNull(ListUtils.concat(this.beforeDecision(), this.onWait));
+        if (ListUtils.isEmpty(beforeBranch) && ListUtils.isEmpty(this.approveTasks()) && ListUtils.isEmpty(this.onDeny)) {
             subGraph.addEdge(subGraph.getTaskNode(), subGraph.getFinally(), new Relation());
         }
 
         GraphUtils.sequentialThenSwitchCase(
             subGraph,
-            ListUtils.emptyOnNull(this.onWait),
+            beforeBranch,
             Map.of(
-                "approve", ListUtils.emptyOnNull(this.onApprove),
+                "approve", ListUtils.emptyOnNull(this.approveTasks()),
                 "deny", ListUtils.emptyOnNull(this.onDeny)
             ),
             this.errors,
-            this._finally,
+            this.finallyTasks(),
             taskRun,
             execution
         );
@@ -224,57 +250,105 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     @Override
     public List<Task> allChildTasks() {
-        return ListUtils.concat(this.onWait, this.onApprove, this.onDeny, this.errors, this._finally);
+        return ListUtils.concat(this.beforeDecision(), this.onWait, this.approveTasks(), this.onDeny, this.errors, this.finallyTasks());
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // autoApprove records its decision at creation, so it goes straight to its branch instead of running onWait.
         Decision.Type decision = this.decisionType(runContext);
+        if (decision == null && !ListUtils.isEmpty(this.beforeDecision())) {
+            // the decision is taken from the outputs of beforeDecision before it is stored, so its branch may already run.
+            return FlowableUtils.resolveTasks(ListUtils.concat(this.beforeDecision(), this.onWait, this.approveTasks()), parentTaskRun);
+        }
+        // autoApprove records its decision at creation, so it goes straight to its branch instead of running onWait.
         if (decision == null) {
             return FlowableUtils.resolveTasks(this.onWait, parentTaskRun);
         }
-        if (decision == Decision.Type.EXPIRED) {
-            return Collections.emptyList();
-        }
-        return FlowableUtils.resolveTasks(ListUtils.emptyOnNull(decision == Decision.Type.APPROVED ? this.onApprove : this.onDeny), parentTaskRun);
+        return FlowableUtils.resolveTasks(ListUtils.concat(this.beforeDecision(), this.branchTasks(decision)), parentTaskRun);
+    }
+
+    private List<Task> branchTasks(Decision.Type decision) {
+        return switch (decision) {
+            case APPROVED -> ListUtils.emptyOnNull(this.approveTasks());
+            case DENIED -> ListUtils.emptyOnNull(this.onDeny);
+            case EXPIRED -> Collections.emptyList();
+        };
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.decisionType(runContext) == null) {
+        Decision.Type decision = this.decisionType(runContext, execution, parentTaskRun);
+        if (decision == null) {
+            if (!ListUtils.isEmpty(this.beforeDecision())) {
+                Optional<State.Type> beforeState = this.resolveBeforeDecisionState(runContext, execution, parentTaskRun);
+                if (beforeState.isEmpty() || beforeState.get().isTerminatedInError()) {
+                    return FlowableUtils.resolveSequentialNexts(
+                        execution,
+                        FlowableUtils.resolveTasks(this.beforeDecision(), parentTaskRun),
+                        FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                        beforeState.isPresent() ? FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun) : null,
+                        parentTaskRun
+                    );
+                }
+                if (parentTaskRun.getState().getCurrent() == State.Type.RUNNING) {
+                    this.openRequest(execution, parentTaskRun, runContext);
+                }
+            }
+
             // the Branch phase never schedules 'finally' when onWait failed, so it is scheduled here.
             Optional<State.Type> waitState = this.resolveWaitState(runContext, execution, parentTaskRun);
             boolean onWaitFailed = waitState.isPresent() && waitState.get().isTerminatedInError();
 
             return FlowableUtils.resolveSequentialNexts(
                 execution,
-                this.childTasks(runContext, parentTaskRun),
+                FlowableUtils.resolveTasks(this.onWait, parentTaskRun),
                 FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-                onWaitFailed ? FlowableUtils.resolveTasks(this._finally, parentTaskRun) : null,
+                onWaitFailed ? FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun) : null,
                 parentTaskRun
             );
         }
 
+        if (this.decisionType(runContext) == null) {
+            this.recordAutoApproval(parentTaskRun, runContext);
+        }
+
         return FlowableUtils.resolveSequentialNexts(
             execution,
-            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.branchTasks(decision), parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            FlowableUtils.resolveTasks(this._finally, parentTaskRun),
+            FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun),
             parentTaskRun
         );
     }
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        Decision.Type decision = this.decisionType(runContext);
+        Decision.Type decision = this.decisionType(runContext, execution, parentTaskRun);
         if (decision == null) {
+            if (!ListUtils.isEmpty(this.beforeDecision())) {
+                Optional<State.Type> beforeState = this.resolveBeforeDecisionState(runContext, execution, parentTaskRun);
+                if (beforeState.isEmpty()) {
+                    return Optional.empty();
+                }
+                if (beforeState.get().isTerminatedInError()) {
+                    return FlowableUtils.resolveState(
+                        execution,
+                        FlowableUtils.resolveTasks(this.beforeDecision(), parentTaskRun),
+                        FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                        FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun),
+                        parentTaskRun,
+                        runContext,
+                        this.isAllowFailure(),
+                        this.isAllowWarning()
+                    );
+                }
+            }
             return this.resolveWaitState(runContext, execution, parentTaskRun);
         }
 
-        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, parentTaskRun);
+        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, parentTaskRun, decision);
 
-        if (branchState.isEmpty() || decision == null || branchState.get().isTerminatedInError()) {
+        if (branchState.isEmpty() || branchState.get().isTerminatedInError()) {
             return branchState;
         }
 
@@ -282,13 +356,67 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         return Optional.of(this.applyBehavior(behavior, branchState.get()));
     }
 
+    /** The stored decision, or the automatic approval decided once beforeDecision succeeded, before it is stored. */
+    private Decision.Type decisionType(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        Decision.Type stored = this.decisionType(runContext);
+        if (stored != null || ListUtils.isEmpty(this.beforeDecision())) {
+            return stored;
+        }
+
+        Optional<State.Type> beforeState = this.resolveBeforeDecisionState(runContext, execution, parentTaskRun);
+        boolean succeeded = beforeState.isPresent() && !beforeState.get().isTerminatedInError();
+        return succeeded && this.autoApproved(runContext) ? Decision.Type.APPROVED : null;
+    }
+
+    /** Ignores allowFailure, so that a failed beforeDecision never lets the request be decided. */
+    private Optional<State.Type> resolveBeforeDecisionState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return FlowableUtils.resolveState(execution, FlowableUtils.resolveTasks(this.beforeDecision(), parentTaskRun), null, null, parentTaskRun, runContext, false, false);
+    }
+
+    private void recordAutoApproval(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+        this.mergeOutputs(taskRun, runContext, Map.of("decision", Decision.Type.APPROVED.name(), "auto", true));
+    }
+
+    /** Opens the request {@link #created} left for later, since beforeDecision had to succeed first. */
+    private void openRequest(Execution execution, TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+        Services services = ((DefaultRunContext) runContext).services();
+        try {
+            FlowInterface flow = services.additionalService(FlowMetaStoreInterface.class).findByExecution(execution).orElseThrow();
+            ApprovalRequestHandler.OpenedRequest opened = services.additionalService(ApprovalRequestHandler.class).open(flow, execution, taskRun, this, runContext);
+            Map<String, Object> outputs = new HashMap<>();
+            if (opened.url() != null) {
+                outputs.put("url", opened.url());
+            }
+            if (opened.caseId() != null) {
+                outputs.put("caseId", opened.caseId());
+            }
+            this.mergeOutputs(taskRun, runContext, outputs);
+        } catch (IllegalVariableEvaluationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalVariableEvaluationException(e);
+        }
+    }
+
+    private void mergeOutputs(TaskRun taskRun, RunContext runContext, Map<String, Object> outputs) throws IllegalVariableEvaluationException {
+        if (outputs.isEmpty()) {
+            return;
+        }
+        TaskOutputService taskOutputService = ((DefaultRunContext) runContext).services().additionalService(TaskOutputService.class);
+        try {
+            taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), outputs));
+        } catch (InternalException e) {
+            throw new IllegalVariableEvaluationException(e);
+        }
+    }
+
     /** The Branch phase's own resolved state, before a configured behavior is mapped over it. */
-    private Optional<State.Type> resolveBranchState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
+    private Optional<State.Type> resolveBranchState(RunContext runContext, Execution execution, TaskRun parentTaskRun, Decision.Type decision) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = FlowableUtils.resolveTasks(this.branchTasks(decision), parentTaskRun).stream()
             .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
             .toList();
 
-        List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
+        List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.finallyTasks(), parentTaskRun);
 
         // computeFinalState(null, ...) ignores real children, so an empty branch with a 'finally' must go through resolveState().
         if (ListUtils.isEmpty(childTasks) && ListUtils.isEmpty(finallyTasks)) {
@@ -330,12 +458,12 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     /** Execution-level target state of a decided task run (SUCCEED/CANCEL/KILL only), empty when the branch itself failed. */
     @Override
     public Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
-        Decision.Type decision = this.decisionType(runContext);
+        Decision.Type decision = this.decisionType(runContext, execution, taskRun);
         if (decision == null) {
             return Optional.empty();
         }
 
-        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, taskRun);
+        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, taskRun, decision);
         if (branchState.isEmpty() || branchState.get().isTerminatedInError()) {
             return Optional.empty();
         }
@@ -398,8 +526,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         String caseId = current == null ? null : (String) current.get("caseId");
 
         if (decision == null) {
-            boolean autoApprove = runContext.render(this.autoApprove).as(Boolean.class).orElse(false);
-            if (autoApprove) {
+            // with beforeDecision, the automatic approval is stored once it ran, since its outputs do not exist yet.
+            if (ListUtils.isEmpty(this.beforeDecision()) && this.autoApproved(runContext)) {
                 return Output.builder().url(url).title(title).decision(Decision.Type.APPROVED).auto(true).build();
             }
             return Output.builder()
@@ -475,13 +603,15 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         }
 
         // state is unused for Approval: the delay records expiredDecision() instead of resuming the task run.
-        return Optional.of(ExecutionDelay.builder()
-            .taskRunId(taskRun.getId())
-            .executionId(taskRun.getExecutionId())
-            .date(DateUtils.plusOrThrow(taskRun.getState().maxDate(), timeout))
-            .state(State.Type.FAILED)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build());
+        return Optional.of(
+            ExecutionDelay.builder()
+                .taskRunId(taskRun.getId())
+                .executionId(taskRun.getExecutionId())
+                .date(DateUtils.plusOrThrow(taskRun.getState().maxDate(), timeout))
+                .state(State.Type.FAILED)
+                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                .build()
+        );
     }
 
     @Override
@@ -490,7 +620,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         ApprovalRequestHandler approvalRequestHandler = services.additionalService(ApprovalRequestHandler.class);
         approvalRequestHandler.validate(this);
 
-        if (services.additionalService(TaskOutputService.class).getOutputs(taskRun).get("decision") != null) {
+        if (!ListUtils.isEmpty(this.beforeDecision()) || services.additionalService(TaskOutputService.class).getOutputs(taskRun).get("decision") != null) {
             return Map.of();
         }
 

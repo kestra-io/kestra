@@ -252,12 +252,13 @@
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
-    import {cssVar as cssVariable, debounce, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD, pillZoomCompensation} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
+    import {useViewportRefit} from "./composables/useViewportRefit"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
     import type {LoopLaneData} from "./utils/loopOutcome"
     import BasicNode from "./nodes/BasicNode.vue"
@@ -340,7 +341,7 @@
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, onMoveStart, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, getElements, onNodesInitialized, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -473,45 +474,12 @@
         generateGraph()
     })
 
-    // A container resize only refits a view the user has not panned or zoomed since, so it never discards their framing (#19387).
-    let viewportAdjustedByUser = Boolean(props.defaultViewport)
-    onMoveStart(() => {
-        viewportAdjustedByUser = true
-    })
-
-    function fitGraph() {
-        viewportAdjustedByUser = false
-        fitView()
-    }
-
-    function zoomByUser(zoom: () => Promise<boolean>) {
-        viewportAdjustedByUser = true
-        zoom()
-    }
-
     const shell = ref<HTMLDivElement>()
-    let shellSize: {width: number, height: number} | undefined
-    let shellResizeObserver: ResizeObserver | undefined
-    const refitAfterResize = debounce(() => {
-        if (initialFitDone.value && !viewportAdjustedByUser) fitGraph()
-    }, 100)
-
-    onMounted(() => {
-        if (!shell.value) return
-        shellResizeObserver = new ResizeObserver(([entry]) => {
-            const {width, height} = entry.contentRect
-            // A hidden panel measures 0, and fitting the graph into it would leave it unreadable once shown again.
-            if (!width || !height) return
-            const resized = shellSize !== undefined && (shellSize.width !== width || shellSize.height !== height)
-            shellSize = {width, height}
-            if (resized) refitAfterResize()
-        })
-        shellResizeObserver.observe(shell.value)
-    })
-
-    onUnmounted(() => {
-        shellResizeObserver?.disconnect()
-        refitAfterResize.cancel()
+    const {fitGraph, zoomByUser} = useViewportRefit({
+        container: shell,
+        vueFlow: vueFlowStore,
+        isReady: () => initialFitDone.value,
+        startsAdjusted: Boolean(props.defaultViewport),
     })
 
     const refitOnNodesInitialized = ref(false)

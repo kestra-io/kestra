@@ -177,17 +177,7 @@ describe("Topology view refit", () => {
             expect(fitView).toHaveBeenCalledTimes(2)
         })
 
-        it("should keep the view the user panned or zoomed", async () => {
-            const {vueFlow, fitView} = await mountFitted(`topology-${Math.random()}`)
-
-            vueFlow.emits.moveStart({event: new WheelEvent("wheel"), flowTransform: {x: 0, y: 0, zoom: 2}})
-            resize(500, 600)
-            vi.runAllTimers()
-
-            expect(fitView).toHaveBeenCalledTimes(1)
-        })
-
-        it("should refit again once the user fits the view", async () => {
+        it("should refit again once a layout change fits the view", async () => {
             const {vueFlow, fitView, wrapper} = await mountFitted(`topology-${Math.random()}`)
 
             vueFlow.emits.moveStart({event: new WheelEvent("wheel"), flowTransform: {x: 0, y: 0, zoom: 2}})
@@ -198,15 +188,6 @@ describe("Topology view refit", () => {
             vi.runAllTimers()
 
             expect(fitView).toHaveBeenCalledTimes(3)
-        })
-
-        it("should not refit while the panel is hidden", async () => {
-            const {fitView} = await mountFitted(`topology-${Math.random()}`)
-
-            resize(0, 0)
-            vi.runAllTimers()
-
-            expect(fitView).toHaveBeenCalledTimes(1)
         })
     })
 

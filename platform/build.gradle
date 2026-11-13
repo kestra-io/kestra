@@ -40,6 +40,10 @@ dependencies {
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
     api platform("io.micronaut.platform:micronaut-platform:5.2.5")
+    // security tower (Trivy): micronaut-tracing 8.3.0 imports opentelemetry-bom 1.64.0, opentelemetry-api < 1.67.0 has
+    // CVE-2026-118259 (SEC-0387). Both BOMs so api, context, sdk and the -alpha incubator stay aligned; drop once Micronaut ships >= 1.67.0.
+    api platform("io.opentelemetry:opentelemetry-bom:1.67.0")
+    api platform("io.opentelemetry:opentelemetry-bom-alpha:1.67.0-alpha")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.91.0')
     api platform("io.grpc:grpc-bom:$grpcVersion")
@@ -51,6 +55,8 @@ dependencies {
 
     constraints {
         // security tower (Trivy): transitive libraries pinned to their fixed version
+        api("org.xerial.snappy:snappy-java:1.1.10.9") // from kafka-clients 4.4.0 (1.1.10.7): CVE-2026-93451, CVE-2026-108106, CVE-2026-116590 (SEC-2097)
+        api("org.apache.qpid:proton-j:0.35.0") // from azure-core-amqp 2.12.2 (azure-sdk-bom 1.3.9 ships 0.34.1): CVE-2026-66274 (SEC-2098)
         api("at.yawk.lz4:lz4-java:1.11.4") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc

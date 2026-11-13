@@ -56,7 +56,7 @@ class AuthorFlowToolTest {
     @BeforeEach
     void setUp() {
         aiService = mock(AiServiceInterface.class);
-        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1");
+        params = AgentCallContext.Context.builder().tenant(TENANT).providerId("provider-1").conversationId("thread-1").build();
         when(aiServiceManager.getAiService("provider-1")).thenReturn(aiService);
     }
 

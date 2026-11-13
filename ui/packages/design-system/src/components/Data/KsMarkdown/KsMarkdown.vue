@@ -211,7 +211,8 @@
                 }
             },
             onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
-                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                // The name must be one parseAttributes reads whole: it ends a name at "." or ":", so `data-a.onclick` would come back as `onclick`.
+                if (/^(data|aria)-[\w-]+$/.test(name)) {
                     return `${name}="${escapeAttrValue(value)}"`
                 }
 

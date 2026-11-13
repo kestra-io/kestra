@@ -247,6 +247,16 @@ jobs:
             echo "::error::Unexpected head repository name."
             exit 1
           fi
+          # A pull request whose head is a long-lived branch of this repository (a merge-up PR) would
+          # get a direct push onto it: those branches only take reviewed changes.
+          if [ "$CROSS" != "true" ]; then
+            case "$HEAD_REF" in
+              develop|main|master|releases/*|next/*)
+                echo "::error::Refusing to push onto $HEAD_REF: apply the patch through a pull request instead."
+                exit 1
+                ;;
+            esac
+          fi
           git -c core.hooksPath=/dev/null push "https://x-access-token:${PUSH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:refs/heads/${HEAD_REF}"
 
       - name: Save the commit as a patch instead

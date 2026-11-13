@@ -158,13 +158,17 @@ jobs:
   # Branches in this repository only: a fork PR is withheld the GCP credentials and the app token
   # cannot push to a fork. Those PRs still get the check below, they just have to run the
   # generator themselves.
+  #
+  # Not when a bot pushed: the generated commit is pushed as the Kestra GitHub App and starts this
+  # workflow again. Without the guard, a key Gemini failed on is retried and can push again, once per
+  # full CI run. Dependabot is a bot too.
   translations-generate:
     name: 'Translations - Generate'
     needs: [file-changes]
     if: >-
       needs.file-changes.outputs.translations == 'true'
       && github.event.pull_request.head.repo.fork == false
-      && github.actor != 'dependabot[bot]'
+      && github.event.sender.type != 'Bot'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -281,6 +285,7 @@ jobs:
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra-ee
+          permission-contents: read
 
       # The same-name EE branch when the PR has a companion, otherwise the branch it targets. A stacked
       # PR targets another OSS branch, which has no EE counterpart, hence the fall back to develop.
@@ -308,6 +313,8 @@ jobs:
           repository: kestra-io/kestra-ee
           ref: ${{ steps.ee-branch.outputs.ref }}
           token: ${{ steps.ee-token.outputs.token }}
+          # This branch's own check-translations.mjs runs below: it must not find the token in .git/config.
+          persist-credentials: false
           path: kestra-ee
           sparse-checkout: |
             ui-ee/src/

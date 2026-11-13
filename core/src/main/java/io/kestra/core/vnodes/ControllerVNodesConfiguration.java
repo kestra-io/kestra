@@ -8,11 +8,11 @@ import io.micronaut.core.bind.annotation.Bindable;
 /**
  * The vNodes the worker controllers share, to which the jobs targeting one worker are sent.
  *
- * @param count the number of vNodes.
- * @param rebalanceTimeout the maximum duration to wait for the controllers to reply to a rebalance.
+ * @param vnodes the number of vNodes.
+ * @param vnodesRebalanceTimeout the maximum duration to wait for the controllers to reply to a rebalance.
  */
-@ConfigurationProperties("kestra.controller.vnodes")
+@ConfigurationProperties("kestra.controller")
 public record ControllerVNodesConfiguration(
-    @Bindable(defaultValue = "32") Integer count,
-    @Bindable(defaultValue = "PT5S") Duration rebalanceTimeout) {
+    @Bindable(defaultValue = "32") Integer vnodes,
+    @Bindable(defaultValue = "PT5S") Duration vnodesRebalanceTimeout) {
 }

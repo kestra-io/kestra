@@ -2086,6 +2086,7 @@
     "chart": "График",
     "no_code": {
       "toggle_pebble": "Переключить редактор Pebble",
+      "policy_supplied": "Задано политикой",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -30,9 +31,15 @@ public class ValidateConstraintViolation {
     private List<String> warnings;
     private List<String> infos;
     private List<ValidationError> errors;
+    private List<String> policySuppliedPaths;
 
     public List<ValidationError> getErrors() {
         return errors == null ? List.of() : errors;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<String> getPolicySuppliedPaths() {
+        return policySuppliedPaths == null ? List.of() : policySuppliedPaths;
     }
 
     @Deprecated

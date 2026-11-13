@@ -901,9 +901,10 @@ function deleteFlowAndDependencies() {
             })
     }
 
-    function validateTask(options: { task: string, section: string }) {
+    function validateTask(options: { task: string, section: string, namespace?: string }) {
         return FlowsAPI.validateTask(
             {
+                namespace: options.namespace,
                 section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"],
                 // The endpoint takes the task as YAML (see the header below), which the generated
                 // body type - an object schema - cannot express.

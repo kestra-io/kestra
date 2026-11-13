@@ -51,6 +51,8 @@ export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-is
 
 export const FIELD_VALIDATION_ERRORS_INJECTION_KEY = Symbol("field-validation-errors-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 
+export const POLICY_SUPPLIED_PATHS_INJECTION_KEY = Symbol("policy-supplied-paths-injection-key") as InjectionKey<ComputedRef<ReadonlySet<string>>>
+
 export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
 export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
 export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>

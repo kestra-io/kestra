@@ -23,6 +23,7 @@
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys"
     import TaskEditor from "../components/TaskEditor.vue"
+    import {usePolicySuppliedPaths} from "../utils/usePolicySuppliedPaths"
     import ValidationError from "../../../components/flows/ValidationError.vue"
     import {useFlowStore} from "../../../stores/flow"
     import {validationErrorLines} from "../../../utils/validationErrors"
@@ -91,16 +92,18 @@
     )
 
     const flowStore = useFlowStore()
+    const {track: trackValidation} = usePolicySuppliedPaths()
     const validateTask = (task?: string) => {
         if(task){
             clearTimeout(timer.value)
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {
                     lastValidatedValue.value = task
-                    flowStore.validateTask({
+                    trackValidation(flowStore.validateTask({
                         task,
                         section: validationSection.value,
-                    })
+                        namespace: flowStore.flow?.namespace,
+                    }))
                 }
             }, 500)
         }

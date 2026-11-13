@@ -72,7 +72,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
@@ -2003,6 +2006,23 @@ class FlowControllerTest {
         assertThat(body.get(0).getErrors())
             .extracting(ValidationError::detail, ValidationError::pointer)
             .containsExactly(tuple("must not be null", "/message"));
+    }
+
+    @Test
+    void shouldValidateYamlTaskIgnoringNamespaceAndOmitPolicySuppliedPaths() {
+        // Given
+        String task = "id: log\ntype: io.kestra.plugin.core.log.Log\n";
+
+        // When
+        String withoutNamespace = client.toBlocking()
+            .retrieve(POST("/api/v1/main/flows/validate/task?section=tasks", task).contentType(MediaType.APPLICATION_YAML), String.class);
+        String withNamespace = client.toBlocking()
+            .retrieve(POST("/api/v1/main/flows/validate/task?section=tasks&namespace=io.kestra.tests", task).contentType(MediaType.APPLICATION_YAML), String.class);
+
+        // Then
+        assertThat(withNamespace, is(withoutNamespace));
+        assertThat(withNamespace, containsString("message"));
+        assertThat(withNamespace, not(containsString("policySuppliedPaths")));
     }
 
     @Test

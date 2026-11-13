@@ -67,6 +67,10 @@ function isUnset(value: unknown): boolean {
     return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
 }
 
+function hasSuppliedDescendant(supplied: ReadonlySet<string>, path: string): boolean {
+    return [...supplied].some((suppliedPath) => suppliedPath.startsWith(`${path}.`) || suppliedPath.startsWith(`${path}[`))
+}
+
 /**
  * Walks a task's data alongside its schema to find required properties left unset, recursing into
  * nested objects, array items and the anyOf branch matching the current value — independent of
@@ -77,18 +81,19 @@ export function countUnsetRequiredFields(
     schema: PartialSchema | undefined,
     definitions: Definitions,
     path = "",
+    supplied: ReadonlySet<string> = new Set(),
 ): UnsetRequiredField[] {
     if (!schema) return []
     const resolved = mergeAllOf(resolveRef(schema, definitions) ?? schema, definitions)
 
     if (resolved.anyOf?.length) {
         const branch = resolveAnyOfBranch(model, resolved, definitions)
-        return branch ? countUnsetRequiredFields(model, branch, definitions, path) : []
+        return branch ? countUnsetRequiredFields(model, branch, definitions, path, supplied) : []
     }
 
     if (Array.isArray(model) && resolved.items) {
         return model.flatMap((item, index) =>
-            countUnsetRequiredFields(item, resolved.items, definitions, `${path}[${index}]`),
+            countUnsetRequiredFields(item, resolved.items, definitions, `${path}[${index}]`, supplied),
         )
     }
 
@@ -105,11 +110,15 @@ export function countUnsetRequiredFields(
         const childPath = path ? `${path}.${key}` : key
 
         if (resolved.required?.includes(key) && isUnset(childValue)) {
+            if (supplied.has(childPath)) return []
+            if (hasSuppliedDescendant(supplied, childPath)) {
+                return childSchema ? countUnsetRequiredFields({}, childSchema, definitions, childPath, supplied) : []
+            }
             return [{path: childPath, label: key}]
         }
 
         return childValue !== undefined && childSchema
-            ? countUnsetRequiredFields(childValue, childSchema, definitions, childPath)
+            ? countUnsetRequiredFields(childValue, childSchema, definitions, childPath, supplied)
             : []
     })
 }

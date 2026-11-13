@@ -1,0 +1,21 @@
+id: retry-flowable-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop_block
+    type: io.kestra.plugin.core.flow.Loop
+    transmitFailed: true
+    values: ["ok_item", "bad_item"]
+    retry:
+      type: constant
+      maxAttempts: 3
+      interval: PT1S
+      behavior: RETRY_FLOWABLE
+    tasks:
+      - id: log_item
+        type: io.kestra.plugin.core.log.Log
+        message: "iteration start {{ item.value }}"
+      - id: fail_bad_item
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ item.value == 'bad_item' }}"
+        errorMessage: "bad item fails"

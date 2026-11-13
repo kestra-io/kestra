@@ -1,0 +1,12 @@
+id: retry-flowable-normal-task
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: hi
+    retry:
+      type: constant
+      maxAttempts: 2
+      interval: PT1S
+      behavior: RETRY_FLOWABLE

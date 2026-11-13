@@ -426,7 +426,8 @@ public final class ExecutorTestHarness {
             executionQueue,
             followExecutionEventQueue,
             killSwitchService,
-            runContextLoggerFactory
+            runContextLoggerFactory,
+            executionDelayStateStore
         );
         this.multipleConditionEventMessageHandler = new MultipleConditionEventMessageHandler(
             flowTriggerService,

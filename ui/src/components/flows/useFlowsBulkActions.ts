@@ -44,18 +44,14 @@ export default function useFlowsBulkActions(options: {
                 const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length
                 if (queryBulkAction.value) {
                     return FlowsAPI.exportFlowsByQuery({filters: routeQueryToQueryFilters(loadQuery())}, {responseType: "blob"}).then(data => {
-                        const blob = new Blob([data], {type: "application/octet-stream"})
-                        const url = window.URL.createObjectURL(blob)
-                        Utils.downloadUrl(url, "flows.zip")
+                        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), "flows.zip")
                     }).then(() => {
                         toast.success(t("flows exported", {count: flowCount}))
                         toggleAllUnselected()
                     })
                 } else {
                     return FlowsAPI.exportFlowsByIds({body: selectionIds.value}, {responseType: "blob"}).then(data => {
-                        const blob = new Blob([data], {type: "application/octet-stream"})
-                        const url = window.URL.createObjectURL(blob)
-                        Utils.downloadUrl(url, "flows.zip")
+                        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), "flows.zip")
                     }).then(() => {
                         toast.success(t("flows exported", {count: flowCount}))
                         toggleAllUnselected()
@@ -122,14 +118,7 @@ export default function useFlowsBulkActions(options: {
 
     async function exportFlowsAsStream(query: LocationQuery) {
         const data = await FlowsAPI.exportFlows({filters: routeQueryToQueryFilters(query)})
-        const url = window.URL.createObjectURL(new Blob([data as unknown as string]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "flows.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
+        Utils.downloadBlob(new Blob([data as unknown as string]), "flows.csv")
     }
 
     return {

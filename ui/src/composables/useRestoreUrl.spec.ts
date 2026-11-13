@@ -245,5 +245,26 @@ describe("useRestoreUrl", () => {
 
             expect(router.currentRoute.value.query).toEqual({})
         })
+
+        it("leaves a page entered with its own query alone", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({name: "flows/list", params: {tenant: "main"}, query: {"filters[state][IN]": "FAILED"}})
+
+            expect(router.currentRoute.value.query).toEqual({"filters[state][IN]": "FAILED"})
+        })
+
+        it("keeps the hash when it puts the saved query back", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({name: "flows/list", params: {tenant: "main"}, hash: "#anchor"})
+
+            expect(router.currentRoute.value.query).toEqual({sort: "namespace:asc"})
+            expect(router.currentRoute.value.hash).toBe("#anchor")
+        })
     })
 })

@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,9 @@ public record NamespaceFile(
     URI uri,
     String namespace,
     int revision) {
+
+    private static final Pattern REVISION_SUFFIX_PATTERN = Pattern.compile("\\.v\\d+$");
+    private static final String FIRST_REVISION_SUFFIX = ".v1";
 
     private static final Pattern capturePathWithoutRevision = Pattern.compile("(.*)(?:\\.v\\d+)?$");
 
@@ -136,25 +140,49 @@ public record NamespaceFile(
     }
 
     public static NamespaceFile of(String namespace, String path, int revision) {
-        Path namespacePrefixPath = Path.of(StorageContext.namespaceFilePrefix(namespace));
-        // Need to remove starting trailing slash for Windows
-        String pathWithoutLeadingSlash = path.replaceFirst("^[.]*[\\\\|/]+", "");
+        String pathWithoutLeadingSlash = withoutLeadingSlash(path);
 
         revision = NamespaceFile.isDirectory(pathWithoutLeadingSlash) ? 1 : revision;
 
-        String storagePath = pathWithoutLeadingSlash;
-        if (!pathWithoutLeadingSlash.endsWith("/") && revision > 1) {
-            storagePath += ".v" + revision;
+        String storageObject = pathWithoutLeadingSlash;
+        // Names ending like a revision keep the suffix at revision 1, so 'a.v2' and revision 2 of 'a' never share an object.
+        if (!pathWithoutLeadingSlash.endsWith("/") && (revision > 1 || REVISION_SUFFIX_PATTERN.matcher(pathWithoutLeadingSlash).find())) {
+            storageObject += ".v" + revision;
         }
+
+        return create(namespace, pathWithoutLeadingSlash, storageObject, isDirectory(path), revision);
+    }
+
+    /**
+     * Static factory method for constructing the {@link NamespaceFile} held by a given storage object.
+     * <p>
+     * Only the location in storage is meaningful: the path is the object itself and the revision is always 1.
+     *
+     * @param namespace The namespace - cannot be {@code null}.
+     * @param object The path of the object relative to the namespace files root, revision suffix included.
+     * @return a new {@link NamespaceFile} object
+     */
+    public static NamespaceFile ofStorageObject(String namespace, String object) {
+        String objectWithoutLeadingSlash = withoutLeadingSlash(object);
+        return create(namespace, objectWithoutLeadingSlash, objectWithoutLeadingSlash, isDirectory(object), 1);
+    }
+
+    private static String withoutLeadingSlash(String path) {
+        // Need to remove starting trailing slash for Windows
+        return path.replaceFirst("^[.]*[\\\\|/]+", "");
+    }
+
+    private static NamespaceFile create(String namespace, String path, String storageObject, boolean directory, int revision) {
+        Path namespacePrefixPath = Path.of(StorageContext.namespaceFilePrefix(namespace));
 
         // Use the multi-argument URI constructor so that URI-illegal characters (e.g. spaces)
         // are percent-encoded (space → %20) while legal URI path characters (e.g. '+') are
         // preserved unchanged — keeping "a b.txt" and "a+b.txt" as two distinct stored objects.
-        String uriPath = namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")
-            + (isDirectory(path) ? "/" : "");
+        String uriPath = namespacePrefixPath.resolve(storageObject).toString().replace("\\", "/")
+            + (directory ? "/" : "");
         try {
             return new NamespaceFile(
-                pathWithoutLeadingSlash,
+                path,
                 new URI(StorageContext.KESTRA_SCHEME, "", uriPath, null),
                 namespace,
                 revision
@@ -200,6 +228,22 @@ public record NamespaceFile(
      */
     public Path storagePath() {
         return Path.of(uri().getPath());
+    }
+
+    /**
+     * Returns where this file was stored before revision 1 of a name ending like a revision got a suffix of its own
+     * (kestra-io/kestra#21396).
+     * <p>
+     * That object may hold a revision of another file, so it must only ever be read, never written or deleted.
+     *
+     * @return The legacy storage path, or {@link Optional#empty()} if this file has always been stored at {@link #storagePath()}.
+     */
+    public Optional<Path> legacyStoragePath() {
+        String storagePath = uri().getPath();
+        if (!storagePath.endsWith(FIRST_REVISION_SUFFIX)) {
+            return Optional.empty();
+        }
+        return Optional.of(Path.of(storagePath.substring(0, storagePath.length() - FIRST_REVISION_SUFFIX.length())));
     }
 
     /**

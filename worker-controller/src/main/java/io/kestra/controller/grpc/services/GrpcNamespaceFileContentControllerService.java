@@ -178,7 +178,7 @@ public class GrpcNamespaceFileContentControllerService extends NamespaceFileCont
         StorageLocations.validate(tenantId, namespace);
         String normalized = NamespaceFile.normalize(Path.of(object)).toString();
         boolean directory = NamespaceFile.isDirectory(object) && !NamespaceFile.isDirectory(normalized);
-        return NamespaceFile.of(namespace, directory ? normalized + "/" : normalized, 1);
+        return NamespaceFile.ofStorageObject(namespace, directory ? normalized + "/" : normalized);
     }
 
     private static StatusRuntimeException toStatus(Exception e) {

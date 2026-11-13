@@ -123,6 +123,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -2391,6 +2392,22 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-kill-onwait.yaml" })
+    void shouldRefuseToBulkResumeButBulkKillAPausingExecution() throws QueueException {
+        Execution pausing = runnerUtils.runOneUntil(TENANT_ID, TESTS_FLOW_NS, "approval-kill-onwait", e -> e.getState().getCurrent() == State.Type.PAUSING);
+
+        HttpClientResponseException resume = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(pausing.getId())))
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        HttpResponse<ApiAsyncOperationResponse> kill = client.toBlocking().exchange(DELETE("/api/v1/main/executions/kill/by-ids", List.of(pausing.getId())), ApiAsyncOperationResponse.class);
+        assertThat(kill.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        awaitExecution(pausing.getId(), execution -> execution.getState().getCurrent() == State.Type.KILLED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldReturn202WithOperationIdAndTotalItemsWhenResumeExecutionsByIdsCalled() throws QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
@@ -2994,7 +3011,8 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/executions/" + paused.getId()));
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test
@@ -3009,7 +3027,8 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(response.getCount()).isEqualTo(1);
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test

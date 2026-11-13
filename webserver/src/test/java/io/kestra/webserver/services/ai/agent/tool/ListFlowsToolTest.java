@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(environments = "memory")
 class ListFlowsToolTest {
@@ -48,7 +49,7 @@ class ListFlowsToolTest {
         createFlow(flowId);
 
         // When
-        ListFlowsTool.Result result = tool.listFlows(List.of(), CONTEXT);
+        ListFlowsTool.Result result = tool.listFlows(List.of(), null, CONTEXT);
 
         // Then
         assertThat(result.flows())
@@ -64,7 +65,7 @@ class ListFlowsToolTest {
 
         // When — filtering on the target namespace
         List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, NAMESPACE, null, null));
-        ListFlowsTool.Result result = tool.listFlows(filters, CONTEXT);
+        ListFlowsTool.Result result = tool.listFlows(filters, null, CONTEXT);
 
         // Then — only the target namespace is returned
         assertThat(result.flows()).isNotEmpty();
@@ -82,7 +83,7 @@ class ListFlowsToolTest {
         }
         QueryFilterToolExecutor executor = new QueryFilterToolExecutor(
             tool,
-            ListFlowsTool.class.getMethod("listFlows", List.class, AgentCallContext.Context.class)
+            ListFlowsTool.class.getMethod("listFlows", List.class, Integer.class, AgentCallContext.Context.class)
         );
         ToolExecutionRequest request = ToolExecutionRequest.builder()
             .id("call-1")
@@ -119,5 +120,26 @@ class ListFlowsToolTest {
                     .build()
             )
         );
+    }
+
+    @Test
+    void shouldReturnRemainingFlowsWhenReadingSecondPage() {
+        String tenant = "listflowspage";
+        String namespace = "io.kestra.test.ai.page";
+        for (int i = 0; i < 52; i++) {
+            createFlowIn(tenant, namespace, IdUtils.create());
+        }
+        List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, namespace, null, null));
+
+        ListFlowsTool.Result result = tool.listFlows(filters, 2, AgentCallContext.Context.ofTenant(tenant));
+
+        assertThat(result.flows()).hasSize(2);
+        assertThat(result.total()).isEqualTo(52);
+        assertThat(result.page()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRejectPageBelowOne() {
+        assertThatThrownBy(() -> tool.listFlows(List.of(), 0, CONTEXT)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Page must be 1 or greater");
     }
 }

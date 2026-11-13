@@ -55,7 +55,7 @@ dependencies {
 
     constraints {
         // security tower (Trivy): transitive libraries pinned to their fixed version
-        api("org.xerial.snappy:snappy-java:1.1.10.9") // from kafka-clients 4.4.0 (1.1.10.7): CVE-2026-93451, CVE-2026-108106, CVE-2026-116590 (SEC-2097)
+        api("org.xerial.snappy:snappy-java:1.1.10.12") // from kafka-clients 4.4.0 (1.1.10.7): CVE-2026-93451, CVE-2026-108106, CVE-2026-116590 (SEC-2097)
         api("org.apache.qpid:proton-j:0.35.0") // from azure-core-amqp 2.12.2 (azure-sdk-bom 1.3.9 ships 0.34.1): CVE-2026-66274 (SEC-2098)
         api("at.yawk.lz4:lz4-java:1.11.4") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")

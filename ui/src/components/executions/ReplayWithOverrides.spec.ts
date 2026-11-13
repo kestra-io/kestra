@@ -33,17 +33,29 @@ tasks:
     type: io.kestra.plugin.core.kv.Set
     key: "stock_{{ outputs.fetch_store.values.store_code }}"
     value: "{{ outputs.fetch_store.values.qty_delta }}"
+  - id: notify
+    type: io.kestra.plugin.core.log.Log
+    message: "Saved {{ outputs.fetch_store.values.store_code }}"
+errors:
+  - id: alert
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ outputs.fetch_store.values }}"
 `
 
-async function openDialog() {
+const STORE_CODE_READERS = [
+    {taskId: "notify", path: "outputs.fetch_store.values.store_code"},
+    {taskId: "alert", path: "outputs.fetch_store.values"},
+]
+
+async function openDialog(dynamicReaders: string[] = []) {
     Object.defineProperty(window, "location", {value: {href: ""}, writable: true})
     setActivePinia(createPinia())
     const flowStore = useFlowStore()
     flowStore.loadFlow = vi.fn().mockResolvedValue({source: flowSource}) as typeof flowStore.loadFlow
     replayOutputs.mockResolvedValue({values: [
-        {path: "outputs.fetch_store.values.store_code", value: "KR-0412 "},
-        {path: "outputs.fetch_store.values.qty_delta", value: -12},
-    ]})
+        {path: "outputs.fetch_store.values.store_code", value: "KR-0412 ", readers: STORE_CODE_READERS},
+        {path: "outputs.fetch_store.values.qty_delta", value: -12, readers: []},
+    ], dynamicReaders})
     replayExecutionWithOverrides.mockResolvedValue({id: "replayed", namespace: "company.stores", flowId: "inventory_batch"})
 
     const wrapper = i18nMount(ReplayWithOverrides, {
@@ -57,6 +69,7 @@ async function openDialog() {
             stubs: {
                 KsDropdownItem: {template: "<button><slot /></button>"},
                 KsDialog: {template: "<div><slot /><slot name='footer' /></div>"},
+                KsDrawer: {template: "<div><slot name='header' /><slot /></div>"},
                 KsEditor: {props: ["modelValue"], template: "<pre>{{ modelValue }}</pre>"},
             },
         },
@@ -92,5 +105,36 @@ describe("ReplayWithOverrides", () => {
 
         expect(wrapper.find("[data-test='replay-override-error']").text()).toBe("Enter a number.")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
+    })
+
+    it("counts the other tasks that read an output, shows their definitions and warns once that output is overridden", async () => {
+        const {wrapper} = await openDialog()
+
+        const badges = wrapper.findAll("[data-test='replay-override-readers']")
+        expect(badges).toHaveLength(1)
+        expect(badges[0].text()).toBe("2")
+        expect(badges[0].attributes("aria-label")).toBe("Also read by 2 other tasks of the replay")
+        expect(wrapper.find("[data-test='replay-overrides-impact']").exists()).toBe(false)
+
+        await wrapper.find("input[aria-label='outputs.fetch_store.values.qty_delta']").setValue("5")
+        expect(wrapper.find("[data-test='replay-overrides-impact']").exists()).toBe(false)
+
+        await wrapper.find("input[aria-label='outputs.fetch_store.values.store_code']").setValue("KR-0412")
+        expect(wrapper.find("[data-test='replay-overrides-impact']").text()).toBe("These overrides also change what notify, alert read in the replay.")
+
+        await badges[0].trigger("click")
+        const readers = wrapper.findAll("[data-test='replay-output-reader']")
+        expect(readers.map(reader => reader.find("code").text())).toEqual(["notify", "alert"])
+        expect(readers[1].text()).toContain("message: \"{{ outputs.fetch_store.values }}\"")
+    })
+
+    it("warns that tasks reading outputs dynamically may read an override", async () => {
+        const {wrapper} = await openDialog(["loop"])
+        expect(wrapper.find("[data-test='replay-overrides-impact']").exists()).toBe(false)
+
+        await wrapper.find("input[aria-label='outputs.fetch_store.values.qty_delta']").setValue("5")
+
+        expect(wrapper.find("[data-test='replay-overrides-impact']").text())
+            .toBe("loop read outputs through a dynamic path or in a block, and may also read the new values.")
     })
 })

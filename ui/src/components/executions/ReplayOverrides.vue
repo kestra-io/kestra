@@ -33,27 +33,91 @@
                         v-model="texts[output.path]"
                         :aria-label="output.path"
                         data-test="replay-override-input"
-                    />
+                    >
+                        <template v-if="readers[output.path].length" #suffix>
+                            <KsTooltip placement="top">
+                                <template #content>
+                                    <div class="readers-tooltip" data-test="replay-override-readers-tooltip">
+                                        <span>{{ $t("replayOverrides.readers_tooltip") }}</span>
+                                        <code v-for="reader in readers[output.path]" :key="reader.taskId">{{ reader.taskId }}</code>
+                                    </div>
+                                </template>
+                                <KsButton
+                                    text
+                                    size="small"
+                                    :icon="CallSplit"
+                                    :aria-label="$t('replayOverrides.readers_count', {count: readers[output.path].length}, readers[output.path].length)"
+                                    data-test="replay-override-readers"
+                                    @click="selectedPath = output.path"
+                                >
+                                    {{ readers[output.path].length }}
+                                </KsButton>
+                            </KsTooltip>
+                        </template>
+                    </KsInput>
                     <KsText v-if="parsed[output.path]?.error" size="small" type="danger" data-test="replay-override-error">
                         {{ $t(`replayOverrides.error.${parsed[output.path].error}`) }}
                     </KsText>
                 </div>
             </div>
         </div>
+
+        <KsAlert
+            v-if="impactedTaskIds.length || (overrideCount && dynamicReaders.length)"
+            type="warning"
+            :closable="false"
+            showIcon
+            data-test="replay-overrides-impact"
+        >
+            <template #title>
+                <i18n-t v-if="impactedTaskIds.length" keypath="replayOverrides.impact" tag="span" scope="global">
+                    <template #tasks>
+                        <TaskIds :ids="impactedTaskIds" />
+                    </template>
+                </i18n-t>
+                <i18n-t v-else keypath="replayOverrides.dynamic_readers" tag="span" scope="global">
+                    <template #tasks>
+                        <TaskIds :ids="dynamicReaders" />
+                    </template>
+                </i18n-t>
+            </template>
+            <i18n-t
+                v-if="impactedTaskIds.length && dynamicReaders.length"
+                keypath="replayOverrides.dynamic_readers"
+                tag="span"
+                scope="global"
+            >
+                <template #tasks>
+                    <TaskIds :ids="dynamicReaders" />
+                </template>
+            </i18n-t>
+        </KsAlert>
+
+        <ReplayOutputReaders
+            v-if="selectedPath"
+            :modelValue="!!selectedPath"
+            :path="selectedPath"
+            :readers="readers[selectedPath]"
+            :flowSource="flowSource"
+            @update:modelValue="open => selectedPath = open ? selectedPath : undefined"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, ref, watch} from "vue"
+    import {computed, h, onMounted, reactive, ref, watch, type FunctionalComponent} from "vue"
     import {isDeepEqual} from "@kestra-io/design-system"
     import type {ReplayOutputServiceReplayOutput} from "@kestra-io/kestra-sdk"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
-    import {editableText, formatValue, parseOverride, type ParsedOverride} from "./replayOverrides"
+    import CallSplit from "vue-material-design-icons/CallSplit.vue"
+    import {editableText, formatValue, groupReaders, parseOverride, type ParsedOverride} from "./replayOverrides"
+    import ReplayOutputReaders from "./ReplayOutputReaders.vue"
 
     const props = defineProps<{
         executionId: string
         taskRunId: string
         taskId: string
+        flowSource?: string
     }>()
 
     const overridesModel = defineModel<Record<string, unknown>>("overrides", {required: true})
@@ -62,7 +126,16 @@
     const loading = ref(true)
     const loadFailed = ref(false)
     const outputs = ref<ReplayOutputServiceReplayOutput[]>([])
+    const dynamicReaders = ref<string[]>([])
     const texts = reactive<Record<string, string>>({})
+    const selectedPath = ref<string>()
+
+    const TaskIds: FunctionalComponent<{ids: string[]}> = ({ids}) =>
+        ids.flatMap((id, index) => [index ? ", " : "", h("code", id)])
+
+    const readers = computed(() => Object.fromEntries(
+        outputs.value.map(output => [output.path, groupReaders(output.readers)]),
+    ))
 
     const parsed = computed(() => Object.fromEntries(
         outputs.value.map(output => [output.path, parseOverride(output.value, texts[output.path] ?? "")]),
@@ -74,12 +147,20 @@
             .map(output => [output.path, parsed.value[output.path].value]),
     ))
 
+    const overrideCount = computed(() => Object.keys(overrides.value).length)
+
+    const impactedTaskIds = computed(() => [...new Set(
+        Object.keys(overrides.value).flatMap(path => readers.value[path].map(reader => reader.taskId)),
+    )])
+
     watch(overrides, value => overridesModel.value = value, {immediate: true})
     watch(parsed, value => invalid.value = Object.values(value).some(it => it.error), {immediate: true})
 
     onMounted(async () => {
         try {
-            outputs.value = (await ExecutionsAPI.replayOutputs({executionId: props.executionId, taskRunId: props.taskRunId})).values
+            const loaded = await ExecutionsAPI.replayOutputs({executionId: props.executionId, taskRunId: props.taskRunId})
+            outputs.value = loaded.values
+            dynamicReaders.value = loaded.dynamicReaders
             outputs.value.forEach(output => texts[output.path] = editableText(output.value))
         } catch {
             loadFailed.value = true
@@ -128,5 +209,11 @@
 
 .override-label code {
     overflow-wrap: anywhere;
+}
+
+.readers-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-1);
 }
 </style>

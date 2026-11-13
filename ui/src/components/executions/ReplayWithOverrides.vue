@@ -50,6 +50,7 @@
                 :executionId="execution.id"
                 :taskRunId="taskRun.id"
                 :taskId="taskRun.taskId"
+                :flowSource="flowSource"
             />
         </div>
 
@@ -75,7 +76,6 @@
     import {useI18n} from "vue-i18n"
     import {useRouter} from "vue-router"
     import {State} from "@kestra-io/design-system"
-    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import PlayBoxEditOutline from "vue-material-design-icons/PlayBoxEditOutline.vue"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import type {Execution} from "../../stores/executions"
@@ -87,6 +87,7 @@
     import resource from "../../models/resource"
     import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import ReplayOverrides from "./ReplayOverrides.vue"
+    import {taskSource as extractTaskSource} from "./replayOverrides"
 
     const props = defineProps<{
         execution: Execution
@@ -106,7 +107,8 @@
     const sending = ref(false)
     const loadingSource = ref(false)
     const sourceFailed = ref(false)
-    const taskSource = ref<string>()
+    const flowSource = ref<string>()
+    const taskSource = computed(() => flowSource.value === undefined ? undefined : extractTaskSource(flowSource.value, props.taskRun.taskId))
 
     const overrideCount = computed(() => Object.keys(overrides.value).length)
 
@@ -121,7 +123,7 @@
     })
 
     watch(isOpen, async open => {
-        if (!open || taskSource.value !== undefined) return
+        if (!open || flowSource.value !== undefined) return
         loadingSource.value = true
         try {
             const flow = await flowStore.loadFlow({
@@ -130,7 +132,7 @@
                 revision: String(props.execution.flowRevision),
                 store: false,
             })
-            taskSource.value = YAML_UTILS.extractBlock({source: flow?.source ?? "", section: "tasks", key: props.taskRun.taskId})
+            flowSource.value = flow?.source ?? ""
         } catch {
             sourceFailed.value = true
         } finally {

@@ -1,0 +1,40 @@
+id: replay-output-readers
+namespace: io.kestra.tests
+
+tasks:
+  - id: fetch
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      code: "KR-0412 "
+      store:
+        region: eu
+
+  - id: before
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"
+
+  - id: adjust
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ outputs.fetch.values.code != 'KR-0412' }}"
+
+  - id: notify
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values }}"
+
+  - id: region
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.store.region }}"
+
+  - id: loop
+    type: io.kestra.plugin.core.debug.Return
+    format: "{% for key in ['code'] %}{{ outputs.fetch.values[key] }}{% endfor %}"
+
+errors:
+  - id: alert
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"
+
+finally:
+  - id: audit
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code | trim }}"

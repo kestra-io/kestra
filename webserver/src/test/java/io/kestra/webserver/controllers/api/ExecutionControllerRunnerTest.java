@@ -1141,11 +1141,26 @@ class ExecutionControllerRunnerTest {
     void shouldListOnlyOutputsTheTaskReadsThroughStaticPathOutsideBlocks() throws Exception {
         Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");
 
-        assertThat(replayOutputs(failed, "adjust")).containsExactlyInAnyOrder(
-            new ReplayOutputService.ReplayOutput("outputs.fetch.values.code", "KR-0412 "),
-            new ReplayOutputService.ReplayOutput("outputs.fetch.values.store.region", "eu"),
-            new ReplayOutputService.ReplayOutput("outputs.fetch.values.field", "code")
+        assertThat(replayOutputs(failed, "adjust").values()).containsExactlyInAnyOrder(
+            new ReplayOutputService.ReplayOutput("outputs.fetch.values.code", "KR-0412 ", List.of(new ReplayOutputService.OutputReader("notify", "outputs.fetch.values.code"))),
+            new ReplayOutputService.ReplayOutput("outputs.fetch.values.store.region", "eu", List.of(new ReplayOutputService.OutputReader("notify", "outputs.fetch.values.store.region"))),
+            new ReplayOutputService.ReplayOutput("outputs.fetch.values.field", "code", List.of())
         );
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-output-readers.yaml" })
+    void shouldNameOtherTasksTheReplayRunsThatReadAnOverridableOutput() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-readers");
+
+        ExecutionController.ReplayOutputs outputs = replayOutputs(failed, "adjust");
+
+        assertThat(outputs.values()).containsExactly(new ReplayOutputService.ReplayOutput("outputs.fetch.values.code", "KR-0412 ", List.of(
+            new ReplayOutputService.OutputReader("notify", "outputs.fetch.values"),
+            new ReplayOutputService.OutputReader("alert", "outputs.fetch.values.code"),
+            new ReplayOutputService.OutputReader("audit", "outputs.fetch.values.code")
+        )));
+        assertThat(outputs.dynamicReaders()).containsExactly("loop");
     }
 
     @Test
@@ -1238,11 +1253,11 @@ class ExecutionControllerRunnerTest {
         );
     }
 
-    private List<ReplayOutputService.ReplayOutput> replayOutputs(Execution execution, String taskId) {
+    private ExecutionController.ReplayOutputs replayOutputs(Execution execution, String taskId) {
         return client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/replay-outputs".formatted(execution.getId(), execution.findTaskRunsByTaskId(taskId).getFirst().getId())),
             ExecutionController.ReplayOutputs.class
-        ).values();
+        );
     }
 
     private Execution awaitReplay(Execution source) throws QueueException {

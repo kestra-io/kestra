@@ -36,12 +36,12 @@
             {{ $t("concurrency_limit.warning") }}
         </KsAlert>
         <br>
-        <KsInputNumber v-model="newRunningCount" />
+        <KsInputNumber v-model="newRunningCount" :min="0" />
         <template #footer>
             <KsButton @click="editRunning = false">
                 {{ $t("cancel") }}
             </KsButton>
-            <KsButton type="primary" @click="saveEditRunning()">
+            <KsButton type="primary" :disabled="!isRunningCountValid" @click="saveEditRunning()">
                 {{ $t("save") }}
             </KsButton>
         </template>
@@ -113,7 +113,8 @@
     }
 
     const editRunning = ref(false)
-    const newRunningCount = ref(0)
+    const newRunningCount = ref<number>()
+    const isRunningCountValid = computed(() => typeof newRunningCount.value === "number")
     const editingRow = ref<ConcurrencyLimit|null>(null)
 
     const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
@@ -136,7 +137,7 @@
 
     async function saveEditRunning(){
         const row = editingRow.value
-        if(!row){
+        if(!row || !isRunningCountValid.value){
             return
         }
         try {

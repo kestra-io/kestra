@@ -3162,6 +3162,8 @@
     "chart mode": {
       "counts": "Contagens",
       "timeline": "Linha do tempo"
-    }
+    },
+    "search_in_flow_source": "Pesquisar \"{query}\" no código-fonte do fluxo",
+    "flows_matched_query": "{count} fluxo com \"{query}\" no id ou namespace. | {count} fluxos com \"{query}\" no id ou namespace."
   }
 }

@@ -75,11 +75,14 @@
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
     import {useTopLayer, KsSearch} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
     import Magnify from "vue-material-design-icons/Magnify.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
 
     const router = useRouter()
+    const {t} = useI18n()
     const {menu} = useLeftMenu()
 
     type SearchItem = {
@@ -167,11 +170,27 @@
         const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
         const order = {value: 0}
         // When scoped, we treat the scope root as depth 0 for ordering.
-        return buildEntries(root, [], 0, order)
+        const entries = buildEntries(root, [], 0, order)
+
+        // Ensure "Flows / Source search" is directly discoverable from Jump to when not scoped into a non-workspace section
+        if (scopeStack.value.length === 0 || scopeStack.value.some((s) => s.title.toLowerCase() === "workspace")) {
+            entries.push({
+                kind: "link",
+                title: t("source search"),
+                parentTitle: t("flows"),
+                href: {name: "flows/search"},
+                icon: {element: TextBoxSearch},
+                depth: 1,
+                order: order.value++,
+            })
+        }
+
+        return entries
     })
 
     const results = computed(() => {
-        const q = query.value.trim().toLowerCase()
+        const trimmed = query.value.trim()
+        const q = trimmed.toLowerCase()
         const matches = (item: SearchItem) => {
             const haystack = [item.parentTitle, item.title].filter(Boolean).join(" ").toLowerCase()
             return haystack.includes(q)
@@ -180,7 +199,26 @@
         const filtered = q ? navItems.value.filter(matches) : navItems.value
 
         // Prefer items closest to the current root (depth 0 first), while preserving menu order.
-        return [...filtered].sort((a, b) => (a.depth - b.depth) || (a.order - b.order))
+        const sorted = [...filtered].sort((a, b) => (a.depth - b.depth) || (a.order - b.order))
+
+        if (trimmed) {
+            sorted.push({
+                kind: "link",
+                title: t("search_in_flow_source", {query: trimmed}),
+                parentTitle: t("flows"),
+                href: {
+                    name: "flows/search",
+                    query: {q: trimmed},
+                },
+                icon: {
+                    element: TextBoxSearch,
+                },
+                depth: 1,
+                order: Number.MAX_SAFE_INTEGER,
+            })
+        }
+
+        return sorted
     })
 
     const keyDown = (e: KeyboardEvent) => {

@@ -3162,6 +3162,8 @@
     "chart mode": {
       "counts": "计数",
       "timeline": "时间线"
-    }
+    },
+    "search_in_flow_source": "在流程源码中搜索 \"{query}\"",
+    "flows_matched_query": "ID 或命名空间中包含 \"{query}\" 的 {count} 个流程。 | ID 或命名空间中包含 \"{query}\" 的 {count} 个流程。"
   }
 }

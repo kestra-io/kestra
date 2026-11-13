@@ -766,8 +766,8 @@ public class ExecutionController {
         // Minted before the parts are read, so that they are stored under the execution that will carry them.
         String executionId = IdUtils.create();
 
-        return webhookBodyService
-            .collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
+        return MultipartUtils
+            .releasing(parts, webhookBodyService.collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA)))
             .flatMap(body ->
             {
                 try {

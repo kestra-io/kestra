@@ -1,7 +1,16 @@
 diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
-index beade0d..43eb835 100644
+index beade0d..7eaef52 100644
 --- a/node_modules/monaco-yaml/yaml.worker.js
 +++ b/node_modules/monaco-yaml/yaml.worker.js
+@@ -2610,7 +2610,7 @@ var SchemaCollector2 = class _SchemaCollector {
+     this.schemas.push(schema);
+   }
+   merge(other) {
+-    this.schemas.push(...other.schemas);
++    for (const schema of other.schemas) this.schemas.push(schema);
+   }
+   include(node) {
+     return (this.focusOffset === -1 || contains2(node, this.focusOffset)) && node !== this.exclude;
 @@ -2982,15 +2982,58 @@ var BaseValidator = class {
          matchingSchemas.add(ms);
        }

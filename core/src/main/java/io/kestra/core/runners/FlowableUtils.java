@@ -157,12 +157,11 @@ public class FlowableUtils {
         RunContext runContext,
         boolean allowFailure,
         boolean allowWarning) {
-        if (
-            ListUtils.emptyOnNull(tasks).stream()
-                .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-                .findAny()
-                .isEmpty()
-        ) {
+        boolean hasEnabledTasks = ListUtils.emptyOnNull(tasks).stream()
+            .anyMatch(resolvedTask -> !resolvedTask.getTask().getDisabled());
+        boolean hasEnabledFinallyTasks = ListUtils.emptyOnNull(_finally).stream()
+            .anyMatch(resolvedTask -> !resolvedTask.getTask().getDisabled());
+        if (!hasEnabledTasks && !hasEnabledFinallyTasks) {
             return Optional.of(State.Type.SUCCESS);
         }
 

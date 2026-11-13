@@ -177,7 +177,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
-            this.childTasks(runContext, parentTaskRun),
+            ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun
@@ -189,7 +189,10 @@ public class If extends Task implements FlowableTask<If.Output> {
         List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
             .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
             .toList();
-        if (ListUtils.isEmpty(childTasks)) {
+        List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
+        boolean hasEnabledFinallyTasks = ListUtils.emptyOnNull(finallyTasks).stream()
+            .anyMatch(resolvedTask -> !resolvedTask.getTask().getDisabled());
+        if (ListUtils.isEmpty(childTasks) && !hasEnabledFinallyTasks) {
             // no next task to run, we guess the state from the parent task
             return Optional.of(execution.computeFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
@@ -198,7 +201,7 @@ public class If extends Task implements FlowableTask<If.Output> {
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            finallyTasks,
             parentTaskRun,
             runContext,
             this.isAllowFailure(),

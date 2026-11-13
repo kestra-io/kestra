@@ -1067,11 +1067,31 @@ public class ExecutorService {
         }
 
         if (iterationCount == 0) {
-            executor.withExecution(
-                executor.getExecution()
-                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
-                "handleLoop"
-            );
+            List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(loop.getFinally(), taskRun);
+            boolean hasEnabledFinallyTasks = finallyTasks != null && finallyTasks.stream()
+                .anyMatch(resolvedTask -> !resolvedTask.getTask().getDisabled());
+
+            if (hasEnabledFinallyTasks) {
+                executor.withExecution(
+                    executor.getExecution()
+                        .withTaskRun(taskRun.run()),
+                    "handleLoop"
+                );
+                List<NextTaskRun> nexts = FlowableUtils.resolveSequentialNexts(
+                    executor.getExecution(),
+                    Collections.emptyList(),
+                    FlowableUtils.resolveTasks(loop.getErrors(), taskRun),
+                    finallyTasks,
+                    taskRun
+                );
+                executor.withTaskRun(this.saveFlowableOutput(nexts, executor), "handleEmptyLoopFinally");
+            } else {
+                executor.withExecution(
+                    executor.getExecution()
+                        .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+                    "handleLoop"
+                );
+            }
         }
     }
 

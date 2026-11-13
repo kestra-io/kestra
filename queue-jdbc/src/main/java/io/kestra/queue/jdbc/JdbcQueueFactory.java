@@ -53,9 +53,9 @@ public class JdbcQueueFactory implements QueueFactoryInterface, Closeable {
     }
 
     @Override
-    public <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz) {
+    public <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz, int vNodeCount) {
         return new JdbcVNodeDispatchQueue<>(
-            clazz, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+            clazz, vNodeCount, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
         );
     }
 

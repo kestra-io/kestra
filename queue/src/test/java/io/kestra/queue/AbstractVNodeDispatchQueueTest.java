@@ -20,13 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
+    static final int VNODE_COUNT = 16;
+    static final int SMALL_VNODE_COUNT = 2;
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @Inject
     private VNodeDispatchQueueInterface<TestVNodeDispatchDispatch> vNodeDispatchQueue;
 
     @Inject
-    private QueueService queueService;
+    private VNodeDispatchQueueInterface<TestSmallVNodeDispatch> smallVNodeDispatchQueue;
 
     @Test
     void shouldNotThrowWhenEmittingEmptyBatch() {
@@ -39,7 +41,7 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
 
         QueueSubscriber<TestVNodeDispatchDispatch> subscriber = vNodeDispatchQueue
-            .subscriber(IntStream.range(0, queueService.getVNodeCount()).boxed().collect(Collectors.toSet()))
+            .subscriber(IntStream.range(0, VNODE_COUNT).boxed().collect(Collectors.toSet()))
             .subscribe(e ->
             {
                 list.add(e.getLeft().id);
@@ -103,6 +105,25 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
     }
 
     @Test
+    void shouldRouteOnTheQueueVNodeCountWhenItDiffersFromTheScheduler() throws QueueException, InterruptedException {
+        int count = 20;
+        CountDownLatch countDownLatch = new CountDownLatch(count);
+        QueueSubscriber<TestSmallVNodeDispatch> subscriber = smallVNodeDispatchQueue
+            .subscriber(IntStream.range(0, SMALL_VNODE_COUNT).boxed().collect(Collectors.toSet()))
+            .subscribe(e -> countDownLatch.countDown());
+
+        String prefix = this.keyPrefix();
+        for (int i = 0; i < count; i++) {
+            smallVNodeDispatchQueue.emit(new TestSmallVNodeDispatch(prefix + "_" + IdUtils.create(), i));
+        }
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await).isTrue();
+    }
+
+    @Test
     void multipleGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(6);
         List<QueueSubscriber<TestVNodeDispatchDispatch>> subscribers = new ArrayList<>();
@@ -143,5 +164,8 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
     }
 
     public record TestVNodeDispatchDispatch(String key, Integer id) implements VNodeDispatchEvent {
+    }
+
+    public record TestSmallVNodeDispatch(String key, Integer id) implements VNodeDispatchEvent {
     }
 }

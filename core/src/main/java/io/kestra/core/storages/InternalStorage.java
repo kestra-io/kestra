@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.FileUtils;
 
@@ -143,6 +144,15 @@ public class InternalStorage implements Storage {
     @Override
     public List<URI> deleteExecutionFiles() throws IOException {
         return this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI());
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<URI> deleteExecutionFiles(Execution execution) throws IOException {
+        URI uri = StorageContext.forExecution(execution).getExecutionStorageURI();
+        return this.storage.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri);
     }
 
     /**

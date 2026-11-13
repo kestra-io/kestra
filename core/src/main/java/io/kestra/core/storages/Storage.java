@@ -8,6 +8,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.core.models.executions.Execution;
+
 import jakarta.annotation.Nullable;
 
 /**
@@ -70,6 +72,15 @@ public interface Storage {
      * @throws IOException if an error happened while deleting files.
      */
     List<URI> deleteExecutionFiles() throws IOException;
+
+    /**
+     * Deletes all the files for the given execution.
+     *
+     * @param execution the execution whose files should be deleted.
+     * @return The URIs of the deleted files.
+     * @throws IOException if an error happened while deleting files.
+     */
+    List<URI> deleteExecutionFiles(Execution execution) throws IOException;
 
     /**
      * Gets the storage base URI for the current context.

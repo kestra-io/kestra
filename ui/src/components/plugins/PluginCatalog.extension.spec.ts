@@ -93,7 +93,7 @@ describe("PluginCatalog extension", () => {
         document.title = ""
     })
 
-    test("hands the extension table the searched entries and the whole catalog, instead of the cards", async () => {
+    test("hands the extension table the searched entries instead of the cards", async () => {
         useRoute().query = {view: "table"}
         const wrapper = await mountCatalog()
 
@@ -101,7 +101,7 @@ describe("PluginCatalog extension", () => {
         await flushPromises()
 
         const table = wrapper.find("[data-test=table]")
-        expect([table.attributes("data-plugins"), table.attributes("data-catalog")]).toEqual(["plugin-aws", "plugin-aws,plugin-dbt"])
+        expect(table.attributes("data-plugins")).toBe("plugin-aws")
         expect(wrapper.find("[data-test=toolbar]").attributes("data-catalog")).toBe("plugin-aws,plugin-dbt")
         expect(wrapper.find("article").exists()).toBe(false)
     })
@@ -136,7 +136,7 @@ describe("PluginCatalog extension", () => {
 
         useRoute().query = {sort: "nameDesc", view: "table"}
         await flushPromises()
-        expect(wrapper.find("[data-test=table]").attributes("data-entries")).toBe("plugin-dbt,Cloudflare R2,plugin-aws")
+        expect(wrapper.find("[data-test=table]").attributes("data-entries")).toBe("plugin-dbt,extra:Cloudflare R2,plugin-aws")
     })
 
     test("shows the extension cards instead of the empty state", async () => {

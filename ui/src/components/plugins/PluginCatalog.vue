@@ -79,9 +79,6 @@
             v-else-if="catalogExtension.table && view === 'table'"
             :plugins="pluginsList"
             :entries="catalogEntries"
-            :catalog="baseList"
-            :search="searchInput"
-            :categories="selectedCategories"
         />
 
         <section v-else class="plugins-container">
@@ -144,7 +141,7 @@
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
-    import {usePluginCatalogExtension, type PluginCatalogExtraEntry} from "override/components/plugins/pluginCatalogExtension"
+    import {usePluginCatalogExtension, type PluginCatalogEntry} from "override/components/plugins/pluginCatalogExtension"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -200,7 +197,6 @@
 
     const SORT_KEYS = ["nameAsc", "nameDesc", "newest", "mostUsed"] as const
     type SortKey = typeof SORT_KEYS[number]
-    type CatalogEntry = {key: string, title: string, plugin?: Plugin, extra?: PluginCatalogExtraEntry}
     const sortBy = useQueryChoice("sort", SORT_KEYS)
 
     const sortOptions = computed<{value: SortKey, label: string}[]>(() => [
@@ -264,9 +260,9 @@
 
     // Comparator map keyed by sortBy. `newest` / `mostUsed` rely on enrichment data
     // (api.kestra.io); missing values degrade gracefully to the name comparison.
-    const nameAsc = (a: CatalogEntry, b: CatalogEntry): number => a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+    const nameAsc = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => a.title.toLowerCase().localeCompare(b.title.toLowerCase())
 
-    const newestComparator = (a: CatalogEntry, b: CatalogEntry): number => {
+    const newestComparator = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => {
         const dateA = enrichmentStore.getEnrichment(a.plugin)?.lastReleasedAt
         const dateB = enrichmentStore.getEnrichment(b.plugin)?.lastReleasedAt
         const tA = dateA ? new Date(dateA).getTime() : 0
@@ -277,27 +273,29 @@
         return tB - tA || nameAsc(a, b)
     }
 
-    const mostUsedComparator = (a: CatalogEntry, b: CatalogEntry): number => {
+    const mostUsedComparator = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => {
         const uA = enrichmentStore.getEnrichment(a.plugin)?.usageCount ?? 0
         const uB = enrichmentStore.getEnrichment(b.plugin)?.usageCount ?? 0
         return uB - uA || nameAsc(a, b)
     }
 
-    const comparators: Record<SortKey, (a: CatalogEntry, b: CatalogEntry) => number> = {
+    const comparators: Record<SortKey, (a: PluginCatalogEntry, b: PluginCatalogEntry) => number> = {
         nameAsc,
         nameDesc: (a, b) => nameAsc(b, a),
         newest: newestComparator,
         mostUsed: mostUsedComparator,
     }
 
-    const catalogEntries = computed<CatalogEntry[]>(() => {
+    const catalogEntries = computed<PluginCatalogEntry[]>(() => {
         const plugins = baseList.value
             .filter(plugin => matchesSearch(plugin))
             .filter(plugin => matchesSelectedCategories(plugin))
             .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
             .map(plugin => ({key: plugin.name, title: displayTitle(plugin), plugin}))
-        const extras = (catalogExtension.extraEntries?.(baseList.value, searchInput.value, selectedCategories.value) ?? [])
-            .map(extra => ({key: extra.key, title: extra.title, extra}))
+        const extras = catalogExtension.extraCard
+            ? (catalogExtension.extraEntries?.(baseList.value, searchInput.value, selectedCategories.value) ?? [])
+                .map(extra => ({key: `extra:${extra.key}`, title: extra.title, extra}))
+            : []
         return [...plugins, ...extras].sort(comparators[sortBy.value])
     })
 

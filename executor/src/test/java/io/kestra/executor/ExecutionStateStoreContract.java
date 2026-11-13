@@ -28,7 +28,7 @@ public abstract class ExecutionStateStoreContract {
 
     protected static Flow flow() {
         return Flow.builder()
-            .tenantId(null)
+            .tenantId("main")
             .namespace("io.kestra.unittest")
             .id(IdUtils.create())
             .revision(1)

@@ -2535,6 +2535,12 @@
           "sendTooltip": "AI provider가 구성되지 않아 전송이 비활성화되었습니다.",
           "notSent": "프롬프트가 전송되지 않았습니다."
         },
+        "mcpTip": {
+          "title": "Claude Code, Cursor 및 기타 MCP 클라이언트에서 Kestra 사용",
+          "description": "Copilot과 함께 Kestra는 MCP 서버를 제공합니다. 외부 MCP 클라이언트를 연결하여 이미 사용 중인 도구에서 flow 및 execution을 관리하세요.",
+          "docs": "문서 보기",
+          "dismiss": "다시 표시 안 함"
+        },
         "thinkingWords": [
           "오케스트레이션",
           "스케줄링",

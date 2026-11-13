@@ -2535,6 +2535,12 @@
           "sendTooltip": "Wysyłanie jest wyłączone, ponieważ nie skonfigurowano żadnego dostawcy AI.",
           "notSent": "Twoje zapytanie nie zostało wysłane"
         },
+        "mcpTip": {
+          "title": "Używaj Kestra z Claude Code, Cursor i innych klientów MCP",
+          "description": "Oprócz Copilota, Kestra udostępnia serwer MCP. Podłącz do niego zewnętrznego klienta MCP, aby zarządzać swoimi Flowami i egzekucjami za pomocą narzędzi, których już używasz.",
+          "docs": "Wyświetl dokumentację",
+          "dismiss": "Nie pokazuj ponownie"
+        },
         "thinkingWords": [
           "Orchestrowanie",
           "Harmonogramowanie",

@@ -2535,6 +2535,12 @@
           "sendTooltip": "Senden ist deaktiviert, da kein AI-Provider konfiguriert ist.",
           "notSent": "Deine Eingabe wurde nicht gesendet"
         },
+        "mcpTip": {
+          "title": "Nutze Kestra von Claude Code, Cursor und anderen MCP-Clients",
+          "description": "Neben dem Copilot bietet Kestra einen MCP-Server. Verbinde einen externen MCP-Client damit, um deine Flows und Executions mit den Tools zu verwalten, die du bereits verwendest.",
+          "docs": "Dokumentation ansehen",
+          "dismiss": "Nicht mehr anzeigen"
+        },
         "thinkingWords": [
           "Orchestrierung",
           "Terminierung",

@@ -2535,6 +2535,12 @@
           "sendTooltip": "发送已禁用，因为未配置 AI provider。",
           "notSent": "您的提示未发送"
         },
+        "mcpTip": {
+          "title": "从 Claude Code、Cursor 和其他 MCP 客户端使用 Kestra",
+          "description": "除了 Copilot，Kestra 还提供 MCP 服务器。连接外部 MCP 客户端以通过您已使用的工具管理您的 flow 和 execution。",
+          "docs": "查看文档",
+          "dismiss": "不再显示"
+        },
         "thinkingWords": [
           "编排",
           "调度",

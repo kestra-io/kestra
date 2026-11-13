@@ -3,10 +3,10 @@ import {createPinia, setActivePinia} from "pinia"
 import {defineComponent, h, KeepAlive} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 
-const saveMock = vi.fn()
+const saveKeepingDraftState = vi.fn()
 
 vi.mock("../../flows/useFlowEditorActions", () => ({
-    useFlowEditorActions: () => ({save: saveMock}),
+    useFlowEditorActions: () => ({saveKeepingDraftState}),
 }))
 
 vi.mock("vue-router", () => ({
@@ -40,7 +40,7 @@ describe("useKeyboardSave", () => {
     let wrapper: VueWrapper
 
     beforeEach(() => {
-        saveMock.mockClear()
+        saveKeepingDraftState.mockClear()
         setActivePinia(createPinia())
     })
 
@@ -48,21 +48,21 @@ describe("useKeyboardSave", () => {
         wrapper?.unmount()
     })
 
-    it("delegates Ctrl+S to the shared save action", async () => {
+    it("saves on Ctrl+S, keeping a draft flow a draft", async () => {
         wrapper = await mountKeyboardSave()
         ctrlS()
-        expect(saveMock).toHaveBeenCalledOnce()
+        expect(saveKeepingDraftState).toHaveBeenCalledOnce()
     })
 
-    it("delegates Cmd+S (metaKey) to the shared save action", async () => {
+    it("saves on Cmd+S (metaKey), keeping a draft flow a draft", async () => {
         wrapper = await mountKeyboardSave()
         metaS()
-        expect(saveMock).toHaveBeenCalledOnce()
+        expect(saveKeepingDraftState).toHaveBeenCalledOnce()
     })
 
     it("ignores a plain 's' keypress without a modifier", async () => {
         wrapper = await mountKeyboardSave()
         document.dispatchEvent(new KeyboardEvent("keydown", {key: "s", bubbles: true}))
-        expect(saveMock).not.toHaveBeenCalled()
+        expect(saveKeepingDraftState).not.toHaveBeenCalled()
     })
 })

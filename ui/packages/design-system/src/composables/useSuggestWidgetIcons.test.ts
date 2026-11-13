@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
-import {ref, effectScope, nextTick} from "vue"
+import {ref, effectScope, nextTick, defineComponent, h} from "vue"
 import {useSuggestWidgetIcons, type SuggestWidgetIconsContext} from "./useSuggestWidgetIcons"
 import {OVERFLOW_WIDGETS_ID} from "../utils/monacoSetup"
 import {STATES} from "../utils/state"
@@ -10,14 +10,21 @@ vi.mock("monaco-editor/editor/editor.api", () => ({
     },
 }))
 
-// monacoSetup.ts imports monaco-editor/languages/features/typescript/register at module level,
-// which instantiates Emitter before the editor.api mock is applied; stub it out.
+// monacoSetup.ts imports this at module level and instantiates Emitter before the editor.api mock is applied.
 vi.mock("monaco-editor/languages/features/typescript/register", () => ({
     typescriptDefaults: {setCompilerOptions: vi.fn()},
     ScriptTarget: {ES2020: 7},
 }))
 
-// ── DOM helpers ──────────────────────────────────────────────────────────────
+let mountedIcons: string[] = []
+
+const RecordingTaskIcon = defineComponent({
+    props: {cls: {type: String, default: ""}},
+    setup(props) {
+        mountedIcons.push(props.cls)
+        return () => h("i", {"data-cls": props.cls})
+    },
+})
 
 function buildOverflowContainer(): {contentWidgets: HTMLElement} {
     const overflowNode = document.createElement("div")
@@ -32,7 +39,6 @@ function buildOverflowContainer(): {contentWidgets: HTMLElement} {
 function buildSuggestWidget(): HTMLElement {
     const widget = document.createElement("div")
     widget.className = "suggest-widget"
-    // The sash element is required: observeAndResize reads .monaco-sash.vertical
     const sash = document.createElement("div")
     sash.className = "monaco-sash vertical disabled"
     widget.appendChild(sash)
@@ -64,11 +70,9 @@ function buildRow(label: string, pkg?: string, id = "row-1"): HTMLElement {
     return row
 }
 
-// ── Context factory ───────────────────────────────────────────────────────────
-
 function makeCtx(overrides: Partial<SuggestWidgetIconsContext> = {}): SuggestWidgetIconsContext {
     return {
-        taskIcon: {render: () => null} as unknown as SuggestWidgetIconsContext["taskIcon"],
+        taskIcon: RecordingTaskIcon,
         loadTaskIcon: ref(vi.fn()),
         largeSuggestions: ref(false),
         codeEditor: () => undefined,
@@ -77,17 +81,11 @@ function makeCtx(overrides: Partial<SuggestWidgetIconsContext> = {}): SuggestWid
     }
 }
 
-// ── Flush helper: MutationObserver callbacks fire synchronously in jsdom, ─────
-// but Vue's watch() schedules on the microtask queue, so we need multiple
-// ticks to let the watch handler run and then the rowObserver to be set up.
-
 async function flushAll() {
     await Promise.resolve()
     await nextTick()
     await Promise.resolve()
 }
-
-// ── Shared setup ──────────────────────────────────────────────────────────────
 
 describe("useSuggestWidgetIcons", () => {
     let scope: ReturnType<typeof effectScope>
@@ -95,11 +93,22 @@ describe("useSuggestWidgetIcons", () => {
     let teardown: () => void
 
     beforeEach(() => {
+        mountedIcons = []
         scope = effectScope()
         const result = scope.run(() => useSuggestWidgetIcons(makeCtx()))!
         observeAndResize = result.observeAndResize
         teardown = result.teardown
     })
+
+    async function openSuggestWidget() {
+        const {contentWidgets} = buildOverflowContainer()
+        observeAndResize()
+
+        const widget = buildSuggestWidget()
+        contentWidgets.appendChild(widget)
+        await flushAll()
+        return {contentWidgets, widget}
+    }
 
     afterEach(() => {
         scope.stop()
@@ -107,60 +116,36 @@ describe("useSuggestWidgetIcons", () => {
         document.body.innerHTML = ""
     })
 
-    // ── 1. Known plugin gets its icon ─────────────────────────────────────────
+    it("injects the plugin icon and hides the VS Code icon for a known plugin FQCN", async () => {
+        const {widget} = await openSuggestWidget()
 
-    it("injects a kestra-icon-wrapper and hides the VS Code icon for a known plugin FQCN", async () => {
-        const {contentWidgets} = buildOverflowContainer()
-        observeAndResize()
-
-        const widget = buildSuggestWidget()
-        contentWidgets.appendChild(widget)
-        await flushAll()
-
-        // The label is the last segment, the package is the full parent namespace
         const row = buildRow("Log", "io.kestra.plugin.core.log", "row-plugin")
         widget.appendChild(row)
         await Promise.resolve()
 
-        expect(row.querySelector(".kestra-icon-wrapper")).not.toBeNull()
+        expect(row.querySelector(".kestra-icon-wrapper [data-cls='io.kestra.plugin.core.log.Log']")).not.toBeNull()
+        expect(mountedIcons).toEqual(["io.kestra.plugin.core.log.Log"])
         expect((row.querySelector(".suggest-icon") as HTMLElement).style.display).toBe("none")
     })
 
-    // ── 2. Unknown label is left untouched ────────────────────────────────────
-
     it("leaves the VS Code icon visible for a label that matches no plugin or state", async () => {
-        const {contentWidgets} = buildOverflowContainer()
-        observeAndResize()
-
-        const widget = buildSuggestWidget()
-        contentWidgets.appendChild(widget)
-        await flushAll()
+        const {widget} = await openSuggestWidget()
 
         const row = buildRow("namespace", undefined, "row-unknown")
         widget.appendChild(row)
         await Promise.resolve()
 
         expect(row.querySelector(".kestra-icon-wrapper")).toBeNull()
+        expect(mountedIcons).toEqual([])
         expect((row.querySelector(".suggest-icon") as HTMLElement).style.display).toBe("")
     })
 
-    // ── 3. Icon is not injected twice for the same entry ──────────────────────
-
-    it("produces exactly one kestra-icon-wrapper even when the same row is processed twice", async () => {
-        const {contentWidgets} = buildOverflowContainer()
-        observeAndResize()
-
-        const widget = buildSuggestWidget()
-        contentWidgets.appendChild(widget)
-        await flushAll()
-
+    it("produces exactly one icon wrapper when the same row is processed again", async () => {
+        const {widget} = await openSuggestWidget()
         const row = buildRow("Log", "io.kestra.plugin.core.log", "row-dedup")
 
-        // First append: row is processed
         widget.appendChild(row)
         await Promise.resolve()
-
-        // Remove and re-append to trigger a second MutationObserver callback
         widget.removeChild(row)
         await Promise.resolve()
         widget.appendChild(row)
@@ -169,49 +154,76 @@ describe("useSuggestWidgetIcons", () => {
         expect(row.querySelectorAll(".kestra-icon-wrapper")).toHaveLength(1)
     })
 
-    // ── 4. Observer is disconnected on teardown ───────────────────────────────
+    it("mounts the icon once when one batch of mutations reports the same row twice", async () => {
+        const {widget} = await openSuggestWidget()
+        const row = buildRow("Log", "io.kestra.plugin.core.log", "row-batch")
+        widget.appendChild(row)
+        await Promise.resolve()
+        mountedIcons = []
 
-    it("disconnects both observers when teardown is called", async () => {
-        const {contentWidgets} = buildOverflowContainer()
-        observeAndResize()
+        const nameContainer = row.querySelector(".monaco-icon-name-container") as HTMLElement
+        nameContainer.appendChild(document.createTextNode(""))
+        nameContainer.appendChild(document.createTextNode(""))
+        await Promise.resolve()
 
-        // Bring the suggest widget up so the rowObserver is created too
-        const widget = buildSuggestWidget()
-        contentWidgets.appendChild(widget)
-        await flushAll()
+        expect(mountedIcons).toHaveLength(1)
+        expect(row.querySelectorAll(".kestra-icon-wrapper")).toHaveLength(1)
+    })
 
-        const disconnectSpy = vi.spyOn(MutationObserver.prototype, "disconnect")
+    it("stops decorating the rows of the open suggest widget once torn down", async () => {
+        const {widget} = await openSuggestWidget()
 
         teardown()
 
-        expect(disconnectSpy).toHaveBeenCalled()
+        const lateRow = buildRow("Log", "io.kestra.plugin.core.log", "row-late")
+        widget.appendChild(lateRow)
+        await Promise.resolve()
+
+        expect(lateRow.querySelector(".kestra-icon-wrapper")).toBeNull()
+        expect(mountedIcons).toEqual([])
     })
 
-    // ── 5. No suggest widget present is a no-op ───────────────────────────────
+    it("does not pick up a suggest widget opened after teardown", async () => {
+        const {contentWidgets} = buildOverflowContainer()
+        observeAndResize()
+
+        teardown()
+
+        const widget = buildSuggestWidget()
+        widget.appendChild(buildRow("Log", "io.kestra.plugin.core.log", "row-next"))
+        contentWidgets.appendChild(widget)
+        await flushAll()
+
+        expect(widget.querySelector(".kestra-icon-wrapper")).toBeNull()
+        expect(mountedIcons).toEqual([])
+    })
 
     it("does not throw and injects no icons when no overflow container is in the DOM", () => {
-        // Document is empty (afterEach clears it; no buildOverflowContainer call here)
         expect(() => observeAndResize()).not.toThrow()
         expect(document.querySelectorAll(".kestra-icon-wrapper")).toHaveLength(0)
     })
 
-    // ── Bonus: state label gets its icon ──────────────────────────────────────
-
-    it("injects a kestra-icon-wrapper for a label that matches a known execution state", async () => {
-        const stateKey = Object.keys(STATES)[0]
-
+    it("ignores nodes added to the overflow container that are not a suggest widget", async () => {
         const {contentWidgets} = buildOverflowContainer()
         observeAndResize()
 
-        const widget = buildSuggestWidget()
-        contentWidgets.appendChild(widget)
+        const row = buildRow("Log", "io.kestra.plugin.core.log", "row-stray")
+        contentWidgets.appendChild(row)
         await flushAll()
 
-        const row = buildRow(stateKey, undefined, "row-state")
+        expect(row.querySelector(".kestra-icon-wrapper")).toBeNull()
+        expect(mountedIcons).toEqual([])
+    })
+
+    it("injects the state icon and hides the VS Code icon for a label that matches an execution state", async () => {
+        const {widget} = await openSuggestWidget()
+
+        const row = buildRow(Object.keys(STATES)[0], undefined, "row-state")
         widget.appendChild(row)
         await Promise.resolve()
 
         expect(row.querySelector(".kestra-icon-wrapper")).not.toBeNull()
+        expect(mountedIcons).toEqual([])
         expect((row.querySelector(".suggest-icon") as HTMLElement).style.display).toBe("none")
     })
 })

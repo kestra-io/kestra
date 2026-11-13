@@ -296,7 +296,7 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -327,7 +327,7 @@
     import {usePageSize} from "../../composables/usePageSize"
     import {useKvFilter} from "../filter/configurations/kvFilter"
 
-    import {dateUtils, dayjs, useTableColumns} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
@@ -416,18 +416,7 @@
         router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
-    // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
-    // uses: otherwise a page opened with ?sort=updateDate:desc lists rows by date under an arrow on Key, and
-    // the first click on Last modified re-applies the order it already has.
-    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
-        const parts = typeof sort === "string" ? sort.split(":") : []
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            return {prop: "key", order: "ascending"}
-        }
-        // Read the direction as the API does: "asc" is ascending, anything else descending.
-        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
-    }
-    const defaultSort = sortFromQuery(route.query.sort)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "key", order: "ascending"})
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query

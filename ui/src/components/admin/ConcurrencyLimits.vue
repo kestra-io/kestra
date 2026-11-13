@@ -21,7 +21,7 @@
             :label="$t(column.label)"
         >
             <template #default="scope">
-                <button v-if="column.prop === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
+                <button v-if="column.prop === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" data-test="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
                     {{ scope.row[column.prop] }}
                     <IconEdit />
                 </button>
@@ -41,7 +41,7 @@
             <KsButton @click="editRunning = false">
                 {{ $t("cancel") }}
             </KsButton>
-            <KsButton type="primary" :disabled="!isRunningCountValid" @click="saveEditRunning()">
+            <KsButton type="primary" data-test="save-running" :disabled="!isRunningCountValid" @click="saveEditRunning()">
                 {{ $t("save") }}
             </KsButton>
         </template>
@@ -60,6 +60,7 @@
     import {apiUrlWithTenant} from "override/utils/route"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
 
@@ -146,8 +147,10 @@
                 flowId: row.flowId,
                 running: newRunningCount.value,
             })
-        } catch {
-            toast.error(t("concurrency_limit.save_error"))
+        } catch (error) {
+            if (!isReportedCentrally(error as KestraHttpError)) {
+                toast.error(t("concurrency_limit.save_error"))
+            }
             return
         }
         editRunning.value = false

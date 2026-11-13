@@ -7,7 +7,7 @@
             :total="total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'key', order: 'ascending'}"
+            :defaultSort="defaultSort"
             :selectable="false"
             @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
@@ -249,7 +249,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations/secretsFilter"
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
 
@@ -514,6 +514,7 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "key", order: "ascending"})
     const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {

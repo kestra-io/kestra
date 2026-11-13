@@ -33,7 +33,7 @@
         @update:model-value="onInput"
     />
     <template v-else>
-        <KsFormItem class="anyof-switch">
+        <KsFormItem stacked class="anyof-switch">
             <KsSegmented
                 v-model="selectedSchema"
                 :options="schemaOptions"

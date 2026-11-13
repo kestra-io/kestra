@@ -46,8 +46,7 @@ describe("KsFileTag", () => {
             props: {uri: "kestra:///company/team/exec/outputs/report.csv"},
             global: globalConfig,
         })
-        const attrs = wrapper.findComponent(KsTooltip).vm.$attrs as {popperClass?: string}
-        expect(attrs.popperClass).toBe("ks-file-tag-tooltip")
+        expect(wrapper.findComponent(KsTooltip).props("popperClass")).toBe("ks-file-tag-tooltip")
     })
 
     test("picks the icon from the URI, whose extension the name often lacks", () => {

@@ -10,15 +10,17 @@
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ElDatePicker, type DatePickerPropsPublic} from "element-plus"
+    import {ElDatePicker, type DatePickerPropsPublic, type ElTooltipContentProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useInputAttrs} from "../../composables/useInputAttrs"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<T>()
 
-    const props = withDefaults(defineProps<{
+    type KsDatePickerProps = {
         type?: string
         placeholder?: string
         disabled?: boolean
@@ -28,7 +30,12 @@
         size?: "large" | "default" | "small"
         startPlaceholder?: string
         endPlaceholder?: string
-    }>(), {
+    }
+
+    // The picker hands its attrs to its tooltip, which is where `teleported` lands.
+    type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
+
+    const props = withDefaults(defineProps<KsDatePickerProps & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {
         type: undefined,
         placeholder: undefined,
         clearable: undefined,

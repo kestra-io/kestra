@@ -4,6 +4,7 @@
         :hideAfter="0"
         transition=""
         :visible="internalVisible"
+        :showArrow="showArrow"
         v-bind="({...filteredProps(), ...$attrs} as PopoverProps)"
         @update:visible="handleUpdateVisible"
         @hide="emit('hide')"
@@ -20,23 +21,16 @@
 <script setup lang="ts">
     import {ElPopover} from "element-plus"
     import type {PopoverProps} from "element-plus"
-    import {onBeforeUnmount, ref, watch} from "vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {onBeforeUnmount, ref, watch, type HTMLAttributes} from "vue"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        visible?: boolean
-        placement?: string
-        trigger?: "click" | "hover" | "focus" | "contextmenu"
-        width?: number | string
-        effect?: "light" | "dark"
-        popperClass?: string
-        showArrow?: boolean
-        disabled?: boolean
-        title?: string
-        content?: string
-    }>(), {visible: undefined, showArrow: false})
+    // Element Plus types its listeners as props; declared here, they would stop being the parent's listeners.
+    export type KsPopoverProps = Omit<PopoverProps, "onUpdate:visible" | "onMouseenter" | "onMouseleave" | "onClick" | "onKeydown" | "onFocus" | "onBlur" | "onContextmenu">
+
+    const props = withDefaults(defineProps<KsPopoverProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsPopoverProps>>(), {visible: undefined, showArrow: false})
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]
@@ -62,7 +56,7 @@
     })
 
     watch(() => props.visible, (val) => {
-        if (val !== undefined) internalVisible.value = val
+        if (val !== undefined && val !== null) internalVisible.value = val
     }, {immediate: true})
 
     function handleUpdateVisible(v: boolean) {
@@ -72,7 +66,7 @@
 
     onBeforeUnmount(() => document.removeEventListener("keydown", handleEscapeKeydown))
 
-    const filteredProps = useFilteredProps(props, ["visible"])
+    const filteredProps = usePassedProps(props, ["visible"])
 </script>
 
 <style lang="scss">

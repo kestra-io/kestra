@@ -281,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef, type ComponentPublicInstance} from "vue"
+    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef, type ComponentPublicInstance, type CSSProperties} from "vue"
     import {logsFontSize} from "../../composables/useLogDisplay"
     import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
@@ -406,7 +406,7 @@
         "scroller-update": []
     }>()
 
-    const FULLSCREEN_CARD_BODY_STYLE = {
+    const FULLSCREEN_CARD_BODY_STYLE: CSSProperties = {
         display: "flex",
         flexDirection: "column",
         flex: "1",

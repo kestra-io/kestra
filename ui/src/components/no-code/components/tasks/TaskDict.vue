@@ -11,7 +11,7 @@
             <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
                 <template #tasks>
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => { if (el) keyInputRefs[index] = el as InstanceType<typeof InputText> }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         noMargin
@@ -42,7 +42,7 @@
             <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="dict-row" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
                 <KsCol :span="6">
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => { if (el) keyInputRefs[index] = el as InstanceType<typeof InputText> }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         noMargin
@@ -81,6 +81,7 @@
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
 
     const {te} = useI18n()
 
@@ -89,8 +90,8 @@
     })
 
     const props = withDefaults(defineProps<{
-        modelValue?: Record<string, any>;
-        schema?: any;
+        modelValue?: Record<string, unknown> | null;
+        schema?: Schema;
         root?: string;
         disabled?: boolean;
     }>(), {
@@ -106,14 +107,15 @@
         props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const componentType = computed(() => {
-        return props.schema?.additionalProperties ? getBlockComponent.value(
-            props.schema.additionalProperties,
+        const additionalProperties = props.schema?.additionalProperties
+        return additionalProperties ? getBlockComponent.value(
+            additionalProperties === true ? {} : additionalProperties,
             props.root,
         ) : undefined
     })
 
-    const currentValue = ref<[string, any][]>([])
-    const keyInputRefs: Record<number, any> = {}
+    const currentValue = ref<[string, unknown][]>([])
+    const keyInputRefs: Record<number, InstanceType<typeof InputText>> = {}
 
     const localEdit = ref(false)
 
@@ -155,7 +157,9 @@
     // A debounced update still pending when the panel closes would be dropped, losing the user's last edit
     onBeforeUnmount(() => emitUpdate.flush())
 
-    const emit = defineEmits(["update:modelValue"])
+    const emit = defineEmits<{
+        "update:modelValue": [value: Record<string, unknown>];
+    }>()
 
     function getKey(key: string) {
         if (!props.root) return key
@@ -171,7 +175,7 @@
         emitUpdate()
     }
 
-    function onValueChange(key: number, val: any) {
+    function onValueChange(key: number, val: unknown) {
         currentValue.value[key][1] = val
         emitUpdate()
     }

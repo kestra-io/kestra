@@ -1,5 +1,4 @@
 {
   "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
-  "src/components/no-code/components/tasks/TaskDict.vue": 5,
   "src/stores/executions.bulkRestart.spec.ts": 1
 }

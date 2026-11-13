@@ -18,6 +18,11 @@ variables:
   statement: "{%- if inputs.enabled -%}on{%- else -%}off{%- endif -%}"
   pebble_comment: "before {# a pebble comment #} after"
   escaped: "{{ \"quoted \\\" inside\" | upper }}"
+  trim_empty: "{{-}}"
+  accented: "{{ forçado ?? orçamento() | inégal }} {{ étape.for }} {{ éif }} {{ 日本語 }}"
+  wrapped_pipe: "{{ inputs.list |
+    join(', ') |
+    upper }}"
   single: '{{ outputs[''task-with-dash''].value }}'
   flow_seq: ["{{ inputs.a }}", '{{ inputs.b }}', plain, 42, true, null]
   flow_map: {first: "{{ inputs.a }}", second: 3.14, third: ~}

@@ -1,5 +1,5 @@
 <template>
-    <div class="topology-shell ks-topology">
+    <div ref="shell" class="topology-shell ks-topology">
         <FlowSummaryChip
             v-if="flowId && !isReadOnly && isAllowedEdit"
             class="topology-flow-bar"
@@ -166,17 +166,17 @@
 
             <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
                 <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
-                    <ControlButton @click.stop="zoomIn()">
+                    <ControlButton @click.stop="zoomByUser(zoomIn)">
                         <Plus />
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
-                    <ControlButton @click.stop="zoomOut()">
+                    <ControlButton @click.stop="zoomByUser(zoomOut)">
                         <Minus />
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                    <ControlButton @click.stop="fitView()">
+                    <ControlButton @click.stop="fitGraph()">
                         <Fullscreen />
                     </ControlButton>
                 </KsTooltip>
@@ -252,7 +252,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
-    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, debounce, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD, pillZoomCompensation} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
@@ -340,7 +340,7 @@
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, getElements, onNodesInitialized, onMoveStart, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -473,18 +473,59 @@
         generateGraph()
     })
 
+    // A container resize only refits a view the user has not panned or zoomed since, so it never discards their framing (#19387).
+    let viewportAdjustedByUser = Boolean(props.defaultViewport)
+    onMoveStart(() => {
+        viewportAdjustedByUser = true
+    })
+
+    function fitGraph() {
+        viewportAdjustedByUser = false
+        fitView()
+    }
+
+    function zoomByUser(zoom: () => Promise<boolean>) {
+        viewportAdjustedByUser = true
+        zoom()
+    }
+
+    const shell = ref<HTMLDivElement>()
+    let shellSize: {width: number, height: number} | undefined
+    let shellResizeObserver: ResizeObserver | undefined
+    const refitAfterResize = debounce(() => {
+        if (initialFitDone.value && !viewportAdjustedByUser) fitGraph()
+    }, 100)
+
+    onMounted(() => {
+        if (!shell.value) return
+        shellResizeObserver = new ResizeObserver(([entry]) => {
+            const {width, height} = entry.contentRect
+            // A hidden panel measures 0, and fitting the graph into it would leave it unreadable once shown again.
+            if (!width || !height) return
+            const resized = shellSize !== undefined && (shellSize.width !== width || shellSize.height !== height)
+            shellSize = {width, height}
+            if (resized) refitAfterResize()
+        })
+        shellResizeObserver.observe(shell.value)
+    })
+
+    onUnmounted(() => {
+        shellResizeObserver?.disconnect()
+        refitAfterResize.cancel()
+    })
+
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
             initialFitDone.value = true
             // A caller passing its own starting zoom (Storybook, tests) means fitView() would
             // immediately discard it.
-            if (!props.defaultViewport) fitView()
+            if (!props.defaultViewport) fitGraph()
             return
         }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
-            fitView()
+            fitGraph()
         }
     })
 

@@ -15,18 +15,18 @@
             <Empty v-if="data !== undefined" type="concurrency_limits" />
         </template>
         <KsTableColumn
-            v-for="k in KEYS"
-            :key="k"
-            :prop="k"
-            :label="k === 'queued' ? $t('concurrency_limit.queued') : k"
+            v-for="column in COLUMNS"
+            :key="column.prop"
+            :prop="column.prop"
+            :label="$t(column.label)"
         >
             <template #default="scope">
-                <button v-if="k === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
-                    {{ scope.row[k] }}
+                <button v-if="column.prop === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
+                    {{ scope.row[column.prop] }}
                     <IconEdit />
                 </button>
                 <span v-else>
-                    {{ scope.row[k] }}
+                    {{ scope.row[column.prop] }}
                 </span>
             </template>
         </KsTableColumn>
@@ -80,7 +80,13 @@
     type ConcurrencyLimitRow = ConcurrencyLimit & {queued?: number}
     type ConcurrencyLimitPage = {results: ConcurrencyLimitRow[], total: number}
 
-    const KEYS: (keyof ConcurrencyLimitRow)[] = ["tenantId", "namespace", "flowId", "running", "queued"]
+    const COLUMNS: {prop: keyof ConcurrencyLimitRow, label: string}[] = [
+        {prop: "tenantId", label: "tenantId"},
+        {prop: "namespace", label: "namespace"},
+        {prop: "flowId", label: "flow"},
+        {prop: "running", label: "running"},
+        {prop: "queued", label: "concurrency_limit.queued"},
+    ]
 
     const axios = useClient()
     const data = ref<ConcurrencyLimitPage>()

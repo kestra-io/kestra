@@ -470,8 +470,8 @@
       "readers_tooltip": "重放的这些 Task 也会读取。点击查看它们的定义。",
       "readers_title": "也读取 {path} 的 Tasks",
       "readers_reads": "读取 {paths}",
-      "impact": "这些覆盖也会改变 {tasks} 在 replay 中读取的内容。",
-      "dynamic_readers": "{tasks} 通过动态路径或在 block 中读取 output，也可能读取新值。",
+      "impact": "这些覆盖还会更改 Task {tasks} 在重放中读取的值。",
+      "dynamic_readers": "Tasks {tasks} 整体读取 output，通过动态路径或在 block 中，也可能读取新值。",
       "confirm": "使用 {count} 个覆盖项重放",
       "error": {
         "number": "输入一个数字。",

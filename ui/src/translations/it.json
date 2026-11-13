@@ -470,8 +470,8 @@
       "readers_tooltip": "Letto anche da questi Task del replay. Clicca per vedere le loro definizioni.",
       "readers_title": "Task che leggono anche {path}",
       "readers_reads": "Legge {paths}",
-      "impact": "Queste sovrascritture modificano anche ciò che i {tasks} leggono nel replay.",
-      "dynamic_readers": "{tasks} leggono gli output tramite un percorso dinamico o in un blocco, e possono anche leggere i nuovi valori.",
+      "impact": "Queste sovrascritture modificano anche i valori che i task {tasks} leggono nel replay.",
+      "dynamic_readers": "I Task {tasks} leggono gli output nel loro complesso, tramite un percorso dinamico o in un blocco, e possono anche leggere i nuovi valori.",
       "confirm": "Replay con {count} override | Replay con {count} override",
       "error": {
         "number": "Inserisci un numero.",

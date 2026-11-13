@@ -470,8 +470,8 @@
       "readers_tooltip": "También leído por estas Tasks del Replay. Haz clic para ver sus definiciones.",
       "readers_title": "Tasks que también leen {path}",
       "readers_reads": "Lee {paths}",
-      "impact": "Estas anulaciones también cambian lo que {tasks} leen en la reproducción.",
-      "dynamic_readers": "{tasks} leen los outputs a través de una ruta dinámica o en un bloque, y también pueden leer los nuevos valores.",
+      "impact": "Estas anulaciones también cambian los valores que las tasks {tasks} leen en la Replay.",
+      "dynamic_readers": "Las Tasks {tasks} leen las salidas en su totalidad, a través de una ruta dinámica o en un bloque, y también pueden leer los nuevos valores.",
       "confirm": "Replay con {count} override | Replay con {count} overrides",
       "error": {
         "number": "Introduce un número.",

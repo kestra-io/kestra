@@ -470,8 +470,8 @@
       "readers_tooltip": "Também lido por estas tasks do replay. Clique para ver as suas definições.",
       "readers_title": "Tasks que também leem {path}",
       "readers_reads": "Lê {paths}",
-      "impact": "Essas substituições também alteram o que as {tasks} leem no replay.",
-      "dynamic_readers": "{tasks} leem outputs através de um caminho dinâmico ou em um bloco, e também podem ler os novos valores.",
+      "impact": "Essas substituições também alteram os valores que as tasks {tasks} leem no replay.",
+      "dynamic_readers": "Tasks {tasks} leem outputs como um todo, através de um caminho dinâmico ou em um bloco, e também podem ler os novos valores.",
       "confirm": "Replay com {count} substituição | Replay com {count} substituições",
       "error": {
         "number": "Insira um número.",

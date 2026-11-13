@@ -470,8 +470,8 @@
       "readers_tooltip": "Odczytane również przez te Taski Replaya. Kliknij, aby zobaczyć ich definicje.",
       "readers_title": "Taski, które również odczytują {path}",
       "readers_reads": "Odczytuje {paths}",
-      "impact": "Te nadpisania zmieniają również to, co {tasks} odczytują w Replayu.",
-      "dynamic_readers": "{tasks} odczytują outputy poprzez dynamiczną ścieżkę lub w bloku, a także mogą odczytywać nowe wartości.",
+      "impact": "Te nadpisania zmieniają również wartości, które Taski {tasks} odczytują w Replayu.",
+      "dynamic_readers": "Taski {tasks} odczytują Outputy w całości, poprzez dynamiczną ścieżkę lub w bloku, a także mogą odczytywać nowe wartości.",
       "confirm": "Replay z {count} nadpisaniem | Replay z {count} nadpisaniami | Replay z {count} nadpisaniami",
       "error": {
         "number": "Wprowadź liczbę.",

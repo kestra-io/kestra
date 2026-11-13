@@ -470,8 +470,8 @@
       "readers_tooltip": "リプレイのこれらのTaskでも読み込まれます。クリックして定義を表示します。",
       "readers_title": "{path}も読み取るTask",
       "readers_reads": "{paths}を読み込みます",
-      "impact": "これらのオーバーライドは、replay で {tasks} が読み取る内容も変更します。",
-      "dynamic_readers": "{tasks} は、動的なパスまたはブロックを介して出力を読み取り、新しい値を読み取ることもできます。",
+      "impact": "これらのオーバーライドは、replayで{tasks} Taskが読み取る値も変更します。",
+      "dynamic_readers": "Tasks {tasks} は、動的なパスまたはブロックを介して出力を全体として読み取り、新しい値も読み取ることができます。",
       "confirm": "{count} 件のオーバーライドでリプレイ",
       "error": {
         "number": "数値を入力してください。",

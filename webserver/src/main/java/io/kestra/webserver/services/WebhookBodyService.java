@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -145,6 +146,9 @@ public class WebhookBodyService {
      * <p>
      * The parts are collected whatever the {@link FetchType} of the trigger: a file part is stored rather than
      * read into the flow in any case, so the fetch type has nothing to choose between here.
+     * <p>
+     * When collection fails or is cancelled, what was already stored for the execution is deleted, as no
+     * execution will ever carry it. A part still being written at the moment of a cancellation may outlive it.
      *
      * @param parts       the parts of the request, {@code null} if it has none
      * @param flow        the flow the webhook trigger belongs to
@@ -170,11 +174,13 @@ public class WebhookBodyService {
                 }
             })
             .collectList()
-            .map(collected -> MultipartFormDataRequestBody.builder()
+            .<MultipartFormDataRequestBody> map(collected -> MultipartFormDataRequestBody.builder()
                 .contentType(contentType)
                 .charset(StandardCharsets.UTF_8)
                 .content(collected)
-                .build());
+                .build())
+            .doOnError(e -> deleteStored(flow, executionId))
+            .doOnCancel(() -> Schedulers.boundedElastic().schedule(() -> deleteStored(flow, executionId)));
     }
 
     /**
@@ -264,7 +270,16 @@ public class WebhookBodyService {
      */
     private static URI partStorageUri(Flow flow, String executionId, int index, String filename) {
         // Only the file name is kept: the caller could otherwise reach outside the execution directory.
-        return URI.create("%s/%s/%d/%s".formatted(executionUri(flow, executionId), PARTS_DIRECTORY, index, FilenameUtils.getName(filename)));
+        String name = encodePathSegment(FilenameUtils.getName(filename));
+        return URI.create("%s/%s/%d/%s".formatted(executionUri(flow, executionId), PARTS_DIRECTORY, index, name));
+    }
+
+    private static String encodePathSegment(String segment) {
+        try {
+            return new URI(null, null, "/" + segment, null).getRawPath().substring(1);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid file name '%s' in a multipart webhook request.".formatted(segment), e);
+        }
     }
 
     /**

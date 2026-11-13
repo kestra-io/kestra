@@ -1,7 +1,7 @@
 import {defineStore} from "pinia"
 import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import type {LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
+import type {KeyedLog, LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
@@ -59,7 +59,7 @@ export interface LogsDownloadResult {
 }
 
 /** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
-export type Log = LogEntry & {index?: number}
+export type Log = LogEntry & Pick<KeyedLog, "key"> & {index?: number}
 
 function setupLogsStore() {
     const logs = ref<Log[]>()
@@ -236,6 +236,14 @@ function setupLogsStore() {
         return counts
     }
 
+    function bulkDeleteLogs(ids: string[]) {
+        return LogsAPI.deleteLogsByIds({body: ids})
+    }
+
+    function queryDeleteLogs(filters: Record<string, unknown>) {
+        return LogsAPI.deleteLogsByQuery({filters: routeQueryToQueryFilters(filters)})
+    }
+
     return {
         logs,
         total,
@@ -248,6 +256,8 @@ function setupLogsStore() {
         loadNextPage,
         loadPreviousPage,
         deleteLogs,
+        bulkDeleteLogs,
+        queryDeleteLogs,
         downloadLogs,
         levelCounts,
     }

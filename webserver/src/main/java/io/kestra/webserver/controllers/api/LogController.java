@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import org.slf4j.event.Level;
@@ -10,12 +11,16 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.LogDataStoreInterface.KeyedLog;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
@@ -26,6 +31,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -38,6 +44,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
@@ -66,7 +73,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Logs" }, summary = "Search for logs")
-    public CursorOrOffsetPagedResults<LogEntry> searchLogs(
+    public CursorOrOffsetPagedResults<KeyedLog> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
@@ -89,7 +96,7 @@ public class LogController {
             : offsetPageable;
 
         return CursorOrOffsetPagedResults.of(
-            logRepository.find(
+            logRepository.findWithKeys(
                 pageable,
                 tenantService.resolveTenant(),
                 QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
@@ -209,5 +216,35 @@ public class LogController {
         @Parameter(description = "The flow identifier") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/by-ids")
+    @Operation(tags = { "Logs" }, summary = "Delete a list of logs by their ids")
+    public HttpResponse<BulkResponse> deleteLogsByIds(
+        @RequestBody(description = "The ids of the logs to delete") @Body List<String> ids) {
+        int count = logRepository.deleteByIds(tenantService.resolveTenant(), ids);
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/by-query")
+    @Operation(tags = { "Logs" }, summary = "Delete logs matching the given filters")
+    @ApiResponse(responseCode = "200", description = "On success; `count` is omitted when the log store cannot report the number of deleted logs", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "At least one valid filter is required", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public HttpResponse<BulkResponse> deleteLogsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
+            in = ParameterIn.QUERY
+        ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        if (ListUtils.isEmpty(filters)) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "At least one valid filter is required to delete logs by query.");
+        }
+
+        OptionalInt count = logRepository.deleteByFiltersAndCount(
+            tenantService.resolveTenant(),
+            QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
+        );
+        return HttpResponse.ok(BulkResponse.builder().count(count.isPresent() ? count.getAsInt() : null).build());
     }
 }

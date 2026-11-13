@@ -102,6 +102,8 @@ public class JsonSchemaGenerator {
         .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
         .collect(Collectors.joining("|", ".*(", ").*"));
 
+    static final String EXAMPLES_HEADING = "##### Examples\n";
+
     private final PluginRegistry pluginRegistry;
 
     @Inject
@@ -1081,7 +1083,7 @@ public class JsonSchemaGenerator {
 
                     String description = collectedTypeAttributes.has("markdownDescription") ? collectedTypeAttributes.get("markdownDescription").asText() : "";
 
-                    description += "##### Examples\n" + doc;
+                    description += EXAMPLES_HEADING + doc;
 
                     collectedTypeAttributes.set("markdownDescription", new TextNode(description));
 

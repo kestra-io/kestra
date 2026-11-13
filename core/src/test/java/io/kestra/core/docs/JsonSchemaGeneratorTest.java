@@ -193,7 +193,7 @@ class JsonSchemaGeneratorTest {
 
         // The hints only the no-code editor reads are gone from the compact schema, and still in the plain one.
         assertThat(properties(definitions.get(Log.class.getName())).get("timeout").toString(), containsString("$dynamic"));
-        assertThat(compact.toString(), not(anyOf(containsString("$dynamic"), containsString("$group"))));
+        assertThat(compact.toString(), not(anyOf(containsString("$dynamic"), containsString("$group"), containsString("##### Examples"))));
     }
 
     @SuppressWarnings("unchecked")

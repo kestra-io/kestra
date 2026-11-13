@@ -114,6 +114,28 @@ class JsonSchemaCompactorTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldDropTheExamplesSectionButKeepTheDescriptionBeforeIt() throws Exception {
+        // Given: one description with prose before its examples, one made of examples only
+        Map<String, Object> schema = JacksonMapper.ofJson().readValue("""
+            {
+              "definitions": {
+                "a.Log": {"type": "object", "markdownDescription": "Emit a log.##### Examples\\n```yaml\\nid: x\\n```"},
+                "a.Bare": {"type": "object", "title": "Bare", "markdownDescription": "##### Examples\\n```yaml\\nid: y\\n```"}
+              }
+            }
+            """, Map.class);
+
+        // When
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
+
+        // Then
+        Map<String, Object> definitions = (Map<String, Object>) compact.get("definitions");
+        assertThat(definitions.get("a.Log")).isEqualTo(Map.of("type", "object", "markdownDescription", "Emit a log."));
+        assertThat(definitions.get("a.Bare")).isEqualTo(Map.of("type", "object", "title", "Bare"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldLeaveLiteralValuesAloneWhenTheyLookLikeASchema() throws Exception {
         // Given: two defaults that are data, each holding a `properties` key with a repeated, large value
         Map<String, Object> schema = JacksonMapper.ofJson().readValue("""

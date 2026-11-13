@@ -234,7 +234,9 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 by `JsonSchemaCompactor` in four steps:
 
 - `$dynamic` and `$group` are dropped: they are hints for the no-code editor, which reads the
-  plain endpoint, and the YAML language service ignores them;
+  plain endpoint, and the YAML language service ignores them. The `##### Examples` section of each
+  description is dropped too (catalog stubs included), so hover no longer shows examples; the plugin
+  documentation still does;
 - the generator inlines the full subtype list at every `tasks` / `errors` / `finally` site, 17 of
   them in the flow schema, so each type costs one `$ref` branch per site. Every bare `anyOf` that
   repeats a definition's list becomes a `$ref` to that definition, and a list repeated with no
@@ -247,8 +249,9 @@ by `JsonSchemaCompactor` in four steps:
   `shared-property-<name>` definition, referenced from each site.
 
 The YAML language service merges a `$ref` target into the referencing node, so validation and
-completion are unchanged. Hover differs in one place: on a single-subtype property it now shows the
-property's own title, where the inline form showed the parent's description once per subtype. The plain endpoint keeps everything inline for the no-code
+completion are unchanged. Hover shows no examples, and differs in one more place: on a
+single-subtype property it shows the property's own title, where the inline form showed the
+parent's description once per subtype. The plain endpoint keeps everything inline for the no-code
 editor. An edition that overrides `isCatalogMergeAllowed()` to `false` (EE) gets the compact schema
 without the bundle.
 

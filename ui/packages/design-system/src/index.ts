@@ -203,6 +203,7 @@ export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
+export {sortFromQuery} from "./utils/tableSort"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export {

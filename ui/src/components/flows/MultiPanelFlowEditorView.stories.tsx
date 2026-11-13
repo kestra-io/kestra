@@ -188,7 +188,7 @@ async function lockedEditor() {
 }
 
 async function settle() {
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    await new Promise((resolve) => setTimeout(resolve, 1200))
 }
 
 function expectNoToast() {

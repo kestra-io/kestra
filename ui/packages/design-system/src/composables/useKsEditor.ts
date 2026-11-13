@@ -103,7 +103,6 @@ export function useKsEditor(
 
     const isFocused = ref(false)
     const preventCursorChange = ref(false)
-    // props.modelValue lags the editor; without this, a synchronous model rewrite loses its final emit to the stale prop.
     let emittedAwaitingProp: string | undefined
     const localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>()
     const localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>()
@@ -313,6 +312,7 @@ export function useKsEditor(
                 model.setValue(await valueSupplier())
             }
         }
+        emittedAwaitingProp = undefined
         localEditor.value?.setModel(model)
         return model
     }
@@ -619,6 +619,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        emittedAwaitingProp = undefined
         markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()

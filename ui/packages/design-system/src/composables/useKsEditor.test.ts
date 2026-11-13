@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, h, ref} from "vue"
+import {defineComponent, h, nextTick, reactive, ref} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {useKsEditor} from "./useKsEditor"
@@ -172,9 +172,9 @@ vi.mock("./PlaceholderContentWidget", () => ({
     },
 }))
 
-function mountEditor(emit: KsEditorEmit) {
-    const props = {
-        modelValue: "",
+function mountEditor(emit: KsEditorEmit, modelValue = "") {
+    const props = reactive({
+        modelValue,
         options: {},
         theme: "vs",
         readOnly: false,
@@ -182,7 +182,7 @@ function mountEditor(emit: KsEditorEmit) {
         navbar: false,
         placeholder: "",
         path: "",
-    } as unknown as ResolvedKsEditorProps
+    }) as unknown as ResolvedKsEditorProps
     const refs: KsEditorTemplateRefs = {
         editorRef: ref(document.createElement("div")),
         container: ref(document.createElement("div")),
@@ -196,7 +196,7 @@ function mountEditor(emit: KsEditorEmit) {
             return () => h("div")
         },
     })
-    return mount(Comp)
+    return Object.assign(mount(Comp), {props})
 }
 
 beforeEach(() => {
@@ -317,5 +317,65 @@ describe("useKsEditor suggestions on cursor settle", () => {
         const {trigger} = await mountAndSettle({selectionEmpty: true, suggestOpen: false, enteredPebble: true})
 
         expect(trigger).toHaveBeenCalledWith("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
+    })
+})
+
+describe("useKsEditor update:modelValue emission", () => {
+    async function mountWithContentListener(modelValue: string) {
+        const emit = vi.fn()
+        const wrapper = mountEditor(emit as unknown as KsEditorEmit, modelValue)
+        await flushPromises()
+
+        const editor = vi.mocked(monaco.editor.create).mock.results[0].value
+        const contentListener = editor.onDidChangeModelContent.mock.calls.at(-1)[0] as () => void
+        const typeValue = (value: string) => {
+            editor.getValue.mockReturnValue(value)
+            contentListener()
+        }
+        const emitted = () => emit.mock.calls.filter(([event]) => event === "update:modelValue").map(([, value]) => value)
+
+        return {wrapper, typeValue, emitted}
+    }
+
+    it("emits every change when the parent never updates the prop", async () => {
+        const {wrapper, typeValue, emitted} = await mountWithContentListener("A")
+
+        typeValue("B")
+        typeValue("A")
+        typeValue("B")
+
+        expect(emitted()).toEqual(["B", "A", "B"])
+        wrapper.unmount()
+    })
+
+    it("emits the corrected value after a synchronous rewrite inside one content event", async () => {
+        const {wrapper, typeValue, emitted} = await mountWithContentListener("A")
+
+        typeValue("violating")
+        typeValue("A")
+
+        expect(emitted()).toEqual(["violating", "A"])
+        wrapper.unmount()
+    })
+
+    it("does not re-emit a value the parent has since replaced", async () => {
+        const {wrapper, typeValue, emitted} = await mountWithContentListener("A")
+        typeValue("B")
+
+        wrapper.props.modelValue = "C"
+        await nextTick()
+        typeValue("C")
+
+        expect(emitted()).toEqual(["B"])
+        wrapper.unmount()
+    })
+
+    it("does not emit a value the prop already holds", async () => {
+        const {wrapper, typeValue, emitted} = await mountWithContentListener("A")
+
+        typeValue("A")
+
+        expect(emitted()).toEqual([])
+        wrapper.unmount()
     })
 })

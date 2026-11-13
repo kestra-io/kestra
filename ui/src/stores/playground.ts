@@ -6,7 +6,7 @@ import type {PlaygroundPlan} from "@kestra-io/kestra-sdk"
 import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
-import {State, durationUtils} from "@kestra-io/design-system"
+import {State} from "@kestra-io/design-system"
 import {Flow, isSuccessfulFlowSaveOutcome, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
@@ -24,11 +24,7 @@ const forExecution = (flow: Flow): FlowForExecution => ({
     tasks: flow.tasks ?? [],
 })
 
-const DEFAULT_REPORT_EVERY_MS = 20_000
 const SESSION_SIZE = 10
-
-// one id per page load: a duplicated tab copies sessionStorage, so an id kept there would be shared
-const CLIENT_ID = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("")
 
 export type BuildOn = "LATEST" | "NOTHING" | string
 
@@ -327,42 +323,16 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     })
 
-    let heartbeat: ReturnType<typeof setTimeout> | undefined
-    let reportingRunId: string | undefined
     let leavingEditor = false
-    const watchedRunId = computed(() => {
+    const liveRunId = computed(() => {
         const latest = latestExecution.value
-        return enabled.value && latest && !State.isTerminated(latest.state.current) ? latest.id : undefined
+        return latest && !State.isTerminated(latest.state.current) ? latest.id : undefined
     })
-
-    function stopReporting() {
-        clearTimeout(heartbeat)
-        heartbeat = undefined
-    }
-
-    async function report(executionId: string) {
-        let delay = DEFAULT_REPORT_EVERY_MS
-        try {
-            const response = await PlaygroundAPI.reportPlaygroundClient({...flowRef(), executionId, clientId: CLIENT_ID})
-            delay = (durationUtils.duration(response.reportEvery) * 1000) || DEFAULT_REPORT_EVERY_MS
-        } catch {
-            delay = DEFAULT_REPORT_EVERY_MS
-        }
-        if (reportingRunId === executionId) {
-            heartbeat = setTimeout(() => report(executionId), delay)
-        }
-    }
-
-    watch(watchedRunId, (executionId) => {
-        stopReporting()
-        reportingRunId = executionId
-        if (executionId) report(executionId)
-    }, {immediate: true})
 
     watch(enabled, (newValue) => {
         params.playground = newValue ? "on" : ""
-        if (!newValue && !leavingEditor && reportingRunId) {
-            PlaygroundAPI.releasePlaygroundClient({...flowRef(), executionId: reportingRunId, clientId: CLIENT_ID}).catch(() => undefined)
+        if (!newValue && !leavingEditor && liveRunId.value) {
+            PlaygroundAPI.endPlaygroundRun({...flowRef(), executionId: liveRunId.value}).catch(() => undefined)
         }
     }, {flush: "sync"})
 
@@ -370,7 +340,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         leavingEditor = true
         enabled.value = false
         leavingEditor = false
-        stopReporting()
         executions.value = []
         buildOn.value = "LATEST"
         executionsStore.execution = undefined

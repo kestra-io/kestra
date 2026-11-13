@@ -38,8 +38,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @KestraTest(startRunner = true)
-@Property(name = "kestra.playground.heartbeat.timeout", value = "PT3S")
-@Property(name = "kestra.playground.heartbeat.check-interval", value = "1s")
+@Property(name = "kestra.playground.breakpoint-timeout", value = "PT3S")
+@Property(name = "kestra.playground.breakpoint-check-interval", value = "1s")
 class PlaygroundControllerTest {
     private static final String NAMESPACE = "io.kestra.tests";
 
@@ -98,17 +98,11 @@ class PlaygroundControllerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/playground-session.yaml" })
-    void shouldKillTheRunAndRunAfterExecutionOnlyWhenItsLastPanelCloses(String tenantId) {
+    void shouldKillTheRunAndRunAfterExecutionWhenItsPanelCloses(String tenantId) {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution run = runUntil(tenantId, "playground-session", "b", e -> e.getState().isBreakpoint());
-        String clients = playground(tenantId, "playground-session") + "/runs/" + run.getId() + "/clients/";
 
-        client.toBlocking().exchange(HttpRequest.POST(clients + "tab-1", Map.of()));
-        client.toBlocking().exchange(HttpRequest.POST(clients + "tab-2", Map.of()));
-        client.toBlocking().exchange(HttpRequest.DELETE(clients + "tab-1"));
-        assertThat(executionRepository.findById(tenantId, run.getId()).orElseThrow().getState().isBreakpoint()).isTrue();
-
-        client.toBlocking().exchange(HttpRequest.DELETE(clients + "tab-2"));
+        client.toBlocking().exchange(HttpRequest.DELETE(playground(tenantId, "playground-session") + "/runs/" + run.getId()));
         Execution killed = awaitRun(
             tenantId, run.getId(), e -> e.getState().isTerminated() && !e.findTaskRunsByTaskId("after").isEmpty()
                 && e.findTaskRunsByTaskId("after").getFirst().getState().isTerminated()
@@ -120,7 +114,7 @@ class PlaygroundControllerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/playground-session.yaml" })
-    void shouldKillARunNoPanelReportsAfterTheTimeout(String tenantId) {
+    void shouldKillARunLeftAtItsBreakpointPastTheTimeout(String tenantId) {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         when(tenantService.listTenants()).thenReturn(List.of(tenantId));
         Execution run = runUntil(tenantId, "playground-session", "b", e -> e.getState().isBreakpoint());

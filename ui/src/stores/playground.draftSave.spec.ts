@@ -27,14 +27,12 @@ vi.mock("./fileExplorer", () => ({
 
 vi.mock("@kestra-io/design-system", () => ({
     State: {KILLING: "KILLING", RUNNING: "RUNNING", RESTARTED: "RESTARTED", CREATED: "CREATED", isTerminated: () => false},
-    durationUtils: {duration: () => 20},
 }))
 
 vi.mock("@kestra-io/kestra-sdk/playground", () => ({
     planPlaygroundRun: vi.fn().mockResolvedValue({reusedTaskIds: [], breakpoints: [], freshReason: "NO_PREVIOUS_RUN"}),
     listReusedTaskRuns: vi.fn().mockResolvedValue({taskRuns: {}}),
-    reportPlaygroundClient: vi.fn().mockResolvedValue({reportEvery: "PT20S"}),
-    releasePlaygroundClient: vi.fn().mockResolvedValue({}),
+    endPlaygroundRun: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("vue-router", () => ({

@@ -1954,13 +1954,6 @@ export type PebbleFunctionArgument = {
     defaultValue?: string | null;
 };
 
-export type PlaygroundClient = {
-    /**
-     * How often the panel should report, as an ISO 8601 duration
-     */
-    reportEvery: string;
-};
-
 /**
  * Why a Playground run reuses nothing; #NONE when it replays the run it builds on.
  */
@@ -10067,7 +10060,7 @@ export type ListPlaygroundRunsResponses = {
 
 export type ListPlaygroundRunsResponse = ListPlaygroundRunsResponses[keyof ListPlaygroundRunsResponses];
 
-export type ReleasePlaygroundClientData = {
+export type EndPlaygroundRunData = {
     body?: never;
     path: {
         /**
@@ -10082,17 +10075,13 @@ export type ReleasePlaygroundClientData = {
          * The Playground run id
          */
         executionId: string;
-        /**
-         * An id the panel picks once per browser tab
-         */
-        clientId: string;
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/clients/{clientId}';
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}';
 };
 
-export type ReleasePlaygroundClientErrors = {
+export type EndPlaygroundRunErrors = {
     /**
      * Authentication required
      */
@@ -10107,67 +10096,14 @@ export type ReleasePlaygroundClientErrors = {
     500: ProblemDetail;
 };
 
-export type ReleasePlaygroundClientError = ReleasePlaygroundClientErrors[keyof ReleasePlaygroundClientErrors];
+export type EndPlaygroundRunError = EndPlaygroundRunErrors[keyof EndPlaygroundRunErrors];
 
-export type ReleasePlaygroundClientResponses = {
+export type EndPlaygroundRunResponses = {
     /**
-     * releasePlaygroundClient 200 response
+     * endPlaygroundRun 200 response
      */
-    200: PlaygroundClient;
+    200: unknown;
 };
-
-export type ReleasePlaygroundClientResponse = ReleasePlaygroundClientResponses[keyof ReleasePlaygroundClientResponses];
-
-export type ReportPlaygroundClientData = {
-    body?: never;
-    path: {
-        /**
-         * The flow namespace
-         */
-        namespace: string;
-        /**
-         * The flow id
-         */
-        id: string;
-        /**
-         * The Playground run id
-         */
-        executionId: string;
-        /**
-         * An id the panel picks once per browser tab
-         */
-        clientId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/clients/{clientId}';
-};
-
-export type ReportPlaygroundClientErrors = {
-    /**
-     * Authentication required
-     */
-    401: ProblemDetail;
-    /**
-     * Access denied
-     */
-    403: ProblemDetail;
-    /**
-     * Internal server error
-     */
-    500: ProblemDetail;
-};
-
-export type ReportPlaygroundClientError = ReportPlaygroundClientErrors[keyof ReportPlaygroundClientErrors];
-
-export type ReportPlaygroundClientResponses = {
-    /**
-     * reportPlaygroundClient 200 response
-     */
-    200: PlaygroundClient;
-};
-
-export type ReportPlaygroundClientResponse = ReportPlaygroundClientResponses[keyof ReportPlaygroundClientResponses];
 
 export type GetTaskRunContextData = {
     body?: never;

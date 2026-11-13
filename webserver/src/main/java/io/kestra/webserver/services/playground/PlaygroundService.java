@@ -178,6 +178,13 @@ public class PlaygroundService {
         }
     }
 
+    /** Ends a run whose panel was closed; a run that has already terminated is left as it is. */
+    public void end(Execution run) {
+        if (isKillable(run)) {
+            kill(run);
+        }
+    }
+
     /** Asks the executor to kill the run; the kill handler ignores a run that has meanwhile terminated. */
     public void kill(Execution run) {
         try {

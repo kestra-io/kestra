@@ -24,8 +24,7 @@ const playgroundApi = vi.hoisted(() => ({
     planPlaygroundRun: vi.fn(),
     listPlaygroundRuns: vi.fn(),
     listReusedTaskRuns: vi.fn(),
-    reportPlaygroundClient: vi.fn(),
-    releasePlaygroundClient: vi.fn(),
+    endPlaygroundRun: vi.fn(),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/playground", () => playgroundApi)

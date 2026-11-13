@@ -4,12 +4,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.models.api.ApiLightExecution;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.services.playground.PlaygroundHeartbeats;
 import io.kestra.webserver.services.playground.PlaygroundPlan;
 import io.kestra.webserver.services.playground.PlaygroundRunMode;
 import io.kestra.webserver.services.playground.PlaygroundService;
@@ -17,6 +15,7 @@ import io.kestra.webserver.services.playground.PlaygroundService.ReusedTaskRun;
 import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
@@ -36,21 +35,16 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @Validated
 @Controller("/api/v1/{tenant}/flows/{namespace}/{id}/playground")
 public class PlaygroundController {
-    private static final String CLIENT_ID_PATTERN = "^[a-zA-Z0-9_-]{1,64}$";
-
     protected final PlaygroundService playgroundService;
-    protected final PlaygroundHeartbeats playgroundHeartbeats;
     protected final TenantService tenantService;
 
     @Inject
-    public PlaygroundController(PlaygroundService playgroundService, PlaygroundHeartbeats playgroundHeartbeats, TenantService tenantService) {
+    public PlaygroundController(PlaygroundService playgroundService, TenantService tenantService) {
         this.playgroundService = Objects.requireNonNull(playgroundService);
-        this.playgroundHeartbeats = Objects.requireNonNull(playgroundHeartbeats);
         this.tenantService = Objects.requireNonNull(tenantService);
     }
 
@@ -103,27 +97,14 @@ public class PlaygroundController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/runs/{executionId}/clients/{clientId}")
-    @Operation(tags = { "Playground" }, summary = "Report that a Playground panel still shows this run, so it is not killed")
-    public ClientResponse reportPlaygroundClient(
+    @Delete(uri = "/runs/{executionId}")
+    @Operation(tags = { "Playground" }, summary = "End a Playground run when its panel is closed")
+    public HttpResponse<Void> endPlaygroundRun(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The Playground run id") @PathVariable String executionId,
-        @Parameter(description = "An id the panel picks once per browser tab") @PathVariable @Pattern(regexp = CLIENT_ID_PATTERN) String clientId) throws QueueException {
-        playgroundHeartbeats.report(run(namespace, id, executionId), clientId);
-        return new ClientResponse(playgroundHeartbeats.reportEvery().toString());
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/runs/{executionId}/clients/{clientId}")
-    @Operation(tags = { "Playground" }, summary = "Report that a Playground panel was closed; the run is killed when no other panel shows it")
-    public ClientResponse releasePlaygroundClient(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The Playground run id") @PathVariable String executionId,
-        @Parameter(description = "An id the panel picks once per browser tab") @PathVariable @Pattern(regexp = CLIENT_ID_PATTERN) String clientId) throws QueueException {
-        playgroundHeartbeats.release(run(namespace, id, executionId), clientId);
-        return new ClientResponse(playgroundHeartbeats.reportEvery().toString());
+        @Parameter(description = "The Playground run id") @PathVariable String executionId) {
+        playgroundService.end(run(namespace, id, executionId));
+        return HttpResponse.noContent();
     }
 
     protected Execution run(String namespace, String flowId, String executionId) {
@@ -146,7 +127,4 @@ public class PlaygroundController {
     public record ContextResponse(@NotNull Map<String, Object> variables) {
     }
 
-    @Schema(name = "PlaygroundClient")
-    public record ClientResponse(@NotNull @Schema(description = "How often the panel should report, as an ISO 8601 duration") String reportEvery) {
-    }
 }

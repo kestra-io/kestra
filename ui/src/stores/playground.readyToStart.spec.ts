@@ -21,8 +21,7 @@ vi.mock("./fileExplorer", () => ({useFileExplorerStore: () => ({loadNodes: vi.fn
 vi.mock("@kestra-io/kestra-sdk/playground", () => ({
     planPlaygroundRun: vi.fn().mockResolvedValue({reusedTaskIds: [], breakpoints: [], freshReason: "NO_PREVIOUS_RUN"}),
     listReusedTaskRuns: vi.fn().mockResolvedValue({taskRuns: {}}),
-    reportPlaygroundClient: vi.fn().mockResolvedValue({reportEvery: "PT20S"}),
-    releasePlaygroundClient: vi.fn().mockResolvedValue({}),
+    endPlaygroundRun: vi.fn().mockResolvedValue(undefined),
 }))
 
 const {usePlaygroundStore} = await import("./playground")

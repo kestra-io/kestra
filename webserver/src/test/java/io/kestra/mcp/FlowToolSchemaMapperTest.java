@@ -159,6 +159,14 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string", "format", "uri"))
             .build(),
         InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).build())
+            .expectedSchema(Map.of("type", "string"))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).multiple(true).build())
+            .expectedSchema(Map.of("type", "array", "items", Map.of("type", "string")))
+            .build(),
+        InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
             .build(),

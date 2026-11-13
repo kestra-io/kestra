@@ -6,7 +6,7 @@ import {describe, expect, it} from "vitest"
 import {bootstrapUtilityUses, bootstrapVariableReads, type UtilityUse} from "./bootstrapGuard"
 
 const UI = resolve(dirname(fileURLToPath(import.meta.url)), "../../..")
-const ROOTS = ["src", "packages/design-system/src", "packages/topology/src"]
+const ROOTS = ["src", "packages/design-system/src", "packages/topology/src", "tests/storybook"]
 
 const describeUse = ({at, name}: UtilityUse) => `${at} (${name})`
 

@@ -2,11 +2,9 @@
     <KsInputNumber
         :modelValue="val"
         @update:model-value="onInput"
-        :state="isValid"
         :min="schema?.minimum as number | undefined"
         :max="schema?.maximum as number | undefined"
         :step="schema?.step as number | undefined"
-        type="number"
     />
 </template>
 
@@ -37,18 +35,6 @@
     }>()
 
     const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
-
-    const isValid = computed(() => {
-        if (props.required && props.modelValue === undefined) {
-            return false
-        }
-
-        if (props.modelValue !== undefined) {
-            return !isNaN(props.modelValue as number)
-        }
-
-        return true
-    })
 
     // Number() keeps decimals (parseInt turned 2.5 into 2) and the explicit empty check keeps 0;
     // anything that is not a finite number (a Pebble expression, for example) stays out of the box.

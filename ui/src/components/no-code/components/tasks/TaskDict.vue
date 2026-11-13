@@ -56,8 +56,6 @@
                         :modelValue="item[1]"
                         @update:model-value="onValueChange(index, $event)"
                         :root="getKey(item[0])"
-                        :schema="schema.additionalProperties"
-                        :required="isRequired(item[0])"
                         :disabled
                     />
                 </KsCol>

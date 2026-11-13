@@ -62,7 +62,7 @@
                                 </KsFormItem>
                                 <KsPasswordRequirements
                                     :password="userFormData.password"
-                                    v-model:valid="isPasswordValid"
+                                    @update:valid="isPasswordValid = $event"
                                 />
                             </div>
                             <div class="user-field">

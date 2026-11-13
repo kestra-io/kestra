@@ -29,7 +29,6 @@
         <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :sizes="[10, 20, 50, 100]"
             v-model:pageSize="pageSize"
             v-model:currentPage="currentPage"
         />

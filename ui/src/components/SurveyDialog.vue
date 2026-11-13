@@ -6,7 +6,6 @@
         :closeOnClickModal="false"
         :closeOnPressEscape="true"
         @close="handleClose"
-        customClass="hello-survey-dialog"
         scrollable
     >
         <div class="survey-content">
@@ -168,38 +167,6 @@
 </script>
 
 <style scoped>
-:deep(.hello-survey-dialog) {
-    border-radius: 8px;
-    border: 1px solid var(--ks-border-default);
-
-    .kel-dialog {
-        border-radius: 8px;
-    }
-
-    .kel-dialog__header {
-        background-color: var(--ks-bg-surface);
-        border-bottom: 1px solid var(--ks-border-default);
-        padding: 20px 24px;
-
-        .kel-dialog__title {
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-md);
-            font-weight: 600;
-        }
-    }
-
-    .kel-dialog__body {
-        padding: 24px;
-        background-color: var(--ks-bg-surface);
-    }
-
-    .kel-dialog__footer {
-        background-color: var(--ks-bg-surface);
-        border-top: 1px solid var(--ks-border-default);
-        padding: 20px 24px;
-    }
-}
-
 .survey-content {
     padding: 1rem;
 

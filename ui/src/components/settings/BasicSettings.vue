@@ -8,7 +8,7 @@
                 :label="$t('settings.blocks.configuration.fields.default_namespace')"
                 :description="$t('settings.blocks.configuration.descriptions.default_namespace')"
             >
-                <NamespaceSelect fit :value="settings.defaultNamespace" @update:model-value="onNamespace" />
+                <NamespaceSelect fit :modelValue="settings.defaultNamespace ?? undefined" @update:model-value="onNamespace" />
             </SettingRow>
 
             <SettingRow

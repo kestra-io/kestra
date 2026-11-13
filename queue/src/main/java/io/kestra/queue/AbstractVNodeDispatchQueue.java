@@ -13,12 +13,16 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodes;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public abstract class AbstractVNodeDispatchQueue<T extends VNodeDispatchEvent> extends AbstractQueue<T> implements VNodeDispatchQueueInterface<T> {
-    public AbstractVNodeDispatchQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    private final int vNodeCount;
+
+    public AbstractVNodeDispatchQueue(Class<T> cls, int vNodeCount, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
+        this.vNodeCount = vNodeCount;
     }
 
     @Override
@@ -72,6 +76,10 @@ public abstract class AbstractVNodeDispatchQueue<T extends VNodeDispatchEvent> e
     @Override
     public final QueueSubscriber<T> subscriber(Set<Integer> vNodes) {
         return trackSubscriber(doSubscriber(vNodes));
+    }
+
+    protected int computeVNode(String key) {
+        return VNodes.computeVNode(vNodeCount, key);
     }
 
     protected abstract QueueSubscriber<T> doSubscriber(Set<Integer> vNodes);

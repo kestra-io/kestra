@@ -32,7 +32,7 @@ public interface QueueFactoryInterface extends Plugin, Closeable {
 
     <Q extends BroadcastEvent> BroadcastQueueInterface<Q> broadcastQueue(Class<Q> clazz);
 
-    <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz);
+    <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz, int vNodeCount);
 
     <Q extends KeyedDispatchEvent> KeyedDispatchQueueInterface<Q> keyedDispatchQueue(Class<Q> clazz);
 

@@ -68,6 +68,54 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isFalse();
     }
 
+    @ParameterizedTest
+    @CsvSource({
+        "0 2 * * *, America/New_York, 2025-03-08T02:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]",
+        "30 2 * * *, Europe/Paris, 2025-03-29T02:30+01:00[Europe/Paris], 2025-03-30T03:30+02:00[Europe/Paris], 2025-03-31T02:30+02:00[Europe/Paris]",
+        "15 2 * * *, Australia/Lord_Howe, 2025-10-04T02:15+10:30[Australia/Lord_Howe], 2025-10-05T02:45+11:00[Australia/Lord_Howe], 2025-10-06T02:15+11:00[Australia/Lord_Howe]",
+        "*/15 2 * * *, America/New_York, 2025-03-08T02:45-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]"
+    })
+    void shouldRunOnceAfterTheGapWhenSpringForwardSkipsTheCronTime(String cron, String timezone, String last, String catchUp, String after) throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(cron).timezone(timezone).build();
+
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(ZonedDateTime.parse(last), trigger)));
+        ZonedDateTime following = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(next, trigger)));
+
+        assertThat(next).isEqualTo(ZonedDateTime.parse(catchUp));
+        assertThat(following).isEqualTo(ZonedDateTime.parse(after));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0 * * * *, 2025-03-09T01:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York]",
+        "0 * * * *, 2025-03-09T03:00-04:00[America/New_York], 2025-03-09T04:00-04:00[America/New_York]",
+        "'0 2,3 * * *', 2025-03-08T03:00-05:00[America/New_York], 2025-03-09T03:00-04:00[America/New_York]",
+        "'0 2,3 * * *', 2025-03-09T03:00-04:00[America/New_York], 2025-03-10T02:00-04:00[America/New_York]",
+        "30 1 * * *, 2025-11-01T01:30-04:00[America/New_York], 2025-11-02T01:30-04:00[America/New_York]",
+        "30 1 * * *, 2025-11-02T01:30-04:00[America/New_York], 2025-11-03T01:30-05:00[America/New_York]"
+    })
+    void shouldNotAddARunWhenTheDaylightSavingChangeIsAlreadyCovered(String cron, String last, String expected) throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(cron).timezone("America/New_York").build();
+
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(ZonedDateTime.parse(last), trigger)));
+
+        assertThat(next).isEqualTo(ZonedDateTime.parse(expected));
+    }
+
+    @Test
+    void shouldReportTheSpringForwardRunWhenEvaluatedAtIt() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 2 * * *").timezone("America/New_York").build();
+        ZonedDateTime catchUp = ZonedDateTime.parse("2025-03-09T03:00-04:00[America/New_York]");
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(conditionContext(trigger), triggerContext(catchUp, trigger));
+
+        assertThat(evaluate).isPresent();
+        var vars = evaluate.get().trigger().getVariables();
+        assertThat(dateFromVars((String) vars.get("date"), catchUp)).isEqualTo(catchUp);
+        assertThat(dateFromVars((String) vars.get("previous"), catchUp)).isEqualTo(ZonedDateTime.parse("2025-03-08T02:00-05:00[America/New_York]"));
+        assertThat(dateFromVars((String) vars.get("next"), catchUp)).isEqualTo(ZonedDateTime.parse("2025-03-10T02:00-04:00[America/New_York]"));
+    }
+
     private static TriggerContext triggerContext(ZonedDateTime date, Schedule schedule) {
         Flow flow = Flow.builder()
             .id(IdUtils.create())

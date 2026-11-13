@@ -10,8 +10,9 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {ElDropdownItem, dropdownItemProps} from "element-plus"
-    import type {Component, ExtractPublicPropTypes} from "vue"
+    import type {Component, ExtractPublicPropTypes, HTMLAttributes} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -22,7 +23,7 @@
         divided?: boolean
         icon?: string | Component
         danger?: boolean
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const filteredProps = useFilteredProps(props, ["danger"])
 

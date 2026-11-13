@@ -40,7 +40,7 @@
                                     <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                         <template #suffix v-if="getFieldError('username')">
                                             <KsTooltip placement="top" :content="getFieldError('username')">
-                                                <KsIcon name="information-outline" class="validation-icon error" />
+                                                <KsIcon class="validation-icon error"><InformationOutline /></KsIcon>
                                             </KsTooltip>
                                         </template>
                                     </KsInput>
@@ -168,6 +168,7 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {storageKeys} from "../../utils/constants"
 
     interface UserFormData {

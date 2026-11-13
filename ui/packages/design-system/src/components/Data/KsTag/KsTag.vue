@@ -38,9 +38,10 @@
 </script>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {ElTag, type TagProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import {computed, type Component} from "vue"
+    import {computed, type Component, type HTMLAttributes} from "vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -55,7 +56,7 @@
         plain?: boolean
         /** Clips the label with an ellipsis instead of letting the tag outgrow its container. */
         truncate?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         effect: "plain",
     })
 

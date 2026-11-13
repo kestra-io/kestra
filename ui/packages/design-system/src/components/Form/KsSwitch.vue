@@ -7,7 +7,8 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {Component, HTMLAttributes} from "vue"
     import {ElSwitch, type SwitchProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -24,7 +25,7 @@
         size?: "large" | "default" | "small"
         activeValue?: boolean | string | number
         inactiveValue?: boolean | string | number
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         activeText: undefined,
         inactiveText: undefined,
         activeActionIcon: undefined,

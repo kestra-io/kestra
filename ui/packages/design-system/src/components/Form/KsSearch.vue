@@ -18,7 +18,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -42,7 +43,7 @@
         readonly?: boolean
         name?: string
         id?: string
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         change: [value: string | number]

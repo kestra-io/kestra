@@ -18,7 +18,7 @@
         <DragVertical
             v-if="draggable"
             class="leaf-block-card-grip"
-            :aria-label="$t('block_editor.drag_reorder')"
+            :title="$t('block_editor.drag_reorder')"
             @mousedown.stop
         />
 

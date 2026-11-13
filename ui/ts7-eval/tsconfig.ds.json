@@ -1,0 +1,7 @@
+{
+  "extends": ["../packages/design-system/tsconfig.app.json", "./tsconfig.mapper.json"],
+  "compilerOptions": {
+    "outDir": "./.tmp/ds",
+    "tsBuildInfoFile": "./.tmp/ds.tsbuildinfo"
+  }
+}

@@ -5,7 +5,9 @@ import java.util.concurrent.TimeoutException;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.Actor;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.AsyncOperationWaiter;
@@ -25,17 +27,20 @@ public class ExecutionCommandSubmitter {
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
     private final ActorResolver actorResolver;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     public ExecutionCommandSubmitter(
         final ExecutionRepositoryInterface executionRepository,
         final AsyncOperationWaiter asyncOperationWaiter,
         final AsyncOperationsConfiguration asyncOperationsConfiguration,
-        final ActorResolver actorResolver) {
+        final ActorResolver actorResolver,
+        final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
         this.executionRepository = executionRepository;
         this.asyncOperationWaiter = asyncOperationWaiter;
         this.asyncOperationsConfiguration = asyncOperationsConfiguration;
         this.actorResolver = actorResolver;
+        this.executionCommandQueue = executionCommandQueue;
     }
 
     /**
@@ -73,6 +78,19 @@ public class ExecutionCommandSubmitter {
         if (processed.outcome() == AsyncOperationProcessedEvent.Outcome.FAILED) {
             throw new IllegalStateException("Failed to %s execution '%s': %s".formatted(action, executionId, processed.error()));
         }
+    }
+
+    /**
+     * Same as {@link #submitAndWait(String, String, Emitter)} for the tools that emit several commands on the execution
+     * command queue: the queue is passed to the emitter, along with the operation id to tag the awaited command with and the acting user.
+     */
+    public void submitAndWait(final String executionId, final String action, final QueueEmitter emitter) {
+        submitAndWait(executionId, action, (operationId, actor) -> emitter.emit(executionCommandQueue, operationId, actor));
+    }
+
+    @FunctionalInterface
+    public interface QueueEmitter {
+        void emit(DispatchQueueInterface<ExecutionCommand> queue, String operationId, @Nullable Actor actor) throws QueueException;
     }
 
     @FunctionalInterface

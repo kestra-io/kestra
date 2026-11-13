@@ -53,8 +53,4 @@
 .ks-sidebar__footer {
     flex: 0 0 auto;
 }
-
-.ks-sidebar__body :deep(.kel-scrollbar__wrap) {
-    overflow-x: visible;
-}
 </style>

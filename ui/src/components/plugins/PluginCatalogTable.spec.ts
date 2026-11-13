@@ -27,8 +27,10 @@ const aws = {
 } as Plugin
 const eeSecrets = {name: "plugin-ee-secrets", title: "secrets", group: "io.kestra.plugin.ee.secrets", tasks: [{cls: "io.kestra.plugin.ee.secrets.Get"}]} as Plugin
 
+const entriesOf = (plugins: Plugin[]) => plugins.map(plugin => ({key: plugin.name, title: plugin.title, plugin}))
+
 async function mountTable(plugins: Plugin[]) {
-    const wrapper = i18nMount(PluginCatalogTable, {props: {plugins}, global: {stubs: {RouterLink: {template: "<a><slot /></a>"}}}})
+    const wrapper = i18nMount(PluginCatalogTable, {props: {entries: entriesOf(plugins)}, global: {stubs: {RouterLink: {template: "<a><slot /></a>"}}}})
     await flushPromises()
     return wrapper
 }
@@ -61,7 +63,7 @@ describe("PluginCatalogTable", () => {
 
         wrapper.findComponent({name: "KsDataTable"}).vm.$emit("update:currentPage", 2)
         await flushPromises()
-        await wrapper.setProps({plugins: [...plugins].reverse()})
+        await wrapper.setProps({entries: entriesOf([...plugins].reverse())})
         await flushPromises()
 
         expect(wrapper.findAll("[data-test=plugin-catalog-table-name]")).toHaveLength(5)

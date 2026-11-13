@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <div v-if="pluginsList.length === 0 && extraCardCount === 0" class="plugins-empty" data-test="plugins-empty">
+        <div v-if="catalogEntries.length === 0" class="plugins-empty" data-test="plugins-empty">
             <KsNoData :title="emptyCopy.title">
                 {{ emptyCopy.description }}
             </KsNoData>
@@ -77,64 +77,53 @@
         <component
             :is="catalogExtension.table"
             v-else-if="catalogExtension.table && view === 'table'"
-            :plugins="pluginsList"
-            :catalog="baseList"
-            :search="searchInput"
-            :categories="selectedCategories"
+            :entries="catalogEntries"
         />
 
         <section v-else class="plugins-container">
-            <KsTooltip
-                v-for="plugin in pluginsList"
-                :showAfter="1000"
-                :key="plugin.name"
-            >
-                <template #content>
-                    <div class="tasks-tooltips">
-                        <template
-                            v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)"
-                            :key="elementType"
-                        >
-                            <p
-                                v-if="elements.length > 0"
-                                class="task-type"
+            <template v-for="{key, plugin, extra} in catalogEntries" :key>
+                <KsTooltip v-if="plugin" :showAfter="1000">
+                    <template #content>
+                        <div class="tasks-tooltips">
+                            <template
+                                v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)"
+                                :key="elementType"
                             >
-                                {{ $t(elementType) }}
-                            </p>
-                            <ul>
-                                <li
-                                    v-for="element in elements"
-                                    :key="element"
+                                <p
+                                    v-if="elements.length > 0"
+                                    class="task-type"
                                 >
-                                    {{ element }}
-                                </li>
-                            </ul>
-                        </template>
-                    </div>
-                </template>
-                <PluginCard
-                    :iconCls="plugin.group"
-                    :icons
-                    :loadIcon="pluginsStore.loadIcon"
-                    :title="displayTitle(plugin)"
-                    :description="plugin.description"
-                    :categories="plugin.categories"
-                    :taskCount="taskCount(plugin)"
-                    :blueprintCount="blueprintCount(plugin)"
-                    @click="openGroup(plugin)"
-                >
-                    <template v-if="catalogExtension.cardStatus" #status>
-                        <component :is="catalogExtension.cardStatus" :plugin />
+                                    {{ $t(elementType) }}
+                                </p>
+                                <ul>
+                                    <li
+                                        v-for="element in elements"
+                                        :key="element"
+                                    >
+                                        {{ element }}
+                                    </li>
+                                </ul>
+                            </template>
+                        </div>
                     </template>
-                </PluginCard>
-            </KsTooltip>
-            <component
-                :is="catalogExtension.extraCards"
-                v-if="catalogExtension.extraCards"
-                :catalog="baseList"
-                :search="searchInput"
-                :categories="selectedCategories"
-            />
+                    <PluginCard
+                        :iconCls="plugin.group"
+                        :icons
+                        :loadIcon="pluginsStore.loadIcon"
+                        :title="displayTitle(plugin)"
+                        :description="plugin.description"
+                        :categories="plugin.categories"
+                        :taskCount="taskCount(plugin)"
+                        :blueprintCount="blueprintCount(plugin)"
+                        @click="openGroup(plugin)"
+                    >
+                        <template v-if="catalogExtension.cardStatus" #status>
+                            <component :is="catalogExtension.cardStatus" :plugin />
+                        </template>
+                    </PluginCard>
+                </KsTooltip>
+                <component :is="catalogExtension.extraCard" v-else-if="catalogExtension.extraCard" :entry="extra" />
+            </template>
         </section>
     </template>
 </template>
@@ -151,7 +140,7 @@
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
-    import {usePluginCatalogExtension} from "override/components/plugins/pluginCatalogExtension"
+    import {usePluginCatalogExtension, type PluginCatalogEntry} from "override/components/plugins/pluginCatalogExtension"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -219,7 +208,6 @@
     const searchInput = computed(() => searchText.value.toLowerCase())
 
     const displayTitle = (plugin: Plugin): string => pluginDisplayTitle(plugin, enrichmentStore.getEnrichment(plugin))
-    const pluginTitle = (plugin: Plugin): string => displayTitle(plugin).toLowerCase()
 
     const baseList = computed<Plugin[]>(() => {
         return latestVersionEntries(filteredPlugins.value ?? [])
@@ -271,11 +259,11 @@
 
     // Comparator map keyed by sortBy. `newest` / `mostUsed` rely on enrichment data
     // (api.kestra.io); missing values degrade gracefully to the name comparison.
-    const nameAsc = (a: Plugin, b: Plugin): number => pluginTitle(a).localeCompare(pluginTitle(b))
+    const nameAsc = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => a.title.toLowerCase().localeCompare(b.title.toLowerCase())
 
-    const newestComparator = (a: Plugin, b: Plugin): number => {
-        const dateA = enrichmentStore.getEnrichment(a)?.lastReleasedAt
-        const dateB = enrichmentStore.getEnrichment(b)?.lastReleasedAt
+    const newestComparator = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => {
+        const dateA = enrichmentStore.getEnrichment(a.plugin)?.lastReleasedAt
+        const dateB = enrichmentStore.getEnrichment(b.plugin)?.lastReleasedAt
         const tA = dateA ? new Date(dateA).getTime() : 0
         const tB = dateB ? new Date(dateB).getTime() : 0
         if (!tA && !tB) return nameAsc(a, b)
@@ -284,28 +272,31 @@
         return tB - tA || nameAsc(a, b)
     }
 
-    const mostUsedComparator = (a: Plugin, b: Plugin): number => {
-        const uA = enrichmentStore.getEnrichment(a)?.usageCount ?? 0
-        const uB = enrichmentStore.getEnrichment(b)?.usageCount ?? 0
+    const mostUsedComparator = (a: PluginCatalogEntry, b: PluginCatalogEntry): number => {
+        const uA = enrichmentStore.getEnrichment(a.plugin)?.usageCount ?? 0
+        const uB = enrichmentStore.getEnrichment(b.plugin)?.usageCount ?? 0
         return uB - uA || nameAsc(a, b)
     }
 
-    const comparators: Record<SortKey, (a: Plugin, b: Plugin) => number> = {
+    const comparators: Record<SortKey, (a: PluginCatalogEntry, b: PluginCatalogEntry) => number> = {
         nameAsc,
         nameDesc: (a, b) => nameAsc(b, a),
         newest: newestComparator,
         mostUsed: mostUsedComparator,
     }
 
-    const pluginsList = computed<Plugin[]>(() => {
-        return baseList.value
+    const catalogEntries = computed<PluginCatalogEntry[]>(() => {
+        const plugins = baseList.value
             .filter(plugin => matchesSearch(plugin))
             .filter(plugin => matchesSelectedCategories(plugin))
             .filter(plugin => catalogExtension.matches?.(plugin) ?? true)
-            .sort(comparators[sortBy.value])
+            .map(plugin => ({key: plugin.name, title: displayTitle(plugin), plugin}))
+        const extras = catalogExtension.extraCard
+            ? (catalogExtension.extraEntries?.(baseList.value, searchInput.value, selectedCategories.value) ?? [])
+                .map(extra => ({key: `extra:${extra.key}`, title: extra.title, extra}))
+            : []
+        return [...plugins, ...extras].sort(comparators[sortBy.value])
     })
-
-    const extraCardCount = computed(() => catalogExtension.extraCardCount?.(baseList.value, searchInput.value, selectedCategories.value) ?? 0)
 
     const isFiltered = computed(() => searchInput.value !== "" || selectedCategories.value.length > 0)
 

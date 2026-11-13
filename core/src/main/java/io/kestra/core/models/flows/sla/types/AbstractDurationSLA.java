@@ -24,7 +24,7 @@ abstract class AbstractDurationSLA extends SLA implements ExecutionMonitoringSLA
         Duration executionDuration = Duration.between(execution.getState().getStartDate(), Instant.now());
         Duration slaDuration = (Duration) additionalParameters.get(SLA.SLA_DURATION_ATTRIBUTE);
         if (executionDuration.compareTo(slaDuration) > 0) {
-            String reason = "execution duration of " + executionDuration.truncatedTo(ChronoUnit.MILLIS) + " exceed the deadline of " + slaDuration + ".";
+            String reason = "execution duration of " + executionDuration.truncatedTo(ChronoUnit.MILLIS) + " exceeds the deadline of " + slaDuration + ".";
             return Optional.of(new Violation(this.getId(), this.getBehavior(), this.getLabels(), reason));
         }
 

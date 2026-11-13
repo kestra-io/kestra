@@ -18,7 +18,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, type Component} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type Component, type HTMLAttributes} from "vue"
     import {ElSegmented, type SegmentedProps} from "element-plus"
     import KsIcon from "../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -35,7 +36,7 @@
         disabled?: boolean
         block?: boolean
         variant?: "primary" | "neutral"
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         change: [value: string | number | boolean]

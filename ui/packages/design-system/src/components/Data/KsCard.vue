@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCard, type CardProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -21,7 +23,7 @@
 
     const props = defineProps<{
         shadow?: "always" | "hover" | "never"
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const filteredProps = useFilteredProps(props)
 

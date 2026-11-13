@@ -32,7 +32,7 @@
                 @click.stop="emit(EVENTS.EXPAND, {id})"
             >
                 <KsTooltip :content="$t('expand')">
-                    <UnfoldMoreHorizontal class="button-icon" alt="Expand lane" />
+                    <UnfoldMoreHorizontal class="button-icon" :title="$t('expand')" />
                 </KsTooltip>
             </span>
         </template>
@@ -56,7 +56,7 @@
                 @click="emit(EVENTS.EXPAND, {id})"
             >
                 <KsTooltip :content="$t('expand')">
-                    <UnfoldMoreHorizontal class="button-icon" alt="Expand task" />
+                    <UnfoldMoreHorizontal class="button-icon" :title="$t('expand')" />
                 </KsTooltip>
             </span>
         </div>

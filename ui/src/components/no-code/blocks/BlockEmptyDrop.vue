@@ -17,7 +17,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "@kestra-io/design-system"
+    import {computed, type ButtonHTMLAttributes} from "vue"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -32,7 +33,7 @@
         /** Marks the empty state with the same border/background as an unset required field. */
         required?: boolean
         disabled?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<ButtonHTMLAttributes>>(), {
         variant: "inline",
         dropState: "idle",
         required: false,

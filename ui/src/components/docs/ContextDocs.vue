@@ -9,7 +9,7 @@
                 :class="{disabled: !canGoBack}"
                 :aria-label="$t('common.back')"
             >
-                <ChevronLeft class="back-icon" aria-hidden="true" />
+                <ChevronLeft class="back-icon" />
             </KsButton>
         </template>
         <template #header>

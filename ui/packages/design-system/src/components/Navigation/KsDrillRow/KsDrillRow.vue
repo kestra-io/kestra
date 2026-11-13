@@ -29,6 +29,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {ButtonHTMLAttributes} from "vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     withDefaults(defineProps<{
@@ -37,7 +39,7 @@
         preview?: string;
         disabled?: boolean;
         ariaLabel?: string;
-    }>(), {})
+    } & /* @vue-ignore */ NativeAttributes<ButtonHTMLAttributes>>(), {})
 
     const emit = defineEmits<{open: []}>()
 

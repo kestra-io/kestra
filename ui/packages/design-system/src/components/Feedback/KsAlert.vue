@@ -25,7 +25,8 @@
     export type KsAlertType = typeof KS_ALERT_TYPES[number]
 </script>
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElAlert} from "element-plus"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -44,7 +45,7 @@
         showIcon?: boolean
         center?: boolean
         banner?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         closable: false,
         showIcon: true,
         banner: false,

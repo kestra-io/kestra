@@ -7,7 +7,8 @@
 </template>
 
 <script setup lang="ts">
-    import {useTemplateRef} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {useTemplateRef, type HTMLAttributes} from "vue"
     import {ElScrollbar, type ScrollbarInstance, type ScrollbarProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -16,7 +17,7 @@
     const props = defineProps<{
         maxHeight?: string | number
         height?: string | number
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     defineSlots<{
         default?(): unknown

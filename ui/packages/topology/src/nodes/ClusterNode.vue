@@ -31,7 +31,7 @@
                     @click.stop="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
+                        <UnfoldLessHorizontal class="button-icon" :title="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </template>
@@ -66,7 +66,7 @@
                     @click="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
+                        <UnfoldLessHorizontal class="button-icon" :title="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </div>

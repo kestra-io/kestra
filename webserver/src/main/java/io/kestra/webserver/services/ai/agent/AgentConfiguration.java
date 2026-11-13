@@ -35,6 +35,8 @@ import lombok.Builder;
  *        conversations; once exceeded the least-recently-active conversation is evicted, bounding
  *        memory. A safety ceiling above the idle-TTL sweep — a single account keeps only a handful of
  *        live conversations (default 50). Ignored when a durable backend is in use.
+ * @param executeFlowMaxWait how long the {@code execute_flow} tool waits for an execution to end when
+ *        asked to, before returning its current state instead (default 1 minute).
  */
 @ConfigurationProperties("kestra.ai.agent")
 @Builder
@@ -46,5 +48,6 @@ public record AgentConfiguration(
     @Bindable(defaultValue = "32") int maxConcurrentTurns,
     @Bindable(defaultValue = "10") int maxContextTurns,
     @Bindable(defaultValue = "PT1H") Duration inMemoryConversationTtl,
-    @Bindable(defaultValue = "50") int maxInMemoryConversations) {
+    @Bindable(defaultValue = "50") int maxInMemoryConversations,
+    @Bindable(defaultValue = "PT1M") Duration executeFlowMaxWait) {
 }

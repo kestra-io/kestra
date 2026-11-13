@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -38,10 +39,10 @@ public final class JsonSchemaCompactor {
     private JsonSchemaCompactor() {
     }
 
-    /** Returns a compacted copy of {@code schema}: UI hints dropped, subtype lists hoisted, then repeated property schemas shared. */
+    /** Returns a compacted copy of {@code schema}: editor-irrelevant content dropped, subtype lists hoisted, then repeated property schemas shared. */
     public static Map<String, Object> compact(Map<String, Object> schema) {
         ObjectNode root = MAPPER.convertValue(schema, ObjectNode.class);
-        stripUiHints(root);
+        stripEditorIrrelevantContent(root);
         hoistSubtypeLists(root);
         sharePropertySchemas(root);
         return MAPPER.convertValue(root, MAP_TYPE);
@@ -194,15 +195,29 @@ public final class JsonSchemaCompactor {
         }
     }
 
-    private static void stripUiHints(JsonNode schema) {
+    /** Returns {@code markdown} without the examples section {@link JsonSchemaGenerator} appends to a type's description. */
+    public static String withoutExamples(String markdown) {
+        int heading = markdown.indexOf(JsonSchemaGenerator.EXAMPLES_HEADING);
+        return heading < 0 ? markdown : markdown.substring(0, heading).stripTrailing();
+    }
+
+    private static void stripEditorIrrelevantContent(JsonNode schema) {
         if (!(schema instanceof ObjectNode object)) {
             return;
         }
         object.remove(UI_HINTS);
-        if (object.get("properties") instanceof ObjectNode properties) {
-            properties.forEach(JsonSchemaCompactor::stripUiHints);
+        if (object.get("markdownDescription") instanceof TextNode description) {
+            String trimmed = withoutExamples(description.asText());
+            if (trimmed.isEmpty()) {
+                object.remove("markdownDescription");
+            } else {
+                object.put("markdownDescription", trimmed);
+            }
         }
-        forEachSubschema(object, JsonSchemaCompactor::stripUiHints);
+        if (object.get("properties") instanceof ObjectNode properties) {
+            properties.forEach(JsonSchemaCompactor::stripEditorIrrelevantContent);
+        }
+        forEachSubschema(object, JsonSchemaCompactor::stripEditorIrrelevantContent);
     }
 
     private static void walkProperties(JsonNode schema, BiPredicate<String, ObjectNode> shouldDescend) {

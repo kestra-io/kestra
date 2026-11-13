@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.kestra.core.docs.JsonSchemaCompactor;
 import io.kestra.core.docs.SchemaType;
 
 import jakarta.annotation.Nullable;
@@ -183,7 +184,8 @@ final class PluginSchemaBundleMerger {
         }
 
         JsonNode doc = definition.get("markdownDescription");
-        definition.put("markdownDescription", doc != null && doc.isTextual() ? doc.asText() + "\n\n" + STUB_NOTE : STUB_NOTE);
+        String description = doc != null && doc.isTextual() ? JsonSchemaCompactor.withoutExamples(doc.asText()) : "";
+        definition.put("markdownDescription", description.isEmpty() ? STUB_NOTE : description + "\n\n" + STUB_NOTE);
         return definition;
     }
 

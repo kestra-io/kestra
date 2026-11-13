@@ -55,4 +55,23 @@ class JsonSchemaCacheTest {
         assertThat(afterChange).containsEntry("version", "2");
         verify(generator, times(2)).schemas(any(), anyBoolean());
     }
+
+    @Test
+    void shouldRebuildCompactSchemaWhenPluginRegistryChanges() {
+        // Given
+        JsonSchemaGenerator generator = mock(JsonSchemaGenerator.class);
+        PluginRegistry registry = mock(PluginRegistry.class);
+        when(generator.schemas(any(), anyBoolean())).thenReturn(Map.of("version", "1"), Map.of("version", "2"));
+        when(registry.hash()).thenReturn(1L, 1L, 2L);
+        JsonSchemaCache cache = new JsonSchemaCache(generator, registry);
+
+        // When
+        Map<String, Object> first = cache.getCompactSchemaForType(SchemaType.FLOW, false);
+        Map<String, Object> cached = cache.getCompactSchemaForType(SchemaType.FLOW, false);
+        Map<String, Object> afterChange = cache.getCompactSchemaForType(SchemaType.FLOW, false);
+
+        // Then
+        assertThat(cached).isSameAs(first);
+        assertThat(afterChange).containsEntry("version", "2");
+    }
 }

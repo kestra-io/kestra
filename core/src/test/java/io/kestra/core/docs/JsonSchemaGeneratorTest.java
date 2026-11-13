@@ -168,6 +168,43 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldCompactTheFlowSchemaWithoutLosingTheSharedContent() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+
+        Map<String, Object> compact = JsonSchemaCompactor.compact(schema);
+
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        var compactDefinitions = (Map<String, Map<String, Object>>) compact.get("definitions");
+        Map<String, Object> inlineItems = flowTasksItems(schema);
+        assertThat(flowTasksItems(compact), is(Map.of("$ref", "#/definitions/" + Task.class.getName())));
+        assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
+        assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
+
+        // A property typed as one task repeats its annotation on every branch: the list is referenced once, the annotation kept once.
+        Map<String, Object> dagTask = properties(compactDefinitions.get(Dag.DagTask.class.getName().replace('$', '-'))).get("task");
+        assertThat(dagTask.get("anyOf"), is(List.of(Map.of("$ref", "#/definitions/" + Task.class.getName()))));
+        assertThat(dagTask, hasEntry("title", "The task within the DAG"));
+
+        // `retry` is inherited by every task: one shared definition, referenced from each of them.
+        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
+        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
+        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), hasEntry("title", "Retry"));
+
+        // The hints only the no-code editor reads are gone from the compact schema, and still in the plain one.
+        assertThat(properties(definitions.get(Log.class.getName())).get("timeout").toString(), containsString("$dynamic"));
+        assertThat(compact.toString(), not(anyOf(containsString("$dynamic"), containsString("$group"), containsString("##### Examples"))));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        var properties = (Map<String, Map<String, Object>>) definitions.get(Flow.class.getName()).get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {

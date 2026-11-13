@@ -5,6 +5,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import TaskDict from "./TaskDict.vue"
 import TaskExpression from "./TaskExpression.vue"
+import TaskString from "./TaskString.vue"
 import InputText from "../inputs/InputText.vue"
 import Add from "../Add.vue"
 import {taskComponentsReady} from "./useBlockComponent"
@@ -110,6 +111,7 @@ describe("TaskDict", () => {
         expect(wrapper.find(".item-wrapper").exists()).toBe(true)
         await wrapper.setProps({schema: {additionalProperties: {type: "string"}}})
         expect(wrapper.findComponent(TaskExpression).exists()).toBe(false)
+        expect(wrapper.getComponent(TaskString).props("modelValue")).toBe("initial")
         await wrapper.setProps({schema: {additionalProperties: false}, modelValue: {changed: null}})
         expect(wrapper.getComponent(InputText).props("modelValue")).toBe("changed")
         expect(wrapper.getComponent(TaskExpression).props("modelValue")).toBeNull()

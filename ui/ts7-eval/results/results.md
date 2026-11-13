@@ -1,13 +1,13 @@
 | Run | Wall time, mean ± σ | Speedup vs vue-tsc | Peak RSS, process tree | Δ RSS vs vue-tsc | Largest process | Diagnostics (raw / folded) | Δ vs vue-tsc |
 |---|---|---|---|---|---|---|---|
-| `vue-tsc` | 80.7 s ± 2.2 | 1.0x | 2.08 GB | 0% | 2.08 GB | 0 / 0 | +0 / -0 |
-| `tsgo` | 16.4 s ± 0.4 | 4.9x | 2.56 GB | +23% | 1.94 GB | 1016 / 800 | +800 / -0 |
-| `tsrs` | 10.8 s ± 0.1 | 7.5x | 1.28 GB | -39% | 0.67 GB | 1016 / 800 | +800 / -0 |
-| `tsrs-fast` | 10.3 s ± 0.4 | 7.8x | 1.17 GB | -44% | 0.59 GB | 1016 / 800 | +800 / -0 |
-| `tsgo-flat` | 11.4 s ± 0.3 | 7.1x | 2.39 GB | +15% | 1.88 GB | 809 / 800 | +800 / -0 |
-| `tsrs-flat-4g` | 7.1 s ± 0.1 | 11.4x | 1.16 GB | -45% | 0.66 GB | 809 / 800 | +800 / -0 |
-| `tsrs-flat-384m` | 7.1 s ± 0.1 | 11.3x | 1.15 GB | -45% | 0.65 GB | 809 / 800 | +800 / -0 |
-| `tsrs-flat-go` | 7.3 s ± 0.2 | 11.1x | 1.28 GB | -38% | 0.78 GB | 809 / 800 | +800 / -0 |
+| `vue-tsc` | 72.7 s ± 4.1 | 1.0x | 2.09 GB | 0% | 2.09 GB | 0 / 0 | +0 / -0 |
+| `tsgo` | 14.4 s ± 0.4 | 5.1x | 2.61 GB | +25% | 1.98 GB | 929 / 730 | +730 / -0 |
+| `tsrs` | 9.3 s ± 0.2 | 7.8x | 1.28 GB | -39% | 0.69 GB | 929 / 730 | +730 / -0 |
+| `tsrs-fast` | 9.0 s ± 0.1 | 8.1x | 1.18 GB | -44% | 0.59 GB | 929 / 730 | +730 / -0 |
+| `tsgo-flat` | 10.1 s ± 0.2 | 7.2x | 2.37 GB | +13% | 1.84 GB | 738 / 730 | +730 / -0 |
+| `tsrs-flat-4g` | 6.1 s ± 0.1 | 11.9x | 1.17 GB | -44% | 0.66 GB | 738 / 730 | +730 / -0 |
+| `tsrs-flat-384m` | 5.7 s ± 0.3 | 12.7x | 1.16 GB | -44% | 0.66 GB | 738 / 730 | +730 / -0 |
+| `tsrs-flat-go` | 5.6 s ± 0.1 | 13.0x | 1.29 GB | -38% | 0.78 GB | 738 / 730 | +730 / -0 |
 
 - `tsrs` vs `tsgo`: identical diagnostics
 - `tsrs-fast` vs `tsgo`: identical diagnostics

@@ -595,6 +595,40 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldAccumulateAllValidationExceptionsWhenMultipleInputsAreInvalid() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .id("firstMissing")
+                        .type(Type.STRING)
+                        .required(true)
+                        .build(),
+                    StringInput.builder()
+                        .id("secondMissing")
+                        .type(Type.STRING)
+                        .required(true)
+                        .build()
+                )
+            )
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
+            .isInstanceOf(InputOutputValidationException.class)
+            .satisfies(e -> {
+                InputOutputValidationException ex = (InputOutputValidationException) e;
+                assertThat(ex.getViolationsByField()).containsKeys("firstMissing", "secondMissing");
+                assertThat(ex.getMessage())
+                    .contains("firstMissing")
+                    .contains("secondMissing");
+            });
+    }
+
+    @Test
     void shouldStillRenderExpressionWhenValidatingInputsWithCustomValueAllowed() {
         // Given
         SelectInput input = SelectInput.builder()

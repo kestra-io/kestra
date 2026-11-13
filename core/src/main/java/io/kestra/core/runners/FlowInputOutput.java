@@ -340,30 +340,36 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        List<SearchableData> searchableData = new ArrayList<>();
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true, false, true)
-            .stream()
-            .filter(InputAndValue::enabled)
-            .peek(it -> {
-                //TODO check to return all exception at-once.
-                if (it.exceptions() != null && !it.exceptions().isEmpty()) {
-                    throw InputOutputValidationException.merge(it.exceptions());
-                }
-            })
-            .map(it ->
-            {
-                if (Boolean.TRUE.equals(it.input().getSearchable())) {
-                    RunContext runContext = runContextFactory.get().of(flow, execution);
-                    try {
-                        searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), execution, it.input(), it.value()));
-                    } catch (Exception e) {
-                        runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), execution.getId(), e.getMessage(), e);
-                    }
-                }
+        List<InputAndValue> resolvedInputs = this.resolveInputs(inputs, flow, execution, data, true, false, true);
 
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
-            })
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        Map<String, List<InputOutputValidationException>> violationsByField = new LinkedHashMap<>();
+        for (InputAndValue it : resolvedInputs) {
+            if (it.enabled() && it.exceptions() != null && !it.exceptions().isEmpty()) {
+                violationsByField.put(it.input().getId(), new ArrayList<>(it.exceptions()));
+            }
+        }
+
+        if (!violationsByField.isEmpty()) {
+            throw InputOutputValidationException.ofViolations(violationsByField);
+        }
+
+        List<SearchableData> searchableData = new ArrayList<>();
+        Map<String, Object> resolved = new HashMap<>();
+        for (InputAndValue it : resolvedInputs) {
+            if (!it.enabled()) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(it.input().getSearchable())) {
+                RunContext runContext = runContextFactory.get().of(flow, execution);
+                try {
+                    searchableData.addAll(SearchableDataUtils.toSearchableData(runContext.logger(), execution, it.input(), it.value()));
+                } catch (Exception e) {
+                    runContext.logger().error("Failed to index the searchable input '{}' of the execution '{}', it will not be searchable: {}", it.input().getId(), execution.getId(), e.getMessage(), e);
+                }
+            }
+            resolved.put(it.input().getId(), it.value());
+        }
+
         // saved only once every input is valid, so a rejected execution leaves no orphan rows
         saveSearchableData(flow, execution, searchableData);
         if (resolved.size() < data.size()) {

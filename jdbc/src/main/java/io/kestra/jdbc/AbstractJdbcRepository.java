@@ -1,6 +1,7 @@
 package io.kestra.jdbc;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -303,8 +304,23 @@ public abstract class AbstractJdbcRepository<T> {
     public <R extends Record> T map(R record) {
         if (deserializer != null) {
             return deserializer.apply(record);
-        } else {
-            return this.deserialize(record.get("value", String.class));
+        }
+
+        Object value = record.get("value");
+        if (value instanceof byte[] bytes) {
+            return this.deserialize(bytes);
+        }
+        return this.deserialize(record.get("value", String.class));
+    }
+
+    /**
+     * @param record the JSON document, UTF-8 encoded
+     */
+    public T deserialize(byte[] record) {
+        try {
+            return MAPPER.readValue(record, cls);
+        } catch (IOException e) {
+            throw new DeserializationException(e, new String(record, StandardCharsets.UTF_8));
         }
     }
 

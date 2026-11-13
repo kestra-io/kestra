@@ -419,7 +419,7 @@ If your `<style>` block needs to exist:
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |
-| `KsForm` / `KsFormItem` | Form container with validation |
+| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields) |
 
 ### Data Display
 

@@ -70,6 +70,14 @@ describe("KsFormItem", () => {
         expect(wrapper.find(".kel-form-item.is-inline-row").exists()).toBe(false)
     })
 
+    test("adds is-stacked class when stacked", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name", stacked: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item.is-stacked").exists()).toBe(true)
+    })
+
     test("forwards for so the label can opt out of pointing at a control", () => {
         const wrapper = mount(KsFormItem, {
             props: {label: "Name", for: ""},

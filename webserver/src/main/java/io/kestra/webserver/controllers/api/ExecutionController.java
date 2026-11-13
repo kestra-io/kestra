@@ -1589,10 +1589,7 @@ public class ExecutionController {
         @RequestBody(description = "The new values, by output path such as outputs.fetch.values.code") @Valid @Body ReplayWithOverridesRequest request) throws Exception {
         Execution execution = findExecutionWithTaskRun(executionId, taskRunId);
 
-        controlReplayable(execution, taskRunId, null);
-
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()));
-        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
+        Flow flow = executionReplayService.validateReplay(execution, taskRunId, execution.getFlowRevision());
 
         return blockingReplay(execution, taskRunId, null, Optional.empty(), replayOutputService.overrides(flow, execution, taskRunId, request.overrides()));
     }

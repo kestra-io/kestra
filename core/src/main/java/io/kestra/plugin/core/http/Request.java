@@ -3,14 +3,16 @@ package io.kestra.plugin.core.http;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.hc.core5.http.ContentType;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
@@ -353,7 +355,7 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
 
             if (response.getBody() != null) {
                 byte[] bytes = getResponseBytes(response);
-                body = IOUtils.toString(bytes, StandardCharsets.UTF_8.name());
+                body = new String(bytes, this.responseCharset(runContext, response));
             }
 
             // check that the string is a valid Unicode string
@@ -370,6 +372,20 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
 
             return this.output(runContext, request, response, body);
         }
+    }
+
+    // Decode with the response Content-Type charset, then options.defaultCharset, then UTF-8.
+    private Charset responseCharset(RunContext runContext, HttpResponse<Byte[]> response) throws IllegalVariableEvaluationException {
+        var charset = Optional.ofNullable(response.getHeaders())
+            .flatMap(headers -> headers.firstValue("Content-Type"))
+            .map(ContentType::parseLenient)
+            .map(ContentType::getCharset);
+        if (charset.isPresent()) {
+            return charset.get();
+        }
+
+        var defaultCharset = this.defaultCharset(runContext);
+        return defaultCharset != null ? defaultCharset : StandardCharsets.UTF_8;
     }
 
     private static byte[] getResponseBytes(HttpResponse<Byte[]> response) {

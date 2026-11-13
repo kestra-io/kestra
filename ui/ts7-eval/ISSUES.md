@@ -13,6 +13,22 @@ node node_modules/typescript7/bin/tsc -p repros/ts5088-min
 bash repros/ts2883-min/repro.sh node_modules/typescript7/bin/tsc
 ```
 
+## Status, checked 2026-11-13
+
+TypeScript 7 reports live in microsoft/TypeScript, not microsoft/typescript-go, which is why the first search below
+found nothing. `@vue/content-mapper@4.0.0-alpha.3` is still the newest alpha.
+
+| Item | Upstream | State | Still reproduces |
+|---|---|---|---|
+| TS5088 | microsoft/TypeScript#64656 | Open, milestone 7.1.1 RC. Intended since microsoft/TypeScript#64461 (merged 2026-09-30); microsoft/TypeScript#65331 was closed as "Working as Intended" | Yes, on `7.1.0-dev.20261113.1`. First bad nightly: `20261001.1` |
+| TS2883 | none found | **Not filed** | Yes, on `7.1.0-dev.20261113.1`. Last good `20261012.1` (`aa81492`), first bad `20261013.1` (`b5c34ba`), the day after microsoft/TypeScript#64599 closed microsoft/TypeScript#64590 |
+| Native listener | vuejs/language-tools#6334 | Open, no comment, no PR | Yes. vue-tsc 3.3.14 reports the same once `checkUnknownProps`, `checkUnknownEvents` and `checkUnknownComponents` are all on |
+| `aria-*` / `role` | vuejs/language-tools#6318 | Open, fix proposed in vuejs/language-tools#6323 (open) | Yes. vue-tsc 3.3.14 reports the same with `checkUnknownProps` alone |
+| `v-else-if` narrowing | vuejs/language-tools#6306 | Open, duplicate vuejs/language-tools#6356, fixes proposed in vuejs/language-tools#6359, #6330 and #6317 (all open) | Yes, v4 only |
+
+So TS5088 needs no new issue, and the section 1 draft should be cut down to TS2883 before anyone files it. Sections 2 and
+3 describe vue-tsc 3's strict template checks made mandatory in v4 rather than mapper bugs; only section 4 is v4-only.
+
 ## 1. microsoft/typescript-go: two declaration-emit regressions in 7.1 (new)
 
 No open issue matches `TS5088`, `TS2883`, "cyclic structure" or "likely not portable" in microsoft/typescript-go.

@@ -16,18 +16,32 @@
             ({{ humanSize }})
         </el-button>
     </el-button-group>
-    <el-button-group v-else-if="isURI(value)">
+    <span v-else-if="isURI(value) && !isTooLarge" class="uri-value">
+        <span>{{ value }}</span>
         <el-button
             type="primary"
             tag="a"
             size="small"
             :href="value"
             target="_blank"
+            rel="noopener noreferrer"
             :icon="OpenInNew"
         >
             {{ $t('open') }}
         </el-button>
-    </el-button-group>
+    </span>
+    <span v-else-if="mailtoHref && !isTooLarge" class="uri-value">
+        <span>{{ value }}</span>
+        <el-button
+            tag="a"
+            size="small"
+            :href="mailtoHref"
+            :icon="EmailOutline"
+            data-test="var-value-mailto"
+        >
+            {{ $t('email') }}
+        </el-button>
+    </span>
 
     <span v-else-if="value === null">
         <em>null</em>
@@ -71,6 +85,7 @@
     import {computed, ref, watch, onMounted} from "vue";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import EmailOutline from "vue-material-design-icons/EmailOutline.vue";
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
@@ -89,11 +104,12 @@
     const props = withDefaults(defineProps<{
         value?: string | object | boolean | number;
         execution?: Execution;
+        /** Offer an Open button only for http(s) values; any `scheme:` string parses as a URL otherwise. */
         restrictUri?: boolean;
     }>(), {
         value: "",
         execution: () => ({id: ""}),
-        restrictUri: false,
+        restrictUri: true,
     });
 
     const humanSize = ref<string>("");
@@ -120,6 +136,10 @@
             return false;
         }
     };
+
+    const mailtoHref = computed(() =>
+        typeof props.value === "string" && /^mailto:/i.test(props.value) ? props.value : undefined,
+    );
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
@@ -205,6 +225,13 @@
 </script>
 
 <style scoped lang="scss">
+.uri-value {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    word-break: break-all;
+}
+
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-primary);

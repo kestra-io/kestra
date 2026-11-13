@@ -33,6 +33,13 @@ dependencies {
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
     api platform("io.micronaut.platform:micronaut-platform:4.10.22")
+    // security tower (Trivy): Micronaut 4.10's tracing imports opentelemetry-bom 1.54.1, opentelemetry-api < 1.62.0 has
+    // CVE-2026-45292 (SEC-0387). 1.62.0 is the highest version Micronaut 4.10 runs on: its opentelemetry-instrumentation 2.20.1
+    // calls io.opentelemetry.api.internal.InstrumentationUtil (gone in 1.63), and the instrumentation releases that stopped
+    // calling it also dropped PeerServiceAttributesExtractor, a bean of micronaut-tracing 7.2. CVE-2026-118259 (fixed in
+    // 1.67.0) therefore needs Micronaut 5 (develop).
+    api platform("io.opentelemetry:opentelemetry-bom:1.62.0")
+    api platform("io.opentelemetry:opentelemetry-bom-alpha:1.62.0-alpha")
     api platform("io.qameta.allure:allure-bom:2.33.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.76.0')
@@ -71,7 +78,7 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
 
         // http5 client
-        api("org.apache.httpcomponents.client5:httpclient5:5.5.1")
+        api("org.apache.httpcomponents.client5:httpclient5:5.6.4") // CVE-2026-64607 (SEC-2251)
         api("org.apache.httpcomponents.core5:httpcore5:5.4.3")
         api("org.apache.httpcomponents.core5:httpcore5-h2:5.4.3")
 
@@ -89,7 +96,8 @@ dependencies {
         // Other libs
         api("org.projectlombok:lombok:1.18.42")
         api("org.codehaus.janino:janino:3.1.12")
-        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.25.3'
+        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.25.5'
+        api group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.25.5' // CVE-2026-49844 (SEC-2255)
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.2'

@@ -323,8 +323,7 @@
 
     function isValidURL(url: string) {
         try {
-            new URL(url);
-            return true;
+            return ["http:", "https:", "kestra:"].includes(new URL(url).protocol);
         } catch {
             return false;
         }

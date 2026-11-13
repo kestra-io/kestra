@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -94,16 +95,18 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         File tempFile = runContext.workingDir().createTempFile(extension).toFile();
 
         File originalFile = runContext.workingDir().createTempFile(extension).toFile();
-        try (OutputStream outputStream = new FileOutputStream(originalFile)) {
-            IOUtils.copyLarge(runContext.storage().getFile(from), outputStream);
+        try (
+            InputStream inputStream = runContext.storage().getFile(from);
+            OutputStream outputStream = new FileOutputStream(originalFile)
+        ) {
+            IOUtils.copyLarge(inputStream, outputStream);
         }
 
-        ReversedLinesFileReader reversedLinesFileReader = ReversedLinesFileReader.builder()
-            .setPath(originalFile.toPath())
-            .setCharset(charset)
-            .get();
-
         try (
+            ReversedLinesFileReader reversedLinesFileReader = ReversedLinesFileReader.builder()
+                .setPath(originalFile.toPath())
+                .setCharset(charset)
+                .get();
             BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
         ) {
             String line;

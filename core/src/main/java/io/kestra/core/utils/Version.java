@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -271,12 +272,12 @@ public class Version implements Comparable<Version> {
             return compareMajor;
         }
 
-        int compareMinor = Integer.compare(that.minorVersion, this.minorVersion);
+        int compareMinor = Integer.compare(that.minorVersion(), this.minorVersion());
         if (compareMinor != 0) {
             return compareMinor;
         }
 
-        int compareIncremental = Integer.compare(that.patchVersion, this.patchVersion);
+        int compareIncremental = Integer.compare(that.patchVersion(), this.patchVersion());
         if (compareIncremental != 0) {
             return compareIncremental;
         }
@@ -365,7 +366,7 @@ public class Version implements Comparable<Version> {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(qualifier);
+            return qualifier.toLowerCase(Locale.ROOT).hashCode();
         }
 
         /**

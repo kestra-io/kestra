@@ -344,6 +344,7 @@
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
+    "create_child_namespace": "创建子 namespace",
     "from": "从",
     "to": "到",
     "steps": "步骤",
@@ -488,17 +489,21 @@
         "decision": "决策",
         "by": "由",
         "on": "已决定",
+        "cancelled by": "已取消，取消者：",
+        "cancelled on": "已取消于",
         "decisions": {
           "approved": "已批准",
           "denied": "拒绝",
-          "expired": "已过期"
+          "expired": "已过期",
+          "cancelled": "已取消",
+          "killed": "已终止"
         }
       },
       "cancel request": "取消请求",
       "cancel confirm": "您确定要取消执行 {id} 的审批请求吗？没有决策分支会运行。",
       "cancel done": "审批请求已取消",
       "banner": {
-        "pausing": "此执行正在准备审批请求，并将暂停以供审查。",
+        "pausing": "此 Execution 正在暂停。所有 onWait Task 完成后即可审核批准请求。",
         "paused": "此 Execution 正在等待审核。批准或拒绝以继续。"
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "refresh": "刷新",
     "filter by status": "按{status}状态筛选执行",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "此 task 已重试",
       "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "此键已存在",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
-        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>",
+        "deleted": "已从 namespace <code>{namespace}</code> 中删除 <code>{count}</code> 个 KV"
       },
       "inherited": "继承的KV对",
       "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"

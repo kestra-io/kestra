@@ -344,6 +344,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -488,17 +489,21 @@
         "decision": "Decision",
         "by": "Decided by",
         "on": "Decided on",
+        "cancelled by": "Cancelled by",
+        "cancelled on": "Cancelled on",
         "decisions": {
           "approved": "Approved",
           "denied": "Denied",
-          "expired": "Expired"
+          "expired": "Expired",
+          "cancelled": "Cancelled",
+          "killed": "Killed"
         }
       },
       "cancel request": "Cancel request",
       "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
       "cancel done": "The approval request has been cancelled",
       "banner": {
-        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "pausing": "This execution is pausing. The approval request can be reviewed as soon as all onWait tasks finish.",
         "paused": "This execution is waiting for a review. Approve or deny it to continue."
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "filter by status": "Filter executions by {status} status",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "This task was retried",
       "artifacts": "no artifacts | {count} artifact | {count} artifacts",
@@ -1911,7 +1922,8 @@
       "duplicate": "This key already exists",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."

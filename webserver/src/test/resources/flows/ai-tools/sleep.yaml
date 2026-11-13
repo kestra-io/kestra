@@ -1,0 +1,10 @@
+id: sleep
+namespace: io.kestra.tests.ai
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT30S
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: done

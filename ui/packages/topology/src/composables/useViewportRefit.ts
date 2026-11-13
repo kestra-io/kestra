@@ -1,47 +1,37 @@
 import {onMounted, onUnmounted} from "vue"
 import type {Ref} from "vue"
-import type {VueFlowStore} from "@vue-flow/core"
+import type {ViewportTransform, VueFlowStore} from "@vue-flow/core"
 import {debounce} from "@kestra-io/design-system"
 
 export const REFIT_DELAY_MS = 100
 
-interface ViewportRefitOptions {
-    container: Ref<HTMLElement | undefined>
-    vueFlow: Pick<VueFlowStore, "fitView" | "onMoveStart">
-    /** Whether the graph has had its first fit, before which a resize has nothing to refit. */
-    isReady: () => boolean
-    /** Whether the starting viewport was set by the caller, so it must survive a resize too. */
-    startsAdjusted: boolean
-}
-
 /**
- * Refits the graph to its container after a resize, unless the user panned or zoomed since the
- * last fit: refitting on every resize discarded their framing (#19387).
+ * Refits the graph to its container after a resize, as long as the view is still the one the last
+ * fit produced. Any other view was set on purpose (a pan, a zoom, a host focusing one task) and
+ * refitting would discard it (#19387). Before the first fit there is no view of ours to keep up.
  *
- * @returns `fitGraph`, which every full fit must go through so that resizes refit again after it,
- *          and `zoomByUser`, for zoom controls that move the view without a user gesture.
+ * @returns `fitGraph`, which every full fit must go through for resizes to refit after it.
  */
-export function useViewportRefit({container, vueFlow, isReady, startsAdjusted}: ViewportRefitOptions) {
-    let adjustedByUser = startsAdjusted
+export function useViewportRefit(container: Ref<HTMLElement | undefined>, vueFlow: Pick<VueFlowStore, "fitView" | "viewport">) {
+    let fittedView: ViewportTransform | undefined
     let containerSize: {width: number, height: number} | undefined
     let resizeObserver: ResizeObserver | undefined
 
-    vueFlow.onMoveStart(() => {
-        adjustedByUser = true
-    })
-
-    function fitGraph() {
-        adjustedByUser = false
-        vueFlow.fitView()
+    async function fitGraph() {
+        await vueFlow.fitView()
+        fittedView = {...vueFlow.viewport.value}
     }
 
-    function zoomByUser(zoom: () => Promise<boolean>) {
-        adjustedByUser = true
-        zoom()
+    function isFittedView() {
+        if (!fittedView) return false
+        const {x, y, zoom} = vueFlow.viewport.value
+        return Math.abs(x - fittedView.x) < 1
+            && Math.abs(y - fittedView.y) < 1
+            && Math.abs(zoom - fittedView.zoom) < 0.001
     }
 
     const refitAfterResize = debounce(() => {
-        if (isReady() && !adjustedByUser) fitGraph()
+        if (isFittedView()) fitGraph()
     }, REFIT_DELAY_MS)
 
     onMounted(() => {
@@ -62,5 +52,5 @@ export function useViewportRefit({container, vueFlow, isReady, startsAdjusted}: 
         refitAfterResize.cancel()
     })
 
-    return {fitGraph, zoomByUser}
+    return {fitGraph}
 }

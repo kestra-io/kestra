@@ -166,12 +166,12 @@
 
             <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
                 <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
-                    <ControlButton @click.stop="zoomByUser(zoomIn)">
+                    <ControlButton @click.stop="zoomIn()">
                         <Plus />
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
-                    <ControlButton @click.stop="zoomByUser(zoomOut)">
+                    <ControlButton @click.stop="zoomOut()">
                         <Minus />
                     </ControlButton>
                 </KsTooltip>
@@ -475,12 +475,7 @@
     })
 
     const shell = ref<HTMLDivElement>()
-    const {fitGraph, zoomByUser} = useViewportRefit({
-        container: shell,
-        vueFlow: vueFlowStore,
-        isReady: () => initialFitDone.value,
-        startsAdjusted: Boolean(props.defaultViewport),
-    })
+    const {fitGraph} = useViewportRefit(shell, vueFlowStore)
 
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {

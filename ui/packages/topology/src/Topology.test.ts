@@ -162,8 +162,8 @@ describe("Topology view refit", () => {
             const wrapper = mountForRefit(id)
             await settle()
             vueFlow.emits.nodesInitialized([])
+            await settle()
             resize(800, 600)
-            vi.runAllTimers()
             expect(fitView).toHaveBeenCalledTimes(1)
             return {vueFlow, fitView, wrapper}
         }
@@ -177,13 +177,14 @@ describe("Topology view refit", () => {
             expect(fitView).toHaveBeenCalledTimes(2)
         })
 
-        it("should refit again once a layout change fits the view", async () => {
+        it("should refit again once a layout change fits a moved view", async () => {
             const {vueFlow, fitView, wrapper} = await mountFitted(`topology-${Math.random()}`)
 
-            vueFlow.emits.moveStart({event: new WheelEvent("wheel"), flowTransform: {x: 0, y: 0, zoom: 2}})
+            vueFlow.viewport.value = {x: 120, y: 40, zoom: 2}
             await wrapper.setProps({isHorizontal: true})
             await settle()
             vueFlow.emits.nodesInitialized([])
+            await settle()
             resize(500, 600)
             vi.runAllTimers()
 

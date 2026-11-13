@@ -525,6 +525,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                     .task(workerTaskRunning.getTask())
                     .data(workerTaskRunning.getData())
+                    .executionKind(workerTaskRunning.getExecutionKind())
                     .build();
                 workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                 // The lease is released only once the job is back on the queue: left in place it is

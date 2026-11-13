@@ -102,7 +102,7 @@
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -187,6 +187,7 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
+    import {useAiEnabled} from "../../../composables/useAiEnabled"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -236,6 +237,7 @@
         return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
     })
 
+    const aiEnabled = useAiEnabled()
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)

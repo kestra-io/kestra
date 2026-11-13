@@ -17,15 +17,14 @@ const names = (plugins: Plugin[]) => plugins.map(plugin => plugin.name).join(","
 
 const PluginList = (testId: string) => defineComponent({
     props: {
-        plugins: {type: Array as PropType<Plugin[]>, default: () => []},
         catalog: {type: Array as PropType<Plugin[]>, default: () => []},
-        entries: {type: Array as PropType<{key: string}[]>, default: () => []},
+        entries: {type: Array as PropType<{key: string, plugin?: Plugin}[]>, default: () => []},
     },
     setup: (props) => () => h("div", {
         "data-test": testId,
-        "data-plugins": names(props.plugins),
         "data-catalog": names(props.catalog),
         "data-entries": props.entries.map(entry => entry.key).join(","),
+        "data-entry-plugins": names(props.entries.flatMap(entry => entry.plugin ? [entry.plugin] : [])),
     }),
 })
 
@@ -101,7 +100,7 @@ describe("PluginCatalog extension", () => {
         await flushPromises()
 
         const table = wrapper.find("[data-test=table]")
-        expect(table.attributes("data-plugins")).toBe("plugin-aws")
+        expect(table.attributes("data-entry-plugins")).toBe("plugin-aws")
         expect(wrapper.find("[data-test=toolbar]").attributes("data-catalog")).toBe("plugin-aws,plugin-dbt")
         expect(wrapper.find("article").exists()).toBe(false)
     })

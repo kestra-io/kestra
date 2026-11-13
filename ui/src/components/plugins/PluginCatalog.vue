@@ -77,7 +77,6 @@
         <component
             :is="catalogExtension.table"
             v-else-if="catalogExtension.table && view === 'table'"
-            :plugins="pluginsList"
             :entries="catalogEntries"
         />
 
@@ -298,8 +297,6 @@
             : []
         return [...plugins, ...extras].sort(comparators[sortBy.value])
     })
-
-    const pluginsList = computed<Plugin[]>(() => catalogEntries.value.flatMap(entry => entry.plugin ? [entry.plugin] : []))
 
     const isFiltered = computed(() => searchInput.value !== "" || selectedCategories.value.length > 0)
 

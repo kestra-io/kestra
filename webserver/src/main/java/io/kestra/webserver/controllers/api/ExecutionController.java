@@ -37,7 +37,6 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -53,7 +52,6 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -74,7 +72,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
@@ -106,6 +103,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionCreationService;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.ExecutionReplayService;
 import io.kestra.webserver.services.SearchableDataFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
@@ -176,7 +174,6 @@ public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
     private static final Duration EXECUTION_LOOKUP_DELAY = Duration.ofMillis(500);
     private static final long EXECUTION_LOOKUP_RETRIES = 20;
-    private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
     private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
     private static final Duration FOLLOW_HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
     static final String FOLLOW_HEARTBEAT_ID = "heartbeat";
@@ -193,6 +190,9 @@ public class ExecutionController {
 
     @Inject
     private FlowService flowService;
+
+    @Inject
+    private ExecutionReplayService executionReplayService;
 
     @Inject
     private NamespaceService namespaceService;
@@ -1397,7 +1397,7 @@ public class ExecutionController {
             description = "Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.", deprecated = true
         ) @Nullable @QueryValue Integer revision) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
-        this.controlRevision(execution, revision);
+        executionReplayService.controlRevision(execution, revision);
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
@@ -1491,11 +1491,7 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        controlRevision(execution, revision);
-        controlReplayable(execution, taskRunId, revision);
-
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
+        executionReplayService.validateReplay(execution, taskRunId, revision);
 
         return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
@@ -1533,11 +1529,7 @@ public class ExecutionController {
         return MultipartUtils.guard(inputs, () -> {
             Execution current = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-            controlRevision(current, revision);
-            controlReplayable(current, taskRunId, revision);
-
-            Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
-            ExecutionCreationService.controlDraftExecutableAs(flow, current.getKind());
+            Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
             return flowInputOutput.readExecutionInputs(flow, current, inputs)
                 .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
@@ -1558,11 +1550,7 @@ public class ExecutionController {
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        controlRevision(execution, revision);
-        controlReplayable(execution, taskRunId, revision);
-
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
+        executionReplayService.validateReplay(execution, taskRunId, revision);
 
         return HttpResponse.ok();
     }
@@ -1637,171 +1625,6 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId).withActor(actor));
-    }
-
-    private void controlReplayable(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws InternalException {
-        State state = execution.getState();
-        // the Playground replays its own execution that is suspended on a breakpoint to reuse the tasks already run
-        boolean isSuspendedPlayground = ExecutionKind.PLAYGROUND == execution.getKind() && (state.isBreakpoint() || state.isPaused());
-        if (!state.isTerminated() && !isSuspendedPlayground) {
-            throw new ConflictException(
-                "Cannot replay execution: current state is '%s', expected terminated.".formatted(state.getCurrent())
-            );
-        }
-
-        // if we want to replay from a taskrun to a different revision, we must check that both revisions are compatible
-        // TODO this will load two times the flow as controlRevision already loaded it once and is called just before
-        if (taskRunId != null && revision != null && !execution.getFlowRevision().equals(revision)) {
-            Flow executionflow = this.flowRepository.findByExecution(execution);
-            Flow newFlow = this.flowRepository.findById(
-                execution.getTenantId(),
-                execution.getNamespace(),
-                execution.getFlowId(),
-                Optional.of(revision)
-            ).orElseThrow(FlowNotFoundException::new);
-            TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
-
-            // 1. refuse if any task prior to this taskrun changed, looking inside flowable tasks recursively
-            controlReplayTasksUnchanged(executionflow.getTasks(), newFlow.getTasks(), taskRun.getTaskId(), taskRunId, revision);
-
-            // 2. refuse if any input definition is changed
-            for (Input<?> originalInput : ListUtils.emptyOnNull(executionflow.getInputs())) {
-                Input<?> newInput = ListUtils.emptyOnNull(newFlow.getInputs()).stream()
-                    .filter(input -> input.getId().equals(originalInput.getId()))
-                    .findFirst()
-                    .orElse(null);
-
-                if (newInput == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been removed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-
-                if (!originalInput.getType().equals(newInput.getType())) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' type has changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-
-                if (!Objects.equals(originalInput.getDefaults(), newInput.getDefaults())) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults have changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-            }
-
-            // 3. Refuse if an input has been added
-            for (Input<?> newInput : ListUtils.emptyOnNull(newFlow.getInputs())) {
-                Input<?> originalInput = ListUtils.emptyOnNull(executionflow.getInputs()).stream()
-                    .filter(input -> input.getId().equals(newInput.getId()))
-                    .findFirst()
-                    .orElse(null);
-
-                if (originalInput == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been added. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, newInput.getId())
-                    );
-                }
-            }
-
-            // 4. refuse if any variable definition changed
-            for (Map.Entry<String, Object> originalVar : MapUtils.emptyOnNull(executionflow.getVariables()).entrySet()) {
-                Object newVar = MapUtils.emptyOnNull(newFlow.getVariables()).get(originalVar.getKey());
-
-                if (newVar == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has been removed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalVar.getKey())
-                    );
-                }
-
-                if (!originalVar.getValue().equals(newVar)) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalVar.getKey())
-                    );
-                }
-            }
-        }
-    }
-
-    // A flowable containing the task to replay from is compared without its children, which are then compared recursively.
-    private boolean controlReplayTasksUnchanged(List<Task> originalTasks, List<Task> newTasks, String targetTaskId, String taskRunId, Integer revision) {
-        for (int i = 0; i < originalTasks.size(); i++) {
-            Task originalTask = originalTasks.get(i);
-            Task newTask = newTasks.size() > i ? newTasks.get(i) : null;
-            if (newTask == null) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-            if (!originalTask.getId().equals(newTask.getId())) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been moved. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-            if (originalTask.getId().equals(targetTaskId)) {
-                return true;
-            }
-            if (!originalTask.getType().equals(newTask.getType())) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' type has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-
-            boolean isFlowable = originalTask.isFlowable();
-            Map<String, Object> originalTaskAsMap = JacksonMapper.toMap(originalTask);
-            Map<String, Object> newTaskAsMap = JacksonMapper.toMap(newTask);
-            originalTaskAsMap.forEach((key, value) ->
-            {
-                if (REPLAY_IGNORED_CHANGED_ATTRIBUTES.contains(key) || (isFlowable && containsTask(value))) {
-                    return;
-                }
-                if (!Objects.equals(value, newTaskAsMap.get(key))) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                    );
-                }
-            });
-
-            if (isFlowable && controlReplayTasksUnchanged(((FlowableTask<?>) originalTask).allChildTasks(), ((FlowableTask<?>) newTask).allChildTasks(), targetTaskId, taskRunId, revision)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // A serialized task is a map holding both an id and a type.
-    private static boolean containsTask(Object value) {
-        if (value instanceof Map<?, ?> map) {
-            return (map.containsKey("id") && map.containsKey("type")) || map.values().stream().anyMatch(ExecutionController::containsTask);
-        }
-        if (value instanceof Collection<?> collection) {
-            return collection.stream().anyMatch(ExecutionController::containsTask);
-        }
-        return false;
-    }
-
-    private void controlRevision(Execution execution, Integer revision) {
-        if (revision != null) {
-            Optional<Flow> flowRevision = this.flowRepository.findById(
-                execution.getTenantId(),
-                execution.getNamespace(),
-                execution.getFlowId(),
-                Optional.of(revision)
-            );
-
-            if (flowRevision.isEmpty()) {
-                throw new NoSuchElementException(
-                    "Unable to find revision " + revision +
-                        " on flow " + execution.getNamespace() + "." + execution.getFlowId()
-                );
-            }
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -5,18 +5,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
@@ -171,17 +165,7 @@ public class KVController {
         if (value != null && value.stripLeading().startsWith("\"")) {
             metadata = metadata.withType(KVType.STRING);
         }
-        try {
-            try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
-                JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);
-                if (parser.nextToken() != null) {
-                    throw new JsonParseException(parser, "Trailing content after the first Ion value");
-                }
-                kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
-            }
-        } catch (JsonProcessingException e) {
-            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
-        }
+        kvStore(namespace).put(key, KVValueAndMetadata.ofText(metadata, value));
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -39,6 +39,7 @@ export const Default: Story = {
         showPassword: false,
         required: false,
         borderless: false,
+        highlight: false,
         rows: 2,
         name: "",
         id: "",
@@ -128,6 +129,24 @@ export const Borderless: Story = {
         await expect(style.backgroundColor).toBe("rgba(0, 0, 0, 0)")
         await expect(style.boxShadow).toMatch(/^rgba\(0, 0, 0, 0\)/)
         await expect(style.paddingLeft).toBe("0px")
+    },
+}
+
+/** Highlight: pulses the focus ring once when a page opens on the field, e.g. the prefilled id of a child namespace */
+export const Highlight: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("company.")} },
+        template: `
+            <div style="padding:24px;width:300px">
+                <ks-input v-model="value" highlight />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const wrapper = canvasElement.querySelector(".kel-input__wrapper") as HTMLElement
+        await expect(getComputedStyle(wrapper).animationName).toBe("ks-input-highlight")
     },
 }
 

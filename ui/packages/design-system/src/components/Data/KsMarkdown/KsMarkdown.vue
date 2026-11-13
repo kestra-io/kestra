@@ -1,5 +1,5 @@
 <template>
-    <div class="ks-markdown">
+    <div class="ks-markdown" :class="{'ks-markdown--compact': compact}">
         <component :is="renderContent()" />
     </div>
 </template>
@@ -37,6 +37,8 @@
             content?: string
             html?: boolean
             xssProtection?: boolean
+            /** Scales headings down to the UI type scale, for markdown rendered inside a panel rather than as a page. */
+            compact?: boolean
             /** Tag name → component, for HTML elements (`a`, `img`) and PascalCase custom tags (`ChildCard`). */
             components?: Record<string, Component>
         }>(),
@@ -44,6 +46,7 @@
             content: undefined,
             html: true,
             xssProtection: true,
+            compact: false,
             components: () => ({}),
         },
     )
@@ -208,7 +211,8 @@
                 }
             },
             onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
-                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                // The name must be one parseAttributes reads whole: it ends a name at "." or ":", so `data-a.onclick` would come back as `onclick`.
+                if (/^(data|aria)-[\w-]+$/.test(name)) {
                     return `${name}="${escapeAttrValue(value)}"`
                 }
 
@@ -643,6 +647,20 @@
 
         & h6 {
             font-size: var(--ks-font-size-base);
+        }
+
+        &.ks-markdown--compact {
+            & h1 {
+                font-size: var(--ks-font-size-lg);
+            }
+
+            & h2 {
+                font-size: var(--ks-font-size-base);
+            }
+
+            & h3, & h4, & h5, & h6 {
+                font-size: var(--ks-font-size-sm);
+            }
         }
 
         & .anchor {

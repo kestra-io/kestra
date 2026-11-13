@@ -124,11 +124,9 @@ public class BlueprintController {
     /**
      * Translates {@link QueryFilter} entries for the BLUEPRINT resource into the legacy
      * {@code q} / {@code tags} query string params the downstream community API expects.
-     * Validates field/operation pairs against {@link QueryFilter.Resource#BLUEPRINT}.
      * Returns an empty map when no relevant filters are present.
      */
     protected static Map<String, Object> blueprintFilterQueryParams(@Nullable List<QueryFilter> filters) {
-        QueryFilter.validateQueryFilters(filters, QueryFilter.Resource.BLUEPRINT);
         rejectUnsupportedComplexFilters(filters);
         String q = parseQueryFiltersForBlueprint(filters);
         List<String> tags = parseTagsFromQueryFiltersForBlueprint(filters);

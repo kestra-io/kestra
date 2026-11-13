@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
-    "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
+    "no_logs_data_title": "ログが見つかりません",
     "duration": "期間",
     "total_duration": "合計時間",
     "running duration": "実行期間",
@@ -344,6 +344,7 @@
     "home": "ホーム",
     "create": "作成",
     "create_flow": "フローを作成",
+    "create_child_namespace": "子 namespace を作成",
     "from": "から",
     "to": "まで",
     "steps": "ステップ",
@@ -451,7 +452,7 @@
       "whole_action": "代わりにExecution全体をリプレイする",
       "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
       "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",
-      "confirm_from_task": "Taskからリプレイ",
+      "confirm_from_task": "{taskId}からReplay",
       "confirm_whole": "Execution全体をリプレイ"
     },
     "change execution state done": "実行状態が更新されました",
@@ -488,17 +489,21 @@
         "decision": "決定",
         "by": "決定者",
         "on": "決定済み",
+        "cancelled by": "キャンセル者",
+        "cancelled on": "キャンセル日時",
         "decisions": {
           "approved": "承認済み",
           "denied": "拒否されました",
-          "expired": "期限切れ"
+          "expired": "期限切れ",
+          "cancelled": "キャンセル済み",
+          "killed": "強制終了"
         }
       },
       "cancel request": "リクエストをキャンセル",
       "cancel confirm": "実行 {id} の承認リクエストをキャンセルしてもよろしいですか？決定ブランチは実行されません。",
       "cancel done": "承認リクエストはキャンセルされました",
       "banner": {
-        "pausing": "このExecutionは承認リクエストを準備しており、レビューのために一時停止します。",
+        "pausing": "このExecutionは一時停止中です。すべてのonWait Taskが完了すると、承認リクエストを確認できます。",
         "paused": "このExecutionはレビューを待機しています。続行するには承認または拒否してください。"
       }
     },
@@ -540,6 +545,12 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "このTaskはリトライされました",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
@@ -863,7 +874,7 @@
     "last execution date": "最後の実行日",
     "revisions": "リビジョン",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
-    "no revisions": "リビジョンなし",
+    "no revisions": "リビジョンが見つかりません",
     "side-by-side": "並列表示",
     "line-by-line": "行ごと表示",
     "template": "テンプレート",
@@ -1339,6 +1350,8 @@
     "pause backfill": "backfillを一時停止",
     "continue backfills": "backfillを続行",
     "delete backfills": "backfillを削除",
+    "delete backfill confirm": "trigger {id} のbackfillを削除しますか？",
+    "delete backfill success": "trigger {id} のbackfillを削除しました",
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
@@ -1909,7 +1922,8 @@
       "duplicate": "このキーは既に存在します",
       "delete multiple": {
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
-        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code> から <code>{count}</code> 件のKVが削除されました"
       },
       "inherited": "継承されたKVペア",
       "expiration_hint": "現在、{date}に期限切れになります。この期限を維持するには、フィールドをそのままにしておきます。期間を選択すると、現在から再計算され、クリアすると削除されます。"
@@ -2351,6 +2365,7 @@
       "default": "デフォルトダッシュボード",
       "set_default": "デフォルトに設定",
       "empty": "表示する結果がありません。",
+      "overdue": "期限切れ — {date}",
       "edition": {
         "label": "ダッシュボードを編集",
         "chart": "このチャートを編集"
@@ -2373,7 +2388,8 @@
         "paused": "一時停止中",
         "success": "成功",
         "warning": "警告",
-        "failed": "失敗"
+        "failed": "失敗",
+        "upcoming": "近日公開"
       }
     },
     "setup": {
@@ -2792,7 +2808,8 @@
         "tooltip": "フローテストを表示"
       },
       "errors": {
-        "label": "{count} エラー"
+        "label": "{count} エラー",
+        "action": "{count} 件のエラー、次のエラーに移動"
       }
     },
     "invalid_source_code": "無効なソースコード",

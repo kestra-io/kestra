@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
 import type {KsBreadcrumbLoader} from "@kestra-io/design-system"
 
-const state = vi.hoisted(() => ({tenant: "", canList: true, ids: [] as string[]}))
+const state = vi.hoisted(() => ({tenant: "", canList: true, ids: [] as string[], edition: "EE", creatable: [] as string[]}))
 const all = vi.hoisted(() => vi.fn())
 
 vi.mock("vue-i18n", () => ({
@@ -14,7 +14,15 @@ vi.mock("override/utils/route", () => ({
 }))
 
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: {hasAnyActionOnAnyNamespace: () => state.canList}}),
+    useAuthStore: () => ({user: {
+        hasAnyActionOnAnyNamespace: () => state.canList,
+        isAllowed: (permission: string, act: string, namespace: string) => permission === "NAMESPACE" && act === "CREATE"
+            && state.creatable.some((prefix) => namespace === prefix || namespace.startsWith(`${prefix}.`)),
+    }}),
+}))
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {edition: state.edition}}),
 }))
 
 vi.mock("./useNamespaces", () => ({
@@ -23,7 +31,7 @@ vi.mock("./useNamespaces", () => ({
 
 import {useNamespaceBreadcrumb} from "./useNamespaceBreadcrumb"
 
-const TREE = ["acme", "acme.data", "acme.data.raw", "acme.ops", "lone", "lone.leaf", "solo", "solo.only", "solo.only.deep"]
+const TREE = ["acme", "acme.data", "acme.data.raw", "acme.ops", "lone", "lone.leaf", "solo", "solo.only", "solo.only.deep", "system"]
 
 const labels = async (loader?: KsBreadcrumbLoader) => (await loader?.())?.map((entry) => entry.label)
 
@@ -35,6 +43,8 @@ describe("useNamespaceBreadcrumb", () => {
         state.tenant = `tenant-${++tenants}`
         state.canList = true
         state.ids = [...TREE]
+        state.edition = "EE"
+        state.creatable = []
         all.mockReset()
         all.mockImplementation(async () => state.ids.map((id) => ({id})))
     })
@@ -54,6 +64,51 @@ describe("useNamespaceBreadcrumb", () => {
 
         expect(children.map((entry) => entry.label)).toEqual(["data", "ops"])
         expect(await labels(children[0].children)).toEqual(["raw"])
+        expect(children[1].children).toBeUndefined()
+    })
+
+    it("should end the fly-out of a namespace the user may create in with a link creating a child of it", async () => {
+        state.creatable = ["acme"]
+        const [, acme] = useNamespaceBreadcrumb("acme.data").value
+
+        const children = (await acme.children?.()) ?? []
+        const topLevel = (await acme.siblings?.()) ?? []
+
+        expect(children.map((entry) => entry.label)).toEqual(["data", "ops", "create_child_namespace"])
+        expect(children[2].link).toEqual({name: "namespaces/create", params: {tab: "edit"}, query: {id: "acme."}})
+        expect(await labels(children[1].children)).toEqual(["create_child_namespace"])
+        expect(topLevel.map((entry) => entry.label)).toEqual(["acme", "lone", "solo", "system"])
+        expect(await labels(topLevel[1].children)).toEqual(["leaf"])
+    })
+
+    it("should keep a leaf page's menu when creating a child of it is offered", async () => {
+        state.creatable = ["lone"]
+        const [, , leaf] = useNamespaceBreadcrumb("lone.leaf").value
+
+        const siblings = (await leaf.siblings?.()) ?? []
+
+        expect(siblings.map((entry) => entry.label)).toEqual(["leaf"])
+        expect(await labels(siblings[0].children)).toEqual(["create_child_namespace"])
+    })
+
+    it("should offer no child creation under the system namespace", async () => {
+        state.creatable = ["system"]
+        const [, system] = useNamespaceBreadcrumb("system").value
+
+        const topLevel = (await system.siblings?.()) ?? []
+
+        expect(await labels(system.children)).toEqual([])
+        expect(topLevel.find((entry) => entry.label === "system")?.children).toBeUndefined()
+    })
+
+    it("should offer no namespace creation in the open source edition, which has none", async () => {
+        state.edition = "OSS"
+        state.creatable = ["acme"]
+        const [, acme] = useNamespaceBreadcrumb("acme.data").value
+
+        const children = (await acme.children?.()) ?? []
+
+        expect(children.map((entry) => entry.label)).toEqual(["data", "ops"])
         expect(children[1].children).toBeUndefined()
     })
 

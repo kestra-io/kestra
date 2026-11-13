@@ -279,7 +279,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)})
     }
 
     /**
@@ -289,7 +289,7 @@ export const useBaseNamespacesStore = () => {
      */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
         await FilesAPI.moveFileDirectory(
-            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {namespace: payload.namespace, from: safePath(payload.old), to: safePath(payload.new)},
         )
     }
 

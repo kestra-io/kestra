@@ -22,7 +22,7 @@ public final class SourceSearchMatcher {
     public static final int MAX_SOURCE_SEARCH_CANDIDATES = 1000;
 
     private static final int MAX_MATCHES_PER_SOURCE = 500;
-    private static final Pattern TOP_LEVEL_KEY = Pattern.compile("^[A-Za-z_][\\w-]*:.*");
+    private static final Pattern TOP_LEVEL_KEY = Pattern.compile("^(['\"]?)([A-Za-z_][\\w-]*)\\1[ \\t]*:");
 
     private SourceSearchMatcher() {
     }
@@ -217,11 +217,11 @@ public final class SourceSearchMatcher {
         int start = -1;
         int end = lines.length;
         for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            boolean isTopLevelKey = TOP_LEVEL_KEY.matcher(line).matches();
+            Matcher matcher = TOP_LEVEL_KEY.matcher(lines[i]);
+            boolean isTopLevelKey = matcher.find();
 
             if (start == -1) {
-                if (isTopLevelKey && line.startsWith(key + ":")) {
+                if (isTopLevelKey && key.equals(matcher.group(2))) {
                     start = i + 1;
                 }
             } else if (isTopLevelKey) {
@@ -230,7 +230,7 @@ public final class SourceSearchMatcher {
             }
         }
 
-        return start == -1 ? null : new int[]{start, end};
+        return start == -1 ? null : new int[] { start, end };
     }
 
     private static List<int[]> lineBounds(String source) {
@@ -238,11 +238,11 @@ public final class SourceSearchMatcher {
         int start = 0;
         for (int i = 0; i < source.length(); i++) {
             if (source.charAt(i) == '\n') {
-                bounds.add(new int[]{start, i});
+                bounds.add(new int[] { start, i });
                 start = i + 1;
             }
         }
-        bounds.add(new int[]{start, source.length()});
+        bounds.add(new int[] { start, source.length() });
         return bounds;
     }
 }

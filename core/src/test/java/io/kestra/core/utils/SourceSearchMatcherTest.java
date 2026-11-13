@@ -1,9 +1,14 @@
 package io.kestra.core.utils;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
 import io.kestra.core.models.SourceMatch;
@@ -169,5 +174,98 @@ class SourceSearchMatcherTest {
         assertThat(replaced).contains("description: marker outside");
         assertThat(replaced).contains("format: changed inside");
         assertThat(replaced).contains("cron: marker-trigger");
+    }
+
+    @ParameterizedTest
+    @MethodSource("scopeKeyFormats")
+    void shouldFindAndReplaceWithinQuotedOrSpacedScope(SourceSearchScope scope, String keyFormat, String lineEnding) {
+        String key = scope.name().toLowerCase(Locale.ROOT);
+        String source = """
+            id: scoped_flow
+            namespace: company.team
+            inputs:
+              - id: input
+                defaults: marker-inputs
+            tasks:
+              - id: log
+                message: marker-tasks
+            triggers:
+              - id: marker-triggers
+            outputs:
+              - id: marker-outputs
+            """.replace(key + ":", keyFormat.formatted(key) + ":").replace("\n", lineEnding);
+        int expectedLine = switch (scope) {
+            case INPUTS -> 5;
+            case TASKS -> 8;
+            case TRIGGERS -> 10;
+            default -> throw new IllegalArgumentException("Unexpected scope '%s'.".formatted(scope));
+        };
+        int expectedColumn = switch (scope) {
+            case INPUTS -> 14;
+            case TASKS -> 13;
+            case TRIGGERS -> 8;
+            default -> throw new IllegalArgumentException("Unexpected scope '%s'.".formatted(scope));
+        };
+        String expectedSnippet = SourceSearchMatcher.extractLine(source, expectedLine).replace("marker", "[mark]marker[/mark]");
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(source, "marker", true, false, false, scope);
+        String replaced = SourceSearchMatcher.replaceWithinScope(source, Pattern.compile("marker"), "changed", scope);
+
+        assertThat(matches).containsExactly(new SourceMatch(expectedLine, expectedColumn, expectedSnippet));
+        assertThat(replaced).isEqualTo(source.replace("marker-" + key, "changed-" + key));
+    }
+
+    static Stream<Arguments> scopeKeyFormats() {
+        return Stream.of(SourceSearchScope.INPUTS, SourceSearchScope.TASKS, SourceSearchScope.TRIGGERS)
+            .flatMap(
+                scope -> keyFormats().flatMap(
+                    format -> Stream.of("\n", "\r\n")
+                        .map(lineEnding -> Arguments.of(scope, format, lineEnding))
+                )
+            );
+    }
+
+    @ParameterizedTest
+    @MethodSource("boundaryKeyFormats")
+    void shouldStopSearchAndReplacementAtQuotedOrSpacedBoundary(String keyFormat, String lineEnding) {
+        String source = SCOPED_SOURCE.replace("triggers:", keyFormat.formatted("triggers") + ":").replace("\n", lineEnding);
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(source, "marker", true, false, false, SourceSearchScope.TASKS);
+        String replaced = SourceSearchMatcher.replaceWithinScope(source, Pattern.compile("marker"), "changed", SourceSearchScope.TASKS);
+
+        assertThat(matches).hasSize(1);
+        assertThat(matches.getFirst().line()).isEqualTo(7);
+        assertThat(replaced).isEqualTo(source.replace("marker inside", "changed inside"));
+    }
+
+    static Stream<Arguments> boundaryKeyFormats() {
+        return keyFormats().flatMap(format -> Stream.of("\n", "\r\n").map(lineEnding -> Arguments.of(format, lineEnding)));
+    }
+
+    private static Stream<String> keyFormats() {
+        return Stream.of("%s", "'%s'", "\"%s\"", "%s ", "'%s' ", "\"%s\"\t");
+    }
+
+    @Test
+    void shouldIgnoreNestedKeysAndCommentsWhenDeterminingScope() {
+        String source = """
+            description: |
+              'tasks':
+                marker-description
+            tasks:
+              - id: log
+                message: |
+                  "triggers":
+                    marker-task
+            # 'triggers':
+            triggers:
+              - id: marker-trigger
+            """;
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(source, "marker", true, false, false, SourceSearchScope.TASKS);
+        String replaced = SourceSearchMatcher.replaceWithinScope(source, Pattern.compile("marker"), "changed", SourceSearchScope.TASKS);
+
+        assertThat(matches).containsExactly(new SourceMatch(8, 8, "        [mark]marker[/mark]-task"));
+        assertThat(replaced).isEqualTo(source.replace("marker-task", "changed-task"));
     }
 }

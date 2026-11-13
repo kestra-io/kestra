@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
@@ -1039,6 +1041,36 @@ class ExecutionServiceTest {
         assertThat(secondAfter.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(secondAfter)).containsEntry("value", "yes");
         assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("first_after")).count()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "alert", "cleanup", "notify" })
+    @LoadFlows({ "flows/valids/replay-flow-errors.yaml" })
+    void shouldKeepMainBranchTaskRunsWhenReplayingFirstFlowHandlerTask(String handlerTaskId) throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-flow-errors");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String handlerTaskRunId = execution.findTaskRunByTaskIdAndValue(handlerTaskId, List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, handlerTaskRunId, null, Optional.empty());
+
+        assertThat(replay.findTaskRunByTaskIdAndValue("fetch", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("fail", List.of()).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(replay.findTaskRunByTaskIdAndValue(handlerTaskId, List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId())
+                && e.getState().isTerminated()
+                && e.getTaskRunList().stream().anyMatch(tr -> tr.getTaskId().equals("notify") && tr.getState().isTerminated()),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        TaskRun handler = completed.findTaskRunByTaskIdAndValue(handlerTaskId, List.of());
+        assertThat(handler.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(handler)).containsEntry("value", "KR-0412");
+        assertThat(completed.getTaskRunList()).extracting(TaskRun::getTaskId)
+            .containsExactlyInAnyOrder("fetch", "fail", "alert", "cleanup", "notify");
     }
 
     @Test

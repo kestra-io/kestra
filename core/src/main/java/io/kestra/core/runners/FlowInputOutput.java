@@ -330,7 +330,12 @@ public class FlowInputOutput {
         }
     }
 
-    private Map<String, Object> readExecutionInputs(
+    /**
+     * Reads the given inputs of an execution from already parsed values, such as the onResume inputs of a paused task.
+     *
+     * @throws InputOutputValidationException if a value is invalid
+     */
+    public Map<String, Object> readExecutionInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,

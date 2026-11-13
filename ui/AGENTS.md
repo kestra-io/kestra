@@ -379,7 +379,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
@@ -455,7 +455,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -513,6 +513,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

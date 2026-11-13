@@ -349,8 +349,36 @@
         }
     }
 
-    .highlight-pebble {
+    .highlight-pebble-pebble {
         color: var(--code-pebble) !important;
+    }
+
+    .highlight-pebble-keyword {
+        color: var(--code-keyword) !important;
+    }
+
+    .highlight-pebble-constant {
+        color: var(--code-constant) !important;
+    }
+
+    .highlight-pebble-string {
+        color: var(--code-string) !important;
+    }
+
+    .highlight-pebble-number {
+        color: var(--code-number) !important;
+    }
+
+    .highlight-pebble-function {
+        color: var(--code-function) !important;
+    }
+
+    .highlight-pebble-operator {
+        color: var(--code-operator) !important;
+    }
+
+    .highlight-pebble-punctuation {
+        color: var(--code-punctuation) !important;
     }
 
     .disable-text {

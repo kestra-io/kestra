@@ -1233,6 +1233,16 @@ public class ExecutionService {
             });
     }
 
+    /**
+     * Same as {@link #readInputs(Execution, FlowInterface, Publisher)}, with the onResume inputs already parsed.
+     */
+    public Mono<Map<String, Object>> readResumeInputs(final Execution execution, final FlowInterface flow, final Map<String, ?> inputs) {
+        return getFirstPausedTaskOr(execution, flow)
+            .map(task -> task.isPresent() && task.get() instanceof PausableTask pausableTask
+                ? flowInputOutput.readExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs)
+                : Collections.<String, Object> emptyMap());
+    }
+
     /** Validates the reviewer inputs of the Approval task run {@code taskRunId}. */
     public Mono<List<InputAndValue>> validateForReview(final Execution execution, Flow flow, String taskRunId, @Nullable Publisher<CompletedPart> inputs) {
         return getTaskOr(execution, flow, taskRunId)

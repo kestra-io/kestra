@@ -455,6 +455,31 @@
       "confirm_from_task": "Replay da {taskId}",
       "confirm_whole": "Riproduci l'intera Execution"
     },
+    "replayOverrides": {
+      "action": "Replay con override",
+      "dialog_title": "Replay {taskId} con override",
+      "revision_note": "Il replay viene eseguito sulla revisione {revision}, quella su cui è stata eseguita questa esecuzione.",
+      "task_code": "Definizione di {taskId}",
+      "code_error": "Impossibile caricare la definizione di {taskId}.",
+      "title": "Sovrascrivi output",
+      "description": "Gli output dei task precedenti che il task {taskId} legge. Impostane uno per riprodurre con quel valore: i task precedenti non vengono eseguiti di nuovo, e {taskId} e ogni task successivo leggono il nuovo valore.",
+      "load_error": "Impossibile caricare gli output letti dal task {taskId}.",
+      "empty": "Il Task {taskId} non legge alcun output di un Task precedente tramite un percorso statico nelle proprie proprietà.",
+      "current": "Valore attuale {value}",
+      "confirm": "Replay con {count} override | Replay con {count} override",
+      "error": {
+        "number": "Inserisci un numero.",
+        "boolean": "Inserisci vero o falso.",
+        "json": "Inserisci JSON valido."
+      },
+      "recorded": "{count} output sovrascritto | {count} output sovrascritti",
+      "recorded_title": "Output sovrascritti al replay",
+      "recorded_path": "Output",
+      "recorded_original": "Valore originale",
+      "recorded_value": "Ripetuto con",
+      "recorded_by": "Impostato da {user} il {date}",
+      "recorded_hidden": "La lettura dei valori richiede il permesso di leggere gli output."
+    },
     "change execution state done": "Stato di esecuzione aggiornato",
     "mark as": "Contrassegna come {status}",
     "unqueue as": "Dequeued come {status}",

@@ -455,6 +455,31 @@
       "confirm_from_task": "Повтор с {taskId}",
       "confirm_whole": "Повторить всю egzekucję"
     },
+    "replayOverrides": {
+      "action": "Повторить с переопределениями",
+      "dialog_title": "Повторить {taskId} с переопределениями",
+      "revision_note": "Повтор запускается на ревизии {revision}, той, на которой выполнялась эта egzekucja.",
+      "task_code": "Определение {taskId}",
+      "code_error": "Не удалось загрузить определение {taskId}.",
+      "title": "Переопределить output'ы",
+      "description": "Выходные данные предыдущих Task'ов, которые читает Task {taskId}. Установите одно значение для повторного воспроизведения с этим значением: Task'и до него не запускаются снова, а {taskId} и каждый последующий Task читают новое значение.",
+      "load_error": "Не удалось загрузить output'ы, которые читает Task {taskId}.",
+      "empty": "Task {taskId} не считывает output предыдущего Task через статический путь в своих свойствах.",
+      "current": "Текущее значение {value}",
+      "confirm": "Повторить с {count} переопределением | Повторить с {count} переопределениями | Повторить с {count} переопределениями",
+      "error": {
+        "number": "Введите число.",
+        "boolean": "Введите true или false.",
+        "json": "Введите действительный JSON."
+      },
+      "recorded": "{count} переопределенный output | {count} переопределенных output'а | {count} переопределенных output'ов",
+      "recorded_title": "Выходные данные переопределены при повторном воспроизведении",
+      "recorded_path": "Вывод",
+      "recorded_original": "Исходное значение",
+      "recorded_value": "Повторно воспроизведено с",
+      "recorded_by": "Установлено {user} {date}",
+      "recorded_hidden": "Чтение значений требует разрешения на чтение output."
+    },
     "change execution state done": "Состояние выполнения обновлено",
     "mark as": "Пометить как {status}",
     "unqueue as": "Очередь снята как {status}",

@@ -100,6 +100,20 @@ async function mountGantt(
 const logTask = (id: string) => ({id, type: "io.kestra.plugin.core.log.Log"})
 
 describe("Gantt layout", () => {
+    it("shouldTagOnlyTheTaskRunsAReplayOverrode", async () => {
+        const {wrapper} = await mountGantt([logTask("first"), logTask("second")], [
+            {id: "tr-1", taskId: "first", state: {current: "SUCCESS", histories}},
+            {id: "tr-2", taskId: "second", state: {current: "SUCCESS", histories}, overrides: {id: "ov-1", paths: ["outputs.first.code"], overriddenAt: "2026-10-27T10:00:00Z"}},
+        ])
+        try {
+            const rows = wrapper.findAll("[role='row']")
+            expect(rows[0].find("[data-test='task-run-overrides']").exists()).toBe(false)
+            expect(rows[1].find("[data-test='task-run-overrides']").exists()).toBe(true)
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
     it("shouldShowOffsetAndScaleForEachTaskRun", async () => {
         const {wrapper} = await mountGantt([logTask("first")], [
             {

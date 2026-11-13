@@ -455,6 +455,31 @@
       "confirm_from_task": "Replay desde {taskId}",
       "confirm_whole": "Reproducir toda la ejecución"
     },
+    "replayOverrides": {
+      "action": "Reproducir con anulaciones",
+      "dialog_title": "Replay {taskId} con anulaciones",
+      "revision_note": "La repetición se ejecuta en la revisión {revision}, la misma en la que se ejecutó esta execution.",
+      "task_code": "Definición de {taskId}",
+      "code_error": "No se pudo cargar la definición de {taskId}.",
+      "title": "Anular salidas",
+      "description": "Las salidas de las tasks anteriores que lee la task {taskId}. Establece una para reproducir con ese valor en su lugar: las tasks anteriores no se vuelven a ejecutar, y {taskId} y cada task posterior leen el nuevo valor.",
+      "load_error": "No se pudieron cargar los outputs que lee la task {taskId}.",
+      "empty": "La Task {taskId} no lee ningún output de una Task anterior a través de una ruta estática en sus propias propiedades.",
+      "current": "Valor actual {value}",
+      "confirm": "Replay con {count} override | Replay con {count} overrides",
+      "error": {
+        "number": "Introduce un número.",
+        "boolean": "Introduce verdadero o falso.",
+        "json": "Introduce un JSON válido."
+      },
+      "recorded": "{count} salida anulada | {count} salidas anuladas",
+      "recorded_title": "Salidas anuladas en la repetición",
+      "recorded_path": "Output",
+      "recorded_original": "Valor original",
+      "recorded_value": "Reproducido con",
+      "recorded_by": "Establecido por {user} el {date}",
+      "recorded_hidden": "La lectura de los valores requiere permiso para leer los outputs."
+    },
     "change execution state done": "Estado de ejecución actualizado",
     "mark as": "Marcar como {status}",
     "unqueue as": "Desencolar como {status}",

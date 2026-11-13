@@ -10,7 +10,7 @@
             <small v-if="value"> {{ value }}</small>
         </span>
     </KsTooltip>
-    <KsTooltip v-if="attempts > 1" placement="right">
+    <KsTooltip v-if="attempts > 1" placement="top">
         <template #content>
             <span>{{ $t("this_task_has") }} {{ attempts }} {{ $t("attempts").toLowerCase() }}.</span>
         </template>

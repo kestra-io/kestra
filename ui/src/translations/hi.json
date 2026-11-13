@@ -455,6 +455,31 @@
       "confirm_from_task": "{taskId} से Replay करें",
       "confirm_whole": "पूरी execution को फिर से चलाएँ"
     },
+    "replayOverrides": {
+      "action": "ओवरराइड के साथ रीप्ले करें",
+      "dialog_title": "ओवरराइड के साथ {taskId} को Replay करें",
+      "revision_note": "रिप्ले रिविजन {revision} पर चलता है, जिस पर यह execution चला था।",
+      "task_code": "{taskId} की परिभाषा",
+      "code_error": "{taskId} की परिभाषा लोड नहीं की जा सकी।",
+      "title": "आउटपुट ओवरराइड करें",
+      "description": "पिछले Task के आउटपुट जिन्हें Task {taskId} पढ़ता है। इसके बजाय उस मान के साथ रीप्ले करने के लिए एक सेट करें: इससे पहले के Task फिर से नहीं चलते हैं, और {taskId} और हर बाद का Task नया मान पढ़ता है।",
+      "load_error": "Task {taskId} द्वारा पढ़े गए आउटपुट लोड नहीं किए जा सके।",
+      "empty": "Task {taskId} अपनी प्रॉपर्टी में एक स्थिर पथ के माध्यम से पिछले Task का कोई आउटपुट नहीं पढ़ता है।",
+      "current": "वर्तमान मान {value}",
+      "confirm": "{count} ओवरराइड के साथ रीप्ले करें | {count} ओवरराइड के साथ रीप्ले करें",
+      "error": {
+        "number": "एक संख्या दर्ज करें।",
+        "boolean": "सही या गलत दर्ज करें।",
+        "json": "वैध JSON दर्ज करें।"
+      },
+      "recorded": "{count} ओवरराइड किया गया आउटपुट | {count} ओवरराइड किए गए आउटपुट",
+      "recorded_title": "रिप्ले पर आउटपुट ओवरराइड किए गए",
+      "recorded_path": "आउटपुट",
+      "recorded_original": "मूल्य",
+      "recorded_value": "के साथ पुनः चलाया गया",
+      "recorded_by": "{date} को {user} द्वारा सेट किया गया",
+      "recorded_hidden": "मान पढ़ने के लिए आउटपुट पढ़ने की अनुमति चाहिए।"
+    },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
     "mark as": "{status} के रूप में चिह्नित करें",
     "unqueue as": "{status} के रूप में अनक्यू करें",

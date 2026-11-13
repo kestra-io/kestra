@@ -455,6 +455,31 @@
         "confirm_from_task": "Replay from {taskId}",
         "confirm_whole": "Replay whole execution"
     },
+    "replayOverrides": {
+        "action": "Replay with overrides",
+        "dialog_title": "Replay {taskId} with overrides",
+        "revision_note": "The replay runs on revision {revision}, the one this execution ran on.",
+        "task_code": "Definition of {taskId}",
+        "code_error": "Could not load the definition of {taskId}.",
+        "title": "Override outputs",
+        "description": "The outputs of previous tasks that task {taskId} reads. Set one to replay with that value instead: the tasks before it are not run again, and {taskId} and every later task read the new value.",
+        "load_error": "Could not load the outputs that task {taskId} reads.",
+        "empty": "Task {taskId} reads no output of a previous task through a static path in its own properties.",
+        "current": "Current value {value}",
+        "confirm": "Replay with {count} override | Replay with {count} overrides",
+        "error": {
+            "number": "Enter a number.",
+            "boolean": "Enter true or false.",
+            "json": "Enter valid JSON."
+        },
+        "recorded": "{count} overridden output | {count} overridden outputs",
+        "recorded_title": "Outputs overridden on replay",
+        "recorded_path": "Output",
+        "recorded_original": "Original value",
+        "recorded_value": "Replayed with",
+        "recorded_by": "Set by {user} on {date}",
+        "recorded_hidden": "Reading the values takes the permission to read outputs."
+    },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as {status}",
     "unqueue as": "Unqueue as {status}",

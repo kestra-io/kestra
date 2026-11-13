@@ -352,6 +352,7 @@
     "home": "Accueil",
     "create": "Créer",
     "create_flow": "Créer Flow",
+    "create_child_namespace": "Créer un namespace enfant",
     "from": "De",
     "to": "à",
     "steps": "Étapes",
@@ -459,7 +460,7 @@
       "whole_action": "Rejouer toute l'exécution à la place",
       "whole_title": "La version {revision} peut être rejouée comme une exécution complète.",
       "whole_description": "Aucun résultat antérieur n'est réutilisé, donc chaque Task s'exécute à nouveau sur la révision {revision}. L'exécution originale est conservée et liée.",
-      "confirm_from_task": "Replay à partir de la tâche",
+      "confirm_from_task": "Rejouer à partir de {taskId}",
       "confirm_whole": "Rejouer l'exécution entière"
     },
     "change execution state done": "État d'exécution mis à jour",
@@ -496,17 +497,21 @@
         "decision": "Décision",
         "by": "Décidé par",
         "on": "Décidé le",
+        "cancelled by": "Annulé par",
+        "cancelled on": "Annulé le",
         "decisions": {
           "approved": "Approuvé",
           "denied": "Refusé",
-          "expired": "Expiré"
+          "expired": "Expiré",
+          "cancelled": "Annulé",
+          "killed": "Tué"
         }
       },
       "cancel request": "Annuler la demande",
       "cancel confirm": "Voulez-vous vraiment annuler la demande d'approbation de l'exécution {id} ? Aucune branche de décision ne sera exécutée.",
       "cancel done": "La demande d'approbation a été annulée",
       "banner": {
-        "pausing": "Cette exécution prépare une demande d'approbation et se mettra en pause pour une révision.",
+        "pausing": "Cette exécution est en pause. La demande d'approbation pourra être examinée dès que toutes les tâches onWait seront terminées.",
         "paused": "Cette exécution est en attente d'une révision. Approuvez-la ou refusez-la pour continuer."
       }
     },
@@ -548,6 +553,12 @@
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
     "refresh": "Rafraîchir",
     "filter by status": "Filtrer les exécutions par statut {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Cette tâche a été relancée",
       "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
@@ -1919,7 +1930,8 @@
       "duplicate": "Cette clé existe déjà",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
-        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) supprimé(s) du namespace <code>{namespace}</code>"
       },
       "inherited": "Paires KV héritées",
       "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."

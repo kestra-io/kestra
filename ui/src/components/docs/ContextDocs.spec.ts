@@ -1,11 +1,12 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, type VueWrapper} from "@vue/test-utils"
 import {createPinia, setActivePinia, type Pinia} from "pinia"
-import {i18nShallowMount} from "../../../tests/unit/i18nMount"
+import {i18nMount, i18nShallowMount} from "../../../tests/unit/i18nMount"
 
 const fetch = vi.fn<typeof globalThis.fetch>()
 vi.stubGlobal("fetch", fetch)
 vi.mock("../../stores/api", () => ({API_URL: "https://api.kestra.io"}))
+vi.mock("../../composables/useScrollMemory", () => ({useScrollMemory: () => {}}))
 
 import {useDocStore} from "../../stores/doc"
 import ContextInfoContent from "../ContextInfoContent.vue"
@@ -84,5 +85,26 @@ describe("ContextDocs", () => {
 
         expect(panelTitle()).toBe("KV Store")
         expect(useDocStore().docPath).toBe("docs/concepts/kv-store")
+    })
+
+    it("lists the new page's child cards when the next page has a card grid in the same place", async () => {
+        const CHILDREN: Record<string, Record<string, {title: string}>> = {
+            "docs/tutorial": {"docs/tutorial/fundamentals": {title: "Fundamentals"}},
+            "docs/workflow-components": {"docs/workflow-components/flow": {title: "Flow"}},
+        }
+        fetch.mockImplementation(async (url) => {
+            const [, path, children] = String(url).match(/\/v1\/docs\/(.*)\/versions\/1\.3\.0(\/children)?$/) ?? []
+            if (children) return Response.json(CHILDREN[path] ?? {})
+            return new Response(`# ${path}\n\n<ChildCard />`, {headers: {"x-kestra-metadata": JSON.stringify({title: path})}})
+        })
+        const docStore = useDocStore()
+        docStore.docPath = "docs/tutorial"
+        wrapper = i18nMount(ContextDocs, {global: {plugins: [pinia], stubs: {ContextDocsSearch: true, DocsMenu: true}}})
+        await vi.waitFor(() => expect(wrapper?.text()).toContain("Fundamentals"))
+
+        docStore.docPath = "docs/workflow-components"
+
+        await vi.waitFor(() => expect(wrapper?.text()).toContain("Flow"))
+        expect(wrapper?.text()).not.toContain("Fundamentals")
     })
 })

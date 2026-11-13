@@ -352,6 +352,7 @@
     "home": "Strona główna",
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
+    "create_child_namespace": "Utwórz podrzędny namespace",
     "from": "Od",
     "to": "Do",
     "steps": "Kroki",
@@ -459,7 +460,7 @@
       "whole_action": "Zamiast tego powtórz całą egzekucję",
       "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
       "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
-      "confirm_from_task": "Replay z Taska",
+      "confirm_from_task": "Replay od {taskId}",
       "confirm_whole": "Odtwórz całą egzekucję"
     },
     "change execution state done": "Status egzekucji zaktualizowany",
@@ -496,17 +497,21 @@
         "decision": "Decyzja",
         "by": "Zdecydowano przez",
         "on": "Zdecydowano na",
+        "cancelled by": "Anulowane przez",
+        "cancelled on": "Anulowano dnia",
         "decisions": {
           "approved": "Zatwierdzono",
           "denied": "Odmówiono",
-          "expired": "Wygasłe"
+          "expired": "Wygasłe",
+          "cancelled": "Anulowano",
+          "killed": "Zabito"
         }
       },
       "cancel request": "Anuluj żądanie",
       "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji {id}? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
       "cancel done": "Żądanie zatwierdzenia zostało anulowane",
       "banner": {
-        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "pausing": "Ta egzekucja jest wstrzymywana. Żądanie zatwierdzenia będzie można przejrzeć, gdy wszystkie Taski onWait zostaną zakończone.",
         "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
       }
     },
@@ -548,6 +553,12 @@
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Ten Task został ponowiony",
       "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
@@ -1919,7 +1930,8 @@
       "duplicate": "Ten Key już istnieje",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
-        "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
+        "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>",
+        "deleted": "Usunięto <code>{count}</code> par KV z namespace'u <code>{namespace}</code>"
       },
       "inherited": "Odziedziczone pary KV",
       "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."

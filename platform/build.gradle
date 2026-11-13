@@ -20,7 +20,7 @@ dependencies {
     def slf4jVersion = "2.0.20"
     def bouncycastleVersion = "1.86"
     def mavenResolverVersion = "2.0.10"
-    def jollydayVersion = "2.23.0"
+    def jollydayVersion = "2.24.0"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.4.0"
     def opensearchVersion = "3.10.0"
@@ -39,17 +39,25 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:5.2.4")
+    api platform("io.micronaut.platform:micronaut-platform:5.2.5")
+    // security tower (Trivy): micronaut-tracing 8.3.0 imports opentelemetry-bom 1.64.0, opentelemetry-api < 1.67.0 has
+    // CVE-2026-118259 (SEC-0387). Both BOMs so api, context, sdk and the -alpha incubator stay aligned; drop once Micronaut ships >= 1.67.0.
+    api platform("io.opentelemetry:opentelemetry-bom:1.67.0")
+    api platform("io.opentelemetry:opentelemetry-bom-alpha:1.67.0-alpha")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.91.0')
     api platform("io.grpc:grpc-bom:$grpcVersion")
     api platform("com.azure:azure-sdk-bom:1.3.9")
-    api platform('software.amazon.awssdk:bom:2.57.8')
+    api platform('software.amazon.awssdk:bom:2.57.9')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")
 
     constraints {
+        // security tower (Trivy): transitive libraries pinned to their fixed version
+        api("org.xerial.snappy:snappy-java:1.1.10.9") // from kafka-clients 4.4.0 (1.1.10.7): CVE-2026-93451, CVE-2026-108106, CVE-2026-116590 (SEC-2097)
+        api("org.apache.qpid:proton-j:0.35.0") // from azure-core-amqp 2.12.2 (azure-sdk-bom 1.3.9 ships 0.34.1): CVE-2026-66274 (SEC-2098)
+        api("at.yawk.lz4:lz4-java:1.11.4") // from kafka-clients, rocketmq, flink: CVE-2026-106451, CVE-2026-106450, CVE-2026-106449 (SEC-2095)
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc
         api("com.google.protobuf:protobuf-java:$protobufVersion")
@@ -88,7 +96,7 @@ dependencies {
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         api "org.apache.kafka:kafka-server-common:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.49.0'
+        api 'software.amazon.awssdk.crt:aws-crt:0.50.0'
 
         // Other libs
         api "org.projectlombok:lombok:1.18.48"
@@ -98,7 +106,7 @@ dependencies {
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"
         api "net.thisptr:jackson-jq:1.6.5"
-        api "com.google.guava:guava:33.7.2-jre"
+        api "com.google.guava:guava:33.8.0-jre"
         api "commons-io:commons-io:2.22.0"
         api "org.apache.commons:commons-lang3:3.21.0"
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
@@ -120,7 +128,7 @@ dependencies {
         api "com.github.victools:jsonschema-module-jakarta-validation:$jsonschemaVersion"
         api "com.github.victools:jsonschema-module-jackson:$jsonschemaVersion"
         api "com.github.victools:jsonschema-module-swagger-2:$jsonschemaVersion"
-        api "com.networknt:json-schema-validator:3.0.8"
+        api "com.networknt:json-schema-validator:3.0.9"
         api 'com.h2database:h2:2.5.252'
         api 'com.mysql:mysql-connector-j:26.10.0'
         api 'org.postgresql:postgresql:42.7.14'
@@ -135,7 +143,7 @@ dependencies {
         api "org.opensearch.client:opensearch-java:$opensearchVersion"
         api "org.opensearch.client:opensearch-rest-client:$opensearchRestVersion"
         api "org.opensearch.client:opensearch-rest-high-level-client:$opensearchRestVersion" // used by the elasticsearch plugin
-        api 'org.jsoup:jsoup:1.23.2'
+        api 'org.jsoup:jsoup:1.24.1'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api "jakarta.mail:jakarta.mail-api:2.1.5"
@@ -178,7 +186,7 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.3.3"
+        api "io.kestra.libs:copilot:0.3.4"
         api 'io.modelcontextprotocol.sdk:mcp:1.1.3'
         // Micronaut 5.1's BOM manages mcp-core at 2.0.0, a major ahead of the mcp SDK version above -
         // pinned back down to keep both artifacts of the one SDK at the same version.

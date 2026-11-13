@@ -352,6 +352,7 @@
     "home": "홈",
     "create": "생성",
     "create_flow": "Flow 생성",
+    "create_child_namespace": "하위 namespace 생성",
     "from": "시작",
     "to": "종료",
     "steps": "단계",
@@ -459,7 +460,7 @@
       "whole_action": "대신 전체 Execution을 Replay합니다.",
       "whole_title": "Revision {revision}을 전체 Execution으로 Replay할 수 있습니다.",
       "whole_description": "이전 결과는 재사용되지 않으므로 모든 Task는 revision {revision}에서 다시 실행됩니다. 원본 Execution은 유지되고 연결됩니다.",
-      "confirm_from_task": "Task에서 Replay",
+      "confirm_from_task": "{taskId}부터 Replay",
       "confirm_whole": "전체 Execution Replay"
     },
     "change execution state done": "실행 상태가 업데이트되었습니다",
@@ -496,17 +497,21 @@
         "decision": "결정",
         "by": "결정 기준",
         "on": "결정됨",
+        "cancelled by": "취소자",
+        "cancelled on": "취소됨",
         "decisions": {
           "approved": "승인됨",
           "denied": "거부됨",
-          "expired": "만료됨"
+          "expired": "만료됨",
+          "cancelled": "취소됨",
+          "killed": "종료됨"
         }
       },
       "cancel request": "요청 취소",
       "cancel confirm": "execution {id}에 대한 승인 요청을 취소하시겠습니까? 결정 branch는 실행되지 않습니다.",
       "cancel done": "승인 요청이 취소되었습니다.",
       "banner": {
-        "pausing": "이 실행은 승인 요청을 준비 중이며 검토를 위해 일시 중지됩니다.",
+        "pausing": "이 Execution이 일시 중지됩니다. 모든 onWait Task가 완료되면 승인 요청을 검토할 수 있습니다.",
         "paused": "이 Execution은 검토를 기다리고 있습니다. 계속하려면 승인하거나 거부하세요."
       }
     },
@@ -548,6 +553,12 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "refresh": "새로 고침",
     "filter by status": "{status} 상태로 실행 필터링",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
@@ -1919,7 +1930,8 @@
       "duplicate": "이 키는 이미 존재합니다",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
-        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
+        "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>",
+        "deleted": "namespace <code>{namespace}</code>에서 <code>{count}</code>개의 KV가 삭제되었습니다"
       },
       "inherited": "상속된 KV 쌍",
       "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."

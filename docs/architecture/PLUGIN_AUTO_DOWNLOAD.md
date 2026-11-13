@@ -231,17 +231,22 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
 **compact local** schema (installed plugins, `JsonSchemaCache.getCompactSchemaForType`), produced
-by `JsonSchemaCompactor` in two steps:
+by `JsonSchemaCompactor` in three steps:
 
 - the generator inlines the full subtype list at every `tasks` / `errors` / `finally` site, 17 of
   them in the flow schema, so each type costs one `$ref` branch per site. Every bare `anyOf` that
-  repeats a definition's list becomes a `$ref` to that definition;
+  repeats a definition's list becomes a `$ref` to that definition, and a list repeated with no
+  definition of its own gets a `shared-subtypes` one;
+- a property typed as a single subtype (`Dag.tasks[].task`, `Pause.onPause`, `retry`) is emitted as
+  one `allOf: [$ref, annotation]` branch per subtype, repeating the property's title and
+  description each time. It becomes the annotation plus a one-branch `anyOf` referencing the list;
 - every task definition carries its own copy of the properties it inherits (`retry`, `timeout`,
   `errors`, ...). A property schema that occurs more than once moves to one
   `shared-property-<name>` definition, referenced from each site.
 
-The YAML language service merges a `$ref` target into the referencing node, so validation,
-completion and hover are unchanged. The plain endpoint keeps everything inline for the no-code
+The YAML language service merges a `$ref` target into the referencing node, so validation and
+completion are unchanged. Hover differs in one place: on a single-subtype property it now shows the
+property's own title, where the inline form showed the parent's description once per subtype. The plain endpoint keeps everything inline for the no-code
 editor. An edition that overrides `isCatalogMergeAllowed()` to `false` (EE) gets the compact schema
 without the bundle.
 

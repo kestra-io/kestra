@@ -180,11 +180,16 @@ class JsonSchemaGeneratorTest {
         assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
         assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
 
-        // `retry` is inherited by every task: one shared definition, holding exactly what each task carried inline.
-        String retryRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("retry").get("$ref");
-        assertThat(retryRef, startsWith("#/definitions/shared-property-retry"));
-        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("retry"), is(Map.of("$ref", retryRef)));
-        assertThat(compactDefinitions.get(retryRef.substring("#/definitions/".length())), is(properties(definitions.get(Log.class.getName())).get("retry")));
+        // A property typed as one task repeats its annotation on every branch: the list is referenced once, the annotation kept once.
+        Map<String, Object> dagTask = properties(compactDefinitions.get(Dag.DagTask.class.getName().replace('$', '-'))).get("task");
+        assertThat(dagTask.get("anyOf"), is(List.of(Map.of("$ref", "#/definitions/" + Task.class.getName()))));
+        assertThat(dagTask, hasEntry("title", "The task within the DAG"));
+
+        // `timeout` is inherited by every task: one shared definition, holding exactly what each task carried inline.
+        String timeoutRef = (String) properties(compactDefinitions.get(Log.class.getName())).get("timeout").get("$ref");
+        assertThat(timeoutRef, startsWith("#/definitions/shared-property-timeout"));
+        assertThat(properties(compactDefinitions.get(Return.class.getName())).get("timeout"), is(Map.of("$ref", timeoutRef)));
+        assertThat(compactDefinitions.get(timeoutRef.substring("#/definitions/".length())), is(properties(definitions.get(Log.class.getName())).get("timeout")));
     }
 
     @SuppressWarnings("unchecked")

@@ -103,6 +103,8 @@ export function useKsEditor(
 
     const isFocused = ref(false)
     const preventCursorChange = ref(false)
+    // props.modelValue lags the editor; without this, a synchronous model rewrite loses its final emit to the stale prop.
+    let emittedAwaitingProp: string | undefined
     const localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>()
     const localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>()
     const resizeObserver = ref<ResizeObserver>()
@@ -475,7 +477,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedAwaitingProp ?? props.modelValue) === value) return
+            emittedAwaitingProp = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -660,6 +664,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
+        emittedAwaitingProp = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)

@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest"
+import {describe, expect, it} from "vitest"
 import {mount} from "@vue/test-utils"
 import {computed, defineComponent, ref, type Ref} from "vue"
 import {
@@ -142,117 +142,179 @@ describe("violatedKeys", () => {
     })
 })
 
-/**
- * Minimal stand-in for the slice of Monaco the composable touches. Edits are
- * applied by line range, which is what makes the "keep the rest of the edit"
- * behaviour observable.
- *
- * The undo stack is modelled because the guard's correctness depends on it: an
- * edit made with `pushEditOperations` joins the element already open, while one
- * made with `executeEdits` opens a new element of its own. Undo pops one element
- * and, like Monaco, notifies the content listeners afterwards.
- *
- * Listener registrations are counted rather than merely tracked, so that a guard
- * re-attaching when it should not is visible even though attach() leaves exactly
- * one listener behind either way.
- *
- * Decorations are modelled as tracked ranges for the same reason: Monaco collapses
- * a range that an edit replaces rather than moving it, so a guard that never
- * repaints leaves the highlight on line 1. Holding the decoration array untouched
- * would keep the right answer by accident and hide exactly that.
- */
+type Selection = {anchor: number; head: number}
+type UserChange = {offset: number; length: number; text: string}
 type PaintedDecoration = {range: {startLineNumber: number; endLineNumber: number}}
+type RangeEdit = {
+    range: {startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number}
+    text: string
+}
+type ContentEvent = {
+    changes: {rangeOffset: number; rangeLength: number; text: string}[]
+    isFlush: boolean
+    isUndoing: boolean
+}
 
 function editorDouble(initial: string) {
-    let lines = initial.split("\n")
-    const listeners: Array<() => void> = []
+    let text = initial
+    let selections: Selection[] = [{anchor: 0, head: 0}]
     let painted: PaintedDecoration[] = []
     let registrations = 0
-    /** Snapshot taken before each undo element; last entry is the newest. */
-    const undoStack: string[] = []
+    const contentListeners: Array<(event: ContentEvent) => void> = []
+    const selectionListeners: Array<() => void> = []
+    const modelListeners: Array<() => void> = []
+    const undoStack: Array<{text: string; selections: Selection[]}> = []
+
+    function lineStarts(source: string) {
+        const starts = [0]
+        for (let index = 0; index < source.length; index++) {
+            if (source[index] === "\n") starts.push(index + 1)
+        }
+        return starts
+    }
+
+    function lineOf(offset: number) {
+        return lineStarts(text.slice(0, offset)).length
+    }
+
+    function offsetOf(line: number, column: number) {
+        return lineStarts(text)[line - 1] + column - 1
+    }
+
+    function collapse(start: number, end: number) {
+        const first = lineOf(start)
+        const last = lineOf(end)
+        for (const decoration of painted) {
+            const line = decoration.range.startLineNumber
+            if (line >= first && line <= last) {
+                decoration.range.startLineNumber = first
+                decoration.range.endLineNumber = first
+            }
+        }
+    }
+
+    function applyChanges(changes: UserChange[]) {
+        const descending = [...changes].sort((a, b) => b.offset - a.offset)
+        for (const change of descending) {
+            collapse(change.offset, change.offset + change.length)
+            text = text.slice(0, change.offset) + change.text + text.slice(change.offset + change.length)
+        }
+        return [...changes]
+            .sort((a, b) => a.offset - b.offset)
+            .map((change) => ({rangeOffset: change.offset, rangeLength: change.length, text: change.text}))
+    }
+
+    function notifyContent(event: ContentEvent) {
+        contentListeners.forEach((listener) => listener(event))
+    }
+
+    function notifySelection() {
+        selectionListeners.forEach((listener) => listener())
+    }
 
     const model = {
-        getValue: () => lines.join("\n"),
-        getFullModelRange: () => ({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: lines.length,
-            endColumn: (lines[lines.length - 1]?.length ?? 0) + 1,
-        }),
-        getLineMaxColumn: (line: number) => (lines[line - 1]?.length ?? 0) + 1,
-        /** Joins the element already open — no new undo step. */
-        pushEditOperations(
-            _before: unknown,
-            edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[],
-        ) {
-            applyEdits(edits)
+        getValue: () => text,
+        getPositionAt(offset: number) {
+            const before = text.slice(0, offset)
+            return {lineNumber: lineStarts(before).length, column: offset - before.lastIndexOf("\n")}
+        },
+        pushEditOperations(_before: unknown, edits: RangeEdit[]) {
+            const changes: UserChange[] = edits.map((edit) => {
+                const start = offsetOf(edit.range.startLineNumber, edit.range.startColumn)
+                const end = offsetOf(edit.range.endLineNumber, edit.range.endColumn)
+                return {offset: start, length: end - start, text: edit.text}
+            })
+            const reported = applyChanges(changes)
+            const last = reported[reported.length - 1]
+            const caret = last.rangeOffset + last.text.length
+            selections = [{anchor: caret, head: caret}]
+            notifyContent({changes: reported, isFlush: false, isUndoing: false})
             return null
         },
     }
 
-    function applyEdits(edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[]) {
-        // Descending, so earlier line numbers stay valid as we splice.
-        for (const edit of [...edits].sort((a, b) => b.range.startLineNumber - a.range.startLineNumber)) {
-            const start = edit.range.startLineNumber - 1
-            const count = edit.range.endLineNumber - edit.range.startLineNumber + 1
-            lines.splice(start, count, ...edit.text.split("\n"))
-
-            // A decoration inside the replaced span collapses onto its start.
-            for (const decoration of painted) {
-                const line = decoration.range.startLineNumber
-                if (line >= edit.range.startLineNumber && line <= edit.range.endLineNumber) {
-                    decoration.range.startLineNumber = edit.range.startLineNumber
-                    decoration.range.endLineNumber = edit.range.startLineNumber
-                }
-            }
-        }
-        // Monaco notifies synchronously, which is also what exercises the
-        // composable's re-entrancy guard.
-        listeners.forEach((listener) => listener())
-    }
-
     const editor = {
         getModel: () => model,
-        onDidChangeModelContent(callback: () => void) {
+        getSelections: () => selections,
+        setSelections(next: Selection[]) {
+            selections = next
+            notifySelection()
+        },
+        onDidChangeModelContent(callback: (event: ContentEvent) => void) {
             registrations += 1
-            listeners.push(callback)
-            return {dispose: () => listeners.splice(listeners.indexOf(callback), 1)}
+            contentListeners.push(callback)
+            return {dispose: () => contentListeners.splice(contentListeners.indexOf(callback), 1)}
+        },
+        onDidChangeCursorSelection(callback: () => void) {
+            selectionListeners.push(callback)
+            return {dispose: () => selectionListeners.splice(selectionListeners.indexOf(callback), 1)}
+        },
+        onDidChangeModel(callback: () => void) {
+            modelListeners.push(callback)
+            return {dispose: () => modelListeners.splice(modelListeners.indexOf(callback), 1)}
         },
         createDecorationsCollection: () => ({
             set: (next: PaintedDecoration[]) => { painted = next },
             clear: () => { painted = [] },
         }),
-        /** Opens its own undo element, as Monaco does outside an open one. */
-        executeEdits(_source: string, edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[]) {
-            undoStack.push(lines.join("\n"))
-            applyEdits(edits)
+        executeEdits(_source: string, edits: RangeEdit[]) {
+            undoStack.push({text, selections})
+            model.pushEditOperations(null, edits)
             return true
         },
-        getSelection: () => null,
-        getSelections: () => [],
-        setSelection: () => {},
     }
 
     return {
         editor,
-        current: () => lines.join("\n"),
+        current: () => text,
+        selections: () => selections,
         decorationCount: () => painted.length,
-        /** Which lines currently carry the locked-line decoration. */
         decoratedLines: () => painted.map((decoration) => decoration.range.startLineNumber),
         undoDepth: () => undoStack.length,
         attachCount: () => registrations,
-        /** Simulate the user changing the buffer; each one opens an undo element. */
-        type(next: string) {
-            undoStack.push(lines.join("\n"))
-            lines = next.split("\n")
-            listeners.forEach((listener) => listener())
+        select(next: Selection[]) {
+            selections = next
+            notifySelection()
         },
-        /** Pop one undo element, then notify — the order Monaco uses. */
+        edit(changes: UserChange[]) {
+            undoStack.push({text, selections})
+            const reported = applyChanges(changes)
+            let shift = 0
+            selections = reported.map((change) => {
+                const caret = change.rangeOffset + shift + change.text.length
+                shift += change.text.length - change.rangeLength
+                return {anchor: caret, head: caret}
+            })
+            notifyContent({changes: reported, isFlush: false, isUndoing: false})
+            notifySelection()
+        },
+        setValue(next: string) {
+            const previousLength = text.length
+            text = next
+            selections = [{anchor: 0, head: 0}]
+            notifyContent({
+                changes: [{rangeOffset: 0, rangeLength: previousLength, text: next}],
+                isFlush: true,
+                isUndoing: false,
+            })
+            notifySelection()
+        },
+        swapModel(next: string) {
+            text = next
+            selections = [{anchor: 0, head: 0}]
+            modelListeners.forEach((listener) => listener())
+        },
         undo() {
-            const previous = undoStack.pop()
-            if (previous === undefined) return
-            lines = previous.split("\n")
-            listeners.forEach((listener) => listener())
+            const element = undoStack.pop()
+            if (!element) return
+            const previousLength = text.length
+            text = element.text
+            selections = element.selections
+            notifyContent({
+                changes: [{rangeOffset: 0, rangeLength: previousLength, text: element.text}],
+                isFlush: false,
+                isUndoing: true,
+            })
         },
     }
 }
@@ -266,18 +328,20 @@ function withComposable(run: () => void) {
     }))
 }
 
+const caretAt = (offset: number): Selection => ({anchor: offset, head: offset})
+const insertAt = (offset: number, text: string): UserChange => ({offset, length: 0, text})
+const endOfLine = (needle: string) => FLOW.indexOf("\n", FLOW.indexOf(needle))
+
 describe("useReadOnlyYamlKeys", () => {
     function guardWith(
         double: ReturnType<typeof editorDouble>,
         expected: Ref<Record<string, string | undefined>>,
         enabled = true,
-        onReverted?: (keys: string[]) => void,
     ) {
         return withComposable(() => useReadOnlyYamlKeys({
             editor: ref(double.editor) as unknown as ReadOnlyYamlKeysOptions["editor"],
             expected,
             enabled: computed(() => enabled),
-            onReverted,
         }))
     }
 
@@ -285,211 +349,193 @@ describe("useReadOnlyYamlKeys", () => {
         return guardWith(double, ref({id: "my_flow", namespace: "company.team"}), enabled)
     }
 
-    /** Guard as usual, handing back the spy that stands in for the toast. */
-    function guardReporting(double: ReturnType<typeof editorDouble>) {
-        const reverted = vi.fn()
-        guardWith(double, ref({id: "my_flow", namespace: "company.team"}), true, reverted)
-        return reverted
-    }
+    const message = FLOW.indexOf("hello", FLOW.indexOf("message"))
+    const namespaceLine = FLOW.indexOf("namespace")
 
-    it("rejects an edit to a locked value", () => {
+    it("refuses an edit to a locked value", () => {
         const double = editorDouble(FLOW)
         guard(double)
 
-        double.type(FLOW.replace("id: my_flow", "id: my_flowX"))
+        double.edit([insertAt(endOfLine("id: my_flow"), "X")])
 
         expect(double.current()).toBe(FLOW)
     })
 
-    it("lets edits to the rest of the document through", () => {
+    it("refuses typing in front of a locked key and keeps the cursor where it was", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        double.select([caretAt(0)])
+
+        double.edit([insertAt(0, "x")])
+
+        expect(double.current()).toBe(FLOW)
+        expect(double.selections()).toEqual([caretAt(0)])
+    })
+
+    it("refuses a line join that would swallow a locked key", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        double.select([caretAt(namespaceLine)])
+
+        double.edit([{offset: namespaceLine - 1, length: 1, text: ""}])
+
+        expect(double.current()).toBe(FLOW)
+        expect(double.selections()).toEqual([caretAt(namespaceLine)])
+    })
+
+    it("refuses deleting a locked line and keeps the selection", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        const selection = {anchor: 0, head: namespaceLine}
+        double.select([selection])
+
+        double.edit([{offset: 0, length: namespaceLine, text: ""}])
+
+        expect(double.current()).toBe(FLOW)
+        expect(double.selections()).toEqual([selection])
+    })
+
+    it("refuses a paste over the whole document", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        const selection = {anchor: 0, head: FLOW.length}
+        double.select([selection])
+
+        double.edit([{offset: 0, length: FLOW.length, text: "tasks: []"}])
+
+        expect(double.current()).toBe(FLOW)
+        expect(double.selections()).toEqual([selection])
+    })
+
+    it("refuses every cursor's edit when one of them touches a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        const carets = [caretAt(0), caretAt(message)]
+        double.select(carets)
+
+        double.edit([insertAt(0, "x"), insertAt(message, "x")])
+
+        expect(double.current()).toBe(FLOW)
+        expect(double.selections()).toEqual(carets)
+    })
+
+    it("applies a multi-cursor edit that touches no locked line", () => {
         const double = editorDouble(FLOW)
         guard(double)
 
-        const edited = FLOW.replace("message: hello", "message: changed")
-        double.type(edited)
+        double.edit([insertAt(message, "x"), insertAt(message + 5, "y")])
+
+        expect(double.current()).toBe(FLOW.replace("message: hello", "message: xhelloy"))
+    })
+
+    it("lets edits to the rest of the document through and leaves the cursor to the editor", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.edit([insertAt(message, "x")])
+
+        expect(double.current()).toBe(FLOW.replace("message: hello", "message: xhello"))
+        expect(double.selections()).toEqual([caretAt(message + 1)])
+    })
+
+    it("allows Enter at the end of a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.edit([insertAt(endOfLine("id: my_flow"), "\n")])
+
+        expect(double.current()).toBe(FLOW.replace("id: my_flow\n", "id: my_flow\n\n"))
+    })
+
+    it("allows an inline comment on a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.edit([insertAt(endOfLine("id: my_flow"), " # note")])
+
+        expect(double.current()).toBe(FLOW.replace("id: my_flow", "id: my_flow # note"))
+    })
+
+    it("keeps the document intact when the user keeps typing on a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.edit([insertAt(0, "x")])
+        double.edit([insertAt(0, "y")])
+
+        expect(double.current()).toBe(FLOW)
+    })
+
+    it("refuses against the content that followed the last accepted edit", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        const edited = FLOW.replace("message: hello", "message: hello world")
+        double.edit([insertAt(message + 5, " world")])
+
+        double.edit([insertAt(0, "x")])
 
         expect(double.current()).toBe(edited)
     })
 
-    it("keeps the rest of a paste that also changed a locked line", () => {
+    it("accepts a programmatic replacement and refuses against it afterwards", () => {
         const double = editorDouble(FLOW)
         guard(double)
+        const reloaded = FLOW.replace("message: hello", "message: reloaded")
 
-        // Select-all and paste a different flow: the id must snap back, but the
-        // pasted body must survive — discarding it silently is the failure mode.
-        double.type([
-            "id: someone_elses_flow",
-            "namespace: company.team",
-            "",
-            "tasks:",
-            "  - id: pasted",
-            "    type: io.kestra.plugin.core.log.Log",
-            "    message: pasted",
-            "",
-        ].join("\n"))
+        double.setValue(reloaded)
+        double.edit([insertAt(0, "x")])
 
-        expect(double.current()).toContain("id: my_flow")
-        expect(double.current()).not.toContain("someone_elses_flow")
-        expect(double.current()).toContain("  - id: pasted")
-        expect(double.current()).toContain("message: pasted")
+        expect(double.current()).toBe(reloaded)
     })
 
-    it("restores both locked lines when a paste changes each of them", () => {
+    it("accepts a programmatic replacement that does not match the expectations", () => {
         const double = editorDouble(FLOW)
         guard(double)
+        const other = "id: other_flow\nnamespace: other.team\n\ntasks: []\n"
 
-        double.type("id: other\nnamespace: other.team\n\ntasks: []\n")
+        double.setValue(other)
 
-        expect(double.current()).toContain("id: my_flow")
-        expect(double.current()).toContain("namespace: company.team")
-        expect(double.current()).toContain("tasks: []")
+        expect(double.current()).toBe(other)
     })
 
-    it("falls back to the last good document when a locked key is removed", () => {
+    it("still allows edits when the buffer already violated as the guard attached", () => {
+        const violating = FLOW.replace("id: my_flow", "id: renamed")
+        const double = editorDouble(violating)
+        guard(double)
+
+        double.edit([insertAt(violating.indexOf("hello", violating.indexOf("message")), "x")])
+
+        expect(double.current()).toBe(violating.replace("message: hello", "message: xhello"))
+    })
+
+    it("refuses a new violation in a buffer that already violated another key", () => {
+        const violating = FLOW.replace("id: my_flow", "id: renamed")
+        const double = editorDouble(violating)
+        guard(double)
+
+        double.edit([insertAt(violating.indexOf("namespace"), "x")])
+
+        expect(double.current()).toBe(violating)
+    })
+
+    it("computes the inversion against the new document after the model is swapped", () => {
         const double = editorDouble(FLOW)
         guard(double)
+        const swapped = FLOW.replace("message: hello", "message: swapped, and now longer")
 
-        double.type(FLOW.replace("id: my_flow\n", ""))
+        double.swapModel(swapped)
+        double.edit([insertAt(0, "x")])
 
-        expect(double.current()).toBe(FLOW)
-    })
-
-    it("reports the paste it threw away when a locked key is dropped", () => {
-        const double = editorDouble(FLOW)
-        const reverted = guardReporting(double)
-
-        // A snippet pasted over the whole document that simply carries no `id:`
-        // line — nothing is left to correct, so the paste goes in full. That is
-        // the one case where the user loses work and has to be told.
-        double.type([
-            "namespace: company.team",
-            "",
-            "tasks:",
-            "  - id: pasted",
-            "    type: io.kestra.plugin.core.log.Log",
-            "",
-        ].join("\n"))
-
-        expect(double.current()).toBe(FLOW)
-        expect(reverted).toHaveBeenCalledWith(["id"])
-    })
-
-    it("keeps work that survived an in-place correction when a later edit falls back", () => {
-        const double = editorDouble(FLOW)
-        guard(double)
-
-        // A paste that renames the flow and adds a task: the rename is refused, the
-        // task is kept. The buffer now holds work that the last good content does not.
-        double.type(FLOW
-            .replace("id: my_flow", "id: renamed")
-            .replace("    message: hello\n", "    message: hello\n  - id: added\n    type: io.kestra.plugin.core.log.Log\n"))
-        expect(double.current()).toContain("id: my_flow")
-        expect(double.current()).toContain("- id: added")
-
-        // Removing the locked line outright is the one edit only the fallback can
-        // handle, and it must not take the kept task down with it.
-        double.type(double.current().replace("id: my_flow\n", ""))
-
-        expect(double.current()).toContain("id: my_flow")
-        expect(double.current()).toContain("- id: added")
-    })
-
-    it("repaints the locked lines after the whole-document fallback", () => {
-        const double = editorDouble(FLOW)
-        guard(double)
-        expect(double.decoratedLines()).toEqual([1, 2])
-
-        double.type(FLOW.replace("id: my_flow\n", ""))
-
-        // The fallback replaces the whole document, which collapses both tracked
-        // ranges onto line 1; without a repaint the highlight and its hover sit
-        // there rather than on the `id:` and `namespace:` lines.
-        expect(double.current()).toBe(FLOW)
-        expect(double.decoratedLines()).toEqual([1, 2])
-    })
-
-    it("says nothing when the locked line was corrected in place", () => {
-        const double = editorDouble(FLOW)
-        const reverted = guardReporting(double)
-
-        // The id snaps back and the rest of the edit survives, so nothing was
-        // lost — reporting here would fire on every keystroke on a locked line.
-        double.type(FLOW.replace("id: my_flow", "id: someone_elses_flow"))
-
-        expect(double.current()).toBe(FLOW)
-        expect(reverted).not.toHaveBeenCalled()
-    })
-
-    it("says nothing when there is no good document to fall back to", () => {
-        // Attached to a buffer that already violates, so nothing was recorded to
-        // restore: the edit stands, and no revert happened to report.
-        const stale = FLOW.replace("id: my_flow", "id: stale")
-        const double = editorDouble(stale)
-        const reverted = guardReporting(double)
-
-        double.type(stale.replace("id: stale\n", ""))
-
-        expect(reverted).not.toHaveBeenCalled()
-    })
-
-    it("keeps an inline comment when correcting the line it sits on", () => {
-        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
-        const double = editorDouble(commented)
-        guard(double)
-
-        // Typing on the locked line itself, which is what reaches restoreLines —
-        // an edit elsewhere leaves violatedKeys empty and never gets there.
-        double.type(commented.replace("id: my_flow # keep", "id: my_flowX # keep"))
-
-        // The value snaps back and the comment, which was the user's to write,
-        // survives with it.
-        expect(double.current()).toBe(commented)
-    })
-
-    it("keeps a comment on a locked line that a paste rewrote wholesale", () => {
-        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
-        const double = editorDouble(commented)
-        guard(double)
-
-        // The pasted line carries its own comment; the value is refused but the
-        // comment that arrived with it is what the line now legitimately holds.
-        double.type(commented.replace("id: my_flow # keep", "id: pasted # theirs"))
-
-        expect(double.current()).toContain("id: my_flow # theirs")
-    })
-
-    it.each(["\"", "'"])("keeps the %s quoting the user wrote on a corrected line", (q) => {
-        const quoted = FLOW.replace("id: my_flow", `id: ${q}my_flow${q}`)
-        const double = editorDouble(quoted)
-        guard(double)
-
-        double.type(quoted.replace(`${q}my_flow${q}`, `${q}my_flowX${q}`))
-
-        // The value snaps back inside the quotes the user typed, rather than being
-        // silently rewritten as a bare scalar.
-        expect(double.current()).toBe(quoted)
-    })
-
-    it("does not provoke a correction for an edit elsewhere in a commented document", () => {
-        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
-        const double = editorDouble(commented)
-        guard(double)
-
-        const edited = commented.replace("message: hello", "message: changed")
-        double.type(edited)
-
-        // Nothing was violated, so nothing was rewritten.
-        expect(double.current()).toBe(edited)
+        expect(double.current()).toBe(swapped)
     })
 
     it("stays out of the way while disabled, as when creating", () => {
         const double = editorDouble(FLOW)
         guard(double, false)
 
-        const renamed = FLOW.replace("id: my_flow", "id: brand_new")
-        double.type(renamed)
+        double.edit([insertAt(0, "x")])
 
-        expect(double.current()).toBe(renamed)
+        expect(double.current()).toBe(`x${FLOW}`)
     })
 
     it("decorates both locked lines", () => {
@@ -506,26 +552,27 @@ describe("useReadOnlyYamlKeys", () => {
         expect(double.decorationCount()).toBe(0)
     })
 
-    it("leaves undo working after a keystroke is refused", () => {
+    it("repaints the locked lines after refusing a line join", () => {
         const double = editorDouble(FLOW)
         guard(double)
 
-        // A legitimate edit the user will expect to be able to undo later.
-        const edited = FLOW.replace("message: hello", "message: changed")
-        double.type(edited)
+        double.edit([{offset: namespaceLine - 1, length: 1, text: ""}])
+
+        expect(double.decoratedLines()).toEqual([1, 2])
+    })
+
+    it("leaves undo working after a keystroke is refused", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        const edited = FLOW.replace("message: hello", "message: xhello")
+        double.edit([insertAt(message, "x")])
+
+        double.edit([insertAt(0, "x")])
         expect(double.current()).toBe(edited)
 
-        // A keystroke on a locked line, correctly refused.
-        double.type(edited.replace("id: my_flow", "id: my_flowX"))
-        expect(double.current()).toBe(edited)
-
-        // The refused keystroke and its correction are one step, so this undoes
-        // both and lands on a document that violates nothing.
         double.undo()
         expect(double.current()).toBe(edited)
 
-        // And the legitimate edit is still reachable, which is what a correction
-        // in its own undo element takes away.
         double.undo()
         expect(double.current()).toBe(FLOW)
     })
@@ -535,27 +582,17 @@ describe("useReadOnlyYamlKeys", () => {
         guard(double)
 
         const before = double.undoDepth()
-        double.type(FLOW.replace("id: my_flow", "id: my_flowX"))
+        double.edit([insertAt(0, "x")])
 
-        // One element for the user's keystroke; the correction joins it rather
-        // than adding a second the user would have to press through.
         expect(double.undoDepth()).toBe(before + 1)
     })
 
     it("does not re-attach when the expectations are replaced by an equal object", async () => {
         const double = editorDouble(FLOW)
-        const expected = ref<Record<string, string | undefined>>({
-            id: "my_flow",
-            namespace: "company.team",
-        })
+        const expected = ref<Record<string, string | undefined>>({id: "my_flow", namespace: "company.team"})
         guardWith(double, expected)
-
         const attached = double.attachCount()
 
-        // What the flow store does on every save, revision load and refetch: a
-        // fresh object carrying the same values. Keying the watcher on the
-        // container rather than the values re-ran attach() for each one, which
-        // clears the decorations and can strand `lastValid` at undefined.
         expected.value = {id: "my_flow", namespace: "company.team"}
         await new Promise((resolve) => setTimeout(resolve))
 
@@ -564,31 +601,21 @@ describe("useReadOnlyYamlKeys", () => {
 
     it("accepts a whole-document replacement when the expectations change with it", async () => {
         const double = editorDouble(FLOW)
-        const expected = ref<Record<string, string | undefined>>({
-            id: "my_flow",
-            namespace: "company.team",
-        })
+        const expected = ref<Record<string, string | undefined>>({id: "my_flow", namespace: "company.team"})
         guardWith(double, expected)
-
-        // Navigating to another flow, or restoring a revision: the store swaps the flow
-        // and its YAML together. Comparing against the expectations rather than the
-        // previous text is what stops this being read as a rename of the old flow.
         const other = "id: other_flow\nnamespace: other.team\n\ntasks: []\n"
+
         expected.value = {id: "other_flow", namespace: "other.team"}
         await new Promise((resolve) => setTimeout(resolve))
-        double.type(other)
+        double.edit([{offset: 0, length: FLOW.length, text: other}])
 
         expect(double.current()).toBe(other)
     })
 
     it("does re-attach when a locked value actually changes", async () => {
         const double = editorDouble(FLOW)
-        const expected = ref<Record<string, string | undefined>>({
-            id: "my_flow",
-            namespace: "company.team",
-        })
+        const expected = ref<Record<string, string | undefined>>({id: "my_flow", namespace: "company.team"})
         guardWith(double, expected)
-
         const attached = double.attachCount()
 
         expected.value = {id: "renamed_flow", namespace: "company.team"}

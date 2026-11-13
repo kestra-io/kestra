@@ -9,6 +9,9 @@ import flowSchema from "../../stores/flow-schema.json";
 import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback, mockResponse} from "../../../.storybook/apiMock";
 import {useFlowStore, type Flow} from "../../stores/flow";
+import {expect, waitFor} from "storybook/test";
+import * as monaco from "monaco-editor/editor/editor.api";
+import {READ_ONLY_LINE_CLASS} from "../../composables/useReadOnlyYamlKeys";
 
 
 export default {
@@ -163,3 +166,152 @@ tasks:
 `.trim(),
     flowGraph: loopUntilDemo,
 };
+
+const LOCKED_FLOW = `
+id: locked-demo
+namespace: tutorial
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello
+`.trim();
+
+const MESSAGE_LINE = 6
+
+async function lockedEditor() {
+    return waitFor(() => {
+        const editor = monaco.editor.getEditors().find((candidate) => candidate.getValue() === LOCKED_FLOW)
+        expect(editor).toBeTruthy()
+        expect(document.querySelector(`.${READ_ONLY_LINE_CLASS}`)).toBeTruthy()
+        return editor as monaco.editor.IStandaloneCodeEditor
+    }, {timeout: 10000})
+}
+
+async function settle() {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+}
+
+function expectNoToast() {
+    expect(document.querySelector("[class*='notification']")).toBeNull()
+}
+
+function lockedStory(play: (editor: monaco.editor.IStandaloneCodeEditor) => Promise<void>) {
+    const story = Template.bind({}) as StoryFn<{flow: string; flowGraph?: FlowGraph}> & {play?: () => Promise<void>}
+    story.args = {flow: LOCKED_FLOW}
+    story.play = async () => {
+        const editor = await lockedEditor()
+        editor.focus()
+        await play(editor)
+    }
+    return story
+}
+
+export const LockedTypingBeforeKey = lockedStory(async (editor) => {
+    editor.setPosition({lineNumber: 1, column: 1})
+
+    editor.trigger("keyboard", "type", {text: "x"})
+    await settle()
+
+    expect(editor.getPosition()).toMatchObject({lineNumber: 1, column: 1})
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedLineJoin = lockedStory(async (editor) => {
+    editor.setPosition({lineNumber: 2, column: 1})
+
+    editor.trigger("keyboard", "deleteLeft", {})
+    await settle()
+
+    expect(editor.getPosition()).toMatchObject({lineNumber: 2, column: 1})
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedLineDelete = lockedStory(async (editor) => {
+    const selection = {startLineNumber: 1, startColumn: 1, endLineNumber: 2, endColumn: 1}
+    editor.setSelection(selection)
+
+    editor.trigger("keyboard", "deleteLeft", {})
+    await settle()
+
+    expect(editor.getSelection()).toMatchObject(selection)
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedPasteOverDocument = lockedStory(async (editor) => {
+    const selection = editor.getModel()!.getFullModelRange()
+    editor.setSelection(selection)
+
+    editor.executeEdits("paste", [{range: selection, text: "tasks: []"}])
+    await settle()
+
+    expect(editor.getSelection()).toMatchObject(selection)
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedMultiCursor = lockedStory(async (editor) => {
+    const selections = [
+        {selectionStartLineNumber: 1, selectionStartColumn: 1, positionLineNumber: 1, positionColumn: 1},
+        {selectionStartLineNumber: MESSAGE_LINE, selectionStartColumn: 1, positionLineNumber: MESSAGE_LINE, positionColumn: 1},
+    ]
+    editor.setSelections(selections)
+
+    editor.trigger("keyboard", "type", {text: "x"})
+    await settle()
+
+    expect(editor.getSelections()).toHaveLength(2)
+    expect(editor.getSelections()?.[0]).toMatchObject({positionLineNumber: 1, positionColumn: 1})
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedUndoAfterRefusedEdit = lockedStory(async (editor) => {
+    editor.setPosition({lineNumber: 1, column: 1})
+    editor.trigger("keyboard", "type", {text: "x"})
+    await settle()
+
+    editor.trigger("keyboard", "undo", {})
+    await settle()
+
+    expect(editor.getValue()).toBe(LOCKED_FLOW)
+    expectNoToast()
+})
+
+export const LockedWithCrlf = lockedStory(async (editor) => {
+    editor.getModel()!.setEOL(monaco.editor.EndOfLineSequence.CRLF)
+    const crlfValue = editor.getValue()
+    editor.setPosition({lineNumber: 2, column: 1})
+
+    editor.trigger("keyboard", "deleteLeft", {})
+    await settle()
+
+    expect(editor.getValue()).toBe(crlfValue)
+    expect(editor.getPosition()).toMatchObject({lineNumber: 2, column: 1})
+    expectNoToast()
+})
+
+export const EditingElsewhereStaysFree = lockedStory(async (editor) => {
+    const endOfMessage = editor.getModel()!.getLineMaxColumn(MESSAGE_LINE)
+    editor.setPosition({lineNumber: MESSAGE_LINE, column: endOfMessage})
+
+    editor.trigger("keyboard", "type", {text: "!"})
+    await settle()
+
+    expect(editor.getValue()).toBe(LOCKED_FLOW.replace("message: Hello", "message: Hello!"))
+    expect(editor.getPosition()).toMatchObject({lineNumber: MESSAGE_LINE, column: endOfMessage + 1})
+    expectNoToast()
+})
+
+export const EnterAtEndOfLockedLineIsAllowed = lockedStory(async (editor) => {
+    editor.setPosition({lineNumber: 1, column: editor.getModel()!.getLineMaxColumn(1)})
+
+    editor.trigger("keyboard", "type", {text: "\n"})
+    await settle()
+
+    expect(editor.getValue()).toBe(LOCKED_FLOW.replace("id: locked-demo\n", "id: locked-demo\n\n"))
+    expect(editor.getPosition()).toMatchObject({lineNumber: 2})
+    expectNoToast()
+})

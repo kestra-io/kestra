@@ -16,4 +16,11 @@ public interface McpToolAccessControl {
      * @return an identifier for the caller behind this request, empty when it is anonymous
      */
     Optional<String> callerId(HttpRequest<?> request);
+
+    /**
+     * @return the caller's name for the {@code system.username} label, empty when there is no user to name
+     */
+    default Optional<String> callerName(HttpRequest<?> request) {
+        return Optional.empty();
+    }
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.property.Property;
 
 import jakarta.validation.ConstraintViolationException;
 
@@ -71,5 +72,27 @@ class AssetInputTest {
         assertThat(rendered.getDisplayName()).isEqualTo("Virtual machine");
         assertThat(rendered.getMultiple()).isTrue();
         assertThat(rendered.getStatus()).isEqualTo("retired");
+    }
+
+    @Test
+    void shouldReadTheDefaultIdsWhenWrittenLiterally() {
+        assertThat(withDefaults(Property.ofValue("web-01")).staticDefaultIds()).containsExactly("web-01");
+        assertThat(withDefaults(Property.ofValue(List.of("web-01", "db-01"))).staticDefaultIds()).containsExactly("web-01", "db-01");
+        assertThat(withDefaults(Property.ofExpression("{{ inputs.vm }}")).staticDefaultIds()).isEmpty();
+        assertThat(withDefaults(Property.ofValue(Map.of("id", "web-01", "overrides", Map.of("owner", "bob")))).staticDefaultIds()).containsExactly("web-01");
+        assertThat(withDefaults(Property.ofValue(List.of(Map.of("id", "web-01"), "db-01"))).staticDefaultIds()).containsExactly("web-01", "db-01");
+        assertThat(withDefaults(Property.ofValue("[web-01")).staticDefaultIds()).isEmpty();
+        assertThat(withDefaults(null).staticDefaultIds()).isEmpty();
+    }
+
+    @Test
+    void shouldHaveDynamicFiltersOnlyWhenAFilterIsAnExpression() {
+        assertThat(AssetInput.builder().id("vm").type(Type.ASSET).namespace("infra").metadata(Map.of("env", "prod")).build().hasDynamicFilters()).isFalse();
+        assertThat(AssetInput.builder().id("vm").type(Type.ASSET).namespace("{{ flow.namespace }}").build().hasDynamicFilters()).isTrue();
+        assertThat(AssetInput.builder().id("vm").type(Type.ASSET).metadata(Map.of("env", "{{ inputs.env }}")).build().hasDynamicFilters()).isTrue();
+    }
+
+    private static AssetInput withDefaults(Property<Object> defaults) {
+        return AssetInput.builder().id("vm").type(Type.ASSET).defaults(defaults).build();
     }
 }

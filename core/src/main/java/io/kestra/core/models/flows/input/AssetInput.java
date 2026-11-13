@@ -10,8 +10,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.AssetInputValidation;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -83,6 +86,48 @@ public class AssetInput extends Input<Object> implements RenderableInput {
     @Override
     public Boolean getAllowCustomValue() {
         return false;
+    }
+
+    /**
+     * @return the asset ids written literally in {@code defaults}, or an empty list when there are none or they are an expression
+     */
+    public List<String> staticDefaultIds() {
+        if (getDefaults() == null) {
+            return List.of();
+        }
+        String raw = getDefaults().toString().trim();
+        if (raw.isEmpty() || PebbleUtil.containsOpeningBlockDelimiter(raw)) {
+            return List.of();
+        }
+        if (!raw.startsWith("[") && !raw.startsWith("{")) {
+            return List.of(raw);
+        }
+        try {
+            return idsOf(JacksonMapper.ofJson().readValue(raw, Object.class));
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+    }
+
+    private static List<String> idsOf(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().flatMap(item -> idsOf(item).stream()).toList();
+        }
+        if (value instanceof Map<?, ?> map) {
+            return map.get("id") == null ? List.of() : List.of(String.valueOf(map.get("id")));
+        }
+        return List.of(String.valueOf(value));
+    }
+
+    /**
+     * @return whether a filter is an expression, which can only be rendered once the execution exists
+     */
+    public boolean hasDynamicFilters() {
+        return PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(assetType))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(assetId))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(namespace))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(status))
+            || (metadata != null && metadata.values().stream().anyMatch(value -> PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(value))));
     }
 
     @Override

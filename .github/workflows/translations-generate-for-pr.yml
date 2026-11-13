@@ -169,6 +169,7 @@ jobs:
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra
+          permission-contents: write
 
       - name: Resolve the pull request
         id: pr

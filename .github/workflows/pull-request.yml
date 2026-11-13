@@ -175,25 +175,13 @@ jobs:
     env:
       HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
     steps:
-      # The commit is pushed as the Kestra GitHub App: a push made with `GITHUB_TOKEN` starts no workflow
-      # run, so the pull request was left without a check on the generated commit until someone re-ran it.
-      - name: Generate GitHub App token
-        id: app-token
-        if: env.HAS_GCP_CREDENTIALS == 'true'
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ secrets.GH_BOT_APP_ID }}
-          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          owner: kestra-io
-          repositories: kestra
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
         if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
-          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: env.HAS_GCP_CREDENTIALS == 'true'
@@ -221,12 +209,26 @@ jobs:
           GOOGLE_CLOUD_PROJECT: kestra-prd
           GOOGLE_CLOUD_LOCATION: global
 
+      # Pushed as the Kestra GitHub App, since a `GITHUB_TOKEN` push starts no workflow run. Minted only
+      # now and limited to `contents`, so the branch's dependencies and scripts never run beside it.
+      - name: Generate GitHub App token
+        id: app-token
+        if: env.HAS_GCP_CREDENTIALS == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+          permission-contents: write
+
       - name: Commit them onto the pull request
         if: env.HAS_GCP_CREDENTIALS == 'true'
         # The branch name is chosen by whoever pushed it, so keep it out of the script itself:
         # interpolated directly, a `$(...)` in the name would run on the runner.
         env:
           HEAD_REF: ${{ github.head_ref }}
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git config user.name "kestra-io"
           git config user.email "hello@kestra.io"
@@ -238,7 +240,7 @@ jobs:
           fi
           git commit -m "chore(core): localize to languages other than english"
           # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
-          git push origin "HEAD:${HEAD_REF}"
+          git -c core.hooksPath=/dev/null push "https://x-access-token:${APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${HEAD_REF}"
 
   # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
   # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an

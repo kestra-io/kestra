@@ -48,6 +48,49 @@ class AsyncOperationWaiterTest {
     }
 
     @Test
+    void shouldWaitPastProgressEventsForTheTerminalOutcome() throws java.util.concurrent.TimeoutException {
+        AsyncOperationProcessedEvent received = waiter.submitAndWait(
+            "item-3",
+            operationId -> CompletableFuture.runAsync(() ->
+            {
+                try {
+                    queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-3", Outcome.RUNNING, null, Instant.now()));
+                    queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-3", Outcome.FAILED, "boom", Instant.now()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }),
+            Duration.ofSeconds(5)
+        );
+
+        assertThat(received.outcome()).isEqualTo(Outcome.FAILED);
+        assertThat(received.error()).isEqualTo("boom");
+    }
+
+    @Test
+    void shouldRestartTheTimeoutOnEachProgressEvent() throws java.util.concurrent.TimeoutException {
+        AsyncOperationProcessedEvent received = waiter.submitAndWait(
+            "item-4",
+            operationId -> CompletableFuture.runAsync(() ->
+            {
+                try {
+                    for (int i = 0; i < 3; i++) {
+                        Thread.sleep(1000);
+                        queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-4", Outcome.RUNNING, null, Instant.now()));
+                    }
+                    Thread.sleep(1000);
+                    queue.emit(new AsyncOperationProcessedEvent(operationId, "t", "item-4", Outcome.SUCCEEDED, null, Instant.now()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }),
+            Duration.ofSeconds(2)
+        );
+
+        assertThat(received.outcome()).isEqualTo(Outcome.SUCCEEDED);
+    }
+
+    @Test
     void shouldThrowTimeoutExceptionWhenNoEventArrivesWithinTimeout() {
         assertThatThrownBy(() -> waiter.submitAndWait("item-2", opId ->
         {

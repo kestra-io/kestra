@@ -166,6 +166,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
+    public boolean existsInstanceResource(@Nullable String namespace, URI uri) {
+        return Files.exists(getInstancePath(uri));
+    }
+
+    @Override
     public List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getLocalPath(tenantId, uri))) {
             return stream

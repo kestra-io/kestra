@@ -196,10 +196,7 @@ function setupLogsStore() {
         // whole change exists to stop producing.
         if (lines.length > 0) {
             const text = formatLogsAsText(lines.slice().reverse())
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-                logsDownloadFilename(new Date()),
-            )
+            Utils.downloadBlob(new Blob([text], {type: "text/plain"}), logsDownloadFilename(new Date()))
         }
 
         const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)

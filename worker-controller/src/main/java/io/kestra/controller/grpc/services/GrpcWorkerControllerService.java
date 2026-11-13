@@ -257,13 +257,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 case REALTIME -> {
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(workerTriggerResult.id(), evaluation);
-                    } else {
-                        // The realtime trigger stream ended without producing an execution — clean
-                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
-                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
-                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
                     }
                     if (isTerminalRealtimeResult(evaluation)) {
+                        triggerEventQueue.send(realtimeTerminationEvent(workerTriggerResult));
                         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
                     }
                 }
@@ -282,6 +278,20 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      */
     static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
         return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
+    }
+
+    /**
+     * Unlocks a realtime trigger from its terminal result, the only signal carrying the dispatch epoch: the
+     * executor's termination event for the FAILED trigger-creation execution has none and is dropped as stale.
+     */
+    static TriggerExecutionTerminated realtimeTerminationEvent(WorkerTriggerResult workerTriggerResult) {
+        TriggerEvaluationResult evaluation = workerTriggerResult.evaluation();
+        return new TriggerExecutionTerminated(
+            workerTriggerResult.id(),
+            evaluation != null ? evaluation.executionId() : null,
+            State.Type.FAILED,
+            workerTriggerResult.dispatchEpoch()
+        );
     }
 
     @Override

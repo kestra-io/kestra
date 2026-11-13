@@ -86,11 +86,8 @@ public class FlowTriggerService {
      * the trigger going silent.
      */
     public List<Execution> computeExecutionsFromFlowTriggerConditions(Execution execution, Flow flow) {
-        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> ListUtils.isEmpty(trigger.getDependsOn()))
-            .stream()
-            // we must filter on no dependsOn to avoid evaluating two times triggers that have standard conditions and multiple conditions
-            .filter(it -> ListUtils.isEmpty(it.getTrigger().getDependsOn()))
-            .toList();
+        // we must filter on no dependsOn to avoid evaluating two times triggers that have standard conditions and multiple conditions
+        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> ListUtils.isEmpty(trigger.getDependsOn()));
 
         // short-circuit empty triggers to evaluate
         if (flowWithFlowTriggers.isEmpty()) {
@@ -126,11 +123,8 @@ public class FlowTriggerService {
      * the standard-conditions route.
      */
     public List<Execution> computeExecutionsFromFlowTriggerDependsOn(Execution execution, Flow flow, MultipleConditionStateStore multipleConditionStorage) {
-        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> !ListUtils.isEmpty(trigger.getDependsOn()))
-            .stream()
-            // we must filter on dependsOn to avoid evaluating two times triggers that only have standard conditions
-            .filter(flowWithFlowTrigger -> !ListUtils.isEmpty(flowWithFlowTrigger.getTrigger().getDependsOn()))
-            .toList();
+        // we must filter on dependsOn to avoid evaluating two times triggers that only have standard conditions
+        List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow, trigger -> !ListUtils.isEmpty(trigger.getDependsOn()));
 
         // short-circuit empty triggers to evaluate
         if (flowWithFlowTriggers.isEmpty()) {
@@ -248,7 +242,7 @@ public class FlowTriggerService {
         }
     }
 
-    private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow, Predicate<io.kestra.plugin.core.trigger.Flow> blockedTriggerFilter) {
+    private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow, Predicate<io.kestra.plugin.core.trigger.Flow> triggerFilter) {
         if (
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
@@ -266,7 +260,16 @@ public class FlowTriggerService {
         // checked before anything is logged on the execution: its team must not learn about flows it cannot see
         Optional<String> blockingNamespace = flowService.findNamespaceBlockingFlowTrigger(flow, execution);
         if (blockingNamespace.isPresent()) {
-            warnBlockedFlowTriggers(execution, flow, blockingNamespace.get(), blockedTriggerFilter);
+            warnBlockedFlowTriggers(execution, flow, blockingNamespace.get(), triggerFilter);
+            return Collections.emptyList();
+        }
+
+        // checked before the run context is built: building it reads the execution's outputs, and this runs on every state transition
+        List<io.kestra.plugin.core.trigger.Flow> candidates = flowTriggers(flow)
+            .filter(triggerFilter)
+            .filter(trigger -> trigger.getStates().contains(execution.getState().getCurrent()))
+            .toList();
+        if (candidates.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -286,9 +289,7 @@ public class FlowTriggerService {
             return Collections.emptyList();
         }
 
-        return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
-            // filter on the execution state the flow listen to
-            .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))
+        return candidates.stream().map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // validate flow triggers conditions excluding multiple conditions; an unrenderable `when` is a
             // misconfiguration, so it is logged on both sides and the trigger does not fire
             .filter(flowWithFlowTrigger -> {

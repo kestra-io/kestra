@@ -17,7 +17,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         value?: string | number
         /** `neutral` is a grey pill for counts that sit next to content without competing with it. */
         type?: "primary" | "success" | "warning" | "danger" | "info" | "neutral"
@@ -27,7 +27,7 @@
         showZero?: boolean
         inline?: boolean
         size?: "small" | "default"
-    }>()
+    }>(), {showZero: false})
 
     const filteredProps = useFilteredProps(props, ["inline", "size", "type"])
 

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * One resource targeted by an {@link AsyncOperationType async operation}
- * (an execution id or a trigger uid — see {@link AsyncOperationType#resourceType()}),
+ * (an execution id, a trigger uid or plugin artifact coordinates — see {@link AsyncOperationType#resourceType()}),
  * and its processing outcome.
  * <p>
  * The physical primary key is {@link #uid()}, a hash of the {@code (operationId, resourceId)}

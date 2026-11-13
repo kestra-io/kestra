@@ -12,7 +12,7 @@
     />
 
     <KsForm v-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
-        <KsFormItem>
+        <KsFormItem stacked>
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>

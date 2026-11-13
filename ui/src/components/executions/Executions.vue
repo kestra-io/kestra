@@ -58,7 +58,7 @@
             :mobileColumns="mobileColumns"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
-            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :defaultSort="defaultSort"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: Execution) => row.id"
@@ -533,7 +533,7 @@
 
     import useRouteContext from "../../composables/useRouteContext"
     import {useIterationsListInfo} from "../../composables/useLoopLineage"
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -854,6 +854,7 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "state.startDate", order: "descending"})
     const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
     const localPage = ref(1)
     const localSize = ref(25)

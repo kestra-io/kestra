@@ -48,6 +48,8 @@ describe("exportTriggersAsCSV", () => {
         const link = click.mock.contexts[0] as HTMLAnchorElement
         expect(link.getAttribute("download")).toBe("triggers.csv")
         expect(link.getAttribute("href")).toBe("blob:triggers")
+        expect(revokeObjectURL).not.toHaveBeenCalled()
+        await new Promise((resolve) => setTimeout(resolve))
         expect(revokeObjectURL).toHaveBeenCalledWith("blob:triggers")
     })
 })

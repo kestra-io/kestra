@@ -42,7 +42,7 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import {getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
+    import {getPluginReleaseUrl, pluginDisplayTitle, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import PluginCatalogTableName from "./PluginCatalogTableName.vue"
 
@@ -64,7 +64,7 @@
             return {
                 name: plugin.name,
                 group: plugin.group,
-                title: enrichment?.title ?? plugin.title.capitalize(),
+                title: pluginDisplayTitle(plugin, enrichment),
                 route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
                 taskCount: pluginElementClasses(plugin).length,
                 blueprintCount: enrichment?.blueprintCount ?? 0,

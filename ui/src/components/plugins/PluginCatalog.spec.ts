@@ -7,6 +7,7 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginCatalog from "./PluginCatalog.vue"
+import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
 import "../../utils/global"
 
 const navigation = vi.hoisted(() => ({delayMs: 0, replaces: 0}))
@@ -102,10 +103,6 @@ vi.mock("../../composables/usePluginsCount", () => ({
     usePluginsCount: () => ({totalPlugins: ref(900)}),
 }))
 
-vi.mock("../../stores/pluginsEnrichment", () => ({
-    usePluginsEnrichmentStore: () => ({fetchEnrichment: vi.fn(), getEnrichment: () => undefined}),
-}))
-
 async function mountCatalog() {
     const wrapper = i18nMount(PluginCatalog, {
         global: {
@@ -190,5 +187,13 @@ describe("PluginCatalog", () => {
 
         expect(wrapper.find("input").element.value).toBe("dbt")
         expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["DBT"])
+    })
+
+    test("sorts the cards by the title they show", async () => {
+        usePluginsEnrichmentStore().enrichments["io.kestra.plugin.dbt"] = {title: "Zeta dbt"}
+
+        const wrapper = await mountCatalog()
+
+        expect(wrapper.findAll("h5").map(t => t.text())).toEqual(["Python", "Zeta dbt"])
     })
 })

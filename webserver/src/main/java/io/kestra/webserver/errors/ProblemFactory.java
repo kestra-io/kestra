@@ -55,7 +55,18 @@ public class ProblemFactory {
         final ProblemType type,
         final List<ProblemError> errors
     ) {
-        return this.respond(this.build(request, throwable, type, statusOf(throwable, type), messageOf(throwable), errors));
+        return this.response(request, throwable, type, messageOf(throwable), errors);
+    }
+
+    /** Reports a throwable as a known type, with a {@code detail} that replaces the exception's message. */
+    public MutableHttpResponse<ProblemDetail> response(
+        final HttpRequest<?> request,
+        final Throwable throwable,
+        final ProblemType type,
+        final String detail,
+        final List<ProblemError> errors
+    ) {
+        return this.respond(this.build(request, throwable, type, statusOf(throwable, type), detail, errors));
     }
 
     /**

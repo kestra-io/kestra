@@ -39,7 +39,7 @@
         preview?: string;
         disabled?: boolean;
         ariaLabel?: string;
-    } & /* @vue-ignore */ NativeAttributes<ButtonHTMLAttributes>>(), {})
+    } & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, "type">>(), {})
 
     const emit = defineEmits<{open: []}>()
 

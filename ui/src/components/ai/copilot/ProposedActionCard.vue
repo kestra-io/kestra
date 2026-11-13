@@ -56,7 +56,7 @@
                 data-test="copilot-approve"
                 @click="emit('approve')"
             >
-                {{ isPlan ? $t("ai.copilot.confirm.approveExecute") : $t("ai.copilot.confirm.approve") }}
+                {{ isPlan ? $t("ai.copilot.confirm.approvePlan") : $t("ai.copilot.confirm.approve") }}
             </KsButton>
         </div>
     </div>

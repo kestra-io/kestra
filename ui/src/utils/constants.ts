@@ -45,6 +45,7 @@ export const storageKeys = {
     PWA_INSTALL_DISMISSED: "pwaInstallDismissed",
     NAMESPACE_FILES_TIP_DISMISSED: "namespaceFilesTipDismissed",
     NAMESPACE_FILES_TIP_CLOSED: "namespaceFilesTipClosed",
+    COPILOT_MCP_TIP_DISMISSED: "copilotMcpTipDismissed",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
     AUTO_REFRESH_ENABLED: "autoRefreshEnabled",
     DATE_FORMAT_STORAGE_KEY: "dateFormat",

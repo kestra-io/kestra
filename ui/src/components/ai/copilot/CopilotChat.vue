@@ -747,7 +747,6 @@
         gap: var(--ks-spacing-2);
     }
 
-    /* Touch screens need a 44px target (no spacing token maps to 2.75rem). */
     @media (pointer: coarse) {
         .copilot-docs-link {
             min-height: 2.75rem;

@@ -29,7 +29,6 @@
         />
 
         <div class="copilot-composer-actions">
-            <!-- The dropdown owns `aria-describedby` on its trigger, so a locked composer renders a plain button that can point at the notice. -->
             <KsButton
                 v-if="disabledReason"
                 size="small"
@@ -127,7 +126,6 @@
                         @click="emit('stop')"
                     />
                     <KsTooltip v-else trigger="manual" :visible="sendTipVisible" :disabled="!disabledReason" :content="disabledReason">
-                        <!-- A disabled button swallows hover and focus, so the span carries them for the tooltip. -->
                         <span
                             class="copilot-send-wrapper"
                             :tabindex="disabledReason ? 0 : undefined"

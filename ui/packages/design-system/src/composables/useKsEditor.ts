@@ -103,6 +103,7 @@ export function useKsEditor(
 
     const isFocused = ref(false)
     const preventCursorChange = ref(false)
+    let emittedAwaitingProp: string | undefined
     const localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>()
     const localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>()
     const resizeObserver = ref<ResizeObserver>()
@@ -311,6 +312,7 @@ export function useKsEditor(
                 model.setValue(await valueSupplier())
             }
         }
+        emittedAwaitingProp = undefined
         localEditor.value?.setModel(model)
         return model
     }
@@ -475,7 +477,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedAwaitingProp ?? props.modelValue) === value) return
+            emittedAwaitingProp = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -615,6 +619,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        emittedAwaitingProp = undefined
         markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
@@ -660,6 +665,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
+        emittedAwaitingProp = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)

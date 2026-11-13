@@ -119,7 +119,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import {humanFileSize} from "../../utils/utils"
-    import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
@@ -127,7 +126,6 @@
 
     const route = useRoute()
     const {t} = useI18n()
-    const toast = useToast()
 
     const {save} = useFlowEditorActions()
     const flowStore = useFlowStore()
@@ -298,9 +296,6 @@
     const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
-    // `id` and `namespace` are immutable once the flow exists. Monaco has no
-    // read-only ranges, so the guard below refuses those edits as they arrive
-    // rather than letting them land and undoing them on the next onEdit tick.
     // shallowRef, not ref: a deep reactive proxy around the editor breaks it.
     const monacoEditor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
 
@@ -311,12 +306,6 @@
             : undefined
     }
 
-    // Gated on the editor too, not just on the flow being editable. This value
-    // does double duty: it enables the guard, and it tells the store to drop the
-    // read-only warning. Without a code editor the guard cannot attach, so
-    // suppressing the warning on the strength of the other conditions alone
-    // would leave an edit silently reverted with nothing said — which is the
-    // behaviour this change exists to remove.
     const metadataGuarded = computed(() => Boolean(monacoEditor.value)
         && props.flow
         && !flowStore.isCreating
@@ -361,10 +350,6 @@
             : {}),
         enabled: metadataGuarded,
         hoverMessage: computed(() => t("flow metadata locked")),
-        // Reverting the whole document is the one correction that discards what
-        // the user just did, and metadataGuarded has already told the store to
-        // drop its warning, so this is all that is left to say it happened.
-        onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
     const timeout = ref<ReturnType<typeof setTimeout>>()
@@ -433,8 +418,6 @@
                 source: newValue,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
-                // The id/namespace lines are locked in this editor, so a warning
-                // here would explain a change the user was never able to make.
                 metadataGuarded: metadataGuarded.value,
             })
         }, 1000)

@@ -530,9 +530,11 @@ public abstract class AbstractJdbcRepository {
                 Object v = primitiveOrToString(value);
                 yield v == null ? column.isNull() : column.eq(v);
             }
+            // In SQL, NULL <> 'x' and NULL NOT IN ('x') are not true, so the negated operators
+            // add IS NULL explicitly to keep rows where the field is empty.
             case NOT_EQUALS -> {
                 Object v = primitiveOrToString(value);
-                yield v == null ? column.isNotNull() : column.ne(v);
+                yield v == null ? column.isNotNull() : column.ne(v).or(column.isNull());
             }
             case GREATER_THAN -> {
                 if (value == null) {
@@ -556,7 +558,7 @@ public abstract class AbstractJdbcRepository {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("NOT_IN operation requires a non-null value");
                 }
-                yield column.notIn(ListUtils.convertToListString(value));
+                yield column.notIn(ListUtils.convertToListString(value)).or(column.isNull());
             }
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
@@ -822,11 +824,12 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {
         Name columnName = getColumnName(QueryFilter.Field.ATTEMPT_NUMBER);
+        // Execution-level logs have no attempt number; the negated operators keep them.
         return switch (operation) {
             case EQUALS -> DSL.field(columnName).eq(TypeConverter.toInteger(value));
-            case NOT_EQUALS -> DSL.field(columnName).ne(TypeConverter.toInteger(value));
+            case NOT_EQUALS -> DSL.field(columnName).ne(TypeConverter.toInteger(value)).or(DSL.field(columnName).isNull());
             case IN -> DSL.field(columnName).in(toIntegerList(value));
-            case NOT_IN -> DSL.field(columnName).notIn(toIntegerList(value));
+            case NOT_IN -> DSL.field(columnName).notIn(toIntegerList(value)).or(DSL.field(columnName).isNull());
             default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for ATTEMPT_NUMBER: " + operation
             );

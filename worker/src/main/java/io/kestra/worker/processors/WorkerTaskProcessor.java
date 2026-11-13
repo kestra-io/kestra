@@ -306,6 +306,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRunAttempt attempt = TaskRunAttempt.builder()
                 .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
                 .workerId(this.workerId)
+                .logFile(runContext.logFileURI())
                 .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);

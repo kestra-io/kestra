@@ -82,7 +82,7 @@ public class RestartExecutionTool implements McpPlatformTool {
                 operationId ->
                 {
                     try {
-                        executionCommandQueue.emit(Restart.from(execution, null).withOperationId(operationId));
+                        executionCommandQueue.emit(Restart.from(execution, null).withOperationId(operationId).withActor(context.actor()));
                     } catch (QueueException e) {
                         throw new RuntimeException(e);
                     }

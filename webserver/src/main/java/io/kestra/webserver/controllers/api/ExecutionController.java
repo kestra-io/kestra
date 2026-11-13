@@ -20,14 +20,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.CheckReturnValue;
 
 import org.apache.commons.io.FilenameUtils;
 import org.reactivestreams.Publisher;
-import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -35,7 +33,6 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
-import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
@@ -62,7 +59,6 @@ import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.notification.NotificationService;
 import io.kestra.core.notification.model.AsyncOperationType;
 import io.kestra.core.preview.FilePreview;
@@ -108,6 +104,7 @@ import io.kestra.webserver.models.api.ApiLightExecution;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
+import io.kestra.webserver.services.ExecutionCreationService;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.SearchableDataFilterService;
 import io.kestra.webserver.services.FileRendererService;
@@ -137,9 +134,7 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.context.propagation.ContextPropagators;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -153,7 +148,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -255,9 +249,6 @@ public class ExecutionController {
     private TenantService tenantService;
 
     @Inject
-    private Optional<OpenTelemetry> openTelemetry;
-
-    @Inject
     private LocalPathFactory localPathFactory;
 
     @Inject
@@ -271,9 +262,6 @@ public class ExecutionController {
 
     @Inject
     private ServerConfig serverConfig;
-
-    @Inject
-    private KestraConfiguration kestraConfiguration;
 
     @Inject
     private LocalFilesConfiguration localFilesConfiguration;
@@ -297,7 +285,7 @@ public class ExecutionController {
     private ActorResolver actorResolver;
 
     @Inject
-    private ModelValidator modelValidator;
+    private ExecutionCreationService executionCreationService;
 
     @Inject
     private FileRendererService fileRendererService;
@@ -1064,48 +1052,11 @@ public class ExecutionController {
 
     private Mono<ExecutionResponse> doCreateExecution(String namespace, String id, MultipartBody inputs, List<String> labels, Boolean wait, Optional<Integer> revision, Optional<ZonedDateTime> scheduleDate, Optional<String> breakpoints, Optional<ExecutionKind> kind) {
         final String tenantId = tenantService.resolveTenant();
-        final Flow flow;
-        try {
-            flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
-        } catch (NoSuchElementException e) {
-            // No non-draft revision was found. If the flow exists but only has draft revisions,
-            // reject the request as unprocessable with an explanation instead of a bare 404, so the
-            // user knows to save a published revision before executing without a revision.
-            if (revision.isEmpty()) {
-                flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty())
-                    .filter(f -> !f.isDeleted() && f.isDraft())
-                    .ifPresent(draftFlow ->
-                    {
-                        throw new IllegalArgumentException(
-                            "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
-                        );
-                    });
-            }
-            throw e;
-        }
-
+        ExecutionCreationService.ExecutableFlow executable = executionCreationService.findExecutableFlow(tenantId, namespace, id, revision, kind.orElse(null));
+        final Flow flow = executable.flow();
         List<Label> parsedLabels = parseLabels(labels);
 
-        if (flow.isDraft()) {
-            controlDraftExecutableAs(flow, kind.orElse(null));
-
-            // Only drafts need re-validation here: published revisions are already validated at save
-            // time, so re-validating every execution would just add cost to the hot path. A draft can be
-            // saved with constraint violations, so when the user explicitly executes one (by passing its
-            // revision) the request is rejected as unprocessable with the validation error, rather than
-            // starting an execution that cannot run.
-            Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
-            if (violations.isPresent()) {
-                throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
-            }
-        }
-
         var executionId = IdUtils.create();
-        // inputs render against the flow, and the labels, the executor will build the execution from,
-        // so a `defaults` referencing a label the flow only carries at runtime resolves here too
-        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
-        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
-        List<Label> contributed = LabelService.withoutPinned(parsedLabels, processedFlow.pinnedLabelKeys());
         // Capture the OTel context on the current thread before entering the reactive chain.
         // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
         // would return an empty root context since OTel Context is thread-local.
@@ -1113,48 +1064,23 @@ public class ExecutionController {
         // Same reason for the Micronaut propagated context: it carries the server request and its
         // authentication, which the CREATE event listeners need to attribute the execution to its author.
         final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        return flowInputOutput.readExecutionInputs(resolvedFlow, executionId, contributed, inputs)
+        return flowInputOutput.readExecutionInputs(executable.runtimeFlow(), executionId, executable.contributedLabels(parsedLabels), inputs)
             .flatMap(executionInputs ->
             {
-                List<Check> failed = flowService.getFailedChecks(resolvedFlow, executionInputs);
-                Check.Behavior behavior = Check.resolveBehavior(failed);
-                if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
-                    return Mono.error(
-                        new IllegalArgumentException(
-                            "Flow execution blocked: one or more condition checks evaluated to false."
-                                + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(
-                                    Collectors.joining(", ")
-                                )
-                        )
-                    );
-                }
-
-                Create createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
-                    .withLabels(parsedLabels)
-                    .withInputs(executionInputs)
-                    .withScheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
-                    .withKind(kind.orElse(null))
-                    .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
-
-                if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
-                    Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
-                    createCommand = createCommand.withStateType(State.Type.FAILED);
-                }
-
-                // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
-                // TODO see if we can replicate ExecutionTextMapSetter logic
-                Map<String, String> traceCarrier = new HashMap<>();
-                openTelemetry
-                    .map(OpenTelemetry::getPropagators)
-                    .map(ContextPropagators::getTextMapPropagator)
-                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
-                if (traceCarrier.containsKey("traceparent")) {
-                    createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
-                }
+                Create createCommand = executionCreationService.createCommand(
+                    executable,
+                    executionId,
+                    parsedLabels,
+                    executionInputs,
+                    scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null),
+                    kind.orElse(null),
+                    breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null),
+                    otelContext
+                );
 
                 Create finalCreateCommand = createCommand;
                 return awaitBlockingAction(
-                    executionId, "Create", null,
+                    tenantId, executionId, "Create", null,
                     (operationId, _) -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
@@ -1162,7 +1088,7 @@ public class ExecutionController {
                         eventPublisher.publishEvent(CrudEvent.create(res.body()));
                     }
 
-                    var executionUrl = executionUrl(finalCreateCommand.executionFullId());
+                    var executionUrl = executionCreationService.executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
                         return Mono.just(
                             ExecutionResponse.fromExecution(
@@ -1201,17 +1127,6 @@ public class ExecutionController {
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
             });
-    }
-
-    private URI executionUrl(ExecutionId executionId) {
-        String baseUrl = Optional.ofNullable(kestraConfiguration.url()).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
-        return URI.create(
-            baseUrl + "/ui" + (executionId.tenantId() != null ? "/" + executionId.tenantId() : "")
-                + "/executions/"
-                + executionId.namespace() + "/"
-                + executionId.flowId() + "/"
-                + executionId.executionId()
-        );
     }
 
     @Getter
@@ -1276,33 +1191,11 @@ public class ExecutionController {
      * route is governed identically rather than once per door.
      */
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? new ArrayList<>()
+        List<Label> parsedLabels = labels == null ? List.of()
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-
-        parsedLabels.forEach(modelValidator::validate);
-
-        // system labels can only be set by Kestra itself; the only exceptions accepted from a
-        // client are system.correlationId and system.from=ui (sent by the UI). Any other
-        // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
-        Optional<Label> first = parsedLabels.stream()
-            .filter(
-                label -> Label.isSystem(label.key())
-                    && !label.key().equals(CORRELATION_ID)
-                    && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
-            )
-            .findFirst();
-        if (first.isPresent()) {
-            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
-        }
-
-        // default the origin to "api" when the client didn't set it (the UI sends system.from=ui)
-        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
-            parsedLabels.add(new Label(Label.FROM, Label.FromLabel.API.value));
-        }
-
-        return parsedLabels;
+                .toList();
+        return executionCreationService.requestLabels(parsedLabels);
     }
 
     @CheckReturnValue
@@ -1515,7 +1408,7 @@ public class ExecutionController {
         this.restartCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Restart",
+            execution.getTenantId(), executionId, "Restart", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId).withActor(actor))
         );
     }
@@ -1602,7 +1495,7 @@ public class ExecutionController {
         controlReplayable(execution, taskRunId, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        controlDraftExecutableAs(flow, execution.getKind());
+        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
 
         return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
@@ -1644,7 +1537,7 @@ public class ExecutionController {
             controlReplayable(current, taskRunId, revision);
 
             Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
-            controlDraftExecutableAs(flow, current.getKind());
+            ExecutionCreationService.controlDraftExecutableAs(flow, current.getKind());
 
             return flowInputOutput.readExecutionInputs(flow, current, inputs)
                 .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
@@ -1669,7 +1562,7 @@ public class ExecutionController {
         controlReplayable(execution, taskRunId, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        controlDraftExecutableAs(flow, execution.getKind());
+        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
 
         return HttpResponse.ok();
     }
@@ -1744,19 +1637,6 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId).withActor(actor));
-    }
-
-    /**
-     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND} execution,
-     * whether the revision is passed explicitly (create) or inherited from a replayed execution.
-     */
-    private static void controlDraftExecutableAs(Flow flow, @Nullable ExecutionKind kind) {
-        if (flow.isDraft() && ExecutionKind.PLAYGROUND != kind) {
-            throw new IllegalArgumentException(
-                "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
-                    " is a draft. Draft revisions can only be executed as playground executions."
-            );
-        }
     }
 
     private void controlReplayable(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws InternalException {
@@ -1941,7 +1821,7 @@ public class ExecutionController {
         this.changeTaskRunStateCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change task run state",
+            execution.getTenantId(), executionId, "Change task run state", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId).withActor(actor))
         );
     }
@@ -1972,7 +1852,7 @@ public class ExecutionController {
         this.changeStatusCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Change status",
+            execution.getTenantId(), executionId, "Change status", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2128,7 +2008,7 @@ public class ExecutionController {
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
 
         return awaitBlockingAction(
-            execution.getId(), "Kill",
+            execution.getTenantId(), execution.getId(), "Kill", actorResolver.resolve(),
             (operationId, actor) -> killQueue.emit(
                 ExecutionKilledExecution
                     .builder()
@@ -2208,7 +2088,7 @@ public class ExecutionController {
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
-                    execution.getId(), "Resume", actor,
+                    execution.getTenantId(), execution.getId(), "Resume", actor,
                     (operationId, resumeActor) -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId).withActor(resumeActor))
                 )
             )
@@ -2237,8 +2117,8 @@ public class ExecutionController {
         io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
 
         return awaitBlockingAction(
-            execution.getId(), "Cancel approval",
-            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed).withOperationId(operationId))
+            execution.getTenantId(), execution.getId(), "Cancel approval", actorResolver.resolve(),
+            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed, false).withOperationId(operationId))
         ).map(r -> (HttpResponse<?>) r);
     }
 
@@ -2339,7 +2219,7 @@ public class ExecutionController {
                 .then(executionService.readReviewInputs(execution, flow, taskRunId, reviewBody.inputsPublisher()))
                 .flatMap(
                     reviewInputs -> awaitBlockingAction(
-                        execution.getId(), "Review", actor,
+                        execution.getTenantId(), execution.getId(), "Review", actor,
                         (operationId, reviewActor) -> executionCommandQueue.emit(Resume.decide(execution, taskRunId, decision, resumed, reviewInputs).withOperationId(operationId).withActor(reviewActor))
                     )
                 )
@@ -2414,7 +2294,7 @@ public class ExecutionController {
         this.resumeFromBreakpointCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Resume from breakpoint",
+            execution.getTenantId(), executionId, "Resume from breakpoint", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2500,7 +2380,7 @@ public class ExecutionController {
         this.pauseCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Pause",
+            execution.getTenantId(), executionId, "Pause", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId).withActor(actor))
         );
     }
@@ -2864,7 +2744,7 @@ public class ExecutionController {
         this.updateLabelsCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Set labels",
+            execution.getTenantId(), executionId, "Set labels", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId).withActor(actor))
         )
             .map(r -> (HttpResponse<?>) r);
@@ -2962,7 +2842,7 @@ public class ExecutionController {
         this.unqueueCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Unqueue",
+            execution.getTenantId(), executionId, "Unqueue", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3033,7 +2913,7 @@ public class ExecutionController {
         this.forceRunCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Force run",
+            execution.getTenantId(), executionId, "Force run", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3060,7 +2940,7 @@ public class ExecutionController {
         this.rescheduleCounter.increment();
 
         return awaitBlockingAction(
-            executionId, "Reschedule",
+            execution.getTenantId(), executionId, "Reschedule", actorResolver.resolve(),
             (operationId, actor) -> executionCommandQueue.emit(Reschedule.from(execution, scheduleDate.toInstant()).withOperationId(operationId).withActor(actor))
         );
     }
@@ -3586,24 +3466,16 @@ public class ExecutionController {
     }
 
     /**
-     * Executes a single async operation on an execution, on behalf of the actor of the current request.
+     * Executes a single async operation on an execution of {@code tenantId}, on behalf of {@code actor}.
+     * Callers that read a request body first may run on a thread with no server request bound, so the tenant must be
+     * resolved by the caller rather than here.
      */
     private Mono<HttpResponse<Execution>> awaitBlockingAction(
-        String executionId,
-        String actionName,
-        ThrowingBiConsumer<String, Actor> emit) {
-        return awaitBlockingAction(executionId, actionName, actorResolver.resolve(), emit);
-    }
-
-    /**
-     * Executes a single async operation on an execution, on behalf of {@code actor}.
-     */
-    private Mono<HttpResponse<Execution>> awaitBlockingAction(
+        String tenantId,
         String executionId,
         String actionName,
         @Nullable Actor actor,
         ThrowingBiConsumer<String, Actor> emit) {
-        String tenantId = tenantService.resolveTenant();
         return asyncOperationWaiter.submit(
             executionId,
             operationId ->

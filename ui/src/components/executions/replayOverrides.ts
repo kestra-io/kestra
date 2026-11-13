@@ -49,8 +49,15 @@ export function taskSource(flowSource: string, taskId: string): string | undefin
 
 /** The first line of a task definition that reads one of the paths, 1-based. */
 export function firstReadingLine(source: string, paths: string[]): number | undefined {
-    const index = source.split("\n").findIndex(line => paths.some(path => line.includes(path)))
+    const index = source.split("\n").findIndex(line => paths.some(path => readsPath(line, path)))
     return index === -1 ? undefined : index + 1
+}
+
+function readsPath(line: string, path: string): boolean {
+    for (let index = line.indexOf(path); index !== -1; index = line.indexOf(path, index + 1)) {
+        if (!/[\w-]/.test(line.charAt(index + path.length))) return true
+    }
+    return false
 }
 
 export function groupReaders(readers: ReplayOutputServiceOutputReader[]): {taskId: string, paths: string[]}[] {

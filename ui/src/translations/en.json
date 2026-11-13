@@ -470,8 +470,8 @@
         "readers_tooltip": "Also read by these tasks of the replay. Click to see their definitions.",
         "readers_title": "Tasks that also read {path}",
         "readers_reads": "Reads {paths}",
-        "impact": "These overrides also change what {tasks} read in the replay.",
-        "dynamic_readers": "{tasks} read outputs through a dynamic path or in a block, and may also read the new values.",
+        "impact": "These overrides also change the values that tasks {tasks} read in the replay.",
+        "dynamic_readers": "Tasks {tasks} read outputs as a whole, through a dynamic path or in a block, and may also read the new values.",
         "confirm": "Replay with {count} override | Replay with {count} overrides",
         "error": {
             "number": "Enter a number.",

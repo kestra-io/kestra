@@ -23,6 +23,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
 
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -144,15 +145,25 @@ public class ReplayOutputService {
     }
 
     private static List<Task> tasksRunByReplay(Flow flow, Execution execution, TaskRun replayed, ExecutionService.ReplayScope scope) {
+        Map<String, List<TaskRun>> taskRuns = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .collect(Collectors.groupingBy(TaskRun::getTaskId));
         Map<String, Task> tasks = new LinkedHashMap<>();
         for (Task task : flow.allTasksWithChilds()) {
-            List<TaskRun> taskRuns = execution.findTaskRunsByTaskId(task.getId());
-            boolean runs = taskRuns.isEmpty() || taskRuns.stream().anyMatch(taskRun -> scope.toRestart().contains(taskRun.getId()) || scope.toRemove().contains(taskRun.getId()));
-            if (!task.getId().equals(replayed.getTaskId()) && runs) {
+            if (!task.getId().equals(replayed.getTaskId()) && mayRun(flow, task, taskRuns, scope)) {
                 tasks.putIfAbsent(task.getId(), task);
             }
         }
         return List.copyOf(tasks.values());
+    }
+
+    // a task that never ran may still run, unless its parent ran and the replay reuses it as it is
+    private static boolean mayRun(Flow flow, Task task, Map<String, List<TaskRun>> taskRuns, ExecutionService.ReplayScope scope) {
+        List<TaskRun> runs = taskRuns.getOrDefault(task.getId(), List.of());
+        if (!runs.isEmpty()) {
+            return runs.stream().anyMatch(taskRun -> scope.toRestart().contains(taskRun.getId()) || scope.toRemove().contains(taskRun.getId()));
+        }
+        Task parent = flow.findParentTasksByTaskId(task.getId());
+        return parent == null || mayRun(flow, parent, taskRuns, scope);
     }
 
     // a reader of the path, of a map holding it, or of a key inside it sees the overridden value
@@ -183,6 +194,10 @@ public class ReplayOutputService {
     }
 
     private static void collect(Expression<?> expression, Reads reads) {
+        if (expression instanceof ContextVariableExpression variable && OUTPUTS.equals(variable.getName())) {
+            reads.dynamic = true;
+            return;
+        }
         Optional<List<String>> path = expression instanceof GetAttributeExpression ? staticPath(expression) : Optional.empty();
         if (path.isPresent()) {
             if (path.get().size() >= reads.minSize && OUTPUTS.equals(path.get().getFirst())) {
@@ -203,8 +218,6 @@ public class ReplayOutputService {
         arguments(attribute.getArgumentsNode()).forEach(argument -> collect(argument, reads));
         if (attribute.getNode() instanceof GetAttributeExpression parent) {
             collectInDynamicChain(parent, reads);
-        } else if (attribute.getNode() instanceof ContextVariableExpression variable && OUTPUTS.equals(variable.getName())) {
-            reads.dynamic = true;
         } else {
             collect(attribute.getNode(), reads);
         }
@@ -344,7 +357,7 @@ public class ReplayOutputService {
     }
 
     /**
-     * @param dynamicReaders tasks the replay may run that read outputs through a dynamic path or in a {@code {% %}} block
+     * @param dynamicReaders tasks the replay may run that read outputs as a whole, through a dynamic path or in a {@code {% %}} block
      */
     public record ReplayOutputs(@NotNull List<ReplayOutput> values, @NotNull List<String> dynamicReaders) {
     }

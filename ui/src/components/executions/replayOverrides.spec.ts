@@ -26,5 +26,6 @@ describe("firstReadingLine", () => {
     it("finds the first line reading one of the paths, 1-based", () => {
         expect(firstReadingLine("id: notify\nmessage: \"{{ outputs.fetch.values }}\"", ["outputs.fetch.values"])).toBe(2)
         expect(firstReadingLine("id: notify", ["outputs.fetch.values"])).toBeUndefined()
+        expect(firstReadingLine("a: \"{{ outputs.fetch.values_other }}\"\nb: \"{{ outputs.fetch.values }}\"", ["outputs.fetch.values"])).toBe(2)
     })
 })

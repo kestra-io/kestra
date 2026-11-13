@@ -120,7 +120,7 @@ describe("ReplayWithOverrides", () => {
         expect(wrapper.find("[data-test='replay-overrides-impact']").exists()).toBe(false)
 
         await wrapper.find("input[aria-label='outputs.fetch_store.values.store_code']").setValue("KR-0412")
-        expect(wrapper.find("[data-test='replay-overrides-impact']").text()).toBe("These overrides also change what notify, alert read in the replay.")
+        expect(wrapper.find("[data-test='replay-overrides-impact']").text()).toBe("These overrides also change the values that tasks notify, alert read in the replay.")
 
         await badges[0].trigger("click")
         const readers = wrapper.findAll("[data-test='replay-output-reader']")
@@ -137,6 +137,6 @@ describe("ReplayWithOverrides", () => {
         await wrapper.find("input[aria-label='outputs.fetch_store.values.qty_delta']").setValue("5")
 
         expect(wrapper.find("[data-test='replay-overrides-impact']").text())
-            .toBe("loop read outputs through a dynamic path or in a block, and may also read the new values.")
+            .toBe("Tasks loop read outputs as a whole, through a dynamic path or in a block, and may also read the new values.")
     })
 })

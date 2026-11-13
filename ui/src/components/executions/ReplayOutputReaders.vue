@@ -55,8 +55,11 @@
         props.readers.map(reader => [reader.taskId, props.flowSource ? taskSource(props.flowSource, reader.taskId) : undefined]),
     ))
 
+    const editorRefs = new Map<string, (editor: unknown) => void>()
+
     function editorRef(taskId: string) {
-        return (editor: unknown) => editors[taskId] = editor as KsEditorExposes | null
+        if (!editorRefs.has(taskId)) editorRefs.set(taskId, editor => editors[taskId] = editor as KsEditorExposes | null)
+        return editorRefs.get(taskId)
     }
 
     function highlight(reader: {taskId: string, paths: string[]}) {
@@ -76,17 +79,19 @@
 .reader {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: var(--ks-spacing-2);
 }
 
 .section-title {
     font-size: var(--ks-font-size-sm);
-    font-weight: 600;
+    font-weight: var(--ks-font-weight-semibold);
     margin: 0;
     color: var(--ks-text-primary);
 }
 
 .code {
+    align-self: stretch;
     border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
 }

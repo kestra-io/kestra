@@ -63,34 +63,26 @@
         </div>
 
         <KsAlert
-            v-if="impactedTaskIds.length || (overrideCount && dynamicReaders.length)"
+            v-if="impactLines.length"
             type="warning"
             :closable="false"
             showIcon
             data-test="replay-overrides-impact"
         >
             <template #title>
-                <i18n-t v-if="impactedTaskIds.length" keypath="replayOverrides.impact" tag="span" scope="global">
+                <i18n-t
+                    v-for="line in impactLines"
+                    :key="line.keypath"
+                    :keypath="line.keypath"
+                    tag="span"
+                    scope="global"
+                    class="impact-line"
+                >
                     <template #tasks>
-                        <TaskIds :ids="impactedTaskIds" />
-                    </template>
-                </i18n-t>
-                <i18n-t v-else keypath="replayOverrides.dynamic_readers" tag="span" scope="global">
-                    <template #tasks>
-                        <TaskIds :ids="dynamicReaders" />
+                        <TaskIds :ids="line.ids" />
                     </template>
                 </i18n-t>
             </template>
-            <i18n-t
-                v-if="impactedTaskIds.length && dynamicReaders.length"
-                keypath="replayOverrides.dynamic_readers"
-                tag="span"
-                scope="global"
-            >
-                <template #tasks>
-                    <TaskIds :ids="dynamicReaders" />
-                </template>
-            </i18n-t>
         </KsAlert>
 
         <ReplayOutputReaders
@@ -153,6 +145,11 @@
         Object.keys(overrides.value).flatMap(path => readers.value[path].map(reader => reader.taskId)),
     )])
 
+    const impactLines = computed(() => [
+        {keypath: "replayOverrides.impact", ids: impactedTaskIds.value},
+        {keypath: "replayOverrides.dynamic_readers", ids: overrideCount.value ? dynamicReaders.value : []},
+    ].filter(line => line.ids.length))
+
     watch(overrides, value => overridesModel.value = value, {immediate: true})
     watch(parsed, value => invalid.value = Object.values(value).some(it => it.error), {immediate: true})
 
@@ -209,6 +206,10 @@
 
 .override-label code {
     overflow-wrap: anywhere;
+}
+
+.impact-line {
+    display: block;
 }
 
 .readers-tooltip {

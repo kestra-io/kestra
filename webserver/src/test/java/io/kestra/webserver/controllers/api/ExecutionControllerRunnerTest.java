@@ -1157,10 +1157,25 @@ class ExecutionControllerRunnerTest {
 
         assertThat(outputs.values()).containsExactly(new ReplayOutputService.ReplayOutput("outputs.fetch.values.code", "KR-0412 ", List.of(
             new ReplayOutputService.OutputReader("notify", "outputs.fetch.values"),
+            new ReplayOutputService.OutputReader("grouped", "outputs.fetch.values.code"),
             new ReplayOutputService.OutputReader("alert", "outputs.fetch.values.code"),
-            new ReplayOutputService.OutputReader("audit", "outputs.fetch.values.code")
+            new ReplayOutputService.OutputReader("audit", "outputs.fetch.values.code"),
+            new ReplayOutputService.OutputReader("after", "outputs.fetch.values.code")
         )));
-        assertThat(outputs.dynamicReaders()).containsExactly("loop");
+        assertThat(outputs.dynamicReaders()).containsExactly("loop", "dump");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-output-readers.yaml" })
+    void shouldNameChildrenOfReplayedFlowableInBothBranches() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-readers");
+
+        List<ReplayOutputService.ReplayOutput> outputs = replayOutputs(failed, "check").values();
+
+        assertThat(outputs).singleElement().satisfies(output -> assertThat(output.readers())
+            .extracting(ReplayOutputService.OutputReader::taskId)
+            .contains("nested", "skipped", "adjust")
+            .doesNotContain("before"));
     }
 
     @Test

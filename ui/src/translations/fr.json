@@ -466,7 +466,7 @@
       "load_error": "Impossible de charger les outputs lus par la task {taskId}.",
       "empty": "La Task {taskId} ne lit aucune sortie d'une Task précédente via un chemin statique dans ses propres propriétés.",
       "current": "Valeur actuelle {value}",
-      "readers_count": "Également lu par {count} autre tâche du replay | Également lu par {count} autres tâches du replay",
+      "readers_count": "Également lu par {count} autre task du replay | Également lu par {count} autres tasks du replay",
       "readers_tooltip": "Également lu par ces tasks du replay. Cliquez pour voir leurs définitions.",
       "readers_title": "Tasks qui lisent aussi {path}",
       "readers_reads": "Lit {paths}",

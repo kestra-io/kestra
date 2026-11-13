@@ -13,6 +13,18 @@ tasks:
     type: io.kestra.plugin.core.debug.Return
     format: "{{ outputs.fetch.values.code }}"
 
+  - id: check
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.fetch.values.code != '' }}"
+    then:
+      - id: nested
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs.fetch.values.code }}"
+    else:
+      - id: skipped
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs.fetch.values.code }}"
+
   - id: adjust
     type: io.kestra.plugin.core.execution.Fail
     condition: "{{ outputs.fetch.values.code != 'KR-0412' }}"
@@ -29,6 +41,17 @@ tasks:
     type: io.kestra.plugin.core.debug.Return
     format: "{% for key in ['code'] %}{{ outputs.fetch.values[key] }}{% endfor %}"
 
+  - id: dump
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs | toJson }}"
+
+  - id: group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: grouped
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs['fetch'].values.code }}"
+
 errors:
   - id: alert
     type: io.kestra.plugin.core.debug.Return
@@ -38,3 +61,8 @@ finally:
   - id: audit
     type: io.kestra.plugin.core.debug.Return
     format: "{{ outputs.fetch.values.code | trim }}"
+
+afterExecution:
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }}"

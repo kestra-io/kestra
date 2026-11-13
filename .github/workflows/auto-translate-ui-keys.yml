@@ -71,6 +71,7 @@ jobs:
           with:
             ref: ${{ matrix.branch }}
             fetch-depth: 0
+            persist-credentials: false
 
         - name: Set up Node
           uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -78,7 +79,7 @@ jobs:
             node-version: "24.x"
 
         - name: Install Node dependencies
-          run: npm ci
+          run: npm ci --ignore-scripts
           working-directory: ui
 
         - name: Authenticate to Google Cloud
@@ -94,12 +95,25 @@ jobs:
 
         - name: Set up Git
           run: |
-            git config --global user.name "GitHub Action"
-            git config --global user.email "actions@github.com"
+            git config --global user.name "kestra-io"
+            git config --global user.email "hello@kestra.io"
+
+        # Pushed and opened as the Kestra GitHub App, since `GITHUB_TOKEN` starts no workflow run. Minted
+        # only now and limited to what the step needs, so the npm dependencies never run beside it.
+        - name: Generate GitHub App token
+          id: app-token
+          uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+          with:
+            client-id: ${{ secrets.GH_BOT_APP_ID }}
+            private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+            owner: kestra-io
+            repositories: kestra
+            permission-contents: write
+            permission-pull-requests: write
 
         - name: Commit and create PR
           env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
           run: |
             BRANCH_NAME="chore/update-translations-$(echo "${{ matrix.branch }}" | tr "/" "-")-$(date +%s)"
             git checkout -b $BRANCH_NAME
@@ -147,7 +161,8 @@ jobs:
               fi
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
-            git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
+            push() { git -c core.hooksPath=/dev/null push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$@"; }
+            push "$BRANCH_NAME" || (push --delete "$BRANCH_NAME" && push "$BRANCH_NAME")
             PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base "${{ matrix.branch }}" --head $BRANCH_NAME)
             PR_NUMBER="${PR_URL##*/}"
             # Reviewers: whoever authored the commits that changed the English sources since the last

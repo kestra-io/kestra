@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.plugins.PluginCatalogService.PluginManifest;
@@ -64,6 +66,9 @@ public class PluginSchemaBundleService {
     private static final String CLASSPATH_BUNDLE = "/plugins-schema.json";
 
     private final String resolvedBundleUrl;
+
+    // Weak keys compare by identity: a schema regenerated after a plugin change is a new map, so its stale entry is never hit again and gets collected.
+    private final Cache<Map<String, Object>, Map<String, Object>> mergedSchemas = Caffeine.newBuilder().weakKeys().build();
 
     private volatile Bundle bundle;
     private volatile Instant lastFailureAt;
@@ -175,7 +180,8 @@ public class PluginSchemaBundleService {
      * Returns a copy of {@code localSchema} enriched with a lightweight definition and a
      * {@code $ref} branch for every catalog subtype not installed locally — see
      * {@link PluginSchemaBundleMerger}. When the service is disabled or no bundle could be loaded,
-     * the original {@code localSchema} is returned unchanged.
+     * the original {@code localSchema} is returned unchanged. The merge is cached per
+     * {@code localSchema} instance, so callers must treat the result as read-only.
      *
      * @param type the schema type to look up in the bundle
      * @param localSchema the locally-generated schema (not modified)
@@ -191,9 +197,12 @@ public class PluginSchemaBundleService {
             return localSchema;
         }
 
-        ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
-        PluginSchemaBundleMerger.mergeLightweightSubtypes(mutable, loaded.definitions(), loaded.roots());
-        return MAPPER.convertValue(mutable, MAP_TYPE);
+        return mergedSchemas.get(localSchema, local ->
+        {
+            ObjectNode mutable = MAPPER.convertValue(local, ObjectNode.class);
+            PluginSchemaBundleMerger.mergeLightweightSubtypes(mutable, loaded.definitions(), loaded.roots());
+            return MAPPER.convertValue(mutable, MAP_TYPE);
+        });
     }
 
     // The bundle is immutable per release: load it once on first use, keep it forever. On failure

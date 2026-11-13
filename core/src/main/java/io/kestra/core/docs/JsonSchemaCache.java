@@ -26,6 +26,7 @@ public class JsonSchemaCache {
     private final PluginRegistry pluginRegistry;
 
     private final ConcurrentMap<CacheKey, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<CacheKey, CompactSchema> compactSchemaCache = new ConcurrentHashMap<>();
     private final ConcurrentMap<SchemaType, Map<String, Object>> propertiesCache = new ConcurrentHashMap<>();
 
     private final Map<SchemaType, Class<?>> classesBySchemaType = new EnumMap<>(SchemaType.class);
@@ -62,6 +63,18 @@ public class JsonSchemaCache {
         });
     }
 
+    /**
+     * Returns the schema of {@link #getSchemaForType} with its repeated subtype lists hoisted, for consumers that resolve {@code $ref} themselves.
+     * The same instance is returned until the plugin registry changes.
+     */
+    public Map<String, Object> getCompactSchemaForType(final SchemaType type, final boolean arrayOf) {
+        Map<String, Object> schema = getSchemaForType(type, arrayOf);
+        return compactSchemaCache.compute(
+            new CacheKey(type, arrayOf),
+            (key, cached) -> cached != null && cached.source() == schema ? cached : new CompactSchema(schema, jsonSchemaGenerator.hoistSubtypeLists(schema))
+        ).schema();
+    }
+
     public Map<String, Object> getPropertiesForType(final SchemaType type) {
         invalidateIfPluginRegistryChanged();
         return propertiesCache.computeIfAbsent(type, key ->
@@ -96,5 +109,9 @@ public class JsonSchemaCache {
     }
 
     private record CacheKey(SchemaType type, boolean arrayOf) {
+    }
+
+    // Keyed on the identity of its source, so a schema regenerated after a registry change is never served a stale compaction.
+    private record CompactSchema(Map<String, Object> source, Map<String, Object> schema) {
     }
 }

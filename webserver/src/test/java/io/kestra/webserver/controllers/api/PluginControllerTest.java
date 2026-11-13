@@ -414,6 +414,24 @@ class PluginControllerTest {
         assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldHoistTaskSubtypeListsOnlyForTheEditorSchema() {
+        Map<String, Object> plain = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow"), Argument.mapOf(String.class, Object.class));
+        Map<String, Object> editor = client.toBlocking().retrieve(HttpRequest.GET(PATH + "/schemas/flow?includeCatalog=true"), Argument.mapOf(String.class, Object.class));
+
+        // The no-code editor reads the plain schema and expects the subtypes inline.
+        assertThat(flowTasksItems(plain)).containsOnlyKeys("anyOf");
+        assertThat(flowTasksItems(editor)).isEqualTo(Map.of("$ref", "#/definitions/io.kestra.core.models.tasks.Task"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) definitions.get("io.kestra.core.models.flows.Flow").get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
     @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(

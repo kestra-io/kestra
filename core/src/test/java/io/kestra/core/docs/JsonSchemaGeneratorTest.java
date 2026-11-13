@@ -168,6 +168,27 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldReferenceTheTaskDefinitionWhenItsSubtypeListIsRepeatedInline() {
+        Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+
+        Map<String, Object> compact = jsonSchemaGenerator.hoistSubtypeLists(schema);
+
+        Map<String, Object> inlineItems = flowTasksItems(schema);
+        var compactDefinitions = (Map<String, Map<String, Object>>) compact.get("definitions");
+        assertThat(flowTasksItems(compact), is(Map.of("$ref", "#/definitions/" + Task.class.getName())));
+        assertThat((List<Object>) inlineItems.get("anyOf"), not(empty()));
+        assertThat(compactDefinitions.get(Task.class.getName()).get("anyOf"), is(inlineItems.get("anyOf")));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> flowTasksItems(Map<String, Object> schema) {
+        var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+        var properties = (Map<String, Map<String, Object>>) definitions.get(Flow.class.getName()).get("properties");
+        return (Map<String, Object>) properties.get("tasks").get("items");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {

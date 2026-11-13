@@ -230,7 +230,17 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 ### (c) Serve — merge on the fly
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
-**local** schema (installed plugins) and enriches it with the bundle via
+**compact local** schema (installed plugins, `JsonSchemaCache.getCompactSchemaForType`): the
+generator inlines the full subtype list at every `tasks` / `errors` / `finally` site, 17 of them in
+the flow schema, so each type costs one `$ref` branch per site. The compact variant replaces every
+bare `anyOf` that repeats a definition's list with a `$ref` to that definition
+(`JsonSchemaGenerator.hoistSubtypeLists`). The YAML language service resolves the `$ref` to the same
+list, so validation and completion are unchanged. The plain endpoint keeps the lists inline for the
+no-code editor. An edition that overrides `isCatalogMergeAllowed()` to `false` (EE) gets the compact
+schema without the bundle.
+
+The compact schema is then enriched with the bundle, once per generated schema (the merge is cached
+until the plugin registry changes), via
 `PluginSchemaBundleService.mergeWithBundle` — `mergeLightweightSubtypes`:
 
 - for **every occurrence** of a polymorphic subtype list in the local schema, it adds, for each

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import io.kestra.core.docs.JsonSchemaCompactor;
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.plugins.PluginCatalogService.PluginManifest;
 import io.kestra.core.serializers.JacksonMapper;
@@ -201,6 +202,8 @@ public class PluginSchemaBundleService {
         {
             ObjectNode mutable = MAPPER.convertValue(local, ObjectNode.class);
             PluginSchemaBundleMerger.mergeLightweightSubtypes(mutable, loaded.definitions(), loaded.roots());
+            // The stubs repeat the documentation of every inherited property, once per catalog type.
+            JsonSchemaCompactor.sharePropertySchemas(mutable);
             return MAPPER.convertValue(mutable, MAP_TYPE);
         });
     }

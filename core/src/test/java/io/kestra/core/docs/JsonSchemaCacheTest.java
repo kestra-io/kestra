@@ -62,7 +62,6 @@ class JsonSchemaCacheTest {
         JsonSchemaGenerator generator = mock(JsonSchemaGenerator.class);
         PluginRegistry registry = mock(PluginRegistry.class);
         when(generator.schemas(any(), anyBoolean())).thenReturn(Map.of("version", "1"), Map.of("version", "2"));
-        when(generator.hoistSubtypeLists(any())).thenAnswer(invocation -> Map.copyOf(invocation.<Map<String, Object>> getArgument(0)));
         when(registry.hash()).thenReturn(1L, 1L, 2L);
         JsonSchemaCache cache = new JsonSchemaCache(generator, registry);
 

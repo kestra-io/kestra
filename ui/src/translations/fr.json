@@ -2535,6 +2535,12 @@
           "sendTooltip": "L'envoi est désactivé car aucun fournisseur AI n'est configuré.",
           "notSent": "Votre invite n'a pas été envoyée"
         },
+        "mcpTip": {
+          "title": "Utilisez Kestra depuis Claude Code, Cursor et d'autres clients MCP",
+          "description": "En plus du Copilot, Kestra fournit un serveur MCP. Connectez-y un client MCP externe pour gérer vos flows et vos Executions à partir des outils que vous utilisez déjà.",
+          "docs": "Voir la documentation",
+          "dismiss": "Ne plus afficher"
+        },
         "thinkingWords": [
           "Orchestration",
           "Planification",

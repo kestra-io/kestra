@@ -84,6 +84,8 @@
                     </KsButton>
                 </div>
 
+                <CopilotMcpTip />
+
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
         </div>
@@ -187,6 +189,7 @@
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
     import CopilotHelp from "./CopilotHelp.vue"
+    import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"

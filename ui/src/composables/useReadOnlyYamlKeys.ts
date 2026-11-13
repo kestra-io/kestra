@@ -1,7 +1,6 @@
 import {onBeforeUnmount, watch, type Ref} from "vue"
 import type * as monaco from "monaco-editor/editor/editor.api"
 
-// Anchored at column 0: block-scalar content is always indented.
 const TOP_LEVEL_KEY = /^([A-Za-z0-9_-]+)[ \t]*:(.*)$/
 
 export const READ_ONLY_LINE_CLASS = "ks-readonly-yaml-line"
@@ -27,7 +26,6 @@ function splitScalar(raw: string): Scalar {
             : {value: trimmed.slice(1, closing), suffix: trimmed.slice(closing + 1)}
     }
 
-    // YAML only opens an inline comment on a `#` preceded by whitespace.
     const comment = trimmed.search(/\s#/)
     return comment === -1
         ? {value: trimmed, suffix: ""}
@@ -38,7 +36,6 @@ export function commentOf(raw: string): string {
     return splitScalar(raw).suffix
 }
 
-// Only the first occurrence counts: a duplicate top-level key is invalid YAML.
 export function readTopLevelValue(source: string, key: string): string | undefined {
     for (const rawLine of source.split("\n")) {
         const match = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))
@@ -63,7 +60,6 @@ export function findReadOnlyLines(source: string, keys: readonly string[]): Read
     return lines
 }
 
-// An `undefined` expectation is not known yet and never fails.
 export function violatedKeys(
     source: string,
     expected: Record<string, string | undefined>,
@@ -168,7 +164,6 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
 
         correcting = true
         try {
-            // Joins the user's open undo element; executeEdits would add one whose undo restores the violation.
             model.pushEditOperations(selectionsBeforeEdit, inverseOf(model, event.changes), () => null)
             if (selectionsBeforeEdit.length) editor.setSelections(selectionsBeforeEdit)
         } finally {
@@ -206,8 +201,6 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         modelListener = editor.onDidChangeModel(rebase)
     }
 
-    // Keyed on the serialised expectations: the call site rebuilds the object whenever the
-    // flow store replaces the flow, and each new identity would otherwise re-run attach().
     watch(
         [options.editor, options.enabled, () => JSON.stringify(options.expected.value)],
         ([editor]) => {

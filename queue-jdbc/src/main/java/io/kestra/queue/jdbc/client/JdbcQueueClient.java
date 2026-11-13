@@ -33,7 +33,6 @@ public class JdbcQueueClient {
     public static final Field<String> ROUTING_KEY = field("routing_key", String.class);
     public static final Field<String> KEY = field("key", String.class);
     public static final Field<JSONB> VALUE = field("value", JSONB.class);
-    private static final Field<byte[]> VALUE_BYTES = VALUE_BYTES_FIELD;
     public static final Field<Instant> CREATED = field("created", Instant.class);
     public static final Field<Long> OFFSET = field("offset", Long.class);
 
@@ -168,7 +167,7 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            var select = context.select(OFFSET, VALUE_BYTES)
+            var select = context.select(OFFSET, VALUE_BYTES_FIELD)
                 .from(this.queueTable)
                 .where(TYPE.eq(queue));
 
@@ -190,7 +189,7 @@ public class JdbcQueueClient {
                     .stream()
                     .map(record ->
                     {
-                        consumer.accept(record.get(VALUE_BYTES));
+                        consumer.accept(record.get(VALUE_BYTES_FIELD));
                         return record.get(OFFSET);
                     })
                     .toList();
@@ -212,7 +211,7 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            var select = context.select(OFFSET, VALUE_BYTES)
+            var select = context.select(OFFSET, VALUE_BYTES_FIELD)
                 .from(this.queueTable)
                 .where(TYPE.eq(queue));
 
@@ -230,7 +229,7 @@ public class JdbcQueueClient {
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get(VALUE_BYTES)).toList());
+                consumer.accept(result.stream().map(record -> record.get(VALUE_BYTES_FIELD)).toList());
 
                 List<Long> processedItems = result
                     .stream()
@@ -300,7 +299,7 @@ public class JdbcQueueClient {
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
             var result = DSL.using(conf)
-                .select(OFFSET, VALUE_BYTES)
+                .select(OFFSET, VALUE_BYTES_FIELD)
                 .from(this.queueTable)
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull())
@@ -310,7 +309,7 @@ public class JdbcQueueClient {
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.map(record -> record.get(VALUE_BYTES)));
+                consumer.accept(result.map(record -> record.get(VALUE_BYTES_FIELD)));
             }
 
             return result.map(record -> record.get(OFFSET));

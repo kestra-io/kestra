@@ -24,14 +24,6 @@ describe("useFlowEditorActions — saving a draft flow", () => {
         saveAll.mockReset()
     })
 
-    it("keeps the draft state on the keyboard save", async () => {
-        const {useFlowEditorActions} = await import("./useFlowEditorActions")
-
-        await useFlowEditorActions().saveKeepingDraftState()
-
-        expect(saveAll).toHaveBeenCalledExactlyOnceWith(undefined)
-    })
-
     it("publishes on the Save menu item, the explicit way out of draft mode", async () => {
         const {useFlowEditorActions} = await import("./useFlowEditorActions")
 

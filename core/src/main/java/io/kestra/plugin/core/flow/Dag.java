@@ -181,13 +181,17 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
+            this.concurrent(runContext),
             this.tasks
         );
     }
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        // an invalid graph or an unresolvable concurrent expression must fail the task run here,
+        // the same way an If condition does, instead of freezing the execution in RUNNING
+        this.controlTask();
+        this.concurrent(runContext);
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
         return FlowableUtils.resolveSequentialState(
@@ -200,6 +204,10 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
             this.isAllowFailure(),
             this.isAllowWarning()
         );
+    }
+
+    private int concurrent(RunContext runContext) throws IllegalVariableEvaluationException {
+        return runContext.render(this.concurrent).as(Integer.class).orElseThrow();
     }
 
     public List<String> dagCheckNotExistTask(List<DagTask> taskDepends) {

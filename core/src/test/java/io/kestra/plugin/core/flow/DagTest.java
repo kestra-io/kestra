@@ -54,6 +54,15 @@ public class DagTest {
         assertThat(execution.findTaskRunsByTaskId("dag").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    // https://github.com/kestra-io/kestra/issues/20533: an unresolvable concurrent expression used to be
+    // swallowed by the executor and the execution stayed RUNNING forever.
+    @Test
+    @ExecuteFlow("flows/valids/dag-broken-concurrent.yaml")
+    void dagWithBrokenConcurrentShouldFailExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("dag").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     @Test
     void dagCyclicDependencies() {
         Flow flow = this.parse("flows/invalids/dag-cyclicdependency.yaml");

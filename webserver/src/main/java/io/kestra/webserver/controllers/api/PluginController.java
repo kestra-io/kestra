@@ -128,12 +128,14 @@ public class PluginController {
             // Same ETag revalidation as the plain schema (#12102): the browser re-downloads the big
             // merged JSON only when the installed plugin set or the bundle actually changed, and
             // gets a cheap 304 otherwise — a newly-installed plugin shows up on the next request.
-            final String catalogEtag = schemaETag("schema-catalog-" + pluginSchemaBundleService.fingerprint(), type, arrayOf);
+            final boolean mergeCatalog = isCatalogMergeAllowed();
+            final String catalogEtag = schemaETag(mergeCatalog ? "schema-catalog-" + pluginSchemaBundleService.fingerprint() : "schema-compact", type, arrayOf);
             if (catalogEtag.equals(ifNoneMatch)) {
                 return notModified(catalogEtag);
             }
-            Map<String, Object> merged = pluginSchemaBundleService.mergeWithBundle(type, jsonSchemaCache.getSchemaForType(type, arrayOf));
-            return HttpResponse.ok(merged)
+            // This variant is only read by the YAML editor, which resolves $ref itself; the plain one keeps subtype lists inline for the no-code editor.
+            Map<String, Object> compact = jsonSchemaCache.getCompactSchemaForType(type, arrayOf);
+            return HttpResponse.ok(mergeCatalog ? pluginSchemaBundleService.mergeWithBundle(type, compact) : compact)
                 .header(HttpHeaders.ETAG, catalogEtag)
                 .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
         }
@@ -248,6 +250,11 @@ public class PluginController {
         return HttpResponse.ok(jsonSchemaCache.getPropertiesForType(type))
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+    }
+
+    /** Whether {@code includeCatalog} may merge the plugin schema bundle; an edition without auto-install turns it off and still gets the compact schema. */
+    protected boolean isCatalogMergeAllowed() {
+        return true;
     }
 
     /**

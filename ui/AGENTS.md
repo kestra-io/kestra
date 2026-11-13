@@ -67,6 +67,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
+- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.

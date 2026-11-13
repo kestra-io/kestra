@@ -42,7 +42,7 @@
 </template>
 
 <script lang="ts">
-    import type {ButtonProps, ButtonType} from "element-plus"
+    import type {ButtonProps, ButtonType, Placement} from "element-plus"
     import type {RouteLocationRaw} from "vue-router"
 
     export type KsButtonType = ButtonType
@@ -51,7 +51,7 @@
         square?: boolean
         block?: boolean
         tooltip?: string
-        tooltipPlacement?: string
+        tooltipPlacement?: Placement
         /** With `tag="a"`. */
         href?: string
         target?: string

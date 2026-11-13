@@ -2379,7 +2379,7 @@
       "ignoredFilters": "Il filtro {filters} non si applica a questo grafico. | I filtri {filters} non si applicano a questo grafico.",
       "dataFrom": "Aggiornato {date}",
       "dataUnavailable": "Dati non disponibili",
-      "dataTruncated": "Il file di output è stato troncato alle sue prime {rows} righe",
+      "dataTruncated": "Il file di output è stato troncato alle sue prime {rows} righe. Consulta la documentazione per maggiori dettagli.",
       "show_all_statuses": "Mostra tutti gli stati",
       "quick_filters": {
         "all": "Tutti",

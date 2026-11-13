@@ -2379,7 +2379,7 @@
       "ignoredFilters": "Der Filter {filters} gilt nicht für dieses Diagramm. | Die Filter {filters} gelten nicht für dieses Diagramm.",
       "dataFrom": "Aktualisiert {date}",
       "dataUnavailable": "Daten nicht verfügbar",
-      "dataTruncated": "Die Output-Datei wurde auf die ersten {rows} Zeilen gekürzt",
+      "dataTruncated": "Die Output-Datei wurde auf die ersten {rows} Zeilen gekürzt. Weitere Details findest du in der Dokumentation.",
       "show_all_statuses": "Alle Status anzeigen",
       "quick_filters": {
         "all": "Alle",

@@ -3,6 +3,7 @@ import {ref} from "vue"
 import {cssVar, dateUtils, dayjs, type Dayjs} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
 import {DateGrouping} from "../../../utils/utils"
+import type {ColorByValue} from "../types"
 
 export interface RankedStackedBars {
     categories: string[]
@@ -131,7 +132,9 @@ export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping
     return Array.from(labels).sort()
 }
 
-function hashToHexColor(value: string): string {
+export const CATEGORICAL_SLOTS = 10
+
+function hashString(value: string): number {
     let hash = 0x811c9dc5
     for (let i = 0; i < value.length; i++) {
         hash ^= value.charCodeAt(i)
@@ -144,12 +147,25 @@ function hashToHexColor(value: string): string {
     hash *= 0xc2b2ae35
     hash ^= hash >>> 16
 
-    return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
+    return hash >>> 0
 }
 
-export function getConsistentHEXColor(_theme: "light" | "dark", value: string | undefined): string {
-    const status = (value?.includes(",") ? value.split(",").pop()?.trim() : value) ?? ""
+function hashToHexColor(value: string): string {
+    return `#${(hashString(value) & 0xffffff).toString(16).padStart(6, "0")}`
+}
 
+function lastPart(value: string): string {
+    return value.split(", ").at(-1) ?? value
+}
+
+function fixedColor(value: string, colorByValues?: ColorByValue[]): string | undefined {
+    const rank = categoryRank(value, colorByValues)
+    const configured = rank === undefined ? undefined : colorByValues?.[rank]?.color
+    if (configured) {
+        return configured.startsWith("#") ? configured : fixedColor(configured.toUpperCase())
+    }
+
+    const status = lastPart(value)
     const tokenColor = status ? cssVar(`--ks-chart-${status.toLowerCase()}`) : ""
     if (tokenColor) {
         return tokenColor
@@ -162,7 +178,67 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string | 
         }
     }
 
-    return hashToHexColor(value ?? "")
+    return undefined
+}
+
+function paletteColor(slot: number, value: string): string {
+    return cssVar(`--ks-chart-categorical-${slot + 1}`) || hashToHexColor(value)
+}
+
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string | undefined): string {
+    const text = value ?? ""
+    return fixedColor(text) ?? paletteColor(hashString(text) % CATEGORICAL_SLOTS, text)
+}
+
+/** Colors of all the values of one chart: values with a configured, status or log level color keep it, the others get distinct palette slots, picked by hash so a value keeps its slot across charts unless two values collide, and once every slot is taken a color derived from the value. */
+export function chartCategoryColors(_theme: "light" | "dark", values: (string | undefined)[], colorByValues?: ColorByValue[]): Map<string, string> {
+    const result = new Map<string, string>()
+    const unlisted: string[] = []
+    for (const value of new Set(values.map((v) => v ?? ""))) {
+        const color = fixedColor(value, colorByValues)
+        if (color) {
+            result.set(value, color)
+        } else {
+            unlisted.push(value)
+        }
+    }
+
+    const taken = new Set<number>()
+    for (const value of unlisted.sort()) {
+        if (taken.size === CATEGORICAL_SLOTS) {
+            result.set(value, hashToHexColor(value))
+            continue
+        }
+        let slot = hashString(value) % CATEGORICAL_SLOTS
+        while (taken.has(slot)) {
+            slot = (slot + 1) % CATEGORICAL_SLOTS
+        }
+        taken.add(slot)
+        result.set(value, paletteColor(slot, value))
+    }
+
+    return result
+}
+
+/** Position of a value in `colorByValues`, matching a stacked value by its last part too, or undefined when it is not listed. */
+export function categoryRank(value: string, colorByValues?: ColorByValue[]): number | undefined {
+    return [value, lastPart(value)]
+        .map((key) => colorByValues?.findIndex((entry) => String(entry.value) === key) ?? -1)
+        .find((index) => index >= 0)
+}
+
+export function byCategoryRank(colorByValues?: ColorByValue[]): (a: string, b: string) => number {
+    const rank = (value: string) => categoryRank(value, colorByValues) ?? Number.MAX_SAFE_INTEGER
+    return (a, b) => rank(a) - rank(b)
+}
+
+/** The configured label of a value, replacing each part of a stacked value on its own, or undefined when none is configured. */
+export function categoryDisplayName(value: string, colorByValues?: ColorByValue[]): string | undefined {
+    const labelOf = (key: string) => colorByValues?.find((entry) => String(entry.value) === key)?.label
+    const parts = value.split(", ")
+    return labelOf(value) ?? (parts.some((part) => labelOf(part) !== undefined)
+        ? parts.map((part) => labelOf(part) ?? part).join(", ")
+        : undefined)
 }
 
 export function getFormat(groupBy?: string): string | undefined {

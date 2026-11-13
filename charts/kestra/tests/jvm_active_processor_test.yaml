@@ -4,7 +4,7 @@ templates:
   - templates/deployment.yaml
 
 tests:
-  - it: does not set KESTRA_JAVA_OPTS when feature is disabled
+  - it: does not set _JAVA_OPTIONS when feature is disabled
     set:
       common:
         jvm:
@@ -17,9 +17,9 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: KESTRA_JAVA_OPTS
+            name: _JAVA_OPTIONS
 
-  - it: does not set KESTRA_JAVA_OPTS when nothing is configured
+  - it: does not set _JAVA_OPTIONS when nothing is configured
     set:
       common:
         resources:
@@ -29,7 +29,7 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: KESTRA_JAVA_OPTS
+            name: _JAVA_OPTIONS
 
   - it: sets ActiveProcessorCount=1 when cpu=250m and mode=auto
     set:
@@ -51,7 +51,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: KESTRA_JAVA_OPTS
+          value: _JAVA_OPTIONS
       - equal:
           path: spec.template.spec.containers[0].env[1].value
           value: "-XX:ActiveProcessorCount=1"
@@ -76,7 +76,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: KESTRA_JAVA_OPTS
+          value: _JAVA_OPTIONS
       - equal:
           path: spec.template.spec.containers[0].env[1].value
           value: "-XX:ActiveProcessorCount=1"
@@ -102,7 +102,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: KESTRA_JAVA_OPTS
+          value: _JAVA_OPTIONS
       - equal:
           path: spec.template.spec.containers[0].env[1].value
           value: "-XX:ActiveProcessorCount=3"
@@ -132,7 +132,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: KESTRA_JAVA_OPTS
+          value: _JAVA_OPTIONS
       - equal:
           path: spec.template.spec.containers[0].env[1].value
           value: "-XX:ActiveProcessorCount=5"

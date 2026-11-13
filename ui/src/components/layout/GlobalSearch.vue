@@ -41,14 +41,14 @@
                                             :aria-selected="index === activeIndex"
                                             @mouseenter="activeIndex = index"
                                         >
-                                            <div class="result-row d-flex gap-2">
+                                            <div class="result-row d-flex">
                                                 <component
                                                     :is="item.kind === 'link' ? 'router-link' : 'button'"
                                                     v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                                    class="result-link d-flex gap-2"
+                                                    class="result-link d-flex"
                                                     @click="onItemClick(item)"
                                                 >
-                                                    <div class="result-title d-flex gap-2 nav-item-title">
+                                                    <div class="result-title d-flex nav-item-title">
                                                         <component
                                                             v-if="item.icon?.element"
                                                             :is="{...item.icon.element}"

@@ -2601,8 +2601,15 @@
       "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
       "run_all_tasks": "सभी Tasks चलाएं",
       "history": "पिछले 10 रन",
-      "clear_history": "इतिहास साफ़ करें",
-      "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
+      "clear_history": "अगली रन को नए सिरे से शुरू करें",
+      "tooltip_persistence": "Playground रन सर्वर पर रखे जाते हैं: रीलोड या टैब बदलने के बाद, अगला रन उस रन पर बनता है जिसे आपने छोड़ा था। Playground बंद करने से वर्तमान रन समाप्त हो जाता है।",
+      "session_error": "आपके पिछले Playground रन लोड नहीं किए जा सके।",
+      "context": {
+        "title": "संदर्भ",
+        "task_run": "Task रन",
+        "empty": "प्रत्येक Task द्वारा देखे गए variables को देखने के लिए एक Task चलाएँ।",
+        "error": "इस Task run का संदर्भ लोड नहीं किया जा सका।"
+      }
     },
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",

@@ -2601,8 +2601,15 @@
       "run_task_and_downstream": "Uruchom Task i downstream",
       "run_all_tasks": "Uruchom wszystkie Taski",
       "history": "Ostatnie 10 uruchomień",
-      "clear_history": "Wyczyść historię",
-      "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
+      "clear_history": "Rozpocznij następne uruchomienie od nowa",
+      "tooltip_persistence": "Egzekucje Playground są przechowywane na serwerze: po przeładowaniu lub zmianie zakładki, następna egzekucja będzie kontynuacją tej, którą opuściłeś. Wyłączenie Playground kończy bieżącą egzekucję.",
+      "session_error": "Nie można było załadować poprzednich uruchomień Playground.",
+      "context": {
+        "title": "Kontekst",
+        "task_run": "Task Run",
+        "empty": "Uruchom Task, aby zobaczyć zmienne, które widzi każdy Task.",
+        "error": "Nie można załadować kontekstu tego Task Runa."
+      }
     },
     "submit": "Wyślij",
     "accept": "Zaakceptuj",

@@ -2601,8 +2601,15 @@
       "run_task_and_downstream": "タスクとダウンストリームを実行",
       "run_all_tasks": "すべてのタスクを実行",
       "history": "直近10回の実行",
-      "clear_history": "履歴をクリア",
-      "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
+      "clear_history": "次の実行を新たに開始する",
+      "tooltip_persistence": "Playground の実行はサーバーに保持されます。リロードまたはタブの変更後、次回の実行は中断した実行から継続されます。Playground をオフにすると、現在の実行は終了します。",
+      "session_error": "以前のPlayground実行を読み込めませんでした。",
+      "context": {
+        "title": "コンテキスト",
+        "task_run": "Task実行",
+        "empty": "各Taskが参照する変数を表示するには、Taskを実行してください。",
+        "error": "このTask Runのコンテキストを読み込めませんでした。"
+      }
     },
     "submit": "送信",
     "accept": "承認",

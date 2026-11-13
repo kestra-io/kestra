@@ -2601,8 +2601,15 @@
       "run_task_and_downstream": "Ejecutar task y downstream",
       "run_all_tasks": "Ejecutar Todas las Tasks",
       "history": "Últimas 10 ejecuciones",
-      "clear_history": "Borrar historial",
-      "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
+      "clear_history": "Iniciar la siguiente ejecución desde cero",
+      "tooltip_persistence": "Las ejecuciones de Playground se mantienen en el servidor: después de una recarga o un cambio de pestaña, la siguiente ejecución se basa en la ejecución que dejaste. Desactivar Playground finaliza la ejecución actual.",
+      "session_error": "No se pudieron cargar tus ejecuciones anteriores de Playground.",
+      "context": {
+        "title": "Contexto",
+        "task_run": "Ejecución de Task",
+        "empty": "Ejecuta una Task para ver las variables que cada Task ve.",
+        "error": "No se pudo cargar el contexto de este Task Run."
+      }
     },
     "submit": "Enviar",
     "accept": "Aceptar",

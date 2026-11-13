@@ -18,6 +18,11 @@ const {flowStore, executionsStore} = vi.hoisted(() => ({
 vi.mock("./flow", () => ({useFlowStore: () => flowStore}))
 vi.mock("./executions", () => ({useExecutionsStore: () => executionsStore}))
 vi.mock("./fileExplorer", () => ({useFileExplorerStore: () => ({loadNodes: vi.fn()})}))
+vi.mock("@kestra-io/kestra-sdk/playground", () => ({
+    planPlaygroundRun: vi.fn().mockResolvedValue({reusedTaskIds: [], breakpoints: [], freshReason: "NO_PREVIOUS_RUN"}),
+    listReusedTaskRuns: vi.fn().mockResolvedValue({taskRuns: {}}),
+    endPlaygroundRun: vi.fn().mockResolvedValue(undefined),
+}))
 
 const {usePlaygroundStore} = await import("./playground")
 
@@ -30,11 +35,11 @@ describe("playground readyToStart", () => {
             flowErrors: undefined,
             isCreating: false,
             saveAsDraft: vi.fn().mockResolvedValue("saved"),
-            loadGraph: vi.fn().mockResolvedValue(undefined),
         })
         Object.assign(executionsStore, {
             execution: undefined,
             triggerExecution: vi.fn(),
+            clearReusedTaskRuns: vi.fn(),
         })
     })
 

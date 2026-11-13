@@ -61,6 +61,41 @@ describe("CopilotComposer", () => {
         expect(w.emitted("submit")).toBeUndefined()
     })
 
+    it("disables every control and explains why on Send when there is a lasting reason", async () => {
+        const w = mountComposer({disabledReason: "No provider", describedBy: "why", modelValue: "hi"})
+
+        expect(input(w).attributes("disabled")).toBeDefined()
+        expect(input(w).attributes("aria-describedby")).toBe("why")
+        const mode = w.find(".copilot-mode-trigger")
+        expect(mode.attributes("disabled")).toBeDefined()
+        expect(mode.attributes("aria-describedby")).toBe("why")
+        expect(sendBtn(w).attributes("disabled")).toBeDefined()
+        expect(sendBtn(w).attributes("aria-describedby")).toBe("why")
+        expect(w.find(".ks-tooltip").attributes("data-tooltip")).toBe("No provider")
+
+        await input(w).trigger("keydown", {key: "Enter"})
+        expect(w.emitted("submit")).toBeUndefined()
+    })
+
+    it("shows the Send tooltip on hover and on keyboard focus, and hides it once both leave", async () => {
+        const w = mountComposer({disabledReason: "No provider"})
+        const wrapper = w.find("[data-test=\"copilot-send-wrapper\"]")
+        const visible = () => w.find(".ks-tooltip").attributes("data-visible")
+        expect(visible()).toBe("false")
+
+        await wrapper.trigger("focus")
+        expect(visible()).toBe("true")
+        await wrapper.trigger("mouseenter")
+        await wrapper.trigger("blur")
+        expect(visible()).toBe("true")
+        await wrapper.trigger("mouseleave")
+        expect(visible()).toBe("false")
+    })
+
+    it("shows no tooltip on Send while the composer is usable", () => {
+        expect(mountComposer().find(".ks-tooltip").attributes("data-tooltip")).toBeUndefined()
+    })
+
     it("hides the mic when the Web Speech API is unavailable (e.g. jsdom)", () => {
         // No SpeechRecognition in jsdom → voice input degrades gracefully to no mic button.
         expect(mountComposer().find("[data-test=\"copilot-mic\"]").exists()).toBe(false)

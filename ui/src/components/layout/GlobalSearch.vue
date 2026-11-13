@@ -9,7 +9,7 @@
                             v-model="query"
                             :placeholder="$t('jump to...')"
                             clearable
-                            @keydown.esc="closeSearch"
+                            @keydown.esc.prevent="closeSearch"
                             @keydown="onInputKeydown"
                         >
                             <template v-if="scopePrefix" #prefix>
@@ -364,12 +364,12 @@
                 background: var(--ks-bg-surface);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
-                input {
+                & input {
                     color: var(--ks-text-primary);
                     background: transparent;
                 }
 
-                input::placeholder {
+                & input::placeholder {
                     color: var(--ks-placeholder-color);
                     font-size: var(--ks-placeholder-font-size);
                     font-weight: var(--ks-placeholder-font-weight);

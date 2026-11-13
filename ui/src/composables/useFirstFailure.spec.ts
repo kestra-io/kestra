@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {effectScope, nextTick, ref} from "vue"
 import {useFirstFailure} from "./useFirstFailure"
 import {useExecutionsStore, type Execution} from "../stores/executions"
+import {routedPinia} from "../../tests/unit/memoryRouter"
 
 const failedExecution = (id: string, taskRunId = "tr-1"): Execution => ({
     id,
@@ -20,7 +21,7 @@ const flush = async () => {
 
 describe("useFirstFailure", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
     })
 
     it("asks for the error logs of the failed task run only", async () => {
@@ -35,11 +36,32 @@ describe("useFirstFailure", () => {
         // Then
         expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
             executionId: "e1",
-            params: expect.objectContaining({"filters[taskRunId][EQUALS]": "tr-1", "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}),
+            filters: expect.arrayContaining([
+                {field: "taskRunId", operation: "EQUALS", value: "tr-1"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ]),
         }))
         expect(message.value).toBe("boom x")
     })
 
+    it.each(["NORMAL", "PLAYGROUND"])("does not restrict %s execution errors by log kind", async (kind) => {
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([{taskRunId: "tr-1", message: "boom"}] as never)
+        const scope = effectScope()
+        const result = scope.run(() => useFirstFailure({...failedExecution("e1"), kind} as Execution))!
+        await flush()
+
+        expect(loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "e1",
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                {field: "taskRunId", operation: "EQUALS", value: "tr-1"},
+            ],
+        })
+        expect(result.message.value).toBe("boom")
+        expect(result.logsRoute.value.query).toEqual({"filters[taskRunId][EQUALS]": "tr-1"})
+        scope.stop()
+    })
     it("shows a sub-execution link as its execution id instead of raw link markup", async () => {
         // Given
         const store = useExecutionsStore()

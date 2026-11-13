@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
-import {defineComponent, h} from "vue"
-import {mount, VueWrapper} from "@vue/test-utils"
-import {createRouter, createMemoryHistory, type Router, type RouteLocation} from "vue-router"
-import useRestoreUrl, {getRestoredQuery} from "./useRestoreUrl"
+import {defineComponent, h, onMounted, ref} from "vue"
+import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
+import {createRouter, createMemoryHistory, RouterView, useRoute, type LocationQuery, type Router, type RouteLocation} from "vue-router"
+import useRestoreUrl, {getRestoredQuery, restoreUrlGuard} from "./useRestoreUrl"
 
 const SAVED_QUERY = {"filters[timeRange][EQUALS]": "PT24H"}
 
@@ -16,10 +16,10 @@ function createTestRouter(): Router {
     })
 }
 
-function mountRestoreUrl(router: Router) {
+function mountRestoreUrl(router: Router, options?: Parameters<typeof useRestoreUrl>[0]) {
     return mount(defineComponent({
         setup() {
-            return useRestoreUrl()
+            return useRestoreUrl(options)
         },
         render: () => h("div"),
     }), {global: {plugins: [router]}})
@@ -62,12 +62,28 @@ describe("useRestoreUrl", () => {
 
         wrapper = mountRestoreUrl(router)
 
-        // Mimics Dashboard.vue appending its id param right after mount: this navigation
-        // cancels the in-flight restore, which used to drop the saved filters for good.
+        // The page navigating again right after mount cancels the in-flight restore,
+        // which used to drop the saved filters for good.
         await router.push({name: "home", params: {tenant: "main", dashboard: "default"}})
         await new Promise((resolve) => setTimeout(resolve, 150))
 
         expect(router.currentRoute.value.params.dashboard).toBe("default")
+        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
+    })
+
+    it("restores only the saved query of the dashboard the page resolves", async () => {
+        const router = createTestRouter()
+        await router.push({name: "home", params: {tenant: "main"}})
+        window.sessionStorage.setItem("home_dashA_main_restore_url", JSON.stringify({"filters[timeRange][EQUALS]": "PT168H"}))
+        window.sessionStorage.setItem("home_dashB_main_restore_url", JSON.stringify(SAVED_QUERY))
+        const scope = ref<string>()
+        const dashboard = mountRestoreUrl(router, {scope})
+        wrapper = dashboard
+
+        await router.push({name: "home", params: {tenant: "main", dashboard: "dashB"}})
+        scope.value = "dashB"
+        await dashboard.vm.goToRestoreUrl()
+
         expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
 
@@ -173,5 +189,82 @@ describe("useRestoreUrl", () => {
 
         expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, "filters[state][IN]": "FAILED"})
         expect(JSON.parse(window.sessionStorage.getItem(key) as string)).toMatchObject(SAVED_QUERY)
+    })
+
+    describe("restoreUrlGuard", () => {
+        const loads: LocationQuery[] = []
+
+        const ListPage = defineComponent({
+            setup() {
+                const route = useRoute()
+                const {loadInit} = useRestoreUrl()
+                const sortAtSetup = route.query.sort
+                onMounted(() => {
+                    if (loadInit.value) loads.push({...route.query})
+                })
+                return () => h("div", String(sortAtSetup))
+            },
+        })
+
+        function createGuardedRouter(): Router {
+            const router = createRouter({
+                history: createMemoryHistory(),
+                routes: [
+                    {name: "flows/list", path: "/:tenant?/flows", component: ListPage},
+                    {name: "executions/list", path: "/:tenant?/executions", component: {render: () => h("div")}},
+                ],
+            })
+            router.beforeEach(restoreUrlGuard)
+            return router
+        }
+
+        beforeEach(() => {
+            loads.length = 0
+        })
+
+        it("sets a page up from its saved sort and loads it when the page is entered with no query", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc", page: "3"}))
+            wrapper = mount(RouterView, {global: {plugins: [router]}})
+
+            await router.push({name: "flows/list", params: {tenant: "main"}})
+            await flushPromises()
+
+            expect(router.currentRoute.value.query).toEqual({sort: "namespace:asc"})
+            expect(wrapper.text()).toBe("namespace:asc")
+            expect(loads).toEqual([{sort: "namespace:asc"}])
+        })
+
+        it("lets the page clear its own query instead of putting the saved one back", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "flows/list", params: {tenant: "main"}, query: {sort: "namespace:asc"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({query: {}})
+
+            expect(router.currentRoute.value.query).toEqual({})
+        })
+
+        it("leaves a page entered with its own query alone", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({name: "flows/list", params: {tenant: "main"}, query: {"filters[state][IN]": "FAILED"}})
+
+            expect(router.currentRoute.value.query).toEqual({"filters[state][IN]": "FAILED"})
+        })
+
+        it("keeps the hash when it puts the saved query back", async () => {
+            const router = createGuardedRouter()
+            await router.push({name: "executions/list", params: {tenant: "main"}})
+            window.sessionStorage.setItem("flows_list_main_restore_url", JSON.stringify({sort: "namespace:asc"}))
+
+            await router.push({name: "flows/list", params: {tenant: "main"}, hash: "#anchor"})
+
+            expect(router.currentRoute.value.query).toEqual({sort: "namespace:asc"})
+            expect(router.currentRoute.value.hash).toBe("#anchor")
+        })
     })
 })

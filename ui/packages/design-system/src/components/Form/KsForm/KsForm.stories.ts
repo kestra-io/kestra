@@ -35,7 +35,7 @@ export const Default: Story = {
         },
         template: `
             <div style="padding:24px;max-width:400px">
-                <ks-form :model="form" :rules="rules" v-bind="args" label-position="top">
+                <ks-form :model="form" :rules="rules" v-bind="args">
                     <ks-form-item label="Name" prop="name">
                         <ks-input v-model="form.name" placeholder="Enter name" />
                     </ks-form-item>
@@ -49,10 +49,12 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {labelPosition: "top", labelWidth: "", size: "default", disabled: false},
 }
 
 /** Inline form */
 export const InlineForm: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsForm, KsFormItem, KsInput, KsButton},
         setup() {
@@ -79,6 +81,7 @@ export const InlineForm: Story = {
 
 /** Inline row – `inline` on a KsFormItem keeps the label on the left and pushes the control to the right edge */
 export const InlineRow: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsForm, KsFormItem, KsInput},
         setup() {
@@ -107,8 +110,34 @@ export const InlineRow: Story = {
     },
 }
 
+/** Stacked – `stacked` on a KsFormItem puts each child of the content on its own full-width line */
+export const Stacked: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsForm, KsFormItem, KsButton},
+        template: `
+            <div style="padding:24px;max-width:420px">
+                <ks-form label-position="top">
+                    <ks-form-item stacked label="Tags">
+                        <ks-button>Add a tag</ks-button>
+                        <p>Labels shown next to the flow.</p>
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const content = canvasElement.querySelector(".kel-form-item.is-stacked .kel-form-item__content") as HTMLElement
+        await expect(content).toBeTruthy()
+        await expect(getComputedStyle(content).display).toBe("block")
+        const [button, help] = Array.from(content.children) as HTMLElement[]
+        await expect(help.getBoundingClientRect().top).toBeGreaterThanOrEqual(button.getBoundingClientRect().bottom)
+    },
+}
+
 /** Size control – form-level size affects all children */
 export const SizeControl: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsForm, KsFormItem, KsInput, KsButton},
         setup() {
@@ -134,6 +163,7 @@ export const SizeControl: Story = {
 }
 
 export const LabelPositions: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsForm, KsFormItem, KsInput},
         setup() {

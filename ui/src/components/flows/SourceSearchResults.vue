@@ -122,7 +122,7 @@
                                     secret('{{ secretKey(match.snippet) }}')
                                 </KsTag>
                                 <div v-else class="result-match-snippet">
-                                    <code v-html="renderSnippet(match.snippet)" />
+                                    <code><template v-for="(part, index) in snippetParts(match.snippet)" :key="index"><mark v-if="part.kind === 'match'">{{ part.old }}</mark><template v-else-if="part.kind === 'replace'"><del class="result-match-old">{{ part.old }}</del><template v-if="part.next"><span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">{{ part.next }}</ins></template></template><template v-else>{{ part.old }}</template></template></code>
                                 </div>
                                 <KsButton
                                     v-if="replaceContext && group.editable && !secretKey(match.snippet)"
@@ -190,7 +190,7 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <i18n-t keypath="source_search.searching_namespace" tag="span">
+                    <i18n-t keypath="source_search.searching_namespace" tag="span" scope="global">
                         <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                     </i18n-t>
                 </div>
@@ -202,7 +202,7 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <i18n-t keypath="source_search.namespace_search_failed" tag="span">
+                        <i18n-t keypath="source_search.namespace_search_failed" tag="span" scope="global">
                             <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                         </i18n-t>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>
@@ -245,7 +245,8 @@
                                 @keydown.enter="emit('select', {type: 'kv', namespace: group.namespace, key: entry.key})"
                             >
                                 <span class="result-row-icon"><DatabaseOutline /></span>
-                                <span class="result-key" v-html="renderTermHighlighted(entry.key)" />
+                                <!-- KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked. -->
+                                <span class="result-key"><HighlightedText :segments="buildTermHighlightSegments(entry.key, query, caseSensitive)" /></span>
                                 <span v-if="entry.updateDate" class="result-row-meta">
                                     <KsDateAgo :date="entry.updateDate" />
                                 </span>
@@ -289,7 +290,7 @@
                                     <template #icon>
                                         <Lock />
                                     </template>
-                                    <span v-html="renderHighlighted(entry.key)" />
+                                    <span><HighlightedText :segments="buildHighlightSegments(entry.key, query, caseSensitive)" /></span>
                                 </KsTag>
                             </div>
                         </div>
@@ -303,7 +304,6 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
-    import {escapeHtml} from "@kestra-io/design-system"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -319,11 +319,12 @@
     import Loading from "vue-material-design-icons/Loading.vue"
     import {useI18n} from "vue-i18n"
     import {inlineReplacement, type ReplaceContext, type SourceSearchResult, type SourceMatch} from "../../utils/sourceSearchDiff"
+    import HighlightedText from "../layout/HighlightedText.vue"
     import {
         SEARCH_RESOURCE_TYPES,
         buildPathSegments,
-        buildHighlightHtml,
-        buildTermHighlightHtml,
+        buildHighlightSegments,
+        buildTermHighlightSegments,
         crossSearchResultKey,
         type CrossSearchSelection,
         type SearchResourceType,
@@ -447,15 +448,6 @@
         return crossSearchResultKey(selection)
     }
 
-    function renderHighlighted(text: string) {
-        return buildHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
-    // KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked.
-    function renderTermHighlighted(text: string) {
-        return buildTermHighlightHtml(text, props.query, props.caseSensitive)
-    }
-
     watch(
         () => [props.flowsResults, props.filesNamespaces, props.kvGroups, props.secretsGroups],
         () => {
@@ -509,26 +501,24 @@
         return snippet.replaceAll("[mark]", "").replaceAll("[/mark]", "")
     }
 
-    function renderSnippet(snippet: string) {
+    type SnippetPart =
+        | {kind: "text" | "match"; old: string}
+        | {kind: "replace"; old: string; next: string}
+
+    function snippetParts(snippet: string): SnippetPart[] {
         return snippet
             .split(/(\[mark\][\s\S]*?\[\/mark\])/)
-            .map((part) => {
+            .map((part): SnippetPart => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return escapeHtml(part)
+                    return {kind: "text", old: part}
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${escapeHtml(old)}</mark>`
+                    return {kind: "match", old}
                 }
-                const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${escapeHtml(old)}</del>`
-                if (next === "") {
-                    return removed
-                }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${escapeHtml(next)}</ins>`
+                return {kind: "replace", old, next: inlineReplacement(old, props.replaceContext)}
             })
-            .join("")
     }
 
     function collapseAll() {

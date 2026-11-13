@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {use} from "echarts/core"
 import {BarChart, LineChart} from "echarts/charts"
 import KsEchart from "./KsEchart.vue"
-import {TooltipType} from "../../utils/chart"
+import {ChartRenderer, TooltipType} from "../../utils/chart"
 
 use([BarChart, LineChart])
 
@@ -15,6 +15,7 @@ const meta: Meta<typeof KsEchart> = {
     argTypes: {
         loading: {control: "boolean"},
         tooltipType: {control: "select", options: ["native", "external"]},
+        stickyTooltip: {control: "boolean"},
         renderer: {control: "select", options: ["canvas", "svg"]},
         maxPixelRatio: {control: {type: "number", min: 1, max: 3, step: 0.5}},
         disableFeatures: {
@@ -58,7 +59,14 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px;height:320px\"><ks-echart v-bind=\"{...args, options}\" /></div>",
     }),
-    args: {loading: false, tooltipType: TooltipType.NATIVE},
+    args: {
+        loading: false,
+        tooltipType: TooltipType.NATIVE,
+        stickyTooltip: false,
+        disableFeatures: [],
+        renderer: ChartRenderer.CANVAS,
+        maxPixelRatio: 2,
+    },
 }
 
 // ─── Bar chart ────────────────────────────────────────────────────────────────
@@ -83,6 +91,7 @@ export const SimpleBarChart: Story = {
         },
         template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 // ─── Mixed bar + area with multiple Y axes ────────────────────────────────────
@@ -123,6 +132,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
         template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" tooltip-type=\"external\" /></div>",
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story:
@@ -179,6 +189,7 @@ export const TripleYAxis: Story = {
         template: "<div style=\"padding:24px;height:360px\"><ks-echart :options=\"options\" /></div>",
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story: "Three independent y-axes: runs (bar, left), errors (bar, right-inner), latency ms (area, right-outer).",
@@ -217,11 +228,55 @@ export const ExternalTooltip: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story:
                     "With tooltipType=\"external\" the native ECharts tooltip is suppressed and KsTooltip is used instead. " +
                     "Move your cursor over the chart area to see the external tooltip.",
+            },
+        },
+    },
+}
+
+export const ExternalTooltipSeriesLabel: Story = {
+    render: () => ({
+        components: {KsEchart},
+        setup() {
+            const labels: Record<string, string> = {"by_priority.critical": "Critical", "by_priority.high": "High"}
+            const seriesData = [
+                {name: "by_priority.critical", data: [7, 9, 6, 8, 5, 7, 4]},
+                {name: "by_priority.high", data: [12, 10, 14, 11, 13, 12, 9]},
+                {name: "by_priority.low", data: [9, 8, 10, 7, 9, 11, 8]},
+            ]
+            return {
+                seriesLabel: (name: string) => labels[name],
+                options: {
+                    xAxis: {type: "category", data: CATEGORIES},
+                    yAxis: {type: "value"},
+                    tooltip: {trigger: "axis"},
+                    series: seriesData.map((s) => ({...s, type: "bar", stack: "total"})),
+                },
+            }
+        },
+        template: `
+            <div style="padding:24px;height:280px">
+                <ks-echart
+                    :options="options"
+                    tooltip-type="external"
+                    :seriesLabel="seriesLabel"
+                />
+            </div>
+        `,
+    }),
+    parameters: {
+        controls: {disable: true},
+        docs: {
+            description: {
+                story:
+                    "seriesLabel gives the external tooltip a display name per series, here Critical and High, " +
+                    "while the series keep their raw names for legend toggles and click handlers. " +
+                    "A series it returns nothing for, by_priority.low, keeps the default formatting.",
             },
         },
     },
@@ -243,6 +298,7 @@ export const Loading: Story = {
         },
         template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" :loading=\"true\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 // ─── Disabled features ────────────────────────────────────────────────────────
@@ -271,6 +327,7 @@ export const DisabledAxis: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story: "All non-data features disabled — ideal for sparkline / mini-chart usage.",
@@ -298,6 +355,7 @@ export const SvgRenderer: Story = {
         },
         template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" renderer=\"svg\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 // ─── Capped pixel ratio ───────────────────────────────────────────────────────
@@ -323,6 +381,7 @@ export const CappedPixelRatio: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story:

@@ -100,12 +100,11 @@ both dark themes) is a separate entry of the published package, imported once at
 import "@kestra-io/design-system/styleBase"
 ```
 
-In-repo consumers pull the SCSS source instead — this is what
-[`ui/src/styles/app.scss`](../../src/styles/app.scss) does:
+In-repo consumers pull the SCSS source instead, before the app's own stylesheet, as
+[`ui/src/App.vue`](../../src/App.vue) does:
 
-```scss
-@use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
-@use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
+```ts
+import "@kestra-io/design-system/src/assets/styles/index.scss"
 ```
 
 In feature code, read colors through `var(--ks-*)` in CSS, or `cssVar("--ks-status-success")` when
@@ -191,3 +190,7 @@ failures are the package's own suite and are reproducible with `npm run test`. A
 *Publish to npm* step leaves nothing published, but a failure **after** the *Commit and tag* step
 leaves the tag pushed: delete it (`git push origin :refs/tags/design-system/v<version>`) before
 re-running, or the next run will collide.
+
+## License
+
+[Apache 2.0](https://github.com/kestra-io/kestra/blob/develop/LICENSE)

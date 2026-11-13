@@ -20,6 +20,9 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
 }))
 
+// The store reads the route at setup, and here it is created outside any component.
+vi.mock("vue-router", () => ({useRoute: () => ({query: {}})}))
+
 // saveFlow()/createFlow() and validateFlow() go through the SDK's flows submodule, not
 // useClient()'s axios instance
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
@@ -182,6 +185,32 @@ describe("flow draft save — draft resolution per entry point", () => {
             .toMatchObject({body: savedDraftSource, draft: false})
         expect(outcome)
             .toBe("saved")
+    })
+
+    // The whole point of a draft is to be promoted one day, with or without further edits.
+    it("publishDraft() on an unchanged draft still publishes it (draft=false)", async () => {
+        const store = await freshStore()
+        store.flow = makeFlow(true)
+        store.flowYamlOrigin = VALID_FLOW
+        expect(store.haveChange).toBe(false)
+
+        const outcome = await store.publishDraft()
+
+        expect(lastUpdateFlowCall())
+            .toMatchObject({body: VALID_FLOW, draft: false})
+        expect(outcome)
+            .toBe("saved")
+    })
+
+    it("saveAll() on an unchanged published flow is a no-op", async () => {
+        const store = await freshStore()
+        store.flowYamlOrigin = VALID_FLOW
+
+        const outcome = await store.saveAll()
+
+        expect(updateFlow).not.toHaveBeenCalled()
+        expect(outcome)
+            .toBe("no_op")
     })
 
     it("publishDraft() with no target publishes the store's own in-progress source", async () => {

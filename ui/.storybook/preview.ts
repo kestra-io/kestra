@@ -4,38 +4,22 @@ import {setup, type Preview} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
 import initApp from "../src/utils/init"
 import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n"
-import {configureClient, useClient} from "@kestra-io/kestra-sdk"
+import {configureClient, setMockClient, useClient} from "@kestra-io/kestra-sdk"
 import {createMemoryHistory, type RouterOptions} from "vue-router"
 import {vueRouter} from "storybook-vue3-router"
-import "../src/styles/vendor.scss"
-import "../src/styles/app.scss"
+import "../src/styles/vendor.css"
+import "@kestra-io/design-system/src/assets/styles/index.scss"
+import "../src/styles/app.css"
 import en from "../src/translations/en.json"
+import {installLayoutSlots} from "./layoutSlots"
 
 window.KESTRA_BASE_PATH = "/ui/"
 window.KESTRA_UI_PATH = "./"
 
-// Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
-// TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
-// is mounted once at the layout root before any page's TopNavBar teleports
-// into it; Storybook has no such layout wrapper.
-//
-// These are appended directly to document.body — as plain DOM nodes, outside
-// Vue's own render tree — rather than rendered as template siblings in a
-// decorator. Teleport resolves its target via a synchronous
-// document.querySelector() call the instant it mounts; a decorator-rendered
-// sibling only reliably exists in time for components whose own mount is a
-// shallow, single synchronous pass. Components/Admin/Triggers renders
-// <TopNavBar> as a root element behind an extra layer of story/decorator
-// nesting, which raced the sibling into existing too late and printed
-// "Failed to locate Teleport target". Real, static body-level nodes created
-// once before any story ever mounts have no such race.
-for (const id of ["topnav-title-slot", "topnav-description-slot", "topnav-actions-slot"]) {
-  if (!document.getElementById(id)) {
-    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div")
-    el.id = id
-    document.body.appendChild(el)
-  }
-}
+const unmockedClient = {...useClient()}
+let renderError: unknown
+
+installLayoutSlots()
 
 const preview: Preview = {
   parameters: {
@@ -71,10 +55,25 @@ const preview: Preview = {
   // fix rather than at nothing.
   beforeEach({title, name}) {
     beginStoryScope(`${title} > ${name}`)
+    setMockClient(unmockedClient)
+    renderError = undefined
+    // Stories share one iframe, so a preference saved by one story would otherwise reach the next.
+    localStorage.clear()
+    sessionStorage.clear()
+  },
+  afterEach() {
+    if (renderError) {
+      throw renderError
+    }
   },
 }
 
 setup(async (app) => {
+  const reportError = app.config.errorHandler
+  app.config.errorHandler = (error, instance, info) => {
+    renderError ??= error
+    reportError?.(error, instance, info)
+  }
   const {piniaStore} = await initApp(app, [], {}, en)
   // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
   // noisy "Not found" warnings in Storybook (it already falls back to the key).

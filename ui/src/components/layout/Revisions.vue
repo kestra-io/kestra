@@ -28,9 +28,10 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
-                                <TrashCanOutline
+                                <Delete
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
                                     v-if="canDelete && item.value !== undefined && currentRevision !== item.value"
@@ -70,9 +71,10 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
-                                <TrashCanOutline
+                                <Delete
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
                                     v-if="canDelete && item.value !== undefined && currentRevision !== item.value"
@@ -130,7 +132,7 @@
     import * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
-    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -149,6 +151,7 @@
         updated?: string;  // ISO datetime string
         source?: string;
         draft?: boolean;
+        updatedBy?: string;
     }
 
     const {t} = useI18n()
@@ -176,10 +179,11 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
+        deleteRevision?: (revision: number) => Promise<unknown>,
         editRouteQuery?: boolean,
         canDelete?: boolean,
         highlight?: string
-    }>(), {editRouteQuery: true, canDelete: true})
+    }>(), {editRouteQuery: true, canDelete: true, deleteRevision: undefined})
 
     const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
@@ -231,7 +235,7 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return ""
 
-        return dateFilter(updatedDate, "YYYY-MM-DD HH:mm")
+        return dateFilter(updatedDate)
     }
 
     function formatRevisionText(revision: number): string {
@@ -268,7 +272,7 @@
     function options(excludeRevision: number | undefined) {
         return sortedRevisions.value
             .filter(rev => rev.revision !== excludeRevision)
-            .map(({revision, updated, draft}) => {
+            .map(({revision, updated, draft, updatedBy}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revision,
@@ -276,6 +280,7 @@
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
                     isDraft: draft === true,
+                    updatedBy,
                     text: formatRevisionText(revision),
                 }
             })
@@ -314,11 +319,15 @@
 
         toast.confirm(t("delete revision confirm", {revision}), async () => {
             try {
-                await flowStore.deleteRevision({
-                    namespace: route.params.namespace?.toString() || "",
-                    id: route.params.id?.toString() || "",
-                    revision: revision.toString(),
-                })
+                if (props.deleteRevision) {
+                    await props.deleteRevision(revision)
+                } else {
+                    await flowStore.deleteRevision({
+                        namespace: route.params.namespace?.toString() || "",
+                        id: route.params.id?.toString() || "",
+                        revision: revision.toString(),
+                    })
+                }
                 toast.success(t("revision deleted", {revision: revision.toString()}), t("deleted"))
                 emit("deleted", revision)
             } catch (error: unknown) {

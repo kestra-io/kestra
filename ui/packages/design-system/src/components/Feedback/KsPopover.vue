@@ -20,12 +20,12 @@
 <script setup lang="ts">
     import {ElPopover} from "element-plus"
     import type {PopoverProps} from "element-plus"
-    import {ref, watch} from "vue"
+    import {onBeforeUnmount, ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         visible?: boolean
         placement?: string
         trigger?: "click" | "hover" | "focus" | "contextmenu"
@@ -36,7 +36,7 @@
         disabled?: boolean
         title?: string
         content?: string
-    }>()
+    }>(), {visible: undefined, showArrow: false})
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]
@@ -50,6 +50,17 @@
 
     const internalVisible = ref(false)
 
+    // ElTooltip does not wire up Escape-to-close itself.
+    function handleEscapeKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") handleUpdateVisible(false)
+    }
+
+    // Must be declared before the props.visible watch below, and without `immediate`.
+    watch(internalVisible, (visible) => {
+        if (visible) document.addEventListener("keydown", handleEscapeKeydown)
+        else document.removeEventListener("keydown", handleEscapeKeydown)
+    })
+
     watch(() => props.visible, (val) => {
         if (val !== undefined) internalVisible.value = val
     }, {immediate: true})
@@ -58,6 +69,8 @@
         internalVisible.value = v
         emit("update:visible", v)
     }
+
+    onBeforeUnmount(() => document.removeEventListener("keydown", handleEscapeKeydown))
 
     const filteredProps = useFilteredProps(props, ["visible"])
 </script>

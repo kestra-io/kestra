@@ -90,6 +90,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (message.state().isPaused()) {
             return handlePaused(message);
         }
+        if (message.state().isBreakpoint()) {
+            return handleBreakpoint(message);
+        }
         if (message.state() == State.Type.RESTARTED) {
             return handleRestarted(message);
         }
@@ -101,6 +104,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         {
             try {
                 final FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                // the Loop task run was removed by a WorkingDirectory that runs again, which killed its iterations
+                if (execution.findTaskRunByTaskRunIdIfPresent(message.loopRun().taskRunId()).isEmpty()) {
+                    log.warn("Ignoring loop execution event for sub-execution {} as its Loop task run no longer exists", message.executionId());
+                    return null;
+                }
                 ExecutorContext executor = new ExecutorContext(execution, flow);
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
@@ -258,6 +266,22 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
                 return executor.withExecution(pausedExecution, "pausedLoopIteration");
             } catch (InternalException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
+    private Optional<ExecutorContext> handleBreakpoint(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            if (!execution.getState().getCurrent().onlyRunning()) {
+                return null;
+            }
+
+            try {
+                Execution suspended = executionService.suspendAtLoopBreakpoint(execution);
+                return new ExecutorContext(execution).withExecution(suspended, "loopIterationBreakpoint");
+            } catch (QueueException e) {
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             }
         });

@@ -34,11 +34,9 @@
         />
         <PrevNext :execution />
     </div>
-    <KsNoData
-        v-else
-        id="empty"
-        :description="$t('execution not found', {executionId: route.params.id})"
-    />
+    <KsNoData v-else id="empty">
+        {{ $t("execution not found", {executionId: route.params.id}) }}
+    </KsNoData>
 </template>
 
 <script setup lang="ts">
@@ -56,7 +54,7 @@
 
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
-    import Banner from "./components/Banner.vue"
+    import Banner from "../components/Banner.vue"
     import FailedTaskCard from "./components/FailedTaskCard.vue"
     import MobileSummary from "./components/MobileSummary.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"

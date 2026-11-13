@@ -111,6 +111,14 @@ class FlowGraphTest {
         String parallelEnd = cluster(flowGraph, "root\\.parent").getEnd();
         assertThat(edge(flowGraph, ".*t1", parallelEnd).getSource()).matches(".*parent\\.t1");
         assertThat(edge(flowGraph, ".*t4", parallelEnd).getSource()).matches(".*parent\\.t4");
+
+        // parallel branches keep the flow order so the topology layout is stable
+        assertThat(
+            flowGraph.getEdges().stream()
+                .filter(e -> e.getRelation().getRelationType() == RelationType.PARALLEL)
+                .map(e -> e.getTarget().replaceAll(".*\\.", ""))
+                .toList()
+        ).containsExactly("t1", "t2", "t3", "t4", "t5", "t6");
     }
 
     @Test
@@ -143,6 +151,18 @@ class FlowGraphTest {
         assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
         assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getValue()).isEqualTo("defaults");
         assertThat(edge(flowGraph, ".*t2", ".*t2_sub").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+    }
+
+    @Test
+    void shouldChainOnWaitBeforeTheDecisionBranchesForAnApproval() throws IllegalVariableEvaluationException, IOException {
+        FlowWithSource flow = this.parse("flows/valids/approval-basic.yaml");
+        FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
+
+        assertThat(edge(flowGraph, ".*approval", ".*approval\\.notify").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.approved").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.approved").getRelation().getValue()).isEqualTo("approve");
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.denied").getRelation().getValue()).isEqualTo("deny");
+        assertThat(edges(flowGraph, ".*approval")).noneMatch(target -> target.matches(".*approval\\.(approved|denied)"));
     }
 
     @Test

@@ -6,7 +6,7 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
 const ALL_STATES = [
-    "SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING",
+    "SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "PAUSING", "RETRYING", "KILLING",
     "PAUSED", "BREAKPOINT",
     "SUCCESS",
     "WARNING",
@@ -19,9 +19,9 @@ const executionsChart = (where?: unknown) => ({
     data: {type: EXECUTIONS, columns: {state: {field: "STATE"}}, ...(where ? {where} : {})},
 })
 
-const mountFilter = (chart: Record<string, unknown>) =>
+const mountFilter = (chart: Record<string, unknown>, showUpcoming = false) =>
     i18nMount(TableQuickFilter, {
-        props: {chart: chart as never},
+        props: {chart: chart as never, showUpcoming},
         global: {stubs: {Motion: true}},
     })
 
@@ -118,5 +118,29 @@ describe("TableQuickFilter", () => {
             {field: "state", operation: "IN", value: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"]},
             "failed",
         ])
+    })
+
+    describe("the Upcoming tab", () => {
+        it("is absent unless it is asked for", () => {
+            expect(tabButtons(mountFilter(executionsChart()))).toHaveLength(QUICK_FILTER_TABS.length)
+        })
+
+        it("is appended after the state tabs, so none of them moves", () => {
+            const buttons = tabButtons(mountFilter(executionsChart(), true))
+
+            expect(buttons).toHaveLength(QUICK_FILTER_TABS.length + 1)
+            expect(buttons.at(-1)!.text()).toContain("upcoming")
+        })
+
+        it("emits no state filter, even when the chart constrains STATE", async () => {
+            const wrapper = mountFilter(
+                executionsChart([{type: "IN", field: "STATE", values: ["RUNNING"]}]),
+                true,
+            )
+
+            await tabButtons(wrapper).at(-1)!.trigger("click")
+
+            expect(lastChange(wrapper)).toEqual([null, "upcoming"])
+        })
     })
 })

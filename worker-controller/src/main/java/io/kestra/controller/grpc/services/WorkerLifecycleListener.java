@@ -59,4 +59,10 @@ public interface WorkerLifecycleListener {
      */
     default void onWorkerSubscriptionsChanged(WorkerStreamContext<?> context, Set<String> added, Set<String> removed) {
     }
+
+    /**
+     * Fired after a worker reported new permits or completed jobs, so it may have free capacity again.
+     */
+    default void onWorkerCapacityChanged(WorkerStreamContext<?> context) {
+    }
 }

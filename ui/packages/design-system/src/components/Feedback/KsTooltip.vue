@@ -5,7 +5,7 @@
         transition=""
         :effect="props.effect ?? 'light'"
         v-bind="({...filteredProps(), ...$attrs} as UseTooltipProps)"
-        :popperClass="popperClass"
+        :popperClass="['ks-tooltip', props.popperClass]"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -16,45 +16,30 @@
     </ElTooltip>
 </template>
 
-<script setup lang="ts">
-    import {computed, useAttrs} from "vue"
-    import {ElTooltip} from "element-plus"
+<script lang="ts">
     import type {UseTooltipProps} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+
+    export interface KsTooltipProps extends Omit<UseTooltipProps, "trigger"> {
+        effect?: "light" | "dark"
+        /** "manual" attaches no trigger, so only `visible` opens the tooltip. */
+        trigger?: UseTooltipProps["trigger"] | "manual"
+    }
+</script>
+
+<script setup lang="ts">
+    import {ElTooltip} from "element-plus"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        content?: string
-        trigger?: "click" | "hover" | "focus" | "contextmenu" | "manual"
-        placement?: string
-        effect?: "light" | "dark"
-        enterable?: boolean
-        rawContent?: boolean
-        disabled?: boolean
-        autoClose?: boolean | number
-    }>(), {
-        content: undefined,
-        trigger: undefined,
-        placement: undefined,
-        effect: undefined,
-        enterable: undefined,
-        autoClose: undefined,
-    })
+    const props = defineProps<KsTooltipProps>()
 
     defineSlots<{
         default?(): unknown
         content?(): unknown
     }>()
 
-    const attrs = useAttrs()
-
-    const popperClass = computed(() => {
-        const extra = (attrs.popperClass as string | undefined) ?? ""
-        return `ks-tooltip ${extra}`.trim()
-    })
-
-    const filteredProps = useFilteredProps(props, ["effect"])
+    const filteredProps = usePassedProps(props, ["effect", "popperClass"])
 </script>
 
 <style lang="scss">

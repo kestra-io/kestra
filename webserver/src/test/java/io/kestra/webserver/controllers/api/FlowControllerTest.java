@@ -1178,7 +1178,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(20);
+        assertThat(namespaces.size()).isEqualTo(21);
     }
 
     @Test
@@ -1643,6 +1643,35 @@ class FlowControllerTest {
         // nothing when any id in the batch does not exist.
         String flow = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.deletebyidspartial/keepMe"), String.class);
         assertThat(flow).isNotNull();
+    }
+
+    @Test
+    void validateShouldRejectASearchableOutputOfAnUnsupportedType() {
+        String flow = """
+            id: searchable_outputs_validation
+            namespace: io.kestra.tests
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+
+            outputs:
+              - id: orderIds
+                type: ARRAY
+                value: ["a"]
+                searchable: true
+              - id: payload
+                type: JSON
+                value: "{}"
+                searchable: true
+            """;
+
+        List<ValidateConstraintViolation> body = client.toBlocking()
+            .retrieve(POST("/api/v1/main/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("The output 'payload' cannot be searchable").doesNotContain("The output 'orderIds'");
     }
 
     @Test

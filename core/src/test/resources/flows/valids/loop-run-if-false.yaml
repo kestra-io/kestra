@@ -1,0 +1,14 @@
+id: loop-run-if-false
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    runIf: "{{ false }}"
+    values: ["value 1", "value 2"]
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after the loop

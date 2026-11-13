@@ -77,7 +77,7 @@
                     </KsFormItem>
                 </KsTabPane>
                 <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
-                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" :replay="replay" />
                 </KsTabPane>
                 <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook.curl_command')" class="execution-pane">
                     <WebhookCurl :flow="flow" />
@@ -179,7 +179,9 @@
         buttonTestId?: string
         autoPrefill?: boolean
         renderLabels?: string[]
+        replay?: {executionId: string; taskRunId?: string; revision?: number}
     }>(), {
+        replay: undefined,
         redirect: true,
         embed: false,
         replaySubmit: null,
@@ -247,7 +249,7 @@
             }
         } catch (error) {
             if ((error as KestraHttpError)?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
+                toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
             }
         } finally {
             publishing.value = false

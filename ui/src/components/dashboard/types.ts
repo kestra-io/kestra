@@ -22,6 +22,13 @@ export interface ChartResults {
     ignoredFilters?: QueryFilterField[];
 }
 
+export interface ColorByValue {
+    value: string;
+    label?: string;
+    /** A hex color, or an execution state or log level name. */
+    color?: string;
+}
+
 export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;
@@ -39,6 +46,8 @@ export interface Chart extends ChartChartOption {
         limit?: number;
         /** Bar.vue and TimeSeries.vue: the column whose value colours and labels each stack. */
         colorByColumn?: string;
+        /** Pie, Bar and TimeSeries: label, color and order of the values the chart is split by. */
+        colorByValues?: ColorByValue[];
         [key: string]: unknown;
     };
     data?: {

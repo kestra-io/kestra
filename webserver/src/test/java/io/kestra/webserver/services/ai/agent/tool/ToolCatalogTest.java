@@ -73,7 +73,7 @@ class ToolCatalogTest {
         // how a replacement subclass extends a base tool
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL);
+        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL, new DefaultAgentToolCallScope());
         ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("tenant-echo").arguments("{}").build();
 
         // When — the spec is derived from the inherited @Tool method, execution dispatches virtually
@@ -123,7 +123,7 @@ class ToolCatalogTest {
     private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator);
+        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator, new DefaultAgentToolCallScope());
     }
 
     private static ToolExecutionRequest request(final String name) {

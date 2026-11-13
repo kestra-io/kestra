@@ -45,7 +45,6 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
-                    searchable: true,
                     colored: true,
                 },
                 {
@@ -61,7 +60,6 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                             value: taskRun.id,
                         }))
                     },
-                    searchable: true,
                 },
             ],
         }

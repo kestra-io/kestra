@@ -1,4 +1,3 @@
-import path from "path"
 import {defineConfig} from "tsdown"
 
 export default defineConfig({
@@ -7,17 +6,14 @@ export default defineConfig({
         "vue-flow-utils": "src/vue-flow-utils.ts",
     },
     platform: "browser",
-    exports: "ci-only",
+    exports: {
+        enabled: "ci-only",
+        customExports: {"./standalone.css": "./dist/standalone.css"},
+    },
+    copy: [{from: "src/standalone.css", to: "dist"}],
     fromVite: true,
     dts: {vue: true},
     deps: {
         neverBundle: ["@vue/reactivity"],
-    },
-    css: {
-        preprocessorOptions: {
-            scss: {
-                loadPaths: [path.resolve(import.meta.dirname, "../../node_modules")],
-            },
-        },
     },
 })

@@ -72,7 +72,7 @@ test.describe("AI Copilot", () => {
                 contentType: "text/event-stream",
                 body: sse([
                     ["token", {text: "I'll restart the failed execution."}],
-                    ["proposed_action", {confirmationId: "cf1", tool: "restart-execution", family: "MUTATE", summary: "Run restart-execution on exec-1"}],
+                    ["proposed_action", {confirmationId: "cf1", tool: "restart_execution", family: "MUTATE", summary: "Run restart_execution on exec-1"}],
                     ["done", {status: "AWAITING_CONFIRMATION"}],
                 ]),
             })
@@ -82,8 +82,8 @@ test.describe("AI Copilot", () => {
                 status: 200,
                 contentType: "text/event-stream",
                 body: sse([
-                    ["tool_call", {tool: "restart-execution", family: "MUTATE", arguments: {id: "exec-1"}}],
-                    ["tool_result", {tool: "restart-execution", outcome: "ok"}],
+                    ["tool_call", {tool: "restart_execution", family: "MUTATE", arguments: {id: "exec-1"}}],
+                    ["tool_result", {tool: "restart_execution", outcome: "ok"}],
                     ["token", {text: "Done — it's running again."}],
                     ["done", {status: "IDLE"}],
                 ]),
@@ -96,7 +96,7 @@ test.describe("AI Copilot", () => {
 
         const card = page.locator(D.card)
         await expect(card).toBeVisible()
-        await expect(card).toContainText("Run restart-execution on exec-1")
+        await expect(card).toContainText("Run restart_execution on exec-1")
         await expect(page.locator(D.input)).toBeDisabled()
 
         await page.locator(D.approve).click()
@@ -228,10 +228,11 @@ test.describe("AI Copilot", () => {
         await expect(draft).toContainText("id: demo")
 
         await page.locator(D.draftOpen).click()
-        // Hands the drafted YAML to the flow create editor via the blueprint-source handoff.
-        await page.waitForURL(/\/flows\/new\?.*blueprintId=copilot-draft/)
-        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
-        expect(new URL(page.url()).searchParams.get("blueprintSourceYaml")).toContain("id: demo")
+        // Hands the drafted YAML to the flow create editor through sessionStorage, keeping it out of the
+        // URL (a refresh of a URL carrying raw `|` characters made the server answer with a 500).
+        await page.waitForURL(/\/flows\/new\?copilotDraft=\d+$/)
+        expect(new URL(page.url()).searchParams.has("blueprintSourceYaml")).toBe(false)
+        await expect(page.getByTestId("monaco-editor").getByText("id: demo")).toBeVisible()
     })
 
     /** OSS cannot store dashboards (isCustomDashboardsEnabled: false), so the draft card hides its actions; the actionable path is covered by the EE suite. */
@@ -400,9 +401,9 @@ test.describe("AI Copilot", () => {
         await expect(alert).toContainText("The model provider is unavailable.")
     })
 
-    test("shows the unavailable state on a failed thread create, pointing at the docs", async ({page}) => {
-        // A 503 on thread creation (no provider configured) → the dedicated unavailable state,
-        // never the global not-found redirect.
+    test("keeps the chat and restores the prompt when thread creation is refused", async ({page}) => {
+        // A 503 on thread creation (provider unreachable) leaves the chat in place: the prompt goes
+        // back into the composer and an error alert explains, never a full-view screen.
         await page.route("**/api/v1/*/ai/threads", async (route) => {
             if (route.request().method() === "POST") {
                 await route.fulfill({status: 503, contentType: "application/json", body: "{}"})
@@ -413,12 +414,12 @@ test.describe("AI Copilot", () => {
         await page.locator(D.input).fill("hi")
         await page.locator(D.send).click()
 
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible()
-
-        // Configuring a provider is an instance-config change, so the only action is the docs link.
-        const docs = page.locator("[data-test=\"copilot-unavailable-docs\"]")
-        await expect(docs).toHaveAttribute("href", /kestra\.io\/docs\/ai-tools\/ai-copilot/)
-        await expect(docs).toHaveAttribute("target", "_blank")
+        const alert = page.locator("[data-test=\"copilot-not-sent\"]")
+        await expect(alert).toBeVisible()
+        await expect(alert).toContainText("Your prompt was not sent")
+        await expect(page.locator(D.input)).toHaveValue("hi")
+        await expect(page.locator(D.input)).toBeEnabled()
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeHidden()
     })
 })
 
@@ -447,23 +448,23 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await expect(help).toContainText("Slack")
     })
 
-    // kestra-io/kestra-ee#10739: an instance with no provider used to land on the unavailable state,
-    // so OSS users met a blank page. The page now opens as usual and only owns up once a prompt is
-    // sent — which never reaches the network, since `/configs` already said there's no provider.
-    test("opens the page as usual with no provider, and says so once a prompt is sent", async ({page}) => {
+    // With no provider the page opens as usual, says so up front and disables what cannot work
+    // (kestra-io/kestra#21124).
+    test("opens the page with a notice and a disabled composer when no provider is configured", async ({page}) => {
         await stubAiProviderConfigured(page, false)
         await disableProductTour(page)
         await page.goto("/ui/ai", {waitUntil: "load"})
 
         await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeHidden()
         await expect(page.locator("[data-test=\"copilot-help\"]")).toBeVisible()
 
-        await page.locator(D.input).fill("build me a flow")
-        await page.locator(D.send).click()
+        const notice = page.locator("[data-test=\"copilot-unavailable\"]")
+        await expect(notice).toBeVisible()
+        await expect(notice).toContainText("No AI provider is configured")
+        await expect(page.locator("[data-test=\"copilot-unavailable-docs\"]")).toHaveAttribute("target", "_blank")
 
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible()
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toContainText("No AI provider is configured")
-        await expect(page.locator(D.input)).toBeHidden()
+        await expect(page.locator(D.input)).toBeDisabled()
+        await expect(page.locator(D.send)).toBeDisabled()
+        await expect(page.locator("[data-test=\"copilot-suggestion\"]").first()).toBeDisabled()
     })
 })

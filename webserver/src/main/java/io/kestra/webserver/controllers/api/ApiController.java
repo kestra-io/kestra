@@ -31,7 +31,7 @@ public class ApiController {
             "  <link rel=\"shortcut icon\" type=\"image/png\" href=\"/static/favicon.png\" />\n" +
             "  <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'/>\n" +
             "  <link href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap\" rel=\"stylesheet\">\n" +
-            "  <script src='https://unpkg.com/rapidoc/dist/rapidoc-min.js'></script>\n" +
+            "  <script type=\"module\" src=\"" + getBasePath() + "/ui/vendor/rapidoc-min.js\"></script>\n" +
             "</head>\n" +
             "<body>\n" +
             "  <rapi-doc " +

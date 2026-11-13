@@ -2,8 +2,10 @@ package io.kestra.jdbc.repository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
+import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,21 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     );
 
     @Test
+    void shouldBuildColumnNameWithRootLocaleUnderTurkishLocale() {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            assertThat(this.getColumnName(QueryFilter.Field.FLOW_ID)).isEqualTo(DSL.quotedName("flow_id"));
+            assertThat(this.getConditionOnField(QueryFilter.Field.EXECUTION_ID, "anyValue", QueryFilter.Op.EQUALS, null)).isEqualTo(
+                DSL.field(DSL.quotedName("execution_id")).eq("anyValue")
+            );
+        } finally {
+            Locale.setDefault(previous);
+        }
+    }
+
+    @Test
     void defaultConditions() {
         Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field ->
         {
@@ -67,14 +84,15 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN, null)).isEqualTo(
                 DSL.field(columnName).notIn(List.of(assertValue))
             );
+            Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(
-                DSL.field(columnName).startsWith(assertValue)
+                searchColumn.startsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.ENDS_WITH, null)).isEqualTo(
-                DSL.field(columnName).endsWith(assertValue)
+                searchColumn.endsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.CONTAINS, null)).isEqualTo(
-                DSL.field(columnName).contains(assertValue)
+                searchColumn.contains(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.REGEX, null)).isEqualTo(
                 DSL.field(columnName).likeRegex(assertValue)
@@ -146,18 +164,19 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         String wildcardValue = "%";
         String underscoreValue = "_";
         Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
+        Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
 
         // When / Then — CONTAINS: metacharacter must be escaped, not treated as a wildcard
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS, null))
-            .isEqualTo(DSL.field(columnName).contains(wildcardValue));
+            .isEqualTo(searchColumn.contains(wildcardValue));
 
         // When / Then — STARTS_WITH: % in value must not produce an open-ended match
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.STARTS_WITH, null))
-            .isEqualTo(DSL.field(columnName).startsWith(wildcardValue));
+            .isEqualTo(searchColumn.startsWith(wildcardValue));
 
         // When / Then — ENDS_WITH: _ in value must not act as a single-char wildcard
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, underscoreValue, QueryFilter.Op.ENDS_WITH, null))
-            .isEqualTo(DSL.field(columnName).endsWith(underscoreValue));
+            .isEqualTo(searchColumn.endsWith(underscoreValue));
     }
 
     @Test

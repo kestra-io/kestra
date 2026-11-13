@@ -28,8 +28,8 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            :defaultSort="defaultSort"
+            @page-changed="onPageChanged"
             @ready="ready = true"
             @row-click="onRowClick"
             :mobileColumns="mobileColumns"
@@ -65,7 +65,7 @@
                 <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                     {{ $t("export") }}
                 </KsButton>
-                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="Delete">
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
@@ -211,7 +211,7 @@
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION) && canViewCharts"
                     prop="state"
                     :label="$t('execution statistics')"
                     className="row-graph"
@@ -291,7 +291,7 @@
             large
         >
             <template #header>
-                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ selectedFlow.id }}</code></template>
                 </i18n-t>
             </template>
@@ -312,6 +312,7 @@
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
+    import {usePageSize} from "../../composables/usePageSize"
     import {isPlainRowActivation} from "../../utils/rowNavigation"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
@@ -326,7 +327,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import Upload from "vue-material-design-icons/Upload.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
@@ -357,15 +358,17 @@
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+    import {defaultTimeRange} from "../executions/timeRangeWiden"
 
 
     const props = withDefaults(defineProps<{
@@ -493,6 +496,7 @@
     })
 
     const user = computed(() => authStore.user)
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)
@@ -547,7 +551,13 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "id", order: "ascending"})
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
+    }
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -685,7 +695,7 @@
     }
 
     function chartFilters(): QueryFilter[] {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        const DEFAULT_DURATION = defaultTimeRange(miscStore.configs?.chartDefaultDuration)
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,

@@ -21,20 +21,21 @@ const NOTIFICATION_ROUTES: Record<string, RouteResolver> = {
     ASYNC_OPERATION: resolveAsyncOperationRoute,
 }
 
-async function resolveExecutionRoute(notification: Notification): Promise<NotificationRoute | null> {
+export async function resolveExecutionRoute(notification: Notification): Promise<NotificationRoute | null> {
     const execution = await ExecutionsAPI.execution({executionId: notification.referenceId as string}).catch(() => null)
     return execution ? {name: "executions/update", params: {namespace: execution.namespace, flowId: execution.flowId, id: execution.id}} : null
 }
 
 function resolveAsyncOperationRoute(notification: Notification): NotificationRoute | null {
-    if (!notification.resourceType) {
+    const query = {"filters[operationId][EQUALS]": notification.referenceId as string}
+    switch (notification.resourceType) {
+    case "TRIGGER":
+        return {name: "admin/triggers", params: {tab: "manage"}, query}
+    case "EXECUTION":
+        return {name: "executions/list", params: {}, query}
+    default:
         return null
     }
-
-    const query = {"filters[operationId][EQUALS]": notification.referenceId as string}
-    return notification.resourceType === "TRIGGER"
-        ? {name: "admin/triggers", params: {tab: "manage"}, query}
-        : {name: "executions/list", params: {}, query}
 }
 
 export function registerNotificationRoute(type: string, resolver: RouteResolver) {

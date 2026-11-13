@@ -17,6 +17,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import type {
     AbstractTrigger,
+    Flow as SdkFlow,
     FlowWithSource,
     PagedResultsFlow,
     SourceSearchResult,
@@ -27,10 +28,12 @@ import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
+import {toFlowGraph} from "../utils/flowGraph"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
+import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
 
 const textYamlHeader = {
     headers: {
@@ -117,6 +120,12 @@ type SourceSearchOptions = {
  */
 export type FlowRevision = FlowWithSource & {revision: number}
 
+export interface FlowPreviewBanner {
+    message: string
+    actionLabel: string
+    onAction: () => void
+}
+
 /** `subflows` lists the subflow paths whose own graph is expanded inline. */
 type GraphSubflows = {params?: {subflows?: string | string[]}}
 
@@ -133,7 +142,8 @@ export function isSuccessfulFlowSaveOutcome(
 }
 
 export const useFlowStore = defineStore("flow", () => {
-    const flows = ref<Flow[]>()
+    /** A search result row: unlike the open `flow`, it carries no `source`. */
+    const flows = ref<SdkFlow[]>()
     const flow = ref<Flow>()
     const search = ref<SourceSearchResult[]>()
     const total = ref<number>(0)
@@ -158,11 +168,17 @@ export const useFlowStore = defineStore("flow", () => {
      *  read-only-preview banner can decline the active `previewSource` without depending on the AI
      *  dock's internal state directly. */
     const declinePreview = ref<(() => void) | null>(null)
+    /** Set with `previewSource` by a preview that is not a Copilot draft; unset, the banner falls back to Copilot's. */
+    const previewBanner = ref<FlowPreviewBanner>()
+    /** Registered by `FlowFileEditorTab.vue` (mirrors `filesSaveAll`'s pattern) so the toolbar's
+     *  error status can step through the violations the editor underlines without reaching into Monaco. */
+    const errorNavigation = ref<{count: number; revealNext: () => void} | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
+    const ksEditorWarnings = ref<string[]>([])
 
     const t = (key: string, values?: Record<string, unknown>) => {
         if (!globalI18n.value) {
@@ -178,22 +194,27 @@ export const useFlowStore = defineStore("flow", () => {
         saveAttempted.value = false
     })
 
-    watch(haveChange, (newValue) => {
+    watch(() => haveChange.value || hasDirtyEditorFiles.value, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
+
+    // Publishing a draft, or demoting a flow to a draft, is a save even when the source is unchanged.
+    function hasPendingSave(draft: boolean) {
+        return isCreating.value || haveChange.value || draft !== (flow.value?.draft ?? false)
+    }
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
         saveAttempted.value = true
         const isDraft = draft ?? flow.value?.draft ?? false
 
-        if (!haveChange.value && !isCreating.value) {
+        if (!hasPendingSave(isDraft)) {
             return "no_op"
         }
 
         if (!flow.value) return "blocked"
         const source = flowYaml.value
         const validation = await onEdit({source})
-        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+        if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
             return "no_op"
         }
         const outcome = await saveWithoutRevisionGuard(isDraft)
@@ -203,19 +224,9 @@ export const useFlowStore = defineStore("flow", () => {
         return outcome
     }
 
-    function confirmOutdatedSave(): Promise<boolean> {
+    function confirmFlowOutdatedSave(): Promise<boolean> {
         const key = "outdated revision save confirmation.update"
-        return KsMessageBox({
-            title: t(`${key}.title`),
-            message: () => h("div", null, [
-                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
-            ]),
-            showCancelButton: true,
-            confirmButtonText: t("ok"),
-            cancelButtonText: t("cancel"),
-            center: false,
-            showClose: false,
-        }).then(() => true).catch(() => false)
+        return confirmOutdatedSave(t, `${t(`${key}.description`)} ${t(`${key}.details`)}`)
     }
 
     async function saveAsDraft(): Promise<FlowSaveOutcome> {
@@ -233,7 +244,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (source) {
             const validation = await onEdit({source})
-            if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
                 return "no_op"
             }
             const outcome = await saveWithoutRevisionGuard(draft)
@@ -338,7 +349,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         if (inFlightSave) return inFlightSave
-        if (!isCreating.value && !haveChange.value) return "no_op"
+        if (!hasPendingSave(draft)) return "no_op"
         inFlightSave = performSave(draft)
         try {
             return await inFlightSave
@@ -485,7 +496,7 @@ export const useFlowStore = defineStore("flow", () => {
 
             else {
                 if (options.commit !== false && search === latestFlowSearch) {
-                    flows.value = response.results as unknown as Flow[]
+                    flows.value = response.results
                     total.value = response.total ?? 0
                 }
 
@@ -515,7 +526,7 @@ export const useFlowStore = defineStore("flow", () => {
     let latestFlowLoadKey: string | undefined
 
     async function loadFlow(
-        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, optional?: boolean },
     ) {
         const key = `${options.namespace}/${options.id}`
         if (options.store !== false) {
@@ -534,6 +545,10 @@ export const useFlowStore = defineStore("flow", () => {
             // A deleted flow answers 404 with a problem document rather than the flow, and the one
             // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
             if (options.deleted && (e as KestraHttpError).status === 404) {
+                return {} as Flow & {exception?: string}
+            }
+            // A caller that only enriches its own view with the flow (the execution topology) does without it when forbidden.
+            if (options.optional && handledIf(e, [403])) {
                 return {} as Flow & {exception?: string}
             }
             throw e
@@ -571,6 +586,7 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
+        previewBanner.value = undefined
         readonlyToastShown.value = false
 
         return data
@@ -680,7 +696,11 @@ export const useFlowStore = defineStore("flow", () => {
             return inFlight
         }
 
-        const request = requestDependencies(options, onlyCount)
+        // A count only feeds a badge, so a user who cannot read the dependencies sees none rather than an error.
+        const request = requestDependencies(options, onlyCount).catch((e: unknown): Awaited<ReturnType<typeof requestDependencies>> => {
+            if (!handledIf(e, [403])) throw e
+            return {count: 0}
+        })
         inFlightDependencyCounts.set(key, request)
         // Both handlers, so this derived promise never becomes an unhandled rejection.
         const settle = () => {
@@ -759,7 +779,7 @@ function deleteFlowAndDependencies() {
             subflows: options.params?.subflows,
         }).then(data => {
             invalidGraph.value = false
-            flowGraph.value = data as unknown as FlowGraph
+            flowGraph.value = toFlowGraph(data)
             return flowGraph.value
         }).catch(() => {
             invalidGraph.value = true
@@ -780,7 +800,7 @@ function deleteFlowAndDependencies() {
         )
             .then(data => {
                 invalidGraph.value = false
-                flowGraph.value = data as unknown as FlowGraph
+                flowGraph.value = toFlowGraph(data)
 
                 const flowVar = YAML_UTILS.parse<Flow>(options.flow)
                 if (flowVar) {
@@ -805,7 +825,7 @@ function deleteFlowAndDependencies() {
 
                 if ([404, 422].includes(status) && subflows && subflows.length > 0) {
                     coreStore.message = {
-                        title: "Couldn't expand subflow",
+                        title: t("topology-graph.expand_subflow_error"),
                         content: asProblem(error)?.detail,
                         variant: "error",
                     }
@@ -824,7 +844,7 @@ function deleteFlowAndDependencies() {
         if (!flowParsed?.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource}).then(toFlowGraph)
     }
 
     function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {
@@ -1088,6 +1108,8 @@ function deleteFlowAndDependencies() {
         saveAttempted,
         previewSource,
         declinePreview,
+        previewBanner,
+        errorNavigation,
         haveChange,
         expandedSubflows,
         addTrigger,
@@ -1126,5 +1148,6 @@ function deleteFlowAndDependencies() {
         loadTasksWithMetrics,
         getNamespace,
         deleteRevision,
+        ksEditorWarnings,
     }
 })

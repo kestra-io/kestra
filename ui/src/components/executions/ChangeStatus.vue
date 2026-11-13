@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
+        <span v-if="labeled || component !== 'KsButton'">{{ $t('change state') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -14,7 +14,7 @@
 
             <template #default>
                 <p>
-                    <i18n-t keypath="change state confirm" tag="span">
+                    <i18n-t keypath="change state confirm" tag="span" scope="global">
                         <template #task><code>{{ taskRun?.taskId ?? '' }}</code></template>
                         <template #id><code>{{ execution.id }}</code></template>
                     </i18n-t>
@@ -23,7 +23,7 @@
                 </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun?.state?.current ?? ''" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="status-badge" :status="taskRun?.state?.current ?? ''" />
                 </p>
 
                 <KsSelect
@@ -37,15 +37,15 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <i18n-t keypath="mark as" tag="span">
+                            <KsExecutionStatus size="small" :label="true" class="status-badge" :status="item.code" />
+                            <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
                         </template>
                     </KsOption>
                 </KsSelect>
 
-                <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
+                <div v-if="selectedStatus" class="alert-status-change" role="alert">
                     <ul>
                         <li v-for="(text, i) in ($tm('change state hint') as Record<string, string[]>)[selectedStatus]" :key="i">
                             {{ $rt(text) }}
@@ -84,11 +84,13 @@
 
     const props = withDefaults(defineProps<{
         component?: string
+        labeled?: boolean
         execution: Execution
         taskRun?: TaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
+        labeled: false,
         taskRun: undefined,
         attemptIndex: undefined,
     })
@@ -165,8 +167,14 @@
 </script>
 
 <style scoped>
+    .status-badge {
+        margin-right: var(--ks-spacing-1);
+    }
+
     .alert-status-change {
-        ul {
+        margin-top: var(--ks-spacing-2);
+
+        & ul {
             margin-bottom: 0;
             padding-left: 10px;
         }

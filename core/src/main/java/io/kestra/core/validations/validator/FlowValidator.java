@@ -17,11 +17,13 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
@@ -72,13 +74,13 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(Task::getId)
             .toList();
 
-        List<String> duplicateIds = getDuplicates(taskIds);
+        List<String> duplicateIds = ListUtils.getDuplicates(taskIds);
 
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate task id with name [" + String.join(", ", duplicateIds) + "]");
         }
 
-        duplicateIds = getDuplicates(value.allTriggerIds());
+        duplicateIds = ListUtils.getDuplicates(value.allTriggerIds());
 
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate trigger id with name [" + String.join(", ", duplicateIds) + "]");
@@ -94,7 +96,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         // input unique name (top-level): catches two top-level entries sharing an id even when their
         // expanded child paths are disjoint (e.g. two FORMs both named 'environment').
-        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
+        duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate input with name [" + String.join(", ", duplicateIds) + "]");
         }
@@ -103,7 +105,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         List<String> expandedPaths = Input.collectExpandedPaths(value.getInputs());
         // Only dotted paths are form-relevant: a duplicate bare path can only be two top-level non-FORM inputs,
         // already reported by the top-level "Duplicate input with name" check above.
-        List<String> duplicatePaths = getDuplicates(expandedPaths).stream().filter(path -> path.contains(".")).toList();
+        List<String> duplicatePaths = ListUtils.getDuplicates(expandedPaths).stream().filter(path -> path.contains(".")).toList();
         if (!duplicatePaths.isEmpty()) {
             violations.add("Duplicate input path [" + String.join(", ", duplicatePaths) + "]");
         }
@@ -114,16 +116,30 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 }
             }
         }
-        checkFlowInputsDependencyGraph(value, violations);
+        violations.addAll(inputDependencyViolations(value.getInputs()));
 
         // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
         // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
         violations.addAll(eeOnlyInputsViolations(value.getInputs()));
 
         // output unique name
-        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
+        duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
+        }
+
+        // searchable inputs and outputs share one table keyed by id, so the same id on both sides would overwrite each other
+        Set<String> searchableInputIds = ListUtils.emptyOnNull(value.getInputs()).stream()
+            .filter(input -> Boolean.TRUE.equals(input.getSearchable()))
+            .map(Data::getId)
+            .collect(Collectors.toSet());
+        List<String> searchableIdsInBoth = ListUtils.emptyOnNull(value.getOutputs()).stream()
+            .filter(output -> Boolean.TRUE.equals(output.getSearchable()))
+            .map(Data::getId)
+            .filter(searchableInputIds::contains)
+            .toList();
+        if (!searchableIdsInBoth.isEmpty()) {
+            violations.add("The id [%s] cannot be searchable on both an input and an output, searchable data is keyed by id.".formatted(String.join(", ", searchableIdsInBoth)));
         }
 
         findMissingInputsForTriggers(value).forEach(violations::add);
@@ -298,15 +314,19 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             );
     }
 
-    private static void checkFlowInputsDependencyGraph(final Flow flow, final List<String> violations) {
-        if (ListUtils.isEmpty(flow.getInputs()))
-            return;
+    /**
+     * @return every input that depends on an input that doesn't exist, or on itself through other inputs
+     */
+    public static List<String> inputDependencyViolations(@Nullable List<Input<?>> inputs) {
+        List<String> violations = new ArrayList<>();
+        if (ListUtils.isEmpty(inputs))
+            return violations;
 
         Map<String, List<String>> graph = new HashMap<>();
         // Expand FORMs so children enter the graph keyed by their dotted path. A child referencing a sibling
         // must write the full dotted path (e.g. 'environment.data_center'); a bare ref resolves to no node and
         // is rejected below ("depends on a non-existent input"), so the no-auto-rewrite contract fails loudly.
-        for (Input<?> input : flow.resolvableInputs()) {
+        for (Input<?> input : Input.expandToLeaves(inputs)) {
             graph.putIfAbsent(input.getId(), new ArrayList<>());
             if (input.getDependsOn() != null && !ListUtils.isEmpty(input.getDependsOn().inputs())) {
                 graph.get(input.getId()).addAll(input.getDependsOn().inputs());
@@ -328,14 +348,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 violations.add(String.format("Cycle dependency detected for input with id '%s': %s", key, list));
             });
         });
-
-    }
-
-    protected static List<String> getDuplicates(List<String> taskIds) {
-        return taskIds.stream()
-            .distinct()
-            .filter(entry -> Collections.frequency(taskIds, entry) > 1)
-            .toList();
+        return violations;
     }
 
     /**
@@ -426,12 +439,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     /**
      * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
      * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
-     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types). A
+     * {@code TABLE} is checked cell by cell against its columns, with each message prefixed by its row and column.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
+    public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
         if (rawValue == null) {
             return Optional.empty();
+        }
+
+        if (input instanceof TableInput table) {
+            return tableLiteralValueViolation(table, rawValue);
         }
 
         String asString = rawValue.toString();
@@ -460,6 +478,83 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         return Optional.empty();
+    }
+
+    private static Optional<String> tableLiteralValueViolation(TableInput table, Object rawValue) {
+        List<String> messages = tableLiteralValueViolations(table, rawValue).stream()
+            .map(TableCellViolation::toString)
+            .toList();
+        return messages.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", messages));
+    }
+
+    /**
+     * @return every reason a literal {@code TABLE} value cannot satisfy the table and its columns, each one located on
+     * the row and column it is about, or on the whole table when both are null.
+     */
+    public static List<TableCellViolation> tableLiteralValueViolations(TableInput table, Object rawValue) {
+        List<?> rows;
+        try {
+            rows = rawValue instanceof List<?> list ? list : JacksonMapper.toList(rawValue.toString());
+        } catch (Exception e) {
+            return PebbleUtil.containsOpeningBlockDelimiter(rawValue.toString())
+                ? List.of()
+                : List.of(new TableCellViolation(null, null, "`%s` is not a valid TABLE value".formatted(rawValue)));
+        }
+
+        List<TableCellViolation> violations = new ArrayList<>();
+        if (ListUtils.isEmpty(table.getFilters())) {
+            try {
+                table.validate(rows);
+            } catch (ConstraintViolationException e) {
+                e.getConstraintViolations().forEach(violation -> violations.add(new TableCellViolation(null, null, violation.getMessage())));
+            }
+        }
+
+        List<Input<?>> columns = ListUtils.emptyOnNull(table.getColumns());
+        Set<String> declared = columns.stream().map(Input::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        for (int row = 0; row < rows.size(); row++) {
+            if (!(rows.get(row) instanceof Map<?, ?> cells)) {
+                violations.add(new TableCellViolation(row, null, "expected an object"));
+                continue;
+            }
+
+            int index = row;
+            cells.keySet().stream()
+                .map(String::valueOf)
+                .filter(key -> !declared.contains(key))
+                .forEach(key -> violations.add(new TableCellViolation(index, key, "it is not declared")));
+
+            for (Input<?> column : columns) {
+                Object value = cells.get(column.getId());
+                if (value instanceof String s && s.isEmpty() && !FlowInputOutput.isTextType(column.getType())) {
+                    value = null;
+                }
+                if (value == null) {
+                    if (Boolean.TRUE.equals(column.getRequired())) {
+                        violations.add(new TableCellViolation(row, column.getId(), "missing required value"));
+                    }
+                    continue;
+                }
+                literalValueViolation(column, value).ifPresent(message -> violations.add(new TableCellViolation(index, column.getId(), message)));
+            }
+        }
+        return violations;
+    }
+
+    /**
+     * @param row the 0-based row index, or null when the violation is about the whole table
+     * @param column the column id, or null when the violation is about the whole row or table
+     */
+    public record TableCellViolation(@Nullable Integer row, @Nullable String column, String message) {
+        @Override
+        public String toString() {
+            if (row == null) {
+                return message;
+            }
+            return column == null
+                ? "row %d: %s".formatted(row + 1, message)
+                : "row %d, column `%s`: %s".formatted(row + 1, column, message);
+        }
     }
 
     /**

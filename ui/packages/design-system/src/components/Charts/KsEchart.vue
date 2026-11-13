@@ -40,16 +40,19 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, watch} from "vue"
 
-    import {useElementSize} from "@vueuse/core"
+    import {useDevicePixelRatio, useElementSize} from "@vueuse/core"
     import VChart from "vue-echarts"
     import {use, type ECharts} from "echarts/core"
     import {CanvasRenderer, SVGRenderer} from "echarts/renderers"
+    import type CanvasPainter from "zrender/lib/canvas/Painter"
+    import type {ZRCanvasRenderingContext} from "zrender/lib/core/types.js"
     import {GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, GraphicComponent} from "echarts/components"
 
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
     import {categoryLabel, deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
+    import {escapeHtml} from "../../utils/lang"
 
     defineOptions({inheritAttrs: false})
 
@@ -83,6 +86,8 @@
             renderer?: ChartRenderer
             /** Upper bound for the canvas pixel ratio. Trades a little sharpness on high-DPI screens for a much smaller canvas; leave unset to render at full device resolution. */
             maxPixelRatio?: number
+            /** EXTERNAL only: text shown for a series, or a pie slice, in the tooltip; returning undefined keeps the default formatting of its name. */
+            seriesLabel?: (name: string) => string | undefined
         }>(),
         {
             loading: false,
@@ -92,16 +97,26 @@
             data: null,
             renderer: ChartRenderer.CANVAS,
             maxPixelRatio: undefined,
+            seriesLabel: undefined,
         },
     )
 
+    const cappedPixelRatio = (ratio: number): number => {
+        if (props.maxPixelRatio === undefined) {
+            return ratio
+        } else {
+            return Math.min(ratio, props.maxPixelRatio)
+        }
+    }
+
+    const {pixelRatio} = useDevicePixelRatio()
+
     // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
     // a page holding many charts affordable on a high-DPI screen.
+    // Read from window rather than pixelRatio: a reactive initOptions makes vue-echarts re-create the chart on every zoom.
     const initOptions = computed(() => ({
         renderer: props.renderer,
-        ...(props.maxPixelRatio === undefined
-            ? {}
-            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+        devicePixelRatio: cappedPixelRatio(window.devicePixelRatio || 1),
     }))
 
     const isDark = ref(false)
@@ -204,6 +219,11 @@
         return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
     }
 
+    function displayName(name: string): string {
+        const label = props.seriesLabel?.(name)
+        return label === undefined ? categoryLabel(name) : escapeHtml(label)
+    }
+
     function buildContentFromParams(params: unknown): string {
         const list: EChartsTooltipParam[] = Array.isArray(params) ? params : [params as EChartsTooltipParam]
         if (!list.length) return ""
@@ -214,7 +234,7 @@
         const category = list[0]?.name ?? ""
 
         if (category) {
-            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? categoryLabel(category) : category}</div>`)
+            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? displayName(category) : category}</div>`)
         }
 
         for (const p of list) {
@@ -227,7 +247,7 @@
             const swatch = p.seriesType === "line"
                 ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
-            const label = isPie ? "" : categoryLabel(p.seriesName ?? "")
+            const label = isPie ? "" : displayName(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(
                 `<div style="display:flex;align-items:center;gap:6px;line-height:18px;white-space:nowrap">${swatch}<span style="flex:1">${label}</span><span style="margin-left:12px">${value}${suffix}</span></div>`,
@@ -270,6 +290,22 @@
     }
 
     watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
+
+    /** zrender fixes the canvas pixel ratio at init with no setter, and re-initialising on zoom would drop the layout, camera and listeners callers set on the instance. */
+    watch(pixelRatio, (ratio) => {
+        const painter = (vChartRef.value?.chart as ECharts | undefined)?.getZr().painter as CanvasPainter | undefined
+        const dpr = cappedPixelRatio(ratio)
+        if (painter?.type !== "canvas" || painter.dpr === dpr) {
+            return
+        }
+        painter.dpr = dpr
+        painter.eachLayer((layer) => {
+            const ctx = layer.ctx as ZRCanvasRenderingContext
+            layer.dpr = ctx.dpr = dpr
+            layer.resize(painter.getWidth(), painter.getHeight())
+        })
+        painter.refresh(true)
+    })
 
     onUnmounted(() => bindZr())
 

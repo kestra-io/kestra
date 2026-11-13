@@ -14,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 
@@ -192,6 +193,26 @@ public class StorageContext {
         }
 
         return Optional.of(matcher.group(2));
+    }
+
+    /**
+     * Tells whether the path points inside the storage folder of the given execution.
+     */
+    public static boolean isInExecutionStorage(Execution execution, URI path) {
+        String executionPrefix = forExecution(execution).getExecutionStorageURI().getPath() + "/";
+        return path.getPath() != null && path.getPath().startsWith(executionPrefix);
+    }
+
+    /**
+     * Tells whether the path is under the namespace files prefix of the given namespace, without parent traversal.
+     * <p>
+     * This only checks the prefix: a child namespace named {@code _files} stores its flows under the same one, so
+     * the file must still be resolved through {@link Namespace}.
+     */
+    public static boolean isInNamespaceFiles(String namespace, URI path) {
+        return path.getPath() != null
+            && !FileUtils.isParentTraversal(path)
+            && path.getPath().startsWith(namespaceFilePrefix(namespace) + "/");
     }
 
     /**

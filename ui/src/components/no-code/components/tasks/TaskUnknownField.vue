@@ -1,5 +1,5 @@
 <template>
-    <KsFormItem :data-test="`unknown-field-${fieldKey}`">
+    <KsFormItem stacked :data-test="`unknown-field-${fieldKey}`">
         <template #label>
             <div class="unknown-head">
                 <span class="label">{{ fieldKey }}</span>
@@ -8,7 +8,7 @@
                     :aria-label="$t('no_code.remove.default')"
                     @click="emit('remove')"
                 >
-                    <TrashCanOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </template>
@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import FieldValidationErrors from "../FieldValidationErrors.vue"
 
     const props = defineProps<{fieldKey: string, value: unknown, errors: string[]}>()

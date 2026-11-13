@@ -140,12 +140,10 @@ public class TaskLogLineMatcher {
         }
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
-            Map<String, Object> otlpOutputs = forwardOtlp(logger, runContext, instant, match.otlp(), logData, true);
-            if (!otlpOutputs.isEmpty()) {
-                Map<String, Object> outputs = new HashMap<>(match.outputs());
-                outputs.putAll(otlpOutputs);
-                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp(), match.checkpoints());
-            }
+            List<String> outputFiles = new ArrayList<>(match.outputFiles());
+            Map<String, Object> outputs = new HashMap<>(match.outputs());
+            outputs.putAll(forwardOtlp(logger, runContext, instant, match.otlp(), logData, true, outputFiles));
+            return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp(), match.checkpoints(), outputFiles);
         }
 
         return match;
@@ -219,11 +217,11 @@ public class TaskLogLineMatcher {
      * untouched as they are only exposed to the caller for now.
      */
     protected void handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
-        forwardOtlp(logger, runContext, instant, record, data, false);
+        forwardOtlp(logger, runContext, instant, record, data, false, new ArrayList<>());
     }
 
     // Only framed lines handle markers in log bodies, as parseOtlp has no way to return their outputs.
-    private Map<String, Object> forwardOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data, boolean handleMarkers) {
+    private Map<String, Object> forwardOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data, boolean handleMarkers, List<String> outputFiles) {
         Map<String, Object> outputs = new HashMap<>();
         ListUtils.emptyOnNull(record.resourceLogs()).stream()
             .flatMap(resourceLogs -> ListUtils.emptyOnNull(resourceLogs.scopeLogs()).stream())
@@ -233,9 +231,10 @@ public class TaskLogLineMatcher {
                 try {
                     Instant logInstant = toInstant(logRecord.timeUnixNano(), instant);
                     String body = logRecord.body() != null ? logRecord.body().asText() : null;
-                    Optional<Map<String, Object>> markerOutputs = handleMarkers && body != null ? markerOutputs(body, logger, runContext, logInstant) : Optional.empty();
-                    if (markerOutputs.isPresent()) {
-                        outputs.putAll(markerOutputs.get());
+                    Optional<TaskLogMatch> marker = handleMarkers && body != null ? markerMatch(body, logger, runContext, logInstant) : Optional.empty();
+                    if (marker.isPresent()) {
+                        outputs.putAll(marker.get().outputs());
+                        outputFiles.addAll(marker.get().outputFiles());
                         return;
                     }
 
@@ -265,9 +264,9 @@ public class TaskLogLineMatcher {
     }
 
     // A body that only looks like a marker is logged as text, as it was before markers were handled here.
-    private Optional<Map<String, Object>> markerOutputs(String body, Logger logger, RunContext runContext, Instant instant) {
+    private Optional<TaskLogMatch> markerMatch(String body, Logger logger, RunContext runContext, Instant instant) {
         try {
-            return matches(body, logger, runContext, instant).map(TaskLogMatch::outputs);
+            return matches(body, logger, runContext, instant);
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -351,9 +350,11 @@ public class TaskLogLineMatcher {
 
             String[] tags = otlpAttributesToTags(dataPoint.attributes());
             Instant timestamp = toInstant(dataPoint.timeUnixNano(), instant);
-            entries.add(isDeltaSum
-                ? Counter.of(metric.name(), description, value, timestamp, tags)
-                : Gauge.of(metric.name(), description, value, timestamp, tags));
+            entries.add(
+                isDeltaSum
+                    ? Counter.of(metric.name(), description, value, timestamp, tags)
+                    : Gauge.of(metric.name(), description, value, timestamp, tags)
+            );
         }
 
         return entries;
@@ -391,7 +392,8 @@ public class TaskLogLineMatcher {
      * @param logs additional log lines derived from the matched line, if any
      * @param assets assets emitted through the matched line, if any
      * @param otlp an OpenTelemetry record captured from the matched line, if any (the key spelling
-     *             follows the kotlp {@code ::{"otlp":...}::} framing)
+     *        follows the kotlp {@code ::{"otlp":...}::} framing)
+     * @param outputFiles exact file paths relative to the task working directory, collected after execution
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,
@@ -399,7 +401,18 @@ public class TaskLogLineMatcher {
         List<LogLine> logs,
         AssetEmit assets,
         OtlpRecord otlp,
-        Map<String, String> checkpoints) {
+        Map<String, String> checkpoints,
+        List<String> outputFiles) {
+        public TaskLogMatch(Map<String, Object> outputs, List<AbstractMetricEntry<?>> metrics, List<LogLine> logs,
+            AssetEmit assets, OtlpRecord otlp, Map<String, String> checkpoints) {
+            this(outputs, metrics, logs, assets, otlp, checkpoints, List.of());
+        }
+
+        @Override
+        public List<String> outputFiles() {
+            return Optional.ofNullable(outputFiles).orElse(List.of());
+        }
+
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

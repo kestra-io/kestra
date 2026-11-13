@@ -4,10 +4,19 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.channels.Channels;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.SecureDirectoryStream;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.util.*;
@@ -19,6 +28,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
@@ -39,8 +49,10 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.UnixModeToPosixFilePermissions;
@@ -691,8 +703,16 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         );
                     }
 
-                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                        downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
+                    if (FileHandlingStrategy.VOLUME.equals(strategy) && (filesVolumeName != null || !defaultLogConsumer.getOutputFiles().isEmpty())) {
+                        try {
+                            downloadOutputFiles(
+                                runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled || !defaultLogConsumer.getOutputFiles().isEmpty()
+                            );
+                        } catch (IOException e) {
+                            failure.setOutputFilesException(e);
+                            failure.addSuppressed(e);
+                            logger.warn("Unable to download output files after the command failed", e);
+                        }
                     }
 
                     throw failure;
@@ -700,8 +720,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
+                if (FileHandlingStrategy.VOLUME.equals(strategy) && (filesVolumeName != null || !defaultLogConsumer.getOutputFiles().isEmpty())) {
+                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled || !defaultLogConsumer.getOutputFiles().isEmpty());
                 }
 
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult> builder()
@@ -824,36 +844,146 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
      * outputs we surface the failure — the caller is waiting for those files. When it declared none, the download is
      * only a best-effort working-directory sync, so we log and continue rather than fail an otherwise successful run.
      *
-     * @param outputsDeclared whether the task declared {@code outputFiles} or enabled the output directory
+     * @param outputsDeclared whether the task declared or announced output files, or enabled the output directory
      */
     private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands, boolean outputsDeclared) throws IOException {
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
-        try (
-            InputStream is = copyArchiveFromContainerCmd.exec();
-            TarArchiveInputStream tar = new TarArchiveInputStream(is)
-        ) {
-            TarArchiveEntry entry;
-            while ((entry = tar.getNextEntry()) != null) {
-                // each entry contains the working directory as the first part, we need to remove it
-                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() + 1)));
-                if (entry.isDirectory()) {
-                    if (!Files.exists(extractTo)) {
-                        Files.createDirectories(extractTo);
-                    }
-                } else {
-                    Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
-                    try {
-                        Files.setPosixFilePermissions(extractTo, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
-                    } catch (UnsupportedOperationException | IOException e) {
-                        // File system does not support POSIX permissions (e.g., Windows)
-                    }
-                }
+        Set<Path> announcedFiles = new HashSet<>();
+        for (String filename : taskCommands.getLogConsumer().getOutputFiles()) {
+            if (filename == null) {
+                throw new IOException("Announced output file paths must not be null.");
             }
+            try {
+                announcedFiles.add(Path.of(filename).normalize());
+            } catch (InvalidPathException e) {
+                throw new IOException("Announced output file has an invalid path.", e);
+            }
+        }
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
+        try (InputStream is = copyArchiveFromContainerCmd.exec(); TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
+            extractOutputFiles(tar, runContext, announcedFiles);
         } catch (IOException e) {
             if (outputsDeclared) {
                 throw e;
             }
             runContext.logger().warn("Unable to sync the working directory back from the container; the task declares no output files, so continuing without failing the run.", e);
+        }
+    }
+
+    static void extractOutputFiles(TarArchiveInputStream tar, RunContext runContext, Set<Path> announcedFiles) throws IOException {
+        Set<Path> pendingFiles = new HashSet<>(announcedFiles);
+        Path staging = null;
+        boolean dynamic = !announcedFiles.isEmpty();
+        try (var root = dynamic ? FilesService.openSecureDirectory(runContext.workingDir().path()) : null) {
+            if (dynamic) {
+                staging = Files.createTempDirectory(runContext.workingDir().path().toAbsolutePath().normalize().getParent(), "kestra-extract-");
+            }
+            try (var staged = dynamic ? FilesService.openSecureDirectory(staging) : null) {
+                TarArchiveEntry entry;
+                while ((entry = tar.getNextEntry()) != null) {
+                    Path relative = runContext.workingDir().path().getFileSystem().getPath(entry.getName().substring(runContext.workingDir().id().length() + 1));
+                    if (relative.isAbsolute()) {
+                        throw new IOException("Container output paths must be relative.");
+                    }
+                    for (Path part : relative) {
+                        if (part.toString().equals("..")) {
+                            throw new IOException("Container output paths must not contain parent traversal.");
+                        }
+                    }
+                    relative = relative.normalize();
+                    if (relative.toString().isEmpty()) {
+                        continue;
+                    }
+                    boolean directory = entry.isDirectory() && entry.getLinkFlag() == TarConstants.LF_DIR;
+                    boolean regular = entry.getLinkFlag() == TarConstants.LF_NORMAL || entry.getLinkFlag() == TarConstants.LF_OLDNORM ||
+                        entry.getLinkFlag() == TarConstants.LF_CONTIG || entry.isSparse();
+                    if (!directory && !regular) {
+                        Path unsupported = relative;
+                        if (announcedFiles.stream().anyMatch(path -> path.startsWith(unsupported))) {
+                            throw new IOException("Announced output files must not use non-regular archive entries: '%s'.".formatted(relative));
+                        }
+                        continue;
+                    }
+                    if (directory && announcedFiles.contains(relative)) {
+                        throw new IOException("Announced output file '%s' must be a regular archive file.".formatted(relative));
+                    }
+                    if (dynamic) {
+                        extractEntry(tar, entry, directory, root, relative, staged, staging);
+                    } else {
+                        Path target = runContext.workingDir().path().resolve(relative);
+                        if (directory) {
+                            Files.createDirectories(target);
+                        } else {
+                            Files.createDirectories(target.getParent());
+                            Files.copy(tar, target, StandardCopyOption.REPLACE_EXISTING);
+                            try {
+                                Files.setPosixFilePermissions(target, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                            } catch (UnsupportedOperationException | IOException ignored) {
+                                // Preserve ordinary downloads on filesystems without POSIX permissions.
+                            }
+                        }
+                    }
+                    if (!directory) {
+                        pendingFiles.remove(relative);
+                    }
+                }
+            }
+            if (!pendingFiles.isEmpty()) {
+                throw new IOException("Announced output files were not returned by Docker: %s.".formatted(pendingFiles));
+            }
+        } finally {
+            if (staging != null) {
+                try (var paths = Files.walk(staging)) {
+                    for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                        Files.delete(path);
+                    }
+                } catch (IOException | UncheckedIOException e) {
+                    runContext.logger().warn("Unable to remove output extraction staging directory '{}'", staging, e);
+                }
+            }
+        }
+    }
+
+    private static void extractEntry(InputStream input, TarArchiveEntry entry, boolean isDirectory, SecureDirectoryStream<Path> parent,
+        Path relative, SecureDirectoryStream<Path> staged, Path staging) throws IOException {
+        if (relative.getNameCount() > 1) {
+            try (var child = openOrCreateDirectory(parent, relative.getName(0), staged, staging)) {
+                extractEntry(input, entry, isDirectory, child, relative.subpath(1, relative.getNameCount()), staged, staging);
+            }
+        } else if (isDirectory) {
+            try (var ignored = openOrCreateDirectory(parent, relative, staged, staging)) {
+            }
+        } else {
+            Path temporary = Files.createTempFile(staging, "file-", null).getFileName();
+            try (
+                var channel = staged.newByteChannel(temporary, Set.of(StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS));
+                var output = Channels.newOutputStream(channel)
+            ) {
+                input.transferTo(output);
+            }
+            try {
+                var permissions = staged.getFileAttributeView(temporary, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+                if (permissions != null) {
+                    permissions.setPermissions(UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                }
+            } catch (UnsupportedOperationException | IOException ignored) {
+                // Match existing best-effort permission preservation on non-POSIX filesystems.
+            }
+            staged.move(temporary, parent, relative);
+        }
+    }
+
+    private static SecureDirectoryStream<Path> openOrCreateDirectory(SecureDirectoryStream<Path> parent, Path name,
+        SecureDirectoryStream<Path> staged, Path staging) throws IOException {
+        try {
+            return parent.newDirectoryStream(name, LinkOption.NOFOLLOW_LINKS);
+        } catch (NoSuchFileException e) {
+            Path temporary = Files.createDirectory(staging.resolve(IdUtils.create())).getFileName();
+            try {
+                staged.move(temporary, parent, name);
+            } catch (FileAlreadyExistsException | DirectoryNotEmptyException ignored) {
+                // A concurrent creator must still pass the no-follow directory open below.
+            }
+            return parent.newDirectoryStream(name, LinkOption.NOFOLLOW_LINKS);
         }
     }
 

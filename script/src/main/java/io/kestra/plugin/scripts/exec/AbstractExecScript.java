@@ -98,7 +98,16 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
         description = """
             Declares files produced by the script that should be uploaded to Kestra's internal storage.
             Use `{{ outputFiles["filename"] }}` in your script body to get the resolved absolute path — this works for local runners (Process, Docker) and remote runners (Kubernetes, cloud batch).
-            Glob patterns (e.g. `*.csv`) are supported for post-run collection but cannot be referenced via Pebble expressions inside the script."""
+            Glob patterns (e.g. `*.csv`) are supported for post-run collection but cannot be referenced via Pebble expressions inside the script.
+
+            Alternatively, scripts can print `::{"outputFiles":["records.ion"]}::` to stdout after closing generated files, without declaring this property.
+            The marker names literal paths relative to the task working directory, without glob expansion. Absolute paths, parent traversal, symbolic links, and files staged before command execution (including their physical aliases) are rejected.
+            Collection runs after the command finishes, stores URIs in the task's `outputFiles` output, and deletes local files after successful upload.
+            This requires a worker version containing dynamic output-file collection support; a client library emitting the marker alone is insufficient.
+            Runtime announcements support the Process runner and synchronous Docker with `wait: true` and `fileHandlingStrategy: VOLUME`.
+            Remote/cloud/Kubernetes runners and Docker MOUNT configurations reject announcements; asynchronous Docker does not consume task logs and cannot observe them.
+            Dynamic collection requires secure directory streams, and Docker dynamic extraction also requires a worker-controlled staging parent and same-filesystem atomic moves.
+            Windows workers do not support dynamic collection. Explicitly configured output patterns retain their existing runner support."""
     )
     private Property<List<String>> outputFiles;
 

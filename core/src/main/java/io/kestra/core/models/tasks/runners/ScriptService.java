@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +27,6 @@ import io.kestra.core.utils.Slugify;
 
 import jakarta.annotation.Nullable;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
@@ -141,26 +141,26 @@ public final class ScriptService {
     }
 
     public static Map<String, URI> uploadOutputFiles(RunContext runContext, Path outputDir) throws IOException {
-        // upload output files
         Map<String, URI> uploaded = new HashMap<>();
-
-        try (Stream<Path> walk = Files.walk(outputDir)) {
-            walk
-                .filter(Files::isRegularFile)
-                .filter(path -> !path.startsWith("."))
-                .forEach(throwConsumer(path ->
-                {
-                    String filename = outputDir.relativize(path).toString();
-                    validateStoragePath(filename);
-
-                    uploaded.put(
-                        filename,
-                        runContext.storage().putFile(path.toFile(), filename)
-                    );
-                }));
+        for (var file : outputFilePaths(outputDir).entrySet()) {
+            uploaded.put(file.getKey(), runContext.storage().putFile(file.getValue().toFile(), file.getKey()));
         }
-
         return uploaded;
+    }
+
+    /** Returns output-directory keys and candidate paths without uploading or deleting files. */
+    public static Map<String, Path> outputFilePaths(Path outputDir) throws IOException {
+        Map<String, Path> files = new LinkedHashMap<>();
+        try (Stream<Path> walk = Files.walk(outputDir)) {
+            for (Path path : walk.filter(Files::isRegularFile).filter(path -> !path.startsWith(".")).toList()) {
+                String filename = outputDir.relativize(path).toString();
+                validateStoragePath(filename);
+                files.put(filename, path);
+            }
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+        return files;
     }
 
     static void validateStoragePath(String filename) throws IOException {

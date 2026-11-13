@@ -15,8 +15,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,23 +31,37 @@ import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.auth.*;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.TlsConfig;
 import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.nio.support.classic.TransportException;
+import org.apache.hc.core5.http.ssl.TLS;
+import org.apache.hc.core5.http2.HttpVersionPolicy;
+import org.apache.hc.core5.http2.config.H2Config;
+import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
@@ -92,6 +106,12 @@ public class HttpClient implements Closeable {
     private ObservationRegistry observationRegistry;
     private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD");
 
+    // The read timeout the classic client gets from Apache when none is configured, which the async client lacks.
+    private static final Timeout DEFAULT_READ_IDLE_TIMEOUT = Timeout.ofMinutes(3);
+
+    // Offers only gzip/deflate so httpclient5 never negotiates Brotli, whose native brotli4j library may be missing.
+    private static final HttpRequestInterceptor ACCEPT_ENCODING_INTERCEPTOR = (request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
+
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
         this.runContext = runContext;
@@ -108,21 +128,25 @@ public class HttpClient implements Closeable {
             throw new IllegalStateException("Client has already been created");
         }
 
+        HttpConfiguration.HttpVersion httpVersion = runContext.render(this.configuration.getHttpVersion())
+            .as(HttpConfiguration.HttpVersion.class)
+            .orElse(HttpConfiguration.HttpVersion.HTTP_1_1);
+
+        return httpVersion == HttpConfiguration.HttpVersion.HTTP_1_1 ? this.createClassicClient() : this.createAsyncClient(httpVersion);
+    }
+
+    private CloseableHttpClient createClassicClient() throws IllegalVariableEvaluationException {
         org.apache.hc.client5.http.impl.classic.HttpClientBuilder builder = HttpClients.custom()
             .disableDefaultUserAgent()
             .setUserAgent("Kestra");
 
-        // Advertise only gzip/deflate so the client never negotiates Brotli (Accept-Encoding: br).
-        // HttpClient5 auto-detects brotli4j on the classpath (e.g. brought in by a plugin) and would
-        // otherwise offer `br`, then fail with UnsatisfiedLinkError when the matching native artifact
-        // is missing. Setting the header explicitly wins: ContentCompressionExec only adds its own
-        // Accept-Encoding when the request has none, so gzip/deflate responses are still auto-decoded.
-        builder.addRequestInterceptorFirst((request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
+        builder.addRequestInterceptorFirst(ACCEPT_ENCODING_INTERCEPTOR);
 
         // Positioned right after REDIRECT so it re-runs on every hop RedirectExec follows, unlike a request interceptor which only runs once before the redirect loop starts.
         builder.addExecInterceptorAfter(
             ChainElement.REDIRECT.name(), "ssrf-guard",
-            (request, scope, chain) -> {
+            (request, scope, chain) ->
+            {
                 validateUri(HttpService.safeURI(request));
                 return chain.proceed(request, scope);
             }
@@ -137,74 +161,27 @@ public class HttpClient implements Closeable {
         }
 
         // logger
-        if (this.configuration.getLogs() != null && this.configuration.getLogs().length > 0) {
-            if (
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
-                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
-            ) {
-                builder.addRequestInterceptorLast(new LoggingRequestInterceptor(runContext.logger(), this.configuration.getLogs()));
-            }
+        HttpRequestInterceptor requestLogger = this.requestLogger();
+        if (requestLogger != null) {
+            builder.addRequestInterceptorLast(requestLogger);
+        }
 
-            if (
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
-                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
-            ) {
-                builder.addResponseInterceptorLast(new LoggingResponseInterceptor(runContext.logger(), this.configuration.getLogs()));
-            }
+        HttpResponseInterceptor responseLogger = this.responseLogger();
+        if (responseLogger != null) {
+            builder.addResponseInterceptorLast(responseLogger);
         }
 
         // Object dependencies
         PoolingHttpClientConnectionManagerBuilder connectionManagerBuilder = PoolingHttpClientConnectionManagerBuilder.create();
-        ConnectionConfig.Builder connectionConfig = ConnectionConfig.custom();
         this.defaultCredentialsProvider = new BasicCredentialsProvider();
 
-        // Timeout
-        if (this.configuration.getTimeout() != null) {
-            var connectTimeout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
-            connectTimeout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
-
-            var readIdleTimeout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
-            readIdleTimeout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
-        }
-
         // proxy
-        if (this.configuration.getProxy() != null && configuration.getProxy().getAddress() != null) {
-            String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
+        ProxySelector proxySelector = this.proxySelector();
+        if (proxySelector != null) {
+            builder.setProxySelector(proxySelector);
 
-            if (StringUtils.isNotEmpty(proxyAddress)) {
-                this.hasProxy = true;
-                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
-                    .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
-                SocketAddress proxyAddr = new InetSocketAddress(
-                    proxyAddress,
-                    port
-                );
-
-                Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
-
-                builder.setProxySelector(new ProxySelector() {
-                    @Override
-                    public void connectFailed(URI uri, SocketAddress sa, IOException e) {
-                        /* ignore */
-                    }
-
-                    @Override
-                    public List<Proxy> select(URI uri) {
-                        return List.of(proxy);
-                    }
-                });
-
-                if (this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null) {
-                    builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
-
-                    this.defaultCredentialsProvider.setCredentials(
-                        new AuthScope(proxyAddress, port),
-                        new UsernamePasswordCredentials(
-                            runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
-                            runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
-                        )
-                    );
-                }
+            if (this.hasProxyCredentials()) {
+                builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
             }
         }
 
@@ -214,10 +191,8 @@ public class HttpClient implements Closeable {
         }
 
         // ssl
-        if (this.configuration.getSsl() != null) {
-            if (this.configuration.getSsl().getInsecureTrustAllCertificates() != null) {
-                connectionManagerBuilder.setSSLSocketFactory(this.selfSignedConnectionSocketFactory());
-            }
+        if (this.insecureTrustAllCertificates()) {
+            connectionManagerBuilder.setSSLSocketFactory(this.selfSignedConnectionSocketFactory());
         }
 
         // auth
@@ -233,7 +208,7 @@ public class HttpClient implements Closeable {
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
 
         // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
-        if (!runContext.render(this.configuration.getEnabledTcpExtendedKeepAlive()).as(Boolean.class).orElse(true)) {
+        if (!this.tcpExtendedKeepAliveEnabled()) {
             connectionManagerBuilder.setDefaultSocketConfig(
                 SocketConfig.custom()
                     .setTcpKeepIdle(0)
@@ -244,7 +219,7 @@ public class HttpClient implements Closeable {
         }
 
         // builder object
-        connectionManagerBuilder.setDefaultConnectionConfig(connectionConfig.build());
+        connectionManagerBuilder.setDefaultConnectionConfig(this.connectionConfig());
         builder.setConnectionManager(connectionManagerBuilder.build());
         builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
 
@@ -254,16 +229,223 @@ public class HttpClient implements Closeable {
     }
 
     private SSLConnectionSocketFactory selfSignedConnectionSocketFactory() {
+        return new SSLConnectionSocketFactory(this.insecureSslContext(), new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
+    }
+
+    private SSLContext insecureSslContext() {
         try {
-            SSLContext sslContext = SSLContexts
+            return SSLContexts
                 .custom()
                 .loadTrustMaterial(null, (chain, authType) -> true)
                 .build();
-
-            return new SSLConnectionSocketFactory(sslContext, new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private boolean insecureTrustAllCertificates() {
+        return this.configuration.getSsl() != null && this.configuration.getSsl().getInsecureTrustAllCertificates() != null;
+    }
+
+    private boolean tcpExtendedKeepAliveEnabled() throws IllegalVariableEvaluationException {
+        return runContext.render(this.configuration.getEnabledTcpExtendedKeepAlive()).as(Boolean.class).orElse(true);
+    }
+
+    private HttpRequestInterceptor requestLogger() {
+        HttpConfiguration.LoggingType[] logs = this.configuration.getLogs();
+        if (logs != null && (ArrayUtils.contains(logs, HttpConfiguration.LoggingType.REQUEST_HEADERS) || ArrayUtils.contains(logs, HttpConfiguration.LoggingType.REQUEST_BODY))) {
+            return new LoggingRequestInterceptor(runContext.logger(), logs);
+        }
+
+        return null;
+    }
+
+    private HttpResponseInterceptor responseLogger() {
+        HttpConfiguration.LoggingType[] logs = this.configuration.getLogs();
+        if (logs != null && (ArrayUtils.contains(logs, HttpConfiguration.LoggingType.RESPONSE_HEADERS) || ArrayUtils.contains(logs, HttpConfiguration.LoggingType.RESPONSE_BODY))) {
+            return new LoggingResponseInterceptor(runContext.logger(), logs);
+        }
+
+        return null;
+    }
+
+    private ConnectionConfig connectionConfig() throws IllegalVariableEvaluationException {
+        ConnectionConfig.Builder connectionConfig = ConnectionConfig.custom();
+
+        if (this.configuration.getTimeout() != null) {
+            var connectTimeout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
+            connectTimeout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
+
+            var readIdleTimeout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
+            readIdleTimeout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
+        }
+
+        return connectionConfig.build();
+    }
+
+    private ProxySelector proxySelector() throws IllegalVariableEvaluationException {
+        if (this.configuration.getProxy() == null || configuration.getProxy().getAddress() == null) {
+            return null;
+        }
+
+        String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
+        if (StringUtils.isEmpty(proxyAddress)) {
+            return null;
+        }
+
+        this.hasProxy = true;
+        int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
+            .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
+        SocketAddress proxyAddr = new InetSocketAddress(
+            proxyAddress,
+            port
+        );
+
+        Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
+
+        if (this.hasProxyCredentials()) {
+            this.defaultCredentialsProvider.setCredentials(
+                new AuthScope(proxyAddress, port),
+                new UsernamePasswordCredentials(
+                    runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
+                    runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
+                )
+            );
+        }
+
+        return new ProxySelector() {
+            @Override
+            public void connectFailed(URI uri, SocketAddress sa, IOException e) {
+                /* ignore */
+            }
+
+            @Override
+            public List<Proxy> select(URI uri) {
+                return List.of(proxy);
+            }
+        };
+    }
+
+    private boolean hasProxyCredentials() {
+        return this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null;
+    }
+
+    private CloseableHttpClient createAsyncClient(HttpConfiguration.HttpVersion httpVersion) throws IllegalVariableEvaluationException {
+        HttpAsyncClientBuilder builder = HttpAsyncClients.custom()
+            .setUserAgent("Kestra")
+            .setH2Config(H2Config.custom().setPushEnabled(false).build());
+
+        builder.addRequestInterceptorFirst(ACCEPT_ENCODING_INTERCEPTOR);
+
+        builder.addExecInterceptorAfter(
+            ChainElement.REDIRECT.name(), "ssrf-guard",
+            (request, entityProducer, scope, chain, asyncExecCallback) ->
+            {
+                try {
+                    validateUri(HttpService.safeURI(request));
+                } catch (RuntimeException e) {
+                    // On a redirect hop this runs in an I/O callback, where a thrown exception would leave the request pending forever.
+                    asyncExecCallback.failed(e);
+                    return;
+                }
+
+                chain.proceed(request, entityProducer, scope, asyncExecCallback);
+            }
+        );
+
+        if (observationRegistry != null) {
+            builder.addExecInterceptorAfter(
+                ChainElement.RETRY.name(), "micrometer",
+                new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
+            );
+        }
+
+        HttpRequestInterceptor requestLogger = this.requestLogger();
+        if (requestLogger != null) {
+            builder.addRequestInterceptorLast(requestLogger);
+        }
+
+        HttpResponseInterceptor responseLogger = this.responseLogger();
+        if (responseLogger != null) {
+            builder.addResponseInterceptorLast(responseLogger);
+        }
+
+        // The async client gives the logging interceptors no readable body.
+        if (
+            ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
+                || ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
+        ) {
+            runContext.logger().warn("The request and response bodies cannot be logged with the HTTP version {}, only the headers are.", httpVersion);
+        }
+
+        PoolingAsyncClientConnectionManagerBuilder connectionManagerBuilder = PoolingAsyncClientConnectionManagerBuilder.create();
+        this.defaultCredentialsProvider = new BasicCredentialsProvider();
+
+        ProxySelector proxySelector = this.proxySelector();
+        if (proxySelector != null) {
+            builder.setProxySelector(proxySelector);
+
+            if (this.hasProxyCredentials()) {
+                builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
+            }
+        }
+
+        // Behind a proxy this resolver would only see the proxy host, which may legitimately sit in a denied range.
+        if (!this.hasProxy) {
+            connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
+        }
+
+        connectionManagerBuilder.setDefaultTlsConfig(
+            TlsConfig.custom()
+                .setVersionPolicy(httpVersion == HttpConfiguration.HttpVersion.HTTP_2 ? HttpVersionPolicy.FORCE_HTTP_2 : HttpVersionPolicy.NEGOTIATE)
+                .build()
+        );
+
+        if (this.insecureTrustAllCertificates()) {
+            connectionManagerBuilder.setTlsStrategy(
+                ClientTlsStrategyBuilder.create()
+                    .setSslContext(this.insecureSslContext())
+                    .setTlsVersions(TLS.V_1_3, TLS.V_1_2)
+                    .setHostVerificationPolicy(HostnameVerificationPolicy.CLIENT)
+                    .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .buildAsync()
+            );
+        }
+
+        if (this.configuration.getAuth() != null) {
+            this.configuration.getAuth().configure(builder, runContext);
+        }
+
+        if (!runContext.render(this.configuration.getFollowRedirects()).as(Boolean.class).orElseThrow()) {
+            builder.disableRedirectHandling();
+        }
+
+        builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
+
+        // A client serves a single task, so one I/O thread is enough instead of one per CPU core.
+        IOReactorConfig.Builder ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(1);
+
+        // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
+        if (!this.tcpExtendedKeepAliveEnabled()) {
+            ioReactorConfig
+                .setTcpKeepIdle(0)
+                .setTcpKeepInterval(0)
+                .setTcpKeepCount(0);
+        }
+
+        builder.setIOReactorConfig(ioReactorConfig.build());
+
+        ConnectionConfig connectionConfig = this.connectionConfig();
+        Timeout readIdleTimeout = connectionConfig.getSocketTimeout() == null ? DEFAULT_READ_IDLE_TIMEOUT : connectionConfig.getSocketTimeout();
+
+        connectionManagerBuilder.setDefaultConnectionConfig(ConnectionConfig.copy(connectionConfig).setSocketTimeout(readIdleTimeout).build());
+        builder.setConnectionManager(connectionManagerBuilder.build());
+        builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
+
+        CloseableHttpAsyncClient asyncClient = builder.build();
+        asyncClient.start();
+
+        return HttpAsyncClients.classic(asyncClient, readIdleTimeout);
     }
 
     /**
@@ -617,6 +799,16 @@ public class HttpClient implements Closeable {
                     if (e.getCause() instanceof HttpClientException ex) {
                         throw ex;
                     }
+
+                    // The async client wraps transport errors, which would otherwise not be retried as they are with the classic client.
+                    if (e instanceof TransportException && (e.getCause() instanceof SocketException || e.getCause() instanceof SSLHandshakeException)) {
+                        throw new HttpClientRequestException(
+                            e.getCause().getMessage(),
+                            request,
+                            e.getCause()
+                        );
+                    }
+
                     throw new RuntimeException(e);
                 }
             }

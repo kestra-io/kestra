@@ -1,5 +1,6 @@
 package io.kestra.core.http.client.configurations;
 
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -25,6 +26,8 @@ public abstract class AbstractAuthConfiguration {
     public abstract AuthType getType();
 
     public abstract void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException;
+
+    public abstract void configure(HttpAsyncClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException;
 
     public enum AuthType {
         BASIC,

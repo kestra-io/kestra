@@ -501,6 +501,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: "fdsfds"
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25

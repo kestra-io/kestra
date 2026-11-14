@@ -330,6 +330,7 @@
 
         &.is-collapsed {
             width: 0;
+            border-right-width: 0;
         }
     }
 }

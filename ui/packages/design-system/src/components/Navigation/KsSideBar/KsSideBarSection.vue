@@ -119,6 +119,7 @@
 
 .ks-sidebar-section__body {
     display: grid;
+    padding-inline: var(--ks-spacing-2);
     grid-template-rows: 0fr;
     transition: grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 

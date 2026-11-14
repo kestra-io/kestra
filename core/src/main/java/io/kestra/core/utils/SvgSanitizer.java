@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * otherwise navigate to arbitrary content from inside a preserved foreignObject, is removed instead.
  */
 public final class SvgSanitizer {
-    private static final Pattern SCRIPT_TAG = Pattern.compile("<script\\b.*?</script\\s*>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern SCRIPT_TAG = Pattern.compile("<script\\b.*?(</script\\s*>|/>)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern IFRAME_TAG = Pattern.compile("<iframe\\b.*?(</iframe\\s*>|/>)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern EVENT_HANDLER_ATTRIBUTE = Pattern.compile("\\s+on[a-z]+\\s*=\\s*(\"[^\"]*\"|'[^']*')", Pattern.CASE_INSENSITIVE);
     private static final Pattern JAVASCRIPT_URI_ATTRIBUTE = Pattern.compile("(href|xlink:href|src)\\s*=\\s*(\"\\s*javascript:[^\"]*\"|'\\s*javascript:[^']*')", Pattern.CASE_INSENSITIVE);
@@ -27,6 +27,10 @@ public final class SvgSanitizer {
     }
 
     public static String sanitize(String svg) {
+        if (svg == null) {
+            return null;
+        }
+
         String sanitized = SCRIPT_TAG.matcher(svg).replaceAll("");
         sanitized = IFRAME_TAG.matcher(sanitized).replaceAll("");
         sanitized = EVENT_HANDLER_ATTRIBUTE.matcher(sanitized).replaceAll("");

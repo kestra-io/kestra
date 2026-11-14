@@ -1114,6 +1114,11 @@
     "bulk force run": "Möchtest du wirklich `{executionCount}` Execution(s) erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution wird nicht garantiert und kann zu doppelten Task-Executions führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "bulk restart": "Möchtest du {executionCount} Execution(s) wirklich neu starten?",
     "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
+    "bulk action ineligible change state": "{count} von {total} ausgewählten Executions sind für eine Statusänderung nicht zulässig.",
+    "bulk action ineligible not state": "{count} von {total} ausgewählten Executions befinden sich nicht im Status {state}.",
+    "bulk action ineligible not pausable": "{count} von {total} ausgewählten Executions können nicht pausiert werden.",
+    "bulk action ineligible not terminated": "{count} von {total} ausgewählten Executions sind nicht beendet.",
+    "bulk action ineligible already terminated": "{count} von {total} ausgewählten Executions wurden bereits beendet.",
     "cancel": "Abbrechen",
     "errorLogs": "Fehler-Logs",
     "product_tour": "Produkttour",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "Nicht abgeschlossene Executions einbeziehen?",
     "execution-warn-title": "Wichtige Warnung!",
     "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Executions zuerst zu killen. Das Löschen nicht abgeschlossener Executions kann zu Concurrency-Problemen, Inkonsistenzen bei Flow-Abhängigkeiten und Zombie-Prozessen auf deiner Instanz führen, was die Systemleistung beeinträchtigen kann. Stelle sicher, dass du diese Risiken vollständig verstehst, bevor du mit dem Löschen fortfährst.",
+    "execution-warn-non-terminated-count": "{count} von {total} ausgewählten Execution(s) sind nicht beendet.",
     "pluginPage": {
       "search": "{count}+ Plugins durchsuchen",
       "searchTasks": "{count} Tasks durchsuchen",
@@ -3165,3 +3171,4 @@
     }
   }
 }
+

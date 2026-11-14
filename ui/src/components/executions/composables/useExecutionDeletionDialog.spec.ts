@@ -1,52 +1,82 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, type VNode} from "vue"
-import {mount} from "@vue/test-utils"
+import {afterEach, describe, expect, it} from "vitest"
+import {defineComponent, nextTick} from "vue"
+import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
-
-const {confirm} = vi.hoisted(() => ({confirm: vi.fn()}))
-
-vi.mock("@kestra-io/design-system", async (importOriginal) => {
-    const original = await importOriginal<typeof import("@kestra-io/design-system")>()
-    return {...original, KsMessageBox: {...original.KsMessageBox, confirm}}
-})
-
-import {KsSwitch} from "@kestra-io/design-system"
+import {KsMessageBox} from "@kestra-io/design-system"
 import {useExecutionDeletionDialog, type ExecutionDeletionOptions} from "./useExecutionDeletionDialog"
 
-const openDialog = async (offerNonTerminated: boolean) => {
+const openDialog = (offerNonTerminated: boolean, nonTerminatedCount = 0) => {
     let result: Promise<ExecutionDeletionOptions | undefined> | undefined
     i18nMount(defineComponent({
         setup() {
-            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {offerNonTerminated})
+            result = useExecutionDeletionDialog().confirmExecutionDeletion("Delete <code>e1</code>?", {
+                offerNonTerminated,
+                nonTerminatedCount,
+                total: nonTerminatedCount,
+            })
             return () => null
         },
     }))
-    const message = confirm.mock.calls[0][0] as () => VNode
-    return {result: result!, dialog: mount({render: message})}
+    return result!
 }
 
+const findButton = (name: string) => [...document.body.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.trim() === name)
+
+afterEach(async () => {
+    KsMessageBox.close()
+    await flushPromises()
+})
+
 describe("execution deletion dialog", () => {
-    beforeEach(() => confirm.mockReset())
+    it("resolves to nothing when dismissed", async () => {
+        const result = openDialog(false)
+        await nextTick()
 
-    /** Both delete paths act on the options the user left ticked, and do nothing on a dismissal. */
-    it("resolves to the chosen options on confirm and to nothing when dismissed", async () => {
-        let accept: (action: string) => void = () => {}
-        confirm.mockReturnValueOnce(new Promise(resolve => accept = resolve))
-        const confirmed = await openDialog(false)
-        await confirmed.dialog.findAll("input[type=checkbox]")[1].setValue(false)
-        accept("confirm")
-        expect(await confirmed.result).toEqual({deleteLogs: true, deleteMetrics: false, deleteStorage: true, includeNonTerminated: false})
+        findButton("Cancel")?.click()
 
-        confirm.mockReset().mockRejectedValueOnce("cancel")
-        expect(await (await openDialog(false)).result).toBeUndefined()
+        await expect(result).resolves.toBeUndefined()
     })
 
-    /** Only the bulk delete may include running executions, so only it shows that switch. */
     it("offers the non-terminated switch only when asked", async () => {
-        confirm.mockResolvedValue("confirm")
+        const withoutSwitch = openDialog(false)
+        await nextTick()
+        expect(document.body.querySelector('[role="switch"]')).toBeNull()
 
-        expect((await openDialog(false)).dialog.findComponent(KsSwitch).exists()).toBe(false)
-        confirm.mockClear()
-        expect((await openDialog(true)).dialog.findComponent(KsSwitch).exists()).toBe(true)
+        findButton("Cancel")?.click()
+        await expect(withoutSwitch).resolves.toBeUndefined()
+
+        const withSwitch = openDialog(true)
+        await nextTick()
+        expect(document.body.querySelector('[role="switch"]')).not.toBeNull()
+
+        findButton("Cancel")?.click()
+        await expect(withSwitch).resolves.toBeUndefined()
+    })
+
+    it("requires consent before confirming deletion of non-terminated executions", async () => {
+        const result = openDialog(true, 2)
+        await nextTick()
+
+        const confirm = findButton("OK")
+        const consent = document.body.querySelector<HTMLButtonElement>('[role="switch"]')
+        expect(confirm).toBeDefined()
+        expect(consent).toBeDefined()
+
+        let resolved = false
+        void result.then(() => {
+            resolved = true
+        })
+
+        confirm?.click()
+        await flushPromises()
+        expect(resolved).toBe(false)
+
+        consent?.click()
+        await flushPromises()
+        confirm?.click()
+
+        await expect(result).resolves.toEqual({deleteLogs: true, deleteMetrics: true, deleteStorage: true, includeNonTerminated: true})
     })
 })
+

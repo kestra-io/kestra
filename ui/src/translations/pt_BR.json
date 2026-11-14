@@ -1114,6 +1114,11 @@
     "bulk force run": "Tem certeza de que deseja forçar a execução de `{executionCount}` execução(ões)?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "bulk restart": "Tem certeza de que deseja reiniciar {executionCount} execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
+    "bulk action ineligible change state": "{count} de {total} execuções selecionadas não podem ter o estado alterado.",
+    "bulk action ineligible not state": "{count} de {total} execuções selecionadas não estão no estado {state}.",
+    "bulk action ineligible not pausable": "{count} de {total} execuções selecionadas não podem ser pausadas.",
+    "bulk action ineligible not terminated": "{count} de {total} execuções selecionadas não foram encerradas.",
+    "bulk action ineligible already terminated": "{count} de {total} execuções selecionadas já foram encerradas.",
     "cancel": "Cancelar",
     "errorLogs": "Logs de erro",
     "product_tour": "Tour do Produto",
@@ -1370,6 +1375,7 @@
     "execution-include-non-terminated": "Incluir execuções não terminadas?",
     "execution-warn-title": "Aviso Importante!",
     "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de entender completamente esses riscos antes de prosseguir com a exclusão.",
+    "execution-warn-non-terminated-count": "{count} de {total} execução(ões) selecionadas não foram encerradas.",
     "pluginPage": {
       "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
@@ -3165,3 +3171,4 @@
     }
   }
 }
+

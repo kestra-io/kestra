@@ -354,6 +354,11 @@
   "body_line_clamp": "86d230cb2b97",
   "breakpoints": "aa40ffb1ed16",
   "bulk action async warning": "993a854a9fdf",
+  "bulk action ineligible already terminated": "4acf35aeea12",
+  "bulk action ineligible change state": "7c3d5d066e63",
+  "bulk action ineligible not pausable": "37261667cfc4",
+  "bulk action ineligible not state": "e2b7b24932df",
+  "bulk action ineligible not terminated": "95eed5705037",
   "bulk actions": "19f0dd9ac406",
   "bulk change state": "8078809d904a",
   "bulk delete": "a440d051f00c",
@@ -841,6 +846,7 @@
   "execution statistics": "ddf4a89b2d01",
   "execution-include-non-terminated": "b4b28b9d5b1d",
   "execution-warn-deleting-still-running": "6dcdbc1dcde5",
+  "execution-warn-non-terminated-count": "24dc260b52ef",
   "execution-warn-title": "4af7d3bf586a",
   "executionProgress|estimatedRemaining": "20405eaef5a8",
   "executionProgress|pastEstimate": "bc02aecb7fc1",
@@ -2421,3 +2427,4 @@
   "wrong labels": "f62b1e53b73f",
   "yes": "85a39ab345d6"
 }
+

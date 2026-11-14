@@ -129,7 +129,7 @@
     const {t} = useI18n()
     const toast = useToast()
 
-    const {save} = useFlowEditorActions()
+    const {saveKeepingDraftState} = useFlowEditorActions()
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
@@ -458,14 +458,15 @@
         )
     }
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
-    // path as the Save button — including auto-install of missing plugins before persisting.
+    // path as the Save button — including auto-install of missing plugins before persisting — but
+    // keep a draft a draft, since only Publish or the Save menu item should take it out of draft.
     const saveFlowYaml = async () => {
         if (timeout.value) {
             clearTimeout(timeout.value)
         }
         if(!editorRefElement.value?.getEditor()) return
 
-        await save()
+        await saveKeepingDraftState()
     }
 
     // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.

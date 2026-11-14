@@ -112,6 +112,8 @@ tasks:
 
 const mockFlowYaml = ref(SIMPLE_YAML)
 const mockOnEdit = vi.fn()
+const mockFlowSave = vi.fn()
+const mockFlow = {id: "my_flow", namespace: "company.team", draft: false}
 
 // --- Store and UI mocks ---
 // vi.mock factories are hoisted before imports. Keep factories self-contained.
@@ -125,8 +127,9 @@ vi.mock("../../../stores/flow", () => ({
     useFlowStore: () => ({
         get flowYaml() { return mockFlowYaml.value },
         set flowYaml(v: string) { mockFlowYaml.value = v },
-        flow: {id: "my_flow", namespace: "company.team"},
+        flow: mockFlow,
         onEdit: mockOnEdit,
+        save: mockFlowSave,
     }),
 }))
 
@@ -1144,6 +1147,24 @@ describe("BlockEditor", () => {
         beforeEach(() => {
             confirmMock.mockClear()
             confirmMock.mockResolvedValue(undefined)
+            mockFlowSave.mockClear()
+            mockFlow.draft = false
+        })
+
+        it.each([
+            ["a draft flow as a draft", true],
+            ["a published flow as published", false],
+        ])("Cmd+S saves %s", async (_label, draft) => {
+            // Given
+            mockFlow.draft = draft
+            wrapper = mountBlockEditor()
+
+            // When
+            windowKeydown({key: "s", metaKey: true})
+            await flushPromises()
+
+            // Then
+            expect(mockFlowSave).toHaveBeenCalledExactlyOnceWith(draft)
         })
 
         it("Delete key removes the selected leaf task after confirmation", async () => {

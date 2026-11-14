@@ -1071,7 +1071,7 @@
     }
 
     async function saveFlow() {
-        const outcome = await flowStore.save?.()
+        const outcome = await flowStore.save?.(flowStore.flow?.draft ?? false)
         if (outcome === "blocked") {
             coreStore.message = {
                 variant: "error",

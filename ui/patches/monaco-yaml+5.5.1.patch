@@ -1,7 +1,16 @@
 diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
-index beade0d..afe321c 100644
+index beade0d..7eaef52 100644
 --- a/node_modules/monaco-yaml/yaml.worker.js
 +++ b/node_modules/monaco-yaml/yaml.worker.js
+@@ -2610,7 +2610,7 @@ var SchemaCollector2 = class _SchemaCollector {
+     this.schemas.push(schema);
+   }
+   merge(other) {
+-    this.schemas.push(...other.schemas);
++    for (const schema of other.schemas) this.schemas.push(schema);
+   }
+   include(node) {
+     return (this.focusOffset === -1 || contains2(node, this.focusOffset)) && node !== this.exclude;
 @@ -2982,15 +2982,58 @@ var BaseValidator = class {
          matchingSchemas.add(ms);
        }
@@ -112,7 +121,27 @@ index beade0d..afe321c 100644
          this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
        }
      }
-@@ -8448,6 +8508,25 @@ ${indent}`);
+@@ -8311,7 +8371,19 @@ ${indent}`);
+         }
+       });
+     }
++    const typePair = isMap8(node) ? node.items.find((it) => isScalar6(it.key) && it.key.value === "type" && isScalar6(it.value)) : void 0;
++    const currentNodeType = typePair?.value?.value;
++    const discriminatorMatches = (s) => {
++      const discriminator = s.schema?.properties?.type;
++      if (!currentNodeType || !discriminator) return false;
++      if (discriminator.const !== void 0) return discriminator.const === currentNodeType;
++      return Array.isArray(discriminator.enum) && discriminator.enum.includes(currentNodeType);
++    };
++    const isOwnSchema = (s) => s.node.internalNode === node || s.node.internalNode === originalNode;
++    // Branches are merged back for `type:` value completion, so keys must be scoped to the branch the node's `type` selects.
++    const hasDiscriminatedSchema = matchingSchemas.some((s) => isOwnSchema(s) && discriminatorMatches(s));
+     for (const schema2 of matchingSchemas) {
++      if (hasDiscriminatedSchema && isOwnSchema(schema2) && schema2.schema.properties && !discriminatorMatches(schema2)) continue;
+       if ((schema2.node.internalNode === node && !matchOriginal || schema2.node.internalNode === originalNode && !hasColon || schema2.node.parent?.internalNode === originalNode && !hasColon) && !schema2.inverted) {
+         this.collectDefaultSnippets(schema2.schema, separatorAfter, collector, {
+           newLineFirst: false,
+@@ -8448,6 +8520,25 @@ ${indent}`);
      if (node && (parentKey !== null || isSeq7(node))) {
        const separatorAfter = "";
        const matchingSchemas = doc.getMatchingSchemas(schema.schema, -1, null, doComplete);
@@ -138,7 +167,7 @@ index beade0d..afe321c 100644
        for (const s of matchingSchemas) {
          if (s.node.internalNode === node && !s.inverted && s.schema) {
            if (s.schema.items) {
-@@ -8470,6 +8549,7 @@ ${indent}`);
+@@ -8470,6 +8561,7 @@ ${indent}`);
            if (s.schema.properties) {
              const propertySchema = s.schema.properties[parentKey];
              if (propertySchema) {

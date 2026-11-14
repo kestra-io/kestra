@@ -23,6 +23,7 @@
             :filter="logFilter"
             :excludeMetas="EXCLUDED_METAS"
             :level="logLevel"
+            :levelFilter="logLevelFilter"
             :hideTaskHeader="hideTaskHeader"
             @follow="emit('follow', $event)"
         />
@@ -30,7 +31,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {computed, ref} from "vue"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import SearchField from "../layout/SearchField.vue"
     import Collapse from "../layout/Collapse.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
@@ -54,7 +56,10 @@
     const EXCLUDED_METAS: ("namespace" | "flowId" | "taskId" | "executionId")[] = ["namespace", "flowId", "taskId", "executionId"]
 
     const logFilter = ref("")
-    const logLevel = ref<LevelKey>(defaultTaskRunLogLevel())
+    const logLevel = defineModel<LevelKey | undefined>("level", {default: undefined})
+    if (logLevel.value === undefined) logLevel.value = defaultTaskRunLogLevel()
+
+    const logLevelFilter = computed<LevelFilterValue>(() => ({value: logLevel.value as LevelKey, direction: "min"}))
 </script>
 
 <style scoped>

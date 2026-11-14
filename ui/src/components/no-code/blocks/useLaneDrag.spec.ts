@@ -43,4 +43,18 @@ describe("useLaneDrag", () => {
 
         wrapper.unmount()
     })
+  
+  it("dropState is idle when no dragContext is injected", () => {
+    let result: ReturnType<typeof useLaneDrag>
+
+    const wrapper = mount(defineComponent({
+      setup() {
+        result = useLaneDrag(() => "blocks", () => 2)
+        
+        return () => null
+      }
+    }))
+
+    expect(result!.dropState.value).toBe("idle")
+  })
 })

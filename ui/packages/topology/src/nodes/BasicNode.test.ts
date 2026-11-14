@@ -150,7 +150,6 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         subtitle: "<span class='subtitle-marker'>Log</span>",
         "title-status": "<span class='status-marker'>status</span>",
         "title-actions": "<span class='actions-marker'>actions</span>",
-        details: "<div class='details-marker'>details</div>",
         footer: "<div class='footer-marker'>bar</div>",
     }
 
@@ -165,21 +164,12 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         expect(wrapper.find(".footer-marker").exists()).toBe(false)
     })
 
-    it("should render the full card at the default level, with no details overlay", () => {
+    it("should render the full card at the default level", () => {
         const wrapper = mountBasicNode({lod: "default"}, slots)
 
         expect(wrapper.find(".node-pill").exists()).toBe(false)
         expect(wrapper.find(".status-marker").exists()).toBe(true)
         expect(wrapper.find(".subtitle-marker").exists()).toBe(true)
-        expect(wrapper.find(".details-marker").exists()).toBe(false)
-        expect(wrapper.find(".node-footer .footer-marker").exists()).toBe(true)
-    })
-
-    it("should additionally render the details overlay above the expanded threshold", () => {
-        const wrapper = mountBasicNode({lod: "expanded"}, slots)
-
-        expect(wrapper.find(".status-marker").exists()).toBe(true)
-        expect(wrapper.find(".node-details-overlay .details-marker").exists()).toBe(true)
         expect(wrapper.find(".node-footer .footer-marker").exists()).toBe(true)
     })
 })

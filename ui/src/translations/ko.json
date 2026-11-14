@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "이 Task는 재시도되었습니다.",
+      "task-details": "{task} 세부 정보",
       "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
       "graph-orientation": "그래프 방향",
       "zoom-in": "확대",

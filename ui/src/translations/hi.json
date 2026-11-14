@@ -553,6 +553,7 @@
     },
     "topology-graph": {
       "retried": "यह Task पुनः प्रयास किया गया था",
+      "task-details": "{task} का विवरण",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",

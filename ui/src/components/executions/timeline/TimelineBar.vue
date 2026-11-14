@@ -87,17 +87,22 @@
                 <span class="hint">{{ $t("executionsTimeline.bucket.hint") }}</span>
             </div>
         </template>
-        <div
+        <component
+            :is="zoomable ? 'button' : 'div'"
             class="timeline-bar timeline-bucket"
-            :class="{dimmed}"
+            :class="{dimmed, zoomable}"
+            :type="zoomable ? 'button' : undefined"
+            :aria-label="zoomable ? bucketLabel() : undefined"
             :data-bucket-state="bucket.dominantState"
             :style="bucketStyle"
+            @click="zoomToBucket"
         />
     </KsTooltip>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
     import {useRouter} from "vue-router"
     import {categoryLabel, dateUtils, durationUtils} from "@kestra-io/design-system"
     import {stateChartColor, type StateBucket, type TimelineExecution} from "../../../utils/executionsTimeline"
@@ -109,16 +114,19 @@
         widthPercent: number;
         dimmed: boolean;
         intensity?: number;
+        zoomable?: boolean;
     }>()
 
     const emit = defineEmits<{
         "show-only-flow": [{namespace: string; flowId: string}];
+        "zoom-to-range": [{startMs: number; endMs: number}];
     }>()
 
     // Popper's flip modifier has to stay off for an explicit placement to stick.
     const POPOVER_MIN_SPACE_ABOVE_PX = 300
     const POPOVER_POPPER_OPTIONS = {modifiers: [{name: "flip", enabled: false}]}
 
+    const {t} = useI18n()
     const router = useRouter()
     const popoverVisible = ref(false)
     const tooltipVisible = ref(false)
@@ -148,6 +156,20 @@
         }
     })
 
+    function bucketLabel() {
+        const {bucket} = props
+        if (!bucket) return undefined
+        return [
+            t("executionsTimeline.row.runsCount", {count: bucket.total}),
+            t("executionsTimeline.bucket.stateCount", {state: categoryLabel(bucket.dominantState), count: bucket.byState[bucket.dominantState]}),
+            t("executionsTimeline.toolbar.range", {
+                start: dateUtils.dateFilter(new Date(bucket.startMs).toISOString()),
+                end: dateUtils.dateFilter(new Date(bucket.endMs).toISOString()),
+                duration: durationUtils.humanDuration((bucket.endMs - bucket.startMs) / 1000),
+            }),
+        ].join(", ")
+    }
+
     const formattedStart = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.startMs).toISOString()) : "")
     const formattedEnd = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.endMs).toISOString()) : "")
     const tooltipDuration = computed(() => props.execution ? durationUtils.humanDuration((props.execution.endMs - props.execution.startMs) / 1000) : "")
@@ -164,6 +186,11 @@
                 id: props.execution.id,
             },
         })
+    }
+
+    function zoomToBucket() {
+        if (!props.bucket || !props.zoomable) return
+        emit("zoom-to-range", {startMs: props.bucket.startMs, endMs: props.bucket.endMs})
     }
 
     function showOnlyThisFlow() {
@@ -206,6 +233,10 @@
     bottom: 0.125rem;
     border-radius: var(--ks-radius-xs);
     cursor: default;
+
+    &.zoomable {
+        cursor: pointer;
+    }
 }
 
 .timeline-bar[data-state="SUCCESS"] {

@@ -11,7 +11,8 @@ import Gantt from "../../components/executions/Gantt.vue"
 
 const toastError = vi.hoisted(() => vi.fn())
 
-vi.mock("../../utils/toast", () => ({
+vi.mock("../../utils/toast", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../../utils/toast")>(),
     useToast: () => ({success: vi.fn(), error: toastError}),
 }))
 

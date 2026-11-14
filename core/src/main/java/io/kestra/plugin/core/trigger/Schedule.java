@@ -480,7 +480,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     synchronized ExecutionTime executionTime() {
         if (this.executionTime == null) {
             Cron parsed = parseCron();
-            this.executionTime = ExecutionTime.forCron(parsed);
+            this.executionTime = new DstGapExecutionTime(ExecutionTime.forCron(parsed));
         }
 
         return this.executionTime;

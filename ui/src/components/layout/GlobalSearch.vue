@@ -712,6 +712,7 @@
         .result-row {
             align-items: center;
             width: 100%;
+            gap: var(--ks-spacing-2);
         }
 
         .result-icon {

@@ -1,6 +1,7 @@
 import type {NavigationGuard, RouteLocationNormalized, RouteRecordNormalized} from "vue-router"
 import {useCoreStore} from "../stores/core"
 import {handled} from "./kestraHttp"
+import {latestRequest} from "./latestRequest"
 
 /** Resolves the one entity a detail page is about. A 404, or a falsy resolution, means it is missing. */
 export type EntityResolver = (to: RouteLocationNormalized) => Promise<unknown>
@@ -40,7 +41,7 @@ async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Prom
     return 404
 }
 
-let latestNavigation = 0
+const startNavigation = latestRequest()
 
 /**
  * Resolves a detail page's entity before the page mounts, so a missing one renders the
@@ -55,7 +56,7 @@ let latestNavigation = 0
 export const entityNotFoundGuard: NavigationGuard = async (to, from) => {
     // Before the early return below: a navigation that resolves nothing still invalidates one that
     // is resolving, or a tab change would let an older flow's verdict land on the current page.
-    const navigation = ++latestNavigation
+    const isLatest = startNavigation()
     const record = to.matched.find(resolverOf)
 
     // A tab or filter change within the same entity has nothing new to resolve.
@@ -65,7 +66,7 @@ export const entityNotFoundGuard: NavigationGuard = async (to, from) => {
 
     // The user has navigated again while this one was resolving, so its verdict is about a page
     // they are no longer on: applying it would show the not-found screen over the newer one.
-    if (navigation !== latestNavigation) return true
+    if (!isLatest()) return true
 
     useCoreStore().error = verdict
 

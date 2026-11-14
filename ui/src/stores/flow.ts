@@ -34,6 +34,7 @@ import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analyti
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
+import {latestRequest} from "../utils/latestRequest"
 
 const textYamlHeader = {
     headers: {
@@ -482,20 +483,20 @@ export const useFlowStore = defineStore("flow", () => {
 
     /** Sequence number for committing searches: a response that is no longer the newest may
      * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
-    let latestFlowSearch = 0
+    const startFlowSearch = latestRequest()
 
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
-        const search = options.commit === false ? undefined : ++latestFlowSearch
+        const isLatestSearch = options.commit === false ? undefined : startFlowSearch()
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false && search === latestFlowSearch) {
+                if (isLatestSearch?.()) {
                     flows.value = response.results
                     total.value = response.total ?? 0
                 }
@@ -870,10 +871,10 @@ function deleteFlowAndDependencies() {
         dependenciesCount.value = undefined
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     function validateFlow(options: { flow: string }) {
-        const validation = ++latestValidation
+        const isLatestValidation = startValidation()
         let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
@@ -894,7 +895,7 @@ function deleteFlowAndDependencies() {
                 }
 
                 // A response overtaken by a newer validation describes a source the editor no longer holds.
-                if (validation === latestValidation) {
+                if (isLatestValidation()) {
                     flowValidation.value = validResults
                 }
                 return validResults

@@ -119,6 +119,7 @@
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
     import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, stateChartColor, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {latestRequest} from "../../../utils/latestRequest"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
@@ -359,11 +360,11 @@
             }))
     }
 
-    let latestFetchId = 0
+    const startFetch = latestRequest()
 
     async function fetchExecutions() {
-        const fetchId = ++latestFetchId
-        const isStale = () => fetchId !== latestFetchId
+        const isLatest = startFetch()
+        const isStale = () => !isLatest()
         loading.value = true
         error.value = undefined
         try {

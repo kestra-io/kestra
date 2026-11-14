@@ -33,6 +33,7 @@ import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
 import {handled, sseData} from "../utils/kestraHttp"
 import {toFlowGraph} from "../utils/flowGraph"
+import {latestRequest} from "../utils/latestRequest"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
@@ -401,14 +402,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    let latestExecutionLoad = 0
+    const startExecutionLoad = latestRequest()
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
      *  trailing event from the previous execution's stream cannot land on top of this one. */
     const loadExecution = (options: { id: string }) => {
-        const load = ++latestExecutionLoad
+        const isLatestLoad = startExecutionLoad()
         return ExecutionsAPI.execution({executionId: options.id}).then(data => {
-            if (load !== latestExecutionLoad) return data
+            if (!isLatestLoad()) return data
 
             throttledExecutionUpdate.cancel()
             execution.value = data
@@ -427,15 +428,15 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** Sequence number for committing searches: a response that is no longer the newest may
      * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
-    let latestExecutionsSearch = 0
+    const startExecutionsSearch = latestRequest()
 
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
-        const search = options.commit === false ? undefined : ++latestExecutionsSearch
+        const isLatestSearch = options.commit === false ? undefined : startExecutionsSearch()
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false && search === latestExecutionsSearch) {
+            if (isLatestSearch?.()) {
                 executions.value = response.results
                 total.value = response.total ?? 0
             }

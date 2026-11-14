@@ -103,7 +103,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease-in-out;
+            transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard), opacity var(--ks-duration-fast) var(--ks-ease-standard);
             gap: var(--ks-spacing-2);
 
             &:hover:not(:disabled) {

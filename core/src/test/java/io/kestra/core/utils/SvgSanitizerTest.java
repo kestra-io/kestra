@@ -16,6 +16,20 @@ class SvgSanitizerTest {
     }
 
     @Test
+    void shouldRemoveSelfClosingScriptTags() {
+        String svg = "<svg><script src=\"https://evil.example\"/><path d=\"M0 0\"/></svg>";
+
+        assertThat(SvgSanitizer.sanitize(svg))
+            .doesNotContain("<script")
+            .contains("<path d=\"M0 0\"/>");
+    }
+
+    @Test
+    void shouldHandleNullInputGracefully() {
+        assertThat(SvgSanitizer.sanitize(null)).isNull();
+    }
+
+    @Test
     void shouldPreserveHarmlessForeignObjectContent() {
         // Figma's SVG export fakes conic/angular gradients this way; several real plugin icons
         // have no visible content without it (a shape with no explicit fill inherits fill="none"

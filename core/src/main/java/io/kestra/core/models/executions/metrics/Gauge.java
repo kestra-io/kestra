@@ -85,8 +85,15 @@ public class Gauge extends AbstractMetricEntry<Double> {
 
     @Override
     public void register(MetricRegistry meterRegistry, String name, String description, Map<String, String> tags) {
-        meterRegistry
-            .gauge(this.metricName(name), description, this.value, this.tagsAsArray(tags));
+        var metricName = this.metricName(name);
+        var tagsArray = this.tagsAsArray(tags);
+
+        var existing = meterRegistry.find(metricName).tags(tagsArray).gauge();
+        if (existing != null) {
+            meterRegistry.removeMeter(existing);
+        }
+
+        meterRegistry.gauge(metricName, description, this.value, tagsArray);
     }
 
     @Override

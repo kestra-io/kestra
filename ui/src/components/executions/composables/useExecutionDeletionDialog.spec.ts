@@ -33,29 +33,32 @@ describe("execution deletion dialog", () => {
         const result = openDialog(false)
         await nextTick()
 
-        KsMessageBox.close()
+        findButton("Cancel")?.click()
 
         await expect(result).resolves.toBeUndefined()
     })
 
     it("offers the non-terminated switch only when asked", async () => {
-        openDialog(false)
+        const withoutSwitch = openDialog(false)
         await nextTick()
         expect(document.body.querySelector('[role="switch"]')).toBeNull()
 
-        KsMessageBox.close()
-        await flushPromises()
+        findButton("Cancel")?.click()
+        await expect(withoutSwitch).resolves.toBeUndefined()
 
-        openDialog(true)
+        const withSwitch = openDialog(true)
         await nextTick()
         expect(document.body.querySelector('[role="switch"]')).not.toBeNull()
+
+        findButton("Cancel")?.click()
+        await expect(withSwitch).resolves.toBeUndefined()
     })
 
     it("requires consent before confirming deletion of non-terminated executions", async () => {
         const result = openDialog(true, 2)
         await nextTick()
 
-        const confirm = findButton("Confirm")
+        const confirm = findButton("OK")
         const consent = document.body.querySelector<HTMLButtonElement>('[role="switch"]')
         expect(confirm).toBeDefined()
         expect(consent).toBeDefined()

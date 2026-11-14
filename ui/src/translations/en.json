@@ -1465,6 +1465,7 @@
             "flow_default_tab": "Default Flow Tab",
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
+            "open_docs_tab": "Open Docs Tab",
             "auto_refresh_interval": "Auto Refresh Interval",
             "task_edit_default_mode": "Default Task Edit Mode",
             "flow_template": "Default Flow Template"
@@ -1481,6 +1482,7 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
+            "open_docs_tab": "Open the Docs tab next to the editor. Applies to new flows and flows you haven't opened before.",
             "task_edit_default_mode": "How a task opens by default from the no-code editor.",
             "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },

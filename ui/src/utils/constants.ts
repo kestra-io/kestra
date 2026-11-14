@@ -68,6 +68,7 @@ export const storageKeys = {
     HOVER_TEXT_EDITOR: "hoverTextEditor",
     PEBBLE_HOVER: "pebbleHover",
     EDITOR_PLAYGROUND: "editorPlayground",
+    EDITOR_OPEN_DOCS_TAB: "editorOpenDocsTab",
     FLOW_DEFAULT_TAB: "flowDefaultTab",
     EXECUTION_DEFAULT_TAB: "executeDefaultTab",
     TRIGGERS_DEFAULT_TAB: "triggersDefaultTab",

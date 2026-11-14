@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,14 +132,12 @@ public class HttpRequest {
         public HttpRequestBuilder addHeader(String name, String value) {
             Map<String, List<String>> allHeaders = new HashMap<>(this.headers == null ? Map.of() : this.headers.map());
 
-            if (allHeaders.containsKey(name)) {
-                List<String> current = allHeaders.get(name);
-                current.add(value);
+            String headerName = name != null ? name.strip() : null;
+            String headerValue = value != null ? value.strip() : "";
 
-                allHeaders.put(name, current);
-            } else {
-                allHeaders.put(name, List.of(value));
-            }
+            List<String> current = new ArrayList<>(allHeaders.getOrDefault(headerName, List.of()));
+            current.add(headerValue);
+            allHeaders.put(headerName, current);
 
             this.headers = HttpHeaders.of(allHeaders, (a, b) -> true);
 

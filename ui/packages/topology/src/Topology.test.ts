@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {nextTick} from "vue"
 import {useVueFlow} from "@vue-flow/core"
 import Topology from "./Topology.vue"
@@ -134,6 +134,62 @@ describe("Topology view refit", () => {
         vueFlow.emits.nodesInitialized([])
 
         expect(fitView).toHaveBeenCalledTimes(2)
+    })
+
+    describe("when the panel is resized", () => {
+        let resize: (width: number, height: number) => void
+
+        beforeEach(() => {
+            vi.useFakeTimers()
+            vi.stubGlobal("ResizeObserver", class {
+                constructor(callback: ResizeObserverCallback) {
+                    resize = (width, height) => callback([{contentRect: {width, height}} as ResizeObserverEntry], this as unknown as ResizeObserver)
+                }
+                observe() {}
+                unobserve() {}
+                disconnect() {}
+            })
+        })
+
+        afterEach(() => {
+            vi.useRealTimers()
+            vi.unstubAllGlobals()
+        })
+
+        async function mountFitted(id: string) {
+            const vueFlow = useVueFlow(id)
+            const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
+            const wrapper = mountForRefit(id)
+            await settle()
+            vueFlow.emits.nodesInitialized([])
+            await settle()
+            resize(800, 600)
+            expect(fitView).toHaveBeenCalledTimes(1)
+            return {vueFlow, fitView, wrapper}
+        }
+
+        it("should refit the graph to the new size", async () => {
+            const {fitView} = await mountFitted(`topology-${Math.random()}`)
+
+            resize(500, 600)
+            vi.runAllTimers()
+
+            expect(fitView).toHaveBeenCalledTimes(2)
+        })
+
+        it("should refit again once a layout change fits a moved view", async () => {
+            const {vueFlow, fitView, wrapper} = await mountFitted(`topology-${Math.random()}`)
+
+            vueFlow.viewport.value = {x: 120, y: 40, zoom: 2}
+            await wrapper.setProps({isHorizontal: true})
+            await settle()
+            vueFlow.emits.nodesInitialized([])
+            await settle()
+            resize(500, 600)
+            vi.runAllTimers()
+
+            expect(fitView).toHaveBeenCalledTimes(3)
+        })
     })
 
     it("should refit when the orientation is toggled explicitly", async () => {

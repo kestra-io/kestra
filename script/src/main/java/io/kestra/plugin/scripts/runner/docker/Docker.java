@@ -800,7 +800,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return false;
     }
 
-    private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
+    // The product tour matches the first sentence verbatim, see ui/src/components/onboarding/tour/tourDocker.ts.
+    static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
         return "Docker execution failed because Docker socket is not accessible.\n\n" +
             "Fix:\n" +
             "- Mount docker socket:\n" +

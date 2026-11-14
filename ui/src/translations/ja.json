@@ -1718,7 +1718,12 @@
           "running": "実行中",
           "finish_now": "ツアーを完了",
           "dismiss": "非表示にする",
-          "skipped_hint": "プロダクトツアーは、後で再開したい場合に左メニューに残ります。"
+          "skipped_hint": "プロダクトツアーは、後で再開したい場合に左メニューに残ります。",
+          "run_without_docker": "Dockerなしで実行",
+          "enable_docker": "Dockerを有効にする方法"
+        },
+        "notices": {
+          "still_running": "Executionはまだ実行中です。Pythonの依存関係のインストール中など、一部の実行には数分かかる場合があります。完了するとツアーが続行されます。"
         },
         "intro": {
           "kicker": "Kestraへようこそ",
@@ -1857,7 +1862,8 @@
           "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
           "replay": "リプレイは{state}として終了しました。このページのlogを開いて{task}が報告した内容を確認し、もう一度試してください。",
           "save_flow": "ツアー flow は保存できませんでした。{reason}",
-          "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
+          "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。",
+          "docker_unavailable": "KestraがDockerに到達できないため、Python taskを開始できませんでした。Dockerなしで実行するか、KestraにDockerへのアクセスを許可して再試行してください。"
         },
         "steps": {
           "1": "flowを書いて実行する",

@@ -55,6 +55,8 @@ const ONBOARDING_NAMES: Record<string, string> = {
     tour_continued: "app.onboarding-tour.continued",
     tour_completed: "app.onboarding-tour.completed",
     tour_closed: "app.onboarding-tour.closed",
+    tour_docker_unavailable: "app.onboarding-tour.docker-unavailable",
+    tour_docker_fallback: "app.onboarding-tour.docker-fallback",
     step_viewed: "app.onboarding-step.viewed",
     step_next_clicked: "app.onboarding-step.advanced",
     step_auto_advanced: "app.onboarding-step.auto-advanced",

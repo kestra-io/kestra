@@ -32,17 +32,28 @@ const flowGraph = {
     clusters: [{cluster: {uid: "cluster_per_region", type: "io.kestra.core.models.hierarchies.GraphCluster", taskNode: {uid: "per_region", task: {type: LOOP_TYPE}}}}],
 }
 
-const iteration = (id: string, childExecutionId: string) => ({
+const iteration = (id: string) => ({
     id,
     state: {current: "SUCCESS"},
-    taskRunList: [{id: `${id}-call`, taskId: "call", state: {current: "RUNNING"}, outputs: {executionId: childExecutionId}}],
+    taskRunList: [{id: `${id}-call`, executionId: "root", taskId: "call", state: {current: "RUNNING"}}],
 })
 
-function setup(loadFlow = vi.fn().mockResolvedValue(undefined)) {
+const child = (id: string, taskRunId: string) => ({id, trigger: {variables: {taskRunId}}})
+
+type Setup = {taskRunList?: unknown[]; graph?: unknown; children?: ReturnType<typeof child>[]; loadFlow?: ReturnType<typeof vi.fn>; kind?: string}
+
+function setup({
+    taskRunList = [{id: "loop-run", taskId: "per_region", state: {current: "SUCCESS"}}],
+    graph = flowGraph,
+    children = [],
+    loadFlow = vi.fn().mockResolvedValue(undefined),
+    kind = "NORMAL",
+}: Setup = {}) {
     const store = useExecutionsStore()
-    store.execution = {id: "root", namespace: "ns", flowId: "flow", state: {current: "SUCCESS"}, taskRunList: [{id: "loop-run", taskId: "per_region", state: {current: "SUCCESS"}}]} as never
-    store.flowGraph = flowGraph as never
-    store.loadAugmentedGraph = vi.fn().mockResolvedValue(flowGraph) as never
+    store.execution = {id: "root", namespace: "ns", flowId: "flow", kind, state: {current: "SUCCESS"}, taskRunList} as never
+    store.flowGraph = graph as never
+    store.loadAugmentedGraph = vi.fn().mockResolvedValue(graph) as never
+    store.findExecutions = vi.fn(() => Promise.resolve({results: children, total: children.length})) as never
     const subscriptions: {executionId: string; close: ReturnType<typeof vi.fn>}[] = []
     store.subscribeToExecution = vi.fn((executionId: string) => {
         const subscription = {executionId, close: vi.fn()}
@@ -65,7 +76,7 @@ describe("executions/Topology flow source", () => {
     it("loads the flow source as optional, so a viewer without access to the flow sees no error", async () => {
         const loadFlow = vi.fn().mockResolvedValue({})
 
-        setup(loadFlow)
+        setup({loadFlow})
         await flushPromises()
 
         expect(loadFlow).toHaveBeenCalledWith({namespace: "ns", id: "flow", optional: true})
@@ -100,14 +111,127 @@ describe("executions/Topology subflow expanded inside a loop", () => {
         expand(["per_region.call"])
         await flushPromises()
 
-        store.setScopedIterations({per_region: iteration("it-0", "child-0")} as never)
+        vi.mocked(store.findExecutions).mockResolvedValue({results: [child("child-0", "it-0-call"), child("child-1", "it-1-call")], total: 2} as never)
+
+        store.setScopedIterations({per_region: iteration("it-0")} as never)
         await flushPromises()
         expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child-0"])
 
-        store.setScopedIterations({per_region: iteration("it-1", "child-1")} as never)
+        store.setScopedIterations({per_region: iteration("it-1")} as never)
         await flushPromises()
 
         expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child-0", "child-1"])
         expect(subscriptions[0].close).toHaveBeenCalled()
+    })
+})
+
+describe("executions/Topology expanded subflow", () => {
+    const subflowGraph = {
+        nodes: [{uid: "call_child", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "call_child", type: "io.kestra.plugin.core.flow.Subflow"}}],
+        edges: [],
+        clusters: [],
+    }
+    const subflowRun = (state: string) => ({id: "call-run", executionId: "root", taskId: "call_child", state: {current: state, startDate: "2026-10-28T10:00:00Z"}})
+
+    beforeEach(() => {
+        vi.useFakeTimers()
+        setActivePinia(createPinia())
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it.each(["SUCCESS", "FAILED", "RUNNING"])("shouldFollowTheChildExecutionTriggeredByTheSubflowRunWhenIt%s", async (state) => {
+        const {store, subscriptions, expand} = setup({
+            taskRunList: [subflowRun(state)],
+            graph: subflowGraph,
+            children: [child("other-child", "other-run"), child("child", "call-run")],
+        })
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+
+        expect(store.findExecutions).toHaveBeenCalledWith(expect.objectContaining({
+            "filters[triggerExecutionId][EQUALS]": "root",
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-10-28T10:00:00Z",
+            commit: false,
+        }))
+        expect(store.findExecutions).not.toHaveBeenCalledWith(expect.objectContaining({"filters[kind][IN]": expect.anything()}))
+        expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child"])
+    })
+
+    it.each(["TEST", "PLAYGROUND"])("shouldSearchTheChildAmongExecutionsOfTheSameKindWhenTheParentIs%s", async (kind) => {
+        const {store, subscriptions, expand} = setup({
+            taskRunList: [subflowRun("SUCCESS")],
+            graph: subflowGraph,
+            children: [child("child", "call-run")],
+            kind,
+        })
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+
+        expect(store.findExecutions).toHaveBeenCalledWith(expect.objectContaining({"filters[kind][IN]": kind}))
+        expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child"])
+    })
+
+    it("shouldPageThroughLaterChildrenToFindTheChildOfAFinishedSubflow", async () => {
+        const laterChildren = Array.from({length: 100}, (_, index) => child(`later-${index}`, `later-run-${index}`))
+        const {store, subscriptions, expand} = setup({taskRunList: [subflowRun("SUCCESS")], graph: subflowGraph})
+        vi.mocked(store.findExecutions).mockImplementation((({page}: {page: number}) => Promise.resolve(
+            page === 1 ? {results: laterChildren, total: 101} : {results: [child("child", "call-run")], total: 101},
+        )) as never)
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+
+        expect(store.findExecutions).toHaveBeenCalledTimes(2)
+        expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child"])
+    })
+
+    it("shouldBackOffBetweenLookupsWhileARunningSubflowHasNoChildYet", async () => {
+        const {store, expand} = setup({taskRunList: [subflowRun("RUNNING")], graph: subflowGraph})
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+        await vi.advanceTimersByTimeAsync(500)
+        expect(store.findExecutions).toHaveBeenCalledTimes(2)
+
+        await vi.advanceTimersByTimeAsync(500)
+        expect(store.findExecutions).toHaveBeenCalledTimes(2)
+
+        await vi.advanceTimersByTimeAsync(500)
+        expect(store.findExecutions).toHaveBeenCalledTimes(3)
+    })
+
+    it("shouldRetryUntilTheChildExecutionOfARunningSubflowIsFound", async () => {
+        const {store, subscriptions, expand} = setup({taskRunList: [subflowRun("RUNNING")], graph: subflowGraph})
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+        expect(store.subscribeToExecution).not.toHaveBeenCalled()
+
+        vi.mocked(store.findExecutions).mockResolvedValue({results: [child("child", "call-run")], total: 1} as never)
+        await vi.advanceTimersByTimeAsync(500)
+
+        expect(subscriptions.map((subscription) => subscription.executionId)).toEqual(["child"])
+    })
+
+    it("shouldStopLookingWhenAFinishedSubflowHasNoChildExecution", async () => {
+        const {store, expand} = setup({taskRunList: [subflowRun("SUCCESS")], graph: subflowGraph})
+        await flushPromises()
+
+        expand(["call_child"])
+        await flushPromises()
+        await vi.advanceTimersByTimeAsync(5_000)
+
+        expect(store.findExecutions).toHaveBeenCalledTimes(1)
+        expect(store.subscribeToExecution).not.toHaveBeenCalled()
     })
 })

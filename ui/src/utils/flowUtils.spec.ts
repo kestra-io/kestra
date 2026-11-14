@@ -215,6 +215,39 @@ tasks:
         ])
     })
 
+    it("getAllTaskIds includes tasks from finally and afterExecution blocks", () => {
+        const flow = {
+            tasks: [
+                {id: "step-1", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            errors: [
+                {id: "on-error", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            finally: [
+                {id: "cleanup-1", type: "io.kestra.plugin.core.log.Log"},
+                {
+                    id: "nested-finally",
+                    type: "io.kestra.plugin.core.flow.Parallel",
+                    tasks: [
+                        {id: "cleanup-nested", type: "io.kestra.plugin.core.log.Log"},
+                    ],
+                },
+            ],
+            afterExecution: [
+                {id: "notify-after", type: "io.kestra.plugin.core.log.Log"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "step-1",
+            "on-error",
+            "cleanup-1",
+            "nested-finally",
+            "cleanup-nested",
+            "notify-after",
+        ])
+    })
+
     it("getAllTaskIds removes duplicate task ids", () => {
         const flow = {
             tasks: [

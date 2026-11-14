@@ -211,6 +211,11 @@
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_logs_data_title": "로그를 찾을 수 없음",
+    "no_logs_in_range_title": "이 기간에 로그가 없습니다.",
+    "no_logs_in_range_at_level_title": "이 기간에 {level} 레벨 이상의 로그가 없습니다.",
+    "no_logs_in_range_description": "flow가 실행되면 여기에 로그가 표시됩니다. 더 보려면 기간을 넓히거나 레벨을 낮추세요.",
+    "execution_no_logs_title": "이 실행에는 로그가 없습니다.",
+    "execution_no_logs_at_level_title": "이 실행에는 {level} 수준 이상의 로그가 없습니다.",
     "duration": "지속 시간",
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
@@ -1897,6 +1902,7 @@
       "false": "{count} trigger(s) 활성화됨"
     },
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
+    "no_namespaces_yet": "아직 namespace가 없습니다. flow가 namespace를 사용하면 생성됩니다.",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
     "secret": {

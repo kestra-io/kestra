@@ -211,6 +211,11 @@
     "logs": "Logs",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_logs_data_title": "कोई logs नहीं मिले",
+    "no_logs_in_range_title": "इस समय सीमा में कोई logs नहीं हैं।",
+    "no_logs_in_range_at_level_title": "इस समय सीमा में {level} स्तर या उससे ऊपर के कोई logs नहीं हैं।",
+    "no_logs_in_range_description": "जब कोई flow चलता है, तो logs यहाँ दिखाई देते हैं। अधिक देखने के लिए समय सीमा बढ़ाएँ या स्तर कम करें।",
+    "execution_no_logs_title": "इस निष्पादन में कोई logs नहीं हैं।",
+    "execution_no_logs_at_level_title": "इस निष्पादन में {level} स्तर या उससे ऊपर के कोई logs नहीं हैं।",
     "duration": "अवधि",
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
@@ -1897,6 +1902,7 @@
       "false": "{count} trigger(s) सक्षम किए गए"
     },
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_namespaces_yet": "अभी तक कोई namespaces नहीं हैं। जब कोई flow किसी namespace का उपयोग करता है, तब वह बन जाता है।",
     "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
     "secret": {

@@ -211,6 +211,11 @@
     "logs": "Логи",
     "no_logs_data_description": "Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
     "no_logs_data_title": "Логи не найдены",
+    "no_logs_in_range_title": "Нет логов за этот период.",
+    "no_logs_in_range_at_level_title": "Нет логов уровня {level} и выше за этот период.",
+    "no_logs_in_range_description": "Логи появятся здесь, когда будет запущен flow. Расширьте период или понизьте уровень, чтобы увидеть больше.",
+    "execution_no_logs_title": "В этом выполнении нет логов.",
+    "execution_no_logs_at_level_title": "В этом выполнении нет логов уровня {level} или выше.",
     "duration": "Длительность",
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
@@ -1897,6 +1902,7 @@
       "false": "{count} trigger(s) включены"
     },
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
+    "no_namespaces_yet": "Namespace пока нет. Namespace создается, когда его использует flow.",
     "system_namespace": "Держите вашу платформу под контролем с помощью system flows.",
     "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки.",
     "secret": {

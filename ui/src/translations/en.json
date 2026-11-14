@@ -211,6 +211,11 @@
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
     "no_logs_data_title": "No logs found",
+    "no_logs_in_range_title": "No logs in this time range.",
+    "no_logs_in_range_at_level_title": "No logs at {level} level or above in this time range.",
+    "no_logs_in_range_description": "Logs appear here when a flow runs. Widen the time range or lower the level to see more.",
+    "execution_no_logs_title": "This execution has no logs.",
+    "execution_no_logs_at_level_title": "This execution has no logs at {level} level or above.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -1897,6 +1902,7 @@
       "false": "{count} trigger(s) enabled"
     },
     "no_namespaces": "Zero namespaces match the search criteria.",
+    "no_namespaces_yet": "No namespaces yet. A namespace is created when a flow uses it.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
     "secret": {

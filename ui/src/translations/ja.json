@@ -211,6 +211,11 @@
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_logs_data_title": "ログが見つかりません",
+    "no_logs_in_range_title": "この期間のログはありません。",
+    "no_logs_in_range_at_level_title": "この期間に {level} レベル以上のログはありません。",
+    "no_logs_in_range_description": "flowが実行されると、ここにログが表示されます。期間を広げるか、レベルを下げると、さらに表示されます。",
+    "execution_no_logs_title": "この実行にはログがありません。",
+    "execution_no_logs_at_level_title": "この実行には {level} レベル以上のログがありません。",
     "duration": "期間",
     "total_duration": "合計時間",
     "running duration": "実行期間",
@@ -1897,6 +1902,7 @@
       "false": "{count}個のtrigger(s)が有効化されました"
     },
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_namespaces_yet": "まだnamespaceはありません。flowがnamespaceを使用すると作成されます。",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "secret": {

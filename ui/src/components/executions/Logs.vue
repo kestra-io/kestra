@@ -108,11 +108,15 @@
                 :bodyStyle="fullscreenModalOpen ? FULLSCREEN_CARD_BODY_STYLE : undefined"
                 style="--kel-card-padding: 0"
             >
-                <KsNoData
-                    v-if="logsLoaded && !logsLoading && temporalLogs.length === 0"
-                    :title="$t('no_logs_data_title')"
-                    :description="$t('no_logs_data_description')"
-                />
+                <template v-if="logsLoaded && !logsLoading && temporalLogs.length === 0">
+                    <KsNoData
+                        v-if="hasUserFilters"
+                        :title="$t('no_logs_data_title')"
+                        :description="$t('no_logs_data_description')"
+                    />
+                    <KsNoData v-else-if="hiddenBelowLevel" :title="$t('execution_no_logs_at_level_title', {level: hiddenBelowLevel})" />
+                    <KsNoData v-else :title="$t('execution_no_logs_title')" />
+                </template>
                 <DynamicScroller
                     v-if="temporalLogs.length > 0"
                     ref="logScroller"
@@ -181,6 +185,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import LogLine from "../logs/LogLine.vue"
+    import {isDefaultLogLevel} from "../logs/logsEmptyState"
     import Restart from "./overview/components/actions/Restart.vue"
     import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import * as LogUtils from "../../utils/logs"
@@ -336,6 +341,15 @@
     const routeTaskRunId = computed(() => {
         const value = route.query["filters[taskRunId][EQUALS]"]
         return typeof value === "string" && value ? value : undefined
+    })
+    const hasUserFilters = computed(() =>
+        Boolean(filter.value)
+        || routeTaskRunId.value !== undefined
+        || !isDefaultLogLevel(effectiveLevelValue.value, merged.value ? ERRORS_ONLY.value : defaultLogLevel.value),
+    )
+    const hiddenBelowLevel = computed(() => {
+        const level = effectiveLevelValue.value
+        return level?.direction === "min" && level.value !== "TRACE" ? level.value : undefined
     })
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")

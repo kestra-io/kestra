@@ -211,6 +211,11 @@
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
     "no_logs_data_title": "Keine Logs gefunden",
+    "no_logs_in_range_title": "Keine Logs in diesem Zeitraum.",
+    "no_logs_in_range_at_level_title": "Keine Logs ab Level {level} in diesem Zeitraum.",
+    "no_logs_in_range_description": "Logs erscheinen hier, sobald ein Flow ausgeführt wird. Erweitern Sie den Zeitraum oder senken Sie das Level, um mehr zu sehen.",
+    "execution_no_logs_title": "Diese Ausführung hat keine Logs.",
+    "execution_no_logs_at_level_title": "Diese Ausführung hat keine Logs ab Level {level}.",
     "duration": "Dauer",
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
@@ -1897,6 +1902,7 @@
       "false": "{count} Trigger aktiviert"
     },
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_namespaces_yet": "Noch keine Namespaces. Ein Namespace wird erstellt, sobald ein Flow ihn verwendet.",
     "system_namespace": "Behalte deine Plattform mit System-Flows im Blick.",
     "system_namespace_description": "Automatisiere Wartungsaufgaben, von Fehler-Alerts bis zu automatisierten Bereinigungen.",
     "secret": {

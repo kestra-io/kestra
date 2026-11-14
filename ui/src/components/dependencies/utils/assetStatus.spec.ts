@@ -1,4 +1,9 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
+import {durationUtils} from "@kestra-io/design-system"
+import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+import ClockAlertOutline from "vue-material-design-icons/ClockAlertOutline.vue"
+import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+import HelpCircleOutline from "vue-material-design-icons/HelpCircleOutline.vue"
 import {compactAge, normalizeStatus, statusColorOf, statusIconOf} from "./assetStatus"
 
 describe("assetStatus", () => {
@@ -19,15 +24,20 @@ describe("assetStatus", () => {
         expect(normalizeStatus()).toBe("unknown")
     })
 
-    it("returns a distinct icon per known status and the unknown icon otherwise", () => {
-        const fresh = statusIconOf("fresh")
-        const stale = statusIconOf("stale")
-        const failed = statusIconOf("failed")
-        const unknown = statusIconOf("unknown")
+    it.each([
+        ["fresh", CheckCircle],
+        ["stale", ClockAlertOutline],
+        ["failed", AlertCircle],
+        ["unknown", HelpCircleOutline],
+        ["other", HelpCircleOutline],
+        [undefined, HelpCircleOutline],
+    ])("maps status %s to its expected icon component", (input, expectedIcon) => {
+        expect(statusIconOf(input)).toBe(expectedIcon)
+    })
 
-        expect(new Set([fresh, stale, failed, unknown]).size).toBe(4)
-        expect(statusIconOf("other")).toBe(unknown)
-        expect(statusIconOf()).toBe(unknown)
+    it("uses four distinct icons across the four known statuses", () => {
+        const icons = ["fresh", "stale", "failed", "unknown"].map((status) => statusIconOf(status))
+        expect(new Set(icons).size).toBe(4)
     })
 
     it("wraps the matching status token in var() with neutral fallback", () => {
@@ -49,10 +59,11 @@ describe("assetStatus", () => {
         expect(compactAge("2026-11-14T12:05:00Z")).toBeUndefined()
     })
 
-    it("formats a past timestamp as a compact duration", () => {
+    it("formats a past timestamp and the exact current-time boundary as a compact duration", () => {
         vi.useFakeTimers()
         vi.setSystemTime(new Date("2026-11-14T12:00:00Z"))
 
+        expect(compactAge("2026-11-14T12:00:00Z")).toBe(durationUtils.humanDuration(0))
         expect(compactAge("2026-11-14T11:00:00Z")).toBe("1h")
         expect(compactAge("2026-11-12T09:00:00Z")).toBe("2d, 3h")
     })

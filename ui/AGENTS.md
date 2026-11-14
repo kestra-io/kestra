@@ -394,7 +394,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
-| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close; `resizable` adds a drag handle, `size` sets the initial width (default 65%) and leaving full screen restores the width held before |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |

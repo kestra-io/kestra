@@ -1060,6 +1060,7 @@ public class FlowController {
         return ids
             .stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
+            .filter(flowWithSource -> !flowWithSource.isDraft())
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(throwConsumer(flow ->
             {
@@ -1073,6 +1074,7 @@ public class FlowController {
         return flowRepository
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
+            .filter(flowWithSource -> !flowWithSource.isDraft())
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(throwConsumer(flow ->
             {

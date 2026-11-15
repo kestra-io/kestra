@@ -1307,6 +1307,8 @@
         flex-wrap: wrap;
         align-items: center;
         padding: 5px;
+        min-height: 32px;
+        box-sizing: border-box;
         gap: 4px;
 
         & :deep(.kel-tag) {

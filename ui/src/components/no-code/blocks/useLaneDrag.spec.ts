@@ -115,6 +115,49 @@ describe("useLaneDrag", () => {
         wrapper.unmount();
     });
 
+    it("does not prevent default when lane refuses the drop", () => {
+        const canDropIn = vi.fn((_parentPath: string) => false);
+        const dropAt = vi.fn((_parentPath: string, _index: number) => {});
+
+        let result: ReturnType<typeof useLaneDrag>;
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    provide(
+                        BLOCK_DRAG_INJECTION_KEY,
+                        createDragContext({ canDropIn, dropAt }),
+                    );
+
+                    result = useLaneDrag(
+                        () => "blocks",
+                        () => 2,
+                    );
+
+                    return () => null;
+                },
+            }),
+        );
+
+        const event = {
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+        } as unknown as DragEvent;
+
+        result!.onItemDragOver(event, 1);
+        result!.onItemDrop(event, 1);
+
+        expect(canDropIn).toHaveBeenCalledWith("blocks");
+        expect(canDropIn).toHaveBeenCalledTimes(2);
+
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(event.stopPropagation).not.toHaveBeenCalled();
+
+        expect(dropAt).not.toHaveBeenCalled();
+
+        wrapper.unmount();
+    });
+
     it("calls dropAt with lane path and index when dropped on an accepting lane", () => {
         const canDropIn = vi.fn((_parentPath: string) => true);
         const dropAt = vi.fn((_parentPath: string, _index: number) => {});

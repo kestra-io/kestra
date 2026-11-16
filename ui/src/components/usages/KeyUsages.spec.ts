@@ -24,10 +24,14 @@ const flow = (namespace: string, id: string, snippets: string[]) => ({
     matches: snippets.map((snippet, index) => ({line: (index + 1) * 10, column: 0, snippet})),
 })
 
-const mountUsages = () => i18nMount(KeyUsages, {
-    props: {target: {kind: "kv" as const, namespace: "company", key: "api_url"}},
+type UsagesProps = {target: {kind: "kv" | "secret"; namespace?: string; key: string}; compact?: boolean}
+
+const mountUsages = (props: UsagesProps = {target: {kind: "kv", namespace: "company", key: "api_url"}}) => i18nMount(KeyUsages, {
+    props,
     global: {stubs: {RouterLink: RouterLinkProbe}},
 })
+
+const manyFlows = (count: number, call: string) => Array.from({length: count}, (_, index) => flow("company", `f${index}`, [call]))
 
 describe("KeyUsages", () => {
     beforeEach(() => {
@@ -121,5 +125,39 @@ describe("KeyUsages", () => {
             params: {tenant: "main"},
             query: {q: buildUsagePattern({kind: "kv", key: "api_url"}), regex: "true", caseSensitive: "true", types: "flows"},
         })
+    })
+
+    it("shows three usages first and reveals the rest on demand", async () => {
+        mockSearchFlowsBySourceCode.mockResolvedValue({results: manyFlows(5, "kv('api_url')"), total: 5})
+
+        const wrapper = mountUsages()
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test='key-usages-row']")).toHaveLength(3)
+        await wrapper.find("[data-test='key-usages-show-more']").trigger("click")
+
+        expect(wrapper.findAll("[data-test='key-usages-row']")).toHaveLength(5)
+        expect(wrapper.find("[data-test='key-usages-show-more']").exists()).toBe(false)
+    })
+
+    it("hides the snippets in compact mode", async () => {
+        mockSearchFlowsBySourceCode.mockResolvedValue({results: manyFlows(1, "secret('API_TOKEN')"), total: 1})
+
+        const wrapper = mountUsages({target: {kind: "secret", key: "API_TOKEN"}, compact: true})
+        await flushPromises()
+
+        expect(wrapper.findAll("[data-test='key-usages-row']")).toHaveLength(1)
+        expect(wrapper.find(".key-usages__snippet").exists()).toBe(false)
+    })
+
+    it("warns about rotation only for a referenced secret", async () => {
+        mockSearchFlowsBySourceCode.mockResolvedValue({results: manyFlows(2, "secret('API_TOKEN') kv('api_url')"), total: 2})
+
+        const secret = mountUsages({target: {kind: "secret", key: "API_TOKEN"}})
+        const kv = mountUsages()
+        await flushPromises()
+
+        expect(secret.find("[data-test='key-usages-rotation']").exists()).toBe(true)
+        expect(kv.find("[data-test='key-usages-rotation']").exists()).toBe(false)
     })
 })

@@ -140,26 +140,35 @@
         <KsDrawer
             v-if="viewSecret"
             :modelValue="true"
-            :title="viewSecret.key"
             @update:modelValue="viewSecret = undefined"
         >
-            <KsForm class="ks-horizontal">
-                <KsFormItem v-if="viewSecret.namespace" :label="$t('namespace')">
-                    <KsInput :modelValue="viewSecret.namespace" disabled />
-                </KsFormItem>
-                <KsFormItem :label="$t('key')">
-                    <KsInput :modelValue="viewSecret.key" disabled />
-                </KsFormItem>
-                <KsFormItem :label="$t('eval.expression')">
-                    <div class="secret-expression">
-                        <code>{{ secretExpression(viewSecret.key) }}</code>
+            <template #header>
+                <span class="secret-drawer__title" data-test="secret-drawer-title">
+                    <KsId :value="viewSecret.key" :shrink="false" />
+                    <KsTag v-if="viewSecret.namespace" size="small">{{ viewSecret.namespace }}</KsTag>
+                </span>
+            </template>
+            <div class="secret-drawer">
+                <div class="secret-drawer__field">
+                    <KsText tag="p" size="small" class="secret-drawer__label">{{ $t("value") }}</KsText>
+                    <div class="secret-drawer__box">
+                        <KsText type="secondary" size="small" class="secret-drawer__hidden">
+                            <Lock />
+                            {{ $t("secret.value_hidden") }}
+                        </KsText>
+                    </div>
+                </div>
+                <div class="secret-drawer__field">
+                    <KsText tag="p" size="small" class="secret-drawer__label">{{ $t("secret.pebble_expression") }}</KsText>
+                    <div class="secret-drawer__box">
+                        <code class="secret-drawer__expression">{{ secretExpression(viewSecret.key) }}</code>
                         <KsIconButton :tooltip="$t('copy_pebble_expression')" placement="left" @click="copyKey(viewSecret.key)">
                             <ContentCopy />
                         </KsIconButton>
                     </div>
-                </KsFormItem>
-            </KsForm>
-            <KeyUsages :target="{kind: 'secret', namespace: keyOnly ? undefined : viewSecret.namespace, key: viewSecret.key}" />
+                </div>
+                <KeyUsages compact :target="{kind: 'secret', namespace: keyOnly ? undefined : viewSecret.namespace, key: viewSecret.key}" />
+            </div>
         </KsDrawer>
 
         <KsDialog
@@ -735,10 +744,59 @@
         width: 100%;
     }
 
-    .secret-expression {
-        display: flex;
+    .secret-drawer__title {
+        display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-2);
+        min-width: 0;
+    }
+
+    .secret-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-5);
+    }
+
+    .secret-drawer__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+
+    .secret-drawer > .key-usages {
+        margin-top: 0;
+    }
+
+    .secret-drawer__label {
+        align-self: flex-start;
+        margin: 0;
+        font-weight: var(--ks-font-weight-semibold);
+    }
+
+    .secret-drawer__box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-2);
+        min-height: 2.5rem;
+        padding: var(--ks-spacing-1) var(--ks-spacing-1) var(--ks-spacing-1) var(--ks-spacing-3);
+        background-color: var(--ks-bg-input);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+    }
+
+    .secret-drawer__hidden {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
+
+    .secret-drawer__expression {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 
     .lock-icon {

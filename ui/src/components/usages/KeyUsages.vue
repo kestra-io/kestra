@@ -96,6 +96,7 @@
     const flowTarget = (usage: KeyUsage) => ({
         name: "flows/update/edit",
         params: {tenant: route.params.tenant, namespace: usage.namespace, id: usage.id},
+        query: {line: String(usage.line)},
     })
 
     const highlight = (snippet: string) => buildHighlightSegments(snippet, props.target.key, true)
@@ -165,11 +166,11 @@
     gap: var(--ks-spacing-2);
     min-width: 0;
     font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-primary);
+    color: var(--ks-text-link);
     text-decoration: none;
 
-    &:hover .key-usages__name {
-        color: var(--ks-text-link);
+    &:hover .key-usages__name,
+    &:focus-visible .key-usages__name {
         text-decoration: underline;
     }
 }

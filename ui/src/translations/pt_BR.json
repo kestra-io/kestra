@@ -2644,6 +2644,10 @@
           },
           "valid": "Válido",
           "invalid": "Precisa de mudanças"
+        },
+        "tray": {
+          "title": "Alterações pendentes",
+          "applyFirst": "Aplicar {flow} primeiro"
         }
       }
     },
@@ -2922,7 +2926,8 @@
       "open_in_secrets": "Abrir em secrets",
       "options_aria": "Opções de busca",
       "path_only_hint": "Busca apenas o caminho do arquivo, não o seu conteúdo. Não pode ser substituído.",
-      "preview_empty": "Selecione um resultado para pré-visualizar. Clique em um flow na lista de resultados para ver seu código-fonte.",
+      "preview_empty_title": "Selecione um resultado para pré-visualizar.",
+      "preview_empty_description": "Clique em um flow na lista de resultados para ver seu código-fonte.",
       "preview_error": "Falha ao carregar o código-fonte do flow",
       "previous_match": "Correspondência anterior",
       "rbac_banner": "{count} flows estão excluídos da substituição. Você tem acesso de leitura, mas não de edição em {namespace}. Peça a um administrador do namespace a permissão de {permission} para incluí-los.",

@@ -2644,6 +2644,10 @@
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"
+        },
+        "tray": {
+          "title": "Modifications en attente",
+          "applyFirst": "Appliquer le {flow} en premier"
         }
       }
     },
@@ -2922,7 +2926,8 @@
       "open_in_secrets": "Ouvrir dans les secrets",
       "options_aria": "Options de recherche",
       "path_only_hint": "Recherche uniquement le chemin du fichier, pas son contenu. Ne peut pas être remplacé.",
-      "preview_empty": "Sélectionnez un résultat pour l'afficher. Cliquez sur un flow dans la liste des résultats pour voir sa source.",
+      "preview_empty_title": "Sélectionnez un résultat pour l'afficher.",
+      "preview_empty_description": "Cliquez sur un flow dans la liste des résultats pour voir sa source.",
       "preview_error": "Échec du chargement de la source du flow",
       "previous_match": "Correspondance précédente",
       "rbac_banner": "{count} flows sont exclus du remplacement. Vous avez un accès en lecture mais pas en édition sur le {namespace}. Demandez à un administrateur de namespace la permission {permission} pour les inclure.",

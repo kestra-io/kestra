@@ -172,7 +172,7 @@
                     <div class="tab-body">
                         <MetricsTable :key="currentTaskRun.id" :taskRunId="currentTaskRun.id" :execution="execution">
                             <template #empty>
-                                <KsEmpty :imageSize="96" :description="$t('no metrics available')" />
+                                <KsNoData :description="$t('no metrics available')" />
                             </template>
                         </MetricsTable>
                     </div>
@@ -218,10 +218,9 @@
                                 {{ $t("task_run_popup.retry") }}
                             </KsButton>
                         </KsAlert>
-                        <KsEmpty
+                        <KsNoData
                             v-else-if="outputsCount === 0"
                             class="tab-empty"
-                            :imageSize="96"
                             :description="$t('no outputs available')"
                             data-test="task-run-popup-outputs-empty"
                         />
@@ -247,10 +246,9 @@
                     </template>
                     <div class="tab-body tab-body--fill">
                         <KsSkeleton v-if="artifactsStatus === 'loading'" animated :rows="4" data-test="task-run-popup-artifacts-loading" />
-                        <KsEmpty
+                        <KsNoData
                             v-else-if="!selectedArtifact"
                             class="tab-empty"
-                            :imageSize="96"
                             :description="$t('task_run_popup.no_artifacts')"
                             data-test="task-run-popup-artifacts-empty"
                         />

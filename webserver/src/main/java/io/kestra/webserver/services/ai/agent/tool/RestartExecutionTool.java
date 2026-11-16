@@ -1,19 +1,11 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.concurrent.TimeoutException;
-
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
-import io.kestra.core.async.AsyncOperationProcessedEvent;
-import io.kestra.core.async.AsyncOperationsConfiguration;
-import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.Restart;
 import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
 import dev.langchain4j.agent.tool.P;
@@ -24,20 +16,12 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RestartExecutionTool implements McpPlatformTool {
     private final ExecutionRepositoryInterface executionRepository;
-    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
-    private final AsyncOperationWaiter asyncOperationWaiter;
-    private final AsyncOperationsConfiguration asyncOperationsConfiguration;
+    private final ExecutionCommandSubmitter commandSubmitter;
 
     @Inject
-    public RestartExecutionTool(
-        final ExecutionRepositoryInterface executionRepository,
-        final DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
-        final AsyncOperationWaiter asyncOperationWaiter,
-        final AsyncOperationsConfiguration asyncOperationsConfiguration) {
+    public RestartExecutionTool(final ExecutionRepositoryInterface executionRepository, final ExecutionCommandSubmitter commandSubmitter) {
         this.executionRepository = executionRepository;
-        this.executionCommandQueue = executionCommandQueue;
-        this.asyncOperationWaiter = asyncOperationWaiter;
-        this.asyncOperationsConfiguration = asyncOperationsConfiguration;
+        this.commandSubmitter = commandSubmitter;
     }
 
     @Override
@@ -75,31 +59,10 @@ public class RestartExecutionTool implements McpPlatformTool {
             );
         }
 
-        AsyncOperationProcessedEvent processed;
-        try {
-            processed = asyncOperationWaiter.submitAndWait(
-                executionId,
-                operationId ->
-                {
-                    try {
-                        executionCommandQueue.emit(Restart.from(execution, null).withOperationId(operationId).withActor(context.actor()));
-                    } catch (QueueException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                asyncOperationsConfiguration.waitTimeout()
-            );
-        } catch (TimeoutException e) {
-            throw new IllegalStateException(
-                "Timed out waiting for execution '%s' to be restarted.".formatted(executionId), e
-            );
-        }
-
-        if (processed.outcome() == AsyncOperationProcessedEvent.Outcome.FAILED) {
-            throw new IllegalStateException(
-                "Failed to restart execution '%s': %s".formatted(executionId, processed.error())
-            );
-        }
+        commandSubmitter.submitAndWait(
+            executionId, "restart",
+            (queue, operationId, actor) -> queue.emit(Restart.from(execution, null).withOperationId(operationId).withActor(context.actor()))
+        );
 
         return new Result(
             executionId

@@ -52,6 +52,7 @@
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
     import {categoryLabel, deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
+    import {escapeHtml} from "../../utils/lang"
 
     defineOptions({inheritAttrs: false})
 
@@ -85,6 +86,8 @@
             renderer?: ChartRenderer
             /** Upper bound for the canvas pixel ratio. Trades a little sharpness on high-DPI screens for a much smaller canvas; leave unset to render at full device resolution. */
             maxPixelRatio?: number
+            /** EXTERNAL only: text shown for a series, or a pie slice, in the tooltip; returning undefined keeps the default formatting of its name. */
+            seriesLabel?: (name: string) => string | undefined
         }>(),
         {
             loading: false,
@@ -94,6 +97,7 @@
             data: null,
             renderer: ChartRenderer.CANVAS,
             maxPixelRatio: undefined,
+            seriesLabel: undefined,
         },
     )
 
@@ -215,6 +219,11 @@
         return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
     }
 
+    function displayName(name: string): string {
+        const label = props.seriesLabel?.(name)
+        return label === undefined ? categoryLabel(name) : escapeHtml(label)
+    }
+
     function buildContentFromParams(params: unknown): string {
         const list: EChartsTooltipParam[] = Array.isArray(params) ? params : [params as EChartsTooltipParam]
         if (!list.length) return ""
@@ -225,7 +234,7 @@
         const category = list[0]?.name ?? ""
 
         if (category) {
-            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? categoryLabel(category) : category}</div>`)
+            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? displayName(category) : category}</div>`)
         }
 
         for (const p of list) {
@@ -238,7 +247,7 @@
             const swatch = p.seriesType === "line"
                 ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
-            const label = isPie ? "" : categoryLabel(p.seriesName ?? "")
+            const label = isPie ? "" : displayName(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(
                 `<div style="display:flex;align-items:center;gap:6px;line-height:18px;white-space:nowrap">${swatch}<span style="flex:1">${label}</span><span style="margin-left:12px">${value}${suffix}</span></div>`,

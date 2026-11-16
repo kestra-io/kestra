@@ -130,4 +130,12 @@ class SwitchTest {
         assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
         assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
     }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/switch-with-only-disabled-tasks.yaml", tenantId = "switchwithonlydisabledtasks", timeout = "PT20S")
+    void shouldSucceedWhenCaseTasksAreAllDisabled(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("switch").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

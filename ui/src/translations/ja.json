@@ -2190,6 +2190,11 @@
           },
           "valid": "有効",
           "invalid": "変更が必要です"
+        },
+        "tray": {
+          "title": "保留中の変更",
+          "applyFirst": "最初に{flow}を適用",
+          "dismiss": "閉じる"
         }
       }
     },

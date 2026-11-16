@@ -109,7 +109,6 @@
             :original="revisionLeftText"
             readOnly
             :lang
-            :showDoc="false"
         />
 
         <div v-if="isLoadingRevisions" class="revision-loading">

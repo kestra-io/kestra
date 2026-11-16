@@ -98,3 +98,32 @@ export const RegistersFocusedExpressionEditor: Story = {
         await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("cleared"));
     },
 };
+
+export const Disabled: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const model = ref(args.modelValue);
+            return () => <div style={{width: "500px"}}>
+                <TaskExpression
+                    modelValue={model.value}
+                    onUpdate:modelValue={(val) => model.value = val}
+                    root={args.root}
+                    disabled
+                />
+                <pre data-testid="result">{JSON.stringify(model.value)}</pre>
+            </div>
+        },
+    }),
+    args: {
+        modelValue: "{{ outputs.myTask.uri }}",
+        root: "expression",
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement);
+        const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"), {timeout: 15000});
+        await userEvent.click(within(editorContainer).getByRole("textbox"));
+        await userEvent.keyboard("changed");
+        await expect(canvas.getByTestId("result")).toHaveTextContent("\"{{ outputs.myTask.uri }}\"");
+    },
+};

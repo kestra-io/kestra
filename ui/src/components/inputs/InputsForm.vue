@@ -61,9 +61,6 @@
                     @confirm="onSubmit"
                 />
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'SELECT' && !input.isRadio"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
@@ -99,9 +96,6 @@
                     />
                 </KsRadioGroup>
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'MULTISELECT'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="multiSelectInputs[input.id]"

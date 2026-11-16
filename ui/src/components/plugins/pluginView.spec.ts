@@ -5,7 +5,9 @@ const replace = vi.fn()
 let routeQuery: LocationQuery = {}
 
 vi.mock("vue-router", () => ({
-    useRoute: () => ({query: routeQuery}),
+    useRoute: () => ({get query() {
+        return routeQuery
+    }}),
     useRouter: () => ({replace}),
 }))
 

@@ -38,12 +38,13 @@ class McpPlatformToolTest {
         // Then
         assertThat(exposed).extracting(ToolCatalog.ToolEntry::name).containsExactlyInAnyOrder(
             "read_flow", "list_flows", "read_execution", "list_executions", "read_execution_logs",
-            "search_plugins", "get_plugin_schema", "validate_flow", "restart_execution",
+            "search_plugins", "get_plugin_schema", "list_installed_plugins", "read_plugin_documentation", "validate_flow", "restart_execution",
             "search_flow_sources", "list_flow_revisions", "list_flow_dependencies", "list_flow_triggers",
             "create_flow", "update_flow", "enable_flow", "disable_flow", "delete_flow",
             "execute_flow", "kill_execution", "pause_execution", "change_execution_state", "update_execution_labels",
             "delete_execution", "read_execution_outputs",
-            "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow"
+            "replay_execution", "resume_execution", "force_run_execution", "change_task_run_state", "backfill_flow",
+            "list_namespaces", "list_namespace_dependencies"
         );
         assertThat(exposed).allSatisfy(entry ->
         {

@@ -308,6 +308,7 @@ class FlowToolSchemaMapperTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReflectAllInputsInSchemaWhenBuildingToolForFlowWithInputs() {
         List<Input<?>> inputs = List.of(
             StringInput.builder().id("name").type(Type.STRING).required(true).build(),
@@ -316,8 +317,8 @@ class FlowToolSchemaMapperTest {
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(inputs), buildTrigger(new McpToolAnnotations(false, false, false, false, false)));
 
-        assertThat(tool.inputSchema().properties()).containsKeys("name", "count");
-        assertThat(tool.inputSchema().required()).containsExactly("name");
+        assertThat((Map<String, Object>) tool.inputSchema().get("properties")).containsKeys("name", "count");
+        assertThat((List<String>) tool.inputSchema().get("required")).containsExactly("name");
     }
 
     private McpToolTrigger buildTrigger(McpToolAnnotations annotations) {

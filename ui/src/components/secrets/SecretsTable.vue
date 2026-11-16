@@ -150,7 +150,7 @@
                 <KsFormItem :label="$t('key')">
                     <KsInput :modelValue="viewSecret.key" disabled />
                 </KsFormItem>
-                <KsFormItem :label="$t('copy_pebble_expression')">
+                <KsFormItem :label="$t('eval.expression')">
                     <div class="secret-expression">
                         <code>{{ secretExpression(viewSecret.key) }}</code>
                         <KsIconButton :tooltip="$t('copy_pebble_expression')" placement="left" @click="copyKey(viewSecret.key)">

@@ -109,6 +109,7 @@
 }
 
 .key-usages__note {
+    align-self: stretch;
     margin: 0;
 }
 
@@ -155,7 +156,6 @@
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
-        padding: 0 var(--ks-spacing-1);
     }
 }
 </style>

@@ -23,6 +23,7 @@ import io.kestra.core.models.flows.SourceSearchScope;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SourceCodeSearchOutcome;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RegexUtils;
@@ -78,15 +79,15 @@ public class SourceSearchService {
             ));
     }
 
-    public List<KeyUsagesResponse> countKeyUsages(String tenantId, KeyUsagesRequest request) {
-        List<KeyUsagesResponse> responses = new ArrayList<>(request.keys().size());
+    public KeyUsagesResponse countKeyUsages(String tenantId, KeyUsagesRequest request) {
+        List<KeyUsagesResponse.KeyUsage> usages = new ArrayList<>(request.keys().size());
         for (KeyUsagesRequest.Key target : request.keys()) {
-            responses.add(countKeyUsages(tenantId, request.kind(), target));
+            usages.add(countKeyUsages(tenantId, request.kind(), target));
         }
-        return responses;
+        return new KeyUsagesResponse(usages);
     }
 
-    private KeyUsagesResponse countKeyUsages(String tenantId, KeyUsagesRequest.Kind kind, KeyUsagesRequest.Key target) {
+    private KeyUsagesResponse.KeyUsage countKeyUsages(String tenantId, KeyUsagesRequest.Kind kind, KeyUsagesRequest.Key target) {
         if (target.key().contains("\n") || target.key().contains("\r")) {
             throw new InvalidSourceSearchQueryException("A key must not contain a line break.");
         }
@@ -96,9 +97,9 @@ public class SourceSearchService {
         boolean truncated = false;
         for (String quote : List.of("'", "\"")) {
             String query = function + "(" + quote + target.key() + quote;
-            List<SearchResult<Flow>> results = flowRepository.findSourceCode(Pageable.UNPAGED, query, true, false, false, SourceSearchScope.ALL, tenantId, null);
-            truncated |= results.size() >= SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES;
-            for (SearchResult<Flow> result : results) {
+            SourceCodeSearchOutcome outcome = flowRepository.findSourceCodeWithCapFlag(Pageable.UNPAGED, query, true, false, false, SourceSearchScope.ALL, tenantId, null);
+            truncated |= outcome.candidatesCapped();
+            for (SearchResult<Flow> result : outcome.results()) {
                 String flowNamespace = result.getModel().getNamespace();
                 if (isInNamespaceScope(flowNamespace, target.namespace())
                     || result.getMatches().stream().anyMatch(match -> namesNamespace(match.snippet(), target.namespace()))) {
@@ -107,7 +108,7 @@ public class SourceSearchService {
             }
         }
 
-        return new KeyUsagesResponse(target.namespace(), target.key(), usedBy.size(), truncated);
+        return new KeyUsagesResponse.KeyUsage(target.namespace(), target.key(), usedBy.size(), truncated);
     }
 
     public SourceSearchReplacePreviewResponse preview(

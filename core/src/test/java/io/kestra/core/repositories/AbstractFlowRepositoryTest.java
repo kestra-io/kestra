@@ -41,6 +41,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Flows;
 import io.kestra.plugin.core.dashboard.data.FlowsKPI;
@@ -1743,6 +1744,40 @@ public abstract class AbstractFlowRepositoryTest {
             ).contains("sourcecode-test");
         } finally {
             deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void shouldFlagCappedCandidatesEvenWhenNoneOfThemMatch() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        List<FlowWithSource> created = new ArrayList<>();
+        for (int i = 0; i <= SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES; i++) {
+            created.add(flowRepository.create(GenericFlow.fromYaml(tenant, """
+                id: capped-%d
+                namespace: %s
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: capmarker
+                """.formatted(i, TEST_NAMESPACE))));
+        }
+
+        try {
+            // When
+            SourceCodeSearchOutcome capped = flowRepository.findSourceCodeWithCapFlag(
+                Pageable.UNPAGED, "CAPMARKER", true, false, false, SourceSearchScope.ALL, tenant, null
+            );
+            SourceCodeSearchOutcome notCapped = flowRepository.findSourceCodeWithCapFlag(
+                Pageable.UNPAGED, "capmarker", true, false, false, SourceSearchScope.ALL, tenant, "io.kestra.unrelated"
+            );
+
+            // Then
+            assertThat(capped.results()).isEmpty();
+            assertThat(capped.candidatesCapped()).isTrue();
+            assertThat(notCapped.candidatesCapped()).isFalse();
+        } finally {
+            created.forEach(this::deleteFlow);
         }
     }
 

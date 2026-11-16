@@ -21,8 +21,8 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.SourceSearchScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SourceCodeSearchOutcome;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.models.flows.KeyUsagesRequest;
 import io.kestra.webserver.models.flows.KeyUsagesRequest.Key;
@@ -294,7 +294,7 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"k\"");
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.flows()).isEqualTo(2);
@@ -308,7 +308,7 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"k\"");
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.flows()).isEqualTo(1);
@@ -321,7 +321,7 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"k\"");
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.flows()).isZero();
@@ -334,7 +334,7 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"k\"", match("company", "double", "x: kv(\"k\")"));
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.flows()).isEqualTo(2);
@@ -347,7 +347,7 @@ class SourceSearchServiceTest {
         givenMatches("secret(\"S\"");
 
         // When
-        KeyUsagesResponse response = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.SECRET, List.of(new Key(null, "S")))).getFirst();
+        KeyUsagesResponse.KeyUsage response = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.SECRET, List.of(new Key(null, "S")))).results().getFirst();
 
         // Then
         assertThat(response.flows()).isEqualTo(2);
@@ -361,7 +361,7 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"k\"", match("company", "a", "z: kv(\"k\")"));
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.flows()).isEqualTo(1);
@@ -376,28 +376,25 @@ class SourceSearchServiceTest {
         givenMatches("kv(\"second\"");
 
         // When
-        List<KeyUsagesResponse> responses = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(new Key("company", "first"), new Key("company", "second"))));
+        List<KeyUsagesResponse.KeyUsage> responses = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(new Key("company", "first"), new Key("company", "second")))).results();
 
         // Then
-        assertThat(responses).extracting(KeyUsagesResponse::key).containsExactly("first", "second");
-        assertThat(responses).extracting(KeyUsagesResponse::flows).containsExactly(1, 0);
+        assertThat(responses).extracting(KeyUsagesResponse.KeyUsage::key).containsExactly("first", "second");
+        assertThat(responses).extracting(KeyUsagesResponse.KeyUsage::flows).containsExactly(1, 0);
     }
 
     @Test
-    void shouldFlagTruncationWhenTheCandidateCapIsReached() {
+    void shouldFlagTruncationWhenTheCandidateCapIsHitEvenIfFewerThanTheCapMatch() {
         // Given
-        FlowMatch[] capped = new FlowMatch[SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES];
-        for (int i = 0; i < capped.length; i++) {
-            capped[i] = match("company", "flow-" + i, "x: kv('k')");
-        }
         givenMatches("kv('k'");
-        givenMatches("kv(\"k\"", capped);
+        givenMatches(true, "kv(\"k\"", match("company", "only-match", "x: kv(\"k\")"));
 
         // When
-        KeyUsagesResponse response = countKv(new Key("company", "k"));
+        KeyUsagesResponse.KeyUsage response = countKv(new Key("company", "k"));
 
         // Then
         assertThat(response.truncated()).isTrue();
+        assertThat(response.flows()).isEqualTo(1);
     }
 
     @Test
@@ -409,8 +406,8 @@ class SourceSearchServiceTest {
         return new SourceSearchService(flowRepository, flowService);
     }
 
-    private KeyUsagesResponse countKv(Key key) {
-        return service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(key))).getFirst();
+    private KeyUsagesResponse.KeyUsage countKv(Key key) {
+        return service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(key))).results().getFirst();
     }
 
     private record FlowMatch(String namespace, String id, List<String> lines) {
@@ -421,6 +418,10 @@ class SourceSearchServiceTest {
     }
 
     private void givenMatches(String query, FlowMatch... flows) {
+        givenMatches(false, query, flows);
+    }
+
+    private void givenMatches(boolean candidatesCapped, String query, FlowMatch... flows) {
         List<SearchResult<Flow>> results = java.util.Arrays.stream(flows)
             .map(flow -> {
                 List<SourceMatch> matches = new java.util.ArrayList<>();
@@ -431,7 +432,7 @@ class SourceSearchServiceTest {
                 return new SearchResult<>(model, matches, true);
             })
             .toList();
-        when(flowRepository.findSourceCode(eq(Pageable.UNPAGED), eq(query), eq(true), eq(false), eq(false), eq(SourceSearchScope.ALL), eq("main"), eq(null)))
-            .thenReturn(new ArrayListTotal<>(results, results.size()));
+        when(flowRepository.findSourceCodeWithCapFlag(eq(Pageable.UNPAGED), eq(query), eq(true), eq(false), eq(false), eq(SourceSearchScope.ALL), eq("main"), eq(null)))
+            .thenReturn(new SourceCodeSearchOutcome(new ArrayListTotal<>(results, results.size()), candidatesCapped));
     }
 }

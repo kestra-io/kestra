@@ -179,7 +179,7 @@
 
 .section-title {
     font-size: var(--ks-font-size-sm);
-    font-weight: 600;
+    font-weight: var(--ks-font-weight-semibold);
     margin: 0 0 var(--ks-spacing-2);
     color: var(--ks-text-primary);
 }

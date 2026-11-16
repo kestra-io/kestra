@@ -90,7 +90,7 @@
 
 .overrides th {
     text-align: start;
-    font-weight: 600;
+    font-weight: var(--ks-font-weight-semibold);
     color: var(--ks-text-secondary);
 }
 

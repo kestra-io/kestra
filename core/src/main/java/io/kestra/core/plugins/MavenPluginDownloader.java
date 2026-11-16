@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -234,7 +233,7 @@ public class MavenPluginDownloader implements Closeable {
 
     // The proxy type selects the repositories a proxy serves; the transport always reaches the proxy itself over plain HTTP.
     private static ProxySelector proxySelector(Properties systemProperties) {
-        String nonProxyHosts = nonProxyHosts(systemProperties.getProperty("http.nonProxyHosts"));
+        String nonProxyHosts = systemProperties.getProperty("http.nonProxyHosts");
         DefaultProxySelector selector = new DefaultProxySelector();
         proxy(systemProperties, Proxy.TYPE_HTTP, 80).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
         proxy(systemProperties, Proxy.TYPE_HTTPS, 443).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
@@ -243,41 +242,25 @@ public class MavenPluginDownloader implements Closeable {
 
     private static Optional<Proxy> proxy(Properties systemProperties, String scheme, int defaultPort) {
         String host = systemProperties.getProperty(scheme + ".proxyHost");
-        if (host == null || host.isBlank()) {
+        if (host == null) {
             return Optional.empty();
         }
 
         String user = systemProperties.getProperty(scheme + ".proxyUser");
-        Authentication authentication = user == null || user.isBlank() ? null : new AuthenticationBuilder()
+        Authentication authentication = user == null ? null : new AuthenticationBuilder()
             .addUsername(user)
             .addPassword(systemProperties.getProperty(scheme + ".proxyPassword", ""))
             .build();
 
-        return Optional.of(new Proxy(scheme, host.trim(), proxyPort(systemProperties, scheme, defaultPort), authentication));
+        return Optional.of(new Proxy(scheme, host, port(systemProperties.getProperty(scheme + ".proxyPort"), defaultPort), authentication));
     }
 
-    private static int proxyPort(Properties systemProperties, String scheme, int defaultPort) {
-        String port = systemProperties.getProperty(scheme + ".proxyPort");
-        if (port == null || port.isBlank()) {
-            return defaultPort;
-        }
+    private static int port(@Nullable String port, int defaultPort) {
         try {
-            return Integer.parseInt(port.trim());
+            return Integer.parseInt(port);
         } catch (NumberFormatException e) {
-            log.warn("The JVM property '{}.proxyPort' is not a port number ('{}'), so plugin downloads use the default port {}, as the JDK does.", scheme, port, defaultPort);
             return defaultPort;
         }
-    }
-
-    @Nullable
-    private static String nonProxyHosts(@Nullable String nonProxyHosts) {
-        if (nonProxyHosts == null || nonProxyHosts.isBlank()) {
-            return null;
-        }
-        return Arrays.stream(nonProxyHosts.split("\\|"))
-            .map(String::trim)
-            .filter(pattern -> !pattern.isEmpty())
-            .collect(Collectors.joining("|"));
     }
 
     private RepositorySystemSession repositorySystemSession(RepositorySystem system, PluginsConfiguration configuration) {

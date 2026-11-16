@@ -204,7 +204,7 @@ class MavenPluginDownloaderTest {
         Properties systemProperties = new Properties();
         systemProperties.setProperty("http.proxyHost", "127.0.0.1");
         systemProperties.setProperty("http.proxyPort", "1");
-        systemProperties.setProperty("http.nonProxyHosts", "localhost | 127.0.0.1");
+        systemProperties.setProperty("http.nonProxyHosts", "localhost|127.0.0.1");
 
         try (MavenPluginDownloader downloader = new MavenPluginDownloader(
             List.of(new MavenPluginRepositoryConfig("internal", "http://127.0.0.1:%d/".formatted(repository.getAddress().getPort()), null)),

@@ -11,7 +11,7 @@
                     :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
                 >
-                    <template v-if="!iconOnly">
+                    <template v-if="!iconOnly" #default>
                         {{ actionLabel }}
                     </template>
                 </KsButton>

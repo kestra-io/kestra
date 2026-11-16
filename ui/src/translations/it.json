@@ -2018,6 +2018,7 @@
       "line": "Riga {line}",
       "error": "Impossibile cercare le sorgenti del flow.",
       "empty": "Nessun flow fa riferimento a questa chiave nel suo sorgente.",
+      "incomplete": "Più Flow contengono questo riferimento di quanti possano essere elencati qui. Apri la ricerca sorgente per vederli tutti.",
       "caveat": "Solo riferimenti statici: le chiavi create in fase di runtime, ad esempio da un input, non possono essere rilevate."
     },
     "kv": {

@@ -2018,6 +2018,7 @@
       "line": "Linia {line}",
       "error": "Nie można wyszukać źródeł Flow.",
       "empty": "Żaden Flow nie odwołuje się do tego klucza w swoim źródle.",
+      "incomplete": "Więcej Flowów zawiera to odniesienie, niż można tu wyświetlić. Otwórz wyszukiwanie źródłowe, aby zobaczyć wszystkie.",
       "caveat": "Tylko statyczne referencje: klucze zbudowane w czasie wykonania, na przykład z inputu, nie mogą zostać wykryte."
     },
     "kv": {

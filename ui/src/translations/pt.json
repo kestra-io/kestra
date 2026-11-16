@@ -2018,6 +2018,7 @@
       "line": "Linha {line}",
       "error": "Não foi possível pesquisar as fontes do flow.",
       "empty": "Nenhum flow referencia esta key em sua origem.",
+      "incomplete": "Mais flows contêm esta referência do que podem ser listados aqui. Abra a pesquisa de origem para vê-los todos.",
       "caveat": "Apenas referências estáticas: chaves criadas em tempo de execução, por exemplo a partir de um input, não podem ser detetadas."
     },
     "kv": {

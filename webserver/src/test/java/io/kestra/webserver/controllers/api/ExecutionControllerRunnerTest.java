@@ -44,6 +44,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -79,9 +80,10 @@ import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -94,8 +96,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.exceptions.ResponseClosedException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -123,6 +123,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -2391,6 +2392,22 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-kill-onwait.yaml" })
+    void shouldRefuseToBulkResumeButBulkKillAPausingExecution() throws QueueException {
+        Execution pausing = runnerUtils.runOneUntil(TENANT_ID, TESTS_FLOW_NS, "approval-kill-onwait", e -> e.getState().getCurrent() == State.Type.PAUSING);
+
+        HttpClientResponseException resume = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/executions/resume/by-ids", List.of(pausing.getId())))
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        HttpResponse<ApiAsyncOperationResponse> kill = client.toBlocking().exchange(DELETE("/api/v1/main/executions/kill/by-ids", List.of(pausing.getId())), ApiAsyncOperationResponse.class);
+        assertThat(kill.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        awaitExecution(pausing.getId(), execution -> execution.getState().getCurrent() == State.Type.KILLED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldReturn202WithOperationIdAndTotalItemsWhenResumeExecutionsByIdsCalled() throws QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
@@ -2994,7 +3011,8 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/executions/" + paused.getId()));
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test
@@ -3009,7 +3027,8 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(response.getCount()).isEqualTo(1);
-        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+        verify(approvalRequestHandler, times(1))
+            .closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED), any(), eq(false));
     }
 
     @Test
@@ -3055,6 +3074,94 @@ class ExecutionControllerRunnerTest {
             BulkResponse.class
         );
         assertThat(response.getCount()).isEqualTo(3);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void deleteExecutionByIdsAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result2 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-ids?async=true".formatted(tenantId), List.of(result1.getId(), result2.getId(), result3.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(3);
+
+        List.of(result1, result2, result3).forEach(execution -> awaitExecutionDeleted(tenantId, execution.getId()));
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldKeepTheActorOnDeleteEventsWhenDeletingAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        ExecutionCrudEventListener.reset();
+
+        client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-ids?async=true".formatted(tenantId), List.of(execution.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        // the purge runs on a background thread: the audit log still needs the caller
+        CrudEvent<Execution> deletion = awaitEvent(CrudEventType.DELETE, execution.getId(), _ -> true);
+        assertThat(deletion.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void deleteExecutionByQueryAsync(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result2 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/by-query?async=true&filters[namespace][PREFIX]=".formatted(tenantId) + result1.getNamespace()),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(3);
+
+        List.of(result1, result2, result3).forEach(execution -> awaitExecutionDeleted(tenantId, execution.getId()));
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml", "flows/valids/pause-test.yaml" })
+    void shouldDeleteNothingWhenByIdsIncludesANonTerminatedExecution(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution terminated = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+        Execution nonTerminated = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/%s/executions/by-ids".formatted(tenantId), List.of(terminated.getId(), nonTerminated.getId()))
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+        // validation is atomic: the non-terminated execution must not cause the terminated one to be deleted either
+        client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + terminated.getId()), Execution.class);
+        client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + nonTerminated.getId()), Execution.class);
+    }
+
+    private void awaitExecutionDeleted(String tenantId, String executionId) {
+        await().atMost(Duration.ofSeconds(10)).until(() ->
+        {
+            try {
+                client.toBlocking().exchange(HttpRequest.GET("/api/v1/%s/executions/".formatted(tenantId) + executionId));
+                return false;
+            } catch (HttpClientResponseException e) {
+                return e.getStatus().getCode() == HttpStatus.NOT_FOUND.getCode();
+            }
+        });
     }
 
     @Test
@@ -4759,10 +4866,15 @@ class ExecutionControllerRunnerTest {
     private static CrudEvent<Execution> awaitEvent(CrudEventType type, String executionId, Predicate<Execution> matching) {
         return await().atMost(Duration.ofSeconds(10)).until(
             () -> ExecutionCrudEventListener.events().stream()
-                .filter(event -> type.equals(event.getType()) && executionId.equals(event.getModel().getId()) && matching.test(event.getModel()))
+                .filter(event -> type.equals(event.getType()) && executionId.equals(subject(event).getId()) && matching.test(subject(event)))
                 .findFirst(),
             Optional::isPresent
         ).orElseThrow();
+    }
+
+    // a DELETE event carries the deleted execution as its previous model
+    private static Execution subject(CrudEvent<Execution> event) {
+        return event.getModel() != null ? event.getModel() : event.getPreviousModel();
     }
 
     /**
@@ -4776,7 +4888,7 @@ class ExecutionControllerRunnerTest {
         @Override
         public void onApplicationEvent(CrudEvent<Execution> event) {
             // generics are erased, so events for other models reach this listener too
-            if (event.getModel() instanceof Execution) {
+            if (event.getModel() instanceof Execution || event.getPreviousModel() instanceof Execution) {
                 EVENTS.add(event);
             }
         }

@@ -14,7 +14,7 @@
     import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
     import type {ThemedTokenWithVariants} from "@shikijs/types"
-    import {kestraDark, kestraLight, paintPebble} from "@kestra-io/plumage"
+    import {kestraDark, kestraLight, paintPebble, type PebbleRole} from "@kestra-io/plumage"
     import xss, {escapeAttrValue} from "xss"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -211,7 +211,8 @@
                 }
             },
             onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
-                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                // The name must be one parseAttributes reads whole: it ends a name at "." or ":", so `data-a.onclick` would come back as `onclick`.
+                if (/^(data|aria)-[\w-]+$/.test(name)) {
                     return `${name}="${escapeAttrValue(value)}"`
                 }
 
@@ -502,12 +503,12 @@
         }
     }
 
-    function paintPebbleVariants(token: ThemedTokenWithVariants): ThemedTokenWithVariants {
+    function paintPebbleVariants(token: ThemedTokenWithVariants, role: PebbleRole): ThemedTokenWithVariants {
         return {
             ...token,
             variants: {
-                light: {...token.variants.light, color: kestraLight.syntax.pebble},
-                dark: {...token.variants.dark, color: kestraDark.syntax.pebble},
+                light: {...token.variants.light, color: kestraLight.syntax[role]},
+                dark: {...token.variants.dark, color: kestraDark.syntax[role]},
             },
         }
     }

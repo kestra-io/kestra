@@ -21,6 +21,7 @@ import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.events.Actor;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
@@ -116,7 +117,7 @@ public class AgentOrchestrator {
 
             runLoop(
                 new AgentLoopContext(
-                    thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false), new AtomicInteger(0)
+                    thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false), new AtomicInteger(0), context.actor()
                 ), sink
             );
         } catch (Exception e) {
@@ -162,7 +163,7 @@ public class AgentOrchestrator {
      * turn is. So a resume can run on any node, not only the one that suspended the turn.
      */
     public void resume(final AgentThread running, final String providerId, final boolean approve, final String reason,
-        final AgentPrincipal principal, final TurnEventSink sink) {
+        final AgentPrincipal principal, @Nullable final Actor actor, final TurnEventSink sink) {
         try {
             List<AgentMessage> log = threadManager.load(running.tenant(), running.uid());
             AgentMessage pending = pendingActionOrThrow(log);
@@ -184,7 +185,7 @@ public class AgentOrchestrator {
             // it from the tool rounds already recorded in this turn.
             AgentLoopContext ctx = new AgentLoopContext(
                 running, running.tenant(), principal, providerId, running.mode(), profile,
-                model, messages, traceId, new AtomicBoolean(planProposal), new AtomicInteger(toolInvocationsInTurn(log, traceId))
+                model, messages, traceId, new AtomicBoolean(planProposal), new AtomicInteger(toolInvocationsInTurn(log, traceId)), actor
             );
 
             if (planProposal) {
@@ -598,7 +599,13 @@ public class AgentOrchestrator {
     }
 
     private AgentCallContext.Context callContext(final AgentLoopContext ctx) {
-        return new AgentCallContext.Context(ctx.tenant(), ctx.principal(), ctx.providerId(), ctx.thread().uid());
+        return AgentCallContext.Context.builder()
+            .tenant(ctx.tenant())
+            .principal(ctx.principal())
+            .providerId(ctx.providerId())
+            .conversationId(ctx.thread().uid())
+            .actor(ctx.actor())
+            .build();
     }
 
     /** Persist and stream an artefact a tool produced — the counterpart of the tool's publishable result. */

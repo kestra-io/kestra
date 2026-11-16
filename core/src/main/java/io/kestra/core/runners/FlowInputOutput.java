@@ -284,7 +284,19 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final String executionId,
         final Map<String, ?> data) {
-        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, null), data);
+        return readExecutionInputs(flow, executionId, null, data);
+    }
+
+    /**
+     * Same as {@link #readExecutionInputs(FlowInterface, String, Map)}, rendering inputs against the labels
+     * the created execution will carry: the flow's own merged with the given contributed ones.
+     */
+    public Map<String, Object> readExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        @Nullable final List<Label> contributed,
+        final Map<String, ?> data) {
+        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, contributed), data);
     }
 
     /**
@@ -318,7 +330,12 @@ public class FlowInputOutput {
         }
     }
 
-    private Map<String, Object> readExecutionInputs(
+    /**
+     * Reads the given inputs of an execution from already parsed values, such as the onResume inputs of a paused task.
+     *
+     * @throws InputOutputValidationException if a value is invalid
+     */
+    public Map<String, Object> readExecutionInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,

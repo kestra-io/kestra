@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.AccessScope;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
@@ -34,6 +34,8 @@ import io.kestra.core.services.LabelService;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.sse.Event;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -170,15 +172,7 @@ public class McpToolService implements McpToolSource {
                 return Mono.just(FORBIDDEN_CALL_TOOL_RESULT);
             }
 
-            Execution execution = toolTrigger.evaluate(
-                flow, input, additionalInputs, Label.from(
-                    Map.of(
-                        Label.FROM, Label.FromLabel.MCP.value,
-                        Label.MCP_SERVER_ID, context.getServerId(),
-                        Label.MCP_SESSION_ID, context.getSessionId()
-                    )
-                )
-            );
+            Execution execution = toolTrigger.evaluate(flow, input, additionalInputs, McpExecutionLabels.of(context));
 
             List<String> validationErrors = collectInputValidationErrors(flow, execution, input);
             if (!validationErrors.isEmpty()) {
@@ -190,7 +184,7 @@ public class McpToolService implements McpToolSource {
                 return Mono.just(invalidInputResult(validationErrors));
             }
 
-            return runFlowForMcpTask(flow, execution)
+            return runFlowForMcpTask(flow, execution, context.getActor())
                 .flatMap(executionResult ->
                 {
                     try {
@@ -244,7 +238,8 @@ public class McpToolService implements McpToolSource {
 
     private Mono<Execution> runFlowForMcpTask(
         Flow flow,
-        Execution execution) {
+        Execution execution,
+        @Nullable Actor actor) {
         try {
             executionCommandQueue.emit(
                 Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
@@ -253,7 +248,9 @@ public class McpToolService implements McpToolSource {
                     .withLabels(execution.getLabels())
                     .withInputs(execution.getInputs())
             );
-            eventPublisher.publishEvent(CrudEvent.create(execution));
+            try (PropagatedContext.Scope _ = Actor.propagate(actor)) {
+                eventPublisher.publishEvent(CrudEvent.create(execution));
+            }
 
             String subscriberId = UUID.randomUUID().toString();
             return Flux.<Event<Execution>> create(

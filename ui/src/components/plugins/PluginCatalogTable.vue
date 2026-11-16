@@ -42,14 +42,13 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import {getPluginReleaseUrl, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
+    import {getPluginReleaseUrl, pluginDisplayTitle, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
+    import type {PluginCatalogEntry} from "override/components/plugins/pluginCatalogExtension"
     import PluginCatalogTableName from "./PluginCatalogTableName.vue"
 
-    defineOptions({inheritAttrs: false})
-
     const props = defineProps<{
-        plugins: Plugin[]
+        entries: PluginCatalogEntry[]
     }>()
 
     const route = useRoute()
@@ -57,14 +56,16 @@
     const currentPage = ref(1)
     const pageSize = ref(25)
 
-    const pageRows = computed(() => props.plugins
+    const plugins = computed<Plugin[]>(() => props.entries.flatMap(({plugin}) => plugin ? [plugin] : []))
+
+    const pageRows = computed(() => plugins.value
         .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
         .map(plugin => {
             const enrichment = enrichmentStore.getEnrichment(plugin)
             return {
                 name: plugin.name,
                 group: plugin.group,
-                title: enrichment?.title ?? plugin.title.capitalize(),
+                title: pluginDisplayTitle(plugin, enrichment),
                 route: {name: "plugins/group", params: {...route.params, name: plugin.name}},
                 taskCount: pluginElementClasses(plugin).length,
                 blueprintCount: enrichment?.blueprintCount ?? 0,
@@ -72,7 +73,7 @@
             }
         }))
 
-    watch(() => props.plugins.map(plugin => plugin.name).sort().join(), () => {
+    watch(() => plugins.value.map(plugin => plugin.name).sort().join(), () => {
         currentPage.value = 1
     })
 </script>

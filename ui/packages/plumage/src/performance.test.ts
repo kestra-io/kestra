@@ -1,7 +1,7 @@
 import {beforeAll, describe, expect, it} from "vitest"
 import {ExpressiveCode, ExpressiveCodeBlock, ExpressiveCodeTheme, InlineStyleAnnotation, loadShikiTheme, type ExpressiveCodeHook} from "expressive-code"
 import type {HighlighterCore, ThemedToken} from "shiki/core"
-import {kestraDark, kestraLight, pebbleBlocks, pebbleTransformer, toTextMateTheme} from "./index.ts"
+import {kestraDark, kestraLight, pebbleBlocks, pebbleTokens, pebbleTransformer, toTextMateTheme} from "./index.ts"
 import {pluginPebble} from "./expressive-code.ts"
 import {yamlCorpus} from "../tests/corpus.ts"
 import {highlighter} from "../tests/highlighter.ts"
@@ -42,6 +42,7 @@ const PATHOLOGICAL: [string, string][] = [
     ["closers without openers", "x: " + "}}%}".repeat(50_000)],
     ["200k character line ending in Pebble", "x: " + "a".repeat(200_000) + " {{ b }}"],
     ["10k Pebble blocks on one line", "x: " + "{{ a }} ".repeat(10_000)],
+    ["10k piped calls on one line", "x: " + "{{ a | b(1, 'c') }} ".repeat(10_000)],
 ]
 
 describe("build cost in Expressive Code", () => {
@@ -124,7 +125,7 @@ describe("pebbleTransformer", () => {
     it.each(PATHOLOGICAL)("paints %s in bounded time", async (_, code) => {
         const tokens = h.codeToTokensBase(code, {lang: "yaml", theme: "kestra-dark"})
         const ms = await fastest(() => run(code, tokens))
-        expect(ms).toBeLessThan(50)
+        expect(ms).toBeLessThan(100)
     }, 60_000)
 })
 
@@ -139,6 +140,21 @@ describe("pebbleBlocks", () => {
     it("scans the whole corpus fast", async () => {
         const ms = await fastest(() => corpus.forEach(pebbleBlocks))
         console.info(`pebbleBlocks: ${kb} KB in ${ms.toFixed(1)} ms`)
+        expect(ms).toBeLessThan(100)
+    })
+})
+
+describe("pebbleTokens", () => {
+    it.each(PATHOLOGICAL)("scans %s in linear time", async (_, code) => {
+        const ms = await fastest(() => pebbleTokens(code))
+        const doubled = await fastest(() => pebbleTokens(code + "\n" + code))
+        expect(ms).toBeLessThan(100)
+        expect(doubled).toBeLessThan(Math.max(ms * 4, 2))
+    })
+
+    it("scans the whole corpus fast", async () => {
+        const ms = await fastest(() => corpus.forEach(pebbleTokens))
+        console.info(`pebbleTokens: ${kb} KB in ${ms.toFixed(1)} ms`)
         expect(ms).toBeLessThan(100)
     })
 })

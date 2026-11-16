@@ -307,6 +307,7 @@
       "ongoing": "In progress",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Deleting {count} execution | Deleting {count} executions",
           "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
           "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
           "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
           "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
           "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Deletion requested for {count} execution | Deletion requested for {count} executions",
+          "EXECUTION_KILL": "Kill requested for {count} execution | Kill requested for {count} executions",
+          "EXECUTION_PAUSE": "Pause requested for {count} execution | Pause requested for {count} executions",
+          "EXECUTION_RESUME": "Resume requested for {count} execution | Resume requested for {count} executions",
+          "EXECUTION_RESTART": "Restart requested for {count} execution | Restart requested for {count} executions",
+          "EXECUTION_REPLAY": "Replay requested for {count} execution | Replay requested for {count} executions",
+          "EXECUTION_FORCE_RUN": "Force run requested for {count} execution | Force run requested for {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueue requested for {count} execution | Unqueue requested for {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Status change requested for {count} execution | Status change requested for {count} executions",
+          "EXECUTION_SET_LABELS": "Label update requested for {count} execution | Label update requested for {count} executions",
+          "TRIGGER_UNLOCK": "Unlock requested for {count} trigger | Unlock requested for {count} triggers",
+          "TRIGGER_DELETE": "Deletion requested for {count} trigger | Deletion requested for {count} triggers",
+          "TRIGGER_DISABLE": "Disable requested for {count} trigger | Disable requested for {count} triggers",
+          "TRIGGER_ENABLE": "Enable requested for {count} trigger | Enable requested for {count} triggers",
+          "BACKFILL_PAUSE": "Pause requested for {count} backfill | Pause requested for {count} backfills",
+          "BACKFILL_RESUME": "Resume requested for {count} backfill | Resume requested for {count} backfills",
+          "BACKFILL_DELETE": "Deletion requested for {count} backfill | Deletion requested for {count} backfills"
         },
         "processed": "{count} processed",
         "rejected": "{count} rejected",
@@ -344,6 +364,7 @@
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
+    "create_child_namespace": "Create child namespace",
     "from": "From",
     "to": "To",
     "steps": "Steps",
@@ -488,17 +509,21 @@
         "decision": "Decision",
         "by": "Decided by",
         "on": "Decided on",
+        "cancelled by": "Cancelled by",
+        "cancelled on": "Cancelled on",
         "decisions": {
           "approved": "Approved",
           "denied": "Denied",
-          "expired": "Expired"
+          "expired": "Expired",
+          "cancelled": "Cancelled",
+          "killed": "Killed"
         }
       },
       "cancel request": "Cancel request",
       "cancel confirm": "Are you sure you want to cancel the approval request of execution {id}? No decision branch will run.",
       "cancel done": "The approval request has been cancelled",
       "banner": {
-        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "pausing": "This execution is pausing. The approval request can be reviewed as soon as all onWait tasks finish.",
         "paused": "This execution is waiting for a review. Approve or deny it to continue."
       }
     },
@@ -1917,7 +1942,8 @@
       "duplicate": "This key already exists",
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
-        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) deleted from the <code>{namespace}</code> namespace"
       },
       "inherited": "Inherited KV pairs",
       "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
@@ -2375,6 +2401,9 @@
         "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
+      "dataFrom": "Updated {date}",
+      "dataUnavailable": "Data unavailable",
+      "dataTruncated": "Output file has been truncated to its {rows} first rows. See documentation for further details.",
       "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",
@@ -2525,7 +2554,9 @@
         "unavailable": {
           "title": "AI Copilot isn't available",
           "detail": "No AI provider is configured for this instance. Configure one in your Kestra configuration file to enable AI Copilot.",
-          "docs": "View documentation"
+          "docs": "View documentation",
+          "sendTooltip": "Sending is disabled because no AI provider is configured.",
+          "notSent": "Your prompt was not sent"
         },
         "thinkingWords": [
           "Orchestrating",

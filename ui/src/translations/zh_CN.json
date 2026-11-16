@@ -307,6 +307,7 @@
       "ongoing": "进行中",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "正在删除 {count} 个执行",
           "EXECUTION_KILL": "正在终止 {count} 个执行",
           "EXECUTION_PAUSE": "正在暂停 {count} 个执行",
           "EXECUTION_RESUME": "正在恢复 {count} 个执行",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "正在暂停 {count} 个 backfill",
           "BACKFILL_RESUME": "正在恢复 {count} 个 backfill",
           "BACKFILL_DELETE": "正在删除 {count} 个 backfill"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "已请求删除 {count} 个执行",
+          "EXECUTION_KILL": "已请求终止 {count} 个执行 | 已请求终止 {count} 个执行",
+          "EXECUTION_PAUSE": "已请求暂停 {count} 个执行",
+          "EXECUTION_RESUME": "已请求恢复 {count} 个执行",
+          "EXECUTION_RESTART": "已请求重启 {count} 个执行",
+          "EXECUTION_REPLAY": "已请求重放 {count} 个执行",
+          "EXECUTION_FORCE_RUN": "已请求强制运行 {count} 个执行",
+          "EXECUTION_UNQUEUE": "已请求取消排队 {count} 个执行 | 已请求取消排队 {count} 个执行",
+          "EXECUTION_CHANGE_STATUS": "已请求更改 {count} 个执行的状态",
+          "EXECUTION_SET_LABELS": "已请求更新 {count} 个执行的 label",
+          "TRIGGER_UNLOCK": "已请求解锁 {count} 个 trigger | 已请求解锁 {count} 个 trigger",
+          "TRIGGER_DELETE": "已请求删除 {count} 个 trigger | 已请求删除 {count} 个 trigger",
+          "TRIGGER_DISABLE": "已请求禁用 {count} 个 trigger | 已请求禁用 {count} 个 trigger",
+          "TRIGGER_ENABLE": "已请求启用 {count} 个 trigger | 已请求启用 {count} 个 trigger",
+          "BACKFILL_PAUSE": "已请求暂停 {count} 个 backfill | 已请求暂停 {count} 个 backfill",
+          "BACKFILL_RESUME": "已请求恢复 {count} 个 backfill | 已请求恢复 {count} 个 backfill",
+          "BACKFILL_DELETE": "已请求删除 {count} 个 backfill | 已请求删除 {count} 个 backfill"
         },
         "processed": "已处理 {count} 个",
         "rejected": "已拒绝 {count} 个",
@@ -344,6 +364,7 @@
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
+    "create_child_namespace": "创建子 namespace",
     "from": "从",
     "to": "到",
     "steps": "步骤",
@@ -488,17 +509,21 @@
         "decision": "决策",
         "by": "由",
         "on": "已决定",
+        "cancelled by": "已取消，取消者：",
+        "cancelled on": "已取消于",
         "decisions": {
           "approved": "已批准",
           "denied": "拒绝",
-          "expired": "已过期"
+          "expired": "已过期",
+          "cancelled": "已取消",
+          "killed": "已终止"
         }
       },
       "cancel request": "取消请求",
       "cancel confirm": "您确定要取消执行 {id} 的审批请求吗？没有决策分支会运行。",
       "cancel done": "审批请求已取消",
       "banner": {
-        "pausing": "此执行正在准备审批请求，并将暂停以供审查。",
+        "pausing": "此 Execution 正在暂停。所有 onWait Task 完成后即可审核批准请求。",
         "paused": "此 Execution 正在等待审核。批准或拒绝以继续。"
       }
     },
@@ -1917,7 +1942,8 @@
       "duplicate": "此键已存在",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
-        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>",
+        "deleted": "已从 namespace <code>{namespace}</code> 中删除 <code>{count}</code> 个 KV"
       },
       "inherited": "继承的KV对",
       "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
@@ -2375,6 +2401,9 @@
         "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
+      "dataFrom": "更新于 {date}",
+      "dataUnavailable": "数据不可用",
+      "dataTruncated": "输出文件已截断为前 {rows} 行。有关更多详细信息，请参阅文档。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2525,7 +2554,9 @@
         "unavailable": {
           "title": "AI Copilot 不可用",
           "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
-          "docs": "查看文档"
+          "docs": "查看文档",
+          "sendTooltip": "发送已禁用，因为未配置 AI provider。",
+          "notSent": "您的提示未发送"
         },
         "thinkingWords": [
           "编排",

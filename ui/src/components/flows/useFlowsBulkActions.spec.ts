@@ -3,18 +3,20 @@ import {ref} from "vue"
 import {configureClient} from "@kestra-io/kestra-sdk"
 import useFlowsBulkActions from "./useFlowsBulkActions"
 
-const downloads: Array<{url: string, filename: string}> = []
+const downloads: Array<{blob: Blob, filename: string}> = []
+const {error} = vi.hoisted(() => ({error: vi.fn()}))
 
-vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
+vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key, te: () => false})}))
 vi.mock("../../utils/toast", () => ({
     useToast: () => ({
         confirm: (_message: string, callback: () => Promise<unknown>) => callback(),
         success: vi.fn(),
+        error,
     }),
 }))
 vi.mock("../../stores/flow", () => ({useFlowStore: () => ({total: 2})}))
 vi.mock("../../utils/utils", () => ({
-    downloadUrl: (url: string, filename: string) => downloads.push({url, filename}),
+    downloadBlob: (blob: Blob, filename: string) => downloads.push({blob, filename}),
 }))
 
 const ZIP_BYTES = Uint8Array.from([0x50, 0x4b, 0x03, 0x04, ...Array.from({length: 256}, (_, i) => i)])
@@ -47,15 +49,8 @@ function mountBulkActions(queryBulkAction: boolean) {
 }
 
 describe("useFlowsBulkActions exportFlows", () => {
-    const createdBlobs: Blob[] = []
-
     beforeEach(() => {
         downloads.length = 0
-        createdBlobs.length = 0
-        URL.createObjectURL = (blob: Blob | MediaSource) => {
-            createdBlobs.push(blob as Blob)
-            return "blob:flows"
-        }
     })
 
     beforeAll(() => {
@@ -78,7 +73,40 @@ describe("useFlowsBulkActions exportFlows", () => {
         await vi.waitFor(() => expect(downloads).toHaveLength(1))
 
         // Then
-        expect(downloads).toEqual([{url: "blob:flows", filename: "flows.zip"}])
-        expect(Array.from(await readBytes(createdBlobs[0]))).toEqual(Array.from(ZIP_BYTES))
+        expect(downloads.map((download) => download.filename)).toEqual(["flows.zip"])
+        expect(Array.from(await readBytes(downloads[0].blob))).toEqual(Array.from(ZIP_BYTES))
+    })
+})
+
+describe("useFlowsBulkActions deleteFlows", () => {
+    const refused = {
+        type: "https://kestra.io/problems/bulk-validation-failed",
+        title: "Bulk validation failed",
+        status: 400,
+        detail: "One or more flows could not be deleted.",
+        errors: [{detail: "flow not found", path: "qa.followup.export_a"}],
+    }
+
+    beforeAll(() => {
+        configureClient({
+            baseUrl: "http://localhost",
+            fetch: async () => new Response(JSON.stringify(refused), {status: 400, headers: {"Content-Type": "application/problem+json"}}),
+        })
+    })
+
+    afterAll(() => {
+        configureClient({fetch: undefined})
+    })
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    test("lists the refused flows when the server refuses a bulk delete", async () => {
+        const {deleteFlows} = mountBulkActions(false)
+
+        deleteFlows()
+
+        await vi.waitFor(() => expect(error).toHaveBeenCalledWith([{message: "flow not found"}], "Bulk validation failed"))
     })
 })

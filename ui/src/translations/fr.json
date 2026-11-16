@@ -307,6 +307,7 @@
       "ongoing": "En cours",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Suppression de {count} exécution | Suppression de {count} exécutions",
           "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
           "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
           "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
           "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
           "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Suppression demandée pour {count} exécution | Suppression demandée pour {count} exécutions",
+          "EXECUTION_KILL": "Demande de kill pour {count} exécution | Demande de kill pour {count} exécutions",
+          "EXECUTION_PAUSE": "Pause demandée pour {count} exécution | Pause demandée pour {count} exécutions",
+          "EXECUTION_RESUME": "Reprise demandée pour {count} exécution | Reprise demandée pour {count} exécutions",
+          "EXECUTION_RESTART": "Redémarrage demandé pour {count} exécution | Redémarrage demandé pour {count} exécutions",
+          "EXECUTION_REPLAY": "Replay demandé pour {count} exécution | Replay demandé pour {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Exécution forcée demandée pour {count} exécution | Exécution forcée demandée pour {count} exécutions",
+          "EXECUTION_UNQUEUE": "Demande de suppression de la file d'attente pour {count} exécution | Demande de suppression de la file d'attente pour {count} exécutions",
+          "EXECUTION_CHANGE_STATUS": "Modification de l'état demandée pour {count} exécution | Modification de l'état demandée pour {count} exécutions",
+          "EXECUTION_SET_LABELS": "Mise à jour du label demandée pour {count} exécution | Mise à jour du label demandée pour {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage demandé pour {count} trigger | Déverrouillage demandé pour {count} triggers",
+          "TRIGGER_DELETE": "Suppression demandée pour {count} trigger | Suppression demandée pour {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation demandée pour {count} trigger | Désactivation demandée pour {count} triggers",
+          "TRIGGER_ENABLE": "Activation demandée pour {count} trigger | Activation demandée pour {count} triggers",
+          "BACKFILL_PAUSE": "Pause demandée pour {count} backfill | Pause demandée pour {count} backfills",
+          "BACKFILL_RESUME": "Reprise demandée pour {count} backfill | Reprise demandée pour {count} backfills",
+          "BACKFILL_DELETE": "Suppression demandée pour {count} backfill | Suppression demandée pour {count} backfills"
         },
         "processed": "{count} traitées",
         "rejected": "{count} rejetées",
@@ -344,6 +364,7 @@
     "home": "Accueil",
     "create": "Créer",
     "create_flow": "Créer Flow",
+    "create_child_namespace": "Créer un namespace enfant",
     "from": "De",
     "to": "à",
     "steps": "Étapes",
@@ -488,17 +509,21 @@
         "decision": "Décision",
         "by": "Décidé par",
         "on": "Décidé le",
+        "cancelled by": "Annulé par",
+        "cancelled on": "Annulé le",
         "decisions": {
           "approved": "Approuvé",
           "denied": "Refusé",
-          "expired": "Expiré"
+          "expired": "Expiré",
+          "cancelled": "Annulé",
+          "killed": "Tué"
         }
       },
       "cancel request": "Annuler la demande",
       "cancel confirm": "Voulez-vous vraiment annuler la demande d'approbation de l'exécution {id} ? Aucune branche de décision ne sera exécutée.",
       "cancel done": "La demande d'approbation a été annulée",
       "banner": {
-        "pausing": "Cette exécution prépare une demande d'approbation et se mettra en pause pour une révision.",
+        "pausing": "Cette exécution est en pause. La demande d'approbation pourra être examinée dès que toutes les tâches onWait seront terminées.",
         "paused": "Cette exécution est en attente d'une révision. Approuvez-la ou refusez-la pour continuer."
       }
     },
@@ -1917,7 +1942,8 @@
       "duplicate": "Cette clé existe déjà",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
-        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>",
+        "deleted": "<code>{count}</code> KV(s) supprimé(s) du namespace <code>{namespace}</code>"
       },
       "inherited": "Paires KV héritées",
       "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."
@@ -2375,6 +2401,9 @@
         "csv": "Exporter vers CSV"
       },
       "ignoredFilters": "Le filtre {filters} ne s'applique pas à ce graphique. | Les filtres {filters} ne s'appliquent pas à ce graphique.",
+      "dataFrom": "Mis à jour {date}",
+      "dataUnavailable": "Données indisponibles",
+      "dataTruncated": "Le fichier de sortie a été tronqué à ses {rows} premières lignes. Consultez la documentation pour plus de détails.",
       "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",
@@ -2525,7 +2554,9 @@
         "unavailable": {
           "title": "AI Copilot n'est pas disponible",
           "detail": "Aucun fournisseur d'IA n'est configuré pour cette instance. Configurez-en un dans votre fichier de configuration Kestra pour activer l'AI Copilot.",
-          "docs": "Voir la documentation"
+          "docs": "Voir la documentation",
+          "sendTooltip": "L'envoi est désactivé car aucun fournisseur AI n'est configuré.",
+          "notSent": "Votre invite n'a pas été envoyée"
         },
         "thinkingWords": [
           "Orchestration",

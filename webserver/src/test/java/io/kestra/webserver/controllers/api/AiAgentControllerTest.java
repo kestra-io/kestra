@@ -11,8 +11,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
+import io.kestra.core.events.Actor;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.webserver.services.ActorResolver;
+import io.kestra.webserver.services.DefaultActorResolver;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
@@ -23,6 +26,7 @@ import io.kestra.webserver.services.ai.agent.data.ApiDecision;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
+import io.kestra.webserver.services.ai.agent.tool.TestMutateTool;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -51,6 +55,7 @@ import static org.mockito.Mockito.when;
 
 @KestraTest
 class AiAgentControllerTest {
+    private static final Actor ACTOR = new Actor("actor-id", "10.0.0.1", null);
     private static final String BASE = "/api/v1/" + TenantService.MAIN_TENANT + "/ai/threads";
 
     private final ScriptedStreamingChatModel scriptedModel = new ScriptedStreamingChatModel();
@@ -63,6 +68,9 @@ class AiAgentControllerTest {
     @Client("/")
     SseClient sseClient;
 
+    @Inject
+    TestMutateTool mutateTool;
+
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
         AiServiceInterface service = mock(AiServiceInterface.class);
@@ -71,6 +79,11 @@ class AiAgentControllerTest {
         when(manager.getAiService(any())).thenReturn(service);
         when(manager.hasConfiguredProvider()).thenReturn(true);
         return manager;
+    }
+
+    @MockBean(DefaultActorResolver.class)
+    ActorResolver actorResolver() {
+        return () -> ACTOR;
     }
 
     @MockBean(DocsMcpToolProvider.class)
@@ -240,6 +253,22 @@ class AiAgentControllerTest {
 
     private List<Event<Map>> confirm(final String threadId, final ApiConfirmActionRequest request) {
         return stream(BASE + "/" + threadId + "/confirm", request);
+    }
+
+    @Test
+    void shouldRunApprovedActionOnBehalfOfConfirmingUserWhenActionApproved() {
+        // Given
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null));
+        scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
+        String confirmationId = confirmationId(chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null)));
+        scriptedModel.enqueue(AiMessage.from("Done."));
+
+        // When
+        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.APPROVE, null, null));
+
+        // Then
+        assertThat(data(events, AgentEvents.TOOL_RESULT).get("outcome")).isEqualTo("ok");
+        assertThat(mutateTool.lastActor()).isEqualTo(ACTOR);
     }
 
     private List<Event<Map>> stream(final String uri, final Object body) {

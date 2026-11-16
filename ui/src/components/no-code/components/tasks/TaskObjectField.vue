@@ -58,6 +58,7 @@
     </div>
     <KsFormItem
         v-else-if="fieldKey"
+        stacked
         :required="isRequired"
         for=""
         :data-test="`field-${fieldKey}`"

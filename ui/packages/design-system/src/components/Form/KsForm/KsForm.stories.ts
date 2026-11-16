@@ -110,6 +110,31 @@ export const InlineRow: Story = {
     },
 }
 
+/** Stacked – `stacked` on a KsFormItem puts each child of the content on its own full-width line */
+export const Stacked: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsForm, KsFormItem, KsButton},
+        template: `
+            <div style="padding:24px;max-width:420px">
+                <ks-form label-position="top">
+                    <ks-form-item stacked label="Tags">
+                        <ks-button>Add a tag</ks-button>
+                        <p>Labels shown next to the flow.</p>
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const content = canvasElement.querySelector(".kel-form-item.is-stacked .kel-form-item__content") as HTMLElement
+        await expect(content).toBeTruthy()
+        await expect(getComputedStyle(content).display).toBe("block")
+        const [button, help] = Array.from(content.children) as HTMLElement[]
+        await expect(help.getBoundingClientRect().top).toBeGreaterThanOrEqual(button.getBoundingClientRect().bottom)
+    },
+}
+
 /** Size control – form-level size affects all children */
 export const SizeControl: Story = {
     parameters: {controls: {disable: true}},

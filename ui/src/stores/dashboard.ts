@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
+import {asProblem, useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -283,6 +283,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
+            if (handledIf(e, [410, 400])) return {results: [], total: 0, warning: asProblem(e)?.detail}
             throw e
         }
     }
@@ -302,7 +303,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             ? await DashboardsAPI.exportChart({format: "CSV", chart: chart.content ?? "", globalFilter: parameters})
             : await DashboardsAPI.exportDashboardChart({format: "CSV", id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        Utils.downloadUrl(window.URL.createObjectURL(new Blob([data], {type: "application/octet-stream"})), `chart__${chart.id}.csv`)
+        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), `chart__${chart.id}.csv`)
     }
 
     const pluginsStore = usePluginsStore()

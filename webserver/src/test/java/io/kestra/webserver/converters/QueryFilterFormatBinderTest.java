@@ -117,6 +117,64 @@ class QueryFilterFormatBinderTest {
     }
 
     @Test
+    void shouldRejectFieldNotSupportedByResource() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.SEVERITY).operation(QueryFilter.Op.EQUALS).value("HIGH").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
+    void shouldRejectOperationNotSupportedByField() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.GREATER_THAN).value("a").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
+    void shouldAcceptTimeRangeAtAnyDepthSinceControllersRewriteIt() {
+        QueryFilter timeRange = QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build();
+        QueryFilter namespace = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("ns").build();
+        List<QueryFilter> filters = List.of(
+            timeRange,
+            QueryFilter.builder().logical(QueryFilter.Logical.OR).children(List.of(timeRange, namespace)).build(),
+            QueryFilter.builder().logical(QueryFilter.Logical.AND).children(List.of(timeRange)).build()
+        );
+
+        assertDoesNotThrow(() -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION));
+    }
+
+    @Test
+    void shouldAcceptStartAndEndDateOnTriggersSinceTheControllerRewritesThem() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.GREATER_THAN).value("2025-01-01T00:00:00Z").build(),
+            QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.LESS_THAN).value("2025-02-01T00:00:00Z").build()
+        );
+
+        assertDoesNotThrow(() -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.TRIGGER));
+        assertThrows(InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.NAMESPACE));
+    }
+
+    @Test
+    void shouldRejectUnsupportedFieldNextToTimeRange() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build(),
+            QueryFilter.builder().field(QueryFilter.Field.SEVERITY).operation(QueryFilter.Op.EQUALS).value("HIGH").build()
+        );
+
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.validate(filters, QueryFilter.Resource.EXECUTION)
+        );
+    }
+
+    @Test
     void shouldRejectMalformedFilterKey() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(

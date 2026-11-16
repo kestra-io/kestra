@@ -108,9 +108,11 @@ public class PlatformMcpToolSource implements McpToolSource {
         Object requestedTenant = arguments.remove(TENANT_ARGUMENT);
         try {
             String tenant = tenant(requestedTenant, tenants(context.getUserId()));
-            AgentCallContext.Context callContext = new AgentCallContext.Context(
-                tenant, principalResolver.resolve(context.getUserId(), tenant), null, null
-            );
+            AgentCallContext.Context callContext = AgentCallContext.Context.builder()
+                .tenant(tenant)
+                .principal(principalResolver.resolve(context.getUserId(), tenant))
+                .actor(context.getActor())
+                .build();
             ToolExecutionRequest execution = ToolExecutionRequest.builder()
                 .id(IdUtils.create())
                 .name(toolName)

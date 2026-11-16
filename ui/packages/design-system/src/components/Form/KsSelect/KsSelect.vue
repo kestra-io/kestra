@@ -86,6 +86,7 @@
         suffixIcon: undefined,
         loading: undefined,
         colorMap: undefined,
+        showArrow: false,
     })
 
     const emit = defineEmits<{

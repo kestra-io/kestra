@@ -2381,6 +2381,9 @@
         "csv": "CSV로 내보내기"
       },
       "ignoredFilters": "{filters} 필터는 이 차트에 적용되지 않습니다. | {filters} 필터는 이 차트에 적용되지 않습니다.",
+      "dataFrom": "업데이트됨 {date}",
+      "dataUnavailable": "데이터를 사용할 수 없음",
+      "dataTruncated": "출력 파일이 처음 {rows}개 행으로 잘렸습니다. 자세한 내용은 문서를 참조하세요.",
       "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",
@@ -2531,7 +2534,9 @@
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
           "detail": "이 인스턴스에 구성된 AI provider가 없습니다. AI Copilot을 활성화하려면 Kestra 구성 파일에서 AI provider를 구성하세요.",
-          "docs": "문서 보기"
+          "docs": "문서 보기",
+          "sendTooltip": "AI provider가 구성되지 않아 전송이 비활성화되었습니다.",
+          "notSent": "프롬프트가 전송되지 않았습니다."
         },
         "thinkingWords": [
           "오케스트레이션",

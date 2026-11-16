@@ -257,6 +257,8 @@ Rules:
 
 ### Types
 
+**A prop the component does not declare is a type error.** `vueCompilerOptions.checkUnknownProps` is on, with `data-*` and `aria-*` accepted everywhere. When vue-tsc rejects a prop, it is either dead (remove it) or forwarded through `$attrs` without a type (type it, as in "When extending the design system"). A library component missing a prop it forwards gets a typed re-export, like `DynamicScroller` from `src/utils/virtualScroller.ts`; import it from there rather than from `vue-virtual-scroller`.
+
 **Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
 Where the type comes from, in this order:

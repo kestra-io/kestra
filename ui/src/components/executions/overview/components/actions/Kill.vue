@@ -11,14 +11,12 @@
             <KsDropdownMenu class="m-dropdown-menu">
                 <KsDropdownItem
                     :icon="StopCircleOutline"
-                    size="large"
                     @click="kill(true)"
                 >
                     {{ $t('kill parents and subflow') }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="StopCircleOutline"
-                    size="large"
                     @click="kill(false)"
                 >
                     {{ $t('kill only parents') }}

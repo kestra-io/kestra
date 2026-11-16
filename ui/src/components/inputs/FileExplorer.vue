@@ -54,10 +54,6 @@
                     ref="folderPicker"
                     type="file"
                     webkitdirectory
-                    mozdirectory
-                    msdirectory
-                    odirectory
-                    directory
                     class="hidden"
                     @change="importFiles"
                 >

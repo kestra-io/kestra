@@ -37,7 +37,6 @@
                     ref="tableRef"
                     v-bind="$attrs"
                     :tableLayout="tableLayout"
-                    fixed
                     :data
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"

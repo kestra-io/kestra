@@ -49,6 +49,16 @@
                 </template>
             </KsTableColumn>
 
+            <KsTableColumn v-if="!paneView" columnKey="usedBy" :label="$t('key_usages.title')">
+                <template #default="scope">
+                    <KeyUsageCount
+                        v-if="scope.row?.key !== undefined"
+                        :target="{kind: 'secret', namespace: keyOnly ? undefined : scope.row.namespace, key: scope.row.key}"
+                        @open="viewSecret = scope.row as NamespaceSecret"
+                    />
+                </template>
+            </KsTableColumn>
+
             <KsTableColumn
                 v-for="col in visibleColumns"
                 :key="col.prop"
@@ -266,6 +276,7 @@
     import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import KeyUsages from "../usages/KeyUsages.vue"
+    import KeyUsageCount from "../usages/KeyUsageCount.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"

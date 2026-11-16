@@ -59,17 +59,27 @@
                     />
                 </template>
             </KsTableColumn>
-            <KsTableColumn
-                v-else-if="colProp === 'key'"
-                prop="key"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('key')"
-            >
-                <template #default="scope">
-                    <KsId v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" @click="viewKvModal(scope.row)" />
-                </template>
-            </KsTableColumn>
+            <template v-else-if="colProp === 'key'">
+                <KsTableColumn
+                    prop="key"
+                    sortable="custom"
+                    :sortOrders="['ascending', 'descending']"
+                    :label="$t('key')"
+                >
+                    <template #default="scope">
+                        <KsId v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" @click="viewKvModal(scope.row)" />
+                    </template>
+                </KsTableColumn>
+                <KsTableColumn v-if="!paneView" columnKey="usedBy" :label="$t('key_usages.title')">
+                    <template #default="scope">
+                        <KeyUsageCount
+                            v-if="scope.row.namespace && scope.row.key"
+                            :target="{kind: 'kv', namespace: scope.row.namespace, key: scope.row.key}"
+                            @open="viewKvModal(scope.row)"
+                        />
+                    </template>
+                </KsTableColumn>
+            </template>
             <KsTableColumn
                 v-else-if="colProp === 'description' && !paneView"
                 prop="description"
@@ -314,6 +324,7 @@
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import InheritedKVs from "./InheritedKVs.vue"
     import KeyUsages from "../usages/KeyUsages.vue"
+    import KeyUsageCount from "../usages/KeyUsageCount.vue"
     import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave, type KvFormValue} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"

@@ -1572,7 +1572,8 @@ public class ExecutionController {
         @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
         Execution execution = findExecutionWithTaskRun(executionId, taskRunId);
 
-        return new ReplayOutputs(replayOutputService.outputs(flowRepository.findByExecution(execution), execution, taskRunId));
+        ReplayOutputService.ReplayOutputs outputs = replayOutputService.outputs(flowRepository.findByExecution(execution), execution, taskRunId);
+        return new ReplayOutputs(outputs.values(), outputs.dynamicReaders());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1613,7 +1614,7 @@ public class ExecutionController {
         return blockingReplay(execution, taskRunId, null, Optional.empty(), replayOutputService.overrides(flow, execution, taskRunId, request.overrides()));
     }
 
-    public record ReplayOutputs(@NotNull List<ReplayOutputService.ReplayOutput> values) {
+    public record ReplayOutputs(@NotNull List<ReplayOutputService.ReplayOutput> values, @NotNull List<String> dynamicReaders) {
     }
 
     public record OverriddenOutputs(@NotNull List<OverriddenOutput> values) {

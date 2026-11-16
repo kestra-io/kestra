@@ -964,6 +964,7 @@ export type ExecutionControllerOverriddenOutputs = {
 
 export type ExecutionControllerReplayOutputs = {
     values: Array<ReplayOutputServiceReplayOutput>;
+    dynamicReaders: Array<string>;
 };
 
 export type ExecutionControllerReplayWithOverridesRequest = {
@@ -2326,11 +2327,17 @@ export type Relation = {
 
 export type RelationType = 'SEQUENTIAL' | 'CHOICE' | 'ERROR' | 'FINALLY' | 'AFTER_EXECUTION' | 'PARALLEL' | 'DYNAMIC';
 
+export type ReplayOutputServiceOutputReader = {
+    taskId: string;
+    path: string;
+};
+
 export type ReplayOutputServiceReplayOutput = {
     path: string;
     value?: {
         [key: string]: unknown;
     } | null;
+    readers: Array<ReplayOutputServiceOutputReader>;
 };
 
 export type Sla = {

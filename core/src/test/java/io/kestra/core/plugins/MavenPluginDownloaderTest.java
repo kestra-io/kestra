@@ -220,7 +220,6 @@ class MavenPluginDownloaderTest {
     private static HttpServer start(HttpHandler handler) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", handler);
-        server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         return server;
     }

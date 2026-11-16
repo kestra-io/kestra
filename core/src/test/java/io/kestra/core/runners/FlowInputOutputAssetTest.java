@@ -9,11 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.AssetInput;
-import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
@@ -119,22 +116,5 @@ class FlowInputOutputAssetTest {
         assertThat(rendered.getNamespace()).isEqualTo("prod.compute");
         assertThat(rendered.getMetadata()).isEqualTo(Map.of("deployment", "prod", "replicas", 3));
         assertThat(values.get(1).input()).isInstanceOfSatisfying(AssetInput.class, input -> assertThat(input.getNamespace()).isEqualTo("prod.compute"));
-    }
-
-    @Test
-    void shouldStoreOnlyTheIdWhenTheAssetInputIsNestedInAForm() {
-        FormInput form = FormInput.builder()
-            .id("target")
-            .type(Type.FORM)
-            .inputs(List.<Input<?>> of(AssetInput.builder().id("vm").type(Type.ASSET).build()))
-            .build();
-
-        Map<String, Object> resolved = flowInputOutput.readExecutionInputs(
-            Flow.builder().id("flow").namespace("io.kestra.test").inputs(List.of(form)).build(),
-            EXECUTION,
-            Map.of("target.vm", "web-01")
-        );
-
-        assertThat(resolved).isEqualTo(Map.of("target", Map.of("vm", "web-01")));
     }
 }

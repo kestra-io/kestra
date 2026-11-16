@@ -2381,6 +2381,9 @@
         "csv": "Exportar para CSV"
       },
       "ignoredFilters": "O filtro {filters} não se aplica a este gráfico. | Os filtros {filters} não se aplicam a este gráfico.",
+      "dataFrom": "Atualizado {date}",
+      "dataUnavailable": "Dados indisponíveis",
+      "dataTruncated": "O arquivo de saída foi truncado para suas {rows} primeiras linhas. Consulte a documentação para mais detalhes.",
       "show_all_statuses": "Mostrar todos os status",
       "quick_filters": {
         "all": "Todos",
@@ -2531,7 +2534,9 @@
         "unavailable": {
           "title": "AI Copilot não está disponível",
           "detail": "Nenhum provedor de IA está configurado para esta instância. Configure um no seu arquivo de configuração do Kestra para habilitar o AI Copilot.",
-          "docs": "Ver documentação"
+          "docs": "Ver documentação",
+          "sendTooltip": "O envio está desativado porque nenhum provedor de AI está configurado.",
+          "notSent": "Seu prompt não foi enviado"
         },
         "thinkingWords": [
           "Orquestração",

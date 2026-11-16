@@ -2381,6 +2381,9 @@
         "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
+      "dataFrom": "更新于 {date}",
+      "dataUnavailable": "数据不可用",
+      "dataTruncated": "输出文件已截断为前 {rows} 行。有关更多详细信息，请参阅文档。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2531,7 +2534,9 @@
         "unavailable": {
           "title": "AI Copilot 不可用",
           "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
-          "docs": "查看文档"
+          "docs": "查看文档",
+          "sendTooltip": "发送已禁用，因为未配置 AI provider。",
+          "notSent": "您的提示未发送"
         },
         "thinkingWords": [
           "编排",

@@ -38,7 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `kestra-tokens/no-undeclared-css-token` (eslint, `@eslint/css`) covers `.css` and plain `<style>` blocks, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and `ks/no-undeclared-custom-property` (stylelint) covers the design system's remaining SCSS. All three propose a replacement, and `npm run lint` runs them all. See [scripts/tokens/README.md](scripts/tokens/README.md).
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
-13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.css` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
+13. **Bootstrap is gone; don't use its utility classes.** Write layout and spacing as scoped CSS with `--ks-*` tokens. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on any Bootstrap utility class and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -379,7 +379,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
@@ -394,7 +394,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
-| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close; `resizable` adds a drag handle, `size` sets the initial width (default 65%) and leaving full screen restores the width held before |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |
@@ -455,7 +455,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsEchart` | ECharts base wrapper (lazy-load) |
+| `KsEchart` | ECharts base wrapper (lazy-load); `seriesLabel` sets the text of a series or pie slice in the external tooltip |
 | `KsLine` / `KsBar` / `KsPie` | Line, bar, and pie charts (lazy-load) |
 | `KsGraph` | Graph / network visualization (lazy-load) |
 
@@ -513,6 +513,7 @@ Token families currently exposed:
 - `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
 - `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
 - `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-chart-categorical-1` … `-10`: palette for chart categories with no status meaning; dashboard charts hand them out with `chartCategoryColors()`
 - `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
 - `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 

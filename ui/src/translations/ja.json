@@ -2381,6 +2381,9 @@
         "csv": "CSVにエクスポート"
       },
       "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
+      "dataFrom": "{date} に更新済み",
+      "dataUnavailable": "データが利用できません",
+      "dataTruncated": "出力ファイルは最初の {rows} 行に切り詰められました。詳細についてはドキュメントを参照してください。",
       "show_all_statuses": "すべてのステータスを表示",
       "quick_filters": {
         "all": "すべて",
@@ -2531,7 +2534,9 @@
         "unavailable": {
           "title": "AI Copilot は利用できません",
           "detail": "このインスタンスにはAIプロバイダーが設定されていません。AI Copilotを有効にするには、Kestra設定ファイルでAIプロバイダーを設定してください。",
-          "docs": "ドキュメントを見る"
+          "docs": "ドキュメントを見る",
+          "sendTooltip": "AIプロバイダーが設定されていないため、送信は無効になっています。",
+          "notSent": "プロンプトが送信されませんでした"
         },
         "thinkingWords": [
           "オーケストレーション",

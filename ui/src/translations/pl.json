@@ -2381,6 +2381,9 @@
         "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
+      "dataFrom": "Zaktualizowano {date}",
+      "dataUnavailable": "Dane niedostępne",
+      "dataTruncated": "Plik wyjściowy został obcięty do pierwszych {rows} wierszy. Więcej szczegółów znajdziesz w dokumentacji.",
       "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",
@@ -2531,7 +2534,9 @@
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
           "detail": "Żaden dostawca AI nie jest skonfigurowany dla tej instancji. Skonfiguruj go w pliku konfiguracyjnym Kestra, aby włączyć AI Copilot.",
-          "docs": "Wyświetl dokumentację"
+          "docs": "Wyświetl dokumentację",
+          "sendTooltip": "Wysyłanie jest wyłączone, ponieważ nie skonfigurowano żadnego dostawcy AI.",
+          "notSent": "Twoje zapytanie nie zostało wysłane"
         },
         "thinkingWords": [
           "Orchestrowanie",

@@ -1,43 +1,44 @@
 import {definePlugin, InlineStyleAnnotation, isInlineStyleAnnotation, type ExpressiveCodeLine, type ExpressiveCodePlugin} from "@expressive-code/core"
-import {pebbleBlocks} from "./pebble.ts"
-import {pebbleColors} from "./themes/index.ts"
+import {pebbleTokens, type PebbleRole} from "./pebble.ts"
+import {syntaxColors} from "./themes/index.ts"
+import type {SyntaxColors} from "./types.ts"
 
-type Columns = [from: number, to: number]
+type Run = [from: number, to: number, role: PebbleRole]
 
 const YAML = new Set(["yaml", "yml"])
 
 /**
- * Recolors the syntax annotations of `line` that fall under the Pebble `blocks` (sorted `[from, to)` columns),
- * splitting an annotation that straddles the edge of a block.
+ * Recolors the syntax annotations of `line` that fall under the Pebble `runs` (sorted `[from, to)` columns, one
+ * role each), splitting an annotation that straddles the edge of a run.
  */
-function paintLine(line: ExpressiveCodeLine, blocks: Columns[], pebbleColorByVariant: (string | undefined)[]) {
+function paintLine(line: ExpressiveCodeLine, runs: Run[], syntaxByVariant: (SyntaxColors | undefined)[]) {
     for (const annotation of line.getAnnotations()) {
         if (!isInlineStyleAnnotation(annotation) || annotation.styleVariantIndex === undefined || !annotation.inlineRange) {
             continue
         }
-        const pebble = pebbleColorByVariant[annotation.styleVariantIndex]
-        if (!pebble) {
+        const syntax = syntaxByVariant[annotation.styleVariantIndex]
+        if (!syntax) {
             continue
         }
         const {columnStart, columnEnd} = annotation.inlineRange
 
-        let firstBlock = 0
-        let searchEnd = blocks.length
-        while (firstBlock < searchEnd) {
-            const middle = (firstBlock + searchEnd) >> 1
-            if (blocks[middle]![1] <= columnStart) {
-                firstBlock = middle + 1
+        let firstRun = 0
+        let searchEnd = runs.length
+        while (firstRun < searchEnd) {
+            const middle = (firstRun + searchEnd) >> 1
+            if (runs[middle]![1] <= columnStart) {
+                firstRun = middle + 1
             } else {
                 searchEnd = middle
             }
         }
-        if (firstBlock === blocks.length || blocks[firstBlock]![0] >= columnEnd) {
+        if (firstRun === runs.length || runs[firstRun]![0] >= columnEnd) {
             continue
         }
 
-        const [blockFrom, blockTo] = blocks[firstBlock]!
-        if (blockFrom <= columnStart && blockTo >= columnEnd) {
-            annotation.color = pebble
+        const [runFrom, runTo, runRole] = runs[firstRun]!
+        if (runFrom <= columnStart && runTo >= columnEnd) {
+            annotation.color = syntax[runRole]
             continue
         }
 
@@ -48,10 +49,10 @@ function paintLine(line: ExpressiveCodeLine, blocks: Columns[], pebbleColorByVar
             }
         }
         let cursor = columnStart
-        for (let index = firstBlock; index < blocks.length && blocks[index]![0] < columnEnd; index++) {
-            const [from, to] = blocks[index]!
+        for (let index = firstRun; index < runs.length && runs[index]![0] < columnEnd; index++) {
+            const [from, to, role] = runs[index]!
             addPart(cursor, from, annotation.color)
-            addPart(Math.max(cursor, from), Math.min(columnEnd, to), pebble)
+            addPart(Math.max(cursor, from), Math.min(columnEnd, to), syntax[role])
             cursor = Math.min(columnEnd, to)
         }
         addPart(cursor, columnEnd, annotation.color)
@@ -82,9 +83,9 @@ function paintLine(line: ExpressiveCodeLine, blocks: Columns[], pebbleColorByVar
 }
 
 /**
- * Expressive Code plugin that paints Pebble blocks in YAML with each Kestra theme's Pebble color. It recolors the
- * syntax highlighter's own annotations instead of layering new ones, so it adds no render pass. Non-Kestra themes
- * are left as is.
+ * Expressive Code plugin that paints Pebble blocks in YAML with each Kestra theme's colors, one per token role. It
+ * recolors the syntax highlighter's own annotations instead of layering new ones, so it adds no render pass.
+ * Non-Kestra themes are left as is.
  */
 export function pluginPebble(): ExpressiveCodePlugin {
     return definePlugin({
@@ -94,16 +95,16 @@ export function pluginPebble(): ExpressiveCodePlugin {
                 if (!YAML.has(codeBlock.language)) {
                     return
                 }
-                const pebbleColorByVariant = styleVariants.map(variant => pebbleColors.get(variant.theme.name))
-                if (pebbleColorByVariant.every(color => !color)) {
+                const syntaxByVariant = styleVariants.map(variant => syntaxColors.get(variant.theme.name))
+                if (syntaxByVariant.every(syntax => !syntax)) {
                     return
                 }
 
                 const lines = codeBlock.getLines()
-                const blocksByLine = new Map<number, Columns[]>()
+                const runsByLine = new Map<number, Run[]>()
                 let lineIndex = 0
                 let lineOffset = 0
-                for (const [start, end] of pebbleBlocks(codeBlock.code)) {
+                for (const [start, end, role] of pebbleTokens(codeBlock.code)) {
                     while (lineOffset + lines[lineIndex]!.text.length < start) {
                         lineOffset += lines[lineIndex]!.text.length + 1
                         lineIndex++
@@ -115,15 +116,15 @@ export function pluginPebble(): ExpressiveCodePlugin {
                         const from = Math.max(start, offset) - offset
                         const to = Math.min(end, offset + length) - offset
                         if (to > from) {
-                            const blocks = blocksByLine.get(index) ?? []
-                            blocks.push([from, to])
-                            blocksByLine.set(index, blocks)
+                            const runs = runsByLine.get(index) ?? []
+                            runs.push([from, to, role])
+                            runsByLine.set(index, runs)
                         }
                         offset += length + 1
                     }
                 }
 
-                blocksByLine.forEach((blocks, index) => paintLine(lines[index]!, blocks, pebbleColorByVariant))
+                runsByLine.forEach((runs, index) => paintLine(lines[index]!, runs, syntaxByVariant))
             },
         },
     })

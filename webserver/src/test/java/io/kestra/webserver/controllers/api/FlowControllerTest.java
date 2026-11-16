@@ -45,6 +45,8 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.models.flows.KeyUsagesRequest;
+import io.kestra.webserver.models.flows.KeyUsagesResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyRequest;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceLineRequest;
@@ -421,6 +423,49 @@ class FlowControllerTest {
         )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
+    }
+
+    @Test
+    void countKeyUsagesCountsDistinctFlowsInOneRequest() {
+        String namespace = "io.kestra.keyusages.main";
+        createSourceSearchFlow(namespace, "uses-twice", "kv('usages-key') then kv(\"usages-key\")");
+        createSourceSearchFlow(namespace + ".child", "uses-once", "kv(\"usages-key\")");
+        createSourceSearchFlow("io.kestra.keyusages.other", "unrelated", "kv('usages-key')");
+        createSourceSearchFlow("io.kestra.keyusages.other", "names-namespace", "kv('usages-key', '" + namespace + "')");
+
+        KeyUsagesRequest request = new KeyUsagesRequest(
+            KeyUsagesRequest.Kind.KV,
+            List.of(new KeyUsagesRequest.Key(namespace, "usages-key"), new KeyUsagesRequest.Key(namespace, "missing-key"))
+        );
+        List<KeyUsagesResponse> responses = client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/source/key-usages", request),
+            Argument.listOf(KeyUsagesResponse.class)
+        );
+
+        assertThat(responses).containsExactly(
+            new KeyUsagesResponse(namespace, "usages-key", 3, false),
+            new KeyUsagesResponse(namespace, "missing-key", 0, false)
+        );
+    }
+
+    @Test
+    void countKeyUsagesRejectsABlankKey() {
+        KeyUsagesRequest request = new KeyUsagesRequest(KeyUsagesRequest.Kind.SECRET, List.of(new KeyUsagesRequest.Key(null, " ")));
+
+        assertThatThrownBy(() -> client.toBlocking().exchange(HttpRequest.POST(FLOW_PATH + "/source/key-usages", request)))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
+    }
+
+    @Test
+    void countKeyUsagesRejectsMoreThanTheMaximumNumberOfKeys() {
+        List<KeyUsagesRequest.Key> keys = java.util.stream.IntStream.rangeClosed(0, KeyUsagesRequest.MAX_KEYS)
+            .mapToObj(i -> new KeyUsagesRequest.Key(null, "key-" + i))
+            .toList();
+
+        assertThatThrownBy(() -> client.toBlocking().exchange(HttpRequest.POST(FLOW_PATH + "/source/key-usages", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, keys))))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
     }
 
     private void createSourceSearchFlow(String namespace, String id, String description) {

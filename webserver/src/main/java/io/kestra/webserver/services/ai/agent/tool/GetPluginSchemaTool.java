@@ -5,6 +5,7 @@ import java.util.Map;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginRegistry;
@@ -19,7 +20,7 @@ import jakarta.inject.Singleton;
  * {@link JsonSchemaGenerator}.
  */
 @Singleton
-public class GetPluginSchemaTool implements AiPlatformTool {
+public class GetPluginSchemaTool implements McpPlatformTool {
     private final PluginRegistry pluginRegistry;
     private final JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -39,8 +40,13 @@ public class GetPluginSchemaTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
+    }
+
     @Tool(
-        name = "get-plugin-schema",
+        name = "get_plugin_schema",
         value = "Get the JSON schema of a Kestra plugin type (its configuration properties and their types). Read-only; use this to learn how to configure a task, trigger or other plugin before authoring flow YAML. "
             + "Returns an object { pluginType, schema } where `schema` is the plugin's JSON schema (a nested object of properties and their types)."
     )

@@ -6,11 +6,11 @@ import type {LoopLaneData} from "./utils/loopOutcome"
 export const EXECUTION_INJECTION_KEY = Symbol("execution-injection-key") as InjectionKey<ComputedRef<GraphExecution | undefined>>
 export const SUBFLOWS_EXECUTIONS_INJECTION_KEY = Symbol("subflows-executions-injection-key") as InjectionKey<ComputedRef<Record<string, GraphExecution>>>
 export const LOD_INJECTION_KEY = Symbol("lod-injection-key") as InjectionKey<ComputedRef<LodLevel>>
+export const PILL_ZOOM_COMPENSATION_INJECTION_KEY = Symbol("pill-zoom-compensation-injection-key") as InjectionKey<ComputedRef<number>>
 export const VALIDATION_ISSUES_INJECTION_KEY = Symbol("validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 export const FOCUSED_TASK_INJECTION_KEY = Symbol("focused-task-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DROP_EDGE_INJECTION_KEY = Symbol("drop-edge-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const CANVAS_HOVERED_INJECTION_KEY = Symbol("canvas-hovered-injection-key") as InjectionKey<ComputedRef<boolean>>
-export const LONGEST_TASK_RUN_DURATION_INJECTION_KEY = Symbol("longest-task-run-duration-injection-key") as InjectionKey<ComputedRef<number>>
 export const LOOP_LANES_INJECTION_KEY = Symbol("loop-lanes-injection-key") as InjectionKey<ComputedRef<Record<string, LoopLaneData>>>
-export const SCOPED_LONGEST_DURATIONS_INJECTION_KEY = Symbol("scoped-longest-durations-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>
+export const ARTIFACT_COUNTS_INJECTION_KEY = Symbol("artifact-counts-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>

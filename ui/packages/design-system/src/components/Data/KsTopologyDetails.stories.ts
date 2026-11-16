@@ -9,7 +9,7 @@ const meta: Meta<typeof KsTopologyDetails> = {
         docs: {
             description: {
                 component:
-                    "Key/value definition grid used by plugin topology-details slots. Plugins pass `rows`; styling stays in the design system.",
+                    "Key/value definition grid used by plugin execution-artifact slots. Plugins pass `rows`; styling stays in the design system.",
             },
         },
     },

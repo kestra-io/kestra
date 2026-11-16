@@ -7,14 +7,17 @@ import fixture from "../../../tests/storybook/components/executions/Executions.f
 import fixtureS from "../../../tests/storybook/components/executions/Executions-s.fixture.json"
 import {setMockClient, type AxiosLikeClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
 import {mockResponse, mockStoryApiRoutes} from "../../../.storybook/apiMock"
+import {useFlowStore} from "../../stores/flow"
+import {expect, within} from "storybook/test"
 
-function getDecorators(data: PagedResultsApiLightExecution) {
+function getDecorators(data: PagedResultsApiLightExecution, initialRoute = "/executions/123/645") {
     return [
         () => {
             return {
                 setup () {
                     const authStore = useAuthStore()
                     const miscStore = useMiscStore()
+                    const flowStore = useFlowStore()
 
                     authStore.user = {
                         id: "123",
@@ -25,6 +28,9 @@ function getDecorators(data: PagedResultsApiLightExecution) {
                         hasAnyAction: () => true,
                         hasAnyActionOnAnyNamespace: () => true,
                     } as unknown as typeof authStore.user
+                    if (initialRoute.startsWith("/flows/update")) {
+                        flowStore.flow = {id: "airbyte-sync", namespace: "company.team", source: ""}
+                    }
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"],
                     }
@@ -65,7 +71,7 @@ function getDecorators(data: PagedResultsApiLightExecution) {
             component: {template: "<div>namespace</div>"},
           },
         ], {
-            initialRoute: "/executions/123/645",
+            initialRoute,
         }),
     ]
 }
@@ -103,5 +109,22 @@ export const BiggerData: Story = {
         statuses: [],
         topbar: false,
         filter: false,
+    },
+}
+
+export const FlowExecutionsTab: Story = {
+    decorators: getDecorators(fixtureS as unknown as PagedResultsApiLightExecution, "/flows/update/company.team/airbyte-sync"),
+    args: {
+        hidden: [],
+        statuses: [],
+        topbar: false,
+        filter: false,
+        flowId: "airbyte-sync",
+        namespace: "company.team",
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        expect((await canvas.findAllByText("airbyte-sync")).length).toBeGreaterThan(0)
+        expect((await canvas.findAllByText("company.team")).length).toBeGreaterThan(0)
     },
 }

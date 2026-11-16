@@ -173,14 +173,14 @@ export const restartExecutionsByQuery = (parameters?: Omit<Parameters<typeof _05
 }, options?: Omit<Parameters<typeof _05978F079>[1], 'throwOnError'>) => getDataOrThrow(_05978F079(addTenantToParameters(parameters), options));
 
 /**
- * Resume a list of paused executions asynchronously
+ * Resume a list of paused or breakpoint-suspended executions asynchronously
  */
 export const resumeExecutionsByIds = (parameters: Omit<Parameters<typeof _028Ee38A7>[0], 'tenant'> & {
     tenant?: string;
 }, options?: Omit<Parameters<typeof _028Ee38A7>[1], 'throwOnError'>) => getDataOrThrow(_028Ee38A7(addTenantToParameters(parameters), options));
 
 /**
- * Resume executions filter by query parameters asynchronously
+ * Resume paused or breakpoint-suspended executions filtered by query parameters asynchronously
  */
 export const resumeExecutionsByQuery = (parameters?: Omit<Parameters<typeof _5A35A529>[0], 'tenant'> & {
     tenant?: string;

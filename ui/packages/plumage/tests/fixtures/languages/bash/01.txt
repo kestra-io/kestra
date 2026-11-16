@@ -1,0 +1,105 @@
+# List flows (all namespaces, or filter by namespace)
+kestractl flows list
+kestractl flows list my.namespace --output json
+
+# List flows in a namespace with pagination
+kestractl flows list-by-namespace my.namespace --page 1 --size 50
+
+# List deprecated flows
+kestractl flows list-deprecated
+
+# Search flows across all namespaces (paginated; no query filter)
+kestractl flows search
+kestractl flows search --page 1 --size 50
+
+# List distinct namespaces that have flows
+kestractl flows namespaces
+
+# Get a flow's YAML source (aliases: show, describe)
+kestractl flows get my.namespace my-flow
+
+# Get a specific task definition within a flow
+kestractl flows task my.namespace my-flow my-task-id
+
+# Deploy flows
+kestractl flows deploy path/to/flow.yaml
+kestractl flows deploy ./flows/ --namespace prod --override --fail-fast
+
+# Deploy under a namespace prefix (prepends to each flow's own namespace; mutually exclusive with --namespace)
+# Only the flow's own namespace is prefixed — subflow targets, Flow trigger dependsOn, namespace files, and KV lookups are not.
+kestractl flows deploy ./flows/ --namespace-prefix staging.pr42 --override
+
+# Disable every trigger on deploy (sets disabled: true on all triggers; use for ephemeral preview environments)
+# Flows with no triggers are deployed unchanged; YAML-aliased or flow-style trigger mappings cause an error.
+kestractl flows deploy ./flows/ --namespace-prefix staging.pr42 --disable-triggers --override
+
+# Import flows from a ZIP archive
+kestractl flows import flows.zip
+
+# Validate a flow or directory
+kestractl flows validate path/to/flow.yaml
+kestractl flows validate ./flows/
+
+# Validate flows already stored on the instance (no local files needed)
+kestractl flows validate-by-query --namespace my.namespace        # scoped to a namespace
+kestractl flows validate-by-query --all                           # every flow on the instance
+kestractl flows validate-by-query --all --output json             # CI gate; exits non-zero on violations
+
+# Validate a task or trigger definition from a YAML file
+kestractl flows validate-task    --file task.yaml
+kestractl flows validate-trigger --file trigger.yaml
+
+# Enable / disable / delete a flow
+kestractl flows enable  my.namespace my-flow
+kestractl flows disable my.namespace my-flow
+kestractl flows delete  my.namespace my-flow
+
+# Bulk operations by query
+kestractl flows enable-by-query  --namespace my.namespace
+kestractl flows disable-by-query --namespace my.namespace
+kestractl flows delete-by-query  --namespace my.namespace --query old-
+
+# Search flows by source content
+kestractl flows search-by-source --query "http.request"
+
+# Bulk-update flows from a YAML file (--delete defaults to false; pass it to remove unlisted flows)
+kestractl flows bulk-update --file flows.yaml
+kestractl flows bulk-update --file flows.yaml --delete
+
+# Export flows
+kestractl flows export            --namespace my.namespace --output-file flows.zip
+kestractl flows export-by-ids     my.namespace/flow-a my.namespace/flow-b --output-file export.zip
+kestractl flows export-by-query   --namespace my.namespace --output-file export.zip
+
+# Sync an entire namespace from a YAML file (deletes flows absent from the file)
+kestractl flows namespace-sync my.namespace flows.yaml --delete --override
+
+# Manage flow revisions
+kestractl flows revisions        my.namespace my-flow
+kestractl flows delete-revisions my.namespace my-flow --revisions 5
+
+# Manage concurrency limits
+kestractl flows concurrency-limits
+kestractl flows update-concurrency my.namespace my-flow --running 10
+
+# Generate a graph topology from a flow source file (without deploying)
+kestractl flows generate-graph-from-source --file flow.yaml
+
+# Show the graph topology of an existing deployed flow
+kestractl flows graph my.namespace my-flow
+kestractl flows graph my.namespace my-flow --revision 3 --output json
+kestractl flows graph my.namespace my-flow --subflow task-a --subflow task-b
+
+# List available Pebble expressions for a flow YAML file
+kestractl flows expressions --file my-flow.yaml
+kestractl flows expressions --file my-flow.yaml --task-id my-task
+
+# Show namespace-level or flow-level dependency trees
+kestractl flows namespace-dependencies my.namespace
+kestractl flows dependencies           my.namespace my-flow
+
+# Build a migration usage report from all flow sources (1.x → 2.0 signal analysis)
+kestractl flows usage-report                                          # markdown report
+kestractl flows usage-report --output json                            # machine-readable
+kestractl flows usage-report --namespace my.namespace --anonymize=false
+kestractl flows usage-report --detailed                               # include per-namespace table

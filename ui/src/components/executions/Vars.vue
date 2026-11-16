@@ -19,7 +19,7 @@
                 <DynamicScrollerItem
                     :item="item"
                     :active="active"
-                    :dataIndex="index"
+                    :data-index="index"
                 >
                     <div class="vars-row">
                         <code class="vars-key">{{ item.key }}</code>

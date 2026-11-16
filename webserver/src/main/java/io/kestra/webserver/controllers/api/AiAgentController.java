@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.events.Actor;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
 import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
@@ -21,6 +22,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
+import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.AiThreadManager;
@@ -61,6 +63,7 @@ public class AiAgentController {
     protected final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
     private final AgentPrincipalResolver principalResolver;
+    private final ActorResolver actorResolver;
     private final int maxTurnsPerThread;
     private final int maxConcurrentTurns;
     private final Semaphore turnGate;
@@ -75,6 +78,7 @@ public class AiAgentController {
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final AgentPrincipalResolver principalResolver,
+        final ActorResolver actorResolver,
         final AgentConfiguration configuration,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
@@ -84,6 +88,7 @@ public class AiAgentController {
         this.threadManager = threadManager;
         this.orchestrator = orchestrator;
         this.principalResolver = principalResolver;
+        this.actorResolver = actorResolver;
         this.maxTurnsPerThread = configuration.maxTurnsPerThread();
         this.maxConcurrentTurns = configuration.maxConcurrentTurns();
         this.turnGate = new Semaphore(maxConcurrentTurns, false);
@@ -153,7 +158,17 @@ public class AiAgentController {
             AgentPrincipal principal = principalResolver.resolve();
             return stream(
                 sink -> orchestrator.runTurn(
-                    new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
+                    AgentTurnContext.builder()
+                        .thread(running)
+                        .prompt(request.prompt())
+                        .mode(mode)
+                        .tenant(tenant)
+                        .providerId(request.providerId())
+                        .principal(principal)
+                        .additionalContext(request.additionalContext())
+                        .actor(actorResolver.resolve())
+                        .build(),
+                    sink
                 )
             );
         } catch (RuntimeException e) {
@@ -189,7 +204,8 @@ public class AiAgentController {
             boolean approve = request.decision() == ApiDecision.APPROVE;
 
             AgentPrincipal principal = principalResolver.resolve();
-            return stream(sink -> orchestrator.resume(running, request.providerId(), approve, request.reason(), principal, sink));
+            Actor actor = actorResolver.resolve();
+            return stream(sink -> orchestrator.resume(running, request.providerId(), approve, request.reason(), principal, actor, sink));
         } catch (RuntimeException e) {
             turnGate.release();
             throw e;

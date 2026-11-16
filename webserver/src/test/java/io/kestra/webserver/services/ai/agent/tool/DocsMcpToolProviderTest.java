@@ -18,8 +18,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @WireMockTest
@@ -28,21 +30,7 @@ class DocsMcpToolProviderTest {
     @Test
     void shouldDisableAutoHealthCheckOnMcpClient(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         // Given
-        stubFor(post(urlPathMatching("/v1/mcp.*"))
-            .withRequestBody(containing("notifications/"))
-            .willReturn(ok()));
-
-        stubFor(post(urlPathMatching("/v1/mcp.*"))
-            .withRequestBody(containing("tools/list"))
-            .willReturn(okJson("""
-                {"jsonrpc":"2.0","id":2,"result":{"tools":[]}}
-            """)));
-
-        stubFor(post(urlPathMatching("/v1/mcp.*"))
-            .withRequestBody(containing("initialize"))
-            .willReturn(okJson("""
-                {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"mock-docs","version":"1.0"}}}
-            """)));
+        stubDocsServer();
 
         AgentConfiguration configuration = AgentConfiguration.builder()
             .docsMcpUrl(wmRuntimeInfo.getHttpBaseUrl() + "/v1/mcp")
@@ -72,6 +60,22 @@ class DocsMcpToolProviderTest {
     }
 
     @Test
+    void shouldSkipProtocolDetectionWhenConnecting(WireMockRuntimeInfo wmRuntimeInfo) {
+        // Given
+        stubDocsServer();
+        AgentConfiguration configuration = AgentConfiguration.builder()
+            .docsMcpUrl(wmRuntimeInfo.getHttpBaseUrl() + "/v1/mcp")
+            .build();
+
+        // When
+        new DocsMcpToolProvider(configuration).tools();
+
+        // Then
+        verify(0, postRequestedFor(urlPathMatching("/v1/mcp.*")).withRequestBody(containing("server/discover")));
+        verify(1, postRequestedFor(urlPathMatching("/v1/mcp.*")).withRequestBody(containing("tools/list")));
+    }
+
+    @Test
     void shouldDegradeGracefullyWhenUnreachable() {
         // Given
         AgentConfiguration configuration = AgentConfiguration.builder()
@@ -84,5 +88,23 @@ class DocsMcpToolProviderTest {
 
         // Then
         assertThat(tools).isEmpty();
+    }
+
+    private static void stubDocsServer() {
+        stubFor(post(urlPathMatching("/v1/mcp.*"))
+            .withRequestBody(containing("notifications/"))
+            .willReturn(ok()));
+
+        stubFor(post(urlPathMatching("/v1/mcp.*"))
+            .withRequestBody(containing("tools/list"))
+            .willReturn(okJson("""
+                {"jsonrpc":"2.0","id":2,"result":{"tools":[]}}
+            """)));
+
+        stubFor(post(urlPathMatching("/v1/mcp.*"))
+            .withRequestBody(containing("initialize"))
+            .willReturn(okJson("""
+                {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"mock-docs","version":"1.0"}}}
+            """)));
     }
 }

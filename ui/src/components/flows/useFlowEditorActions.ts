@@ -283,8 +283,7 @@ export function useFlowEditorActions() {
     function exportYaml() {
         if (!flowStore.flow || !flowStore.flowYaml) return
         const {id, namespace} = flowStore.flow
-        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"})
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`)
+        localUtils.downloadBlob(new Blob([flowStore.flowYaml], {type: "text/yaml"}), `${namespace}.${id}.yaml`)
     }
 
     function copyFlow() {

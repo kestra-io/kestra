@@ -27,21 +27,11 @@ public class FlowToolSchemaMapper {
     };
 
     public McpSchema.Tool buildTool(Flow flow, McpToolTrigger toolTrigger) {
-        McpToolTrigger.Annotations a = toolTrigger.getAnnotations();
         return McpSchema.Tool.builder()
             .name(toolTrigger.getToolName())
             .description(toolTrigger.getToolDescription())
             .title(toolTrigger.getTitle())
-            .annotations(
-                new McpSchema.ToolAnnotations(
-                    null,
-                    a.readOnly(),
-                    a.destructive(),
-                    a.idempotent(),
-                    a.openWorld(),
-                    a.returnDirect()
-                )
-            )
+            .annotations(McpToolAnnotationsMapper.toToolAnnotations(toolTrigger.getAnnotations()))
             .inputSchema(
                 buildToolInputSchema(
                     // FORM inputs are expanded to dotted leaf paths; FORM never reaches convert().

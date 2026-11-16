@@ -1062,6 +1062,16 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
 
+    /**
+     * Finds the namespace whose access restrictions prevent the Flow triggers of {@code listening} from receiving
+     * the given execution. Always empty in OSS, as namespace restrictions are an EE feature.
+     *
+     * @return the closest blocking namespace, or empty when the execution is not blocked.
+     */
+    public Optional<String> findNamespaceBlockingFlowTrigger(Flow listening, Execution execution) {
+        return Optional.empty();
+    }
+
     private static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()

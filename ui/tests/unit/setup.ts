@@ -1,13 +1,18 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
-import {designSystemI18nReady} from "@kestra-io/design-system"
+import {designSystemAsyncComponentsReady, designSystemI18nReady} from "@kestra-io/design-system"
 import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
+import {resetVNodeTransformer} from "./resetVNodeTransformer"
 
 // Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
 // module cached while another file's vi.mock was active keeps that mock. Setup files run before
 // each spec's own imports, so resetting here hands every file a fresh `src/**` registry.
 // Externalized node_modules (vue, @vue/test-utils, …) are unaffected.
 vi.resetModules()
+
+// The component stubs of an earlier file in this worker must not reach this one (see resetVNodeTransformer). A spec that mounts
+// with `@vue/test-utils` installs its own transformer again, so nothing inside a file depends on the previous one.
+resetVNodeTransformer()
 
 // Components that teleport (dialogs, drawers, poppers) keep their content attached
 // to document.body until the wrapper unmounts, and with `isolate: false` that debris
@@ -17,9 +22,13 @@ vi.resetModules()
 disableAutoUnmount()
 enableAutoUnmount(afterEach)
 
-// Installing the design system starts a locale-module glob it does not await, so a spec that
-// finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
-afterEach(() => designSystemI18nReady())
+// Installing the design system starts a locale-module glob it does not await, and a mounted KsMarkdown, chart or
+// KsEditor starts a lazy import, so a spec that finishes first is torn down mid-import and the run reports unhandled
+// EnvironmentTeardownErrors.
+afterEach(async () => {
+    await designSystemI18nReady()
+    await designSystemAsyncComponentsReady()
+})
 
 // A Vue warning inlines the offending value twice over, in the trace serialising every prop and in
 // a prop type-check message, so a megabyte-sized value costs CI 10 to 24 minutes of log (#19566).

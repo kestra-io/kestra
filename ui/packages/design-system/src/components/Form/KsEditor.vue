@@ -25,7 +25,12 @@
             <slot name="absolute" />
         </div>
         <span v-if="label" class="label">{{ label }}</span>
-        <div class="editor-container" ref="container" :class="[containerClass, {'has-label': label}]">
+        <div
+            class="editor-container"
+            ref="container"
+            :class="[containerClass, {'has-label': label}]"
+            :style="containerStyle"
+        >
             <div ref="editorContainer" class="editor-wrapper">
                 <div>
                     <div
@@ -127,6 +132,7 @@
     const {
         icon,
         containerClass,
+        containerStyle,
         showPlaceholder,
         textAreaValue,
         showWidgetContent,
@@ -316,17 +322,17 @@
         & .monaco-editor,
         & .monaco-editor-background {
             outline: none;
-            background-color: var(--ks-bg-input);
-            --vscode-editor-background: var(--ks-bg-input);
-            --vscode-breadcrumb-background: var(--ks-bg-input);
-            --vscode-editorGutter-background: var(--ks-bg-input);
-            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
-            --vscode-editorStickyScroll-background: var(--ks-bg-input);
+            background-color: var(--code-background, var(--ks-bg-input));
+            --vscode-editor-background: var(--code-background, var(--ks-bg-input));
+            --vscode-breadcrumb-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorGutter-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorStickyScrollGutter-background: var(--code-background, var(--ks-bg-input));
+            --vscode-editorStickyScroll-background: var(--code-background, var(--ks-bg-input));
         }
 
         & .monaco-editor .margin {
-            background-color: var(--ks-bg-input);
-            --vscode-editorGutter-background: var(--ks-bg-input);
+            background-color: var(--code-background, var(--ks-bg-input));
+            --vscode-editorGutter-background: var(--code-background, var(--ks-bg-input));
             --vscode-editorLineNumber-activeForeground: var(--ks-text-secondary);
             --vscode-editorLineNumber-foreground: var(--ks-text-secondary);
             --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-text-secondary);
@@ -343,13 +349,36 @@
         }
     }
 
-    .highlight-pebble {
-        /* Not `--ks-editor-pabble`: Dark 2.0 maps that token to green, so it stays hardcoded until the token is corrected. */
-        color: #977100 !important;
+    .highlight-pebble-pebble {
+        color: var(--code-pebble) !important;
+    }
 
-        html.dark & {
-            color: #ffca16 !important;
-        }
+    .highlight-pebble-keyword {
+        color: var(--code-keyword) !important;
+    }
+
+    .highlight-pebble-constant {
+        color: var(--code-constant) !important;
+    }
+
+    .highlight-pebble-string {
+        color: var(--code-string) !important;
+    }
+
+    .highlight-pebble-number {
+        color: var(--code-number) !important;
+    }
+
+    .highlight-pebble-function {
+        color: var(--code-function) !important;
+    }
+
+    .highlight-pebble-operator {
+        color: var(--code-operator) !important;
+    }
+
+    .highlight-pebble-punctuation {
+        color: var(--code-punctuation) !important;
     }
 
     .disable-text {
@@ -373,7 +402,7 @@
     }
 
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
-        background-color: var(--ks-bg-input);
+        background-color: var(--code-background, var(--ks-bg-input));
     }
 
     .monaco-editor {

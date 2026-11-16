@@ -192,10 +192,10 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                 - id: failed_prod_workflows
                   type: io.kestra.plugin.core.trigger.Flow
                   dependsOn:
-                  - states
-                      - FAILED
-                      - WARNING
-                    namespace: company.payroll"""
+                    - namespace: company.payroll
+                      states:
+                        - FAILED
+                        - WARNING"""
         ),
         @Example(
             full = true,

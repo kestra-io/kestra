@@ -1,6 +1,6 @@
 import {describe, expect, test} from "vitest"
-import {Comparators, type AppliedFilter, type FilterGroup, type LeafFilterGroup, type WrapperGroup} from "../utils/filterTypes"
-import {useFilterGroups} from "./useFilterGroups"
+import {Comparators, isWrapperGroup, type AppliedFilter, type FilterGroup, type LeafFilterGroup, type WrapperGroup} from "../utils/filterTypes"
+import {allFilters, findLeafById, findLeafContaining, useFilterGroups} from "./useFilterGroups"
 
 const makeFilter = (id: string): AppliedFilter => ({
     id,
@@ -18,11 +18,15 @@ const makeLeaf = (id: string, filters: AppliedFilter[] = []): LeafFilterGroup =>
     filters,
 })
 
-const makeWrapper = (id: string, logical: "AND" | "OR" = "AND"): WrapperGroup => ({
+const makeWrapper = (
+    id: string,
+    logical: "AND" | "OR" = "AND",
+    children: LeafFilterGroup[] = [makeLeaf(`${id}-child`)],
+): WrapperGroup => ({
     id,
     kind: "wrapper",
     logical,
-    children: [makeLeaf(`${id}-child`)],
+    children,
 })
 
 describe("useFilterGroups", () => {
@@ -174,19 +178,6 @@ describe("useFilterGroups", () => {
     })
 })
 
-const leaf = (id: string) => ({
-    id,
-    kind: "leaf" as const,
-    filters: [],
-})
-
-const wrapper = (id: string, children: ReturnType<typeof leaf>[]) => ({
-    id,
-    kind: "wrapper" as const,
-    logical: "AND" as const,
-    children,
-})
-
 describe("useFilterGroups - group structure operations", () => {
     test("addGroup appends a new empty leaf", () => {
         const tree = useFilterGroups()
@@ -205,7 +196,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup removes the named group", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b"), leaf("c")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b"), makeLeaf("c")])
 
         tree.removeGroup("b")
 
@@ -214,7 +205,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup refuses to remove the last remaining group", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a")])
+        tree.replaceTree([makeLeaf("a")])
 
         tree.removeGroup("a")
 
@@ -223,7 +214,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("removeGroup leaves the tree unchanged for an unknown id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.removeGroup("unknown")
 
@@ -232,7 +223,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups combines two leaves in an AND wrapper", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("source"), leaf("target")])
+        tree.replaceTree([makeLeaf("source"), makeLeaf("target")])
 
         tree.wrapGroups("source", "target")
 
@@ -250,8 +241,8 @@ describe("useFilterGroups - group structure operations", () => {
     test("wrapGroups appends the source to an existing wrapper", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            leaf("source"),
-            wrapper("target", [leaf("a"), leaf("b")]),
+            makeLeaf("source"),
+            makeWrapper("target", "AND", [makeLeaf("a"), makeLeaf("b")]),
         ])
 
         tree.wrapGroups("source", "target")
@@ -271,7 +262,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups is a no-op when source and target are the same", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.wrapGroups("a", "a")
 
@@ -280,7 +271,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("wrapGroups is a no-op when either id is unknown", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.wrapGroups("missing", "b")
         expect(tree.groups.value.map(group => group.id)).toEqual(["a", "b"])
@@ -292,8 +283,8 @@ describe("useFilterGroups - group structure operations", () => {
     test("wrapGroups is a no-op when the source is a wrapper", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            wrapper("source", [leaf("child")]),
-            leaf("target"),
+            makeWrapper("source", "AND", [makeLeaf("child")]),
+            makeLeaf("target"),
         ])
 
         tree.wrapGroups("source", "target")
@@ -307,9 +298,9 @@ describe("useFilterGroups - group structure operations", () => {
     test("unwrapGroup restores children in their original position and order", () => {
         const tree = useFilterGroups()
         tree.replaceTree([
-            leaf("before"),
-            wrapper("group", [leaf("a"), leaf("b")]),
-            leaf("after"),
+            makeLeaf("before"),
+            makeWrapper("group", "AND", [makeLeaf("a"), makeLeaf("b")]),
+            makeLeaf("after"),
         ])
 
         tree.unwrapGroup("group")
@@ -324,7 +315,7 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("unwrapGroup is a no-op for a leaf id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), leaf("b")])
+        tree.replaceTree([makeLeaf("a"), makeLeaf("b")])
 
         tree.unwrapGroup("a")
 
@@ -333,10 +324,237 @@ describe("useFilterGroups - group structure operations", () => {
 
     test("unwrapGroup is a no-op for an unknown id", () => {
         const tree = useFilterGroups()
-        tree.replaceTree([leaf("a"), wrapper("group", [leaf("b")])])
+        tree.replaceTree([makeLeaf("a"), makeWrapper("group", "AND", [makeLeaf("b")])])
 
         tree.unwrapGroup("unknown")
 
         expect(tree.groups.value.map(group => group.id)).toEqual(["a", "group"])
+    })
+})
+
+const makeFieldFilter = (overrides: Partial<AppliedFilter> = {}): AppliedFilter => ({
+    ...makeFilter("f1"),
+    key: "namespace",
+    keyLabel: "Namespace",
+    value: "company.team",
+    valueLabel: "company.team",
+    ...overrides,
+})
+
+const makeWrapperOf = (id: string, children: LeafFilterGroup[]): WrapperGroup => ({
+    id,
+    kind: "wrapper",
+    logical: "AND",
+    children,
+})
+
+const treeWith = (groups: FilterGroup[]) => {
+    const tree = useFilterGroups()
+    tree.replaceTree(groups)
+    return tree
+}
+
+const idsOf = (group: FilterGroup) =>
+    isWrapperGroup(group) ? [] : group.filters.map(f => f.id)
+
+const wrapperAt = (tree: ReturnType<typeof treeWith>, index: number): WrapperGroup => {
+    const group = tree.groups.value[index]
+    if (!isWrapperGroup(group)) {
+        throw new Error(`Expected group ${index} to be a wrapper but it is a leaf.`)
+    }
+    return group
+}
+
+describe("useFilterGroups - moveFilter", () => {
+    test("appends the filter to a target leaf without a conflicting field", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1"})]),
+            makeLeaf("target"),
+        ])
+
+        tree.moveFilter("f1", "target")
+
+        expect(tree.groups.value).toHaveLength(2)
+        expect(idsOf(tree.groups.value[0])).toEqual([])
+        expect(idsOf(tree.groups.value[1])).toEqual(["f1"])
+    })
+
+    test("does not treat the same key with another comparator as a conflict", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1", comparator: Comparators.GREATER_THAN})]),
+            makeLeaf("target", [makeFieldFilter({id: "f2", comparator: Comparators.LESS_THAN})]),
+        ])
+
+        tree.moveFilter("f1", "target")
+
+        expect(tree.groups.value).toHaveLength(2)
+        expect(idsOf(tree.groups.value[1])).toEqual(["f2", "f1"])
+    })
+
+    test("does nothing when the source and target are the same leaf", () => {
+        const build = () => [makeLeaf("only", [makeFieldFilter({id: "f1"}), makeFieldFilter({id: "f2", key: "flowId"})])]
+        const tree = treeWith(build())
+
+        tree.moveFilter("f1", "only")
+
+        expect(tree.groups.value).toEqual(build())
+    })
+
+    test.each([
+        ["filter", "unknown", "target"],
+        ["target leaf", "f1", "unknown"],
+    ])("does nothing when the %s cannot be found", (_, filterId, targetId) => {
+        const build = () => [
+            makeLeaf("source", [makeFieldFilter({id: "f1"})]),
+            makeLeaf("target", [makeFieldFilter({id: "f2", key: "flowId"})]),
+        ]
+        const tree = treeWith(build())
+
+        tree.moveFilter(filterId, targetId)
+
+        expect(tree.groups.value).toEqual(build())
+    })
+
+    test("turns a top-level target leaf into a wrapper when its field conflicts", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1"})]),
+            makeLeaf("target", [
+                makeFieldFilter({id: "f2", value: "other.team"}),
+                makeFieldFilter({id: "f3", key: "flowId"}),
+            ]),
+        ])
+
+        tree.moveFilter("f1", "target")
+
+        expect(tree.groups.value).toHaveLength(2)
+        expect(idsOf(tree.groups.value[0])).toEqual([])
+
+        const wrapped = wrapperAt(tree, 1)
+        expect(wrapped.logical).toBe("AND")
+        expect(wrapped.children.map(idsOf)).toEqual([["f3"], ["f2"], ["f1"]])
+        expect(tree.appliedFilters.value.map(f => f.id).sort()).toEqual(["f1", "f2", "f3"])
+    })
+
+    test("puts every conflicting filter of the target leaf in its own child", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1"})]),
+            makeLeaf("target", [
+                makeFieldFilter({id: "f2", value: "other.team"}),
+                makeFieldFilter({id: "f3", value: "third.team"}),
+            ]),
+        ])
+
+        tree.moveFilter("f1", "target")
+
+        expect(wrapperAt(tree, 1).children.map(idsOf)).toEqual([["f2"], ["f3"], ["f1"]])
+    })
+
+    test("adds a child leaf instead of rebuilding a wrapper that already contains the target", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1"})]),
+            makeWrapperOf("wrapper", [
+                makeLeaf("conflicting", [makeFieldFilter({id: "f2", value: "other.team"})]),
+                makeLeaf("unrelated", [makeFieldFilter({id: "f3", key: "flowId"})]),
+            ]),
+        ])
+
+        tree.moveFilter("f1", "conflicting")
+
+        expect(tree.groups.value).toHaveLength(2)
+
+        const wrapped = wrapperAt(tree, 1)
+        expect(wrapped.id).toBe("wrapper")
+        expect(wrapped.children.map(c => c.id).slice(0, 2)).toEqual(["conflicting", "unrelated"])
+        expect(wrapped.children.map(idsOf)).toEqual([["f2"], ["f3"], ["f1"]])
+    })
+})
+
+describe("useFilterGroups - placeFilter", () => {
+    const threeFilters = () => makeLeaf("leaf", [
+        makeFieldFilter({id: "f1", key: "namespace"}),
+        makeFieldFilter({id: "f2", key: "flowId"}),
+        makeFieldFilter({id: "f3", key: "state"}),
+    ])
+
+    test.each([
+        ["to the front", "f3", 0, ["f3", "f1", "f2"]],
+        ["to the end", "f1", 2, ["f2", "f3", "f1"]],
+    ])("reorders a filter %s of its own leaf", (_, filterId, index, expected) => {
+        const tree = treeWith([threeFilters()])
+
+        tree.placeFilter(filterId, "leaf", index)
+
+        expect(idsOf(tree.groups.value[0])).toEqual(expected)
+    })
+
+    test("moves a filter to another leaf and then positions it at the requested index", () => {
+        const tree = treeWith([
+            makeLeaf("source", [makeFieldFilter({id: "f1", key: "namespace"})]),
+            makeLeaf("target", [
+                makeFieldFilter({id: "f2", key: "flowId"}),
+                makeFieldFilter({id: "f3", key: "state"}),
+            ]),
+        ])
+
+        tree.placeFilter("f1", "target", 1)
+
+        expect(idsOf(tree.groups.value[0])).toEqual([])
+        expect(idsOf(tree.groups.value[1])).toEqual(["f2", "f1", "f3"])
+    })
+
+    test("drops the last filter of the next leaf at the end of the previous leaf, not at the start of the next", () => {
+        const tree = treeWith([
+            makeLeaf("previous", [
+                makeFieldFilter({id: "a1", key: "state"}),
+                makeFieldFilter({id: "a2", key: "namespace"}),
+            ]),
+            makeLeaf("next", [
+                makeFieldFilter({id: "b1", key: "flowId"}),
+                makeFieldFilter({id: "b2", key: "labels"}),
+            ]),
+        ])
+
+        tree.placeFilter("b2", "previous", 2)
+
+        expect(idsOf(tree.groups.value[0])).toEqual(["a1", "a2", "b2"])
+        expect(idsOf(tree.groups.value[1])).toEqual(["b1"])
+    })
+
+    test.each([
+        ["below zero", "f3", -1, ["f3", "f1", "f2"]],
+        ["past the end", "f1", 99, ["f2", "f3", "f1"]],
+    ])("clamps an index %s instead of throwing", (_, filterId, index, expected) => {
+        const tree = treeWith([threeFilters()])
+
+        tree.placeFilter(filterId, "leaf", index)
+
+        expect(idsOf(tree.groups.value[0])).toEqual(expected)
+    })
+})
+
+describe("useFilterGroups - tree helpers", () => {
+    test("allFilters keeps tree order and returns nothing for an empty tree", () => {
+        const groups: FilterGroup[] = [
+            makeLeaf("leaf", [makeFilter("first")]),
+            makeWrapper("wrapper", "AND", [makeLeaf("child", [makeFilter("second")])]),
+        ]
+
+        expect(allFilters(groups).map(filter => filter.id)).toEqual(["first", "second"])
+        expect(allFilters([])).toEqual([])
+    })
+
+    test("findLeafContaining returns undefined for an unknown filter id", () => {
+        expect(findLeafContaining([makeLeaf("leaf", [makeFilter("first")])], "missing")).toBeUndefined()
+    })
+
+    test("findLeafById finds top-level and wrapped leaves but not wrappers", () => {
+        const top = makeLeaf("top")
+        const child = makeLeaf("child")
+        const groups: FilterGroup[] = [top, makeWrapper("wrapper", "AND", [child])]
+
+        expect(findLeafById(groups, "top")).toBe(top)
+        expect(findLeafById(groups, "child")).toBe(child)
+        expect(findLeafById(groups, "wrapper")).toBeUndefined()
+        expect(findLeafById(groups, "missing")).toBeUndefined()
     })
 })

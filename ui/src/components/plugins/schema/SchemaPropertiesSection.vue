@@ -79,6 +79,14 @@
                                     <Alert />
                                 </KsIcon>
                             </div>
+                            <div v-if="extractEnumValues(property)?.length" class="compact-prop-enum">
+                                <KsText size="small">{{ $t("plugins.possible_values") }}</KsText>
+                                <div class="compact-enum-values">
+                                    <KsTag v-for="value in extractEnumValues(property)" :key="value" size="small">
+                                        {{ value }}
+                                    </KsTag>
+                                </div>
+                            </div>
                             <div
                                 v-if="property.description || property.title"
                                 class="compact-prop-desc"
@@ -168,7 +176,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsIcon, KsInput, KsSegmented, KsTag, KsTooltip} from "@kestra-io/design-system"
+    import {KsIcon, KsInput, KsSegmented, KsTag, KsText, KsTooltip} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import Alert from "vue-material-design-icons/Alert.vue"
     import AlphaBBox from "vue-material-design-icons/AlphaBBox.vue"
@@ -180,6 +188,7 @@
     import {
         aggregateAllOf,
         className,
+        extractEnumValues,
         extractTypeInfo,
         isDeprecated,
         isDynamic,
@@ -513,6 +522,17 @@
         color: var(--ks-text-muted);
         border-color: transparent;
         background: transparent;
+    }
+
+    .compact-prop-enum {
+        margin-top: var(--ks-spacing-2);
+    }
+
+    .compact-enum-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+        margin-top: var(--ks-spacing-2);
     }
 
     .compact-prop-desc {

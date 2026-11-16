@@ -247,6 +247,7 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     "tenant.create.steps.secret",
     "tenant.type.infraNav.mappingsPage.flavor",
     "assets.filter.table_column.assets.metadata_key",
+    "pluginPage.view.plugin",
 ])
 
 /**

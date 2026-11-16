@@ -206,13 +206,16 @@
         if (!fields) return {}
         return Object.fromEntries(
             Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
-        ) as unknown as Record<string, Schema>
+        ) as Record<string, Schema>
     })
 
     const triggerSchema = computed<{required?: string[]}>(() => {
-        const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
-        return required?.length ? {required} : {}
+        const wrapper = triggerPlugin.value?.schema?.properties
+        const declared: unknown = wrapper ? Reflect.get(wrapper, "required") : undefined
+        const required = Array.isArray(declared)
+            ? declared.filter((key: unknown): key is string => typeof key === "string" && !RESERVED_FIELDS.has(key))
+            : []
+        return required.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)

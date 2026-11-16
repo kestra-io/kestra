@@ -1,6 +1,6 @@
-import { describe, expect, test } from "vitest"
-import { KsInputNumber } from "@kestra-io/design-system"
-import { i18nMount } from "../../../../../tests/unit/i18nMount"
+import {describe, expect, test} from "vitest"
+import {KsInputNumber} from "@kestra-io/design-system"
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import TaskNumber from "./TaskNumber.vue"
 
 describe("TaskNumber", () => {
@@ -8,7 +8,7 @@ describe("TaskNumber", () => {
         const wrapper = i18nMount(TaskNumber, {
             props: {
                 modelValue: 5,
-                schema: { type: "number", default: 10 },
+                schema: {type: "number", default: 10},
             },
         })
 
@@ -77,7 +77,7 @@ describe("TaskNumber", () => {
         const wrapper = i18nMount(TaskNumber, {
             props: {
                 modelValue: 0,
-                schema: { type: "number", default: 10 },
+                schema: {type: "number", default: 10},
             },
         })
 

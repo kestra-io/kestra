@@ -30,6 +30,7 @@
                 :loading="false"
                 :tooltipType="TooltipType.EXTERNAL"
                 :stickyTooltip="props.short"
+                :seriesLabel="seriesLabel"
                 @echarts-click="onChartClick"
             />
 
@@ -86,7 +87,7 @@
     import {Motion} from "motion-v"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, useLegendToggle, toEchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping} from "../../../utils/utils"
@@ -166,6 +167,9 @@
     const {drillDown} = useChartDrillDown(props.chart)
 
     const {data, chartOptions} = props.chart
+    const colorByValues = computed(() => props.chart.chartOptions?.colorByValues)
+    const byRank = computed(() => byCategoryRank(colorByValues.value))
+    const seriesLabel = (name: string) => categoryDisplayName(name, colorByValues.value)
 
     const aggregator = computed(() => {
         return Object.entries(data?.columns ?? {})
@@ -237,6 +241,12 @@
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column)
 
+            const stackColors = chartCategoryColors(
+                theme.value,
+                array.map((params) => colorByColumn ? params[colorByColumn] as string | undefined : undefined),
+                colorByValues.value,
+            )
+
             return array.reduce<Record<string, BarAccumulatorEntry>>((acc, {...params}) => {
                 const stack = fields.map((f) => params[f]).join(", ")
 
@@ -248,7 +258,7 @@
                         data: [],
                         tooltip: stack,
                         label: stackLabel,
-                        backgroundColor: getConsistentHEXColor(theme.value, stackLabel),
+                        backgroundColor: stackColors.get(stackLabel ?? "") ?? "",
                         unique: new Set(),
                     }
                 }
@@ -286,9 +296,9 @@
 
         const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
-        // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
+        // Configured categories first, then alphabetically by label, for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a, b) =>
-            (a.label ?? "").localeCompare(b.label ?? ""),
+            byRank.value(a.label ?? "", b.label ?? "") || (a.label ?? "").localeCompare(b.label ?? ""),
         )
 
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
@@ -455,6 +465,8 @@
                 label: ds.label ?? "",
                 color: ds.backgroundColor,
                 count: ds.data.reduce((sum, n) => sum + (n || 0), 0),
+                displayName: seriesLabel(ds.label ?? ""),
+                rank: categoryRank(ds.label ?? "", colorByValues.value),
             })),
     )
 
@@ -490,7 +502,7 @@
     }
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
+        const params = toEchartsParams(rawParams)
         if (params.seriesType !== "bar" || props.execution || isSelectable.value) return
 
         drillDown(

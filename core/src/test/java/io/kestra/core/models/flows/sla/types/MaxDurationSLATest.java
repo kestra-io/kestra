@@ -30,7 +30,7 @@ class MaxDurationSLATest {
         Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution, Map.of(SLA.SLA_DURATION_ATTRIBUTE, maxDurationSLA.getDuration()));
         assertTrue(evaluate.isPresent());
         assertThat(evaluate.get().reason()).contains("execution duration of");
-        assertThat(evaluate.get().reason()).contains("exceed the maximum duration of PT0.05S.");
+        assertThat(evaluate.get().reason()).contains("exceed the deadline of PT0.05S.");
     }
 
     @Test

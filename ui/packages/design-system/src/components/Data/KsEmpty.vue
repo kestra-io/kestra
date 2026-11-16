@@ -6,7 +6,7 @@
         <template #description>
             <slot name="description">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="description ?? $t('no_data').replaceAll('\n', '<br >')" />
+                <span v-html="description ?? $t('no_data').replaceAll('\n', '<br >')" /> <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
             </slot>
         </template>
         <template v-if="$slots.image" #image>

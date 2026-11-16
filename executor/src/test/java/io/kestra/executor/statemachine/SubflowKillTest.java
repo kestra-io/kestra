@@ -125,9 +125,47 @@ class SubflowKillTest {
         assertThat(harness).hasExecutionInState(created, State.Type.KILLED);
     }
 
+    @Test
+    void shouldContinueWhenTheSubflowExecutionIsCancelled() {
+        // Given
+        harness.registerFlow(child);
+        FlowWithSource parent = parent("transmitFailed: true", true);
+        harness.registerFlow(parent);
+        Execution created = Executions.created(parent);
+        harness.run(created, runningChildWorker());
+
+        // When
+        cancelChild(created);
+
+        // Then
+        assertThat(executedTasks).containsExactly("after");
+        assertThat(harness).hasExecutionInState(created, State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldContinueWhenTheSubflowExecutionIsCancelledAndFailuresAreNotTransmitted() {
+        // Given
+        harness.registerFlow(child);
+        FlowWithSource parent = parent("transmitFailed: false", true);
+        harness.registerFlow(parent);
+        Execution created = Executions.created(parent);
+        harness.run(created, runningChildWorker());
+
+        // When
+        cancelChild(created);
+
+        // Then
+        assertThat(executedTasks).containsExactly("after");
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+    }
+
     private void killChild(Execution parent) {
         harness.run(List.of(killRequest(childTask.get().getTaskRun().getExecutionId(), parent.getTenantId())), recordingWorker());
         harness.run(List.of(Results.killed(childTask.get(), T0)), recordingWorker());
+    }
+
+    private void cancelChild(Execution parent) {
+        harness.run(List.of(Results.cancelled(childTask.get(), T0)), recordingWorker());
     }
 
     private FlowWithSource parent(String subflowProperty, boolean withNextAndErrors) {

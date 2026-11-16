@@ -6,9 +6,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerQueueFallback;
-import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.plugin.core.log.Log;
 
 import jakarta.inject.Inject;
@@ -28,7 +28,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(List.of("docker", "linux-amd64"), null))
+            .workerSelector(new FlowWorkerSelector(List.of("docker", "linux-amd64"), null))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
@@ -41,7 +41,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(List.of("Docker"), null))
+            .workerSelector(new FlowWorkerSelector(List.of("Docker"), null))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
@@ -54,7 +54,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(List.of("linux_amd64"), null))
+            .workerSelector(new FlowWorkerSelector(List.of("linux_amd64"), null))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
@@ -67,7 +67,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(List.of("-docker"), null))
+            .workerSelector(new FlowWorkerSelector(List.of("-docker"), null))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
@@ -81,7 +81,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(tags, null))
+            .workerSelector(new FlowWorkerSelector(tags, null))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
@@ -94,7 +94,7 @@ class AbstractFlowUsingTest {
         Flow flow = Flow.builder()
             .id("test")
             .namespace("io.kestra.tests")
-            .workerSelector(new WorkerSelector(List.of(), WorkerQueueFallback.WAIT))
+            .workerSelector(new FlowWorkerSelector(List.of(), WorkerQueueFallback.WAIT))
             .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 

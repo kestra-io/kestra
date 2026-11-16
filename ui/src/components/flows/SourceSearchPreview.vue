@@ -101,7 +101,7 @@
                         <component :is="metaGlyph" />
                     </span>
                     <div>
-                        <div class="source-search-preview__meta-name" v-html="metaNameHtml" />
+                        <div class="source-search-preview__meta-name"><span v-for="(segment, index) in metaNameSegments" :key="index" :class="{'source-search-preview__meta-dir': segment.dim}"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></span></div>
                         <div class="source-search-preview__meta-sub">{{ selection.namespace }}</div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    import {KsEditor, escapeHtml} from "@kestra-io/design-system"
+    import {KsEditor} from "@kestra-io/design-system"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
@@ -152,7 +152,7 @@
     import {useFlowStore} from "../../stores/flow"
     import type {SourceSearchReplacePreviewResponse} from "@kestra-io/kestra-sdk"
     import {buildDiffHunks, type SelectionSummary, type SourceSearchDiffMatch} from "../../utils/sourceSearchDiff"
-    import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
+    import {buildHighlightSegments, buildTermHighlightSegments, buildPathSegments, type CrossSearchSelection, type PathSegment} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
 
@@ -293,22 +293,18 @@
         return ""
     })
 
-    const metaNameHtml = computed(() => {
-        if (!props.selection) return ""
+    const metaNameSegments = computed<PathSegment[]>(() => {
+        if (!props.selection) return []
         if (props.selection.type === "files") {
             return buildPathSegments(props.selection.path, props.query, props.caseSensitive)
-                .map((segment) => {
-                    const text = segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text)
-                    return segment.dim ? `<span class="source-search-preview__meta-dir">${text}</span>` : text
-                })
-                .join("")
         }
         if (props.selection.type === "kv" || props.selection.type === "secrets") {
-            return props.selection.type === "kv"
-                ? buildTermHighlightHtml(props.selection.key, props.query, props.caseSensitive)
-                : buildHighlightHtml(props.selection.key, props.query, props.caseSensitive)
+            const segments = props.selection.type === "kv"
+                ? buildTermHighlightSegments(props.selection.key, props.query, props.caseSensitive)
+                : buildHighlightSegments(props.selection.key, props.query, props.caseSensitive)
+            return segments.map((segment) => ({...segment, dim: false}))
         }
-        return ""
+        return []
     })
 
     const metaRows = computed(() => {
@@ -549,7 +545,7 @@
     font-weight: 600;
     overflow-wrap: anywhere;
 
-    & :deep(mark) {
+    & mark {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -557,7 +553,7 @@
     }
 }
 
-:global(.source-search-preview__meta-dir) {
+.source-search-preview__meta-dir {
     color: var(--ks-text-secondary);
 }
 

@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
@@ -24,6 +25,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
@@ -408,7 +410,7 @@ public final class RunVariables {
             // Execution
             if (execution != null) {
                 // The real execution will be used to retrieve the execution context, including triggers and inputs as they are omitted by the Execution.loopExecution method for performance reasons
-                var realExecution = execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
+                var realExecution = execution.rootExecution();
 
                 // Parents
                 if (taskRun != null) {
@@ -587,6 +589,11 @@ public final class RunVariables {
 
             List<Map<String, Object>> result = new ArrayList<>(parents.size());
             for (TaskRun parent : parents) {
+                // the tasks of a WorkingDirectory have always seen the parents of the WorkingDirectory, as they used to run inside it
+                if (flow instanceof Flow fullFlow && fullFlow.findTaskByTaskIdOrNull(parent.getTaskId()) instanceof WorkingDirectory) {
+                    continue;
+                }
+
                 Map<String, Object> current = HashMap.newHashMap(2);
 
                 current.put("task", Map.of("id", parent.getTaskId()));

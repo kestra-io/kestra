@@ -1,6 +1,28 @@
 import {describe, expect, test} from "vitest"
 import * as YamlUtils from "./positions.ts"
 
+describe("localizeElementAtIndex", () => {
+    test.each(["", "  "])("localizes the key on a sequence-item line with indentation %j", (indent) => {
+        const source = `tasks:
+${indent}- id: first
+${indent}  type: io.kestra.plugin.core.log.Log
+${indent}- id: second
+${indent}  type: io.kestra.plugin.core.log.Log
+`
+        const cursorIndex = source.indexOf("second") + "second".length
+
+        expect(YamlUtils.localizeElementAtIndex(source, cursorIndex)).toMatchObject({
+            key: "id",
+            value: "second",
+            path: ["tasks"],
+            parents: expect.arrayContaining([{
+                id: "second",
+                type: "io.kestra.plugin.core.log.Log",
+            }]),
+        })
+    })
+})
+
 describe("get lines infos", () => {
     test("get tasks lines", () => {
         const yamlString = `# this count as an empty line

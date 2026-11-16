@@ -13,9 +13,16 @@ on:
           - "true"
         default: "false"
         required: false
+      # Keep these options in step with the branch list in the `plan` job.
       branch:
-        description: "Run for this branch only (default: every branch in the list)"
-        type: string
+        description: "Branch to translate, or all for every branch in the list"
+        type: choice
+        options:
+          - "develop"
+          - "releases/v2.0.x"
+          - "releases/v1.3.x"
+          - "all"
+        default: "develop"
         required: false
 
 # Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
@@ -29,7 +36,7 @@ jobs:
   # A schedule always fires from the default branch, so this one workflow file drives every branch
   # in the list below: each gets its own checkout, its own generator run and its own bot PR. Adding a
   # release branch is a one-line change here, once that branch has the translation toolset (the
-  # fingerprints and the shared scripts). A manual run can be narrowed to one branch.
+  # fingerprints and the shared scripts). A manual run translates one branch (develop by default), or all of them.
   plan:
     name: Branches
     runs-on: ubuntu-latest
@@ -41,7 +48,7 @@ jobs:
         env:
           ONLY: ${{ inputs.branch }}
         run: |
-          if [ -n "$ONLY" ]; then
+          if [ -n "$ONLY" ] && [ "$ONLY" != "all" ]; then
             echo "branches=$(printf '%s' "$ONLY" | jq -R -c '[.]')" >> "$GITHUB_OUTPUT"
           else
             echo 'branches=["develop","releases/v2.0.x","releases/v1.3.x"]' >> "$GITHUB_OUTPUT"
@@ -64,6 +71,7 @@ jobs:
           with:
             ref: ${{ matrix.branch }}
             fetch-depth: 0
+            persist-credentials: false
 
         - name: Set up Node
           uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -71,7 +79,7 @@ jobs:
             node-version: "24.x"
 
         - name: Install Node dependencies
-          run: npm ci
+          run: npm ci --ignore-scripts
           working-directory: ui
 
         - name: Authenticate to Google Cloud
@@ -87,12 +95,25 @@ jobs:
 
         - name: Set up Git
           run: |
-            git config --global user.name "GitHub Action"
-            git config --global user.email "actions@github.com"
+            git config --global user.name "kestra-io"
+            git config --global user.email "hello@kestra.io"
+
+        # Pushed and opened as the Kestra GitHub App, since `GITHUB_TOKEN` starts no workflow run. Minted
+        # only now and limited to what the step needs, so the npm dependencies never run beside it.
+        - name: Generate GitHub App token
+          id: app-token
+          uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+          with:
+            client-id: ${{ secrets.GH_BOT_APP_ID }}
+            private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+            owner: kestra-io
+            repositories: kestra
+            permission-contents: write
+            permission-pull-requests: write
 
         - name: Commit and create PR
           env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
           run: |
             BRANCH_NAME="chore/update-translations-$(echo "${{ matrix.branch }}" | tr "/" "-")-$(date +%s)"
             git checkout -b $BRANCH_NAME
@@ -140,7 +161,8 @@ jobs:
               fi
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
-            git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
+            push() { git -c core.hooksPath=/dev/null push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$@"; }
+            push "$BRANCH_NAME" || (push --delete "$BRANCH_NAME" && push "$BRANCH_NAME")
             PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base "${{ matrix.branch }}" --head $BRANCH_NAME)
             PR_NUMBER="${PR_URL##*/}"
             # Reviewers: whoever authored the commits that changed the English sources since the last

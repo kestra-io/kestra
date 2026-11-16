@@ -25,7 +25,7 @@
 </template>
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onUnmounted, useTemplateRef} from "vue"
-    import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
+    import {stringUtils, State, throttle} from "@kestra-io/design-system"
     import {isLoopTaskType} from "@kestra-io/topology"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -57,64 +57,8 @@
     const expandedSubflows = ref<string[]>([])
     const previousExpandedSubflows = ref<string[]>([])
     const sseBySubflow = ref<Record<string, {close: () => void}>>({})
-
-    // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
-    // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
-    // time — metrics/outputs only materialise once the task run completes.
-    let progressSSE: EventSource | undefined
-    // followLogs() resolves asynchronously; if the component unmounts in that window, the
-    // EventSource would land in a ref no one closes again. Guard against it explicitly instead
-    // of relying on onUnmounted alone.
     let unmounted = false
     const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
-
-    function closeProgressSSE() {
-        progressSSE?.close()
-        progressSSE = undefined
-    }
-
-    function followProgress() {
-        closeProgressSSE()
-        const id = execution.value?.id
-        if (!id) return
-        executionsStore.followLogs({id, params: levelToRequestParams({value: "INFO", direction: "min"})}).then((sse: EventSource) => {
-            if (unmounted) {
-                sse.close()
-                return
-            }
-            progressSSE = sse
-            sse.onmessage = (event: MessageEvent) => {
-                if (event.lastEventId === "start") return
-                const data = JSON.parse(event.data)
-                if (!data.progress) return
-                executionsStore.addProgressEvent({
-                    taskId: data.taskId,
-                    taskRunId: data.taskRunId,
-                    step: data.progress,
-                    timestamp: data.timestamp,
-                })
-            }
-            // No onerror handler: closing here on a transient drop is what previously froze the
-            // stepper (kestra-io/kestra#16982's leak fear doesn't apply — closeProgressSSE()
-            // below still runs once the execution terminates). Let EventSource auto-reconnect;
-            // the historical replay it gets on reconnect is idempotent thanks to the dedup in
-            // addProgressEvent, so a reconnect can only ever catch up, never regress.
-        })
-    }
-
-    const isExecutionRunning = computed(() => {
-        const current = execution.value?.state?.current
-        return !!current && State.isRunning(current)
-    })
-
-    watch(
-        [() => execution.value?.id, isExecutionRunning],
-        ([id, running]) => {
-            if (id && running) followProgress()
-            else closeProgressSSE()
-        },
-        {immediate: true},
-    )
 
     // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
     type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
@@ -146,7 +90,6 @@
         unmounted = true
         sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
-        closeProgressSSE()
     })
 
     function closeSSE(subflow: string) {

@@ -250,7 +250,7 @@
 
                     <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p" scope="global">
                         <template #suggestion>
-                            <KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
+                            <KsButton link size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
                         </template>
                     </i18n-t>
                 </template>

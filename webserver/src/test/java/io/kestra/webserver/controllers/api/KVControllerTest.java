@@ -52,6 +52,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(resolveParameters = false)
 class KVControllerTest {
@@ -355,7 +356,8 @@ class KVControllerTest {
             Arguments.of(MediaType.TEXT_PLAIN, "false", Boolean.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01", LocalDate.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01T01:02:03Z", Instant.class),
-            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", Duration.class)
+            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "PT5S", Duration.class)
         );
     }
 
@@ -400,6 +402,49 @@ class KVControllerTest {
 
         Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT);
         assertThat(Problems.detail(exception)).contains("too large");
+        assertThat(kvStore().exists("my-key")).isFalse();
+    }
+
+    @Test
+    void shouldKeepAQuotedDurationShapedValueAsAStringWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted", "\"PT30M\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        KVValue stored = kvStore().getValue("quoted").get();
+
+        assertThat(stored.value()).isEqualTo("PT30M");
+        assertThat(KVType.from(stored.value())).isEqualTo(KVType.STRING);
+    }
+
+    @Test
+    void shouldNotRewriteAQuotedDurationShapedValueWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted-days", "\"P5D\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("quoted-days").get().value()).isEqualTo("P5D");
+    }
+
+    @Test
+    void shouldStillReadAnUnquotedDurationAsADurationWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bare", "PT30M")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("bare").get().value()).isEqualTo(Duration.ofMinutes(30));
+    }
+
+    @Test
+    void shouldRejectSetKeyValueWhenTtlIsNotAnIsoDuration() throws IOException {
+        assertThatThrownBy(() -> client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
+                .contentType(MediaType.TEXT_PLAIN)
+                .header("ttl", "not-a-duration")
+        )).isInstanceOfSatisfying(
+            HttpClientResponseException.class,
+            exception -> Problems.assertProblem(exception, ProblemTypes.INVALID_ARGUMENT)
+        );
         assertThat(kvStore().exists("my-key")).isFalse();
     }
 

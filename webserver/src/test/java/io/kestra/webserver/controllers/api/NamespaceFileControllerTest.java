@@ -523,6 +523,62 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldMoveFileWhenRawPathContainsSpaces() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/Bart Pre-Approval/coc bongo.txt"), new ByteArrayInputStream("Hello".getBytes()));
+        namespaceStorage.createDirectory(Path.of("/Permis"));
+
+        client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=Bart+Pre-Approval%2Fcoc+bongo.txt&to=Permis%2Fcoc+bongo.txt", null)
+        );
+
+        assertThat(namespaceStorage.exists(Path.of("/Permis/coc bongo.txt"))).isTrue();
+        assertThat(namespaceStorage.exists(Path.of("/Bart Pre-Approval/coc bongo.txt"))).isFalse();
+    }
+
+    @Test
+    void shouldReturn400WhenMovePathIsEmpty() {
+        String namespace = TestsUtils.randomNamespace();
+
+        for (String query : List.of("from=&to=/x.txt", "from=/x.txt&to=")) {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?" + query, null))
+            );
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        }
+    }
+
+    @Test
+    void shouldReturn422WhenRawMovePathIsNotAValidPath() {
+        String namespace = TestsUtils.randomNamespace();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=//a+b&to=/x.txt", null))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldMoveFileWhenUriEncodedPathContainsSpaces() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/Bart Pre-Approval/coc bongo.txt"), new ByteArrayInputStream("Hello".getBytes()));
+        namespaceStorage.createDirectory(Path.of("/Permis"));
+
+        client.toBlocking().exchange(
+            HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=Bart%2520Pre-Approval%2Fcoc%2520bongo.txt&to=Permis%2Fcoc%2520bongo%2520v2.txt", null)
+        );
+
+        assertThat(namespaceStorage.exists(Path.of("/Permis/coc bongo v2.txt"))).isTrue();
+        assertThat(namespaceStorage.exists(Path.of("/Bart Pre-Approval/coc bongo.txt"))).isFalse();
+    }
+
+    @Test
     void deleteFileDirectory() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
@@ -632,6 +688,10 @@ class NamespaceFileControllerTest {
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/_flows"), TestFileAttributes[].class));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/_flows/test&to=/foo", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=/_flows/test", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=_flows/test", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=/./_flows/test", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=_flows/a+b.txt", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=_flows/test.yml")));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.txt", null)));
     }
 

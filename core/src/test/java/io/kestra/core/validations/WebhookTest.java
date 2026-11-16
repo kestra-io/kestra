@@ -6,6 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -19,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WebhookTest {
     @Inject
     private ModelValidator modelValidator;
+
+    @Inject
+    private RunContextFactory runContextFactory;
 
     @Test
     void webhookResponseContentTypeValidation() {
@@ -113,4 +118,39 @@ public class WebhookTest {
         assertThat(webhook.getFetchType()).isEqualTo(AbstractWebhookTrigger.FetchType.FETCH);
         assertThat(modelValidator.isValid(webhook)).isEmpty();
     }
+
+    @Test
+    void shouldRejectIncompleteSignatureConfiguration() throws JsonProcessingException {
+        Webhook webhook = JacksonMapper.ofYaml().readValue(
+            """
+                id: webhook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: a-secret-key
+                signature:
+                  prefix: sha256=
+                """,
+            Webhook.class
+        );
+        assertThat(modelValidator.isValid(webhook)).isPresent();
+    }
+
+    @Test
+    void shouldDefaultSignatureAlgorithmWhenOmittedFromYaml() throws Exception {
+        Webhook webhook = JacksonMapper.ofYaml().readValue(
+            """
+                id: webhook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: a-secret-key
+                signature:
+                  header: X-Hub-Signature-256
+                  secret: test-secret
+                """,
+            Webhook.class
+        );
+        assertThat(runContextFactory.of(Flow.builder().id("test").namespace("io.kestra.tests").build(), webhook)
+            .render(webhook.getSignature().getAlgorithm()).as(Webhook.SignatureAlgorithm.class))
+            .contains(Webhook.SignatureAlgorithm.HMAC_SHA256);
+        assertThat(modelValidator.isValid(webhook)).isEmpty();
+    }
+
 }

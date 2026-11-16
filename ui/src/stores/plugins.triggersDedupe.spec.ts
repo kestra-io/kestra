@@ -64,4 +64,20 @@ describe("plugins store trigger catalog", () => {
             "io.kestra.plugin.udp.RealtimeTrigger",
         ])
     })
+
+    it("should leave out entries missing the fields the catalog is keyed and labelled by", {timeout: TEST_TIMEOUT_MS}, async () => {
+        listTriggerPluginsFn.mockResolvedValue({
+            results: [
+                {...trigger("io.kestra.plugin.tcp.RealtimeTrigger"), type: undefined},
+                {...trigger("io.kestra.plugin.udp.RealtimeTrigger"), name: undefined},
+                trigger("io.kestra.plugin.mqtt.RealtimeTrigger"),
+            ],
+            total: 3,
+        })
+        const {usePluginsStore} = await import("./plugins")
+
+        const triggers = await usePluginsStore().listTriggers()
+
+        expect(triggers.map(t => t.type)).toEqual(["io.kestra.plugin.mqtt.RealtimeTrigger"])
+    })
 })

@@ -83,7 +83,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string, opt
         if (position < 0) return undefined
         const response = await executionsStore.findExecutions({...listFilters(), page: position + 1, size: 1})
         const row = response.results?.[0]
-        return row ? toLoopIterationRow(row as unknown as Record<string, unknown>) : undefined
+        return row ? toLoopIterationRow(row) : undefined
     }
 
     async function fetchNeighbour(index: number, delta: -1 | 1, currentPosition?: number): Promise<LoopIterationRow | undefined> {

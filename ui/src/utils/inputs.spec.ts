@@ -328,4 +328,11 @@ describe("hasMissingRequiredInputs", () => {
         expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
         expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
     })
+
+    it("checks FORM children by their dotted id", () => {
+        const formInputs = [{id: "env", type: "FORM", inputs: [{id: "region"}, {id: "zone", required: false}]}]
+        expect(hasMissingRequiredInputs(formInputs, {"env.region": "EU"})).toBe(false)
+        expect(hasMissingRequiredInputs(formInputs, {"env.zone": "a"})).toBe(true)
+        expect(hasMissingRequiredInputs(formInputs, {env: "EU"})).toBe(true)
+    })
 })

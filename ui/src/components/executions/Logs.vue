@@ -528,7 +528,9 @@
         raw_view.value ? ViewGrid : ViewList,
     )
 
-    const currentLevelOrLower = computed(() => LogUtils.levelOrLower(undefined))
+    const currentLevelOrLower = computed(() =>
+        LogUtils.levelOrLower(effectiveLevelValue.value?.direction === "min" ? effectiveLevelValue.value.value as LogUtils.LevelKey : undefined),
+    )
 
     const countByLogLevel = computed(() =>
         Object.fromEntries(

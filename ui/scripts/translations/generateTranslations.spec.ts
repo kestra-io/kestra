@@ -88,6 +88,26 @@ describe("generateTranslations", () => {
         }
     })
 
+    it("accepts the English text for a nested key the checker allows to stay in English", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {pluginPage: {view: {plugin: "Plugin"}}}}))
+        const fingerprintsFile = join(dir, "fingerprints.json")
+
+        try {
+            await generateTranslations({
+                client: clientReturning("Plugin"),
+                translationsDir: dir,
+                fingerprintsFile,
+                languages: [["ja", "Japanese"]],
+            })
+
+            expect(process.exitCode).toBeUndefined()
+            expect(JSON.parse(readFileSync(fingerprintsFile, "utf-8"))).toHaveProperty(["pluginPage|view|plugin"])
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
+
     it("leaves the exit code alone when every key was translated", async () => {
         const dir = mkdtempSync(join(tmpdir(), "translations-"))
         writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))

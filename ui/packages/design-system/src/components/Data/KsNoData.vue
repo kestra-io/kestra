@@ -4,7 +4,7 @@
         <strong>{{ title ?? $t("ks_no_data.no_results") }}</strong>
         <p v-if="$slots.default"><slot /></p>
         <!-- eslint-disable-next-line vue/no-v-html -->
-        <p v-else-if="description" v-html="description" />
+        <p v-else-if="description" v-html="description" /> <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
         <template v-else>
             <p>{{ $t("ks_no_data.nothing_here") }}</p>
             <p>{{ $t("ks_no_data.will_appear") }}</p>

@@ -10,6 +10,7 @@ function escapeRegExp(value: string): string {
  * against a "plugin-aws-s3" resource.
  */
 export function progressFor(progress: Record<string, ArtifactProgress>, artifact: PluginArtifact): ArtifactProgress | undefined {
+    // nosemgrep: detect-non-literal-regexp -- the artifact id is escaped with escapeRegExp.
     const pattern = new RegExp(`(^|/)${escapeRegExp(artifact.artifactId ?? "")}-\\d`)
     const key = Object.keys(progress).find(k => pattern.test(k))
     return key ? progress[key] : undefined

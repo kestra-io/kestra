@@ -159,7 +159,6 @@
             startDate: execution.state?.startDate,
             endDate: props.running ? undefined : execution.state?.endDate ?? undefined,
             taskRunList: execution.taskRunList,
-            kind: (execution as {kind?: string}).kind,
         }
     })
 

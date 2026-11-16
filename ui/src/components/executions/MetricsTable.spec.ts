@@ -61,6 +61,7 @@ const global = {
         KsIconButton: true,
         KsTableColumn: true,
         KsTag: true,
+        KsTooltip: true,
         Timer: true,
     },
 }

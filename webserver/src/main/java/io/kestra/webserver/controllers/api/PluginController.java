@@ -571,6 +571,7 @@ public class PluginController {
                     plugin.getApps().stream(),
                     plugin.getAppBlocks().stream(),
                     plugin.getRules().stream(),
+                    plugin.getAssets().stream(),
                     plugin.getAdditionalPlugins().stream()
                 )
                     .flatMap(i -> i)

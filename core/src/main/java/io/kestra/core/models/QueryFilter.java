@@ -3,6 +3,7 @@ package io.kestra.core.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -204,12 +205,14 @@ public record QueryFilter(
         },
         // Governance policy scope (INSTANCE/TENANT/NAMESPACE) — distinct from SCOPE, which is bound to FlowScope
         // in both the request binder and the repository condition mapping.
+        @JsonProperty("policyScope")
         POLICY_SCOPE("policyScope") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("enforcement")
         ENFORCEMENT("enforcement") {
             @Override
             public List<Op> supportedOp() {
@@ -237,8 +240,8 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
-        @JsonProperty("outputs")
-        OUTPUTS("outputs") {
+        @JsonProperty("searchableData")
+        SEARCHABLE_DATA("searchableData") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
@@ -342,12 +345,14 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("severity")
         SEVERITY("severity") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("assignee")
         ASSIGNEE("assignee") {
             @Override
             public List<Op> supportedOp() {
@@ -663,7 +668,7 @@ public record QueryFilter(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
-                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.OUTPUTS
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.SEARCHABLE_DATA
                 );
             }
         },
@@ -946,6 +951,12 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.NAME);
             }
+        },
+        CONCURRENCY_LIMIT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.NAMESPACE);
+            }
         };
 
         public abstract List<Field> supportedField();
@@ -971,7 +982,7 @@ public record QueryFilter(
             List<Operation> operations = field.supportedOp().stream()
                 .map(Resource::toOperation)
                 .toList();
-            return new FieldOp(field.name().toLowerCase(), field.value(), operations);
+            return new FieldOp(field.name().toLowerCase(Locale.ROOT), field.value(), operations);
         }
 
         private static Operation toOperation(Op op) {

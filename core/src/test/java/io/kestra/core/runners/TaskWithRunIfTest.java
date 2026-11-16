@@ -31,7 +31,7 @@ class TaskWithRunIfTest {
     @ExecuteFlow("flows/valids/task-runif-workingdirectory.yml")
     void runIfWorkingDirectory(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.findTaskRunsByTaskId("log_orders").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("log_test").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
         assertThat(execution.findTaskRunsByTaskId("log_test").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);

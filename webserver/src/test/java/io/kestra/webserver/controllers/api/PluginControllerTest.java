@@ -434,7 +434,7 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(9);
+        assertThat(properties.size()).isEqualTo(10);
     }
 
     @Test

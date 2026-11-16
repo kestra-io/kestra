@@ -174,7 +174,6 @@ describe("ExecutionVariableExplorer", () => {
                 },
             ],
         })
-        
         const wrapper = mountExplorer({})
         await flushPromises()
 
@@ -187,6 +186,25 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "plain", "flowOutputs")
 
         expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(false)
+    })
+
+    test("tags the flow inputs declared searchable by the flow", async () => {
+        vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({})
+        useExecutionsStore().flow = computeFlowForExecution({
+            inputs: [
+                {id: "orderId", type: "STRING", searchable: true},
+                {id: "plain", type: "STRING"},
+            ],
+        })
+        const wrapper = mountExplorer({})
+        useExecutionsStore().execution!.inputs = {orderId: "ORD-1", plain: "x"}
+        await flushPromises()
+
+        const items = sidebarSections(wrapper).find((section) => section.key === "inputs")?.items
+        await selectVariable(wrapper, "orderId", "inputs")
+
+        expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderId", true], ["plain", false]])
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
     })
 
     test("uses render for variables containing expressions", async () => {

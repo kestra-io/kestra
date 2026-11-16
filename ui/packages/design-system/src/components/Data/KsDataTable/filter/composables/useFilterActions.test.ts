@@ -141,3 +141,45 @@ describe("useFilterActions - clearedValue", () => {
         expect(timeRangeValues(tree)).toEqual(["ALL"])
     })
 })
+
+describe("useFilterActions - non-removable key", () => {
+    const lockedTimeRangeKey = {
+        key: "timeRange",
+        label: "Interval",
+        valueType: "select" as const,
+        comparators: [Comparators.EQUALS] as [Comparators],
+        clearedValue: "P30D",
+        removable: false,
+    }
+    const timeRangeValues = (tree: ReturnType<typeof setup>["tree"]) =>
+        tree.groups.value.flatMap(g => g.kind === "wrapper" ? [] : g.filters).filter(f => f.key === "timeRange").map(f => f.value)
+
+    test("removeFilter leaves a non-removable chip in place", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+
+        actions.removeFilter("tr")
+
+        expect(timeRangeValues(tree)).toEqual(["PT168H"])
+    })
+
+    test("clearFilters resets a non-removable chip to its clearedValue", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+
+        actions.clearFilters()
+
+        expect(timeRangeValues(tree)).toEqual(["P30D"])
+    })
+
+    test("removeGroup puts a non-removable chip back when its group is deleted", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+        const [lockedGroup] = tree.groups.value
+        actions.addGroup()
+
+        actions.removeGroup(lockedGroup.id)
+
+        expect(timeRangeValues(tree)).toEqual(["P30D"])
+    })
+})

@@ -1186,6 +1186,9 @@
                 rawLogs.value = logs
                 // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
                 logsBuffer.value = []
+                nextTick(() => {
+                    scrollToBottomFailedTask()
+                })
             })
     }
 

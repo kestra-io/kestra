@@ -10,8 +10,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableData;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
 
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
@@ -34,6 +36,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -59,6 +62,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Approval;
 import io.kestra.plugin.core.flow.Loop;
@@ -68,6 +72,7 @@ import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.multipart.CompletedPart;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -103,7 +108,7 @@ public class ExecutionService {
     private final RunContextFactory runContextFactory;
     private final ApprovalRequestHandler approvalRequestHandler;
     private final ExecutionOutputService executionOutputService;
-    private final SearchableOutputRepositoryInterface searchableOutputRepository;
+    private final SearchableDataRepositoryInterface searchableDataRepository;
     private final CheckpointRepositoryInterface checkpointRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -127,7 +132,7 @@ public class ExecutionService {
         RunContextFactory runContextFactory,
         ApprovalRequestHandler approvalRequestHandler,
         ExecutionOutputService executionOutputService,
-        SearchableOutputRepositoryInterface searchableOutputRepository,
+        SearchableDataRepositoryInterface searchableDataRepository,
         CheckpointRepositoryInterface checkpointRepository,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
@@ -148,7 +153,7 @@ public class ExecutionService {
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
         this.approvalRequestHandler = Objects.requireNonNull(approvalRequestHandler);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
-        this.searchableOutputRepository = Objects.requireNonNull(searchableOutputRepository);
+        this.searchableDataRepository = Objects.requireNonNull(searchableDataRepository);
         this.checkpointRepository = Objects.requireNonNull(checkpointRepository);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
@@ -186,7 +191,8 @@ public class ExecutionService {
 
         if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof WorkingDirectory) {
             // a retried WorkingDirectory runs all its children again, under new task runs
-            taskRunList.removeIf(child -> taskRun.getId().equals(child.getParentTaskRunId()));
+            Set<String> descendantIds = execution.findAllChildren(taskRun).stream().map(TaskRun::getId).collect(Collectors.toSet());
+            taskRunList.removeIf(child -> descendantIds.contains(child.getId()));
         }
 
         if (taskRun.getParentTaskRunId() != null) {
@@ -228,6 +234,65 @@ public class ExecutionService {
         }
 
         return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
+    }
+
+    /**
+     * Removes all the task runs of a WorkingDirectory whose worker was lost with its folder, so that it runs again from
+     * its {@link io.kestra.plugin.core.flow.WorkingDirectory.Open}, and kills the subflow and loop sub-executions still
+     * running for the removed task runs.
+     *
+     * @return the updated execution, or empty when the execution, the WorkingDirectory or the lost task run already
+     *     ended, or when the lost task run is no longer part of the execution, as the WorkingDirectory already ran again
+     */
+    public Optional<Execution> restartWorkingDirectory(Execution execution, Flow flow, String workingDirectoryTaskRunId, String lostTaskRunId) throws QueueException {
+        Optional<TaskRun> workingDirectory = execution.findTaskRunByTaskRunIdIfPresent(workingDirectoryTaskRunId);
+        Optional<TaskRun> lostTaskRun = execution.findTaskRunByTaskRunIdIfPresent(lostTaskRunId);
+        if (execution.getState().isTerminated() || workingDirectory.isEmpty() || workingDirectory.get().getState().isTerminated()
+            || lostTaskRun.isEmpty() || lostTaskRun.get().getState().isTerminated()) {
+            return Optional.empty();
+        }
+
+        Set<String> descendantIds = new HashSet<>(Set.of(workingDirectoryTaskRunId));
+        List<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
+        boolean found;
+        do {
+            found = taskRuns.removeIf(child -> child.getParentTaskRunId() != null && descendantIds.contains(child.getParentTaskRunId()) && descendantIds.add(child.getId()));
+        } while (found);
+        Logs.logTaskRun(workingDirectory.get(), Level.WARN, "The worker of the WorkingDirectory was lost with its folder, all its tasks run again.");
+        killChildExecutions(execution, flow, descendantIds);
+        return Optional.of(execution.withTaskRunList(taskRuns));
+    }
+
+    private void killChildExecutions(Execution execution, Flow flow, Set<String> taskRunIds) throws QueueException {
+        Set<String> runningTaskRunIds = execution.getTaskRunList().stream()
+            .filter(taskRun -> taskRunIds.contains(taskRun.getId()) && !taskRun.getState().isTerminated())
+            .filter(taskRun ->
+            {
+                Task task = flow.findTaskByTaskIdOrNull(taskRun.getTaskId());
+                return task instanceof ExecutableTask<?> || task instanceof Loop;
+            })
+            .map(TaskRun::getId)
+            .collect(Collectors.toSet());
+        if (runningTaskRunIds.isEmpty()) {
+            return;
+        }
+
+        Stream<Execution> subflowExecutions = executionRepository.findAllByTriggerExecutionId(execution.getTenantId(), execution.getId())
+            .filter(ExecutableUtils::isSubflow)
+            .filter(child -> runningTaskRunIds.contains(child.getTrigger().getVariables().get("taskRunId")))
+            .toStream();
+        Stream<Execution> loopSubExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream()
+            .filter(child -> child.getLoopRun() != null && runningTaskRunIds.contains(child.getLoopRun().taskRunId()));
+        for (Execution child : Stream.concat(subflowExecutions, loopSubExecutions).filter(child -> !child.getState().isTerminated()).toList()) {
+            killQueue.emit(
+                ExecutionKilledExecution.builder()
+                    .executionId(child.getId())
+                    .isOnKillCascade(true)
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .tenantId(child.getTenantId())
+                    .build()
+            );
+        }
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
@@ -589,7 +654,7 @@ public class ExecutionService {
                 .filter(id -> !taskRunToRestart.contains(id))
                 .collect(Collectors.toCollection(HashSet::new));
 
-            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
+            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, taskRunToRestart));
 
             Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
             execution.getTaskRunList()
@@ -640,10 +705,23 @@ public class ExecutionService {
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;
+        copySearchableData(execution, newExecution);
         if (emitEvent) {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private void copySearchableData(Execution original, Execution replayed) {
+        try {
+            List<SearchableData> copied = searchableDataRepository.findByExecutionId(original.getTenantId(), original.getId(), Pageable.UNPAGED)
+                .stream()
+                .map(it -> new SearchableData(it.tenantId(), replayed.getId(), it.dataId(), it.index(), it.value()))
+                .toList();
+            searchableDataRepository.saveBatch(copied);
+        } catch (Exception e) {
+            log.error("Failed to copy the searchable data of the execution '{}' to its replay '{}', they will not be searchable: {}", original.getId(), replayed.getId(), e.getMessage(), e);
+        }
     }
 
     private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {
@@ -834,14 +912,14 @@ public class ExecutionService {
     }
 
     /** Ends an Approval request without a decision: neither a branch nor {@code finally} runs, and the task run is cancelled. */
-    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed) throws Exception {
+    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed, boolean bulk) throws Exception {
         Approval approval = this.findPausedApproval(execution, flow, taskRunId);
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : PausableTask.Resumed.now(State.Type.CANCELLED));
         TaskRun cancelledTaskRun = cancelled.findTaskRunByTaskRunId(taskRunId);
         this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
-        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED);
+        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED, resumed, bulk);
         this.notifyLoopParent(cancelled, State.Type.RESTARTED);
         this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
         return cancelled;
@@ -996,7 +1074,7 @@ public class ExecutionService {
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
                     builder.checkpointsCount(this.checkpointRepository.purge(executions));
-                    builder.searchableOutputsCount(this.searchableOutputRepository.purge(executions));
+                    builder.searchableOutputsCount(this.searchableDataRepository.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -1153,6 +1231,16 @@ public class ExecutionService {
                     sink.error(e);
                 }
             });
+    }
+
+    /**
+     * Same as {@link #readInputs(Execution, FlowInterface, Publisher)}, with the onResume inputs already parsed.
+     */
+    public Mono<Map<String, Object>> readResumeInputs(final Execution execution, final FlowInterface flow, final Map<String, ?> inputs) {
+        return getFirstPausedTaskOr(execution, flow)
+            .map(task -> task.isPresent() && task.get() instanceof PausableTask pausableTask
+                ? flowInputOutput.readExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs)
+                : Collections.<String, Object> emptyMap());
     }
 
     /** Validates the reviewer inputs of the Approval task run {@code taskRunId}. */
@@ -1432,7 +1520,7 @@ public class ExecutionService {
             try {
                 final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
                 if (flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval && this.isAwaitingDecision(taskRun)) {
-                    approvalRequestHandler.closed(execution, taskRun, approval, resolution);
+                    approvalRequestHandler.closed(execution, taskRun, approval, resolution, null, false);
                 }
             } catch (Exception e) {
                 log.warn("Unable to close the approval request of task run '{}'", taskRun.getId(), e);
@@ -1526,7 +1614,11 @@ public class ExecutionService {
             && ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
-    private void requestKill(Execution execution) {
+    /**
+     * Asks the executor to kill the execution, without waiting for it. A failure to emit the request is logged
+     * and not rethrown.
+     */
+    public void requestKill(Execution execution) {
         try {
             killQueue.emit(
                 ExecutionKilledExecution.builder()
@@ -1536,7 +1628,7 @@ public class ExecutionService {
                     .build()
             );
         } catch (Exception e) {
-            log.warn("Unable to request kill of orphan execution '{}'", execution.getId(), e);
+            log.warn("Unable to request kill of execution '{}'", execution.getId(), e);
         }
     }
 
@@ -1604,13 +1696,13 @@ public class ExecutionService {
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {
-        return this.workerTaskChildren(flow, execution, GraphUtils.of(flow, execution), taskRunToRestart)
+        return this.workerTaskChildren(flow, execution, taskRunToRestart)
             .stream()
             .map(mappingTaskRunId::get)
             .collect(Collectors.toSet());
     }
 
-    private Set<String> workerTaskChildren(Flow flow, Execution execution, GraphCluster graphCluster, Set<String> taskRunToRestart) throws InternalException {
+    private Set<String> workerTaskChildren(Flow flow, Execution execution, Set<String> taskRunToRestart) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
             .filter(throwPredicate(s ->
@@ -1621,13 +1713,10 @@ public class ExecutionService {
             }))
             .collect(Collectors.toSet());
 
-        return GraphUtils.successors(graphCluster, workerTaskRunId)
-            .stream()
-            .filter(task -> task instanceof AbstractGraphTask)
-            .map(task -> (AbstractGraphTask) task)
-            .filter(task -> task.getTaskRun() != null)
-            .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
-            .map(s -> s.getTaskRun().getId())
+        // walks the task runs rather than the graph, which does not hold the internal tasks of a WorkingDirectory
+        return workerTaskRunId.stream()
+            .flatMap(throwFunction(id -> execution.findAllChildren(execution.findTaskRunByTaskRunId(id)).stream()))
+            .map(TaskRun::getId)
             .collect(Collectors.toSet());
     }
 
@@ -1797,16 +1886,20 @@ public class ExecutionService {
     }
 
     /**
+     * Checks whether an execution is suspended in the BREAKPOINT state with at least one breakpoint recorded.
+     */
+    public static boolean isResumableFromBreakpoint(Execution execution) {
+        return execution.getState().isBreakpoint() && !ListUtils.isEmpty(execution.getBreakpoints());
+    }
+
+    /**
      * Resume an execution suspended at a breakpoint.
      *
      * @throws IllegalArgumentException if the execution is not suspended in a breakpoint
      */
     public Execution resumeFromBreakpoint(Execution execution, Optional<String> breakpoints) throws QueueException {
-        if (!execution.getState().isBreakpoint()) {
-            throw new IllegalArgumentException("Execution is not suspended");
-        }
-        if (ListUtils.isEmpty(execution.getBreakpoints())) {
-            throw new IllegalArgumentException("Execution has no breakpoint");
+        if (!isResumableFromBreakpoint(execution)) {
+            throw new IllegalArgumentException("Execution is not suspended at a breakpoint");
         }
 
         // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER

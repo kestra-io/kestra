@@ -89,7 +89,7 @@ public class NotificationService {
      * {@link NotificationItem} per targeted resource. {@code userId} is {@code null} for OSS's
      * single implicit user (no real user model).
      */
-    public void notifyAsyncOperation(@Nullable String userId, String tenantId, String operationId, AsyncOperationType operationType, List<String> resourceIds) {
+    public void notifyAsyncOperation(@Nullable String userId, @Nullable String tenantId, String operationId, AsyncOperationType operationType, List<String> resourceIds) {
         Notification created = createNotification(
             userId,
             tenantId,

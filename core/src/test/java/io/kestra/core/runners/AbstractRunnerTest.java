@@ -296,6 +296,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-pausing-listen.yaml", "flows/valids/flow-trigger-pausing-flow.yaml" })
+    void flowTriggerOnPausing() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPausing();
+    }
+
+    @Test
     @LoadFlows(
         { "flows/valids/flow-trigger-depends-on-flow-listen.yaml",
             "flows/valids/flow-trigger-depends-on-flow-a.yaml",
@@ -550,6 +556,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-run-if-false.yaml")
+    protected void loopRunIfFalse(Execution execution) throws Exception {
+        loopCaseTest.loopRunIfFalse(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-failed-no-transmit.yaml")
     protected void loopTransmitFailedFalse(Execution execution) throws Exception {
         loopCaseTest.loopTransmitFailedFalse(execution);
@@ -765,6 +777,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-execution-assertion-after-execution.yaml" })
+    void shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails() throws Exception {
+        slaTestCase.shouldStopTasksButRunAfterExecutionWhenExecutionAssertionFails();
     }
 
     @Test

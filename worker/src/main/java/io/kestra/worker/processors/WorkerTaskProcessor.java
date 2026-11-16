@@ -42,8 +42,6 @@ import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Logs;
-import io.kestra.core.utils.TruthUtils;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
@@ -56,6 +54,8 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
+    // METRICS
+    private static final Map<Long, AtomicInteger> METRIC_RUNNING_COUNT = new ConcurrentHashMap<>();
 
     private final String workerId;
     private final String workerGroup;
@@ -64,9 +64,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
-
-    // METRICS
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+    private final WorkingDirFactory workingDirFactory;
 
     // QUEUEs
     private final WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
@@ -82,8 +80,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         final RunContextLoggerFactory runContextLoggerFactory,
         final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
         final WorkerQueue<MetricEntry> workerMetricQueue,
-        final ExecutionKilledManager executionKilledManager) {
+        final ExecutionKilledManager executionKilledManager,
+        final WorkingDirFactory workingDirFactory) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
+        this.workingDirFactory = workingDirFactory;
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.workerId = workerId;
@@ -100,80 +100,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     protected void doProcess(final WorkerTask workerTask) {
         Task task = workerTask.getTask();
         if (task instanceof RunnableTask) {
-            runTask(workerTask, true);
-        } else if (task instanceof WorkingDirectory workingDirectory) {
-            runWorkingDirectory(workerTask, workingDirectory);
+            if (workerTask.getWorkingDirectoryId() == null) {
+                runTask(workerTask, true);
+            } else {
+                WorkingDir workingDir = workingDirFactory.createWorkingDirectory(workerTask.getTaskRun().getExecutionId(), workerTask.getWorkingDirectoryId());
+                runTask(workerTask, false, runContextInitializer.forWorkingDirectorySubtask(workerTask, workingDir));
+            }
         } else {
             throw new IllegalArgumentException("Unable to process the task '" + task.getId() + "' as it's not a runnable task");
-        }
-    }
-
-    private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
-        DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
-        final RunContext workingDirectoryRunContext = runContext.clone();
-
-        try {
-            // preExecuteTasks
-            try {
-                workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTask = workerTask.withTaskRun(workerTask.fail());
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.getTaskRun()));
-                return;
-            }
-
-            // execute all tasks
-            for (Task currentTask : workingDirectory.getTasks()) {
-                if (Boolean.TRUE.equals(currentTask.getDisabled())) {
-                    continue;
-                }
-                WorkerTask currentWorkerTask = workingDirectory.workerTask(
-                    workerTask.getTaskRun(),
-                    currentTask,
-                    runContext.cloneForPlugin(currentTask)
-                );
-
-                // all tasks will be handled immediately by the worker
-                WorkerTaskResult workerTaskResult = null;
-                try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                        workerTaskResult = new WorkerTaskResult(
-                            currentWorkerTask.getTaskRun()
-                                .withState(SKIPPED)
-                                .addAttempt(TaskRunAttempt.builder().workerId(workerId).state(new State().withState(SKIPPED)).build())
-                        );
-                        workerTaskResultQueue.put(workerTaskResult);
-                    } else {
-                        workerTaskResult = this.runTask(
-                            currentWorkerTask, false,
-                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir())
-                        );
-                    }
-                } catch (IllegalVariableEvaluationException e) {
-                    RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
-                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-                }
-
-                if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
-                    break;
-                }
-
-                // create the next RunContext populated with the previous WorkerTaskResult
-                runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
-            }
-
-            // postExecuteTasks
-            try {
-                workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-            }
-            this.logTerminated(workerTask, workerTask.getTaskRun());
-        } finally {
-            runContext.cleanup();
         }
     }
 
@@ -610,11 +544,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         long index = Hashing.hashToLong(String.join("-", tags));
 
-        return this.metricRunningCount
+        return METRIC_RUNNING_COUNT
             .computeIfAbsent(
-                index, l -> metricRegistry.gauge(
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
-                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
+                index, _ -> metricRegistry.gauge(
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT,
+                    MetricRegistry.METRIC_WORKER_TASKS_RUNNING_COUNT_DESCRIPTION,
                     new AtomicInteger(0),
                     tags
                 )

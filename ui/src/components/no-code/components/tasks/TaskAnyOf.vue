@@ -33,7 +33,7 @@
         @update:model-value="onInput"
     />
     <template v-else>
-        <KsFormItem class="anyof-switch">
+        <KsFormItem stacked class="anyof-switch">
             <KsSegmented
                 v-model="selectedSchema"
                 :options="schemaOptions"
@@ -423,8 +423,17 @@
         onInput(value)
     }
 
+    function isModelValue(value: unknown): value is ModelValue {
+        return value === undefined
+            || typeof value === "string"
+            || typeof value === "number"
+            || typeof value === "boolean"
+            || Array.isArray(value)
+            || isPlainObject(value)
+    }
+
     function onInput(value: unknown) {
-        model.value = value as ModelValue
+        model.value = isModelValue(value) ? value : undefined
     }
 
     function resetSelectType() {

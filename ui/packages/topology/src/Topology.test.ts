@@ -198,4 +198,10 @@ describe("Topology collapse all", () => {
 
         expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(false)
     })
+
+    it("offers nothing to collapse when the API returns no clusters", () => {
+        const wrapper = mountWithControls({nodes: graph.nodes, edges: graph.edges})
+
+        expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(false)
+    })
 })

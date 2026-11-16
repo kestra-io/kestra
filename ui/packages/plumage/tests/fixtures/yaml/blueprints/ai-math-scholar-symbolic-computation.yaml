@@ -1,0 +1,179 @@
+id: ai-math-scholar-symbolic-computation
+namespace: company.research
+
+description: |
+  Autonomous Mathematical Research and Scientific Computation flow.
+  Combines an AI Mathematics Scholar agent for theoretical formulation,
+  Python SymPy/NumPy execution for symbolic and numerical verification,
+  conditional anomaly/convergence detection, and auto-generates research briefs to GitHub.
+
+inputs:
+  - id: problem_statement
+    type: STRING
+    displayName: Mathematical Problem or Conjecture
+    defaults: |
+      Investigate the eigenvalues and spectral radius of an NxN tridiagonal Toeplitz matrix
+      with main diagonal a=2.0 and off-diagonals b=-1.0, c=-1.0 (Discrete 1D Laplacian).
+      Verify whether the spectral radius rho(A) is strictly bounded by 4.0 as N grows,
+      and compute symbolic analytical roots and numerical eigenvalues for N=50.
+
+  - id: dimension_n
+    type: INT
+    displayName: Dimension N for Numerical Verification
+    defaults: 50
+
+  - id: tolerance
+    type: FLOAT
+    displayName: Convergence / Error Tolerance
+    defaults: 0.0001
+
+  - id: target_repository
+    type: STRING
+    displayName: GitHub Research Notes Repository (owner/repo)
+    defaults: my-org/math-research
+
+triggers:
+  - id: research_webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "{{ secret('WEBHOOK_KEY') }}"
+
+tasks:
+  - id: math_scholar_agent
+    type: io.kestra.plugin.ai.agent.AIAgent
+    description: AI Mathematics Scholar deriving analytical solutions and scientific
+      Python code
+    provider:
+      type: io.kestra.plugin.ai.provider.GoogleGemini
+      apiKey: "{{ secret('GEMINI_API_KEY') }}"
+      modelName: gemini-2.0-flash
+    configuration:
+      temperature: 0.1
+      maxToken: 4096
+    systemMessage: |
+      You are an elite Applied Mathematician and Theoretical Physicist specializing in
+      linear algebra, spectral theory, dynamical systems, and symbolic computation.
+      Given a problem statement, you:
+      1. Derive exact analytical formulas or asymptotic bounds.
+      2. Provide a self-contained Python script using SymPy and NumPy to compute exact and numerical solutions.
+      3. Format output in rigorous mathematical Markdown (with LaTeX formulas).
+    prompt: |
+      Analyze the following mathematical research problem:
+
+      PROBLEM:
+      {{ trigger.body.problem ?? inputs.problem_statement }}
+
+      DIMENSION N: {{ trigger.body.n ?? inputs.dimension_n }}
+      TOLERANCE: {{ trigger.body.tolerance ?? inputs.tolerance }}
+
+      Provide:
+      - ## Theoretical Derivation & Theorems
+      - ## Analytical Closed-Form Solution
+      - ## Verification Strategy
+
+  - id: scientific_numerical_computation
+    type: io.kestra.plugin.scripts.python.Script
+    description: Executes symbolic algebra (SymPy) and high-performance linear
+      algebra (NumPy)
+    containerImage: python:3.11-slim
+    beforeCommands:
+      - pip install numpy scipy sympy
+    outputFiles:
+      - mathematical_results.json
+    script: |
+      import json
+      import numpy as np
+      import sympy as sp
+      from kestra import Kestra
+
+      n = int("{{ trigger.body.n ?? inputs.dimension_n }}")
+      tol = float("{{ trigger.body.tolerance ?? inputs.tolerance }}")
+
+      # Construct Tridiagonal Toeplitz matrix (1D Laplacian: a=2, b=-1, c=-1)
+      main_diag = 2.0 * np.ones(n)
+      off_diag = -1.0 * np.ones(n - 1)
+      A = np.diag(main_diag) + np.diag(off_diag, -1) + np.diag(off_diag, 1)
+
+      # Numerical eigenvalues
+      eigenvalues = np.linalg.eigvalsh(A)
+      min_eig = float(np.min(eigenvalues))
+      max_eig = float(np.max(eigenvalues))
+      spectral_radius = float(np.max(np.abs(eigenvalues)))
+
+      # Analytical formula: lambda_k = 2 - 2*cos(k*pi / (n + 1))
+      k = np.arange(1, n + 1)
+      analytical_eigs = 2.0 - 2.0 * np.cos(k * np.pi / (n + 1))
+      max_error = float(np.max(np.abs(eigenvalues - analytical_eigs)))
+
+      # Theoretical bound verification: spectral radius must be strictly < 4.0
+      bound_satisfied = bool(spectral_radius < 4.0 and max_error < tol)
+
+      results = {
+          "dimension_n": n,
+          "min_eigenvalue": min_eig,
+          "max_eigenvalue": max_eig,
+          "spectral_radius": spectral_radius,
+          "max_analytical_discrepancy": max_error,
+          "bound_verified": bound_satisfied,
+          "status": "CONVERGED_AND_PROVEN" if bound_satisfied else "ANOMALY_DETECTED"
+      }
+
+      with open("mathematical_results.json", "w") as f:
+          json.dump(results, f, indent=2)
+
+      Kestra.outputs({
+          "spectral_radius": spectral_radius,
+          "bound_verified": bound_satisfied,
+          "max_error": max_error,
+          "status": results["status"]
+      })
+
+  - id: check_theorem_convergence
+    type: io.kestra.plugin.core.flow.If
+    description: Branch based on whether numerical computation verifies theoretical bounds
+    condition: "{{ outputs.scientific_numerical_computation.vars.bound_verified ==
+      true }}"
+    then:
+      - id: notify_research_team
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+        description: Alerts scientific research Slack channel of successful proof &
+          convergence
+        url: "{{ secret('SLACK_WEBHOOK') }}"
+        messageText: |
+          📐 *Mathematical Computation & Spectral Bound Verified* 📐
+          *Problem:* Discrete 1D Laplacian Eigenvalues (N={{ trigger.body.n ?? inputs.dimension_n }})
+          *Spectral Radius:* `{{ outputs.scientific_numerical_computation.vars.spectral_radius }}` (< 4.0 Bound)
+          *Max Discrepancy:* `{{ outputs.scientific_numerical_computation.vars.max_error }}`
+          *Status:* *{{ outputs.scientific_numerical_computation.vars.status }}*
+    else:
+      - id: alert_divergence_anomaly
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+        description: Alerts research team of mathematical divergence or anomaly
+        url: "{{ secret('SLACK_WEBHOOK') }}"
+        messageText: |
+          ⚠️ *MATHEMATICAL ANOMALY / DIVERGENCE DETECTED* ⚠️
+          *Discrepancy:* `{{ outputs.scientific_numerical_computation.vars.max_error }}` exceeds tolerance `{{ inputs.tolerance }}`.
+          *Action Required:* Review analytical formulation and numerical conditioning.
+
+  - id: publish_research_finding_github
+    type: io.kestra.plugin.github.issues.Create
+    description: Records validated mathematical proof and numerical computations in
+      GitHub Research issues
+    oauthToken: "{{ secret('GITHUB_TOKEN') }}"
+    repository: "{{ trigger.body.repository ?? inputs.target_repository }}"
+    title: "[MATH-RESEARCH] Spectral Analysis & Theorem Verification (N={{
+      trigger.body.n ?? inputs.dimension_n }})"
+    body: |
+      # Mathematical Research & Numerical Verification Report
+
+      **Status:** {{ outputs.scientific_numerical_computation.vars.status }}
+      **Dimension \(N\):** {{ trigger.body.n ?? inputs.dimension_n }}
+      **Computed Spectral Radius \(\rho(A)\):** `{{ outputs.scientific_numerical_computation.vars.spectral_radius }}`
+      **Maximum Analytical Error:** `{{ outputs.scientific_numerical_computation.vars.max_error }}`
+
+      ---
+
+      ## Theoretical Exposition (AI Math Scholar)
+      {{ outputs.math_scholar_agent.textOutput }}
+
+      ---
+      *Generated automatically via Kestra Scientific Computation Workflow.*

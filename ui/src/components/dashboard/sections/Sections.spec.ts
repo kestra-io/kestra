@@ -43,6 +43,18 @@ vi.mock("../dashboard-types", async () => {
                     },
                 },
             },
+            "tabbed-type": {
+                template: "<div />",
+                methods: {
+                    refresh() {},
+                    exportParameters() {
+                        return {filters: []}
+                    },
+                    exportChart() {
+                        return {id: "recent_executions__upcoming", type: "tabbed-type"}
+                    },
+                },
+            },
             "reporting-type": defineComponent({
                 props: {chart: {type: Object as PropType<{id: string}>, required: true}},
                 setup(props) {
@@ -90,6 +102,21 @@ describe("dashboard Sections.vue — export trigger", () => {
                 pageSize: 10,
                 filters: [{field: "state", operation: "IN", value: ["FAILED"]}],
             },
+        )
+    })
+
+    it("exports the chart the component is showing rather than the declared one", async () => {
+        const chart = {id: "recent_executions", type: "tabbed-type", chartOptions: {width: 12}}
+        const wrapper = mountSections([chart])
+
+        await flushPromises()
+
+        await wrapper.get(EXPORT_BUTTON).trigger("click")
+
+        expect(exportChart).toHaveBeenCalledWith(
+            expect.objectContaining({id: "default"}),
+            expect.objectContaining({id: "recent_executions__upcoming"}),
+            expect.anything(),
         )
     })
 

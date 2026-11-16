@@ -143,6 +143,34 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
     }
 
     @Test
+    void shouldPopTheNextFitBehindMoreBlockedCandidatesThanTheScanBound() {
+        // Given: a namespace limited to 2; flow A additionally limited to 1; A1 and C fill the
+        // namespace; 150 more A executions queue first, then B
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        ScopedConcurrencyLimit namespaceScope = ScopedConcurrencyLimit.ofNamespace("main", namespace, queue(2));
+        Flow flowA = flow(namespace, queue(1));
+        Flow flowB = flow(namespace, null);
+        Flow flowC = flow(namespace, null);
+        List<ScopedConcurrencyLimit> limitsA = register(flowA, ScopedConcurrencyLimit.ofFlow(flowA), namespaceScope);
+        register(flowB, namespaceScope);
+        List<ScopedConcurrencyLimit> limitsC = register(flowC, namespaceScope);
+        store().countThenProcess(flowA, limitsA, (txContext, counts) -> Pair.of(null, true));
+        store().countThenProcess(flowC, limitsC, (txContext, counts) -> Pair.of(null, true));
+        Instant start = Instant.now().minusSeconds(3600);
+        for (int i = 0; i < 150; i++) {
+            enqueue(flowA, start.plusMillis(i));
+        }
+        Execution waitingB = enqueue(flowB, Instant.now());
+
+        // When: C terminates, freeing one namespace slot
+        List<Execution> popped = store().releaseThenPop(flowC, limitsC, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+
+        // Then: the queued A executions all share the same blocked flow limit, so they cannot
+        // exhaust the scan before B is reached
+        assertThat(popped).map(Execution::getId).containsExactly(waitingB.getId());
+    }
+
+    @Test
     void shouldNotPopCandidateOutsideTheFreedScopes() {
         // Given: two limited namespaces, each with one running and one queued execution;
         // the foreign candidate queued first (it is the oldest overall)

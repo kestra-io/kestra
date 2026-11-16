@@ -80,7 +80,7 @@ function setupLogsStore() {
     let latestSearchId = 0
 
     function applyResponse(response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>) {
-        logs.value = response.results as unknown as Log[]
+        logs.value = response.results
         total.value = response.total ?? 0
         paginationType.value = response.type ?? "OFFSET"
         nextCursor.value = response.nextCursor
@@ -111,7 +111,7 @@ function setupLogsStore() {
             const isSuperseded = searchId !== latestSearchId
             if (isSuperseded) return
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             if (results.length === 0) {
                 nextCursor.value = undefined
                 return
@@ -172,7 +172,7 @@ function setupLogsStore() {
                 break
             }
 
-            const results = (response.results ?? []) as unknown as Log[]
+            const results = response.results ?? []
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
 
@@ -196,10 +196,7 @@ function setupLogsStore() {
         // whole change exists to stop producing.
         if (lines.length > 0) {
             const text = formatLogsAsText(lines.slice().reverse())
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-                logsDownloadFilename(new Date()),
-            )
+            Utils.downloadBlob(new Blob([text], {type: "text/plain"}), logsDownloadFilename(new Date()))
         }
 
         const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)

@@ -4,7 +4,6 @@ import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormal
 import {configure} from "vue-gtag"
 import type {I18nOptions} from "vue-i18n"
 import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
-import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
 import Toast from "./toast"
@@ -16,6 +15,7 @@ import createEventsRouter from "./eventsRouter"
 import "./global"
 import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
+import {restoreUrlGuard} from "../composables/useRestoreUrl"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -52,6 +52,8 @@ export default async (
         router.beforeEach(guards.beforeEach.bind(null, router))
     }
 
+    router.beforeEach(restoreUrlGuard)
+
     if(guards.beforeResolve){
         router.beforeResolve(guards.beforeResolve.bind(null, router))
     }
@@ -65,7 +67,7 @@ export default async (
     }
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", {detail: to}))
     })
 
     // Registered before the router installs: app.use(router) starts the first navigation, and both
@@ -113,7 +115,6 @@ export default async (
     // others plugins
     app.use(Toast)
     app.provide("Toast", Toast)
-    app.use(VueVirtualScroller)
 
     // filters
     app.config.globalProperties.$filters = filters

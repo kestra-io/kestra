@@ -84,13 +84,13 @@ describe("execution filter configurations declare triggerId", () => {
     })
 })
 
-describe("execution filter configurations declare searchable outputs", () => {
+describe("execution filter configurations declare searchable values", () => {
     it.each([
         ["useExecutionFilter", useExecutionFilter],
         ["useFlowExecutionFilter", useFlowExecutionFilter],
     ])("%s", (_name, useComposable) => {
         const config = setup(() => useComposable())
-        const outputs = config.value.keys.find((k: {key: string}) => k.key === "outputs")
+        const outputs = config.value.keys.find((k: {key: string}) => k.key === "searchableData")
         expect(outputs).toMatchObject({valueType: "key-value", comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN]})
     })
 })

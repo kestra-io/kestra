@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -28,17 +27,18 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -125,28 +125,27 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
-    public HttpResponse<StreamedFile> downloadLogsFromExecution(
+    @ApiResponse(
+        responseCode = "200",
+        description = "downloadLogsFromExecution 200 response",
+        content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string", format = "binary"))
+    )
+    public HttpResponse<Flux<String>> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
-        List<LogEntry> logs = logRepository
-            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
-            .collectList()
-            .block();
-        InputStream inputStream = new java.io.ByteArrayInputStream(
-            (logs == null ? List.<LogEntry> of() : logs).stream()
-                .map(LogEntry::toPrettyString)
-                .collect(java.util.stream.Collectors.joining("\n"))
-                .getBytes()
-        );
-
-        MutableHttpResponse<StreamedFile> response = HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"));
-        if (!executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()) {
-            return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
-        }
-
         // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
         // them to a different requester, even though a terminated execution's logs never change.
-        return response.header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
+        String cacheControl = executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()
+            ? "private, max-age=86400"
+            : "no-cache";
+
+        Flux<String> lines = logRepository
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+            .index((index, log) -> (index == 0 ? "" : "\n") + LogEntry.toPrettyString(log));
+
+        return HttpResponse.ok(lines)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log")
+            .header(HttpHeaders.CACHE_CONTROL, cacheControl);
     }
 
     @ExecuteOn(TaskExecutors.IO)

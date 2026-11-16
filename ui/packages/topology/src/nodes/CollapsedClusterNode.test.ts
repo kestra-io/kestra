@@ -10,7 +10,7 @@ const TASK_NODE = {
     task: {id: "per_region", type: "io.kestra.plugin.core.flow.Loop"},
 }
 
-function mountCollapsedLane(slots?: Record<string, string>) {
+function mountCollapsedLane(slots?: Record<string, string>, withExecution = true) {
     return i18nMount(CollapsedClusterNode, {
         slots,
         props: {
@@ -26,10 +26,10 @@ function mountCollapsedLane(slots?: Record<string, string>) {
         global: {
             stubs: {NodeMenu: true, Handle: true},
             provide: {
-                [EXECUTION_INJECTION_KEY as symbol]: computed(() => ({
+                [EXECUTION_INJECTION_KEY as symbol]: computed(() => withExecution ? {
                     id: "execution-id",
                     taskRunList: [{taskId: "per_region", state: {current: "FAILED"}}],
-                })),
+                } : undefined),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
             },
         },

@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code get-plugin-schema} resolves a real plugin type through the plugin
+ * Integration check that {@code get_plugin_schema} resolves a real plugin type through the plugin
  * registry and returns its generated JSON schema, and rejects an unknown type.
  */
 @KestraTest(environments = "memory")

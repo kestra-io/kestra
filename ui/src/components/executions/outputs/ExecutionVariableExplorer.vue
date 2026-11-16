@@ -213,6 +213,7 @@
     import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useIsMobile} from "../../../composables/useIsMobile"
+    import {useToast} from "../../../utils/toast"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
@@ -222,12 +223,27 @@
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
+    const props = withDefaults(defineProps<{
+        scope?: {
+            execution: Execution;
+            taskId: string;
+            outputs: Record<string, unknown>;
+        };
+        sidebarWidth?: string;
+        debugWidth?: string;
+    }>(), {
+        scope: undefined,
+        sidebarWidth: "25%",
+        debugWidth: "30%",
+    })
+
     const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
-    const execution = computed(() => executionsStore.execution)
+    const execution = computed(() => props.scope?.execution ?? executionsStore.execution)
 
     /* ----------------------------- Pebble paths ----------------------------- */
 
@@ -277,6 +293,12 @@
             .map((output) => output.id),
     ))
 
+    const searchableInputIds = computed(() => new Set(
+        (executionsStore.flow?.inputs ?? [])
+            .filter((input) => input.searchable === true)
+            .map((input) => input.id),
+    ))
+
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
         if (!record) return []
         return Object.entries(record).map(([label, value]) => ({
@@ -315,6 +337,7 @@
     watch(
         () => [execution.value?.id, execution.value?.state?.current] as const,
         async ([id], previous) => {
+            if (props.scope) return
             if (id !== previous?.[0]) {
                 tasksWithOutputs.value = undefined
                 taskOutputMetaByRunId.value = {}
@@ -431,10 +454,17 @@
 
     const sections = computed<ExplorerSection[]>(() => {
         const exec = execution.value
+        if (props.scope) {
+            return [{
+                key: "taskOutputs",
+                label: t("variable_explorer.task_outputs"),
+                items: itemsFromRecord(props.scope.outputs, `outputs${formatStep(props.scope.taskId)}`),
+            }]
+        }
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
-            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
+            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs").map((item) => ({...item, searchable: searchableInputIds.value.has(item.label)}))},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
             {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs").map((item) => ({...item, searchable: searchableOutputIds.value.has(item.label)}))},
         ]
@@ -444,6 +474,7 @@
 
     /** `?expression=trigger.body` seeds the debugger with that expression. */
     function seededExpression() {
+        if (props.scope) return ""
         const seed = route.query.expression?.toString()
         return seed ? `{{ ${seed} }}` : ""
     }
@@ -453,7 +484,7 @@
 
     function applySeededSelection(available: ExplorerSection[]) {
         const target = route.query.select?.toString()
-        if (selectionApplied || !target) {
+        if (props.scope || selectionApplied || !target) {
             return
         }
         const item = available.flatMap((section) => section.items)
@@ -474,7 +505,10 @@
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const selectedFlowOutputId = ref<string>()
-    const selectedSearchable = computed(() => selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+    const selectedFlowInputId = ref<string>()
+    const selectedSearchable = computed(() =>
+        (selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+        || (selectedFlowInputId.value !== undefined && searchableInputIds.value.has(selectedFlowInputId.value)))
     const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
@@ -540,9 +574,11 @@
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
-        const isFlowOutput = sections.value.find((section) =>
-            section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
+        const sectionKey = sections.value.find((section) =>
+            section.items.some(i => i.expression === item.expression))?.key
+        const isFlowOutput = sectionKey === "flowOutputs"
         selectedFlowOutputId.value = isFlowOutput ? item.label : undefined
+        selectedFlowInputId.value = sectionKey === "inputs" ? item.label : undefined
         const baseExpressionPath = isFlowOutput
             ? `execution.${item.expression}`
             : item.expression
@@ -609,8 +645,9 @@
 
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
-    function copyValue() {
-        copyToClipboard(rawValue.value)
+    async function copyValue() {
+        await copyToClipboard(rawValue.value)
+        toast.success(t("copied"))
     }
 
     function downloadValue() {
@@ -623,8 +660,8 @@
 
     /* --------------------------------- Layout -------------------------------- */
 
-    const leftWidth = ref("25%")
-    const rightWidth = ref("30%")
+    const leftWidth = ref(props.sidebarWidth)
+    const rightWidth = ref(props.debugWidth)
     const isMobile = useIsMobile()
 
     const [DefineViewer, ReuseViewer] = createReusableTemplate()
@@ -634,6 +671,17 @@
     function closeDetail() {
         detailOpen.value = false
     }
+
+    watch(
+        () => props.scope?.outputs,
+        () => {
+            if (!props.scope || isMobile.value) return
+            const items = sections.value.flatMap((section) => section.items)
+            const target = items.find((item) => item.expression === selectedBase.value) ?? items[0]
+            if (target) void selectItem(target)
+        },
+        {immediate: true},
+    )
 </script>
 
 <style scoped>

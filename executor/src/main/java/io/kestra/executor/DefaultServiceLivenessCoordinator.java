@@ -14,6 +14,8 @@ import org.slf4j.event.Level;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.RestartWorkingDirectory;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
@@ -21,15 +23,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.vnodes.VNodeController;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;
@@ -69,11 +72,12 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
     private final KillSwitchService killSwitchService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ExecutionStateStore executionStateStore;
     private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
-    private final VNodeController vNodeController;
+    private final List<VNodeController> vNodeControllers;
     private final List<ServiceResourceReleaser> serviceResourceReleasers;
 
     private Counter workerJobResubmitCounter;
@@ -99,12 +103,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final ServiceInstanceRepositoryInterface serviceInstanceRepository,
         final KillSwitchService killSwitchService,
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
+        final DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         final WorkerJobRunningStateStore workerJobRunningStateStore,
         final ExecutionStateStore executionStateStore,
         final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController,
+        final List<VNodeController> vNodeControllers,
         final List<ServiceResourceReleaser> serviceResourceReleasers) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
@@ -113,6 +118,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.store = store;
         this.killSwitchService = killSwitchService;
         this.workerJobEventQueue = workerJobEventQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.executionStateStore = executionStateStore;
         this.triggerEventQueue = triggerEventQueue;
@@ -120,7 +126,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
             ? serverConfig.service().purge().retention()
             : null;
-        this.vNodeController = vNodeController;
+        this.vNodeControllers = vNodeControllers;
         this.serviceResourceReleasers = serviceResourceReleasers;
     }
 
@@ -174,8 +180,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         runStep("maybeDetectAndLogNewConnectedServices", this::maybeDetectAndLogNewConnectedServices);
 
-        // May reassign scheduler VNodes
-        runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes);
+        // May reassign the vNodes of each group (schedulers, worker controllers)
+        vNodeControllers.forEach(vNodeController -> runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes));
     }
 
     /**
@@ -295,7 +301,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * <p>
      * A worker is only reclaimed from once its termination grace period has elapsed since it became
      * {@code INACTIVE}: a worker that terminated gracefully gets there in the same tick, while the executor
-     * may not have applied its last results yet, and a {@code WorkingDirectory} keeps its lease until it has.
+     * may not have applied its last results yet.
      */
     protected void handleAllOrphanedWorkerJobs(Instant now) {
         Set<String> liveWorkerUids = store.findAllInstancesInStates(Set.of(CREATED, RUNNING))
@@ -499,6 +505,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 workerTaskRunning.getTaskRun().getExecutionId()
             );
             workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
+        } else if (workerTaskRunning.getWorkingDirectoryId() != null) {
+            // the folder of the WorkingDirectory was lost with the worker, so the executor runs all its tasks again
+            try {
+                executionCommandQueue.emit(RestartWorkingDirectory.from(workerTaskRunning.getTaskRun(), workerTaskRunning.getWorkingDirectoryId()));
+                workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
+            } catch (QueueException e) {
+                Logs.logTaskRun(workerTaskRunning.getTaskRun(), Level.ERROR, "Unable to report the lost worker of the WorkingDirectory.", e);
+            }
         } else if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
             // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
             log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());

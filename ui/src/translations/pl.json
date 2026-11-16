@@ -2190,6 +2190,11 @@
           },
           "valid": "Prawidłowy",
           "invalid": "Wymaga zmian"
+        },
+        "tray": {
+          "title": "Oczekujące zmiany",
+          "applyFirst": "Zastosuj najpierw {flow}",
+          "dismiss": "Odrzuć"
         }
       }
     },

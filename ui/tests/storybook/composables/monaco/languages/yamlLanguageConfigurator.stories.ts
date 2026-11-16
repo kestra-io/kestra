@@ -134,3 +134,14 @@ export const SharedKeyAcceptedAfterBareDashKeepsTheDashSpacing = flowStory(
         await waitFor(() => expect(target.getModel()!.getLineContent(cursorPosition(flow).lineNumber)).toBe("  - defaults: "))
     },
 )
+
+export const InlineCompletionsProviderCanBeDisposedByMonaco = flowStory(
+    "id: f\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n",
+    async () => {
+        await mountedEditor()
+        const provider = (StandaloneServices.get(ILanguageFeaturesService).inlineCompletionsProvider as unknown as {
+            _entries: {selector: string; provider: monaco.languages.InlineCompletionsProvider}[];
+        })._entries.filter((entry) => entry.selector === "yaml").at(-1)!.provider
+        expect(typeof provider.disposeInlineCompletions).toBe("function")
+    },
+)

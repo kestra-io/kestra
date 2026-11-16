@@ -38,6 +38,7 @@ export const ksStubs = {
     KsCard: {name: "KsCard", template: "<div><slot /></div>"},
     KsText: {name: "KsText", props: ["size", "type"], template: "<span><slot /></span>"},
     KsIcon: {name: "KsIcon", template: "<i><slot /></i>"},
+    KsBadge: {name: "KsBadge", props: ["value", "type", "inline"], template: "<span class=\"ks-badge\">{{ value }}</span>"},
     KsTag: {name: "KsTag", props: ["size"], template: "<span class=\"ks-tag\"><slot /></span>"},
     KsAlert: {name: "KsAlert", props: ["type", "closable"], template: "<div class=\"ks-alert\" :data-type=\"type\"><slot /></div>"},
     KsCodeStatus: {name: "KsCodeStatus", props: ["status", "label", "iconOnly"], template: "<span class=\"ks-code-status\" :data-status=\"status\"><slot>{{ label }}</slot></span>"},

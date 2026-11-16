@@ -114,7 +114,7 @@
 .key-usages__note {
     margin: 0;
     font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-muted);
+    color: var(--ks-text-secondary);
 }
 
 .key-usages__list {
@@ -147,7 +147,7 @@
 .key-usages__line {
     font-family: var(--ks-font-family-mono);
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-muted);
+    color: var(--ks-text-secondary);
 }
 
 .key-usages__snippet {

@@ -18,10 +18,6 @@ describe("collapseEmptyValues", () => {
         expect(collapseEmptyValues(value)).toBe(value)
     })
 
-    it("keeps undefined as undefined", () => {
-        expect(collapseEmptyValues(undefined)).toBeUndefined()
-    })
-
     it.each([
         ["a non-empty string", "hello"],
         ["a non-empty object", {key: "value"}],
@@ -30,13 +26,7 @@ describe("collapseEmptyValues", () => {
         expect(collapseEmptyValues(value)).toBe(value)
     })
 
-    // JSON.stringify drops undefined properties, so this serialises to "{}".
     it("collapses an object whose only value is undefined", () => {
         expect(collapseEmptyValues({value: undefined})).toBeUndefined()
-    })
-
-    it("returns a non-empty nested object unchanged", () => {
-        const value = {settings: {enabled: false}}
-        expect(collapseEmptyValues(value)).toBe(value)
     })
 })

@@ -106,6 +106,8 @@
                 </div>
             </KsScrollbar>
 
+            <CopilotDraftTray v-if="trayDrafts.length" :items="trayDrafts" @dismiss="dismissTrayDraft" @applied="markDraftApplied" />
+
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
             <div v-if="error || errorDetail || notice" class="copilot-banner">
@@ -154,10 +156,12 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotDraftTray from "./CopilotDraftTray.vue"
     import CopilotHelp from "./CopilotHelp.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
+    import {collectPendingDrafts, type PendingDraft} from "./pendingDrafts"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -303,7 +307,28 @@
     /** Applied tracking is per-conversation — called everywhere a new/different thread starts. */
     function resetDraftTracking(): void {
         appliedDraftIds.value.clear()
+        trayDismissedIds.value.clear()
     }
+
+    // Drafts the user dropped from the pending-changes tray; their transcript card is left as it is.
+    const trayDismissedIds = ref(new Set<string>())
+
+    function dismissTrayDraft(draftId: string): void {
+        trayDismissedIds.value.add(draftId)
+    }
+
+    // A watch on a signal rather than a computed over `messages`: a streamed token mutates the last
+    // bubble in place, and a computed would re-parse every draft's YAML on each one.
+    const trayDrafts = ref<PendingDraft[]>([])
+    const trayScanSignal = computed(() =>
+        `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${appliedDraftIds.value.size}|${trayDismissedIds.value.size}`,
+    )
+    watch(trayScanSignal, () => {
+        trayDrafts.value = collectPendingDrafts(
+            messages.value,
+            (draftId) => appliedDraftIds.value.has(draftId) || trayDismissedIds.value.has(draftId),
+        )
+    }, {immediate: true})
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -656,6 +681,7 @@
        page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
        stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-tray,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

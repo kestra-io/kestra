@@ -2190,6 +2190,11 @@
           },
           "valid": "有效",
           "invalid": "需要修改"
+        },
+        "tray": {
+          "title": "待处理的更改",
+          "applyFirst": "先应用 {flow}",
+          "dismiss": "关闭"
         }
       }
     },

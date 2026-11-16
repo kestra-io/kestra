@@ -45,7 +45,7 @@
                 :label="keyOnly ? $t('secret.names') : $t('key')"
             >
                 <template #default="scope">
-                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" @click="viewSecret = scope.row as NamespaceSecret" />
                 </template>
             </KsTableColumn>
 
@@ -136,6 +136,31 @@
                 </template>
             </KsTableColumn>
         </KsDataTable>
+
+        <KsDrawer
+            v-if="viewSecret"
+            :modelValue="true"
+            :title="viewSecret.key"
+            @update:modelValue="viewSecret = undefined"
+        >
+            <KsForm class="ks-horizontal">
+                <KsFormItem v-if="viewSecret.namespace" :label="$t('namespace')">
+                    <KsInput :modelValue="viewSecret.namespace" disabled />
+                </KsFormItem>
+                <KsFormItem :label="$t('key')">
+                    <KsInput :modelValue="viewSecret.key" disabled />
+                </KsFormItem>
+                <KsFormItem :label="$t('copy_pebble_expression')">
+                    <div class="secret-expression">
+                        <code>{{ secretExpression(viewSecret.key) }}</code>
+                        <KsIconButton :tooltip="$t('copy_pebble_expression')" placement="left" @click="copyKey(viewSecret.key)">
+                            <ContentCopy />
+                        </KsIconButton>
+                    </div>
+                </KsFormItem>
+            </KsForm>
+            <KeyUsages :target="{kind: 'secret', namespace: viewSecret.namespace, key: viewSecret.key}" />
+        </KsDrawer>
 
         <KsDialog
             v-if="addSecretDrawerVisible"
@@ -231,6 +256,7 @@
 
     import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
+    import KeyUsages from "../usages/KeyUsages.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
@@ -307,6 +333,8 @@
     const hasData = ref<boolean>()
     const areNamespaceSecretsReadOnly = ref(false)
     const secrets = ref<(NamespaceSecret & {namespace?: string})[]>()
+
+    const viewSecret = ref<NamespaceSecret>()
 
     const secret = ref<SecretForm>({
         namespace: props.namespace,
@@ -560,8 +588,10 @@
         secret.value?.tags?.splice(index, 1)
     }
 
+    const secretExpression = (key: string) => `{{ secret('${key}') }}`
+
     const copyKey = async (key: string) => {
-        await Utils.copy(`{{ secret('${key}') }}`)
+        await Utils.copy(secretExpression(key))
         toast.success(t("copied"))
     }
 
@@ -703,6 +733,12 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .secret-expression {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 
     .lock-icon {

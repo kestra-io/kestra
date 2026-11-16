@@ -385,7 +385,7 @@
     const replacement = ref("")
     const caseSensitive = ref(false)
     const wholeWord = ref(false)
-    const regexEnabled = ref(false)
+    const regexEnabled = ref(route.query.regex === "true")
 
     const exampleQueries = [
         "io.kestra.plugin.gcp.bigquery.Query",

@@ -2012,6 +2012,15 @@
       "addTag": "Add tag"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "Used by",
+      "open_source_search": "Open in source search",
+      "line": "Line {line}",
+      "error": "Could not search the flow sources.",
+      "empty": "No flow references this key in its source.",
+      "truncated": "Showing {shown} of {total} matching flows.",
+      "caveat": "Static references only: keys built at runtime, for example from an input, cannot be detected."
+    },
     "kv": {
       "name": "KV Store",
       "type": "Type",

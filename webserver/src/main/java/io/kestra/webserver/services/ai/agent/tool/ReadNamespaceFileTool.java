@@ -23,6 +23,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ReadNamespaceFileTool implements McpPlatformTool {
     static final int DEFAULT_MAX_LENGTH = 20_000;
+    static final int MAX_MAX_LENGTH = 100_000;
 
     private final NamespaceFactory namespaceFactory;
 
@@ -48,7 +49,7 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
 
     @Tool(
         name = "read_namespace_file",
-        value = "Read a file stored in a Kestra namespace as UTF-8 text, optionally at a specific revision, in pages of at most `maxLength` characters (default " + DEFAULT_MAX_LENGTH + "). "
+        value = "Read a file stored in a Kestra namespace as UTF-8 text, optionally at a specific revision, in pages of at most `maxLength` characters (default " + DEFAULT_MAX_LENGTH + ", at most " + MAX_MAX_LENGTH + "). "
             + "Fails when the file is not valid UTF-8 text. Read-only; use list_namespace_files to find the path first. Directories have no content. "
             + "Returns an object { namespace, path, revision, offset, content, nextOffset } where `revision` is the revision that was read and `nextOffset` is the offset to pass to read the rest of the file, or null when `content` ends the file."
     )
@@ -57,7 +58,7 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
         @P(name = "path", value = "The path of the file from the namespace root, e.g. '/scripts/etl.py'") String path,
         @P(name = "revision", value = "Optional file revision to read; omit to read the latest revision", required = false) Integer revision,
         @P(name = "offset", value = "The 0-based character offset to start reading at; omit to read from the start", required = false) Integer offset,
-        @P(name = "maxLength", value = "The maximum number of characters to return; omit for the default of " + DEFAULT_MAX_LENGTH, required = false) Integer maxLength,
+        @P(name = "maxLength", value = "The maximum number of characters to return, between 1 and " + MAX_MAX_LENGTH + "; omit for the default of " + DEFAULT_MAX_LENGTH, required = false) Integer maxLength,
         final AgentCallContext.Context context) {
         Path filePath = NamespaceFileTools.path(path);
         int start = offset == null ? 0 : offset;
@@ -65,8 +66,8 @@ public class ReadNamespaceFileTool implements McpPlatformTool {
             throw new IllegalArgumentException("Offset must be 0 or greater, got %d.".formatted(start));
         }
         int length = maxLength == null ? DEFAULT_MAX_LENGTH : maxLength;
-        if (length < 1) {
-            throw new IllegalArgumentException("maxLength must be 1 or greater, got %d.".formatted(length));
+        if (length < 1 || length > MAX_MAX_LENGTH) {
+            throw new IllegalArgumentException("maxLength must be between 1 and %d, got %d.".formatted(MAX_MAX_LENGTH, length));
         }
         Namespace storage = namespaceFactory.of(context.tenant(), namespace);
 

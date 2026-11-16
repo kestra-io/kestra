@@ -69,6 +69,16 @@ class ReadNamespaceFileToolTest {
     }
 
     @Test
+    void shouldRefuseWhenMaxLengthExceedsTheCap() {
+        String namespace = randomNamespace();
+        put(namespaceFactory.of(MAIN_TENANT, namespace), "/data.txt", "0123456789");
+
+        assertThatThrownBy(() -> tool.readNamespaceFile(namespace, "/data.txt", null, null, Integer.MAX_VALUE, CONTEXT))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("maxLength must be between 1 and " + ReadNamespaceFileTool.MAX_MAX_LENGTH);
+    }
+
+    @Test
     void shouldThrowWhenFileDoesNotExist() {
         String namespace = randomNamespace();
 

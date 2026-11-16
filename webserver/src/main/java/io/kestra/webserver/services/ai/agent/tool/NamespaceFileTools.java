@@ -1,7 +1,6 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
 
 import io.kestra.core.storages.NamespaceFile;

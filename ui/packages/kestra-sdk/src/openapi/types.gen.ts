@@ -103,7 +103,7 @@ export type AbstractTrigger = {
      * Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress.
      */
     allowConcurrent?: boolean;
-    assets?: AssetsDeclaration;
+    assets?: TriggerAssetsDeclaration;
 };
 
 export type AbstractTriggerForExecution = {
@@ -2598,6 +2598,21 @@ export type TenantInterface = {
 export type TimeWindow = {
     default?: string;
     max?: string;
+};
+
+export type TriggerAssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
+    enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
+    inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
+    outputs?: PropertyListAsset;
 };
 
 export type TriggerControllerApiCreateBackfillRequest = {

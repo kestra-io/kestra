@@ -34,6 +34,7 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
 }))
 const scrollerMocks = vi.hoisted(() => ({
     scrollCalls: [] as string[],
+    scrollToItemCalls: [] as {taskRunId?: string; index: number}[],
     scrollToItem: vi.fn(),
 }))
 
@@ -51,9 +52,16 @@ vi.mock("vue-virtual-scroller", async () => {
                         scrollerMocks.scrollCalls.push(taskRunId)
                     }
                 })
+                const scrollToItem = vi.fn((index: number) => {
+                    const taskRunId = attrs["data-scroll-key"]
+                    if (typeof taskRunId === "string") {
+                        scrollerMocks.scrollToItemCalls.push({taskRunId, index})
+                    }
+                    scrollerMocks.scrollToItem(index)
+                })
                 expose({
                     scrollToBottom,
-                    scrollToItem: scrollerMocks.scrollToItem,
+                    scrollToItem,
                 })
 
                 return () => h("div", attrs, [
@@ -130,6 +138,7 @@ describe("TaskRunDetails log loading across executions", () => {
         vi.useFakeTimers()
         openedStreams = []
         scrollerMocks.scrollCalls = []
+        scrollerMocks.scrollToItemCalls = []
         scrollerMocks.scrollToItem.mockClear()
         store.executions = reactive({
             execution: undefined,
@@ -337,7 +346,20 @@ describe("TaskRunDetails log loading across executions", () => {
         await nextTick()
         await flushPromises()
 
-        expect(scrollerMocks.scrollCalls).toContain("tr-failed")
+        expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1})
+
+        wrapper.unmount()
+    })
+
+    it("should not scroll when failed task has no logs", async () => {
+        store.executions.loadLogs.mockResolvedValue([])
+        store.executions.execution = executionWithTaskRuns("exec-1") as never
+        const wrapper = mountDetails()
+        await flushPromises()
+        await nextTick()
+        await flushPromises()
+
+        expect(scrollerMocks.scrollToItemCalls).toHaveLength(0)
 
         wrapper.unmount()
     })

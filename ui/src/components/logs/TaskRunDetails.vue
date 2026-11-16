@@ -339,10 +339,10 @@
         return "isGroup" in item
     }
 
-    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem" | "scrollToBottom">
+    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem"> & Partial<Pick<DynamicScrollerExposed, "scrollToBottom">>
 
     function isLogsScroller(el: unknown): el is LogsScroller {
-        return typeof el === "object" && el !== null && "scrollToItem" in el && "scrollToBottom" in el
+        return typeof el === "object" && el !== null && "scrollToItem" in el
     }
 
     type SubflowLogs = {expandAll: () => void; scrollToLog: (logId: string) => void}
@@ -1082,9 +1082,12 @@
                 selectedAttemptNumberByTaskRunId.value[taskRun.id] ?? 0,
             ),
         )
-        shownAttemptsUid.value.forEach((uid) =>
-            logsScrollerRefs.value[uid]?.scrollToBottom(),
-        )
+        shownAttemptsUid.value.forEach((uid) => {
+            const items = displayItemsByAttemptUid.value[uid] ?? []
+            if (items.length > 0) {
+                logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+            }
+        })
 
         expandSubflows()
     }
@@ -1125,17 +1128,17 @@
                     taskRun.state.current === State.FAILED ||
                     taskRun.state.current === State.RUNNING
                 ) {
-                    const attemptNumber = taskRun.attempts
-                        ? taskRun.attempts.length - 1
-                        : (props.forcedAttemptNumber ?? 0)
-                    if (
-                        shownAttemptsUid.value.includes(
-                            `${taskRun.id}-${attemptNumber}`,
-                        )
-                    ) {
-                        logsScrollerRefs.value[
-                            `${taskRun.id}-${attemptNumber}`
-                        ]?.scrollToBottom()
+                    const attemptNumber =
+                        selectedAttemptNumberByTaskRunId.value[taskRun.id] ??
+                        (taskRun.attempts
+                            ? taskRun.attempts.length - 1
+                            : (props.forcedAttemptNumber ?? 0))
+                    const uid = attemptUid(taskRun.id, attemptNumber)
+                    if (shownAttemptsUid.value.includes(uid)) {
+                        const items = displayItemsByAttemptUid.value[uid] ?? []
+                        if (items.length > 0) {
+                            logsScrollerRefs.value[uid]?.scrollToItem(items.length - 1)
+                        }
                     }
                 }
             })

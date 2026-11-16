@@ -36,13 +36,13 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
     }
 
     @Override
-    public AssetEmitter declared(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, Instant endDate, Set<String> alreadyUsed) {
+    public AssetEmitter declared(RunContext runContext, AssetEmitContext context, State.Type state, Instant endDate, Set<String> alreadyUsed) {
         List<String> failures = new ArrayList<>();
         List<String> lockRefusals = new ArrayList<>();
         return new AssetEmitter() {
             @Override
             public void emit(AssetEmit assetEmit) {
-                declaredEmits.add(new DeclaredEmit(context.taskRunId(), state, startDate, alreadyUsed, assetEmit, context.executionKind()));
+                declaredEmits.add(new DeclaredEmit(context.taskRunId(), state, context.attemptStartDate(), alreadyUsed, assetEmit, context.executionKind()));
                 if (backendUnreachableAtStart && State.Type.RUNNING == state) {
                     throw new IllegalStateException("The backend is unreachable.");
                 }
@@ -99,11 +99,11 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
     }
 
     @Override
-    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, AssetEmit used) {
+    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, AssetEmit used) {
         if (backendUnreachableAtFinish) {
             throw new IllegalStateException("The backend is unreachable.");
         }
         finished.put(context.taskRunId(), state);
-        finishes.put(context.taskRunId(), new Finish(state, startDate, used));
+        finishes.put(context.taskRunId(), new Finish(state, context.attemptStartDate(), used));
     }
 }

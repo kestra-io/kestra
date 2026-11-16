@@ -18,7 +18,7 @@ class AssetEmitContextTest {
         AssetEmitContext context = AssetEmitContext.of(workerTask(ExecutionKind.TEST), Map.of("flow", Map.of("revision", 3)));
 
         assertThat(context).isEqualTo(
-            new AssetEmitContext("tenant", "io.kestra.unit-test", "flow", 3, "execution", "log", "task-run", Log.class.getName(), ExecutionKind.TEST)
+            new AssetEmitContext("tenant", "io.kestra.unit-test", "flow", 3, "execution", "log", "task-run", Log.class.getName(), ExecutionKind.TEST, context.attemptStartDate())
         );
     }
 

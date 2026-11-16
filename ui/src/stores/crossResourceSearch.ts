@@ -25,6 +25,12 @@ function searchErrorMessage(error: unknown): string | undefined {
     return asProblem(error)?.detail ?? (error instanceof Error ? error.message : undefined)
 }
 
+function buildQueryFilters(q: string, namespace?: string): QueryFilter[] {
+    const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: q}]
+    if (namespace) filters.push({field: "namespace", operation: "EQUALS", value: namespace})
+    return filters
+}
+
 async function runBounded<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
     let cursor = 0
     const workers = Array.from({length: Math.min(limit, items.length)}, async () => {
@@ -202,11 +208,9 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         const checkSecrets = async (): Promise<boolean> => {
             if (!types.includes("secrets")) return false
             try {
-                const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: alternativeQuery}]
-                if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
-
+                const filters = buildQueryFilters(alternativeQuery, params.namespace)
                 const response = await SecretsAPI.listSecrets({filters, page: 1, size: 1})
-                return (response.results ?? []).length > 0 || (response.total ?? 0) > 0
+                return (response.results ?? []).length > 0
             } catch {
                 return false
             }
@@ -215,21 +219,37 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         const checkKv = async (): Promise<boolean> => {
             if (!types.includes("kv")) return false
             try {
-                const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: alternativeQuery}]
-                if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
-
+                const filters = buildQueryFilters(alternativeQuery, params.namespace)
                 const response = await KvAPI.listAllKeys({filters, page: 1, size: 1})
-                return (response.results ?? []).length > 0 || (response.total ?? 0) > 0
+                return (response.results ?? []).length > 0
             } catch {
                 return false
             }
         }
 
         const checkFiles = async (): Promise<boolean> => {
-            if (!types.includes("files") || !params.namespace) return false
+            if (!types.includes("files")) return false
             try {
-                const paths = await FilesAPI.searchNamespaceFiles({namespace: params.namespace, q: alternativeQuery})
-                return (paths ?? []).length > 0
+                const namespaces = params.namespace
+                    ? [params.namespace]
+                    : (files.value.namespaces.length > 0
+                        ? files.value.namespaces.map((n) => n.namespace)
+                        : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) ?? []))
+                if (namespaces.length === 0) return false
+
+                let found = false
+                await runBounded(namespaces, NAMESPACE_FETCH_CONCURRENCY, async (namespace) => {
+                    if (found) return
+                    try {
+                        const paths = await FilesAPI.searchNamespaceFiles({namespace, q: alternativeQuery})
+                        if ((paths ?? []).length > 0) {
+                            found = true
+                        }
+                    } catch {
+                        // ignore isolated namespace error
+                    }
+                })
+                return found
             } catch {
                 return false
             }
@@ -239,19 +259,11 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             const results = await Promise.all([checkFlows(), checkSecrets(), checkKv(), checkFiles()])
             if (!isCurrent(gen)) return
 
-            if (results.some(Boolean)) {
-                suggestedQuery.value = alternativeQuery
-            } else {
-                suggestedQuery.value = null
-            }
+            suggestedQuery.value = results.some(Boolean) ? alternativeQuery : null
         } catch {
             if (!isCurrent(gen)) return
             suggestedQuery.value = null
         }
-    }
-
-    function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
-        return searchSuggestion({...params, types: ["flows"]}, gen)
     }
 
     function setNamespaceFileState(state: NamespaceFileState, gen: number) {
@@ -331,8 +343,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         kv.value = {status: "counting", groups: kv.value.groups}
         try {
-            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
-            if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+            const filters = buildQueryFilters(params.query, params.namespace)
 
             const response = await KvAPI.listAllKeys({filters, page: 1, size: SEARCH_PAGE_SIZE})
             if (!isCurrent(gen)) return
@@ -361,8 +372,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         secrets.value = {status: "counting", groups: secrets.value.groups}
         try {
-            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
-            if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+            const filters = buildQueryFilters(params.query, params.namespace)
 
             const response = await SecretsAPI.listSecrets({filters, page: 1, size: SEARCH_PAGE_SIZE})
             if (!isCurrent(gen)) return
@@ -530,7 +540,6 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         secrets,
         search,
         searchFlows,
-        searchFlowSuggestion,
         searchSuggestion,
         suggestedQuery,
         searchFiles,

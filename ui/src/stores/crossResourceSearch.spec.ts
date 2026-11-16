@@ -197,8 +197,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -226,8 +227,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -260,8 +262,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -270,8 +273,9 @@ describe("useCrossResourceSearchStore", () => {
 
         expect(store.suggestedQuery).toBe("my_flow")
 
-        await store.searchFlowSuggestion(
+        await store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -292,7 +296,8 @@ describe("useCrossResourceSearchStore", () => {
 
         mockSearchFlowsBySourceCode.mockClear()
 
-        await store.searchFlowSuggestion({
+        await store.searchSuggestion({
+                types: ["flows"],
                 query: "myflow",
                 ...flowFilters,
         }, gen)
@@ -312,7 +317,8 @@ describe("useCrossResourceSearchStore", () => {
 
         mockSearchFlowsBySourceCode.mockClear()
 
-        await store.searchFlowSuggestion({
+        await store.searchSuggestion({
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
                 regex: true,
@@ -339,8 +345,9 @@ describe("useCrossResourceSearchStore", () => {
             ...flowFilters,
         })
 
-        const suggestionPromise = store.searchFlowSuggestion(
+        const suggestionPromise = store.searchSuggestion(
             {
+                types: ["flows"],
                 query: "my-flow",
                 ...flowFilters,
             },
@@ -490,6 +497,62 @@ describe("useCrossResourceSearchStore", () => {
             namespace: "prod",
             q: "my_script",
         })
+    })
+
+    it("sets a separator suggestion for namespace files across namespaces when no namespace filter is present", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns-a", "ns-b"])
+        mockSearchNamespaceFiles
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce(["script.py"])
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBe("my_script")
+        expect(mockSearchNamespaceFiles).toHaveBeenCalledWith({
+            namespace: "ns-b",
+            q: "my_script",
+        })
+    })
+
+    it("does not set a separator suggestion when no namespace files match across namespaces", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns-a"])
+        mockSearchNamespaceFiles
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["files"],
+            query: "my-script",
+            ...flowFilters,
+        })
+
+        await store.searchSuggestion(
+            {
+                types: ["files"],
+                query: "my-script",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(store.suggestedQuery).toBeNull()
     })
 
     it("discards a namespace-file retry once the query has moved on", async () => {

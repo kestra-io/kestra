@@ -10,8 +10,6 @@ const mockRoute = reactive({
 })
 
 const search = vi.fn()
-const searchSuggestion = vi.fn()
-const searchFlowSuggestion = vi.fn()
 
 const store = reactive({
     suggestedQuery: null,
@@ -36,8 +34,7 @@ const store = reactive({
     filesNamespacesTotal: 0,
     filesNamespacesFailed: [],
     search,
-    searchSuggestion,
-    searchFlowSuggestion,
+    searchSuggestion: vi.fn(),
     reset: vi.fn(),
     retryNamespaceFiles: vi.fn(),
     truncatedFor: vi.fn(() => false),
@@ -143,32 +140,6 @@ describe("FlowsSearch", () => {
 
         // The stale search must not clear the loading state.
         expect(wrapper.find("[data-test=\"source-search-loading\"]").exists()).toBe(true)
-
-        wrapper.unmount()
-    })
-
-    it("requests a cross-resource suggestion when no matches are found", async () => {
-        search.mockResolvedValueOnce(1)
-        const wrapper = i18nMount(FlowsSearch, {
-            global: {
-                stubs: {
-                    TopNavBar: true,
-                    NamespaceSelect: true,
-                    SourceSearchResults: true,
-                    SourceSearchPreview: true,
-                },
-            },
-        })
-
-        await flushPromises()
-
-        expect(searchSuggestion).toHaveBeenCalledWith(
-            expect.objectContaining({
-                query: "first-query",
-                types: ["flows", "files", "kv", "secrets"],
-            }),
-            1,
-        )
 
         wrapper.unmount()
     })

@@ -598,7 +598,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 },
                 handlePartialAccept() {
                 },
-                freeInlineCompletions() {
+                // Monaco 0.55+ only calls disposeInlineCompletions (https://github.com/kestra-io/kestra/issues/22751).
+                disposeInlineCompletions() {
                 },
             } as any),
         )

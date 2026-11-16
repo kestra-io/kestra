@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import {useRoute} from "vue-router"
     import type {FlowForExecution} from "@kestra-io/kestra-sdk"
     import {useExecutionsStore} from "../../stores/executions"
     import {handled} from "../../utils/kestraHttp"
@@ -25,6 +26,7 @@
         inputs: Record<string, unknown>;
     }>()
 
+    const route = useRoute()
     const executionsStore = useExecutionsStore()
     const variableValueRenderer = useVariableValueRenderer()
     const flow = ref<FlowForExecution>()
@@ -39,7 +41,7 @@
     })
 
     function loadFlow(namespace: string, flowId: string, revision?: number): Promise<FlowForExecution> {
-        const key = `${namespace}/${flowId}/${revision}`
+        const key = `${route.params.tenant}/${namespace}/${flowId}/${revision}`
         let pending = flowCache.get(key)
         if (!pending) {
             pending = executionsStore.loadFlowForExecution({namespace, flowId, revision, store: false})

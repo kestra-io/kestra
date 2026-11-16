@@ -15,6 +15,12 @@ vi.mock("../../override/components/executions/outputs/variableValueExtension", (
     useVariableValueRenderer: () => variableValueRenderer,
 }))
 
+const route = {params: {tenant: "main"} as Record<string, string>}
+vi.mock("vue-router", async (importOriginal) => ({
+    ...await importOriginal<typeof import("vue-router")>(),
+    useRoute: () => route,
+}))
+
 const AssetViewer = markRaw({props: ["value"], template: "<span data-test=\"asset-viewer\">{{ value }}</span>"})
 
 function mount(flowId: string, inputs: Record<string, unknown>) {
@@ -24,6 +30,7 @@ function mount(flowId: string, inputs: Record<string, unknown>) {
 describe("ExecutionInputsPreview", () => {
     beforeEach(() => {
         loadFlowForExecution.mockReset()
+        route.params = {tenant: "main"}
         variableValueRenderer.mockReset()
     })
 
@@ -58,5 +65,18 @@ describe("ExecutionInputsPreview", () => {
         await flushPromises()
 
         expect(loadFlowForExecution).toHaveBeenCalledTimes(1)
+    })
+
+    it("loads the flow again for an execution of another tenant", async () => {
+        loadFlowForExecution.mockResolvedValue({inputs: []})
+        variableValueRenderer.mockReturnValue(undefined)
+
+        route.params = {tenant: "tenant-a"}
+        mount("same-id", {count: 1})
+        route.params = {tenant: "tenant-b"}
+        mount("same-id", {count: 2})
+        await flushPromises()
+
+        expect(loadFlowForExecution).toHaveBeenCalledTimes(2)
     })
 })

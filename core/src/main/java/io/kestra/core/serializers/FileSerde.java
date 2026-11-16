@@ -1,11 +1,15 @@
 package io.kestra.core.serializers;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,6 +93,42 @@ public final class FileSerde {
             }
         }
         return false;
+    }
+
+    /**
+     * Same as {@link #read(InputStream, int, Consumer)}, but each object keeps only the given fields: the others are skipped without being built.
+     * A value that is not an object is passed unchanged.
+     * <p>
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     *
+     * @return true if there were more values after the ones read
+     */
+    public static boolean read(InputStream input, int maxLines, Set<String> fields, Consumer<Object> consumer) throws IOException {
+        try (JsonParser parser = DEFAULT_OBJECT_MAPPER.createParser(input)) {
+            int nbLines = 0;
+            while (parser.nextToken() != null) {
+                if (nbLines >= maxLines) {
+                    return true;
+                }
+                consumer.accept(parser.currentToken() == JsonToken.START_OBJECT ? readFields(parser, fields) : DEFAULT_OBJECT_MAPPER.readValue(parser, DEFAULT_TYPE_REFERENCE));
+                nbLines++;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, Object> readFields(JsonParser parser, Set<String> fields) throws IOException {
+        Map<String, Object> row = new HashMap<>();
+        while (parser.nextToken() == JsonToken.FIELD_NAME) {
+            String name = parser.currentName();
+            parser.nextToken();
+            if (fields.contains(name)) {
+                row.put(name, DEFAULT_OBJECT_MAPPER.readValue(parser, DEFAULT_TYPE_REFERENCE));
+            } else {
+                parser.skipChildren();
+            }
+        }
+        return row;
     }
 
     /**

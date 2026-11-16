@@ -358,7 +358,7 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@ci/lint-native-annotations
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@ci/oxlint-annotation-paths
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

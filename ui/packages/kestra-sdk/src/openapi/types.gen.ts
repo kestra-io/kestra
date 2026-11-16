@@ -645,6 +645,14 @@ export type ChartFiltersOverrides = {
     filters?: Array<QueryFilter>;
 };
 
+export type ChartMetadata = {
+    executionId: string;
+    date: string;
+    state: string;
+    rowsRead?: number;
+    truncated?: boolean;
+};
+
 export type ChartChartOption = {
     id: string;
     type: string;
@@ -765,6 +773,7 @@ export type DashboardControllerChartData = {
      * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
      */
     ignoredFilters?: Array<QueryFilterField>;
+    metadata?: ChartMetadata | null;
 };
 
 export type DashboardControllerDashboardResponse = {
@@ -1758,6 +1767,7 @@ export type Notification = {
     resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
+    url?: string | null;
     succeededItems?: number | null;
     failedItems?: number | null;
     totalItems?: number | null;

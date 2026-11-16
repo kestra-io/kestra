@@ -7,7 +7,6 @@
         <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-                type="default"
                 @click.stop="() => emit('toggleShowAttempt', (attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
             >
                 <ChevronDown

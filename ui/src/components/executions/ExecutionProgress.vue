@@ -1,17 +1,21 @@
 <template>
-    <div v-if="averageDurationMs" class="execution-progress">
-        <KsText size="small" class="progress-title">{{ $t("executionProgress.title") }}</KsText>
-        <KsText size="small" class="progress-estimate">
-            <template v-if="isPastEstimate">
-                {{ $t("executionProgress.pastEstimate") }}
-            </template>
-            <template v-else>
-                {{ $t("executionProgress.estimatedRemaining", {duration: remainingDisplay}) }}
-            </template>
-        </KsText>
+    <div v-if="isVisible" class="execution-progress" data-test="execution-progress">
+        <div class="progress-header">
+            <KsText size="small" class="progress-title" data-test="execution-progress-title">
+                {{ $t("executionProgress.title") }}
+            </KsText>
+            <KsText size="small" class="progress-estimate" data-test="execution-progress-estimate">
+                <template v-if="isPastEstimate">
+                    {{ $t("executionProgress.pastEstimate") }}
+                </template>
+                <template v-else>
+                    {{ $t("executionProgress.estimatedRemaining", {duration: remainingDisplay}) }}
+                </template>
+            </KsText>
+        </div>
         <KsProgress
             :percentage="progressPercent"
-            :stroke-width="18"
+            :stroke-width="8"
             :showText="false"
             striped
             stripedFlow
@@ -22,7 +26,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
 
-    import {durationUtils, KsProgress, KsText} from "@kestra-io/design-system"
+    import {durationUtils, KsProgress, KsText, State} from "@kestra-io/design-system"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import {type Execution} from "../../stores/executions"
@@ -40,6 +44,9 @@
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
     const now = ref(Date.now())
     let ticker: ReturnType<typeof setInterval> | undefined
+
+    const isRunning = computed(() => props.execution.state?.current === State.RUNNING)
+    const isVisible = computed(() => isRunning.value && averageDurationMs.value !== null)
 
     const elapsedMs = computed(() => {
         const {startDate} = props.execution.state
@@ -97,19 +104,22 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-4);
+        padding: var(--ks-spacing-2-5) var(--ks-spacing-3);
         text-align: left;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
+        border-radius: var(--ks-radius-base);
     }
 
-    .progress-title,
-    .progress-estimate {
-        align-self: flex-start;
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 
     .progress-estimate {
         color: var(--ks-text-secondary);
+        white-space: nowrap;
     }
 </style>

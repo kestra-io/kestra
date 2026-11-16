@@ -20,6 +20,10 @@
                 />
             </div>
         </template>
+        <ExecutionProgress
+            v-if="isProgressing"
+            :execution="execution"
+        />
         <div v-if="isMobile && failedTaskRun" class="topology-heading">
             <span>{{ $t("topology") }}</span>
             <KsButton link type="primary" data-test="jump-to-first-failure" @click="jumpToFirstFailure">
@@ -55,6 +59,7 @@
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     import Banner from "../components/Banner.vue"
+    import ExecutionProgress from "../ExecutionProgress.vue"
     import FailedTaskCard from "./components/FailedTaskCard.vue"
     import MobileSummary from "./components/MobileSummary.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
@@ -69,6 +74,7 @@
     const topologyRef = useTemplateRef<InstanceType<typeof Topology>>("topologyRef")
 
     const isFailed = computed(() => execution.value?.state.current === State.FAILED)
+    const isProgressing = computed(() => execution.value?.state.current === State.RUNNING)
 
     const {failedTaskRun} = useFirstFailure(execution, false)
 

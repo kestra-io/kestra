@@ -70,6 +70,31 @@ export function selectUsages(results: SourceSearchResult[], namespace: string | 
     })
 }
 
+export function keyTargetId({kind, namespace, key}: KeyTarget): string {
+    return `${kind}\u0000${namespace ?? ""}\u0000${key}`
+}
+
+export function countFlows(usages: KeyUsage[]): number {
+    return new Set(usages.map((usage) => `${usage.namespace}\u0000${usage.id}`)).size
+}
+
+export async function fetchKeyUsages(target: KeyTarget): Promise<{usages: KeyUsage[]; truncated: boolean}> {
+    const responses = await Promise.all(buildLiteralQueries(target).map((q) => FlowsAPI.searchFlowsBySourceCode({
+        caseSensitive: true,
+        wholeWord: false,
+        regex: false,
+        scope: "ALL",
+        page: 1,
+        size: USAGES_PAGE_SIZE,
+        q,
+    })))
+    const pages = responses.map((response) => (response.results ?? []) as SourceSearchResult[])
+    return {
+        usages: selectUsages(mergeResults(pages), target.namespace),
+        truncated: responses.some((response, index) => (response.total ?? 0) > pages[index].length),
+    }
+}
+
 export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
     const status = ref<KeyUsagesStatus>("idle")
     const usages = ref<KeyUsage[]>([])
@@ -97,19 +122,10 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
 
         status.value = "loading"
         try {
-            const responses = await Promise.all(buildLiteralQueries(current).map((q) => FlowsAPI.searchFlowsBySourceCode({
-                caseSensitive: true,
-                wholeWord: false,
-                regex: false,
-                scope: "ALL",
-                page: 1,
-                size: USAGES_PAGE_SIZE,
-                q,
-            })))
+            const result = await fetchKeyUsages(current)
             if (!isCurrent(gen)) return
-            const pages = responses.map((response) => (response.results ?? []) as SourceSearchResult[])
-            usages.value = selectUsages(mergeResults(pages), current.namespace)
-            truncated.value = responses.some((response, index) => (response.total ?? 0) > pages[index].length)
+            usages.value = result.usages
+            truncated.value = result.truncated
             status.value = "done"
         } catch (e: unknown) {
             if (!isCurrent(gen)) return
@@ -121,7 +137,7 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
     watch(
         () => {
             const current = toValue(target)
-            return current ? `${current.kind}\u0000${current.namespace}\u0000${current.key}` : undefined
+            return current ? keyTargetId(current) : undefined
         },
         () => load(toValue(target)),
         {immediate: true},

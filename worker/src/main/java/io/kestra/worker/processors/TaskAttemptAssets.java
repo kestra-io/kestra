@@ -208,6 +208,9 @@ final class TaskAttemptAssets {
                 }
             }
             if (runContext instanceof DefaultRunContext defaultRunContext) {
+                if (!resubmitted) {
+                    defaultRunContext.emitAssetsOfDynamicTaskRuns();
+                }
                 defaultRunContext.assetsIfCreated().ifPresent(emitter -> failures.addAll(emitter.failures()));
             }
         } catch (ConstraintViolationException e) {

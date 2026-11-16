@@ -278,6 +278,48 @@ class WorkerTaskProcessorTest {
     }
 
     @Test
+    void shouldSendTheAssetsEmittedForADynamicTaskRunWithTheTaskRunTheExecutorReceives() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").build());
+
+        processor.process(workerTask);
+
+        TaskRun registered = drain(resultQueue).getLast().getDynamicTaskRuns().getFirst();
+        assertThat(recorded().emittedFor.get(workerTask.getTaskRun().getId())).singleElement().satisfies(emittedFor ->
+        {
+            assertThat(emittedFor.dynamicTaskRun().getId()).isEqualTo(registered.getId());
+            assertThat(emittedFor.dynamicTaskRun().getTaskId()).isEqualTo(registered.getTaskId()).hasSizeLessThanOrEqualTo(Task.ID_MAX_LENGTH);
+            assertThat(emittedFor.emit().outputs()).extracting(Asset::getId).containsExactly("model");
+        });
+    }
+
+    @Test
+    void shouldFailATaskThatEmitsAssetsOnBehalfOfATaskRunItDidNotCreate() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").parentTaskRunId("another-task-run").build());
+
+        processor.process(workerTask);
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(recorded().emittedFor).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
+
+    @Test
+    void shouldNotSendTheAssetsEmittedForADynamicTaskRunOfAnAttemptInterruptedForItsResubmission() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        processor.signalShutdownInterrupt();
+        processor.stop();
+        WorkerTask workerTask = workerTaskFor(EmitsForADynamicTaskRun.builder().type(EmitsForADynamicTaskRun.class.getName()).id("dynamic_task").fail(true).build());
+
+        processor.process(workerTask);
+
+        assertThat(recorded().emittedFor).doesNotContainKey(workerTask.getTaskRun().getId());
+    }
+
+    @Test
     void shouldReleaseTheLockedOutputsWhenAnAttemptFails() throws Exception {
         InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
         WorkerTaskProcessor processor = newProcessor(resultQueue);
@@ -1068,6 +1110,41 @@ class WorkerTaskProcessorTest {
         public VoidOutput run(RunContext runContext) throws Exception {
             runContext.assets().emit(new AssetEmit(List.of(), List.of(Custom.builder().id("emitted").type("custom").build())));
             return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class EmitsForADynamicTaskRun extends Task implements RunnableTask<VoidOutput> {
+        @Builder.Default
+        private boolean fail = false;
+
+        private String parentTaskRunId;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            String parentTaskRunId = this.parentTaskRunId != null ? this.parentTaskRunId : runContext.render("{{ taskrun.id }}");
+            TaskRun model = dynamicTaskRun(parentTaskRunId, "model." + "x".repeat(Task.ID_MAX_LENGTH));
+            runContext.assets().emitFor(model, new AssetEmit(List.of(), List.of(Custom.builder().id("model").type("custom").build())));
+            runContext.dynamicWorkerResult(List.of(WorkerTaskResult.builder().taskRun(model).build()));
+            runContext.assets().emitFor(dynamicTaskRun(parentTaskRunId, "never.registered"), new AssetEmit(List.of(), List.of(Custom.builder().id("ghost").type("custom").build())));
+            if (fail) {
+                throw new IllegalStateException("The task failed.");
+            }
+            return null;
+        }
+
+        private static TaskRun dynamicTaskRun(String parentTaskRunId, String taskId) {
+            return TaskRun.builder()
+                .id(IdUtils.create())
+                .namespace("io.kestra.unit-test")
+                .flowId("flow")
+                .executionId("execution")
+                .taskId(taskId)
+                .parentTaskRunId(parentTaskRunId)
+                .state(new State().withState(State.Type.SUCCESS))
+                .build();
         }
     }
 }

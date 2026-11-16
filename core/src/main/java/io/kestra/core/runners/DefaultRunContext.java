@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -33,6 +34,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -717,19 +719,32 @@ public class DefaultRunContext extends RunContext {
         if (this.assetEmitter == null) {
             synchronized (this) {
                 if (this.assetEmitter == null) {
-                    this.assetEmitter = assetManagerFactory.of(
-                        this,
-                        assetEmitContext,
-                        Optional.ofNullable(task).map(Task::getAssets)
-                            .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
-                            .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
-                            .orElse(false)
+                    this.assetEmitter = new DynamicTaskRunAssetEmitter(
+                        assetManagerFactory.of(
+                            this,
+                            assetEmitContext,
+                            Optional.ofNullable(task).map(Task::getAssets)
+                                .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
+                                .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
+                                .orElse(false)
+                        ),
+                        Optional.ofNullable(assetEmitContext).map(AssetEmitContext::taskRunId).orElse(null)
                     );
                 }
             }
         }
 
         return this.assetEmitter;
+    }
+
+    /**
+     * Sends what the task emitted on behalf of the dynamic task runs it registered, with those task runs as the executor receives them.
+     * Called once the attempt ends with a result, since the dynamic task runs only reach the executor with it.
+     */
+    public void emitAssetsOfDynamicTaskRuns() {
+        if (this.assetEmitter instanceof DynamicTaskRunAssetEmitter emitter) {
+            emitter.send(this.dynamicWorkerTaskResult, logger());
+        }
     }
 
     /**
@@ -855,5 +870,74 @@ public class DefaultRunContext extends RunContext {
      * @param alreadyUsed the ids of the assets whose usage this task run already recorded, which are only linked and written again
      */
     public record Declared(State.Type state, @Nullable Instant endDate, Set<String> alreadyUsed) {
+    }
+
+    /**
+     * Holds the emits made on behalf of dynamic task runs until {@link #emitAssetsOfDynamicTaskRuns()}, so they never name a task run the executor may never receive.
+     */
+    private static final class DynamicTaskRunAssetEmitter implements AssetEmitter {
+        private final AssetEmitter delegate;
+        @Nullable
+        private final String taskRunId;
+        private final List<Map.Entry<String, AssetEmit>> held = new CopyOnWriteArrayList<>();
+
+        private DynamicTaskRunAssetEmitter(AssetEmitter delegate, @Nullable String taskRunId) {
+            this.delegate = delegate;
+            this.taskRunId = taskRunId;
+        }
+
+        @Override
+        public void emit(AssetEmit assetEmit) throws QueueException {
+            delegate.emit(assetEmit);
+        }
+
+        @Override
+        public void emitFor(TaskRun dynamicTaskRun, AssetEmit assetEmit) {
+            if (taskRunId != null && !taskRunId.equals(dynamicTaskRun.getParentTaskRunId())) {
+                throw new IllegalArgumentException(
+                    "Cannot emit assets on behalf of task run '%s': it is not a dynamic task run of the emitting task run.".formatted(dynamicTaskRun.getId())
+                );
+            }
+            held.add(Map.entry(dynamicTaskRun.getId(), assetEmit));
+        }
+
+        @Override
+        public List<AssetEmit> emitted() {
+            return delegate.emitted();
+        }
+
+        @Override
+        public List<String> failures() {
+            return delegate.failures();
+        }
+
+        @Override
+        public List<String> lockRefusals() {
+            return delegate.lockRefusals();
+        }
+
+        private void send(List<WorkerTaskResult> registered, Logger logger) {
+            Map<String, TaskRun> registeredById = new HashMap<>();
+            registered.stream().map(WorkerTaskResult::getTaskRun).filter(Objects::nonNull).forEach(taskRun -> registeredById.put(taskRun.getId(), taskRun));
+            try {
+                for (Map.Entry<String, AssetEmit> emit : held) {
+                    TaskRun dynamicTaskRun = registeredById.get(emit.getKey());
+                    if (dynamicTaskRun == null) {
+                        logger.warn("The assets emitted on behalf of task run '{}' are dropped because the task never registered it as a dynamic task run.", emit.getKey());
+                        continue;
+                    }
+                    try {
+                        delegate.emitFor(dynamicTaskRun, emit.getValue());
+                    } catch (UnsupportedOperationException e) {
+                        logger.debug("Asset emission is not supported in this edition, the assets of the dynamic task runs are skipped.");
+                        return;
+                    } catch (Exception e) {
+                        logger.warn("Unable to send the assets emitted on behalf of task run '{}'.", emit.getKey(), e);
+                    }
+                }
+            } finally {
+                held.clear();
+            }
+        }
     }
 }

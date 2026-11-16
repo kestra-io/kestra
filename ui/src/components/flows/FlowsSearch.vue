@@ -736,11 +736,12 @@
             })
 
             if (
-                selectedTypes.value.includes("flows") &&
+                selectedTypes.value.length > 0 &&
                 !anyCountingSelected.value &&
                 summaryMatchCount.value === 0
             ) {
-                await crossResourceSearchStore.searchFlowSuggestion({
+                await crossResourceSearchStore.searchSuggestion({
+                    types: selectedTypes.value,
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,

@@ -96,6 +96,16 @@ export interface FlowsSearchParams {
     scope: SourceSearchScope;
 }
 
+export interface SuggestionSearchParams {
+    query: string;
+    namespace?: string;
+    types?: SearchResourceType[];
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope;
+}
+
 export interface CrossResourceSearchParams {
     types: SearchResourceType[];
     query: string;
@@ -157,7 +167,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
+    async function searchSuggestion(params: SuggestionSearchParams, gen: number): Promise<void> {
         if (!isCurrent(gen)) return
 
         suggestedQuery.value = null
@@ -168,26 +178,80 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         if (!alternativeQuery) return
 
+        const types = params.types ?? ["flows", "files", "kv", "secrets"]
+
+        const checkFlows = async (): Promise<boolean> => {
+            if (!types.includes("flows")) return false
+            try {
+                const response = await FlowsAPI.searchFlowsBySourceCode({
+                    caseSensitive: params.caseSensitive,
+                    wholeWord: params.wholeWord,
+                    regex: params.regex,
+                    scope: params.scope,
+                    page: 1,
+                    size: 1,
+                    q: alternativeQuery,
+                    namespace: params.namespace,
+                })
+                return (response.results ?? []).length > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkSecrets = async (): Promise<boolean> => {
+            if (!types.includes("secrets")) return false
+            try {
+                const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: alternativeQuery}]
+                if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+
+                const response = await SecretsAPI.listSecrets({filters, page: 1, size: 1})
+                return (response.results ?? []).length > 0 || (response.total ?? 0) > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkKv = async (): Promise<boolean> => {
+            if (!types.includes("kv")) return false
+            try {
+                const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: alternativeQuery}]
+                if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
+
+                const response = await KvAPI.listAllKeys({filters, page: 1, size: 1})
+                return (response.results ?? []).length > 0 || (response.total ?? 0) > 0
+            } catch {
+                return false
+            }
+        }
+
+        const checkFiles = async (): Promise<boolean> => {
+            if (!types.includes("files") || !params.namespace) return false
+            try {
+                const paths = await FilesAPI.searchNamespaceFiles({namespace: params.namespace, q: alternativeQuery})
+                return (paths ?? []).length > 0
+            } catch {
+                return false
+            }
+        }
+
         try {
-            const response = await FlowsAPI.searchFlowsBySourceCode({
-                caseSensitive: params.caseSensitive,
-                wholeWord: params.wholeWord,
-                regex: params.regex,
-                scope: params.scope,
-                page: 1,
-                size: 1,
-                q: alternativeQuery,
-                namespace: params.namespace,
-            })
-
+            const results = await Promise.all([checkFlows(), checkSecrets(), checkKv(), checkFiles()])
             if (!isCurrent(gen)) return
-            if ((response.results ?? []).length === 0) return
 
-            suggestedQuery.value = alternativeQuery
+            if (results.some(Boolean)) {
+                suggestedQuery.value = alternativeQuery
+            } else {
+                suggestedQuery.value = null
+            }
         } catch {
             if (!isCurrent(gen)) return
             suggestedQuery.value = null
         }
+    }
+
+    function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
+        return searchSuggestion({...params, types: ["flows"]}, gen)
     }
 
     function setNamespaceFileState(state: NamespaceFileState, gen: number) {
@@ -467,6 +531,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         search,
         searchFlows,
         searchFlowSuggestion,
+        searchSuggestion,
         suggestedQuery,
         searchFiles,
         searchKv,

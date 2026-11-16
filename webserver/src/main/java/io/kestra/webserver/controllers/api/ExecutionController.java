@@ -1512,7 +1512,7 @@ public class ExecutionController {
 
         executionReplayService.validateReplay(execution, taskRunId, revision);
 
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1550,8 +1550,10 @@ public class ExecutionController {
 
             Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            String newExecutionId = IdUtils.create();
+
+            return flowInputOutput.readExecutionInputs(flow, current.toBuilder().id(newExecutionId).build(), inputs)
+                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints)));
         });
     }
 
@@ -1574,14 +1576,13 @@ public class ExecutionController {
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var newExecutionId = IdUtils.create();
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();

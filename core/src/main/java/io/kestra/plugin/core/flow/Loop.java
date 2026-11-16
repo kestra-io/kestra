@@ -338,8 +338,23 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!isMySubExecution(execution, parentTaskRun)) {
-            // Not in this loop's own sub-execution — state is managed by the LoopExecutionEventMessageHandler.
-            return Optional.empty();
+            // A zero-iteration loop runs its finally tasks in the parent execution. Its state is
+            // therefore resolved like a sequential flowable once those task runs exist.
+            if (!hasEmptyLoopFinallyTaskRuns(execution, parentTaskRun)) {
+                // Not in this loop's own sub-execution — state is managed by the LoopExecutionEventMessageHandler.
+                return Optional.empty();
+            }
+
+            return FlowableUtils.resolveSequentialState(
+                execution,
+                Collections.emptyList(),
+                FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+                FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+                parentTaskRun,
+                runContext,
+                this.isAllowFailure(),
+                this.isAllowWarning()
+            );
         }
 
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
@@ -359,10 +374,20 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!isMySubExecution(execution, parentTaskRun)) {
-            // We are not in this loop's own sub-execution (either we're in the main execution,
-            // or in a parent loop's sub-execution), so we don't resolve any next tasks to
-            // avoid executing subtasks outside of the dedicated loop iteration execution.
-            return Collections.emptyList();
+            if (!hasEmptyLoopFinallyTaskRuns(execution, parentTaskRun)) {
+                // We are not in this loop's own sub-execution (either we're in the main execution,
+                // or in a parent loop's sub-execution), so we don't resolve any next tasks to
+                // avoid executing subtasks outside of the dedicated loop iteration execution.
+                return Collections.emptyList();
+            }
+
+            return FlowableUtils.resolveSequentialNexts(
+                execution,
+                Collections.emptyList(),
+                FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                FlowableUtils.resolveTasks(this._finally, parentTaskRun),
+                parentTaskRun
+            );
         }
 
         return FlowableUtils.resolveSequentialNexts(
@@ -372,6 +397,11 @@ public class Loop extends AbstractBranch<Loop.Output> {
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun
         );
+    }
+
+    private boolean hasEmptyLoopFinallyTaskRuns(Execution execution, TaskRun parentTaskRun) {
+        List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
+        return finallyTasks != null && !execution.findTaskRunByTasks(finallyTasks, parentTaskRun).isEmpty();
     }
 
     /**

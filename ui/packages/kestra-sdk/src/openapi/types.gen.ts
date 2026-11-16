@@ -1793,7 +1793,7 @@ export type Output = {
     value: {
         [key: string]: unknown;
     } | string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
@@ -1810,11 +1810,13 @@ export type OutputControllerTaskOutputInformation = {
 export type OutputForExecution = {
     id: string;
     description?: string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
 };
+
+export type OutputType = 'STRING' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'YAML' | 'UNKNOWN';
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.

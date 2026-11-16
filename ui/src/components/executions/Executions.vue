@@ -343,7 +343,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="item.code" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="item.code" />
                         <i18n-t keypath="mark as" tag="span" scope="global">
                             <template #status><code>{{ item.code }}</code></template>
                         </i18n-t>
@@ -386,7 +386,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="state" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>

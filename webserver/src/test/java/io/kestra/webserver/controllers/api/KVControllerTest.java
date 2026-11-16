@@ -389,14 +389,15 @@ class KVControllerTest {
         assertThat(kvStore().getValue("my-key").get().value()).isEqualTo(value);
     }
 
-    @Test
-    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"PT9223372036854775807S", "P3000000D"})
+    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate(String ttl) throws IOException {
         HttpClientResponseException exception = Assertions.assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
                 HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "value")
                     .contentType(MediaType.TEXT_PLAIN)
-                    .header("ttl", "PT9223372036854775807S")
+                    .header("ttl", ttl)
             )
         );
 

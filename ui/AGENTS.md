@@ -112,7 +112,7 @@ Reject (or ask to fix) anything that:
 Every async surface must render all four states. "Happy path only" is a bug.
 
 - **Loading:** `KsSkeleton` for content placeholders; `vKsLoading` directive for sections that already have layout; `KsLoading` component for full-page or container-level spinners.
-- **Empty:** `KsEmpty` with an action where possible — never a blank screen.
+- **Empty:** `KsNoData` with an action next to it where possible — never a blank screen. A page-level empty state with its own illustration uses `KsEmptyState`.
 - **Error:** `KsAlert type="error"` with retry affordance, or `KsMessage` for transient errors.
 - **Success / data:** the actual content.
 
@@ -436,7 +436,9 @@ If your `<style>` block needs to exist:
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
 | `KsPagination` | Pagination controls |
-| `KsEmpty` | Empty state placeholder |
+| `KsNoData` | Default empty state: an icon, a title and a description (`icon`, `title`, `description`, or the default slot for the description) |
+| `KsEmptyState` | Page-level empty state: an illustration (`image`), a title, a description, an `#action` slot and a `learnMore` link |
+| `KsEmpty` | Deprecated since 2.0 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |

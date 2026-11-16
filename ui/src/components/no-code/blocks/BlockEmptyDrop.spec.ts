@@ -35,6 +35,9 @@ describe("BlockEmptyDrop", () => {
         expect(classes).toContain("block-empty-drop--empty")
         expect(classes).not.toContain("block-empty-drop--inline")
         expect(classes.filter((name) => name.startsWith("block-empty-drop--drop-"))).toEqual([])
+
+        expect(mountDrop({dropState: "allowed"}).classes()).toContain("block-empty-drop--drop-allowed")
+        expect(mountDrop({dropState: "forbidden"}).classes()).toContain("block-empty-drop--drop-forbidden")
     })
 
     test("adds the required modifier only when required", () => {

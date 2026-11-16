@@ -6,12 +6,14 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.utils.TypeConverter;
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public final class SearchableDataUtils {
@@ -90,7 +92,36 @@ public final class SearchableDataUtils {
             throw new IllegalArgumentException("The data '%s' cannot be searchable because its type %s is not supported.".formatted(data.getId(), typeOf(data)));
         }
 
-        return value.toString();
+        Object type = arrayItem && data instanceof ItemTypeInterface typed && typed.getItemType() != null ? typed.getItemType() : typeOf(data);
+        if (type instanceof Type) {
+            return switch (type) {
+                case Type.DATETIME -> TypeConverter.toInstant(value).toString();
+                case Type.DATE -> TypeConverter.toLocalDate(value).toString();
+                case Type.TIME -> DateTimeFormatter.ISO_LOCAL_TIME.format(TypeConverter.toLocalTime(value));
+                case Type. DURATION -> toDuration(value).toString();
+                default -> value.toString();
+            };
+        } else if (type instanceof OutputType) {
+            return switch (type) {
+                case OutputType.DATETIME -> TypeConverter.toInstant(value).toString();
+                case OutputType.DATE -> TypeConverter.toLocalDate(value).toString();
+                case OutputType.TIME -> DateTimeFormatter.ISO_LOCAL_TIME.format(TypeConverter.toLocalTime(value));
+                case OutputType.DURATION -> toDuration(value).toString();
+                default -> value.toString();
+            };
+        } else {
+            throw new IllegalArgumentException("Unknow data type: " + Optional.ofNullable(type).map(it -> it.getClass().getName()).orElse("null"));
+        }
+
+    }
+
+    // A serialized output carries a duration as decimal seconds, an input as a Duration.
+    private static Duration toDuration(Object value) {
+        if (value instanceof Number number) {
+            BigDecimal seconds = new BigDecimal(number.toString());
+            return Duration.ofSeconds(seconds.longValue(), seconds.remainder(BigDecimal.ONE).movePointRight(9).longValue());
+        }
+        return TypeConverter.toDuration(value);
     }
 
     private static boolean isArray(Data data) {

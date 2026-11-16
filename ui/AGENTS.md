@@ -438,7 +438,7 @@ If your `<style>` block needs to exist:
 | `KsPagination` | Pagination controls |
 | `KsNoData` | Default empty state: an icon, a title and a description (`icon`, `title`, `description`, or the default slot for the description) |
 | `KsEmptyState` | Page-level empty state: an illustration (`image`), a title, a description, an `#action` slot and a `learnMore` link |
-| `KsEmpty` | Deprecated since 2.1 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
+| `KsEmpty` | Deprecated since 2.0 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |

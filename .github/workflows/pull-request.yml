@@ -117,7 +117,7 @@ jobs:
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_repo":"${{ github.repository }}"}
 
   file-changes:
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ true }} # tmp: let the trial run on a draft
     name: File changes detection
     runs-on: ubuntu-latest
     timeout-minutes: 60

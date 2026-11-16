@@ -124,8 +124,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 terminatedByState.merge(message.state().name(), 1, Integer::sum);
                 int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> taskOutputs = outputs.get(Loop.OUTPUTS_OUTPUT) instanceof List<?> current
-                    ? new ArrayList<>((List<Map<String, Object>>) current)
+                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT)
+                    ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT)
                     : new ArrayList<>();
                 if (!MapUtils.isEmpty(message.outputs())) {
                     taskOutputs.add(buildIterationOutput(message));
@@ -345,7 +345,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (offset != null) {
             outputs.put(Loop.NEXT_OFFSET_OUTPUT, offset);
         }
-        if (!taskOutputs.isEmpty() || outputs.containsKey(Loop.OUTPUTS_OUTPUT)) {
+        if (!taskOutputs.isEmpty()) {
             outputs.put(Loop.OUTPUTS_OUTPUT, taskOutputs);
         }
         if (taskRunStatistic.count() > 0) {

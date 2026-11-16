@@ -3135,7 +3135,7 @@ public class ExecutionController {
      * Looks the execution up without blocking a thread, retrying for up to 10 seconds as it may not be indexed yet.
      * Emits a 404 {@link HttpStatusException} when it never shows up.
      */
-    private Mono<Execution> awaitExecution(String tenant, String executionId) {
+    protected Mono<Execution> awaitExecution(String tenant, String executionId) {
         return Mono.defer(() -> Mono.justOrEmpty(executionRepository.findById(tenant, executionId)))
             .subscribeOn(Schedulers.boundedElastic())
             .switchIfEmpty(Mono.error(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId)))

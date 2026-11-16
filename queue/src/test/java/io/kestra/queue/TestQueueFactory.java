@@ -34,12 +34,7 @@ public class TestQueueFactory {
 
     @QueueBean
     public VNodeDispatchQueueInterface<AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch> vNodeDispatchQueue(QueueFactoryInterface queueFactory) {
-        return queueFactory.vNodeDispatchQueue(AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch.class, AbstractVNodeDispatchQueueTest.VNODE_COUNT);
-    }
-
-    @QueueBean
-    public VNodeDispatchQueueInterface<AbstractVNodeDispatchQueueTest.TestSmallVNodeDispatch> smallVNodeDispatchQueue(QueueFactoryInterface queueFactory) {
-        return queueFactory.vNodeDispatchQueue(AbstractVNodeDispatchQueueTest.TestSmallVNodeDispatch.class, AbstractVNodeDispatchQueueTest.SMALL_VNODE_COUNT);
+        return queueFactory.vNodeDispatchQueue(AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch.class);
     }
 
     @QueueBean

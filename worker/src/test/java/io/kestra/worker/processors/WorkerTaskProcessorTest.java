@@ -248,7 +248,33 @@ class WorkerTaskProcessorTest {
             .containsEntry("value", "produced")
             .containsEntry(Asset.STATUS_METADATA_KEY, "active");
         assertThat(end.emit().lock()).isFalse();
-        assertThat(recorded().finished).containsEntry(taskRun.getId(), State.Type.SUCCESS);
+        assertThat(recorded().finishes.get(taskRun.getId())).satisfies(finish ->
+        {
+            assertThat(finish.state()).isEqualTo(State.Type.SUCCESS);
+            assertThat(finish.startDate()).isEqualTo(start.startDate());
+            assertThat(finish.used().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input", "produced-source");
+            assertThat(finish.used().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs", "produced-host");
+        });
+    }
+
+    @Test
+    void shouldSendTheLineageOfTheAssetsAPluginEmittedWhenItsAttemptEnds() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        EmitsWhileRunning task = EmitsWhileRunning.builder()
+            .type(EmitsWhileRunning.class.getName())
+            .id("emitting_task")
+            .assets(new AssetsDeclaration(Property.ofValue(true), null, null, null))
+            .build();
+
+        processor.process(workerTaskFor(task));
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().finishes.get(taskRun.getId())).satisfies(finish ->
+        {
+            assertThat(finish.state()).isEqualTo(State.Type.SUCCESS);
+            assertThat(finish.used().outputs()).extracting(Asset::getId).containsExactly("emitted");
+        });
     }
 
     @Test

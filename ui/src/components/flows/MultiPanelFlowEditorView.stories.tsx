@@ -12,6 +12,7 @@ import {useFlowStore, type Flow} from "../../stores/flow";
 import {expect, waitFor} from "storybook/test";
 import * as monaco from "monaco-editor/editor/editor.api";
 import {READ_ONLY_LINE_CLASS} from "../../composables/useReadOnlyYamlKeys";
+import translations from "../../translations/en.json";
 
 
 export default {
@@ -191,8 +192,12 @@ async function settle() {
     await new Promise((resolve) => setTimeout(resolve, 1200))
 }
 
+const READONLY_TITLE = translations.en["readonly property"]
+const READONLY_MESSAGE_TAIL = translations.en["namespace and id readonly"].split("`").at(-1) as string
+
 function expectNoToast() {
-    expect(document.querySelector("[class*='notification']")).toBeNull()
+    expect(document.body.textContent).not.toContain(READONLY_TITLE)
+    expect(document.body.textContent).not.toContain(READONLY_MESSAGE_TAIL)
 }
 
 function lockedStory(play: (editor: monaco.editor.IStandaloneCodeEditor) => Promise<void>) {

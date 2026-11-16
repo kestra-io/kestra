@@ -24,7 +24,6 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
@@ -130,13 +129,12 @@ public class KVController {
     @Put(uri = "/namespaces/{namespace}/kv/{key}", consumes = { MediaType.TEXT_PLAIN })
     @Operation(tags = { "KV" }, summary = "Puts a key-value pair in store")
     public void setKeyValue(
-        HttpHeaders httpHeaders,
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key,
+        @Parameter(description = "The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)") @Nullable @Header("ttl") Duration ttl,
+        @Parameter(description = "The description of the key") @Nullable @Header("description") String description,
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
-        String description = httpHeaders.get("description");
-        String ttl = httpHeaders.get("ttl");
-        KVMetadata metadata = new KVMetadata(description, ttl == null ? null : Duration.parse(ttl));
+        KVMetadata metadata = new KVMetadata(description, ttl);
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);

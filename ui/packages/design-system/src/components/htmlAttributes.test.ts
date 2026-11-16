@@ -5,7 +5,6 @@ import * as DS from "../index"
 
 type Case = [name: string, props?: Record<string, unknown>, wrap?: (child: () => ReturnType<typeof h>) => Component]
 
-// Wrappers whose props type the HTML attributes with `@vue-ignore` and forward `$attrs` themselves.
 const CASES: Case[] = [
     ["KsButton"],
     ["KsIconButton"],
@@ -27,6 +26,10 @@ const CASES: Case[] = [
     ["KsRadioGroup"],
     ["KsDataTable", {loadData: async () => ({results: [], total: 0}), currentPage: 1, pageSize: 25}],
     ["KsSplitterPanel", {}, (child) => defineComponent({render: () => h(DS.KsSplitter, null, () => child())})],
+    ["KsDropdownItem", {}, (child) => defineComponent({render: () => h(DS.KsDropdown, {persistent: true}, {default: () => h("button"), dropdown: () => h(DS.KsDropdownMenu, null, () => child())})})],
+    ["KsSideBar"],
+    ["KsNoData"],
+    ["KsDrillRow", {label: "row"}],
 ]
 
 let unmount: (() => void) | undefined

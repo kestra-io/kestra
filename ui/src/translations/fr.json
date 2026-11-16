@@ -2009,11 +2009,16 @@
       "description": "Description",
       "descriptionPlaceholder": "Décrire ce secret",
       "tags": "Tags",
-      "addTag": "Ajouter une étiquette"
+      "addTag": "Ajouter une étiquette",
+      "value_hidden": "Masqué. Les valeurs Secret ne sont jamais affichées.",
+      "pebble_expression": "Expression Pebble"
     },
     "workerId": "Worker Id",
     "key_usages": {
       "title": "Utilisé par",
+      "title_count": "Utilisé par {count} flow | Utilisé par {count} flows",
+      "show_more": "Afficher {count} de plus",
+      "rotation": "La rotation de ce Secret modifie ce que ce Flow lit lors de sa prochaine exécution. | La rotation de ce Secret modifie ce que ces {count} Flows lisent lors de leur prochaine exécution.",
       "open_source_search": "Ouvrir dans la recherche source",
       "line": "Ligne {line}",
       "error": "Impossible de rechercher les sources du Flow.",

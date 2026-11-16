@@ -2009,11 +2009,16 @@
       "description": "Opis",
       "descriptionPlaceholder": "Opisz ten sekret",
       "tags": "Tagi",
-      "addTag": "Dodaj tag"
+      "addTag": "Dodaj tag",
+      "value_hidden": "Ukryte. Wartości sekretów nigdy nie są wyświetlane.",
+      "pebble_expression": "Wyrażenie Pebble"
     },
     "workerId": "ID Workera",
     "key_usages": {
       "title": "Używane przez",
+      "title_count": "Używany przez {count} Flow | Używane przez {count} Flowy | Używane przez {count} Flowów",
+      "show_more": "Pokaż {count} więcej",
+      "rotation": "Obrócenie tego sekretu zmienia to, co ten Flow odczytuje podczas następnego uruchomienia. | Obrócenie tego sekretu zmienia to, co te {count} Flowy odczytują podczas następnego uruchomienia. | Obrócenie tego sekretu zmienia to, co te {count} Flowów odczytuje podczas następnego uruchomienia.",
       "open_source_search": "Otwórz w wyszukiwaniu źródłowym",
       "line": "Linia {line}",
       "error": "Nie można wyszukać źródeł Flow.",

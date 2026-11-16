@@ -34,6 +34,7 @@
 
 <script setup lang="ts">
     import {computed, useAttrs} from "vue"
+    import type {Placement} from "element-plus"
     import KsButton from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
@@ -43,7 +44,7 @@
 
     const props = withDefaults(defineProps<{
         tooltip?: string
-        placement?: string
+        placement?: Placement
         ariaLabel?: string
         disabled?: boolean
         to?: string | Record<string, unknown>

@@ -261,7 +261,7 @@
             executionId: props.execution.id,
             filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
-            Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
+            Utils.downloadBlob(new Blob([response as BlobPart]), downloadNameFor(currentTaskRunId))
         })
     }
 

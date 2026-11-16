@@ -315,6 +315,7 @@
       "ongoing": "进行中",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "正在删除 {count} 个执行",
           "EXECUTION_KILL": "正在终止 {count} 个执行",
           "EXECUTION_PAUSE": "正在暂停 {count} 个执行",
           "EXECUTION_RESUME": "正在恢复 {count} 个执行",
@@ -331,6 +332,25 @@
           "BACKFILL_PAUSE": "正在暂停 {count} 个 backfill",
           "BACKFILL_RESUME": "正在恢复 {count} 个 backfill",
           "BACKFILL_DELETE": "正在删除 {count} 个 backfill"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "已请求删除 {count} 个执行",
+          "EXECUTION_KILL": "已请求终止 {count} 个执行 | 已请求终止 {count} 个执行",
+          "EXECUTION_PAUSE": "已请求暂停 {count} 个执行",
+          "EXECUTION_RESUME": "已请求恢复 {count} 个执行",
+          "EXECUTION_RESTART": "已请求重启 {count} 个执行",
+          "EXECUTION_REPLAY": "已请求重放 {count} 个执行",
+          "EXECUTION_FORCE_RUN": "已请求强制运行 {count} 个执行",
+          "EXECUTION_UNQUEUE": "已请求取消排队 {count} 个执行 | 已请求取消排队 {count} 个执行",
+          "EXECUTION_CHANGE_STATUS": "已请求更改 {count} 个执行的状态",
+          "EXECUTION_SET_LABELS": "已请求更新 {count} 个执行的 label",
+          "TRIGGER_UNLOCK": "已请求解锁 {count} 个 trigger | 已请求解锁 {count} 个 trigger",
+          "TRIGGER_DELETE": "已请求删除 {count} 个 trigger | 已请求删除 {count} 个 trigger",
+          "TRIGGER_DISABLE": "已请求禁用 {count} 个 trigger | 已请求禁用 {count} 个 trigger",
+          "TRIGGER_ENABLE": "已请求启用 {count} 个 trigger | 已请求启用 {count} 个 trigger",
+          "BACKFILL_PAUSE": "已请求暂停 {count} 个 backfill | 已请求暂停 {count} 个 backfill",
+          "BACKFILL_RESUME": "已请求恢复 {count} 个 backfill | 已请求恢复 {count} 个 backfill",
+          "BACKFILL_DELETE": "已请求删除 {count} 个 backfill | 已请求删除 {count} 个 backfill"
         },
         "processed": "已处理 {count} 个",
         "rejected": "已拒绝 {count} 个",
@@ -2389,6 +2409,9 @@
         "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
+      "dataFrom": "更新于 {date}",
+      "dataUnavailable": "数据不可用",
+      "dataTruncated": "输出文件已截断为前 {rows} 行。有关更多详细信息，请参阅文档。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2539,7 +2562,9 @@
         "unavailable": {
           "title": "AI Copilot 不可用",
           "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
-          "docs": "查看文档"
+          "docs": "查看文档",
+          "sendTooltip": "发送已禁用，因为未配置 AI provider。",
+          "notSent": "您的提示未发送"
         },
         "thinkingWords": [
           "编排",

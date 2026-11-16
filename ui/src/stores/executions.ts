@@ -522,7 +522,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & DeleteExecutionOptions) => {
         const {executionsId, ...rest} = options
-        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest})
+        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest, async: true})
     }
 
     const queryDeleteExecution = (options: FilterQuery & DeleteExecutionOptions) => {
@@ -532,6 +532,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             deleteLogs: options.deleteLogs,
             deleteMetrics: options.deleteMetrics,
             deleteStorage: options.deleteStorage,
+            async: true,
         })
     }
 
@@ -733,10 +734,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
-            Utils.downloadUrl(
-                window.URL.createObjectURL(new Blob([text])),
-                executionLogsDownloadFilename(options.executionId, new Date()),
-            )
+            Utils.downloadBlob(new Blob([text]), executionLogsDownloadFilename(options.executionId, new Date()))
         })
     }
 
@@ -985,8 +983,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return !!executionId && !!reusedTaskRuns.value[executionId]?.taskRunIds.includes(taskRunId)
     }
 
-    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], logs: LogEntry[]) => {
-        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs}}
+    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], reusedLogs: LogEntry[]) => {
+        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs: reusedLogs}}
     }
 
     const clearReusedTaskRuns = () => {
@@ -1011,14 +1009,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const exportExecutionsAsCSV = async (params: FilterQuery) => {
         const data = await ExecutionsAPI.exportExecutions({filters: routeQueryToQueryFilters(params)}, {headers: {Accept: "text/csv"}, parseAs: "text"})
-        const url = window.URL.createObjectURL(new Blob([data as unknown as string]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "executions.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
+        Utils.downloadBlob(new Blob([data as unknown as string]), "executions.csv")
     }
 
     return {

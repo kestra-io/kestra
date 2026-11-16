@@ -26,6 +26,20 @@ describe("ChartLegend", () => {
         expect(wrapper.text()).toContain("Error (61)")
     })
 
+    test("lists ranked items first and shows their display name as written", () => {
+        const wrapper = mount(ChartLegend, {
+            props: {
+                items: [
+                    {label: "by_priority.medium", color: "#f9a825", count: 20},
+                    {label: "by_priority.low", color: "#12a072", count: 9, rank: 1, displayName: "Low"},
+                    {label: "by_priority.critical", color: "#cc1d1f", count: 7, rank: 0, displayName: "SLA critical"},
+                ],
+            },
+        })
+
+        expect(wrapper.text()).toMatch(/SLA critical \(7\).*Low \(9\).*By_priority\.medium \(20\)/)
+    })
+
     test("renders duration aggregations through the provided formatter", () => {
         const wrapper = mount(ChartLegend, {
             props: {

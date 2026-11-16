@@ -186,3 +186,41 @@ export function scopePropertySuggestionsToTaskType<T extends {label: string; kin
     const valid = new Set(validPropertyKeys)
     return suggestions.filter((suggestion) => suggestion.kind !== propertyKind || valid.has(suggestion.label))
 }
+
+/**
+ * Collapses property-key suggestions sharing a label into one plain `key: ` suggestion. Monaco YAML emits one per
+ * schema branch whose insert snippet differs (a key typed `string` in one input type and `array` in another), which
+ * reads as the same key listed several times while no `type` narrows the branches.
+ */
+export function mergeDuplicatePropertySuggestions<T extends {label: string; kind?: number; insertText: string}>({
+    suggestions,
+    propertyKind,
+}: {
+    suggestions: T[];
+    propertyKind: number;
+}): T[] {
+    const countByLabel = new Map<string, number>()
+    const indentByLabel = new Map<string, string>()
+    for (const suggestion of suggestions) {
+        if (suggestion.kind === propertyKind) {
+            countByLabel.set(suggestion.label, (countByLabel.get(suggestion.label) ?? 0) + 1)
+            // The worker prefixes the space after a bare list dash on some branches only, so keep the widest prefix.
+            const indent = suggestion.insertText.match(/^\s*/)?.[0] ?? ""
+            if (indent.length > (indentByLabel.get(suggestion.label) ?? "").length) {
+                indentByLabel.set(suggestion.label, indent)
+            }
+        }
+    }
+
+    const seen = new Set<string>()
+    return suggestions.flatMap((suggestion) => {
+        if (suggestion.kind !== propertyKind || countByLabel.get(suggestion.label) === 1) {
+            return [suggestion]
+        }
+        if (seen.has(suggestion.label)) {
+            return []
+        }
+        seen.add(suggestion.label)
+        return [{...suggestion, insertText: `${indentByLabel.get(suggestion.label) ?? ""}${suggestion.label}: `}]
+    })
+}

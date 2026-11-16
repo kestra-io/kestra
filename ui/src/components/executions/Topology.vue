@@ -13,7 +13,6 @@
                 :horizontalDefault="horizontalDefault"
                 isReadOnly
                 @follow="$emit('follow', $event)"
-                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />

@@ -46,10 +46,8 @@
 
                 <KsAlert v-if="error" type="error" :title="$t('executionsTimeline.error.title')" :description="error" :closable="false" />
 
-                <KsEmpty v-else-if="rows.length === 0">
-                    <template #description>
-                        {{ $t("executionsTimeline.empty.description") }}
-                    </template>
+                <template v-else-if="rows.length === 0">
+                    <KsNoData :description="$t('executionsTimeline.empty.description')" />
                     <div class="empty-actions">
                         <KsButton @click="emit('reset-filters')">
                             {{ $t("executionsTimeline.empty.resetFilters") }}
@@ -58,7 +56,7 @@
                             {{ $t("executionsTimeline.empty.widenRange") }}
                         </KsButton>
                     </div>
-                </KsEmpty>
+                </template>
 
                 <template v-else>
                     <div class="timeline-axis">

@@ -41,6 +41,12 @@ describe("MixinTask", () => {
         expect(wrapper.vm.isRequired("id")).toBeFalsy()
     })
 
+    test("isRequired is falsy when the schema has no required list", () => {
+        const wrapper = mountHost({schema: {type: "object"}})
+
+        expect(wrapper.vm.isRequired("id")).toBeFalsy()
+    })
+
     test("values returns modelValue when it is set", () => {
         const wrapper = mountHost({modelValue: "hello", schema: {default: "x"}})
 

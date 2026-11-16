@@ -35,6 +35,7 @@ import {
 } from "./subflowLinkProvider"
 import {
     filterMissingRequiredTaskProperties,
+    mergeDuplicatePropertySuggestions,
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
@@ -327,19 +328,20 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
-            // Monaco YAML derives property suggestions from the union of every task type, so a task
-            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
-            let scopedSuggestions = suggestions
+            let scopedSuggestions = mergeDuplicatePropertySuggestions({
+                suggestions,
+                propertyKind: monaco.languages.CompletionItemKind.Property,
+            })
             if (!isTypeValueContext) {
                 const task = taskIdentityAtCursor({
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
-                // task shape but carry types like `STRING`, which would 404 on every keystroke.
-                const scopeKey = task && task.type.includes(".")
-                    ? `${task.type}@${task.version ?? ""}`
-                    : undefined
+                // The flow schema describes a single version of each plugin, so a task pinning a
+                // `version` is scoped against that version's documentation instead.
+                // Guard on dotted FQCNs to skip 404s for enum types like MAX_DURATION.
+                const isPluginType = task?.type.includes(".")
+                const scopeKey = task?.version && isPluginType ? `${task.type}@${task.version}` : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
@@ -352,7 +354,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         })
                         const properties = pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
-                            suggestions,
+                            suggestions: scopedSuggestions,
                             validPropertyKeys: properties ? Object.keys(properties) : undefined,
                             propertyKind: monaco.languages.CompletionItemKind.Property,
                         })

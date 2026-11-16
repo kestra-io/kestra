@@ -6,6 +6,7 @@ import vue from "@vitejs/plugin-vue"
 
 import {loaderFragment} from "./plugins/loaderFragment.js"
 import {devBootStatus} from "./plugins/devBootStatus.js"
+import {rapidocStandalone} from "./plugins/rapidocStandalone.js"
 
 /** The Vite config ui/ and ui-ee/ both extend, so a singleton deduped here is deduped in both editions.
  * @param {{root: string, mode: string, apiProxyPath: string}} options `root` is the extending project, `apiProxyPath` the proxy key for API calls */
@@ -38,6 +39,7 @@ export function baseConfig({root, mode, apiProxyPath}) {
         plugins: [
             loaderFragment(),
             devBootStatus(target),
+            rapidocStandalone(),
             vue({
                 template: {
                     compilerOptions: {

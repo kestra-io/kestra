@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeAll, afterAll, beforeEach} from "vitest"
+import {assert, describe, it, expect, vi, beforeAll, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 // Bulk restart goes through the generated SDK (ExecutionsAPI.restartExecutionsBy*), not through
@@ -6,9 +6,7 @@ import {setActivePinia, createPinia} from "pinia"
 // uses. configureClient() is what installs the real querySerializer — the one that knows how to
 // turn a QueryFilter[] into PHP-style `filters[field][OP]` params — so going through it keeps this
 // test honest about what the app sends on the wire.
-// Typed with varargs so `fetchSpy.mock.calls[0]?.[0]` type-checks; an argless `vi.fn(() => …)`
-// infers zero-length call tuples and trips TS2493 under vue-tsc.
-const fetchSpy = vi.fn(async (..._args: any[]) => new Response(JSON.stringify({count: 1}), {
+const fetchSpy = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({count: 1}), {
     status: 200,
     headers: {"content-type": "application/json"},
 }))
@@ -40,7 +38,8 @@ let useExecutionsStore: typeof import("./executions")["useExecutionsStore"]
 
 /** The Request the generated client handed to fetch, plus its parsed URL. */
 function lastRequest() {
-    const request = fetchSpy.mock.calls[0]?.[0] as unknown as Request
+    const request = fetchSpy.mock.calls[0]?.[0]
+    assert.instanceOf(request, Request)
     return {request, url: new URL(request.url)}
 }
 

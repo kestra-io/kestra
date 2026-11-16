@@ -162,6 +162,18 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
+    @ExecuteFlow(value = "flows/valids/retry-flowable-errors-task.yaml", timeout = "PT20S")
+    void shouldRetryTaskWhenItIsInFlowableErrors(Execution execution) {
+        retryCaseTest.shouldRetryTaskWhenItIsInFlowableErrors(execution);
+    }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/retry-flowable-finally-task.yaml", timeout = "PT20S")
+    void shouldRetryTaskWhenItIsInFlowableFinally(Execution execution) {
+        retryCaseTest.shouldRetryTaskWhenItIsInFlowableFinally(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/retry-flowable-behavior.yaml")
     void retryFlowableBehavior(Execution execution) {
         retryCaseTest.retryFlowableBehavior(execution);

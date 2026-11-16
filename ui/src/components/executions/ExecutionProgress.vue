@@ -1,10 +1,10 @@
 <template>
-    <div v-if="isVisible" class="execution-progress" data-test="execution-progress">
+    <div v-if="averageDurationMs" class="execution-progress">
         <div class="progress-header">
-            <KsText size="small" class="progress-title" data-test="execution-progress-title">
+            <KsText size="small" class="progress-title">
                 {{ $t("executionProgress.title") }}
             </KsText>
-            <KsText size="small" class="progress-estimate" data-test="execution-progress-estimate">
+            <KsText size="small" class="progress-estimate">
                 <template v-if="isPastEstimate">
                     {{ $t("executionProgress.pastEstimate") }}
                 </template>
@@ -26,7 +26,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
 
-    import {durationUtils, KsProgress, KsText, State} from "@kestra-io/design-system"
+    import {durationUtils, KsProgress, KsText} from "@kestra-io/design-system"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import {type Execution} from "../../stores/executions"
@@ -44,9 +44,6 @@
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
     const now = ref(Date.now())
     let ticker: ReturnType<typeof setInterval> | undefined
-
-    const isRunning = computed(() => props.execution.state?.current === State.RUNNING)
-    const isVisible = computed(() => isRunning.value && averageDurationMs.value !== null)
 
     const elapsedMs = computed(() => {
         const {startDate} = props.execution.state

@@ -1,4 +1,4 @@
-﻿import {describe, expect, it} from "vitest"
+import {describe, expect, it} from "vitest"
 import {computed} from "vue"
 import {Position} from "@vue-flow/core"
 import CollapsedClusterNode from "./CollapsedClusterNode.vue"
@@ -50,8 +50,8 @@ function mountCollapsedClusterNode({
     return i18nMount(CollapsedClusterNode, {
         props: {
             id,
-            sourcePosition: Position.Left,
-            targetPosition: Position.Right,
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
             data: {color, expandable},
         },
         global: {

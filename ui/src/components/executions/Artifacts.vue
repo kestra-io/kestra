@@ -1,10 +1,6 @@
 <template>
     <KsSkeleton v-if="!manifestReady" animated :rows="4" data-test="execution-artifacts-loading" />
-    <KsEmpty v-else-if="!artifacts.length" data-test="execution-artifacts-empty">
-        <template #description>
-            {{ $t("execution_artifacts.empty") }}
-        </template>
-    </KsEmpty>
+    <KsNoData v-else-if="!artifacts.length" data-test="execution-artifacts-empty" :description="$t('execution_artifacts.empty')" />
     <div v-else class="artifacts-layout">
         <nav class="artifacts-list" :aria-label="$t('execution_artifacts.title')">
             <KsText size="small" type="secondary" class="artifacts-count">
@@ -60,7 +56,7 @@
     import {computed, inject, ref, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsDialog, KsEmpty, KsIcon, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsDialog, KsIcon, KsNoData, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"

@@ -83,7 +83,7 @@
                         <template #content>
                             <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
-                        <KsIcon class="d-flex justify-content-center">
+                        <KsIcon class="lock-icon">
                             <Lock />
                         </KsIcon>
                     </KsTooltip>
@@ -157,8 +157,6 @@
                     <NamespaceSelect
                         v-model="secret.namespace"
                         :readOnly="secret.update"
-                        :includeSystemNamespace="true"
-                        all
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
@@ -718,5 +716,10 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .lock-icon {
+        display: flex;
+        justify-content: center;
     }
 </style>

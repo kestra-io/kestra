@@ -39,4 +39,9 @@ describe("defaultTaskRunLogLevel", () => {
     it("returns INFO when nothing is stored in localStorage", () => {
         expect(defaultTaskRunLogLevel()).toBe("INFO")
     })
+
+    it("returns INFO when the stored value is not a known log level", () => {
+        localStorage.setItem(storageKeys.DEFAULT_LOG_LEVEL, "UNKNOWN")
+        expect(defaultTaskRunLogLevel()).toBe("INFO")
+    })
 })

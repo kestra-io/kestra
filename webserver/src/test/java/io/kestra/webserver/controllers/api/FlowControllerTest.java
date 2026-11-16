@@ -437,14 +437,14 @@ class FlowControllerTest {
             KeyUsagesRequest.Kind.KV,
             List.of(new KeyUsagesRequest.Key(namespace, "usages-key"), new KeyUsagesRequest.Key(namespace, "missing-key"))
         );
-        List<KeyUsagesResponse> responses = client.toBlocking().retrieve(
+        KeyUsagesResponse response = client.toBlocking().retrieve(
             HttpRequest.POST(FLOW_PATH + "/source/key-usages", request),
-            Argument.listOf(KeyUsagesResponse.class)
+            KeyUsagesResponse.class
         );
 
-        assertThat(responses).containsExactly(
-            new KeyUsagesResponse(namespace, "usages-key", 3, false),
-            new KeyUsagesResponse(namespace, "missing-key", 0, false)
+        assertThat(response.results()).containsExactly(
+            new KeyUsagesResponse.KeyUsage(namespace, "usages-key", 3, false),
+            new KeyUsagesResponse.KeyUsage(namespace, "missing-key", 0, false)
         );
     }
 

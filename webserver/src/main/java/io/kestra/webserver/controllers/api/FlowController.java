@@ -315,7 +315,7 @@ public class FlowController {
         tags = { "Flows" }, summary = "Count the flows referencing each KV key or secret",
         description = "For each key, counts the distinct flows calling `kv('key')` or `secret('key')` whose namespace is the key's namespace or a descendant, or whose matching line names that namespace. Results are returned in request order."
     )
-    public List<KeyUsagesResponse> countKeyUsages(
+    public KeyUsagesResponse countKeyUsages(
         @RequestBody(description = "The kind of key and the keys to count usages for") @Body @Valid KeyUsagesRequest request) {
         return sourceSearchService.countKeyUsages(tenantService.resolveTenant(), request);
     }

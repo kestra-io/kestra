@@ -2381,6 +2381,9 @@
         "csv": "Exporter vers CSV"
       },
       "ignoredFilters": "Le filtre {filters} ne s'applique pas à ce graphique. | Les filtres {filters} ne s'appliquent pas à ce graphique.",
+      "dataFrom": "Mis à jour {date}",
+      "dataUnavailable": "Données indisponibles",
+      "dataTruncated": "Le fichier de sortie a été tronqué à ses {rows} premières lignes. Consultez la documentation pour plus de détails.",
       "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",

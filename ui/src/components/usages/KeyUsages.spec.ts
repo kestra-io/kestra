@@ -58,6 +58,7 @@ describe("KeyUsages", () => {
         expect(rows[0].text()).toContain("company.team / daily")
         expect(rows[0].text()).toContain("key_usages.line")
         expect(rows[0].find("mark").text()).toBe("api_url")
+        expect(Object.keys(rows[0].find("mark").attributes()).some((name) => name.startsWith("data-v-"))).toBe(true)
         expect(JSON.parse(rows[0].find("[data-test='key-usages-flow']").attributes("data-to")!)).toEqual({
             name: "flows/update/edit",
             params: {tenant: "main", namespace: "company.team", id: "daily"},

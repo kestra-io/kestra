@@ -19,6 +19,6 @@ public class ControllerVNodesFactory {
         ServiceLivenessStore serviceLivenessStore,
         ControllerVNodesAssignmentChannel channel,
         ControllerVNodesConfiguration configuration) {
-        return new VNodeController(lockService, serviceLivenessStore, channel, configuration.count(), configuration.rebalanceTimeout());
+        return new VNodeController(lockService, serviceLivenessStore, channel, configuration.vnodes(), configuration.vnodesRebalanceTimeout());
     }
 }

@@ -31,4 +31,3 @@ public class FlowCommand extends AbstractCommand implements NoDatabaseCommandInt
     }
 }
 
-

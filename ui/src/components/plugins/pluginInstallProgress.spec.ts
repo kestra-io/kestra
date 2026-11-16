@@ -27,6 +27,19 @@ describe("progressFor", () => {
         expect(progressFor({[downloadPath("plugin-aws-s3-1.0.0.jar")]: s3}, artifact("plugin-aws-s3"))).toBe(s3)
     })
 
+    it("matches an entry keyed by a bare file name with no directory", () => {
+        const entry = progress(1, 10)
+
+        expect(progressFor({"plugin-aws-1.2.3.jar": entry}, artifact("plugin-aws"))).toBe(entry)
+    })
+
+    it("does not match an artifact id that is only the tail of a longer file name", () => {
+        const entry = progress(1, 10)
+
+        expect(progressFor({[downloadPath("my-plugin-aws-1.0.0.jar")]: entry}, artifact("plugin-aws"))).toBeUndefined()
+        expect(progressFor({"my-plugin-aws-1.0.0.jar": entry}, artifact("plugin-aws"))).toBeUndefined()
+    })
+
     it("returns undefined when no entry matches", () => {
         expect(progressFor({[downloadPath("plugin-gcp-1.0.0.jar")]: progress(1, 10)}, artifact("plugin-aws"))).toBeUndefined()
     })
@@ -73,6 +86,10 @@ describe("artifactPercentage", () => {
 
     it("is 0 when the total is 0", () => {
         expect(artifactPercentage({[downloadPath("plugin-aws-1.2.3.jar")]: progress(10, 0)}, artifact("plugin-aws"))).toBe(0)
+    })
+
+    it("is 0 when the total is negative", () => {
+        expect(artifactPercentage({[downloadPath("plugin-aws-1.2.3.jar")]: progress(10, -5)}, artifact("plugin-aws"))).toBe(0)
     })
 
     it("is 0 when transferred is missing", () => {

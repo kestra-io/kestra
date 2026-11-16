@@ -15,7 +15,8 @@ public class CoreLegacyConfigurationProvider implements LegacyConfigurationProvi
     private static final List<LegacyConfiguration> LEGACY_CONFIGURATIONS = List.of(
         // the cleaner moved along with the queue it purges, from `JdbcCleaner` to `JdbcQueueCleaner`
         LegacyConfiguration.renamed("kestra.jdbc.cleaner", "kestra.jdbc.queue.cleaner", Severity.WARN),
-        LegacyConfiguration.removed("kestra.jdbc.executor.thread-count", Severity.WARN),
+        // the executor is no longer JDBC-specific, its thread count is now read by `ExecutorConfiguration`
+        LegacyConfiguration.renamed("kestra.jdbc.executor.thread-count", "kestra.executor.thread-count", Severity.WARN),
         LegacyConfiguration.removed("kestra.jdbc.executor.clean", Severity.WARN),
         LegacyConfiguration.removed("kestra.templates.enabled", Severity.WARN)
     );

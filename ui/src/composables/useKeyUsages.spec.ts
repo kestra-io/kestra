@@ -99,6 +99,14 @@ describe("selectUsages", () => {
         expect(usages).toEqual([{namespace: "other", id: "explicit", line: 1, snippet: "kv('k', 'company')"}])
     })
 
+    it("ignores a line that only contains the namespace as part of another word", () => {
+        const results = [flow("other", "f", ["kv('dev-token')", "kv('k', \"dev\")"])]
+
+        const usages = selectUsages(results, "dev")
+
+        expect(usages.map((usage) => usage.line)).toEqual([2])
+    })
+
     it("strips search markers from snippets", () => {
         const usages = selectUsages([flow("company", "f", ["  {{ [mark]kv('k'[/mark]) }}  "])], "company")
 
@@ -143,8 +151,6 @@ describe("useKeyUsages", () => {
         await flushPromises()
 
         expect(state.truncated.value).toBe(true)
-        expect(state.total.value).toBe(250)
-        expect(state.shown.value).toBe(1)
     })
 
     it("exposes the failure and clears usages", async () => {

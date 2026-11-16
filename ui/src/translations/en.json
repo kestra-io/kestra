@@ -2018,7 +2018,7 @@
       "line": "Line {line}",
       "error": "Could not search the flow sources.",
       "empty": "No flow references this key in its source.",
-      "truncated": "Showing {shown} of {total} matching flows.",
+      "incomplete": "More flows contain this reference than can be listed here. Open the source search to see them all.",
       "caveat": "Static references only: keys built at runtime, for example from an input, cannot be detected."
     },
     "kv": {

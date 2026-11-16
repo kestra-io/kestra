@@ -2018,7 +2018,6 @@
       "line": "Ligne {line}",
       "error": "Impossible de rechercher les sources du Flow.",
       "empty": "Aucun flow ne référence cette clé dans sa source.",
-      "truncated": "Affichage de {shown} des {total} flows correspondants.",
       "caveat": "Références statiques uniquement : les clés construites à l'exécution, par exemple à partir d'un input, ne peuvent pas être détectées."
     },
     "kv": {

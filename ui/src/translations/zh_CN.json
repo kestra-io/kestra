@@ -2018,7 +2018,6 @@
       "line": "行 {line}",
       "error": "无法搜索 flow 源代码。",
       "empty": "没有 flow 在其 source 中引用此 key。",
-      "truncated": "显示 {total} 个匹配 Flow 中的 {shown} 个。",
       "caveat": "仅限静态引用：运行时构建的键（例如来自 input 的键）无法被检测到。"
     },
     "kv": {

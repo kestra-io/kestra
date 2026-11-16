@@ -383,7 +383,7 @@
 
     const replaceOpen = ref(false)
     const replacement = ref("")
-    const caseSensitive = ref(false)
+    const caseSensitive = ref(route.query.caseSensitive === "true")
     const wholeWord = ref(false)
     const regexEnabled = ref(route.query.regex === "true")
 

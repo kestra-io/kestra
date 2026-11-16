@@ -110,7 +110,7 @@ describe("KeyUsages", () => {
         expect(wrapper.find("[data-test='key-usages-truncated']").exists()).toBe(true)
     })
 
-    it("links to the source search with the regex prefilled", async () => {
+    it("links to the case-sensitive source search with the regex prefilled", async () => {
         mockSearchFlowsBySourceCode.mockResolvedValue({results: [], total: 0})
 
         const wrapper = mountUsages()
@@ -119,7 +119,7 @@ describe("KeyUsages", () => {
         expect(JSON.parse(wrapper.find("[data-test='key-usages-source-search']").attributes("data-to")!)).toEqual({
             name: "flows/search",
             params: {tenant: "main"},
-            query: {q: buildUsagePattern({kind: "kv", key: "api_url"}), regex: "true", types: "flows"},
+            query: {q: buildUsagePattern({kind: "kv", key: "api_url"}), regex: "true", caseSensitive: "true", types: "flows"},
         })
     })
 })

@@ -747,6 +747,66 @@
             "rootAlias": ""
           },
           {
+            "name": "ks/chart-categorical-1",
+            "value": "#6929c4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-2",
+            "value": "#1192e8",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-3",
+            "value": "#005d5d",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-4",
+            "value": "#9f1853",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-5",
+            "value": "#002d9c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-6",
+            "value": "#ee538b",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-7",
+            "value": "#b28600",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-8",
+            "value": "#009d9a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-9",
+            "value": "#8a3800",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-10",
+            "value": "#a56eff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
             "name": "ks/dependencies-edge-default",
             "value": "#adadbf",
             "var": "gray-neutral/300",
@@ -2317,6 +2377,66 @@
             "rootAlias": ""
           },
           {
+            "name": "ks/chart-categorical-1",
+            "value": "#8a3ffc",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-2",
+            "value": "#33b1ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-3",
+            "value": "#007d79",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-4",
+            "value": "#ff7eb6",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-5",
+            "value": "#4589ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-6",
+            "value": "#d12771",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-7",
+            "value": "#d2a106",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-8",
+            "value": "#08bdba",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-9",
+            "value": "#ba4e00",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-10",
+            "value": "#d4bbff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
             "name": "ks/dependencies-edge-default",
             "value": "#cfd3d6",
             "var": "gray-cool/200",
@@ -3883,6 +4003,66 @@
           {
             "name": "ks/chart-warning",
             "value": "#ff8b61",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-1",
+            "value": "#8a3ffc",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-2",
+            "value": "#33b1ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-3",
+            "value": "#007d79",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-4",
+            "value": "#ff7eb6",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-5",
+            "value": "#4589ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-6",
+            "value": "#d12771",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-7",
+            "value": "#d2a106",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-8",
+            "value": "#08bdba",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-9",
+            "value": "#ba4e00",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-categorical-10",
+            "value": "#d4bbff",
             "var": "",
             "rootAlias": ""
           },

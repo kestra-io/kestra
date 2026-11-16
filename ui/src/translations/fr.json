@@ -2613,6 +2613,10 @@
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"
+        },
+        "tray": {
+          "title": "Modifications en attente",
+          "applyFirst": "Appliquer le {flow} en premier"
         }
       }
     },

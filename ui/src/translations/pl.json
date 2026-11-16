@@ -2613,6 +2613,10 @@
           },
           "valid": "Prawidłowy",
           "invalid": "Wymaga zmian"
+        },
+        "tray": {
+          "title": "Oczekujące zmiany",
+          "applyFirst": "Najpierw zastosuj {flow}"
         }
       }
     },

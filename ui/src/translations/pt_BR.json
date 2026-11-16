@@ -2613,6 +2613,10 @@
           },
           "valid": "Válido",
           "invalid": "Precisa de mudanças"
+        },
+        "tray": {
+          "title": "Alterações pendentes",
+          "applyFirst": "Aplicar {flow} primeiro"
         }
       }
     },

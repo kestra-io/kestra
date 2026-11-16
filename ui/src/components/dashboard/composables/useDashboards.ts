@@ -19,7 +19,7 @@ export const IGNORED_FILTERS_INJECTION_KEY = Symbol("dashboard-ignored-filters")
 
 /** What a chart reports to the dashboard layout, to show on its card: what the data source tells about its rows, or why it has none. */
 export interface ChartNotice {
-    metadata?: ChartMetadata;
+    metadata?: ChartMetadata | null;
     warning?: string;
 }
 

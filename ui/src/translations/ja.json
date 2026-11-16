@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "ガバナンスポリシーを確認できませんでした。",
     "trigger blocked unknown": "不明な理由によりブロックされました。",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger not toggleable": "このTriggerはSchedulerでは評価されません。Flowソース内で無効にしてください",
+    "bulk not toggleable warning": "{count}個の選択されたTriggerはスキップされます。Schedulerはそれらを評価しないため、Flowソースでのみ無効にできます。",
+    "bulk none applied": "影響を受けたトリガーはありませんでした: 選択されたトリガーは処理できませんでした。",
+    "bulk partially applied": "{count}/{requested}個のトリガーが処理され、その他はスキップされました。",
     "trigger enable dialog": {
       "title": "trigger を有効化",
       "bulk title": "{count} triggers を有効にする",
@@ -2613,6 +2617,10 @@
           },
           "valid": "有効",
           "invalid": "変更が必要です"
+        },
+        "tray": {
+          "title": "保留中の変更",
+          "applyFirst": "最初に{flow}を適用"
         }
       }
     },

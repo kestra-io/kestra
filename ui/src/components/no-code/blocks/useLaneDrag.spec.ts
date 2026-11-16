@@ -272,9 +272,10 @@ describe("useLaneDrag", () => {
         const { wrapper, result } = mountLaneDrag(
             createDragContext({ canDropIn }),
         );
-
+        
+        const container = document.createElement("div");
         const event = createDragEvent({
-            currentTarget: null,
+            currentTarget: container,
             relatedTarget: null,
         });
 

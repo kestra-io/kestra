@@ -66,6 +66,7 @@ describe("KeyUsages", () => {
         expect(JSON.parse(rows[0].find("[data-test='key-usages-flow']").attributes("data-to")!)).toEqual({
             name: "flows/update/edit",
             params: {tenant: "main", namespace: "company.team", id: "daily"},
+            query: {line: "10"},
         })
         expect(wrapper.find("[data-test='key-usages-truncated']").exists()).toBe(false)
     })

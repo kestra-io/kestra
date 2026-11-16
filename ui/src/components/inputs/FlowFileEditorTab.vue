@@ -124,6 +124,7 @@
     import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
+    import {useRevealRouteLine} from "../../composables/useRevealRouteLine"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -303,6 +304,8 @@
             ? editor as monaco.editor.IStandaloneCodeEditor
             : undefined
     }
+
+    useRevealRouteLine(monacoEditor, source, computed(() => Boolean(props.flow)))
 
     const metadataGuarded = computed(() => Boolean(monacoEditor.value)
         && props.flow

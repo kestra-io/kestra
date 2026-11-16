@@ -121,6 +121,8 @@
   "ai|copilot|toolResult|error": "1b76deb2eb69",
   "ai|copilot|toolResult|ok": "92892ca1b31d",
   "ai|copilot|toolResult|rejected": "22497198c1ed",
+  "ai|copilot|tray|applyFirst": "8e3b2f8a6127",
+  "ai|copilot|tray|title": "54ae644fbb47",
   "ai|copilot|unavailable|detail": "fcd357917f4c",
   "ai|copilot|unavailable|docs": "392e16f77e9f",
   "ai|copilot|unavailable|notSent": "fe2116a5123b",

@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
+import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,9 +86,32 @@ class TriggerControllerTest {
 
     @BeforeEach
     protected void setup() {
-        jdbcTestUtils.drop();
+        safeDrop();
         jdbcTestUtils.migrate();
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
+    }
+
+    private void safeDrop() {
+        int attempts = 0;
+        while (true) {
+            try {
+                jdbcTestUtils.drop();
+                return;
+            } catch (DataAccessException e) {
+                if (e.getMessage() != null
+                    && e.getMessage().contains("Timeout trying to lock table")
+                    && attempts++ < 5) {
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(ie);
+                    }
+                    continue;
+                }
+                throw e;
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")

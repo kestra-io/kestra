@@ -104,7 +104,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-2-5) var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
         text-align: left;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);

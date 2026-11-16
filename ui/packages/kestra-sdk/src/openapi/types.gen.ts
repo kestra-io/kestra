@@ -365,7 +365,6 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -524,11 +523,6 @@ export type AssetsDeclaration = {
      * Behavior applied to the task state when a declared asset fails to render, emit, or be persisted (e.g. a lock conflict): FAIL escalates it to FAILED, WARN (default) warns it if it would otherwise succeed, IGNORE leaves the state untouched.
      */
     assetFailureBehavior?: PropertyAssetFailureBehavior;
-};
-
-export type AssetsInOut = {
-    inputs?: Array<AssetIdentifier>;
-    outputs?: Array<Asset>;
 };
 
 export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER' | 'PLUGIN';
@@ -2572,6 +2566,9 @@ export type TaskFixture = {
             [key: string]: unknown;
         };
     };
+    /**
+     * @deprecated
+     */
     assets?: Array<Asset>;
     description?: PropertyString;
 };
@@ -2603,10 +2600,6 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2615,7 +2608,6 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2709,7 +2701,7 @@ export type TriggerControllerSetDisabledRequest = {
  */
 export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
-export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
+export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
 
@@ -2861,7 +2853,6 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2952,10 +2943,6 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2964,7 +2951,6 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;

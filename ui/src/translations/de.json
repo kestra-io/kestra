@@ -2012,6 +2012,15 @@
       "addTag": "Tag hinzufügen"
     },
     "workerId": "Worker-ID",
+    "key_usages": {
+      "title": "Verwendet von",
+      "open_source_search": "In Quellsuche öffnen",
+      "line": "Zeile {line}",
+      "error": "Die Flow-Quellen konnten nicht durchsucht werden.",
+      "empty": "Kein Flow referenziert diesen Key in seinem Quellcode.",
+      "truncated": "Zeige {shown} von {total} passenden Flows.",
+      "caveat": "Nur statische Referenzen: zur Laufzeit erstellte Keys, z. B. aus einem Input, können nicht erkannt werden."
+    },
     "kv": {
       "name": "KV Store",
       "type": "Typ",

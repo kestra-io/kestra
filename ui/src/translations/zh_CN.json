@@ -2012,6 +2012,15 @@
       "addTag": "添加标签"
     },
     "workerId": "工作者ID",
+    "key_usages": {
+      "title": "使用方",
+      "open_source_search": "在源搜索中打开",
+      "line": "行 {line}",
+      "error": "无法搜索 flow 源代码。",
+      "empty": "没有 flow 在其 source 中引用此 key。",
+      "truncated": "显示 {total} 个匹配 Flow 中的 {shown} 个。",
+      "caveat": "仅限静态引用：运行时构建的键（例如来自 input 的键）无法被检测到。"
+    },
     "kv": {
       "name": "键值存储",
       "type": "类型",

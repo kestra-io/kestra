@@ -2012,6 +2012,15 @@
       "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "사용됨",
+      "open_source_search": "소스 검색에서 열기",
+      "line": "줄 {line}",
+      "error": "Flow 소스를 검색할 수 없습니다.",
+      "empty": "어떤 flow도 소스에서 이 key를 참조하지 않습니다.",
+      "truncated": "일치하는 Flow {total}개 중 {shown}개 표시",
+      "caveat": "정적 참조만 해당: 예를 들어 input에서 런타임에 빌드된 key는 감지할 수 없습니다."
+    },
     "kv": {
       "name": "KV Store",
       "type": "유형",

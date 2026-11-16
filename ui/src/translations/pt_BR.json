@@ -2012,6 +2012,15 @@
       "addTag": "Adicionar tag"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "Usado por",
+      "open_source_search": "Abrir na busca de origem",
+      "line": "Linha {line}",
+      "error": "Não foi possível pesquisar as fontes do Flow.",
+      "empty": "Nenhum flow referencia esta key em seu código-fonte.",
+      "truncated": "Exibindo {shown} de {total} flows correspondentes.",
+      "caveat": "Apenas referências estáticas: chaves construídas em tempo de execução, por exemplo a partir de um input, não podem ser detectadas."
+    },
     "kv": {
       "name": "KV Store",
       "type": "Tipo",

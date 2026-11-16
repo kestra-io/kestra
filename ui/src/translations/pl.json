@@ -2012,6 +2012,15 @@
       "addTag": "Dodaj tag"
     },
     "workerId": "ID Workera",
+    "key_usages": {
+      "title": "Używane przez",
+      "open_source_search": "Otwórz w wyszukiwaniu źródłowym",
+      "line": "Linia {line}",
+      "error": "Nie można wyszukać źródeł Flow.",
+      "empty": "Żaden Flow nie odwołuje się do tego klucza w swoim źródle.",
+      "truncated": "Wyświetlono {shown} z {total} pasujących Flowów.",
+      "caveat": "Tylko statyczne referencje: klucze zbudowane w czasie wykonania, na przykład z inputu, nie mogą zostać wykryte."
+    },
     "kv": {
       "name": "KV Store",
       "type": "Typ",

@@ -2012,6 +2012,15 @@
       "addTag": "タグを追加"
     },
     "workerId": "Worker Id",
+    "key_usages": {
+      "title": "使用元",
+      "open_source_search": "ソース検索で開く",
+      "line": "行 {line}",
+      "error": "Flowソースを検索できませんでした。",
+      "empty": "このkeyを参照しているFlowはありません。",
+      "truncated": "{total}件中{shown}件の一致するFlowを表示しています。",
+      "caveat": "静的参照のみ: 例えばinputから実行時に構築されたkeyは検出できません。"
+    },
     "kv": {
       "name": "KV Store",
       "type": "タイプ",

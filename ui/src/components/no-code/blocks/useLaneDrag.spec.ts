@@ -237,8 +237,8 @@ describe("useLaneDrag", () => {
 
         result.onLaneDragLeave(event);
 
-        expect(event.currentTarget).not.toBeNull();
-        expect(event.relatedTarget).not.toBeNull();
+        expect(event.currentTarget).toBe(container);
+        expect(event.relatedTarget).toBe(relatedTarget);
         expect(result.dragOverIndex.value).toBe(1);
 
         wrapper.unmount();
@@ -260,8 +260,8 @@ describe("useLaneDrag", () => {
         result.onItemDragOver(event, 1);
         result.onLaneDragLeave(event);
 
-        expect(event.currentTarget).not.toBeNull();
-        expect(event.relatedTarget).not.toBeNull();
+        expect(event.currentTarget).toBe(container);
+        expect(event.relatedTarget).toBe(relatedTarget);
         expect(result.dragOverIndex.value).toBeNull();
 
         wrapper.unmount();
@@ -282,7 +282,7 @@ describe("useLaneDrag", () => {
         result.onItemDragOver(event, 1);
         result.onLaneDragLeave(event);
 
-        expect(event.currentTarget).toBeNull();
+        expect(event.currentTarget).toBe(container);
         expect(event.relatedTarget).toBeNull();
         expect(result.dragOverIndex.value).toBeNull();
 

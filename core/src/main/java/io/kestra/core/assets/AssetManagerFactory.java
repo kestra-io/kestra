@@ -37,7 +37,7 @@ public class AssetManagerFactory {
      *
      * @param alreadyUsed the ids of the assets whose usage this task run already recorded, so they are only written and linked again
      */
-    public AssetEmitter declared(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, @Nullable Instant endDate, Set<String> alreadyUsed) {
+    public AssetEmitter declared(RunContext runContext, AssetEmitContext context, State.Type state, @Nullable Instant endDate, Set<String> alreadyUsed) {
         return new AssetEmitter() {
             @Override
             public void emit(AssetEmit assetEmit) {
@@ -56,6 +56,6 @@ public class AssetManagerFactory {
      *
      * @param used the inputs and outputs of the attempt, only their identity is read
      */
-    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, AssetEmit used) {
+    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, AssetEmit used) {
     }
 }

@@ -379,7 +379,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             )
         );
 
-        TaskAttemptAssets assets = new TaskAttemptAssets(runContext, workerTask, Instant.now());
+        TaskAttemptAssets assets = new TaskAttemptAssets(runContext, workerTask);
         assets.emitAtStart();
 
         io.kestra.core.models.flows.State.Type state;

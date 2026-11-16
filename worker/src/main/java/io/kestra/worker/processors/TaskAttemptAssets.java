@@ -43,7 +43,6 @@ final class TaskAttemptAssets {
 
     private final RunContext runContext;
     private final WorkerTask workerTask;
-    private final Instant startDate;
     private final Set<String> used = new HashSet<>();
     private final Map<String, AssetIdentifier> usedInputs = new LinkedHashMap<>();
     private final Map<String, Asset> usedOutputs = new LinkedHashMap<>();
@@ -53,10 +52,9 @@ final class TaskAttemptAssets {
     private boolean refusedByALock;
     private TaskRunWithOutput.AssetEmission emission = TaskRunWithOutput.AssetEmission.OK;
 
-    TaskAttemptAssets(RunContext runContext, WorkerTask workerTask, Instant startDate) {
+    TaskAttemptAssets(RunContext runContext, WorkerTask workerTask) {
         this.runContext = runContext;
         this.workerTask = workerTask;
-        this.startDate = startDate;
     }
 
     // rendered before the task runs, so a property needing its outputs is skipped, and an asset whose identity needs them is left out until the end
@@ -141,7 +139,7 @@ final class TaskAttemptAssets {
             if (inputs.isEmpty() && outputs.isEmpty()) {
                 return;
             }
-            AssetEmitter declared = defaultRunContext.assets(new DefaultRunContext.Declared(RUNNING, startDate, null, Set.of()));
+            AssetEmitter declared = defaultRunContext.assets(new DefaultRunContext.Declared(RUNNING, null, Set.of()));
             AssetEmit atStart = new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs, true);
             declared.emit(atStart);
             recordUsed(atStart);
@@ -202,7 +200,7 @@ final class TaskAttemptAssets {
                 }
 
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
-                    AssetEmitter declared = defaultRunContext.assets(new DefaultRunContext.Declared(state, startDate, Instant.now(), used));
+                    AssetEmitter declared = defaultRunContext.assets(new DefaultRunContext.Declared(state, Instant.now(), used));
                     AssetEmit atEnd = new AssetEmit(withDefaultNamespace(declaredInputs, taskRun.getNamespace()), declaredOutputs);
                     declared.emit(atEnd);
                     recordUsed(atEnd);
@@ -234,7 +232,7 @@ final class TaskAttemptAssets {
             // a resubmitted or retried attempt runs under the same task run, so it keeps the locks and the state they restore, and its lineage is replaced by the next attempt's
             if ((locked || lockedByThePlugin || !usedInputs.isEmpty() || !usedOutputs.isEmpty()) && !resubmitted && !isRetriedInTheSameTaskRun(taskRun, state)) {
                 try {
-                    defaultRunContext.finishAssets(state, startDate, new AssetEmit(List.copyOf(usedInputs.values()), List.copyOf(usedOutputs.values())));
+                    defaultRunContext.finishAssets(state, new AssetEmit(List.copyOf(usedInputs.values()), List.copyOf(usedOutputs.values())));
                 } catch (Exception e) {
                     logger.error("Unable to release the assets locked by task '{}'", taskRun.getTaskId(), e);
                     emission = TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED;

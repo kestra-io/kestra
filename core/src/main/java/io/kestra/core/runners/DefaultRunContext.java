@@ -272,12 +272,12 @@ public class DefaultRunContext extends RunContext {
      * Only the worker writes declared assets, so unlike {@link #assets()} this is not on {@link RunContext}.
      */
     public AssetEmitter assets(Declared declared) {
-        return assetManagerFactory.declared(this, assetEmitContext, declared.state(), declared.startDate(), declared.endDate(), declared.alreadyUsed());
+        return assetManagerFactory.declared(this, assetEmitContext, declared.state(), declared.endDate(), declared.alreadyUsed());
     }
 
-    public void finishAssets(State.Type state, Instant startDate, AssetEmit used) {
+    public void finishAssets(State.Type state, AssetEmit used) {
         if (assetEmitContext != null) {
-            assetManagerFactory.finish(this, assetEmitContext, state, startDate, used);
+            assetManagerFactory.finish(this, assetEmitContext, state, used);
         }
     }
 
@@ -854,6 +854,6 @@ public class DefaultRunContext extends RunContext {
     /**
      * @param alreadyUsed the ids of the assets whose usage this task run already recorded, which are only linked and written again
      */
-    public record Declared(State.Type state, Instant startDate, @Nullable Instant endDate, Set<String> alreadyUsed) {
+    public record Declared(State.Type state, @Nullable Instant endDate, Set<String> alreadyUsed) {
     }
 }

@@ -1252,6 +1252,10 @@
     "trigger blocked policy check failed": "As políticas de governança não puderam ser verificadas.",
     "trigger blocked unknown": "Bloqueado por um motivo desconhecido.",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
+    "trigger not toggleable": "Este Trigger não é avaliado pelo Scheduler, desative-o na fonte do Flow",
+    "bulk not toggleable warning": "{count} trigger(s) selecionado(s) será(ão) ignorado(s): o Scheduler não os avalia, então eles só podem ser desabilitados na fonte do Flow.",
+    "bulk none applied": "Nenhum trigger foi afetado: nenhum dos selecionados pôde ser processado.",
+    "bulk partially applied": "{count} de {requested} triggers foram processados, os outros foram ignorados.",
     "trigger enable dialog": {
       "title": "Ativar trigger",
       "bulk title": "Ativar {count} triggers",
@@ -2621,6 +2625,10 @@
           },
           "valid": "Válido",
           "invalid": "Precisa de alterações"
+        },
+        "tray": {
+          "title": "Alterações pendentes",
+          "applyFirst": "Aplicar {flow} primeiro"
         }
       }
     },
@@ -2899,7 +2907,8 @@
       "open_in_secrets": "Abrir em secrets",
       "options_aria": "Opções de pesquisa",
       "path_only_hint": "Pesquisa apenas o caminho do ficheiro, não o seu conteúdo. Não pode ser substituído.",
-      "preview_empty": "Selecione um resultado para pré-visualizar. Clique num flow na lista de resultados para ver a sua fonte.",
+      "preview_empty_title": "Selecione um resultado para pré-visualizar.",
+      "preview_empty_description": "Clique num flow na lista de resultados para ver a sua fonte.",
       "preview_error": "Falha ao carregar a fonte do flow",
       "previous_match": "Correspondência anterior",
       "rbac_banner": "{count} flows estão excluídos da substituição. Você tem acesso de leitura, mas não de edição em {namespace}. Peça a um administrador do namespace a permissão {permission} para incluí-los.",

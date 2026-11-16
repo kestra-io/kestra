@@ -1252,6 +1252,10 @@
     "trigger blocked policy check failed": "Governance-Policies konnten nicht geprüft werden.",
     "trigger blocked unknown": "Aus unbekanntem Grund blockiert.",
     "trigger disabled": "Der Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger not toggleable": "Dieser Trigger wird nicht vom Scheduler ausgewertet, deaktivieren Sie ihn in der Flow-Quelle",
+    "bulk not toggleable warning": "{count} ausgewählte Trigger werden übersprungen: Der Scheduler wertet sie nicht aus, daher können sie nur in der Flow-Quelle deaktiviert werden.",
+    "bulk none applied": "Keine Trigger wurden betroffen: Keiner der ausgewählten konnte verarbeitet werden.",
+    "bulk partially applied": "{count} von {requested} Triggern wurden verarbeitet, die anderen wurden übersprungen.",
     "trigger enable dialog": {
       "title": "Trigger aktivieren",
       "bulk title": "{count} Trigger aktivieren",
@@ -2621,6 +2625,10 @@
           },
           "valid": "Gültig",
           "invalid": "Änderungen erforderlich"
+        },
+        "tray": {
+          "title": "Ausstehende Änderungen",
+          "applyFirst": "Wende zuerst {flow} an"
         }
       }
     },
@@ -2899,7 +2907,8 @@
       "open_in_secrets": "In Secrets öffnen",
       "options_aria": "Suchoptionen",
       "path_only_hint": "Durchsucht nur den Dateipfad, nicht den Dateiinhalt. Kann nicht ersetzt werden.",
-      "preview_empty": "Wähle ein Ergebnis zur Vorschau aus. Klicke auf einen Flow in der Ergebnisliste, um dessen Quellcode zu sehen.",
+      "preview_empty_title": "Wähle ein Ergebnis zur Vorschau aus.",
+      "preview_empty_description": "Klicke auf einen Flow in der Ergebnisliste, um dessen Quellcode zu sehen.",
       "preview_error": "Fehler beim Laden des Flow-Quellcodes",
       "previous_match": "Vorheriger Treffer",
       "rbac_banner": "{count} Flows sind vom Ersetzen ausgeschlossen. Du hast Lesezugriff, aber keinen Bearbeitungszugriff auf {namespace}. Bitte einen Namespace-Admin um die Berechtigung {permission}, um sie einzuschließen.",

@@ -1252,6 +1252,10 @@
     "trigger blocked policy check failed": "Не удалось проверить политики Governance.",
     "trigger blocked unknown": "Заблокировано по неизвестной причине.",
     "trigger disabled": "Триггер отключен в источнике Flow",
+    "trigger not toggleable": "Этот триггер не обрабатывается Scheduler, отключите его в источнике Flow",
+    "bulk not toggleable warning": "{count} выбранный trigger будет пропущен: Scheduler не оценивает их, поэтому их можно отключить только в исходном коде Flow.",
+    "bulk none applied": "Ни один trigger не был затронут: ни один из выбранных не мог быть обработан.",
+    "bulk partially applied": "Обработано {count} из {requested} триггеров, остальные были пропущены.",
     "trigger enable dialog": {
       "title": "Включить trigger",
       "bulk title": "Включить {count} triggers",
@@ -2621,6 +2625,10 @@
           },
           "valid": "Действительный",
           "invalid": "Требует изменений"
+        },
+        "tray": {
+          "title": "Ожидающие изменения",
+          "applyFirst": "Сначала примените {flow}"
         }
       }
     },
@@ -2899,7 +2907,8 @@
       "open_in_secrets": "Открыть в secrets",
       "options_aria": "Параметры поиска",
       "path_only_hint": "Ищет только путь файла, а не его содержимое. Заменить нельзя.",
-      "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
+      "preview_empty_title": "Выберите результат для предпросмотра.",
+      "preview_empty_description": "Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
       "preview_error": "Не удалось загрузить исходный код flow",
       "previous_match": "Предыдущее совпадение",
       "rbac_banner": "{count} flows исключены из замены. У вас есть доступ на чтение, но нет доступа на редактирование в {namespace}. Попросите администратора namespace предоставить разрешение {permission}, чтобы включить их.",

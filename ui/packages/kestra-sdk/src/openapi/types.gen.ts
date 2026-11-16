@@ -103,7 +103,7 @@ export type AbstractTrigger = {
      * Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress.
      */
     allowConcurrent?: boolean;
-    assets?: AssetsDeclaration;
+    assets?: TriggerAssetsDeclaration;
 };
 
 export type AbstractTriggerForExecution = {
@@ -365,7 +365,6 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -525,11 +524,6 @@ export type AssetsDeclaration = {
     assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
-export type AssetsInOut = {
-    inputs?: Array<AssetIdentifier>;
-    outputs?: Array<Asset>;
-};
-
 export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER' | 'PLUGIN';
 
 /**
@@ -643,6 +637,14 @@ export type ChartFiltersOverrides = {
         [key: string]: string;
     };
     filters?: Array<QueryFilter>;
+};
+
+export type ChartMetadata = {
+    executionId: string;
+    date: string;
+    state: string;
+    rowsRead?: number;
+    truncated?: boolean;
 };
 
 export type ChartChartOption = {
@@ -765,6 +767,7 @@ export type DashboardControllerChartData = {
      * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
      */
     ignoredFilters?: Array<QueryFilterField>;
+    metadata?: ChartMetadata | null;
 };
 
 export type DashboardControllerDashboardResponse = {
@@ -1758,6 +1761,7 @@ export type Notification = {
     resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
+    url?: string | null;
     succeededItems?: number | null;
     failedItems?: number | null;
     totalItems?: number | null;
@@ -2521,6 +2525,9 @@ export type TaskFixture = {
             [key: string]: unknown;
         };
     };
+    /**
+     * @deprecated
+     */
     assets?: Array<Asset>;
     description?: PropertyString;
 };
@@ -2552,10 +2559,6 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2564,7 +2567,6 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2596,6 +2598,21 @@ export type TenantInterface = {
 export type TimeWindow = {
     default?: string;
     max?: string;
+};
+
+export type TriggerAssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
+    enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
+    inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
+    outputs?: PropertyListAsset;
 };
 
 export type TriggerControllerApiCreateBackfillRequest = {
@@ -2650,7 +2667,7 @@ export type TriggerControllerSetDisabledRequest = {
  */
 export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
-export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
+export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
 
@@ -2802,7 +2819,6 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2892,10 +2908,6 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
-    /**
-     * @deprecated
-     */
-    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2904,7 +2916,6 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;

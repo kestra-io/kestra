@@ -40,6 +40,7 @@ export const ksStubs = {
     KsCard: {name: "KsCard", template: "<div><slot /></div>"},
     KsText: {name: "KsText", props: ["size", "type"], template: "<span><slot /></span>"},
     KsIcon: {name: "KsIcon", template: "<i><slot /></i>"},
+    KsBadge: {name: "KsBadge", props: ["value", "type", "inline"], template: "<span class=\"ks-badge\">{{ value }}</span>"},
     KsTag: {name: "KsTag", props: ["size"], template: "<span class=\"ks-tag\"><slot /></span>"},
     KsAlert: {name: "KsAlert", props: ["type", "closable", "title"], template: "<div class=\"ks-alert\" :data-type=\"type\"><strong v-if=\"title\">{{ title }}</strong><slot /></div>"},
     KsTooltip: {name: "KsTooltip", props: ["content", "disabled", "visible", "trigger"], template: "<div class=\"ks-tooltip\" :data-tooltip=\"disabled ? undefined : content\" :data-visible=\"visible ? 'true' : 'false'\"><slot /></div>"},

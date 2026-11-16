@@ -2613,6 +2613,10 @@
           },
           "valid": "유효",
           "invalid": "수정 필요"
+        },
+        "tray": {
+          "title": "보류 중인 변경 사항",
+          "applyFirst": "먼저 {flow} 적용"
         }
       }
     },

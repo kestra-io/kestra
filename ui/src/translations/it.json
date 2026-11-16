@@ -2613,6 +2613,10 @@
           },
           "valid": "Valido",
           "invalid": "Richiede modifiche"
+        },
+        "tray": {
+          "title": "Modifiche in sospeso",
+          "applyFirst": "Applica prima {flow}"
         }
       }
     },

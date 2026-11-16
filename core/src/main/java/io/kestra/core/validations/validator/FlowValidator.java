@@ -10,7 +10,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -216,20 +215,18 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     private List<String> assetsDeclarationViolations(Flow flow) {
         List<String> violations = new ArrayList<>();
         flow.allTasks().filter(Objects::nonNull)
-            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets())));
+            .filter(task -> task.getAssets() != null)
+            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets().getInputs(), task.getAssets().getOutputs())));
         ListUtils.emptyOnNull(flow.getTriggers()).stream().filter(Objects::nonNull)
-            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets())));
+            .filter(trigger -> trigger.getAssets() != null)
+            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets().getInputs(), trigger.getAssets().getOutputs())));
         return violations;
     }
 
-    private List<String> assetsDeclarationViolations(String kind, String id, AssetsDeclaration assets) {
-        if (assets == null) {
-            return List.of();
-        }
-
+    private List<String> assetsDeclarationViolations(String kind, String id, Property<List<AssetIdentifier>> inputs, Property<List<Asset>> outputs) {
         List<String> violations = new ArrayList<>();
-        violations.addAll(declaredAssetViolations(kind, id, "inputs", assets.getInputs(), AssetIdentifier.class));
-        violations.addAll(declaredAssetViolations(kind, id, "outputs", assets.getOutputs(), Asset.class));
+        violations.addAll(declaredAssetViolations(kind, id, "inputs", inputs, AssetIdentifier.class));
+        violations.addAll(declaredAssetViolations(kind, id, "outputs", outputs, Asset.class));
         return violations;
     }
 

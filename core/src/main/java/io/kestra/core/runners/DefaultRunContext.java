@@ -26,6 +26,8 @@ import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -723,9 +725,9 @@ public class DefaultRunContext extends RunContext {
                         assetManagerFactory.of(
                             this,
                             assetEmitContext,
-                            Optional.ofNullable(task).map(Task::getAssets)
-                                .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
-                                .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
+                            Optional.ofNullable(task).map(Task::getAssets).map(AssetsDeclaration::getEnableAuto)
+                                .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets).map(TriggerAssetsDeclaration::getEnableAuto))
+                                .flatMap(throwFunction(enableAuto -> render(enableAuto).as(Boolean.class)))
                                 .orElse(false)
                         ),
                         Optional.ofNullable(assetEmitContext).map(AssetEmitContext::taskRunId).orElse(null)

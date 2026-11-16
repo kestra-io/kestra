@@ -159,7 +159,7 @@
                     </div>
                 </KsFormItem>
             </KsForm>
-            <KeyUsages :target="{kind: 'secret', namespace: viewSecret.namespace, key: viewSecret.key}" />
+            <KeyUsages :target="{kind: 'secret', namespace: keyOnly ? undefined : viewSecret.namespace, key: viewSecret.key}" />
         </KsDrawer>
 
         <KsDialog

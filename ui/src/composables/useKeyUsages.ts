@@ -58,26 +58,27 @@ function isInNamespaceScope(flowNamespace: string, targetNamespace: string | und
         || flowNamespace === targetNamespace || flowNamespace.startsWith(`${targetNamespace}.`)
 }
 
+const namesNamespace = (snippet: string, namespace: string) =>
+    new RegExp(`['"]${escapeRegex(namespace)}['"]`).test(snippet)
+
 export function selectUsages(results: SourceSearchResult[], namespace: string | undefined): KeyUsage[] {
     return results.flatMap((flow) => {
         const flowInScope = isInNamespaceScope(flow.namespace, namespace)
         return flow.matches
             .map((match) => ({namespace: flow.namespace, id: flow.id, line: match.line, snippet: stripMarkers(match.snippet)}))
-            .filter((usage) => flowInScope || (namespace !== undefined && usage.snippet.includes(namespace)))
+            .filter((usage) => flowInScope || (namespace !== undefined && namesNamespace(usage.snippet, namespace)))
     })
 }
 
 export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
     const status = ref<KeyUsagesStatus>("idle")
     const usages = ref<KeyUsage[]>([])
-    const total = ref(0)
-    const shown = ref(0)
+    const truncated = ref(false)
     const errorMessage = ref<string>()
 
     let generation = 0
     const isCurrent = (gen: number) => gen === generation
 
-    const truncated = computed(() => total.value > shown.value)
     const pattern = computed(() => {
         const current = toValue(target)
         return current ? buildUsagePattern(current) : undefined
@@ -86,8 +87,7 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
     async function load(current: KeyTarget | undefined) {
         const gen = ++generation
         usages.value = []
-        total.value = 0
-        shown.value = 0
+        truncated.value = false
         errorMessage.value = undefined
 
         if (!current) {
@@ -109,8 +109,7 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
             if (!isCurrent(gen)) return
             const pages = responses.map((response) => (response.results ?? []) as SourceSearchResult[])
             usages.value = selectUsages(mergeResults(pages), current.namespace)
-            total.value = responses.reduce((sum, response, index) => sum + (response.total ?? pages[index].length), 0)
-            shown.value = pages.reduce((sum, page) => sum + page.length, 0)
+            truncated.value = responses.some((response, index) => (response.total ?? 0) > pages[index].length)
             status.value = "done"
         } catch (e: unknown) {
             if (!isCurrent(gen)) return
@@ -132,5 +131,5 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
         generation++
     })
 
-    return {status, usages, total, shown, truncated, errorMessage, pattern}
+    return {status, usages, truncated, errorMessage, pattern}
 }

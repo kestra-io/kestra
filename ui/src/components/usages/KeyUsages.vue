@@ -35,7 +35,7 @@
                 </li>
             </ul>
             <KsText v-if="truncated" tag="p" type="secondary" size="small" class="key-usages__note" data-test="key-usages-truncated">
-                {{ $t("key_usages.truncated", {shown, total}) }}
+                {{ $t("key_usages.incomplete") }}
             </KsText>
         </template>
 
@@ -58,12 +58,12 @@
 
     const route = useRoute()
 
-    const {status, usages, shown, total, truncated, errorMessage, pattern} = useKeyUsages(() => props.target)
+    const {status, usages, truncated, errorMessage, pattern} = useKeyUsages(() => props.target)
 
     const sourceSearchTarget = computed(() => ({
         name: "flows/search",
         params: {tenant: route.params.tenant},
-        query: {q: pattern.value, regex: "true", types: "flows"},
+        query: {q: pattern.value, regex: "true", caseSensitive: "true", types: "flows"},
     }))
 
     const flowTarget = (usage: KeyUsage) => ({

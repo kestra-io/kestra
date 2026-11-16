@@ -65,19 +65,6 @@ public class AssetInput extends Input<Object> implements RenderableInput {
     @Builder.Default
     private Boolean multiple = false;
 
-    /**
-     * Reduces a value to what an execution stores: the asset id, or the list of ids when {@code multiple}; an asset given as a map keeps only its id.
-     */
-    public static Object storedValue(Object resolved) {
-        if (resolved instanceof List<?> list) {
-            return list.stream().map(AssetInput::storedValue).toList();
-        }
-        if (resolved instanceof Map<?, ?> asset && asset.get("id") != null) {
-            return asset.get("id").toString();
-        }
-        return resolved;
-    }
-
     /** The filters are always rendered, since a submitted id is checked against them. */
     @JsonIgnore
     @Override

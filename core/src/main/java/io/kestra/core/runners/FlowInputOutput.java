@@ -348,7 +348,7 @@ public class FlowInputOutput {
                     }
                 }
 
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.input() instanceof AssetInput ? AssetInput.storedValue(it.value()) : it.value());
+                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         // saved only once every input is valid, so a rejected execution leaves no orphan rows

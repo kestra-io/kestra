@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -15,8 +17,10 @@ import org.eclipse.aether.MultiRuntimeException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
+import org.eclipse.aether.repository.ProxySelector;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -27,6 +31,7 @@ import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.eclipse.aether.util.repository.DefaultProxySelector;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.KestraRuntimeException;
@@ -48,23 +53,27 @@ import lombok.extern.slf4j.Slf4j;
 public class MavenPluginDownloader implements Closeable {
     private static final String DEFAULT_LOCAL_REPOSITORY_PREFIX = "kestra-plugins-m2-repository";
     private static final String DEFAULT_REPOSITORY_TYPE = "default";
-    private static final String HTTP_PROXY_HOST = System.getProperty("http.proxyHost");
-    private static final String HTTP_PROXY_PORT = System.getProperty("http.proxyPort");
-    private static final String HTTPS_PROXY_HOST = System.getProperty("https.proxyHost");
-    private static final String HTTPS_PROXY_PORT = System.getProperty("https.proxyPort");
 
     public static final String LATEST = "latest";
 
     private final List<MavenPluginRepositoryConfig> repositoryConfigs;
     private final RepositorySystem system;
     private final RepositorySystemSession session;
+    private final ProxySelector proxySelector;
 
     @Inject
     public MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
         @Nullable PluginsConfiguration pluginsConfiguration) {
+        this(repositoryConfigs, pluginsConfiguration, System.getProperties());
+    }
+
+    MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
+        @Nullable PluginsConfiguration pluginsConfiguration,
+        Properties systemProperties) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
         this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration.localRepositoryPath() : null);
+        this.proxySelector = proxySelector(systemProperties);
     }
 
     /**
@@ -173,7 +182,7 @@ public class MavenPluginDownloader implements Closeable {
             .toList();
     }
 
-    private static List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
+    private List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
         return repositoryConfigs
             .stream()
             .map(repositoryConfig ->
@@ -191,19 +200,42 @@ public class MavenPluginDownloader implements Closeable {
                     build.setAuthentication(authenticationBuilder.build());
                 }
 
-                // Honor JDK proxy settings
-                if (repositoryConfig.url().startsWith("http") && HTTP_PROXY_HOST != null) {
-                    Proxy proxy = new Proxy(Proxy.TYPE_HTTP, HTTP_PROXY_HOST, HTTP_PROXY_PORT != null ? Integer.parseInt(HTTP_PROXY_PORT) : 80);
-                    build.setProxy(proxy);
-                }
-                if (repositoryConfig.url().startsWith("https") && HTTPS_PROXY_HOST != null) {
-                    Proxy proxy = new Proxy(Proxy.TYPE_HTTPS, HTTPS_PROXY_HOST, HTTPS_PROXY_PORT != null ? Integer.parseInt(HTTPS_PROXY_PORT) : 443);
-                    build.setProxy(proxy);
-                }
-
-                return build.build();
+                RemoteRepository repository = build.build();
+                return build.setProxy(proxySelector.getProxy(repository)).build();
             })
             .toList();
+    }
+
+    // The proxy type selects the repositories a proxy serves; the transport always reaches the proxy itself over plain HTTP.
+    private static ProxySelector proxySelector(Properties systemProperties) {
+        String nonProxyHosts = systemProperties.getProperty("http.nonProxyHosts");
+        DefaultProxySelector selector = new DefaultProxySelector();
+        proxy(systemProperties, Proxy.TYPE_HTTP, 80).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
+        proxy(systemProperties, Proxy.TYPE_HTTPS, 443).ifPresent(proxy -> selector.add(proxy, nonProxyHosts));
+        return selector;
+    }
+
+    private static Optional<Proxy> proxy(Properties systemProperties, String scheme, int defaultPort) {
+        String host = systemProperties.getProperty(scheme + ".proxyHost");
+        if (host == null) {
+            return Optional.empty();
+        }
+
+        String user = systemProperties.getProperty(scheme + ".proxyUser");
+        Authentication authentication = user == null ? null : new AuthenticationBuilder()
+            .addUsername(user)
+            .addPassword(systemProperties.getProperty(scheme + ".proxyPassword", ""))
+            .build();
+
+        return Optional.of(new Proxy(scheme, host, port(systemProperties.getProperty(scheme + ".proxyPort"), defaultPort), authentication));
+    }
+
+    private static int port(@Nullable String port, int defaultPort) {
+        try {
+            return Integer.parseInt(port);
+        } catch (NumberFormatException e) {
+            return defaultPort;
+        }
     }
 
     private RepositorySystemSession repositorySystemSession(RepositorySystem system, String localRepositoryPath) {

@@ -1,9 +1,9 @@
 <template>
     <section class="key-usages" data-test="key-usages">
         <div class="key-usages__header">
-            <h3 class="key-usages__title">
+            <KsText tag="h3" class="key-usages__title">
                 {{ $t("key_usages.title") }}
-            </h3>
+            </KsText>
             <router-link :to="sourceSearchTarget" class="key-usages__link" data-test="key-usages-source-search">
                 {{ $t("key_usages.open_source_search") }}
             </router-link>
@@ -22,26 +22,26 @@
         </KsAlert>
 
         <template v-else-if="status === 'done'">
-            <p v-if="usages.length === 0" class="key-usages__note" data-test="key-usages-empty">
+            <KsText v-if="usages.length === 0" tag="p" type="secondary" size="small" class="key-usages__note" data-test="key-usages-empty">
                 {{ $t("key_usages.empty") }}
-            </p>
+            </KsText>
             <ul v-else class="key-usages__list">
                 <li v-for="usage in usages" :key="`${usage.namespace}/${usage.id}:${usage.line}`" class="key-usages__row" data-test="key-usages-row">
                     <router-link :to="flowTarget(usage)" class="key-usages__flow" data-test="key-usages-flow">
                         {{ usage.namespace }} / {{ usage.id }}
                     </router-link>
-                    <span class="key-usages__line">{{ $t("key_usages.line", {line: usage.line}) }}</span>
-                    <code class="key-usages__snippet"><HighlightedText :segments="highlight(usage.snippet)" /></code>
+                    <KsText type="secondary" size="small" class="key-usages__line">{{ $t("key_usages.line", {line: usage.line}) }}</KsText>
+                    <code class="key-usages__snippet"><template v-for="(segment, index) in highlight(usage.snippet)" :key="index"><mark v-if="segment.matched">{{ segment.text }}</mark><template v-else>{{ segment.text }}</template></template></code>
                 </li>
             </ul>
-            <p v-if="truncated" class="key-usages__note" data-test="key-usages-truncated">
+            <KsText v-if="truncated" tag="p" type="secondary" size="small" class="key-usages__note" data-test="key-usages-truncated">
                 {{ $t("key_usages.truncated", {shown, total}) }}
-            </p>
+            </KsText>
         </template>
 
-        <p class="key-usages__note" data-test="key-usages-caveat">
+        <KsText tag="p" type="secondary" size="small" class="key-usages__note" data-test="key-usages-caveat">
             {{ $t("key_usages.caveat") }}
-        </p>
+        </KsText>
     </section>
 </template>
 
@@ -49,7 +49,6 @@
     import {computed} from "vue"
     import {useRoute} from "vue-router"
 
-    import HighlightedText from "../layout/HighlightedText.vue"
     import {useKeyUsages, type KeyTarget, type KeyUsage} from "../../composables/useKeyUsages"
     import {buildHighlightSegments} from "../../utils/crossResourceSearch"
 
@@ -92,9 +91,7 @@
 
 .key-usages__title {
     margin: 0;
-    font-size: var(--ks-font-size-md);
     font-weight: var(--ks-font-weight-semibold);
-    color: var(--ks-text-primary);
 }
 
 .key-usages__link,
@@ -113,8 +110,6 @@
 
 .key-usages__note {
     margin: 0;
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-secondary);
 }
 
 .key-usages__list {
@@ -146,8 +141,6 @@
 
 .key-usages__line {
     font-family: var(--ks-font-family-mono);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
 }
 
 .key-usages__snippet {

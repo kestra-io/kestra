@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.kestra.core.assets.AssetEmitContext;
 import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.AssetEmitter;
@@ -21,9 +22,12 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
 
     record Finish(State.Type state, Instant startDate, AssetEmit used) {}
 
+    record EmittedFor(TaskRun dynamicTaskRun, AssetEmit emit) {}
+
     final List<DeclaredEmit> declaredEmits = new CopyOnWriteArrayList<>();
     final Map<String, State.Type> finished = new ConcurrentHashMap<>();
     final Map<String, Finish> finishes = new ConcurrentHashMap<>();
+    final Map<String, List<EmittedFor>> emittedFor = new ConcurrentHashMap<>();
     volatile String refusal;
     volatile boolean refuseOnlyAtStart;
     volatile String runtimeRefusal;
@@ -84,6 +88,11 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
                 if (runtimeRefusal != null) {
                     failures.add(runtimeRefusal);
                 }
+            }
+
+            @Override
+            public void emitFor(TaskRun dynamicTaskRun, AssetEmit assetEmit) {
+                emittedFor.computeIfAbsent(context.taskRunId(), id -> new CopyOnWriteArrayList<>()).add(new EmittedFor(dynamicTaskRun, assetEmit));
             }
 
             @Override

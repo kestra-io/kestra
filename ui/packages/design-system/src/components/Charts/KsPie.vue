@@ -9,7 +9,6 @@
         :disableFeatures="disableFeatures"
         :renderer="renderer"
         :maxPixelRatio="maxPixelRatio"
-        type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
         @echarts-click="emit('echarts-click', $event)"

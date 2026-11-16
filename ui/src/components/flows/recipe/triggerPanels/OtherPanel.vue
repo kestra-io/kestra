@@ -19,7 +19,7 @@
         </KsAlert>
 
         <div v-else-if="loading" class="trigger-list">
-            <KsSkeleton v-for="i in 4" :key="i" height="3rem" />
+            <KsSkeleton v-for="i in 4" :key="i" />
         </div>
 
         <KsNoData v-else-if="filteredTriggers.length === 0" :description="$t('recipe.other.no_results')" />

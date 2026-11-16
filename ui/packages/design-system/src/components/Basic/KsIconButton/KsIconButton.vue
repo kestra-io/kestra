@@ -36,14 +36,14 @@
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {computed, useAttrs, type ButtonHTMLAttributes} from "vue"
     import type {Placement} from "element-plus"
-    import KsButton, {type KsButtonType} from "../KsButton/KsButton.vue"
+    import KsButton, {type KsButtonProps, type KsButtonType} from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     type IconSize = "xs" | "sm" | "base" | "lg" | "xl"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
+    interface KsIconButtonProps {
         tooltip?: string
         placement?: Placement
         ariaLabel?: string
@@ -53,7 +53,9 @@
         filled?: boolean
         size?: IconSize
         type?: KsButtonType
-    } & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, "type">>(), {
+    }
+
+    const props = withDefaults(defineProps<KsIconButtonProps & /* @vue-ignore */ Omit<KsButtonProps & NativeAttributes<ButtonHTMLAttributes>, keyof KsIconButtonProps>>(), {
         tooltip: "",
         placement: "left",
         ariaLabel: "",

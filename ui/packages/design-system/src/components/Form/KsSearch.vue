@@ -22,7 +22,7 @@
     import {ref, type HTMLAttributes} from "vue"
     import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
@@ -36,14 +36,9 @@
 
     const model = defineModel<string>({default: ""})
 
-    const props = defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        clearable?: boolean
-        readonly?: boolean
-        name?: string
-        id?: string
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
+    type KsSearchProps = Omit<InputProps, "modelValue">
+
+    const props = defineProps<KsSearchProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsSearchProps>>()
 
     const emit = defineEmits<{
         change: [value: string | number]
@@ -54,7 +49,7 @@
         suffix?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 </script>
 
 <style>

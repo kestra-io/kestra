@@ -35,19 +35,21 @@
 </script>
 
 <script setup lang="ts" generic="T extends TreeNodeData">
-    import {ref, type ComponentInternalInstance} from "vue"
+    import {ref, type ComponentInternalInstance, type HTMLAttributes} from "vue"
     import {
         ElTree,
+        type TreeComponentProps,
         type AllowDropFunction,
         type AllowDropType,
         type LoadFunction,
         type NodeDropType,
     } from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    type KsTreeProps = {
         data?: T[]
         lazy?: boolean
         load?: (node: KsTreeNode<T>, resolve: (data: T[]) => void, reject: () => void) => void
@@ -58,7 +60,10 @@
         defaultExpandAll?: boolean
         defaultExpandedKeys?: TreeKey[]
         defaultCheckedKeys?: TreeKey[]
-    }>()
+    }
+
+    // Element Plus types the tree's props only as the internal context, with every key required.
+    const props = defineProps<KsTreeProps & /* @vue-ignore */ Omit<NativeAttributes<Partial<TreeComponentProps> & HTMLAttributes>, keyof KsTreeProps>>()
 
     const emit = defineEmits<{
         nodeDragStart: [node: KsTreeNode<T>, event: DragEvent]

@@ -321,6 +321,18 @@ describe("useKsEditor model value sync", () => {
 
         wrapper.unmount()
     })
+
+    it("emits a value again when the parent never applied it the first time", async () => {
+        const {wrapper, changeContent, emittedValues} = await mountWithContent()
+
+        changeContent("typed")
+        changeContent("typed more")
+        changeContent("typed")
+
+        expect(emittedValues()).toEqual(["typed", "typed more", "typed"])
+
+        wrapper.unmount()
+    })
 })
 describe("useKsEditor suggestions on cursor settle", () => {
     async function mountAndSettle({selectionEmpty, suggestOpen, enteredPebble}: {selectionEmpty: boolean, suggestOpen: boolean, enteredPebble: boolean}) {

@@ -6,7 +6,7 @@ const {mockSearchFlowsBySourceCode} = vi.hoisted(() => ({mockSearchFlowsBySource
 
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({searchFlowsBySourceCode: mockSearchFlowsBySourceCode}))
 
-import {buildUsagePattern, selectUsages, useKeyUsages, type KeyTarget} from "./useKeyUsages"
+import {buildLiteralQueries, buildUsagePattern, mergeResults, selectUsages, useKeyUsages, type KeyTarget} from "./useKeyUsages"
 import type {SourceSearchResult} from "../utils/sourceSearchDiff"
 
 const flow = (namespace: string, id: string, snippets: string[]): SourceSearchResult => ({
@@ -58,6 +58,25 @@ describe("buildUsagePattern", () => {
     })
 })
 
+describe("buildLiteralQueries", () => {
+    it("builds one literal call prefix per quote style", () => {
+        expect(buildLiteralQueries({kind: "secret", key: "TOKEN"})).toEqual(["secret('TOKEN'", "secret(\"TOKEN\""])
+    })
+})
+
+describe("mergeResults", () => {
+    it("merges the same flow across pages without duplicating a line", () => {
+        const single = flow("company", "f", ["kv('k')"])
+        const double = {...flow("company", "f", []), matches: [{line: 3, column: 0, snippet: "kv(\"k\")"}, {line: 1, column: 0, snippet: "kv('k')"}]}
+
+        const merged = mergeResults([[single], [double, flow("company", "g", ["kv(\"k\")"])]])
+
+        expect(merged.map((result) => result.id)).toEqual(["f", "g"])
+        expect(merged[0].matches.map((match) => match.line)).toEqual([1, 3])
+        expect(single.matches).toHaveLength(1)
+    })
+})
+
 describe("selectUsages", () => {
     it("keeps flows in the namespace and its descendants only", () => {
         const results = [
@@ -96,23 +115,29 @@ describe("useKeyUsages", () => {
         mockSearchFlowsBySourceCode.mockReset()
     })
 
-    it("searches all namespaces with a bounded regex query", async () => {
-        mockSearchFlowsBySourceCode.mockResolvedValue({results: [flow("company", "f", ["kv('k')"])], total: 1})
+    it("runs one literal query per quote style across all namespaces", async () => {
+        mockSearchFlowsBySourceCode.mockImplementation(async ({q}: {q: string}) =>
+            q.includes("'") ? {results: [flow("company", "f", ["kv('k')"])], total: 1} : {results: [], total: 0})
 
         const {state} = mountComposable({kind: "kv", namespace: "company", key: "k"})
         await flushPromises()
 
-        const params = mockSearchFlowsBySourceCode.mock.calls[0][0]
-        expect(params).toMatchObject({regex: true, caseSensitive: true, page: 1, q: buildUsagePattern({kind: "kv", key: "k"})})
-        expect(params.namespace).toBeUndefined()
-        expect(params.size).toBeLessThanOrEqual(100)
+        const calls = mockSearchFlowsBySourceCode.mock.calls.map(([params]) => params)
+        expect(calls.map((params) => params.q)).toEqual(buildLiteralQueries({kind: "kv", key: "k"}))
+        for (const params of calls) {
+            expect(params).toMatchObject({regex: false, caseSensitive: true, page: 1})
+            expect(params.namespace).toBeUndefined()
+            expect(params.size).toBeLessThanOrEqual(100)
+        }
         expect(state.status.value).toBe("done")
         expect(state.usages.value).toHaveLength(1)
         expect(state.truncated.value).toBe(false)
     })
 
     it("reports truncation when the server holds more flows than returned", async () => {
-        mockSearchFlowsBySourceCode.mockResolvedValue({results: [flow("company", "f", ["kv('k')"])], total: 250})
+        mockSearchFlowsBySourceCode
+            .mockResolvedValueOnce({results: [flow("company", "f", ["kv('k')"])], total: 250})
+            .mockResolvedValueOnce({results: [], total: 0})
 
         const {state} = mountComposable({kind: "kv", namespace: "company", key: "k"})
         await flushPromises()
@@ -136,7 +161,8 @@ describe("useKeyUsages", () => {
     it("ignores a stale response when the key changes", async () => {
         const first = deferred<unknown>()
         const second = deferred<unknown>()
-        mockSearchFlowsBySourceCode.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+        mockSearchFlowsBySourceCode.mockImplementation(({q}: {q: string}) =>
+            q.includes("old") ? first.promise : second.promise)
 
         const {source, state} = mountComposable({kind: "kv", namespace: "company", key: "old"})
         source.value = {kind: "kv", namespace: "company", key: "new"}
@@ -152,7 +178,7 @@ describe("useKeyUsages", () => {
 
     it("ignores a response arriving after the scope is disposed", async () => {
         const pending = deferred<unknown>()
-        mockSearchFlowsBySourceCode.mockReturnValueOnce(pending.promise)
+        mockSearchFlowsBySourceCode.mockReturnValue(pending.promise)
 
         const {state, scope} = mountComposable({kind: "kv", namespace: "company", key: "k"})
         scope.stop()

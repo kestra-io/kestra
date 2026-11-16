@@ -33,6 +33,26 @@ export function buildUsagePattern({kind, key}: Pick<KeyTarget, "kind" | "key">):
     return `\\b${kind}\\(\\s*['"]${escapeRegex(key)}['"]`
 }
 
+export function buildLiteralQueries({kind, key}: Pick<KeyTarget, "kind" | "key">): string[] {
+    return [`${kind}('${key}'`, `${kind}("${key}"`]
+}
+
+export function mergeResults(pages: SourceSearchResult[][]): SourceSearchResult[] {
+    const byFlow = new Map<string, SourceSearchResult>()
+    for (const flow of pages.flat()) {
+        const uid = `${flow.namespace}\u0000${flow.id}`
+        const existing = byFlow.get(uid)
+        if (!existing) {
+            byFlow.set(uid, {...flow, matches: [...flow.matches]})
+            continue
+        }
+        const knownLines = new Set(existing.matches.map((match) => match.line))
+        existing.matches.push(...flow.matches.filter((match) => !knownLines.has(match.line)))
+        existing.matches.sort((a, b) => a.line - b.line)
+    }
+    return [...byFlow.values()]
+}
+
 function isInNamespaceScope(flowNamespace: string, targetNamespace: string | undefined) {
     return targetNamespace === undefined
         || flowNamespace === targetNamespace || flowNamespace.startsWith(`${targetNamespace}.`)
@@ -77,20 +97,20 @@ export function useKeyUsages(target: MaybeRefOrGetter<KeyTarget | undefined>) {
 
         status.value = "loading"
         try {
-            const response = await FlowsAPI.searchFlowsBySourceCode({
+            const responses = await Promise.all(buildLiteralQueries(current).map((q) => FlowsAPI.searchFlowsBySourceCode({
                 caseSensitive: true,
                 wholeWord: false,
-                regex: true,
+                regex: false,
                 scope: "ALL",
                 page: 1,
                 size: USAGES_PAGE_SIZE,
-                q: buildUsagePattern(current),
-            })
+                q,
+            })))
             if (!isCurrent(gen)) return
-            const results = (response.results ?? []) as SourceSearchResult[]
-            usages.value = selectUsages(results, current.namespace)
-            total.value = response.total ?? results.length
-            shown.value = results.length
+            const pages = responses.map((response) => (response.results ?? []) as SourceSearchResult[])
+            usages.value = selectUsages(mergeResults(pages), current.namespace)
+            total.value = responses.reduce((sum, response, index) => sum + (response.total ?? pages[index].length), 0)
+            shown.value = pages.reduce((sum, page) => sum + page.length, 0)
             status.value = "done"
         } catch (e: unknown) {
             if (!isCurrent(gen)) return

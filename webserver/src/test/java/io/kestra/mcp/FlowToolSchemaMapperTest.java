@@ -159,6 +159,14 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string", "format", "uri"))
             .build(),
         InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).build())
+            .expectedSchema(Map.of("type", "string"))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).multiple(true).build())
+            .expectedSchema(Map.of("type", "array", "items", Map.of("type", "string")))
+            .build(),
+        InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
             .build(),
@@ -214,6 +222,10 @@ class FlowToolSchemaMapperTest {
         OutputConversionTestCase.builder()
             .output(Output.builder().id("o").type(OutputType.STRING).value("v").description("An output").build())
             .expectedSchema(Map.of("type", "string", "description", "An output"))
+            .build(),
+        OutputConversionTestCase.builder()
+            .output(Output.builder().id("o").type(OutputType.ASSET).value("v").build())
+            .expectedSchema(Map.of("description", "The id of a Kestra asset, or a list of asset ids."))
             .build(),
         OutputConversionTestCase.builder()
             .output(Output.builder().id("o").type(OutputType.UNKNOWN).value("v").build())

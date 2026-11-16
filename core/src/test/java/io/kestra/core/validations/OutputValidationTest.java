@@ -35,7 +35,7 @@ class OutputValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = OutputType.class, names = {"JSON", "FILE", "SECRET", "YAML", "ION"})
+    @EnumSource(value = OutputType.class, names = {"JSON", "FILE", "SECRET", "YAML", "ION", "ASSET"})
     void shouldRejectASearchableOutputOfAnUnsupportedType(OutputType type) {
         Optional<ConstraintViolationException> violation = modelValidator.isValid(output(type, true));
 

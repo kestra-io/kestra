@@ -93,7 +93,9 @@ public class FlowToolSchemaMapper {
 
     public Map<String, Object> convert(Output output) {
         Map<String, Object> outputSchema = new HashMap<>();
-        if (output.getType().parsedAs() != null) {
+        if (OutputType.ASSET == output.getType()) {
+            outputSchema.put("description", "The id of a Kestra asset, or a list of asset ids.");
+        } else if (output.getType().parsedAs() != null) {
             outputSchema.put("type", getJsonSchemaType(output.getType().parsedAs()));
         }
 
@@ -135,6 +137,7 @@ public class FlowToolSchemaMapper {
             case URIInput i -> toURIType((URIInput) input, baseSchema);
             case YamlInput i -> toObjectType(input, baseSchema);
             case TableInput i -> toTableType(i, baseSchema);
+            case AssetInput i -> toAssetType(i, baseSchema);
             default -> throw new IllegalStateException("Unexpected value: " + input);
         };
     }
@@ -339,6 +342,14 @@ public class FlowToolSchemaMapper {
         );
     }
 
+    private static Map<String, Object> toAssetType(AssetInput input, Map<String, Object> baseSchema) {
+        if (Boolean.TRUE.equals(input.getMultiple())) {
+            baseSchema.put("type", "array");
+            baseSchema.put("items", Map.of("type", "string"));
+        }
+        return baseSchema;
+    }
+
     private static Map<String, Object> toURIType(URIInput input, Map<String, Object> baseSchema) {
         baseSchema.put(
             "format", "uri"
@@ -348,7 +359,7 @@ public class FlowToolSchemaMapper {
 
     private static String getJsonSchemaType(Type type) {
         return switch (type) {
-            case STRING, SECRET, EMAIL, DATE, DURATION, TIME, FILE, URI, DATETIME -> "string";
+            case STRING, SECRET, EMAIL, DATE, DURATION, TIME, FILE, URI, DATETIME, ASSET -> "string";
             case JSON, ION, YAML -> "object";
             case SELECT -> "string";
             case INT -> "integer";

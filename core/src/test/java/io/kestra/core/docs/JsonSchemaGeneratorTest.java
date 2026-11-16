@@ -280,6 +280,7 @@ class JsonSchemaGeneratorTest {
             // discriminator
             assertThat(schema, not(containsString("ReusableInputsInput")));
             assertThat(schema, not(containsString("TableInput")));
+            assertThat(schema, not(containsString("AssetInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
         });

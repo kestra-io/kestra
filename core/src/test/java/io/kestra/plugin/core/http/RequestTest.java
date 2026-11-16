@@ -750,6 +750,52 @@ class RequestTest {
         assertThat(output.getCode()).isEqualTo(200);
     }
 
+    @Test
+    void responseDecodedWithContentTypeCharset() throws Exception {
+        var task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/charset/latin1"))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        var output = task.run(runContext);
+
+        assertThat(output.getBody()).isEqualTo("café olé");
+    }
+
+    @Test
+    void responseWithoutCharsetDecodedWithDefaultCharset() throws Exception {
+        var task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/charset/none"))
+            .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(StandardCharsets.ISO_8859_1)).build())
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        var output = task.run(runContext);
+
+        assertThat(output.getBody()).isEqualTo("café olé");
+    }
+
+    @Test
+    void responseWithUnknownCharsetDecodedAsUtf8() throws Exception {
+        var task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/charset/unknown"))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        var output = task.run(runContext);
+
+        assertThat(output.getBody()).isEqualTo("café olé");
+    }
+
     @Controller
     static class MockController {
 
@@ -763,6 +809,21 @@ class RequestTest {
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
+        }
+
+        @Get("/charset/latin1")
+        HttpResponse<byte[]> charsetLatin1() {
+            return HttpResponse.ok("café olé".getBytes(StandardCharsets.ISO_8859_1)).contentType("text/plain; charset=ISO-8859-1");
+        }
+
+        @Get("/charset/none")
+        HttpResponse<byte[]> charsetNone() {
+            return HttpResponse.ok("café olé".getBytes(StandardCharsets.ISO_8859_1)).contentType("text/plain");
+        }
+
+        @Get("/charset/unknown")
+        HttpResponse<byte[]> charsetUnknown() {
+            return HttpResponse.ok("café olé".getBytes(StandardCharsets.UTF_8)).contentType("text/plain; charset=x-not-a-charset");
         }
 
         @Post("content-type")

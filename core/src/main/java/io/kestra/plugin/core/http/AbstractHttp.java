@@ -183,7 +183,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
         return request.build();
     }
 
-    private Charset defaultCharset(RunContext runContext) throws IllegalVariableEvaluationException {
+    protected Charset defaultCharset(RunContext runContext) throws IllegalVariableEvaluationException {
         return this.options != null && this.options.getDefaultCharset() != null
             ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null)
             : null;

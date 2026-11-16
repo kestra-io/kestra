@@ -56,7 +56,10 @@ public class HttpConfiguration {
     @Builder.Default
     private Property<Boolean> enabledTcpExtendedKeepAlive = Property.ofValue(true);
 
-    @Schema(title = "The default charset for the request.")
+    @Schema(
+        title = "The default charset for the request.",
+        description = "Also used to decode the response body of the `Request` task when the response `Content-Type` header has no charset."
+    )
     @Builder.Default
     private final Property<Charset> defaultCharset = Property.ofValue(StandardCharsets.UTF_8);
 

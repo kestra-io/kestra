@@ -302,7 +302,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             ? await DashboardsAPI.exportChart({format: "CSV", chart: chart.content ?? "", globalFilter: parameters})
             : await DashboardsAPI.exportDashboardChart({format: "CSV", id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        Utils.downloadUrl(window.URL.createObjectURL(new Blob([data], {type: "application/octet-stream"})), `chart__${chart.id}.csv`)
+        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), `chart__${chart.id}.csv`)
     }
 
     const pluginsStore = usePluginsStore()

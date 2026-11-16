@@ -388,7 +388,7 @@
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
     import {useBulkAction} from "../../../composables/useBulkAction"
-    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
@@ -402,7 +402,7 @@
     import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -645,14 +645,7 @@
         router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
-    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
-        const parts = typeof sort === "string" ? sort.split(":") : []
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            return {prop: "triggerId", order: "ascending"}
-        }
-        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
-    }
-    const defaultSort = sortFromQuery(route.query.sort)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "triggerId", order: "ascending"})
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query

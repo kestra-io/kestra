@@ -530,7 +530,7 @@ export type AssetsInOut = {
     outputs?: Array<Asset>;
 };
 
-export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER' | 'PLUGIN';
 
 /**
  * A backfill configuration.

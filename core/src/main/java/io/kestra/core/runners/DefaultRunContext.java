@@ -275,9 +275,9 @@ public class DefaultRunContext extends RunContext {
         return assetManagerFactory.declared(this, assetEmitContext, declared.state(), declared.startDate(), declared.endDate(), declared.alreadyUsed());
     }
 
-    public void finishAssets(State.Type state) {
+    public void finishAssets(State.Type state, Instant startDate, AssetEmit used) {
         if (assetEmitContext != null) {
-            assetManagerFactory.finish(this, assetEmitContext, state);
+            assetManagerFactory.finish(this, assetEmitContext, state, startDate, used);
         }
     }
 

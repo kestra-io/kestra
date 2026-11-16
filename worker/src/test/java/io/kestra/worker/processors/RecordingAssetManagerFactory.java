@@ -17,10 +17,13 @@ import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 
 class RecordingAssetManagerFactory extends AssetManagerFactory {
-    record DeclaredEmit(String taskRunId, State.Type state, Set<String> alreadyUsed, AssetEmit emit, ExecutionKind executionKind) {}
+    record DeclaredEmit(String taskRunId, State.Type state, Instant startDate, Set<String> alreadyUsed, AssetEmit emit, ExecutionKind executionKind) {}
+
+    record Finish(State.Type state, Instant startDate, AssetEmit used) {}
 
     final List<DeclaredEmit> declaredEmits = new CopyOnWriteArrayList<>();
     final Map<String, State.Type> finished = new ConcurrentHashMap<>();
+    final Map<String, Finish> finishes = new ConcurrentHashMap<>();
     volatile String refusal;
     volatile boolean refuseOnlyAtStart;
     volatile String runtimeRefusal;
@@ -39,7 +42,7 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
         return new AssetEmitter() {
             @Override
             public void emit(AssetEmit assetEmit) {
-                declaredEmits.add(new DeclaredEmit(context.taskRunId(), state, alreadyUsed, assetEmit, context.executionKind()));
+                declaredEmits.add(new DeclaredEmit(context.taskRunId(), state, startDate, alreadyUsed, assetEmit, context.executionKind()));
                 if (backendUnreachableAtStart && State.Type.RUNNING == state) {
                     throw new IllegalStateException("The backend is unreachable.");
                 }
@@ -96,10 +99,11 @@ class RecordingAssetManagerFactory extends AssetManagerFactory {
     }
 
     @Override
-    public void finish(RunContext runContext, AssetEmitContext context, State.Type state) {
+    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, AssetEmit used) {
         if (backendUnreachableAtFinish) {
             throw new IllegalStateException("The backend is unreachable.");
         }
         finished.put(context.taskRunId(), state);
+        finishes.put(context.taskRunId(), new Finish(state, startDate, used));
     }
 }

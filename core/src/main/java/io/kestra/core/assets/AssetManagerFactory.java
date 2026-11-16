@@ -51,8 +51,11 @@ public class AssetManagerFactory {
     }
 
     /**
-     * Ends the locks the task run took on its outputs, once an attempt ended in {@code state}.
+     * Ends an attempt of the task run in {@code state}: releases the locks it took on its outputs, and records the lineage of every asset it used,
+     * declared or emitted while it ran, as of its end.
+     *
+     * @param used the inputs and outputs of the attempt, only their identity is read
      */
-    public void finish(RunContext runContext, AssetEmitContext context, State.Type state) {
+    public void finish(RunContext runContext, AssetEmitContext context, State.Type state, Instant startDate, AssetEmit used) {
     }
 }

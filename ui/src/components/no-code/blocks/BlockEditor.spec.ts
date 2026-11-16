@@ -387,7 +387,6 @@ const makeConfig = () => ({
     global: {
         plugins: [createPinia()],
         stubs: {
-            KsEmpty: {template: "<div data-test='ks-empty'><slot /></div>"},
             KsDialog: {
                 template: "<div v-if='modelValue' data-test='ks-dialog'><slot /></div>",
                 props: ["modelValue", "title"],

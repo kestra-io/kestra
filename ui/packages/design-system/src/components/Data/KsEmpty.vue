@@ -20,6 +20,7 @@
     import {useFilteredProps} from "../../utils/filteredProps"
     import noDataImage from "../../assets/images/no-data.png"
 
+    /** @deprecated since 2.1: use KsNoData, or KsEmptyState when the empty state has its own illustration. */
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{

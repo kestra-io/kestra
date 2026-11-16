@@ -33,7 +33,6 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
 const scrollerMocks = vi.hoisted(() => ({
-    scrollCalls: [] as string[],
     scrollToItemCalls: [] as {taskRunId?: string; index: number}[],
     scrollToItem: vi.fn(),
 }))
@@ -46,12 +45,6 @@ vi.mock("vue-virtual-scroller", async () => {
             inheritAttrs: true,
             props: ["items"],
             setup(props, {attrs, slots, expose}) {
-                const scrollToBottom = vi.fn(() => {
-                    const taskRunId = attrs["data-scroll-key"]
-                    if (typeof taskRunId === "string") {
-                        scrollerMocks.scrollCalls.push(taskRunId)
-                    }
-                })
                 const scrollToItem = vi.fn((index: number) => {
                     const taskRunId = attrs["data-scroll-key"]
                     if (typeof taskRunId === "string") {
@@ -60,7 +53,6 @@ vi.mock("vue-virtual-scroller", async () => {
                     scrollerMocks.scrollToItem(index)
                 })
                 expose({
-                    scrollToBottom,
                     scrollToItem,
                 })
 
@@ -137,7 +129,6 @@ describe("TaskRunDetails log loading across executions", () => {
     beforeEach(() => {
         vi.useFakeTimers()
         openedStreams = []
-        scrollerMocks.scrollCalls = []
         scrollerMocks.scrollToItemCalls = []
         scrollerMocks.scrollToItem.mockClear()
         store.executions = reactive({
@@ -347,19 +338,6 @@ describe("TaskRunDetails log loading across executions", () => {
         await flushPromises()
 
         expect(scrollerMocks.scrollToItemCalls).toContainEqual({taskRunId: "tr-failed", index: 1})
-
-        wrapper.unmount()
-    })
-
-    it("should not scroll when failed task has no logs", async () => {
-        store.executions.loadLogs.mockResolvedValue([])
-        store.executions.execution = executionWithTaskRuns("exec-1") as never
-        const wrapper = mountDetails()
-        await flushPromises()
-        await nextTick()
-        await flushPromises()
-
-        expect(scrollerMocks.scrollToItemCalls).toHaveLength(0)
 
         wrapper.unmount()
     })

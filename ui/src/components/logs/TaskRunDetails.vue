@@ -339,7 +339,7 @@
         return "isGroup" in item
     }
 
-    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem"> & Partial<Pick<DynamicScrollerExposed, "scrollToBottom">>
+    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem">
 
     function isLogsScroller(el: unknown): el is LogsScroller {
         return typeof el === "object" && el !== null && "scrollToItem" in el

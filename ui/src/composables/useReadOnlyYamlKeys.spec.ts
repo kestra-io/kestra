@@ -521,10 +521,10 @@ describe("useReadOnlyYamlKeys", () => {
     it("computes the inversion against the new document after the model is swapped", () => {
         const double = editorDouble(FLOW)
         guard(double)
-        const swapped = FLOW.replace("message: hello", "message: swapped, and now longer")
+        const swapped = `# swapped header\n${FLOW}`
 
         double.swapModel(swapped)
-        double.edit([insertAt(0, "x")])
+        double.edit([{offset: swapped.indexOf("my_flow"), length: 7, text: "other"}])
 
         expect(double.current()).toBe(swapped)
     })

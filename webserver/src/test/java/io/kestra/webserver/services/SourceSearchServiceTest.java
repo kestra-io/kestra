@@ -12,6 +12,9 @@ import jakarta.validation.ConstraintViolationException;
 
 import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.SourceMatch;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -19,7 +22,11 @@ import io.kestra.core.models.flows.SourceSearchScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.models.flows.KeyUsagesRequest;
+import io.kestra.webserver.models.flows.KeyUsagesRequest.Key;
+import io.kestra.webserver.models.flows.KeyUsagesResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkipReason;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkippedFlow;
@@ -28,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -277,5 +285,153 @@ class SourceSearchServiceTest {
         assertThat(response.updated()).isEmpty();
         assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.NO_MATCH));
         verify(flowService, never()).update(any(), any());
+    }
+
+    @Test
+    void shouldCountFlowsInTheTargetNamespaceAndItsDescendants() {
+        // Given
+        givenMatches("kv('k'", match("company", "a", "x: kv('k')"), match("company.team", "b", "x: kv('k')"), match("companyx", "c", "x: kv('k')"));
+        givenMatches("kv(\"k\"");
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.flows()).isEqualTo(2);
+        assertThat(response.truncated()).isFalse();
+    }
+
+    @Test
+    void shouldCountFlowOutsideTheNamespaceWhenItsLineNamesTheNamespace() {
+        // Given
+        givenMatches("kv('k'", match("other", "a", "x: kv('k', 'company')"), match("other", "b", "x: kv('k')"));
+        givenMatches("kv(\"k\"");
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.flows()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldIgnoreANamespaceMentionedWithoutQuotes() {
+        // Given
+        givenMatches("kv('k'", match("other", "a", "x: kv('k') # company"));
+        givenMatches("kv(\"k\"");
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.flows()).isZero();
+    }
+
+    @Test
+    void shouldCountFlowsMatchedByEitherQuoteStyle() {
+        // Given
+        givenMatches("kv('k'", match("company", "single", "x: kv('k')"));
+        givenMatches("kv(\"k\"", match("company", "double", "x: kv(\"k\")"));
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.flows()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldKeepEveryFlowWhenTheKeyHasNoNamespace() {
+        // Given
+        givenMatches("secret('S'", match("a", "one", "x: secret('S')"), match("b", "two", "x: secret('S')"));
+        givenMatches("secret(\"S\"");
+
+        // When
+        KeyUsagesResponse response = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.SECRET, List.of(new Key(null, "S")))).getFirst();
+
+        // Then
+        assertThat(response.flows()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldCountADistinctFlowOnceAcrossLinesAndQueries() {
+        // Given
+        FlowMatch twoLines = match("company", "a", "x: kv('k')", "y: kv('k')");
+        givenMatches("kv('k'", twoLines);
+        givenMatches("kv(\"k\"", match("company", "a", "z: kv(\"k\")"));
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.flows()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldReturnOneResponseByKeyInRequestOrder() {
+        // Given
+        givenMatches("kv('first'", match("company", "a", "x: kv('first')"));
+        givenMatches("kv(\"first\"");
+        givenMatches("kv('second'");
+        givenMatches("kv(\"second\"");
+
+        // When
+        List<KeyUsagesResponse> responses = service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(new Key("company", "first"), new Key("company", "second"))));
+
+        // Then
+        assertThat(responses).extracting(KeyUsagesResponse::key).containsExactly("first", "second");
+        assertThat(responses).extracting(KeyUsagesResponse::flows).containsExactly(1, 0);
+    }
+
+    @Test
+    void shouldFlagTruncationWhenTheCandidateCapIsReached() {
+        // Given
+        FlowMatch[] capped = new FlowMatch[SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES];
+        for (int i = 0; i < capped.length; i++) {
+            capped[i] = match("company", "flow-" + i, "x: kv('k')");
+        }
+        givenMatches("kv('k'");
+        givenMatches("kv(\"k\"", capped);
+
+        // When
+        KeyUsagesResponse response = countKv(new Key("company", "k"));
+
+        // Then
+        assertThat(response.truncated()).isTrue();
+    }
+
+    @Test
+    void shouldRejectAKeyContainingANewline() {
+        assertThatThrownBy(() -> countKv(new Key("company", "a\nb"))).isInstanceOf(InvalidSourceSearchQueryException.class);
+    }
+
+    private SourceSearchService service() {
+        return new SourceSearchService(flowRepository, flowService);
+    }
+
+    private KeyUsagesResponse countKv(Key key) {
+        return service().countKeyUsages("main", new KeyUsagesRequest(KeyUsagesRequest.Kind.KV, List.of(key))).getFirst();
+    }
+
+    private record FlowMatch(String namespace, String id, List<String> lines) {
+    }
+
+    private static FlowMatch match(String namespace, String id, String... lines) {
+        return new FlowMatch(namespace, id, List.of(lines));
+    }
+
+    private void givenMatches(String query, FlowMatch... flows) {
+        List<SearchResult<Flow>> results = java.util.Arrays.stream(flows)
+            .map(flow -> {
+                List<SourceMatch> matches = new java.util.ArrayList<>();
+                for (int i = 0; i < flow.lines().size(); i++) {
+                    matches.add(new SourceMatch(i + 1, 0, "[mark]" + flow.lines().get(i) + "[/mark]"));
+                }
+                Flow model = Flow.builder().tenantId("main").namespace(flow.namespace()).id(flow.id()).build();
+                return new SearchResult<>(model, matches, true);
+            })
+            .toList();
+        when(flowRepository.findSourceCode(eq(Pageable.UNPAGED), eq(query), eq(true), eq(false), eq(false), eq(SourceSearchScope.ALL), eq("main"), eq(null)))
+            .thenReturn(new ArrayListTotal<>(results, results.size()));
     }
 }

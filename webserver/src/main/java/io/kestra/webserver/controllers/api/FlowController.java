@@ -46,6 +46,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.flows.KeyUsagesRequest;
+import io.kestra.webserver.models.flows.KeyUsagesResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyRequest;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceLineRequest;
@@ -295,6 +297,17 @@ public class FlowController {
                 scope
             )
         );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/source/key-usages")
+    @Operation(
+        tags = { "Flows" }, summary = "Count the flows referencing each KV key or secret",
+        description = "For each key, counts the distinct flows calling `kv('key')` or `secret('key')` whose namespace is the key's namespace or a descendant, or whose matching line names that namespace. Results are returned in request order."
+    )
+    public List<KeyUsagesResponse> countKeyUsages(
+        @RequestBody(description = "The kind of key and the keys to count usages for") @Body @Valid KeyUsagesRequest request) {
+        return sourceSearchService.countKeyUsages(tenantService.resolveTenant(), request);
     }
 
     @ExecuteOn(TaskExecutors.IO)

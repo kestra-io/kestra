@@ -3,6 +3,8 @@ package io.kestra.core.utils;
 import java.util.function.*;
 
 public final class Rethrow {
+    private static final String CI_DUMMY = "force backend tests to run, remove before merge";
+
     @FunctionalInterface
     public interface ConsumerChecked<T, E extends Exception> {
         void accept(T t) throws E;

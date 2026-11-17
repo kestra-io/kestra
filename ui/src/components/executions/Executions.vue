@@ -758,7 +758,7 @@
         }
     })
 
-    const onRowClick = (row: Execution, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (row: Execution, column: {type?: string} | null | undefined, event: Event) => {
         if (isMobile.value && isPlainRowActivation(column, event)) router.push({name: dblClickRouteName.value, params: executionParams(row)})
     }
 

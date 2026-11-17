@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
 const trackAuthoringAction = vi.fn()
 vi.mock("../../../utils/tabTracking", () => ({
@@ -94,8 +95,8 @@ describe("useBlockMutations", () => {
     it("updateDependsOn writes the stringified list at the dependsOn path", () => {
         setup().updateDependsOn("tasks[0]", ["second", "third"])
 
-        const applied = applyYaml.mock.calls[0][0] as string
-        expect(applied).toMatch(/dependsOn:\s*\n\s*- second\s*\n\s*- third/)
+        const applied = flowYamlUtils.parse<{tasks: {dependsOn?: string[]}[]}>(applyYaml.mock.calls[0][0])
+        expect(applied?.tasks.map(task => task.dependsOn)).toEqual([["second", "third"], ["first"]])
     })
 
     it("updateDependsOn clears the key instead of writing an empty array when the list is empty", () => {

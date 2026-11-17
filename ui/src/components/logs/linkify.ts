@@ -78,10 +78,10 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     const flowUrl = router.resolve(flowRoute)
 
     // we create the anchor nodes
-    const anchorNodeExection = document.createElement("a")
-    anchorNodeExection.href = executionUrl.href
-    anchorNodeExection.textContent = execution
-    anchorNodeExection.onclick = (event: MouseEvent) => {
+    const anchorNodeExecution = document.createElement("a")
+    anchorNodeExecution.href = executionUrl.href
+    anchorNodeExecution.textContent = execution
+    anchorNodeExecution.onclick = (event: MouseEvent) => {
         gotoRoute(event, executionRoute, router)
     }
 
@@ -93,8 +93,8 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     }
 
     // finally we rebuild the router-md component with the new links
-    link.replaceWith(anchorNodeExection)
-    anchorNodeExection.after(anchorNodeFlow)
-    anchorNodeExection.after(document.createTextNode(" for flow "))
+    link.replaceWith(anchorNodeExecution)
+    anchorNodeExecution.after(anchorNodeFlow)
+    anchorNodeExecution.after(document.createTextNode(" for flow "))
   })
 }

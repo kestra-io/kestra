@@ -121,9 +121,9 @@
         () => props.modelValue,
         (newValue) => {
             if(localEdit.value) {
+                localEdit.value = false
                 return
             }
-            localEdit.value = false
             if(newValue === undefined || newValue === null) {
                 currentValue.value = []
                 return

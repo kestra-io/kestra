@@ -107,6 +107,20 @@ describe("TaskDict", () => {
         expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual([{}])
     })
 
+    it("applies external modelValue updates once the parent round trips a local edit", async () => {
+        const wrapper = mountDict({before: "old"})
+        wrapper.findAllComponents(InputText)[0].vm.$emit("update:modelValue", "edited")
+        await vi.advanceTimersByTimeAsync(200)
+        expect(wrapper.emitted("update:modelValue")).toEqual([[{edited: "old"}]])
+
+        await wrapper.setProps({modelValue: {edited: "old"}})
+        await wrapper.setProps({modelValue: {external: "replacement"}})
+        expect(wrapper.findAllComponents(InputText)[0].props("modelValue")).toBe("external")
+
+        await wrapper.setProps({modelValue: null})
+        expect(wrapper.findComponent(InputText).exists()).toBe(false)
+    })
+
     it("supports boolean and object additionalProperties and external model resets", async () => {
         const wrapper = mountDict({value: "initial"}, {additionalProperties: true})
         await taskComponentsReady()

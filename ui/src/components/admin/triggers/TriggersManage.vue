@@ -404,6 +404,7 @@
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
+    import {latestRequest} from "../../../utils/latestRequest"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
     import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
@@ -627,9 +628,12 @@
         return deepMerge(base, nonFilterRest)
     }
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
 
+        const isLatest = startLoad()
         const previousSelection = selection.value
         const query = loadQuery({
             size,
@@ -639,6 +643,7 @@
         })
 
         const triggersData = await searchTriggers(query)
+        if (!isLatest()) return
         triggers.value = triggersData?.results ?? []
         total.value = triggersData?.total ?? 0
 

@@ -17,7 +17,7 @@
         :dirty="changed.length > 0"
         :title="$t('replayOverrides.dialog_title', {taskId: taskRun.taskId})"
     >
-        <div v-ks-loading="loading" class="replay-with-overrides" data-dialog-wide data-test="replay-with-overrides-dialog">
+        <div v-ks-loading="loading" class="replay-with-overrides" data-test="replay-with-overrides-dialog">
             <KsText tag="p" size="small" type="info">
                 {{ $t("replayOverrides.note", {revision: execution.flowRevision}) }}
             </KsText>

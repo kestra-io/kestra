@@ -75,11 +75,6 @@ type Injected = Record<KeyName, unknown> & {
     SAVE_FLOW_FUNCTION: BlockEditorProvideContext["saveFlow"]
 }
 
-type Stores = {
-    flowStore: Record<string, unknown>
-    pluginsStore: Record<string, unknown>
-}
-
 function makeCtx(props: Partial<NoCodeProps> = {}) {
     return {
         props: props as NoCodeProps,
@@ -98,12 +93,12 @@ function makeCtx(props: Partial<NoCodeProps> = {}) {
  * nested block fields consume them. An optional `seed` runs before the composable so a test can
  * set store state. Returns the raw injected values (refs are not unwrapped).
  */
-function mountHost(props: Partial<NoCodeProps>, seed?: (stores: Stores) => void) {
+function mountHost(props: Partial<NoCodeProps>, seed?: () => void) {
     const ctx = makeCtx(props)
     const collected: Record<string, unknown> = {}
 
     if (seed) {
-        seed({flowStore, pluginsStore})
+        seed()
     }
 
     const Child = defineComponent({
@@ -133,7 +128,7 @@ function setup(props: Partial<NoCodeProps> = {}) {
 }
 
 /** Same as `setup`, but lets a test seed the stores before the composable runs. */
-function setupWithStores(seed: (stores: Stores) => void, props: Partial<NoCodeProps> = {}) {
+function setupWithStores(seed: () => void, props: Partial<NoCodeProps> = {}) {
     return mountHost(props, seed)
 }
 
@@ -194,14 +189,14 @@ describe("useBlockEditorProvides", () => {
 
     describe("CREATING_FLOW", () => {
         it("defaults to false", () => {
-            const {value} = setupWithStores(({flowStore}) => {
+            const {value} = setupWithStores(() => {
                 flowStore.isCreating = undefined
             })
             expect(value("CREATING_FLOW")).toBe(false)
         })
 
         it("mirrors the flow store when it is creating", () => {
-            const {value} = setupWithStores(({flowStore}) => {
+            const {value} = setupWithStores(() => {
                 flowStore.isCreating = true
             })
             expect(value("CREATING_FLOW")).toBe(true)
@@ -211,7 +206,7 @@ describe("useBlockEditorProvides", () => {
     describe("DEFAULT_NAMESPACE", () => {
         it("prefers the flow's own namespace", () => {
             defaultNamespace.mockReturnValue("from.default")
-            const {value} = setupWithStores(({flowStore}) => {
+            const {value} = setupWithStores(() => {
                 flowStore.flow = {namespace: "flow.own"}
             })
             expect(value("DEFAULT_NAMESPACE")).toBe("flow.own")
@@ -219,7 +214,7 @@ describe("useBlockEditorProvides", () => {
 
         it("falls back to defaultNamespace() when the flow has no namespace", () => {
             defaultNamespace.mockReturnValue("from.default")
-            const {value} = setupWithStores(({flowStore}) => {
+            const {value} = setupWithStores(() => {
                 flowStore.flow = undefined
             })
             expect(value("DEFAULT_NAMESPACE")).toBe("from.default")
@@ -227,7 +222,7 @@ describe("useBlockEditorProvides", () => {
 
         it("falls back to company.team when neither is available", () => {
             defaultNamespace.mockReturnValue(undefined)
-            const {value} = setupWithStores(({flowStore}) => {
+            const {value} = setupWithStores(() => {
                 flowStore.flow = undefined
             })
             expect(value("DEFAULT_NAMESPACE")).toBe("company.team")
@@ -236,21 +231,21 @@ describe("useBlockEditorProvides", () => {
 
     describe("schemas", () => {
         it("BLOCK_SCHEMA_PATH prefers the prop", () => {
-            const {value} = setupWithStores(({pluginsStore}) => {
+            const {value} = setupWithStores(() => {
                 pluginsStore.flowSchema = {$ref: "#/definitions/Flow"}
             }, {blockSchemaPath: "#/definitions/io.kestra.plugin.Task"})
             expect(value("BLOCK_SCHEMA_PATH")).toBe("#/definitions/io.kestra.plugin.Task")
         })
 
         it("BLOCK_SCHEMA_PATH falls back to the flow schema $ref", () => {
-            const {value} = setupWithStores(({pluginsStore}) => {
+            const {value} = setupWithStores(() => {
                 pluginsStore.flowSchema = {$ref: "#/definitions/Flow"}
             })
             expect(value("BLOCK_SCHEMA_PATH")).toBe("#/definitions/Flow")
         })
 
         it("BLOCK_SCHEMA_PATH falls back to an empty string when there is neither", () => {
-            const {value} = setupWithStores(({pluginsStore}) => {
+            const {value} = setupWithStores(() => {
                 pluginsStore.flowSchema = undefined
             })
             expect(value("BLOCK_SCHEMA_PATH")).toBe("")
@@ -260,7 +255,7 @@ describe("useBlockEditorProvides", () => {
             const flowSchema = {$ref: "#/definitions/Flow"}
             const flowRootSchema = {type: "object"}
             const flowDefinitions = {Flow: {type: "object"}}
-            const {value} = setupWithStores(({pluginsStore}) => {
+            const {value} = setupWithStores(() => {
                 pluginsStore.flowSchema = flowSchema
                 pluginsStore.flowRootSchema = flowRootSchema
                 pluginsStore.flowDefinitions = flowDefinitions
@@ -271,7 +266,7 @@ describe("useBlockEditorProvides", () => {
         })
 
         it("falls back to an empty object for the schema, root schema and definitions", () => {
-            const {value} = setupWithStores(({pluginsStore}) => {
+            const {value} = setupWithStores(() => {
                 pluginsStore.flowSchema = undefined
                 pluginsStore.flowRootSchema = undefined
                 pluginsStore.flowDefinitions = undefined

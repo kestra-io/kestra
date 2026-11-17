@@ -409,10 +409,13 @@
     "replayOverrides": {
       "action": "Replay mit Overrides",
       "dialog_title": "Replay von {taskId} mit Overrides",
-      "note": "Läuft auf Revision {revision}. Vorherige Tasks werden nicht erneut ausgeführt. Die von dir bearbeiteten Outputs ersetzen ihre in der neuen Execution, für diesen Task und jeden nachfolgenden Task.",
-      "add": "Bearbeite die Outputs eines vorherigen Tasks",
-      "remove": "Überschreiben von {task} stoppen",
-      "invalid": "Die Outputs müssen ein JSON-Objekt sein."
+      "note": "Läuft auf Revision {revision}. Vorherige Tasks werden nicht erneut ausgeführt. Die von dir geänderten Werte ersetzen ihre Outputs in der neuen Execution, für diesen Task und jeden Task danach.",
+      "load_error": "Die Outputs, die dieser Task liest, konnten nicht geladen werden.",
+      "empty_title": "Nichts zum Überschreiben",
+      "empty": "{taskId} liest keine Output einer vorherigen Task über einen festen Pfad.",
+      "invalid_number": "Gib eine Zahl ein.",
+      "invalid_boolean": "Gib „true“ oder „false“ ein.",
+      "invalid_json": "Gib gültiges JSON ein."
     },
     "reused_task_run": {
       "label": "Wiederverwendet",

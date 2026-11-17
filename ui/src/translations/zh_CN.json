@@ -409,10 +409,13 @@
     "replayOverrides": {
       "action": "使用覆盖重放",
       "dialog_title": "从 {taskId} 重放并覆盖",
-      "note": "在修订版 {revision} 上运行。之前的 task 不会再次运行。你编辑的 output 将在此 task 和其后的每个 task 的新 execution 中替换它们。",
-      "add": "编辑上一个 task 的 output",
-      "remove": "停止覆盖 {task}",
-      "invalid": "输出必须是 JSON 对象。"
+      "note": "在修订版 {revision} 上运行。之前的 Task 不会再次运行。你更改的值将在此 Task 及其之后的所有 Task 的新 Execution 中替换其 output。",
+      "load_error": "无法加载此 task 读取的 output。",
+      "empty_title": "无内容可覆盖",
+      "empty": "{taskId} 未通过固定路径读取上一个 Task 的 output。",
+      "invalid_number": "输入一个数字。",
+      "invalid_boolean": "输入 true 或 false。",
+      "invalid_json": "请输入有效的 JSON。"
     },
     "reused_task_run": {
       "label": "已复用",

@@ -223,7 +223,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             // LOOP executions are virtual iterations of the parent flow; they must not consume
                             // a separate FLOW concurrency slot since the parent already holds it
                             if (execution.getKind() != ExecutionKind.LOOP) {
-                                List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
+                                List<ScopedConcurrencyLimit> concurrencyLimits = ScopedConcurrencyLimit.claimableBy(concurrencyLimitResolver.resolveLimits(flow), execution);
                                 if (!concurrencyLimits.isEmpty()) {
                                     ExecutionRunning executionRunning = ExecutionRunning.builder()
                                         .tenantId(executor.getFlow().getTenantId())

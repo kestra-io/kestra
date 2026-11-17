@@ -16,11 +16,11 @@
 
 <script setup lang="ts">
     import {collapseEmptyValues} from "./MixinTask"
-    import {KsEditor, type KsEditorExposes} from "@kestra-io/design-system"
+    import {KsEditor, isDeepEqual, type KsEditorExposes} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import {useFocusedExpressionEditor} from "./useFocusedExpressionEditor"
-    import {computed, ref, type PropType} from "vue"
+    import {computed, ref, watch, type PropType} from "vue"
 
     const editorBindings = useEditorBindings()
     const editorRef = ref<KsEditorExposes>()
@@ -61,6 +61,12 @@
     })
 
     const localEditorValue = ref(editorValue.value)
+
+    // Adopt a value the parent sets, but leave the text already being typed alone: its parse is what was emitted.
+    watch(() => props.modelValue, (value) => {
+        if (isDeepEqual(collapseEmptyValues(parseValue(localEditorValue.value)), value)) return
+        localEditorValue.value = editorValue.value
+    }, {deep: true})
 
     function parseValue(value: string) {
         if(value.match(/^\s*{{/)) {

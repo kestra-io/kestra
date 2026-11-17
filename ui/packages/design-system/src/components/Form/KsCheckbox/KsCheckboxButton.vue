@@ -12,7 +12,6 @@
 <script setup lang="ts">
     import {ElCheckboxButton, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
-    import type {HTMLAttributes} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
@@ -24,7 +23,7 @@
         checked?: boolean
     }
 
-    const props = defineProps<KsCheckboxButtonProps & /* @vue-ignore */ Omit<NativeAttributes<CheckboxProps & HTMLAttributes>, keyof KsCheckboxButtonProps>>()
+    const props = defineProps<KsCheckboxButtonProps & /* @vue-ignore */ Omit<NativeAttributes<CheckboxProps>, keyof KsCheckboxButtonProps>>()
 
     const emit = defineEmits<{
         change: [value: CheckboxValueType]

@@ -3,7 +3,7 @@ import {defineComponent, h, nextTick, type Component} from "vue"
 import {i18nMount} from "../../tests/units/i18nMount"
 import * as DS from "../index"
 
-type Case = [name: string, props?: Record<string, unknown>, wrap?: (child: () => ReturnType<typeof h>) => Component]
+type Case = [name: string, props?: Record<string, unknown>, wrap?: (child: () => ReturnType<typeof h>) => Component, forwardsId?: boolean]
 
 const CASES: Case[] = [
     ["KsButton"],
@@ -35,13 +35,27 @@ const CASES: Case[] = [
     ["KsText"],
     ["KsSideBarItem", {title: "item"}],
     ["KsTree"],
+    ["KsRow"],
+    ["KsSplitter"],
+    ["KsPagination", {total: 10}],
+    ["KsProgress", {percentage: 50}],
+    ["KsTable"],
+    ["KsDrawer", {modelValue: true}],
+    ["KsPopover", {visible: true, teleported: false}, undefined, false],
+    ["KsAutocomplete"],
+    ["KsDatePicker"],
+    ["KsTimePicker"],
+    ["KsForm"],
+    ["KsFormItem"],
+    ["KsTabs"],
+    ["KsTabPane", {name: "a", label: "a"}, (child) => defineComponent({render: () => h(DS.KsTabs, {modelValue: "a"}, () => child())})],
 ]
 
 let unmount: (() => void) | undefined
 afterEach(() => unmount?.())
 
 describe("HTML attributes on design-system wrappers", () => {
-    test.each(CASES)("%s forwards them to the DOM", async (name, props = {}, wrap) => {
+    test.each(CASES)("%s forwards them to the DOM", async (name, props = {}, wrap, forwardsId = true) => {
         const id = `html-attributes-${name}`
         const component = (DS as Record<string, unknown>)[name] as Component
         const child = () => h(component, {...props, id, "aria-label": name})
@@ -49,8 +63,9 @@ describe("HTML attributes on design-system wrappers", () => {
         unmount = () => wrapper.unmount()
         await nextTick()
 
-        const element = document.getElementById(id)
-        expect(element).not.toBeNull()
+        if (forwardsId) {
+            expect(document.getElementById(id)).not.toBeNull()
+        }
         expect(document.querySelector(`[aria-label="${name}"]`)).not.toBeNull()
     })
 })

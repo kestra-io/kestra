@@ -153,7 +153,7 @@
         mobileColumns?: KsDataTableMobileColumns
     }
 
-    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps>>(), {
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
         data: () => [],
         total: 0,
         currentPage: 1,
@@ -215,7 +215,7 @@
 
     const composedExpandRowKeys = computed<string[] | undefined>(() => {
         const forced = props.forceExpandedRowKeys ?? []
-        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        const userKeys = (attrs.expandRowKeys ?? attrs["expand-row-keys"]) as string[] | undefined ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
     })
@@ -246,7 +246,7 @@
 
     const composedRowClassName = computed(() => {
         const forced = new Set(props.forceExpandedRowKeys ?? [])
-        const userClass = attrs.rowClassName as string | ((data: {row: T; rowIndex: number}) => string) | undefined
+        const userClass = (attrs.rowClassName ?? attrs["row-class-name"]) as string | ((data: {row: T; rowIndex: number}) => string) | undefined
 
         if (!forced.size && !userClass) return undefined
 

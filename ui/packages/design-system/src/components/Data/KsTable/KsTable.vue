@@ -31,12 +31,7 @@
 
     type TableRow = NonNullable<TableProps["data"]>[number]
 
-    type KsTableProps = Omit<TableProps<TableRow>, "data" | "rowKey" | "cellClassName" | "rowClassName"> & {
-        data?: T[]
-        rowKey?: string | ((row: T) => string)
-        cellClassName?: string | ((data: {row: T; rowIndex: number; column: TableColumnCtx<TableRow>; columnIndex: number}) => string)
-        rowClassName?: string | ((data: {row: T; rowIndex: number}) => string)
-    }
+    type KsTableProps = Omit<TableProps<T & TableRow>, "data"> & {data?: T[]}
 
     const props = defineProps<KsTableProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps>>()
 

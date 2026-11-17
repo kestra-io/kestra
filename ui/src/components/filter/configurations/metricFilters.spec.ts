@@ -64,8 +64,8 @@ describe("metric filter configurations", () => {
         {name: "no execution", execution: undefined},
         {name: "no task-run list", execution: {...execution}},
         {name: "an empty task-run list", execution: {...execution, taskRunList: []}},
-    ])("returns no execution metric options with $name", async ({execution}) => {
-        useExecutionsStore().execution = execution
+    ])("returns no execution metric options with $name", async ({execution: current}) => {
+        useExecutionsStore().execution = current
 
         expect(await useMetricFilter().value.keys[0].valueProvider!()).toEqual([])
     })
@@ -86,11 +86,39 @@ describe("metric filter configurations", () => {
         ])
     })
 
+    it.each([
+        {useFilter: useMetricFilter, labels: {metric: "metric"}},
+        {useFilter: useFlowMetricFilter, labels: {task: "task", metric: "metric", timeRange: "timeRange_metric"}},
+    ])("labels every key with its own filter translations", ({useFilter, labels}) => {
+        const keys = useFilter().value.keys
+
+        expect(keys.map(({key, label, description}) => [key, label, description])).toEqual(
+            Object.entries(labels).map(([key, name]) => [key, `filter.${name}.label`, `filter.${name}.description`]),
+        )
+    })
+
+    it("offers the relative date ranges for the flow time range key and does not group it", async () => {
+        const timeRange = useFlowMetricFilter().value.keys[2]
+
+        expect(timeRange.groupable).toBe(false)
+        expect(await timeRange.valueProvider!()).toEqual([
+            {label: "datepicker.last5minutes", value: "PT5M"},
+            {label: "datepicker.last15minutes", value: "PT15M"},
+            {label: "datepicker.last1hour", value: "PT1H"},
+            {label: "datepicker.last12hours", value: "PT12H"},
+            {label: "datepicker.last24hours", value: "PT24H"},
+            {label: "datepicker.last48hours", value: "PT48H"},
+            {label: "datepicker.last7days", value: "PT168H"},
+            {label: "datepicker.last30days", value: "PT720H"},
+            {label: "datepicker.last365days", value: "PT8760H"},
+        ])
+    })
+
     it("keeps execution and flow filter keys independent", () => {
-        const execution = useMetricFilter().value
+        const executionConfig = useMetricFilter().value
         const flow = useFlowMetricFilter().value
-        execution.keys[0].label = "execution-only label"
-        execution.keys.push({...execution.keys[0], key: "extra"})
+        executionConfig.keys[0].label = "execution-only label"
+        executionConfig.keys.push({...executionConfig.keys[0], key: "extra"})
 
         expect(flow.keys.map(({key}) => key)).toEqual(["task", "metric", "timeRange"])
         expect(flow.keys[1].label).toBe("filter.metric.label")

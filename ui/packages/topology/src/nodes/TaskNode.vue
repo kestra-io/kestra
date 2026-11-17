@@ -42,7 +42,7 @@
                 @click="emit(EVENTS.RUN_TASK, {task: data.node.task})"
             >
                 <KsTooltip style="display: flex;" :content="$t('run task in playground')">
-                    <PlayIcon class="button-play-icon" :alt="$t('run task in playground')" />
+                    <PlayIcon class="button-play-icon" :title="$t('run task in playground')" />
                 </KsTooltip>
             </button>
         </template>

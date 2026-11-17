@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.TableInput;
@@ -120,6 +121,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
         // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
         violations.addAll(eeOnlyInputsViolations(value.getInputs()));
+        violations.addAll(eeOnlyOutputsViolations(value.getOutputs()));
 
         // output unique name
         duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
@@ -273,6 +275,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         List<String> violations = new ArrayList<>();
         collectEeOnlyInputs(inputs, violations);
         return violations;
+    }
+
+    /**
+     * {@code ASSET} outputs are not available in the open-source edition, so a flow declaring one is rejected here
+     * rather than failing only once its tasks have run. The Enterprise build overrides this to allow them.
+     */
+    protected List<String> eeOnlyOutputsViolations(List<Output> outputs) {
+        return ListUtils.emptyOnNull(outputs).stream()
+            .filter(output -> OutputType.ASSET == output.getType())
+            .map(output -> "Output '%s' of type %s is only available in Enterprise Edition.".formatted(output.getId(), output.getType()))
+            .toList();
     }
 
     private static void collectEeOnlyInputs(List<Input<?>> inputs, List<String> violations) {
@@ -560,7 +573,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      */
     private static Optional<String> literalOutputValueViolation(Output output) {
         Object rawValue = output.getValue();
-        if (rawValue == null) {
+        if (rawValue == null || output.getType() == null || output.getType().parsedAs() == null) {
             return Optional.empty();
         }
 
@@ -570,7 +583,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         try {
-            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+            FlowInputOutput.parseScalarInputValue(output.getType().parsedAs(), rawValue);
         } catch (Exception e) {
             return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
         }

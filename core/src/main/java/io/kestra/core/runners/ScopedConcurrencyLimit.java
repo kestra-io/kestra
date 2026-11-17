@@ -57,12 +57,12 @@ public record ScopedConcurrencyLimit(
      * already holds on its behalf are left out.
      */
     public static List<ScopedConcurrencyLimit> claimableBy(List<ScopedConcurrencyLimit> limits, Execution execution) {
-        List<String> inherited = execution.getMetadata() == null ? null : execution.getMetadata().getInheritedConcurrencyScopes();
-        if (ListUtils.isEmpty(inherited)) {
+        List<String> heldByParent = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopesHeldByParent();
+        if (ListUtils.isEmpty(heldByParent)) {
             return limits;
         }
 
-        return limits.stream().filter(limit -> !inherited.contains(limit.uid())).toList();
+        return limits.stream().filter(limit -> !heldByParent.contains(limit.uid())).toList();
     }
 
     /**

@@ -208,6 +208,26 @@
             {{ $t(filesProgressInfo.failed > 0 ? 'source_search.files_progress_banner_failed' : 'source_search.files_progress_banner_ok', filesProgressInfo) }}
         </KsAlert>
 
+        <KsAlert
+            v-if="suggestedQuery && !showEmptyResultsState"
+            type="info"
+            class="source-search__suggestion-banner"
+            data-test="source-search-suggestion-banner"
+        >
+            <i18n-t keypath="source_search.did_you_mean" tag="span" scope="global">
+                <template #suggestion>
+                    <KsButton
+                        link
+                        size="small"
+                        data-test="source-search-suggestion-button"
+                        @click="query = suggestedQuery"
+                    >
+                        {{ suggestedQuery }}
+                    </KsButton>
+                </template>
+            </i18n-t>
+        </KsAlert>
+
         <div v-if="!query" class="source-search__states">
             <KsNoData
                 class="source-search__empty"
@@ -735,13 +755,15 @@
                 ...searchFilters.value,
             })
 
+            const emptySelectedTypes = selectedTypes.value.filter(
+                (type) => crossResourceSearchStore.countFor(type) === 0,
+            )
             if (
-                selectedTypes.value.length > 0 &&
-                !anyCountingSelected.value &&
-                summaryMatchCount.value === 0
+                emptySelectedTypes.length > 0 &&
+                !anyCountingSelected.value
             ) {
                 await crossResourceSearchStore.searchSuggestion({
-                    types: selectedTypes.value,
+                    types: emptySelectedTypes,
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,
@@ -939,7 +961,8 @@
 
 .source-search__type-failed-banner,
 .source-search__rbac-banner,
-.source-search__progress-banner {
+.source-search__progress-banner,
+.source-search__suggestion-banner {
     flex: 0 0 auto;
     border-radius: 0;
 }

@@ -245,9 +245,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                         if ((paths ?? []).length > 0) {
                             found = true
                         }
-                    } catch {
-                        // ignore isolated namespace error
-                    }
+                    } catch {}
                 })
                 return found
             } catch {

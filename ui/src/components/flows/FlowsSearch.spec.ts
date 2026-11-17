@@ -4,7 +4,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const mockRoute = reactive({
-    query: {q: "first-query"},
+    query: {q: "first-query"} as Record<string, string>,
     params: {},
     meta: {},
 })

@@ -16,6 +16,7 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -571,6 +572,21 @@ class HttpClientTest {
         );
 
         assertThat(exception.getMessage()).contains("proxy port is required");
+    }
+
+    @Test
+    void shouldIgnoreJvmProxyWhenSystemProxyIsNotEnabled() throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        Properties previousProperties = (Properties) System.getProperties().clone();
+        System.setProperty("http.proxyHost", "127.0.0.1");
+        System.setProperty("http.proxyPort", "1");
+        System.setProperty("http.nonProxyHosts", "");
+        try (HttpClient client = client()) {
+            HttpResponse<String> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/text")), String.class);
+
+            assertThat(response.getBody()).isEqualTo("pong");
+        } finally {
+            System.setProperties(previousProperties);
+        }
     }
 
     @Test

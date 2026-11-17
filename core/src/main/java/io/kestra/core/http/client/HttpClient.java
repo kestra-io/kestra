@@ -12,6 +12,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -86,6 +87,7 @@ public class HttpClient implements Closeable {
     private transient CloseableHttpClient client;
     private transient BasicCredentialsProvider defaultCredentialsProvider;
     private boolean hasProxy;
+    private final Set<String> proxyHosts = new HashSet<>();
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
@@ -172,6 +174,7 @@ public class HttpClient implements Closeable {
 
             if (StringUtils.isNotEmpty(proxyAddress)) {
                 this.hasProxy = true;
+                this.proxyHosts.add(proxyAddress.toLowerCase(Locale.ROOT));
                 int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
                     .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
                 SocketAddress proxyAddr = new InetSocketAddress(
@@ -207,10 +210,14 @@ public class HttpClient implements Closeable {
             }
         }
 
-        // Behind a proxy this resolver would only see the proxy host, which may legitimately sit in a denied range.
         if (!this.hasProxy) {
-            connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
+            ProxySelector systemProxySelector = this.systemProxySelector();
+            if (systemProxySelector != null) {
+                builder.setProxySelector(systemProxySelector);
+            }
         }
+
+        connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
 
         // ssl
         if (this.configuration.getSsl() != null) {
@@ -930,6 +937,37 @@ public class HttpClient implements Closeable {
         }
     }
 
+    private ProxySelector systemProxySelector() {
+        String httpProxyHost = StringUtils.trimToNull(System.getProperty("http.proxyHost"));
+        String httpsProxyHost = StringUtils.trimToNull(System.getProperty("https.proxyHost"));
+        if ((httpProxyHost == null && httpsProxyHost == null) || !this.isSystemProxyEnabled()) {
+            return null;
+        }
+
+        this.hasProxy = true;
+        this.addSystemProxy(httpProxyHost, Integer.getInteger("http.proxyPort", 80), System.getProperty("http.proxyUser"), System.getProperty("http.proxyPassword", ""));
+        this.addSystemProxy(httpsProxyHost, Integer.getInteger("https.proxyPort", 443), System.getProperty("https.proxyUser"), System.getProperty("https.proxyPassword", ""));
+        return ProxySelector.getDefault();
+    }
+
+    private boolean isSystemProxyEnabled() {
+        return runContext instanceof DefaultRunContext defaultRunContext
+            && defaultRunContext.getTaskProperty("kestra.tasks.http.use-system-proxy", Boolean.class).orElse(false);
+    }
+
+    private void addSystemProxy(@Nullable String host, int port, @Nullable String user, String password) {
+        if (host == null) {
+            return;
+        }
+
+        this.proxyHosts.add(host.toLowerCase(Locale.ROOT));
+        if (user == null) {
+            return;
+        }
+
+        this.defaultCredentialsProvider.setCredentials(new AuthScope(host, port), new UsernamePasswordCredentials(user, password.toCharArray()));
+    }
+
     /**
      * The addresses returned are the ones connected to, so a name cannot resolve to something else after the check.
      * IP literals are left to {@link #validateUri(URI)}, which also honors the scheme, port and path of an entry.
@@ -938,7 +976,8 @@ public class HttpClient implements Closeable {
         @Override
         public InetAddress[] resolve(String host) throws UnknownHostException {
             InetAddress[] addresses = SystemDefaultDnsResolver.INSTANCE.resolve(host);
-            if (parseIpLiteral(host).isPresent()) {
+            // The proxy host may legitimately sit in a denied range, the target behind it is checked in validateUri.
+            if (parseIpLiteral(host).isPresent() || proxyHosts.contains(host.toLowerCase(Locale.ROOT))) {
                 return addresses;
             }
 

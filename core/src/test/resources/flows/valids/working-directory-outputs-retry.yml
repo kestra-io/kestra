@@ -1,0 +1,22 @@
+id: working-directory-outputs-retry
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDir
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    retry:
+      type: constant
+      interval: PT0.1S
+      maxAttempts: 2
+    outputFiles:
+      - "*.err"
+    inputFiles:
+      "{{ kv('attempt_' ~ execution.id, errorOnMissing=false) == null ? 'report.err' : 'notes.txt' }}": "content"
+    tasks:
+      - id: countAttempt
+        type: io.kestra.plugin.core.kv.Set
+        key: "attempt_{{ execution.id }}"
+        value: "{{ kv('attempt_' ~ execution.id, errorOnMissing=false) == null ? 'first' : 'second' }}"
+      - id: failFirstAttempt
+        type: io.kestra.plugin.core.execution.Fail
+        runIf: "{{ kv('attempt_' ~ execution.id) == 'first' }}"

@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,6 +26,8 @@ import io.micronaut.http.annotation.Error;
 import io.micronaut.http.server.exceptions.NotAllowedException;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path;
 import tools.jackson.core.JacksonException;
 
 /**
@@ -61,12 +64,12 @@ public class ErrorController {
     /** Bean validation: one {@code errors} entry per violated constraint. */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConstraintViolationException e) {
-        return this.problems.response(
-            request,
-            e,
-            ProblemTypes.VALIDATION_FAILED,
-            ProblemError.ofViolations(e.getConstraintViolations())
-        );
+        List<ProblemError> errors = ProblemError.ofViolations(e.getConstraintViolations());
+        // The default message of a method-level validation starts with the controller method and parameter names.
+        String detail = isMethodValidation(e)
+            ? errors.stream().map(error -> error.path() + ": " + error.detail()).collect(Collectors.joining(", "))
+            : e.getMessage();
+        return this.problems.response(request, e, ProblemTypes.VALIDATION_FAILED, detail, errors);
     }
 
     /** Bulk endpoints: one {@code errors} entry per rejected item. */
@@ -173,6 +176,17 @@ public class ErrorController {
                 : "[" + reference.getIndex() + "]")
             .collect(Collectors.joining("."))
             .replace(".[", "[");
+    }
+
+    private static boolean isMethodValidation(final ConstraintViolationException e) {
+        return !e.getConstraintViolations().isEmpty() && e.getConstraintViolations().stream().allMatch(violation -> {
+            Iterator<Path.Node> nodes = violation.getPropertyPath().iterator();
+            if (!nodes.hasNext()) {
+                return false;
+            }
+            ElementKind kind = nodes.next().getKind();
+            return ElementKind.METHOD == kind || ElementKind.CONSTRUCTOR == kind;
+        });
     }
 
     /** Jackson 3 equivalent of {@link #pathOf(JsonMappingException)}, for exceptions Micronaut's body binder throws. */

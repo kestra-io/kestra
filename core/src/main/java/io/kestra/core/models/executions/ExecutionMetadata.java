@@ -2,10 +2,8 @@ package io.kestra.core.models.executions;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Stream;
 
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
-import io.kestra.core.utils.ListUtils;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -34,13 +32,12 @@ public class ExecutionMetadata {
     List<String> concurrencyScopes;
 
     /**
-     * The uids of the concurrency scopes an ancestor waiting on this execution (a Subflow with
-     * {@code wait: true}) already holds a slot in. The admission gate does not claim them again,
-     * since a child queued on its waiting parent's slot would never run (kestra-ee#11728).
-     * Null when no waiting ancestor holds a slot.
+     * The uids of the concurrency scopes a parent waiting on this execution (a Subflow with
+     * {@code wait: true}) already holds a slot in, so this execution does not claim them again.
+     * Null when there are none.
      */
     @With
-    List<String> inheritedConcurrencyScopes;
+    List<String> concurrencyScopesHeldByParent;
 
     /**
      * The number of Subflow/Flow-trigger hops between this execution and the root execution that
@@ -69,22 +66,6 @@ public class ExecutionMetadata {
         }
 
         return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
-    }
-
-    /**
-     * The scopes this execution holds a slot in, claimed or inherited; a child it waits on inherits them all.
-     *
-     * @return null when it holds none
-     */
-    public List<String> heldConcurrencyScopes() {
-        if (this.concurrencyScopes == null && this.inheritedConcurrencyScopes == null) {
-            return null;
-        }
-
-        return Stream.concat(
-            ListUtils.emptyOnNull(this.inheritedConcurrencyScopes).stream(),
-            ListUtils.emptyOnNull(this.concurrencyScopes).stream()
-        ).distinct().toList();
     }
 
     public ExecutionMetadata nextAttempt() {

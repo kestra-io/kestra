@@ -708,7 +708,7 @@ public class ExecutionService {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
         // a replay is not waited on by the parent, so it holds no slot through it
-        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt().withInheritedConcurrencyScopes(null)).withLabels(newLabels)
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt().withConcurrencyScopesHeldByParent(null)).withLabels(newLabels)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;

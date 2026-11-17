@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.stream.Streams;
 
@@ -268,7 +269,7 @@ public final class ExecutableUtils {
                 if (currentTask.waitForExecution()) {
                     // the waiting parent keeps its slots until this child ends, so the child runs on them (kestra-ee#11728)
                     execution = execution.withMetadata(
-                        execution.getMetadata().withInheritedConcurrencyScopes(currentExecution.getMetadata().heldConcurrencyScopes())
+                        execution.getMetadata().withConcurrencyScopesHeldByParent(concurrencyScopesHeldBy(currentExecution))
                     );
                 }
                 final Execution executionWithDepth = execution;
@@ -300,6 +301,20 @@ public final class ExecutableUtils {
                 );
             })
         );
+    }
+
+    /**
+     * The scopes a parent holds while it runs, claimed by itself or held by its own waiting parent.
+     *
+     * @return null when it holds none
+     */
+    private static List<String> concurrencyScopesHeldBy(Execution parent) {
+        ExecutionMetadata metadata = parent.getMetadata();
+        List<String> held = Stream.concat(
+            ListUtils.emptyOnNull(metadata.getConcurrencyScopesHeldByParent()).stream(),
+            ListUtils.emptyOnNull(metadata.getConcurrencyScopes()).stream()
+        ).distinct().toList();
+        return held.isEmpty() ? null : held;
     }
 
     private static List<Label> filterLabels(List<Label> labels, FlowInterface flow) {

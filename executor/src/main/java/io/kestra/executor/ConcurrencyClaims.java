@@ -35,12 +35,12 @@ public class ConcurrencyClaims {
      */
     public List<ScopedConcurrencyLimit> of(FlowInterface flow, Execution execution) {
         List<ScopedConcurrencyLimit> limits = concurrencyLimitResolver.resolveLimits(flow);
-        List<String> inherited = execution.getMetadata() == null ? null : execution.getMetadata().getInheritedConcurrencyScopes();
-        if (ListUtils.isEmpty(inherited)) {
+        List<String> heldByParent = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopesHeldByParent();
+        if (ListUtils.isEmpty(heldByParent)) {
             return limits;
         }
 
         // a child queued on the slot its own waiting parent holds would never run (kestra-ee#11728)
-        return limits.stream().filter(limit -> !inherited.contains(limit.uid())).toList();
+        return limits.stream().filter(limit -> !heldByParent.contains(limit.uid())).toList();
     }
 }

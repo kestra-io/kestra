@@ -17,60 +17,48 @@
         :dirty="changed.length > 0"
         :title="$t('replayOverrides.dialog_title', {taskId: taskRun.taskId})"
     >
-        <div class="replay-with-overrides" data-dialog-wide data-test="replay-with-overrides-dialog">
+        <div v-ks-loading="loading" class="replay-with-overrides" data-dialog-wide data-test="replay-with-overrides-dialog">
             <KsText tag="p" size="small" type="info">
                 {{ $t("replayOverrides.note", {revision: execution.flowRevision}) }}
             </KsText>
 
-            <KsSelect
-                v-model="picked"
-                filterable
-                :loading="loading"
-                :placeholder="$t('replayOverrides.add')"
-                :aria-label="$t('replayOverrides.add')"
-                data-test="replay-override-add"
-                @change="add"
-            >
-                <KsOption
-                    v-for="candidate in candidates"
-                    :key="candidate.id"
-                    :value="candidate.id"
-                    :label="label(candidate)"
-                />
-            </KsSelect>
+            <KsAlert
+                v-if="failed"
+                type="error"
+                :closable="false"
+                showIcon
+                :title="$t('replayOverrides.load_error')"
+            />
 
-            <section
-                v-for="entry in entries"
-                :key="entry.taskRunId"
-                class="entry"
-                :data-test="`replay-override-${entry.taskRunId}`"
+            <KsNoData
+                v-else-if="!loading && !rows.length"
+                :title="$t('replayOverrides.empty_title')"
+                :description="$t('replayOverrides.empty', {taskId: taskRun.taskId})"
+                data-test="replay-overrides-empty"
+            />
+
+            <div
+                v-for="row in rows"
+                :key="row.path"
+                class="row"
+                :data-test="`replay-override-${row.path}`"
             >
-                <header>
-                    <h4 class="entry-title">
-                        {{ entry.label }}
-                    </h4>
-                    <KsIconButton :aria-label="$t('replayOverrides.remove', {task: entry.label})" @click="remove(entry.taskRunId)">
-                        <Close />
-                    </KsIconButton>
-                </header>
-                <KsEditor
-                    v-bind="editorBindings"
-                    v-model="entry.text"
-                    :path="`replay-override-${entry.taskRunId}`"
-                    :options="{fullHeight: false, showScroll: true}"
-                    :inline="true"
-                    :navbar="false"
-                    lang="json"
+                <code>{{ row.path }}</code>
+                <KsInput
+                    v-model="texts[row.path]"
+                    :aria-label="row.path"
+                    :type="isObject(row.original) ? 'textarea' : 'text'"
+                    :autosize="{minRows: 1, maxRows: 6}"
                 />
-                <KsAlert
-                    v-if="parse(entry.text) === undefined"
-                    type="error"
-                    :closable="false"
-                    showIcon
-                    :title="$t('replayOverrides.invalid')"
+                <KsText
+                    v-if="errors[row.path]"
+                    size="small"
+                    type="danger"
                     data-test="replay-override-error"
-                />
-            </section>
+                >
+                    {{ $t(`replayOverrides.invalid_${errors[row.path]}`) }}
+                </KsText>
+            </div>
         </div>
 
         <template #footer>
@@ -79,7 +67,7 @@
             </KsButton>
             <KsButton
                 type="primary"
-                :disabled="!changed.length || invalid"
+                :disabled="!changed.length || Object.keys(errors).length > 0"
                 :loading="sending"
                 data-test="replay-confirm"
                 @click="replay"
@@ -91,28 +79,26 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRouter} from "vue-router"
-    import {State, dayjs, isDeepEqual, isPlainObject} from "@kestra-io/design-system"
-    import Close from "vue-material-design-icons/Close.vue"
+    import {State, dayjs, groupBy, isDeepEqual} from "@kestra-io/design-system"
     import PlayBoxEditOutline from "vue-material-design-icons/PlayBoxEditOutline.vue"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import type {Execution} from "../../stores/executions"
     import type {ExecutionTaskRun} from "./executionTaskRun"
+    import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useToast} from "../../utils/toast"
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
+    import {editableText, findTask, ownTemplates, parseOverride, patchedOutputs, readPaths, valueAt, type OutputPath} from "./replayOverrides"
 
-    interface Entry {
+    interface Row extends OutputPath {
         taskRunId: string
-        label: string
-        original: Record<string, unknown>
-        text: string
+        original: unknown
     }
 
     const props = defineProps<{
@@ -124,14 +110,16 @@
     const {t} = useI18n()
     const router = useRouter()
     const toast = useToast()
+    const flowStore = useFlowStore()
     const authStore = useAuthStore()
-    const editorBindings = useEditorBindings()
 
     const isOpen = ref(false)
-    const picked = ref<string>()
     const loading = ref(false)
+    const failed = ref(false)
     const sending = ref(false)
-    const entries = ref<Entry[]>([])
+    const rows = ref<Row[]>([])
+    const outputsByTaskRun = ref<Record<string, Record<string, unknown>>>({})
+    const texts = ref<Record<string, string>>({})
 
     const hasPermission = computed(() =>
         !!authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace),
@@ -143,62 +131,73 @@
         return !attempts || attempts.length - 1 === props.attemptIndex
     })
 
-    // A task run that ended before this one started is reused by the replay, and is all this task could read.
-    const candidates = computed(() => {
-        const start = props.taskRun.state?.startDate
-        return (props.execution.taskRunList ?? []).filter(taskRun =>
-            taskRun.id !== props.taskRun.id
-            && !entries.value.some(entry => entry.taskRunId === taskRun.id)
-            && !!taskRun.state?.endDate
-            && !!start
-            && dayjs(taskRun.state.endDate).isSameOrBefore(start),
-        )
-    })
+    const parsed = computed(() => Object.fromEntries(rows.value.map(row => [row.path, parseOverride(row.original, texts.value[row.path] ?? "")])))
 
-    const invalid = computed(() => entries.value.some(entry => parse(entry.text) === undefined))
+    const errors = computed(() => Object.fromEntries(Object.entries(parsed.value).flatMap(([path, result]) => result.error ? [[path, result.error]] : [])))
 
-    const changed = computed(() => entries.value.flatMap(entry => {
-        const outputs = parse(entry.text)
-        return outputs === undefined || isDeepEqual(outputs, entry.original) ? [] : [[entry.taskRunId, outputs] as const]
+    const changed = computed(() => rows.value.filter(row => {
+        const result = parsed.value[row.path]
+        return !result.error && !isDeepEqual(result.value, row.original ?? null)
     }))
 
-    function label(taskRun: ExecutionTaskRun) {
-        return taskRun.value ? `${taskRun.taskId} (${taskRun.value})` : taskRun.taskId
+    function isObject(value: unknown) {
+        return value !== null && typeof value === "object"
     }
 
-    function parse(text: string): Record<string, unknown> | undefined {
-        try {
-            const value: unknown = JSON.parse(text)
-            return isPlainObject(value) ? value as Record<string, unknown> : undefined
-        } catch {
-            return undefined
-        }
+    // The replay reuses a task run that ended before this one started; a task with several such runs is read through a dynamic key.
+    function reusedTaskRuns() {
+        const start = props.taskRun.state?.startDate
+        const reused = (props.execution.taskRunList ?? []).filter(taskRun =>
+            taskRun.id !== props.taskRun.id
+            && !!start
+            && !!taskRun.state?.endDate
+            && dayjs(taskRun.state.endDate).isSameOrBefore(start),
+        )
+        return new Map(Object.entries(groupBy(reused, taskRun => taskRun.taskId)).flatMap(([taskId, runs]) => runs.length === 1 ? [[taskId, runs[0]]] : []))
     }
 
-    async function add(taskRunId: string) {
-        picked.value = undefined
-        const taskRun = props.execution.taskRunList?.find(candidate => candidate.id === taskRunId)
-        if (!taskRun) return
+    watch(isOpen, async open => {
+        if (!open || rows.value.length || failed.value) return
         loading.value = true
         try {
-            const original = await OutputsAPI.taskRunOutputs({executionId: props.execution.id, taskRunId}) as Record<string, unknown>
-            entries.value.push({taskRunId, label: label(taskRun), original, text: JSON.stringify(original, null, 4)})
+            const flow = await flowStore.loadFlow({
+                namespace: props.execution.namespace,
+                id: props.execution.flowId,
+                revision: String(props.execution.flowRevision),
+                store: false,
+            })
+            const task = findTask(flow, props.taskRun.taskId)
+            const reused = reusedTaskRuns()
+            const paths = task ? readPaths(ownTemplates(task)).filter(path => reused.has(path.taskId)) : []
+
+            const outputs = Object.fromEntries(await Promise.all([...new Set(paths.map(path => reused.get(path.taskId)!.id))].map(async taskRunId =>
+                [taskRunId, await OutputsAPI.taskRunOutputs({executionId: props.execution.id, taskRunId}) as Record<string, unknown>] as const,
+            )))
+            outputsByTaskRun.value = outputs
+            rows.value = paths.map(path => {
+                const taskRunId = reused.get(path.taskId)!.id
+                return {...path, taskRunId, original: valueAt(outputs[taskRunId] ?? {}, path.keys)}
+            })
+            texts.value = Object.fromEntries(rows.value.map(row => [row.path, editableText(row.original)]))
+        } catch {
+            failed.value = true
         } finally {
             loading.value = false
         }
-    }
-
-    function remove(taskRunId: string) {
-        entries.value = entries.value.filter(entry => entry.taskRunId !== taskRunId)
-    }
+    })
 
     async function replay() {
         sending.value = true
         try {
+            const byTaskRun = groupBy(changed.value, row => row.taskRunId)
+            const outputs = Object.fromEntries(Object.entries(byTaskRun).map(([taskRunId, changes]) => [
+                taskRunId,
+                patchedOutputs(outputsByTaskRun.value[taskRunId] ?? {}, changes.map(row => ({keys: row.keys, value: parsed.value[row.path].value}))),
+            ]))
             const replayed = await ExecutionsAPI.replayExecutionWithOverrides({
                 executionId: props.execution.id,
                 taskRunId: props.taskRun.id,
-                outputs: Object.fromEntries(changed.value) as Parameters<typeof ExecutionsAPI.replayExecutionWithOverrides>[0]["outputs"],
+                outputs: outputs as Parameters<typeof ExecutionsAPI.replayExecutionWithOverrides>[0]["outputs"],
             })
             isOpen.value = false
             toast.success(t("replayed"))
@@ -215,6 +214,7 @@
             sending.value = false
         }
     }
+
 </script>
 
 <style scoped>
@@ -222,28 +222,21 @@
     display: flex;
     flex-direction: column;
     gap: var(--ks-spacing-3);
+    min-height: 4rem;
 }
 
 .replay-with-overrides > p {
     margin: 0;
 }
 
-.entry {
+.row {
     display: flex;
     flex-direction: column;
-    gap: var(--ks-spacing-2);
+    gap: var(--ks-spacing-1);
 }
 
-.entry > header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.entry-title {
+.row > code {
     font-size: var(--ks-font-size-sm);
-    font-weight: var(--ks-font-weight-semibold);
-    margin: 0;
     color: var(--ks-text-primary);
 }
 </style>

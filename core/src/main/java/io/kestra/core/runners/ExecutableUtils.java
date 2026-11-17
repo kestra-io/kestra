@@ -265,6 +265,12 @@ public final class ExecutableUtils {
                     )
                     .withTrigger(executionTrigger);
                 execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(executionDepth));
+                if (currentTask.waitForExecution()) {
+                    // the waiting parent keeps its slots until this child ends, so the child runs on them (kestra-ee#11728)
+                    execution = execution.withMetadata(
+                        execution.getMetadata().withInheritedConcurrencyScopes(currentExecution.getMetadata().heldConcurrencyScopes())
+                    );
+                }
                 final Execution executionWithDepth = execution;
 
                 if (execution.getInputs().size() < inputs.size()) {

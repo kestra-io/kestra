@@ -57,7 +57,7 @@ jobs:
 
   backend-tests:
     name: Backend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: ./.github/workflows/backend-tests.yml
     needs: [check-green-commit]
     if: ${{ needs.check-green-commit.outputs.already-green != 'true' && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
     secrets:

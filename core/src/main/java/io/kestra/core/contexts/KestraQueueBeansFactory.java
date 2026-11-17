@@ -20,6 +20,7 @@ import io.kestra.core.queues.factory.QueueConfig;
 import io.kestra.core.queues.factory.QueueFactoryInterface;
 import io.kestra.core.queues.factory.QueuePluginInterfaceFactory;
 import io.kestra.core.runners.*;
+import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.ServiceResourceReleaser;
@@ -194,8 +195,8 @@ public class KestraQueueBeansFactory {
     }
 
     @QueueBean
-    public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(QueueFactoryInterface queueFactoryInterface) {
-        return queueFactoryInterface.vNodeDispatchQueue(TriggerEvent.class);
+    public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(QueueFactoryInterface queueFactoryInterface, SchedulerConfiguration schedulerConfiguration) {
+        return queueFactoryInterface.vNodeDispatchQueue(TriggerEvent.class, schedulerConfiguration.vnodes());
     }
 
     @QueueBean

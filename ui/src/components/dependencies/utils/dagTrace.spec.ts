@@ -32,7 +32,7 @@ describe("traceEdgeKey", () => {
     })
 
     it("should keep canonically-equivalent but distinct unicode ids apart", () => {
-        expect(traceEdgeKey("é", "B")).not.toBe(traceEdgeKey("é", "B"))
+        expect(traceEdgeKey("\u00e9", "B")).not.toBe(traceEdgeKey("e\u0301", "B"))
     })
 
     it("should handle empty ids deterministically and directionally", () => {

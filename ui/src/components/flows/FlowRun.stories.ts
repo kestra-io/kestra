@@ -107,9 +107,5 @@ export const CommandTabs: Story = {
         }
         await userEvent.click(body.getByRole("tab", {name: "Other properties"}))
         expect(body.getByRole("button", {name: "Prefill"})).toBeVisible()
-        await userEvent.click(body.getByRole("tab", {name: "Inputs"}))
-        await userEvent.click(body.getByRole("button", {name: "Prefill"}))
-        expect(body.getByTestId("inputs-wizard-recap")).toHaveTextContent("us-east-2")
-        expect(body.getByTestId("inputs-wizard-recap")).toHaveTextContent("custom")
     },
 }

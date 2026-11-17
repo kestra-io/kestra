@@ -406,6 +406,14 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay latest revision": "Repetir usando la última revisión",
     "replayed": "La ejecución se está reproduciendo",
+    "replayOverrides": {
+      "action": "Reproducir con anulaciones",
+      "dialog_title": "Replay desde {taskId} con anulaciones",
+      "note": "Se ejecuta en la revisión {revision}. Las tareas anteriores no se vuelven a ejecutar. Los outputs que edites reemplazan los suyos en la nueva ejecución, para esta Task y para cada Task posterior.",
+      "add": "Edita los outputs de una Task anterior",
+      "remove": "Dejar de anular {task}",
+      "invalid": "Las salidas deben ser un objeto JSON."
+    },
     "reused_task_run": {
       "label": "Reutilizado",
       "tooltip": "No se volverá a ejecutar en esta egzekucja. Se ejecutó el {date}, y sus logs y outputs provienen de esa ejecución."

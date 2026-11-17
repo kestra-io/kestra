@@ -406,6 +406,14 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
+    "replayOverrides": {
+      "action": "オーバーライドでReplay",
+      "dialog_title": "オーバーライドを使用して{taskId}からReplay",
+      "note": "リビジョン {revision} で実行されます。以前の Task は再度実行されません。編集した output は、この Task とその後のすべての Task で、新しい Execution 内の以前の output を置き換えます。",
+      "add": "以前のTaskの出力を編集",
+      "remove": "{task} のオーバーライドを停止",
+      "invalid": "出力はJSONオブジェクトである必要があります。"
+    },
     "reused_task_run": {
       "label": "再利用",
       "tooltip": "このExecutionでは再度実行されません。{date}に実行され、そのlogとoutputはその実行からのものです。"

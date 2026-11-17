@@ -406,6 +406,14 @@
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
     "replayed": "L'esecuzione è Ripetuta",
+    "replayOverrides": {
+      "action": "Replay con override",
+      "dialog_title": "Replay da {taskId} con override",
+      "note": "Viene eseguito sulla revisione {revision}. I Task precedenti non vengono eseguiti di nuovo. Gli output che modifichi sostituiscono i loro nella nuova esecuzione, per questo Task e per ogni Task successivo.",
+      "add": "Modifica gli output di un task precedente",
+      "remove": "Smetti di sovrascrivere {task}",
+      "invalid": "Gli output devono essere un oggetto JSON."
+    },
     "reused_task_run": {
       "label": "Riutilizzato",
       "tooltip": "Non eseguito di nuovo in questa Execution. È stato eseguito il {date} e i suoi log e output provengono da quella esecuzione."

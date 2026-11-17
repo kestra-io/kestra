@@ -406,6 +406,14 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
     "replayed": "Execution को Replay किया गया है",
+    "replayOverrides": {
+      "action": "ओवरराइड के साथ रीप्ले करें",
+      "dialog_title": "ओवरराइड के साथ {taskId} से Replay करें",
+      "note": "रिवीजन {revision} पर चलता है। पिछले Task फिर से नहीं चलते हैं। आपके द्वारा संपादित किए गए आउटपुट इस Task और इसके बाद के हर Task के लिए नए execution में उनके स्थान पर आते हैं।",
+      "add": "पिछले Task के आउटपुट को संपादित करें",
+      "remove": "{task} को ओवरराइड करना बंद करें",
+      "invalid": "आउटपुट एक JSON ऑब्जेक्ट होना चाहिए।"
+    },
     "reused_task_run": {
       "label": "पुनः उपयोग किया गया",
       "tooltip": "इस execution में फिर से नहीं चलाया गया। यह {date} को चला था, और इसके logs और outputs उस run से आते हैं।"

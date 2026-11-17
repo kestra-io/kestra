@@ -406,6 +406,14 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
+    "replayOverrides": {
+      "action": "使用覆盖重放",
+      "dialog_title": "从 {taskId} 重放并覆盖",
+      "note": "在修订版 {revision} 上运行。之前的 task 不会再次运行。你编辑的 output 将在此 task 和其后的每个 task 的新 execution 中替换它们。",
+      "add": "编辑上一个 task 的 output",
+      "remove": "停止覆盖 {task}",
+      "invalid": "输出必须是 JSON 对象。"
+    },
     "reused_task_run": {
       "label": "已复用",
       "tooltip": "此 execution 不会再次运行。它已于 {date} 运行，其 logs 和 outputs 来自该次运行。"

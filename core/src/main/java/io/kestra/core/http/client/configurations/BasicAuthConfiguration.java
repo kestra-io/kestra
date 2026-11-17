@@ -3,8 +3,10 @@ package io.kestra.core.http.client.configurations;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.message.BasicHeader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,6 +40,15 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
+        builder.addRequestInterceptorFirst(authorizationInterceptor(runContext));
+    }
+
+    @Override
+    public void configure(HttpAsyncClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
+        builder.addRequestInterceptorFirst(authorizationInterceptor(runContext));
+    }
+
+    private HttpRequestInterceptor authorizationInterceptor(RunContext runContext) throws IllegalVariableEvaluationException {
         byte[] encoded = Base64.getEncoder()
             .encode(
                 (runContext.render(this.getUsername()).as(String.class).orElse(null)
@@ -45,15 +56,13 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
                     + runContext.render(this.getPassword()).as(String.class).orElse(null)).getBytes(StandardCharsets.UTF_8)
             );
 
-        builder.addRequestInterceptorFirst(
-            (request, entity, context) -> request
-                .setHeader(
-                    new BasicHeader(
-                        HttpHeaders.AUTHORIZATION,
-                        "Basic " + new String(encoded, StandardCharsets.UTF_8)
-                    )
+        return (request, entity, context) -> request
+            .setHeader(
+                new BasicHeader(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + new String(encoded, StandardCharsets.UTF_8)
                 )
-        );
+            );
     }
 
     @Override

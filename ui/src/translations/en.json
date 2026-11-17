@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "Governance policies could not be checked.",
     "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger not toggleable": "This trigger is not evaluated by the Scheduler, disable it in the Flow source",
+    "bulk not toggleable warning": "{count} selected trigger(s) will be skipped: the Scheduler does not evaluate them, so they can only be disabled in the Flow source.",
+    "bulk none applied": "No triggers were affected: none of the selected ones could be processed.",
+    "bulk partially applied": "{count} of {requested} triggers were processed, the others were skipped.",
     "trigger enable dialog": {
       "title": "Enable trigger",
       "bulk title": "Enable {count} triggers",
@@ -2523,7 +2527,7 @@
           "planTitle": "Proposed plan",
           "actionTitle": "Proposed action",
           "approve": "Approve",
-          "approveExecute": "Approve & execute",
+          "approvePlan": "Approve plan",
           "reject": "Reject",
           "pending": "Pending approval",
           "revise": "Reply to revise"
@@ -2557,6 +2561,12 @@
           "docs": "View documentation",
           "sendTooltip": "Sending is disabled because no AI provider is configured.",
           "notSent": "Your prompt was not sent"
+        },
+        "mcpTip": {
+          "title": "Use Kestra from Claude Code, Cursor and other MCP clients",
+          "description": "Alongside the Copilot, Kestra provides an MCP server. Connect an external MCP client to it to manage your flows and executions from the tools you already use.",
+          "docs": "View documentation",
+          "dismiss": "Don't show again"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -2613,6 +2623,10 @@
           },
           "valid": "Valid",
           "invalid": "Needs changes"
+        },
+        "tray": {
+          "title": "Pending changes",
+          "applyFirst": "Apply {flow} first"
         }
       }
     },
@@ -2891,7 +2905,8 @@
       "open_in_secrets": "Open in secrets",
       "options_aria": "Search options",
       "path_only_hint": "Searches the file path only, not the file content. Cannot be replaced.",
-      "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
+      "preview_empty_title": "Select a result to preview.",
+      "preview_empty_description": "Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source",
       "previous_match": "Previous match",
       "rbac_banner": "{count} flows are excluded from replace. You have read access but not edit access on {namespace}. Ask a namespace admin for the {permission} permission to include them.",

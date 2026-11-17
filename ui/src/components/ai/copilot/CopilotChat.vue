@@ -84,6 +84,8 @@
                     </KsButton>
                 </div>
 
+                <CopilotMcpTip />
+
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
         </div>
@@ -127,6 +129,8 @@
                     <div ref="bottomAnchor" class="copilot-scroll-anchor" />
                 </div>
             </KsScrollbar>
+
+            <CopilotDraftTray v-if="trayDrafts.length" :items="trayDrafts" @dismiss="dismissDraft" @applied="markDraftApplied" />
 
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
@@ -186,11 +190,14 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotDraftTray from "./CopilotDraftTray.vue"
     import CopilotHelp from "./CopilotHelp.vue"
+    import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
+    import {collectPendingDrafts, type PendingDraft} from "./pendingDrafts"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -363,11 +370,17 @@
     // callback isn't tracked the same way — it only re-runs when the signal below actually changes
     // (a message added, dismissed/applied tracking changed, or the route changed), never on a token tick.
     const pendingDraft = ref<{draftId: string; yaml: string} | undefined>(undefined)
+    const trayDrafts = ref<PendingDraft[]>([])
     const draftScanSignal = computed(() =>
         `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${dismissedDraftIds.value.size}|${appliedDraftIds.value.size}|${route.fullPath}`,
     )
     watch(draftScanSignal, () => {
         pendingDraft.value = findPendingDraft()
+        trayDrafts.value = collectPendingDrafts(
+            messages.value,
+            (draftId) => dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId),
+            flowStore.flowYaml,
+        )
     }, {immediate: true})
 
     function findPendingDraft(): {draftId: string; yaml: string} | undefined {
@@ -853,6 +866,7 @@
        page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
        stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-tray,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

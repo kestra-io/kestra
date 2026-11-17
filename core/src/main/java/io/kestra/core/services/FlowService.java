@@ -28,6 +28,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -49,6 +50,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.AssetInputResolver;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
@@ -103,6 +105,9 @@ public class FlowService {
 
     @Inject
     private Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+
+    @Inject
+    private AssetInputResolver assetInputResolver;
 
     @Inject
     private FlowTopologyService flowTopologyService;
@@ -333,18 +338,12 @@ public class FlowService {
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
-            FlowService.findUpdatedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findNewTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
+            FlowService.findUpdatedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            FlowService.findNewTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
             FlowService.findUnchangedTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
@@ -354,14 +353,9 @@ public class FlowService {
             return;
         }
 
-        if (flow.getTriggers() != null) {
-            flow.getTriggers()
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-        }
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(
+            trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+        );
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {
@@ -680,6 +674,17 @@ public class FlowService {
                 );
             }
         });
+
+        flow.resolvableInputs().stream()
+            .filter(AssetInput.class::isInstance)
+            .map(AssetInput.class::cast)
+            .forEach(input -> {
+                List<String> ids = input.staticDefaultIds();
+                List<String> unknown = ids.isEmpty() ? List.of() : assetInputResolver.unknownIds(tenantId, flow.getNamespace(), input, ids);
+                if (!unknown.isEmpty()) {
+                    warnings.add("The default of input '%s' refers to assets that do not exist, do not match its filters, or that the flow cannot reach: %s. This is expected if they are created after the flow is saved.".formatted(input.getId(), String.join(", ", unknown)));
+                }
+            });
 
         // add warning for runnable properties (timeout, workerSelector, taskCache) when used not in a runnable
         flow.allTasksWithChilds().forEach(task ->

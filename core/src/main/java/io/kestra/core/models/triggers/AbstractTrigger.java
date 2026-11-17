@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.FlowWorkerSelector;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
@@ -110,5 +110,5 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @PluginProperty(hidden = true, group = "advanced")
     @Valid
-    private AssetsDeclaration assets;
+    private TriggerAssetsDeclaration assets;
 }

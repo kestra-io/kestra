@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "无法检查治理策略。",
     "trigger blocked unknown": "因未知原因被阻止。",
     "trigger disabled": "在Flow源中触发器已禁用",
+    "trigger not toggleable": "该触发器不由Scheduler评估，请在Flow源中禁用它",
+    "bulk not toggleable warning": "{count} 个选定的 trigger 将被跳过：Scheduler 不会评估它们，因此只能在 Flow 源代码中禁用它们。",
+    "bulk none applied": "没有触发器受到影响：所选触发器均无法处理。",
+    "bulk partially applied": "已处理 {count} 个 Trigger，其余 {requested} 个已跳过。",
     "trigger enable dialog": {
       "title": "启用 trigger",
       "bulk title": "启用 {count} triggers",
@@ -2523,7 +2527,7 @@
           "planTitle": "建议计划",
           "actionTitle": "建议操作",
           "approve": "批准",
-          "approveExecute": "批准并执行",
+          "approvePlan": "批准计划",
           "reject": "拒绝",
           "pending": "待批准",
           "revise": "回复以修改"
@@ -2557,6 +2561,12 @@
           "docs": "查看文档",
           "sendTooltip": "发送已禁用，因为未配置 AI provider。",
           "notSent": "您的提示未发送"
+        },
+        "mcpTip": {
+          "title": "从 Claude Code、Cursor 和其他 MCP 客户端使用 Kestra",
+          "description": "除了 Copilot，Kestra 还提供 MCP 服务器。连接外部 MCP 客户端以通过您已使用的工具管理您的 flow 和 execution。",
+          "docs": "查看文档",
+          "dismiss": "不再显示"
         },
         "thinkingWords": [
           "编排",
@@ -2613,6 +2623,10 @@
           },
           "valid": "有效",
           "invalid": "需要修改"
+        },
+        "tray": {
+          "title": "待处理的更改",
+          "applyFirst": "先应用 {flow}"
         }
       }
     },
@@ -2891,7 +2905,8 @@
       "open_in_secrets": "在 secrets 中打开",
       "options_aria": "搜索选项",
       "path_only_hint": "仅搜索文件路径，不搜索内容。无法替换。",
-      "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
+      "preview_empty_title": "选择一个结果进行预览。",
+      "preview_empty_description": "点击结果列表中的 flow 查看其源码。",
       "preview_error": "加载 flow 源码失败",
       "previous_match": "上一个匹配项",
       "rbac_banner": "{count} 个 flow 被排除在替换之外。您对 {namespace} 具有读取权限，但没有编辑权限。请向 namespace 管理员请求 {permission} 权限以包含它们。",

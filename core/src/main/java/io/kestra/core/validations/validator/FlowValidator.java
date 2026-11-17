@@ -10,11 +10,11 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.TableInput;
@@ -121,6 +121,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
         // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
         violations.addAll(eeOnlyInputsViolations(value.getInputs()));
+        violations.addAll(eeOnlyOutputsViolations(value.getOutputs()));
 
         // output unique name
         duplicateIds = ListUtils.getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
@@ -216,20 +217,18 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     private List<String> assetsDeclarationViolations(Flow flow) {
         List<String> violations = new ArrayList<>();
         flow.allTasks().filter(Objects::nonNull)
-            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets())));
+            .filter(task -> task.getAssets() != null)
+            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets().getInputs(), task.getAssets().getOutputs())));
         ListUtils.emptyOnNull(flow.getTriggers()).stream().filter(Objects::nonNull)
-            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets())));
+            .filter(trigger -> trigger.getAssets() != null)
+            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets().getInputs(), trigger.getAssets().getOutputs())));
         return violations;
     }
 
-    private List<String> assetsDeclarationViolations(String kind, String id, AssetsDeclaration assets) {
-        if (assets == null) {
-            return List.of();
-        }
-
+    private List<String> assetsDeclarationViolations(String kind, String id, Property<List<AssetIdentifier>> inputs, Property<List<Asset>> outputs) {
         List<String> violations = new ArrayList<>();
-        violations.addAll(declaredAssetViolations(kind, id, "inputs", assets.getInputs(), AssetIdentifier.class));
-        violations.addAll(declaredAssetViolations(kind, id, "outputs", assets.getOutputs(), Asset.class));
+        violations.addAll(declaredAssetViolations(kind, id, "inputs", inputs, AssetIdentifier.class));
+        violations.addAll(declaredAssetViolations(kind, id, "outputs", outputs, Asset.class));
         return violations;
     }
 
@@ -276,6 +275,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         List<String> violations = new ArrayList<>();
         collectEeOnlyInputs(inputs, violations);
         return violations;
+    }
+
+    /**
+     * {@code ASSET} outputs are not available in the open-source edition, so a flow declaring one is rejected here
+     * rather than failing only once its tasks have run. The Enterprise build overrides this to allow them.
+     */
+    protected List<String> eeOnlyOutputsViolations(List<Output> outputs) {
+        return ListUtils.emptyOnNull(outputs).stream()
+            .filter(output -> OutputType.ASSET == output.getType())
+            .map(output -> "Output '%s' of type %s is only available in Enterprise Edition.".formatted(output.getId(), output.getType()))
+            .toList();
     }
 
     private static void collectEeOnlyInputs(List<Input<?>> inputs, List<String> violations) {
@@ -563,7 +573,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      */
     private static Optional<String> literalOutputValueViolation(Output output) {
         Object rawValue = output.getValue();
-        if (rawValue == null) {
+        if (rawValue == null || output.getType() == null || output.getType().parsedAs() == null) {
             return Optional.empty();
         }
 
@@ -573,7 +583,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         try {
-            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+            FlowInputOutput.parseScalarInputValue(output.getType().parsedAs(), rawValue);
         } catch (Exception e) {
             return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
         }

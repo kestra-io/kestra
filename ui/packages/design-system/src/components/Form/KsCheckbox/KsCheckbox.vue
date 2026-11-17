@@ -11,6 +11,8 @@
 </template>
 
 <script setup lang="ts" generic="T extends CheckboxValueType">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCheckbox, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -24,7 +26,7 @@
         disabled?: boolean
         checked?: boolean
         indeterminate?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         value: undefined,
     })
 

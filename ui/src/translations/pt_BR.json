@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "Não foi possível verificar as políticas de governança.",
     "trigger blocked unknown": "Bloqueado por um motivo desconhecido.",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
+    "trigger not toggleable": "Este Trigger não é avaliado pelo Scheduler, desative-o na fonte do Flow",
+    "bulk not toggleable warning": "{count} trigger(s) selecionado(s) será(ão) ignorado(s): o Scheduler não os avalia, então eles só podem ser desabilitados na origem do Flow.",
+    "bulk none applied": "Nenhum trigger foi afetado: nenhum dos selecionados pôde ser processado.",
+    "bulk partially applied": "{count} de {requested} triggers foram processados, os outros foram ignorados.",
     "trigger enable dialog": {
       "title": "Habilitar trigger",
       "bulk title": "Habilitar {count} triggers",
@@ -2523,7 +2527,7 @@
           "planTitle": "Plano Proposto",
           "actionTitle": "Ação proposta",
           "approve": "Aprovar",
-          "approveExecute": "Aprovar e executar",
+          "approvePlan": "Aprovar plano",
           "reject": "Rejeitar",
           "pending": "Pendente de aprovação",
           "revise": "Responder para revisar"
@@ -2557,6 +2561,12 @@
           "docs": "Ver documentação",
           "sendTooltip": "O envio está desativado porque nenhum provedor de AI está configurado.",
           "notSent": "Seu prompt não foi enviado"
+        },
+        "mcpTip": {
+          "title": "Use Kestra do Claude Code, Cursor e outros clientes MCP",
+          "description": "Junto com o Copilot, o Kestra oferece um servidor MCP. Conecte um cliente MCP externo a ele para gerenciar seus flows e execuções a partir das ferramentas que você já usa.",
+          "docs": "Ver documentação",
+          "dismiss": "Não mostrar novamente"
         },
         "thinkingWords": [
           "Orquestração",
@@ -2613,6 +2623,10 @@
           },
           "valid": "Válido",
           "invalid": "Precisa de mudanças"
+        },
+        "tray": {
+          "title": "Alterações pendentes",
+          "applyFirst": "Aplicar {flow} primeiro"
         }
       }
     },
@@ -2891,7 +2905,8 @@
       "open_in_secrets": "Abrir em secrets",
       "options_aria": "Opções de busca",
       "path_only_hint": "Busca apenas o caminho do arquivo, não o seu conteúdo. Não pode ser substituído.",
-      "preview_empty": "Selecione um resultado para pré-visualizar. Clique em um flow na lista de resultados para ver seu código-fonte.",
+      "preview_empty_title": "Selecione um resultado para pré-visualizar.",
+      "preview_empty_description": "Clique em um flow na lista de resultados para ver seu código-fonte.",
       "preview_error": "Falha ao carregar o código-fonte do flow",
       "previous_match": "Correspondência anterior",
       "rbac_banner": "{count} flows estão excluídos da substituição. Você tem acesso de leitura, mas não de edição em {namespace}. Peça a um administrador do namespace a permissão de {permission} para incluí-los.",

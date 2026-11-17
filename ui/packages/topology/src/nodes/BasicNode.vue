@@ -33,7 +33,7 @@
                 :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
-                    <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
+                    <DragVertical v-if="movable" class="node-grip" />
                     <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
                         <slot name="icon-badge" />
                         <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">

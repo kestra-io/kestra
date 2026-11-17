@@ -37,6 +37,10 @@ const FLOW_YAML = [
     "",
 ].join("\n")
 
+function blockOrder(yaml: string): string[] {
+    return [...yaml.matchAll(/id: (first|second)\b/g)].map(match => match[1])
+}
+
 function createFakeFocus(): CanvasFocusApi {
     return {
         focusedId: ref<string | undefined>(undefined),
@@ -146,6 +150,20 @@ describe("useBlockOperations", () => {
                 refIndex: 0,
             })
         })
+
+        it("pasteTarget resolves a selection that has no path from its section and position", () => {
+            const ctx = createFakeContext()
+            const ops = useBlockOperations(ctx)
+
+            expect(ops.pasteTarget()).toBeUndefined()
+
+            ctx.selectedId.value = "second"
+            expect(ops.pasteTarget()).toEqual({
+                section: "tasks",
+                parentPath: "tasks",
+                refIndex: 1,
+            })
+        })
     })
 
     describe("canPasteHere", () => {
@@ -153,6 +171,9 @@ describe("useBlockOperations", () => {
             const ctx = createFakeContext()
             const ops = useBlockOperations(ctx)
 
+            expect(ops.canPasteHere()).toBe(false)
+
+            vi.mocked(ctx.clipboard.canPasteInto).mockReturnValue(true)
             expect(ops.canPasteHere()).toBe(false)
 
             ctx.focus.focusedId.value = "first"
@@ -171,6 +192,11 @@ describe("useBlockOperations", () => {
             const ops = useBlockOperations(ctx)
 
             expect(ops.pasteRelative()).toBe(false)
+            expect(ctx.applyYaml).not.toHaveBeenCalled()
+
+            vi.mocked(ctx.clipboard.pasteFor).mockReturnValue({id: "copied", type: "io.kestra.plugin.core.log.Log"})
+            expect(ops.pasteRelative()).toBe(false)
+            expect(ctx.clipboard.pasteFor).not.toHaveBeenCalled()
             expect(ctx.applyYaml).not.toHaveBeenCalled()
 
             ctx.focus.focusedId.value = "first"
@@ -223,6 +249,28 @@ describe("useBlockOperations", () => {
             const firstIndex = appliedYaml.indexOf("id: first")
             const secondIndex = appliedYaml.indexOf("id: second")
             expect(secondIndex).toBeLessThan(firstIndex)
+        })
+
+        it("a move of a block selected without a path applies YAML with the block in its new position", () => {
+            const ctx = createFakeContext()
+            const ops = useBlockOperations(ctx)
+
+            ctx.selectedId.value = "first"
+            ops.moveSelected("down")
+
+            expect(ctx.applyYaml).toHaveBeenCalledTimes(1)
+            expect(blockOrder(vi.mocked(ctx.applyYaml).mock.calls[0][0])).toEqual(["second", "first"])
+        })
+
+        it("a move of the focused block applies YAML with the block in its new position", () => {
+            const ctx = createFakeContext()
+            const ops = useBlockOperations(ctx)
+
+            vi.mocked(ctx.focus.focusedBlockPath).mockReturnValue("tasks[1]")
+            ops.moveFocused("up")
+
+            expect(ctx.applyYaml).toHaveBeenCalledTimes(1)
+            expect(blockOrder(vi.mocked(ctx.applyYaml).mock.calls[0][0])).toEqual(["second", "first"])
         })
     })
 })

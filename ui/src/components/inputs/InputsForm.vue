@@ -433,6 +433,7 @@
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
         "ready": [];
+        "change": [fieldId: string];
     }>()
 
     const executionsStore = useExecutionsStore()
@@ -546,48 +547,11 @@
 
     function hasInputValue(input: InputMetaData): boolean {
         const id = input.id
-        if (input.type === "MULTISELECT") {
-            const multi = multiSelectInputs[id]
-            if (Array.isArray(multi)) {
-                return multi.length > 0
-            }
-            const val = inputsValues[id]
-            if (Array.isArray(val)) {
-                return val.length > 0
-            }
-            if (typeof val === "string") {
-                const trimmed = val.trim()
-                if (trimmed === "" || trimmed === "[]") {
-                    return false
-                }
-                try {
-                    const parsed = JSON.parse(trimmed)
-                    return Array.isArray(parsed) && parsed.length > 0
-                } catch {
-                    return false
-                }
-            }
-            return false
-        }
-
-        if (input.type === "ARRAY") {
-            const val = inputsValues[id]
-            if (Array.isArray(val)) {
-                return true
-            }
-            if (typeof val === "string") {
-                const trimmed = val.trim()
-                if (trimmed === "") {
-                    return false
-                }
-                try {
-                    const parsed = JSON.parse(trimmed)
-                    return Array.isArray(parsed)
-                } catch {
-                    return false
-                }
-            }
-            return false
+        if (input.type === "MULTISELECT" || input.type === "ARRAY") {
+            const items = input.type === "MULTISELECT"
+                ? multiSelectComponentValue(multiSelectInputs[id] ?? inputsValues[id])
+                : multiSelectComponentValue(inputsValues[id])
+            return items.length > 0
         }
 
         if (input.type === "BOOL") {
@@ -618,14 +582,7 @@
             return true
         }
         const requiredPattern = t("is required", {field: inputLabel(input)})
-        if (message === requiredPattern || message.includes(requiredPattern)) {
-            return true
-        }
-        const label = inputLabel(input)
-        if (message === `${label} is required` || message === `${input.id} is required`) {
-            return true
-        }
-        return false
+        return message === requiredPattern || message.includes(requiredPattern)
     }
 
     function activeInputErrors(id: string): InputError[] {
@@ -645,7 +602,7 @@
         }
 
         const valuePresent = hasInputValue(meta)
-        const isUntouchedDynamicSettled = !userEditedInputs.has(id) && dynamicInputIds.value.has(id)
+        const isUntouchedDynamicInput = !userEditedInputs.has(id) && dynamicInputIds.value.has(id)
 
         const result: InputError[] = []
         let hasRequiredError = false
@@ -655,7 +612,7 @@
                 result.push(err)
             } else if (isRequiredError(err, meta)) {
                 hasRequiredError = true
-                if (!valuePresent || isUntouchedDynamicSettled) {
+                if (!valuePresent || isUntouchedDynamicInput) {
                     result.push(err)
                 }
             } else {
@@ -664,7 +621,7 @@
         }
 
         if (meta.required !== false && !meta.isDefault && !valuePresent && inputsValidated.value.has(id) && !hasRequiredError && !isRenderError) {
-            result.push({message: t("is required", {field: inputLabel(meta)})})
+            result.push({message: t("is required", {field: inputLabel(meta)}), path: meta.id})
         }
 
         return result
@@ -728,6 +685,7 @@
         input.isDefault = false
         modelValue.value = {...inputsValues}
         emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
+        emit("change", input.id)
     }
 
     function onSubmit(): void {
@@ -1017,14 +975,16 @@
             }]
         }
 
-        if (input.type === "SELECT" || input.type === "MULTISELECT") {
+        if (input.type === "SELECT" || input.type === "MULTISELECT" || input.type === "ARRAY") {
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
-                    const val = input.type === "MULTISELECT"
-                        ? multiSelectInputs[input.id] as unknown[] | undefined
-                        : inputsValues[input.id] as unknown[] | string | undefined
-                    if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
+                    const items = input.type === "MULTISELECT"
+                        ? multiSelectComponentValue(multiSelectInputs[input.id] ?? inputsValues[input.id])
+                        : input.type === "ARRAY"
+                            ? multiSelectComponentValue(inputsValues[input.id])
+                            : inputsValues[input.id]
+                    if (!items || (Array.isArray(items) ? items.length === 0 : !items)) {
                         return callback(new Error(t("is required", {field: inputLabel(input)})))
                     }
                     callback()
@@ -1037,17 +997,7 @@
     }
 
     function parseArrayValue(inputId: string): unknown[] {
-        const value = inputsValues[inputId]
-        if (!value) return []
-
-        if (typeof value === "string") {
-            try {
-                return JSON.parse(value)
-            } catch {
-                return []
-            }
-        }
-        return []
+        return multiSelectComponentValue(inputsValues[inputId])
     }
 
     function addNewArrayItem(input: InputMetaData): void {

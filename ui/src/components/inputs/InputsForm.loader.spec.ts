@@ -599,10 +599,11 @@ describe("InputsForm required input validation error clearance (#22065)", () => 
         expect(wrapperNoDefault.vm.inputError("reason")).toContain("is required")
     })
 
-    test("accepts an empty ARRAY without producing a misleading required error", async () => {
+    test("clears and restores required errors for ARRAY inputs", async () => {
         const store = useExecutionsStore()
         store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
-            {enabled: true, isDefault: false, input: {id: "items", type: "ARRAY", required: true}},
+            {enabled: true, isDefault: false, input: {id: "items", type: "ARRAY", required: true},
+                errors: [{message: "Invalid value for input `items`. Cause: Missing required input:items", renderError: false}]},
         ]})
 
         const wrapper = mountForm([
@@ -610,30 +611,22 @@ describe("InputsForm required input validation error clearance (#22065)", () => 
         ])
         await flushPromises()
         wrapper.vm.inputsValidated.add("items")
+        expect(wrapper.vm.inputError("items")).toContain("Missing required")
 
-        // When: the ARRAY value is a valid serialized empty array "[]"
-        wrapper.vm.inputsValues.items = "[]"
+        // When: an item is added
+        wrapper.vm.inputsValues.items = JSON.stringify(["first item"])
         wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
         await flushPromises()
 
-        // Then: it counts as present and does not show a synthetic required error
+        // Then: the required error clears immediately
         expect(wrapper.vm.inputError("items")).toBeUndefined()
 
-        // When: items are added
-        wrapper.vm.inputsValues.items = JSON.stringify(["item1", "item2"])
+        // When: the last item is removed (leaving empty array)
+        wrapper.vm.inputsValues.items = JSON.stringify([])
         wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
         await flushPromises()
 
-        // Then: it remains valid with no error
-        expect(wrapper.vm.inputError("items")).toBeUndefined()
-
-        // When: the value becomes absent (empty string)
-        wrapper.vm.inputsValues.items = ""
-        wrapper.vm.onChange(wrapper.vm.inputsMetaData[0])
-        await flushPromises()
-
-        // Then: the required error is shown for an absent value
-        expect(wrapper.vm.inputError("items")).toBeDefined()
-        expect(wrapper.vm.inputError("items")).toContain("is required")
+        // Then: the required error is restored
+        expect(wrapper.vm.inputError("items")).toContain("Missing required")
     })
 })

@@ -22,6 +22,7 @@
                 v-model="inputs"
                 @validation="validateInputs"
                 @ready="baseline = snapshot()"
+                @change="onFieldChange"
             />
             <KsFormItem :label="$t('approval.comment')">
                 <KsInput v-model="comment" type="textarea" :rows="3" data-test="review-comment" />
@@ -52,6 +53,7 @@
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {handledIf} from "../../utils/kestraHttp"
     import {useToast} from "../../utils/toast"
+    import type {FormInstance} from "@kestra-io/design-system"
 
     const props = defineProps<{
         execution: Execution;
@@ -65,10 +67,15 @@
     const executionsStore = useExecutionsStore()
     const toast = useToast()
 
-    const form = ref<{validate: (cb: (valid: boolean) => void) => void} | null>(null)
+    const form = ref<FormInstance | null>(null)
     const inputs = ref<Record<string, unknown>>({})
     const comment = ref("")
     const submitting = ref(false)
+
+    function onFieldChange(fieldId: string) {
+        const prop = fieldId.includes(".") ? [fieldId] : fieldId
+        form.value?.clearValidate(prop)
+    }
 
     const inputsList = computed(() => props.task.inputs ?? [])
 

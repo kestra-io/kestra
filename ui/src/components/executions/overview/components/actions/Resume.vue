@@ -15,7 +15,12 @@
             </i18n-t>
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
+            <InputsForm
+                :initialInputs="inputsList"
+                :execution="execution"
+                v-model="inputs"
+                @change="onFieldChange"
+            />
         </KsForm>
         <template #footer>
             <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
@@ -77,6 +82,11 @@
     })
 
     const needInputs = computed(() => inputsList.value?.length > 0)
+
+    function onFieldChange(fieldId: string) {
+        const prop = fieldId.includes(".") ? [fieldId] : fieldId
+        form.value?.clearValidate(prop)
+    }
 
     function click() {
         if (needInputs.value) {

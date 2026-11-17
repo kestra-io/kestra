@@ -90,20 +90,21 @@
         order: string | null
     }
 
-    export type KsDataTableInstance = {
+    /** `T` is the row type and `M` the mapped selection type, matching the component's own generics. */
+    export type KsDataTableInstance<T = unknown, M = T> = {
         isLoading: boolean
         isReady: boolean
         reload: () => Promise<void>
         resetAndReload: () => void
-        setSelection: (selection: unknown[]) => void
+        setSelection: (selection: T[]) => void
         clearSelection: () => void
         toggleAllUnselected: () => void
-        toggleRowExpansion: (row: unknown, expand?: boolean) => void
+        toggleRowExpansion: (row: T, expand?: boolean) => void
         waitTableRender: () => Promise<void>
-        getSelectionRows: () => unknown[]
+        getSelectionRows: () => T[]
         toggleAllSelection: () => void
         queryBulkAction: boolean
-        selection: unknown[]
+        selection: M[]
     }
 </script>
 

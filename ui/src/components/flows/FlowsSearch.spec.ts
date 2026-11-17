@@ -3,7 +3,11 @@ import {reactive, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
-const mockRoute = reactive({
+const mockRoute = reactive<{
+    query: Record<string, string | string[] | undefined>
+    params: Record<string, string | undefined>
+    meta: Record<string, unknown>
+}>({
     query: {q: "first-query"},
     params: {},
     meta: {},
@@ -12,7 +16,7 @@ const mockRoute = reactive({
 const search = vi.fn()
 
 const store = reactive({
-    suggestedQuery: null,
+    suggestedQuery: null as string | null,
     flows: {
         status: "done",
         results: [],
@@ -38,7 +42,7 @@ const store = reactive({
     reset: vi.fn(),
     retryNamespaceFiles: vi.fn(),
     truncatedFor: vi.fn(() => false),
-    countFor: vi.fn(() => 0),
+    countFor: vi.fn((_type?: string) => 0),
     totalFor: vi.fn(() => 0),
     resourceCountFor: vi.fn(() => 0),
     statusFor: vi.fn(() => "idle"),
@@ -175,7 +179,7 @@ describe("FlowsSearch", () => {
     it("dispatches suggestion for empty types in a partial match and renders the suggestion banner", async () => {
         search.mockResolvedValueOnce(1)
         mockRoute.query = {q: "eu-west-2", types: "flows,secrets"}
-        store.countFor = vi.fn((type: string) => (type === "flows" ? 2 : 0))
+        store.countFor = vi.fn((type?: string) => (type === "flows" ? 2 : 0))
         store.flows.results = [{namespace: "ns", id: "flow", editable: true, matches: [{line: 1, column: 1, snippet: "eu-west-2"}]}] as never
 
         const wrapper = i18nMount(FlowsSearch, {

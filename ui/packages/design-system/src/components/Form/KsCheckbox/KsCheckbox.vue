@@ -15,20 +15,15 @@
     import type {HTMLAttributes} from "vue"
     import {ElCheckbox, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<T>()
 
-    const props = withDefaults(defineProps<{
-        value?: boolean | string | number
-        disabled?: boolean
-        checked?: boolean
-        indeterminate?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
-        value: undefined,
-    })
+    type KsCheckboxProps = Omit<CheckboxProps, "modelValue">
+
+    const props = defineProps<KsCheckboxProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsCheckboxProps>>()
 
     const emit = defineEmits<{
         change: [value: T]
@@ -38,7 +33,7 @@
         default?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 </script>
 
 <style lang="scss">

@@ -35,6 +35,18 @@ tasks:
       type: io.kestra.plugin.core.log.Log
 `
 
+const NESTED_FLOW = `id: my-flow
+namespace: company.team
+tasks:
+  - id: parent
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: child-a
+        type: io.kestra.plugin.core.log.Log
+      - id: child-b
+        type: io.kestra.plugin.core.log.Log
+`
+
 const TRIGGER_FLOW = `id: my-flow
 namespace: company.team
 triggers:
@@ -157,6 +169,40 @@ describe("useTopologyPanels", () => {
         expect(openAddTaskTab).not.toHaveBeenCalled()
     })
 
+    it("uses the innermost index when a create click targets a task nested in another task", async () => {
+        const {openAddTaskTab, openEditTaskTab, topologyClick} = mountTopologyPanels([panel(["topology"])], NESTED_FLOW)
+
+        topologyClick.value = {action: "create", params: {section: "tasks", id: "child-b", position: "after"}}
+        await nextTick()
+
+        expect(openAddTaskTab).toHaveBeenCalledWith(
+            {panelIndex: -1, tabIndex: -1},
+            "tasks[0].tasks",
+            `${FLOW_REF}/properties/tasks/items`,
+            1,
+            "after",
+            undefined,
+            1,
+        )
+        expect(openEditTaskTab).not.toHaveBeenCalled()
+    })
+
+    it("uses the innermost index when an edit click targets a task nested in another task", async () => {
+        const {openAddTaskTab, openEditTaskTab, topologyClick} = mountTopologyPanels([panel(["topology"])], NESTED_FLOW)
+
+        topologyClick.value = {action: "edit", params: {section: "tasks", id: "child-b"}}
+        await nextTick()
+
+        expect(openEditTaskTab).toHaveBeenCalledWith(
+            {panelIndex: -1, tabIndex: -1},
+            "tasks[0].tasks",
+            `${FLOW_REF}/properties/tasks/items`,
+            1,
+            1,
+        )
+        expect(openAddTaskTab).not.toHaveBeenCalled()
+    })
+
     it("builds the block schema path from the flow schema ref, the clicked section and items", async () => {
         pluginsStore.flowSchema = {$ref: "#/definitions/acme.CustomFlow"}
         const {openEditTaskTab, topologyClick} = mountTopologyPanels([panel(["topology"])], TRIGGER_FLOW)
@@ -210,6 +256,23 @@ describe("useTopologyPanels", () => {
             "after",
             undefined,
             2,
+        )
+    })
+
+    it("asks for a new panel right after the first one when no topology panel is open", async () => {
+        const {openAddTaskTab, topologyClick} = mountTopologyPanels([panel(["files"]), panel(["edit"])], FLOW)
+
+        topologyClick.value = {action: "create", params: {section: "tasks", id: "second", position: "after"}}
+        await nextTick()
+
+        expect(openAddTaskTab).toHaveBeenCalledWith(
+            {panelIndex: -1, tabIndex: -1},
+            "tasks",
+            `${FLOW_REF}/properties/tasks/items`,
+            1,
+            "after",
+            undefined,
+            1,
         )
     })
 

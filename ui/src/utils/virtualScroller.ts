@@ -3,12 +3,11 @@ import type {RecycleScroller} from "vue-virtual-scroller"
 import type {HTMLAttributes} from "vue"
 import type {NativeAttributes} from "@kestra-io/design-system"
 
-// DynamicScroller forwards these to RecycleScroller and its root through $attrs, but its types (3.0.5) don't declare them.
-type ForwardedProps = Pick<NonNullable<Parameters<typeof RecycleScroller<unknown>>[0]>, "buffer" | "prerender" | "emitUpdate" | "updateInterval"> & NativeAttributes<HTMLAttributes>
+type UndeclaredForwardedProps = Pick<NonNullable<Parameters<typeof RecycleScroller<unknown>>[0]>, "buffer" | "prerender" | "emitUpdate" | "updateInterval"> & NativeAttributes<HTMLAttributes>
 type Rest<TItem> = Parameters<typeof UntypedDynamicScroller<TItem>> extends [unknown, ...infer R] ? R : never
 
 export const DynamicScroller = UntypedDynamicScroller as <TItem>(
-    props: Parameters<typeof UntypedDynamicScroller<TItem>>[0] & ForwardedProps,
+    props: Parameters<typeof UntypedDynamicScroller<TItem>>[0] & UndeclaredForwardedProps,
     ...rest: Rest<TItem>
 ) => ReturnType<typeof UntypedDynamicScroller<TItem>>
 

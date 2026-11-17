@@ -62,8 +62,8 @@
         defaultCheckedKeys?: TreeKey[]
     }
 
-    // Element Plus types the tree's props only as the internal context, with every key required.
-    const props = defineProps<KsTreeProps & /* @vue-ignore */ Omit<NativeAttributes<Partial<TreeComponentProps> & HTMLAttributes>, keyof KsTreeProps>>()
+    type ElTreeProps = Partial<TreeComponentProps>
+    const props = defineProps<KsTreeProps & /* @vue-ignore */ Omit<NativeAttributes<ElTreeProps & HTMLAttributes>, keyof KsTreeProps>>()
 
     const emit = defineEmits<{
         nodeDragStart: [node: KsTreeNode<T>, event: DragEvent]

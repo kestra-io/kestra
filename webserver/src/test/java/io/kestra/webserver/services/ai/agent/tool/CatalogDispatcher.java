@@ -22,7 +22,7 @@ final class CatalogDispatcher {
     static Map<String, Object> dispatch(final AiPlatformTool tool, final String name, final String arguments, final String tenant) {
         DocsMcpToolProvider docsMcpToolProvider = mock(DocsMcpToolProvider.class);
         when(docsMcpToolProvider.tools()).thenReturn(Map.of());
-        ToolCatalog catalog = new ToolCatalog(List.of(tool), List.of(), docsMcpToolProvider, (permission, tenantId, principal) -> true, new DefaultAgentToolCallScope());
+        ToolCatalog catalog = new ToolCatalog(List.of(tool), List.of(), docsMcpToolProvider, (permission, tenantId, principal) -> true, new DefaultAgentToolCallScope(), new ToolResultBudget(100_000, null));
         ToolExecutionRequest request = ToolExecutionRequest.builder().id("call-1").name(name).arguments(arguments).build();
         String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant(tenant)).text();
         try {

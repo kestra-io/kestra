@@ -1059,6 +1059,11 @@ public class ExecutorService {
         }
 
         if (iterationCount == 0) {
+            if (!ListUtils.isEmpty(loop.getOutputs())) {
+                Map<String, Object> current = new HashMap<>(taskOutputService.getOutputs(taskRun));
+                current.put(Loop.OUTPUTS_OUTPUT, Collections.emptyList());
+                taskOutputService.saveOutputs(taskRun, current);
+            }
             executor.withExecution(
                 executor.getExecution()
                     .withTaskRun(taskRun.withState(State.Type.SUCCESS)),

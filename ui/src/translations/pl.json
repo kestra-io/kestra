@@ -2527,7 +2527,7 @@
           "planTitle": "Proponowany plan",
           "actionTitle": "Proponowana akcja",
           "approve": "Zatwierdź",
-          "approveExecute": "Zatwierdź i wykonaj",
+          "approvePlan": "Zatwierdź plan",
           "reject": "Odrzuć",
           "pending": "Oczekuje na zatwierdzenie",
           "revise": "Odpowiedz, aby poprawić"

@@ -92,7 +92,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     private static List<QueryFilter> reassembleFilters(final QueryFilter.Resource resource, final Map<String, Object> args) {
         List<QueryFilter> filters = new ArrayList<>();
         for (QueryFilter.Field field : resource.supportedField()) {
-            if (!AiToolSpecifications.isExposedFilterField(field)) {
+            if (!AiToolSpecifications.isExposedFilterField(resource, field)) {
                 continue; // not exposed in the schema (e.g. TIME_RANGE) — ignore if the model sent it
             }
             Object raw = args.remove(field.name());

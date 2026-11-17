@@ -23,14 +23,13 @@
             <DragVertical
                 v-if="draggable"
                 class="flowable-cluster-grip"
-                :aria-label="$t('block_editor.drag_reorder')"
+                :title="$t('block_editor.drag_reorder')"
                 @mousedown.stop
             />
 
             <component
                 :is="expanded ? ChevronDown : ChevronRight"
                 class="flowable-cluster-chevron"
-                aria-hidden="true"
             />
 
             <TaskIcon

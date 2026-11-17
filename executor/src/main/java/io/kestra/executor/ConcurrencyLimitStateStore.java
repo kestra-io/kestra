@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencyScopeState;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
@@ -138,7 +139,7 @@ public interface ConcurrencyLimitStateStore {
             }
 
             int newLimit = decrement(flow);
-            if (newLimit >= limits.getFirst().concurrency().getLimit()) {
+            if (new ConcurrencyScopeState(limits.getFirst(), newLimit).isFull()) {
                 LOG.error(
                     "Concurrency limit reached for flow {}.{} after decrementing the execution running count due to a terminated execution. This should not happen.",
                     flow.getNamespace(), flow.getId()

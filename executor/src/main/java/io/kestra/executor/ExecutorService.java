@@ -102,13 +102,13 @@ public class ExecutorService {
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
-    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
-        for (int i = 0; i < limits.size(); i++) {
-            ScopedConcurrencyLimit limit = limits.get(i);
-            int runningCount = runningCounts.get(i);
-            if (runningCount < limit.concurrency().getLimit()) {
+    public ExecutionRunning processExecutionRunning(List<ConcurrencyScopeState> scopeStates, int queuedCount, ExecutionRunning executionRunning) {
+        for (ConcurrencyScopeState scopeState : scopeStates) {
+            if (!scopeState.isFull()) {
                 continue;
             }
+            ScopedConcurrencyLimit limit = scopeState.scope();
+            int runningCount = scopeState.running();
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {

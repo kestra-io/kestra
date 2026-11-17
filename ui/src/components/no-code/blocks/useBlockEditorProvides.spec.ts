@@ -1,13 +1,13 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
-import {computed, defineComponent, h, inject, unref} from "vue"
+import {computed, defineComponent, h, inject, unref, type InjectionKey} from "vue"
 import {mount} from "@vue/test-utils"
 
 // --- mocks (hoisted) ---
 // The real stores import `@kestra-io/kestra-sdk`, so they are replaced with plain objects. The
 // composable only reads a few fields, which each test seeds before mounting.
 const {flowStore, pluginsStore, defaultNamespace} = vi.hoisted(() => ({
-    flowStore: {} as Record<string, any>,
-    pluginsStore: {} as Record<string, any>,
+    flowStore: {} as Record<string, unknown>,
+    pluginsStore: {} as Record<string, unknown>,
     // Middle link of the namespace fallback chain, so it must be controllable.
     defaultNamespace: vi.fn<() => string | undefined>(),
 }))
@@ -66,9 +66,18 @@ const KEYS = {
 
 type KeyName = keyof typeof KEYS
 
+// The injected values are opaque by default; the five provided functions are typed so tests can call them.
+type Injected = Record<KeyName, unknown> & {
+    CREATE_TASK_FUNCTION: BlockEditorProvideContext["createTask"]
+    EDIT_TASK_FUNCTION: BlockEditorProvideContext["editTask"]
+    CLOSE_TASK_FUNCTION: BlockEditorProvideContext["closeTask"]
+    UPDATE_YAML_FUNCTION: BlockEditorProvideContext["updateYaml"]
+    SAVE_FLOW_FUNCTION: BlockEditorProvideContext["saveFlow"]
+}
+
 type Stores = {
-    flowStore: Record<string, any>
-    pluginsStore: Record<string, any>
+    flowStore: Record<string, unknown>
+    pluginsStore: Record<string, unknown>
 }
 
 function makeCtx(props: Partial<NoCodeProps> = {}) {
@@ -91,7 +100,7 @@ function makeCtx(props: Partial<NoCodeProps> = {}) {
  */
 function mountHost(props: Partial<NoCodeProps>, seed?: (stores: Stores) => void) {
     const ctx = makeCtx(props)
-    const injected = {} as Record<KeyName, any>
+    const collected: Record<string, unknown> = {}
 
     if (seed) {
         seed({flowStore, pluginsStore})
@@ -100,7 +109,7 @@ function mountHost(props: Partial<NoCodeProps>, seed?: (stores: Stores) => void)
     const Child = defineComponent({
         setup() {
             for (const [name, key] of Object.entries(KEYS)) {
-                injected[name as KeyName] = inject(key as any, NOT_PROVIDED)
+                collected[name] = inject(key as unknown as InjectionKey<unknown>, NOT_PROVIDED)
             }
             return () => h("div")
         },
@@ -114,6 +123,7 @@ function mountHost(props: Partial<NoCodeProps>, seed?: (stores: Stores) => void)
 
     mount(Host)
 
+    const injected = collected as Injected
     const value = (name: KeyName) => unref(injected[name])
     return {ctx, injected, value}
 }

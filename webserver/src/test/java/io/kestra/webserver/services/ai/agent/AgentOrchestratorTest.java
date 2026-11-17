@@ -786,7 +786,7 @@ class AgentOrchestratorTest {
         );
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).build(), new CollectingSink());
 
         // Then all four counts reach the store, keyed to the provider. Recording is not gated on limits.
         AiUsageTotals totals = usageStore.totals(provider, Instant.now().minus(Duration.ofHours(1)));
@@ -808,7 +808,7 @@ class AgentOrchestratorTest {
         scriptedModel.enqueue(AiMessage.from("You have no flows."), new TokenUsage(900, 60, 960));
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("list my flows").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).build(), new CollectingSink());
 
         // Then both calls are booked: recording per turn would lose each call's own cached share
         AiUsageTotals totals = usageStore.totals(provider, Instant.now().minus(Duration.ofHours(1)));
@@ -827,7 +827,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, null, null), sink);
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).build(), sink);
 
         // Then the model is never called, which is the only thing that actually saves money...
         assertThat(scriptedModel.callCount()).isZero();
@@ -855,7 +855,7 @@ class AgentOrchestratorTest {
 
         // When that user takes a turn
         orchestrator.runTurn(
-            new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-42"), null), sink
+            AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).principal(new TestPrincipal("user-42")).build(), sink
         );
 
         // Then they are refused on their own axis, and the message names it
@@ -876,7 +876,7 @@ class AgentOrchestratorTest {
 
         // When a different user takes a turn
         orchestrator.runTurn(
-            new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-7"), null), sink
+            AgentTurnContext.builder().thread(thread).prompt("what is a trigger?").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).principal(new TestPrincipal("user-7")).build(), sink
         );
 
         // Then it runs: summing every user's spend into this axis would make one heavy user an outage for all
@@ -899,7 +899,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), sink);
+        orchestrator.runTurn(AgentTurnContext.builder().thread(thread).prompt("list my flows").mode(AgentMode.ASK).tenant(TENANT).providerId(provider).build(), sink);
 
         // Then the first call runs and the second does not: checking once per turn would let one runaway turn
         // spend the whole allowance

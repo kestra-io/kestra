@@ -28,7 +28,7 @@ class McpPlatformToolTest {
         // Given — the docs tools are stubbed so the catalog holds every tool bean without reaching kestra.io
         DocsMcpToolProvider docsMcpToolProvider = mock(DocsMcpToolProvider.class);
         when(docsMcpToolProvider.tools()).thenReturn(Map.of());
-        ToolCatalog catalog = new ToolCatalog(platformTools, authoringTools, docsMcpToolProvider, (permission, tenant, principal) -> true, new DefaultAgentToolCallScope());
+        ToolCatalog catalog = new ToolCatalog(platformTools, authoringTools, docsMcpToolProvider, (permission, tenant, principal) -> true, new DefaultAgentToolCallScope(), new ToolResultBudget(100_000, null));
 
         // When
         List<ToolCatalog.ToolEntry> exposed = catalog.entries().stream()

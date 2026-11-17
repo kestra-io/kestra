@@ -178,6 +178,28 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldMatchInputIdLiterallyWhenCheckingDashedReferences() {
+        String flowTemplate = """
+            id: regex-id
+            namespace: io.kestra.tests
+            inputs:
+              - id: "a.b-c"
+                type: STRING
+                defaults: value
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.%s }}"
+            """;
+
+        Optional<ConstraintViolationException> unrelatedReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("aXb-c"), Flow.class));
+        Optional<ConstraintViolationException> literalReference = modelValidator.isValid(YamlParser.parse(flowTemplate.formatted("a.b-c"), Flow.class));
+
+        assertThat(unrelatedReference).isEmpty();
+        assertThat(literalReference).hasValueSatisfying(e -> assertThat(e.getMessage()).contains("Invalid input reference"));
+    }
+
+    @Test
     void validFlowShouldSucceed() {
         Flow flow = this.parse("flows/valids/minimal.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);

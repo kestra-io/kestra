@@ -6,6 +6,7 @@ import java.util.Map;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -111,4 +112,53 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @PluginProperty(hidden = true, group = "advanced")
     @Valid
     private TriggerAssetsDeclaration assets;
+
+    private static final String MIGRATION_GUIDE = "https://kestra.io/docs/migration-guide/v2.0.0";
+
+    /**
+     * Rejects the pre-2.0 trigger filtering properties instead of dropping them.
+     * <p>
+     * The mappers used on the read paths — the flow repositories, and {@code parseForRuntime} — are lenient,
+     * so an undeclared property is normally dropped and the trigger runs <em>without</em> it. For
+     * {@code conditions} / {@code preconditions}, which are what kept a trigger from firing, that turns a
+     * narrow trigger into one that matches everything: a 1.3 flow could start an execution storm right after
+     * an upgrade. Failing here makes such a flow surface as a
+     * {@link io.kestra.core.models.flows.FlowWithException} — listable and visible in the UI, but skipped by
+     * the executor, the scheduler and the flow-trigger service — exactly like a trigger whose <em>type</em>
+     * no longer exists.
+     * <p>
+     * Only the removed <em>filtering</em> properties are rejected, and by name. A property that merely
+     * changed name or moved — {@code workerGroup}, {@code pluginDefaultsRef}, {@code Schedule.backfill} —
+     * keeps being dropped as before: losing it does not change what the trigger matches, and bricking the
+     * flow over it would be worse than the drop.
+     */
+    @JsonSetter("conditions")
+    void rejectRemovedConditions(Object ignored) {
+        throw removed("conditions", "\"when\" (and by \"dependsOn\" on io.kestra.plugin.core.trigger.Flow)");
+    }
+
+    /** @see #rejectRemovedConditions(Object) */
+    @JsonSetter("preconditions")
+    void rejectRemovedPreconditions(Object ignored) {
+        throw removed("preconditions", "\"dependsOn\"");
+    }
+
+    /**
+     * An {@link IllegalArgumentException} is deliberate: Jackson wraps it into a {@code JsonMappingException},
+     * which every read path already handles — the repositories turn it into a {@code FlowWithException},
+     * {@code YamlParser} into a {@code ConstraintViolationException}. A runtime exception of another kind
+     * would escape those handlers.
+     * <p>
+     * The trigger is named only when its {@code id} was read before the offending property, which is the
+     * order of both the YAML users write and the stored flow JSON; otherwise the message says
+     * {@code "<unknown>"} and the caller identifies the trigger from the flow and the property.
+     */
+    protected IllegalArgumentException removed(String property, String replacement) {
+        return new IllegalArgumentException(
+            "Trigger \"" + (this.id == null ? "<unknown>" : this.id) + "\" ("
+                + (this.type == null ? this.getClass().getName() : this.type) + ") uses \"" + property
+                + "\", which was removed in 2.0 and replaced by " + replacement
+                + " - see the migration guide " + MIGRATION_GUIDE
+        );
+    }
 }

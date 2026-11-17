@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import org.hibernate.validator.constraints.time.DurationMin;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -650,5 +652,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         @Schema(title = "The date of the previous schedule")
         @NotNull
         private ZonedDateTime previous;
+    }
+
+    /**
+     * Pre-2.0 date filtering on a schedule, replaced by {@code conditions} in 1.x and then by {@code when}.
+     * Rejected rather than dropped for the same reason as the removed trigger {@code conditions}:
+     * silently losing it makes the schedule fire on every tick it used to skip.
+     */
+    @JsonSetter("scheduleConditions")
+    void rejectRemovedScheduleConditions(Object ignored) {
+        throw removed("scheduleConditions", "\"when\"");
     }
 }

@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import java.util.stream.IntStream;
 
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.data.model.Pageable;
@@ -89,6 +92,96 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         } finally {
             flow.ifPresent(value -> flowRepository.delete(value));
         }
+    }
+
+    /**
+     * A flow stored by Kestra 1.x whose trigger carries the removed `conditions` (or `preconditions`) must not
+     * be read back with the property silently dropped: the trigger would then match everything. It surfaces as
+     * a {@link FlowWithException}, like a trigger whose type no longer exists.
+     */
+    @Test
+    void shouldReturnFlowWithExceptionForLegacyTriggerConditions() {
+        assertLegacyTriggerPropertyIsRejected(
+            "legacy-trigger-conditions",
+            legacyTrigger(
+                "conditions", List.of(
+                    Map.of(
+                        "type", "io.kestra.plugin.core.condition.ExecutionFlow",
+                        "namespace", "io.kestra.unittest",
+                        "flowId", "dep-foreach"
+                    )
+                )
+            ),
+            "Trigger \"on_foreach\" (io.kestra.plugin.core.trigger.Flow) uses \"conditions\", which was removed in 2.0 "
+                + "and replaced by \"when\" (and by \"dependsOn\" on io.kestra.plugin.core.trigger.Flow)"
+        );
+    }
+
+    @Test
+    void shouldReturnFlowWithExceptionForLegacyTriggerPreconditions() {
+        assertLegacyTriggerPropertyIsRejected(
+            "legacy-trigger-preconditions",
+            legacyTrigger("preconditions", Map.of("id", "dep", "flows", List.of(Map.of("namespace", "io.kestra.unittest", "flowId", "dep-foreach")))),
+            "Trigger \"on_foreach\" (io.kestra.plugin.core.trigger.Flow) uses \"preconditions\", which was removed in 2.0 "
+                + "and replaced by \"dependsOn\""
+        );
+    }
+
+    /**
+     * A pre-2.0 Flow trigger, as an ordered map: the stored flow JSON has the trigger `id` before the removed
+     * property, which is what lets the error name the trigger.
+     */
+    private static Map<String, Object> legacyTrigger(String legacyProperty, Object value) {
+        Map<String, Object> trigger = new LinkedHashMap<>();
+        trigger.put("id", "on_foreach");
+        trigger.put("type", "io.kestra.plugin.core.trigger.Flow");
+        trigger.put("states", List.of("SUCCESS", "FAILED"));
+        trigger.put(legacyProperty, value);
+        return trigger;
+    }
+
+    /**
+     * Binds the `value` column the way the repository of the dialect under test does: Postgres stores it as
+     * `jsonb` and rejects a character-varying bind, while H2 and MySQL store it as text. Mirrors what
+     * `PostgresRepository#persistFields` does on the production path.
+     */
+    private static Object jsonValue(DSLContext context, String json) {
+        return context.family() == SQLDialect.POSTGRES ? DSL.val(JdbcJsonbUtils.valueOf(json)) : json;
+    }
+
+    private void assertLegacyTriggerPropertyIsRejected(String flowId, Map<String, Object> trigger, String expectedMessage) {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        dslContextWrapper.transaction(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            String value = JacksonMapper.ofJson().writeValueAsString(
+                Map.of(
+                    "id", flowId,
+                    "tenantId", tenant,
+                    "namespace", "io.kestra.unittest",
+                    "revision", 1,
+                    "deleted", false,
+                    "tasks", List.of(Map.of("id", "log", "type", "io.kestra.plugin.core.log.Log", "message", "hello")),
+                    "triggers", List.of(trigger)
+                )
+            );
+
+            context.insertInto(flowRepository.jdbcRepository.getTable())
+                .set(field("key"), tenant + "_io.kestra.unittest_" + flowId)
+                .set(field("source_code"), "id: " + flowId)
+                .set(field("value"), jsonValue(context, value))
+                .execute();
+        });
+
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenant, "io.kestra.unittest", flowId);
+
+        assertThat(flow).isPresent();
+        assertThat(flow.get()).isInstanceOf(FlowWithException.class);
+        // Jackson frames it ("Problem deserializing ... (through reference chain ...)"), but the part that
+        // tells the user what to change is in there and is what the API and the UI show
+        assertThat(((FlowWithException) flow.get()).getException()).contains(expectedMessage);
     }
 
     @Test

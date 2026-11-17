@@ -2,6 +2,7 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../index"
 import KsSwitch from "./KsSwitch.vue"
+import KsForm from "./KsForm/KsForm.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -28,5 +29,13 @@ describe("KsSwitch", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-switch.is-checked").exists()).toBe(true)
+    })
+
+    test("inherits disabled from a disabled form when the parent sets nothing", () => {
+        const wrapper = mount({
+            components: {KsForm, KsSwitch},
+            template: "<KsForm disabled><KsSwitch :modelValue=\"false\" /></KsForm>",
+        }, {global: globalConfig})
+        expect(wrapper.find("input").attributes("disabled")).toBeDefined()
     })
 })

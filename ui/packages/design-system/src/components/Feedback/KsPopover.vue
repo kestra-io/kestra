@@ -30,7 +30,8 @@
     // Element Plus types its listeners as props; declared here, they would stop being the parent's listeners.
     export type KsPopoverProps = Omit<PopoverProps, "onUpdate:visible" | "onMouseenter" | "onMouseleave" | "onClick" | "onKeydown" | "onFocus" | "onBlur" | "onContextmenu">
 
-    const props = withDefaults(defineProps<KsPopoverProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsPopoverProps>>(), {visible: undefined, showArrow: false})
+    // The popper keeps the id Element Plus gives it, since the reference's aria-describedby points at it.
+    const props = withDefaults(defineProps<KsPopoverProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsPopoverProps | "id">>(), {visible: undefined, showArrow: false})
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]

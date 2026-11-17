@@ -267,7 +267,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 // throws InternalException if not found — treated as a hard failure below
                 TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
 
-                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun);
+                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun, message.executionId());
 
                 return executor.withExecution(resumedExecution, "resumedLoopIteration");
             } catch (InternalException e) {

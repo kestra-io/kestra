@@ -290,6 +290,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         // the same dotted path, matching how FlowInputOutput resolves them.
         Set<String> inputsNeedingATriggerValue = value.resolvableInputs().stream()
             .filter(input -> input.getDefaults() == null && !Boolean.FALSE.equals(input.getRequired()))
+            // we skip validation for inputs that have a condition as they can only be validated at runtime
+            .filter(input -> input.getDependsOn() == null || input.getDependsOn().condition() == null)
             .map(Data::getId)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 

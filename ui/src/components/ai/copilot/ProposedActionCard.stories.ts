@@ -20,7 +20,7 @@ const meta: Meta<typeof ProposedActionCard> = {
 export default meta
 type Story = StoryObj<typeof ProposedActionCard>
 
-// Plan-mode card: no concrete tool → title + "Pending approval" + numbered steps + "Approve & execute".
+// Plan-mode card: no concrete tool → title + "Pending approval" + numbered steps + "Approve plan".
 export const PlanCard: Story = {
     args: {action: {
         confirmationId: "c1",

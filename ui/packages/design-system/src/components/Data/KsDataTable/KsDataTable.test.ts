@@ -719,4 +719,18 @@ describe("KsDataTable", () => {
         expect(cell.classes()).toContain("custom")
         expect(cell.classes().some((name) => name.startsWith("ks-mobile-"))).toBe(false)
     })
+
+    test("applies a row-class-name passed in kebab case", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3" row-class-name="kebab-row">
+                    <ks-table-column prop="id" label="ID" />
+                </ks-data-table>
+            `,
+            data: () => ({data: SAMPLE_DATA}),
+        })
+        await flushPromises()
+        expect(wrapper.findAll("tr.kebab-row")).toHaveLength(3)
+    })
 })

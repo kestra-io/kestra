@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted, type CSSProperties} from "vue"
     import {useRoute} from "vue-router"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {useI18n} from "vue-i18n"
@@ -211,7 +211,7 @@
         uid: string
     }
 
-    const FULLSCREEN_CARD_BODY_STYLE = {
+    const FULLSCREEN_CARD_BODY_STYLE: CSSProperties = {
         display: "flex",
         flexDirection: "column",
         flex: "1",

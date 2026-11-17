@@ -1,5 +1,11 @@
 package io.kestra.core.exceptions;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +39,10 @@ public class InputOutputValidationException extends KestraRuntimeException {
      */
     private final String detail;
 
+    private final List<InputOutputValidationException> exceptions;
+    private final Map<String, List<String>> fieldErrors;
+    private final Map<String, List<InputOutputValidationException>> violationsByField;
+
     public InputOutputValidationException(String message) {
         this(message, false);
     }
@@ -50,6 +60,24 @@ public class InputOutputValidationException extends KestraRuntimeException {
         this.renderError = renderError;
         this.path = path;
         this.detail = detail;
+        this.exceptions = List.of();
+        this.fieldErrors = Collections.emptyMap();
+        this.violationsByField = Collections.emptyMap();
+    }
+
+    public InputOutputValidationException(
+        String message,
+        List<InputOutputValidationException> exceptions,
+        Map<String, List<String>> fieldErrors,
+        Map<String, List<InputOutputValidationException>> violationsByField
+    ) {
+        super(message);
+        this.renderError = false;
+        this.path = null;
+        this.detail = null;
+        this.exceptions = exceptions != null ? List.copyOf(exceptions) : List.of();
+        this.fieldErrors = fieldErrors != null ? Collections.unmodifiableMap(fieldErrors) : Collections.emptyMap();
+        this.violationsByField = violationsByField != null ? Collections.unmodifiableMap(violationsByField) : Collections.emptyMap();
     }
 
     public boolean isRenderError() {
@@ -62,6 +90,18 @@ public class InputOutputValidationException extends KestraRuntimeException {
 
     public String getDetail() {
         return detail;
+    }
+
+    public List<InputOutputValidationException> getExceptions() {
+        return exceptions != null && !exceptions.isEmpty() ? exceptions : List.of(this);
+    }
+
+    public Map<String, List<String>> getFieldErrors() {
+        return fieldErrors;
+    }
+
+    public Map<String, List<InputOutputValidationException>> getViolationsByField() {
+        return violationsByField;
     }
 
     public static InputOutputValidationException of(String message, Input<?> input) {
@@ -94,11 +134,46 @@ public class InputOutputValidationException extends KestraRuntimeException {
         return new InputOutputValidationException(message);
     }
 
-    public static InputOutputValidationException merge(Set<InputOutputValidationException> exceptions) {
+    public static InputOutputValidationException ofViolations(Map<String, List<InputOutputValidationException>> violationsByField) {
+        List<InputOutputValidationException> allExceptions = violationsByField.values().stream()
+            .flatMap(Collection::stream)
+            .toList();
+        String combinedMessage = allExceptions.stream()
+            .map(InputOutputValidationException::getMessage)
+            .collect(Collectors.joining(System.lineSeparator()));
+
+        Map<String, List<String>> fieldErrors = violationsByField.entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream().map(InputOutputValidationException::getMessage).toList(),
+                (a, b) -> a,
+                LinkedHashMap::new
+            ));
+
+        return new InputOutputValidationException(combinedMessage, allExceptions, fieldErrors, violationsByField);
+    }
+
+    public static InputOutputValidationException merge(Collection<InputOutputValidationException> exceptions) {
+        if (exceptions == null || exceptions.isEmpty()) {
+            return new InputOutputValidationException("");
+        }
         String combinedMessage = exceptions.stream()
             .map(InputOutputValidationException::getMessage)
             .collect(Collectors.joining(System.lineSeparator()));
-        throw new InputOutputValidationException(combinedMessage);
+
+        Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
+        Map<String, List<InputOutputValidationException>> violationsByField = new LinkedHashMap<>();
+        for (InputOutputValidationException ex : exceptions) {
+            String field = ex.getPath() != null ? ex.getPath() : "general";
+            fieldErrors.computeIfAbsent(field, k -> new ArrayList<>()).add(ex.getMessage());
+            violationsByField.computeIfAbsent(field, k -> new ArrayList<>()).add(ex);
+        }
+
+        return new InputOutputValidationException(combinedMessage, new ArrayList<>(exceptions), fieldErrors, violationsByField);
+    }
+
+    public static InputOutputValidationException merge(Set<InputOutputValidationException> exceptions) {
+        return merge((Collection<InputOutputValidationException>) exceptions);
     }
 
 }

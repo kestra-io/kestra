@@ -1,12 +1,15 @@
 package io.kestra.webserver.controllers;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.webserver.errors.ProblemDetail;
@@ -83,6 +86,40 @@ public class ErrorController {
             e,
             ProblemTypes.VALIDATION_FAILED,
             e.getInvalids() == null ? List.of() : e.getInvalids().stream().map(ProblemError::of).toList()
+        );
+    }
+
+    /** Flow input/output validation: reports all field-level validation errors. */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, InputOutputValidationException e) {
+        List<ProblemError> errors = new ArrayList<>();
+        if (e.getViolationsByField() != null && !e.getViolationsByField().isEmpty()) {
+            for (Map.Entry<String, List<InputOutputValidationException>> entry : e.getViolationsByField().entrySet()) {
+                String fieldId = entry.getKey();
+                for (InputOutputValidationException child : entry.getValue()) {
+                    String path = child.getPath() != null ? child.getPath() : fieldId;
+                    errors.add(ProblemError.of(child.getMessage(), null, path));
+                }
+            }
+        } else if (e.getExceptions() != null && !e.getExceptions().isEmpty()) {
+            for (InputOutputValidationException child : e.getExceptions()) {
+                errors.add(ProblemError.of(child.getMessage(), null, child.getPath()));
+            }
+        } else if (e.getFieldErrors() != null && !e.getFieldErrors().isEmpty()) {
+            for (Map.Entry<String, List<String>> entry : e.getFieldErrors().entrySet()) {
+                for (String msg : entry.getValue()) {
+                    errors.add(ProblemError.of(msg, null, entry.getKey()));
+                }
+            }
+        } else {
+            errors.add(ProblemError.of(e.getMessage(), null, e.getPath()));
+        }
+
+        return this.problems.response(
+            request,
+            e,
+            ProblemTypes.INVALID_ENTITY,
+            errors
         );
     }
 

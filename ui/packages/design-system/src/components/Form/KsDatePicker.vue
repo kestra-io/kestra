@@ -32,7 +32,6 @@
         endPlaceholder?: string
     }
 
-    // The picker hands its attrs to its tooltip, which is where `teleported` lands.
     type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
 
     const props = withDefaults(defineProps<KsDatePickerProps & /* @vue-ignore */ Omit<NativeAttributes<DatePickerPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsDatePickerProps | "modelValue">>(), {

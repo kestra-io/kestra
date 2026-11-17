@@ -171,9 +171,41 @@ describe("useBaseMiscStore", () => {
             expect(MiscAPI.usages).toHaveBeenCalledWith({days: 7})
             expect(result).toEqual(mockUsages)
         })
+
+        it("queries a single day by default", async () => {
+            vi.mocked(MiscAPI.usages).mockResolvedValue({})
+
+            const store = useStore()
+            store.configs = {isBasicAuthInitialized: true}
+            vi.mocked(BasicAuth.isLoggedIn).mockReturnValue(true)
+
+            await store.loadAllUsages()
+
+            expect(MiscAPI.usages).toHaveBeenCalledWith({days: 1})
+        })
     })
 
     describe("changeBasicAuth", () => {
+        it("sends the new credentials together with the current password", async () => {
+            vi.mocked(MiscAPI.createBasicAuth).mockResolvedValue(undefined as never)
+
+            const store = useStore()
+
+            await store.changeBasicAuth({
+                username: "user",
+                password: "new-pass",
+                currentPassword: "old-pass",
+            })
+
+            expect(MiscAPI.createBasicAuth).toHaveBeenCalledOnce()
+            expect(MiscAPI.createBasicAuth).toHaveBeenCalledWith({
+                uid: "test-uid",
+                username: "user",
+                password: "new-pass",
+                currentPassword: "old-pass",
+            })
+        })
+
         it("marks the error handled and re-throws it", async () => {
             type HandledError = Error & {__kestra_handled?: boolean}
             const error: HandledError = new Error("Bad credentials")

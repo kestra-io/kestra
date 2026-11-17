@@ -36,7 +36,8 @@
 </template>
 
 <script setup lang="ts" generic="T, C extends boolean | undefined = undefined">
-    import {type Component, computed, h, markRaw, provide, ref, toRef} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {type Component, computed, h, markRaw, provide, ref, toRef, type HTMLAttributes} from "vue"
     import {ElSelect, type SelectPropsPublic} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
@@ -74,7 +75,7 @@
         colorMap?: KsSelectColorMap
         selectAll?: boolean
         singleLineTags?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         placeholder: undefined,
         size: undefined,
         clearable: undefined,

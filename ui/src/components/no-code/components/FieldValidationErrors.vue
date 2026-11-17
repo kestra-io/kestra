@@ -6,7 +6,7 @@
             class="field-error"
             :data-test="dataTest"
         >
-            <AlertCircleOutline class="field-error-icon" aria-hidden="true" />
+            <AlertCircleOutline class="field-error-icon" />
             {{ error }}
         </span>
     </div>

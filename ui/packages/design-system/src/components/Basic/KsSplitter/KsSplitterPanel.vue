@@ -7,6 +7,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElSplitterPanel, type SplitterPanelProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -18,7 +20,7 @@
         max?: string | number
         resizable?: boolean
         collapsible?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         size: undefined,
         min: undefined,
         max: undefined,

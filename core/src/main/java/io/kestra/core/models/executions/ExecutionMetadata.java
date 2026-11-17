@@ -32,6 +32,14 @@ public class ExecutionMetadata {
     List<String> concurrencyScopes;
 
     /**
+     * The uids of the concurrency scopes a parent waiting on this execution (a Subflow with
+     * {@code wait: true}) already holds a slot in, so this execution does not claim them again.
+     * Null when there are none.
+     */
+    @With
+    List<String> concurrencyScopesHeldByParent;
+
+    /**
      * The number of Subflow/Flow-trigger hops between this execution and the root execution that
      * started the chain, incremented by one at each hop.
      * Null for a root execution which is treated as depth 0.

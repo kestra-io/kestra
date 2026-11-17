@@ -109,7 +109,8 @@
 </script>
 
 <script setup lang="ts" generic="T extends object, M = T">
-    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type Ref} from "vue"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes, type Ref} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -150,7 +151,7 @@
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
         mobileColumns?: KsDataTableMobileColumns
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         data: () => [],
         total: 0,
         currentPage: 1,

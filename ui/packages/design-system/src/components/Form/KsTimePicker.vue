@@ -28,7 +28,6 @@
         size?: "large" | "default" | "small"
     }
 
-    // The picker hands its attrs to its tooltip, which is where `teleported` lands.
     type PickerTooltipProps = Pick<ElTooltipContentProps, "teleported">
 
     const props = withDefaults(defineProps<KsTimePickerProps & /* @vue-ignore */ Omit<NativeAttributes<TimePickerDefaultPropsPublic & PickerTooltipProps & HTMLAttributes>, keyof KsTimePickerProps | "modelValue">>(), {

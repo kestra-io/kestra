@@ -37,8 +37,8 @@
         reserveSelection?: boolean
     }
 
-    // Rows are untyped here; `never` lets a formatter annotate its own row type.
-    type ForwardedColumnProps = Omit<NativeAttributes<ColumnProps>, keyof KsTableColumnProps | "formatter"> & {formatter?: TableColumnCtx<never>["formatter"]}
+    type AnyRowFormatter = TableColumnCtx<never>["formatter"]
+    type ForwardedColumnProps = Omit<NativeAttributes<ColumnProps>, keyof KsTableColumnProps | "formatter"> & {formatter?: AnyRowFormatter}
 
     const props = withDefaults(defineProps<KsTableColumnProps & /* @vue-ignore */ ForwardedColumnProps>(), {
         type: undefined,

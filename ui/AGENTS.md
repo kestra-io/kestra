@@ -270,21 +270,9 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+**A package with no types?** Give it a small `.d.ts` shim next to `src/material-icons.d.ts`.
 
-**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
-
-- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
-- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
-- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
-- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
-
-**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
-
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
-- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
-
-Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
+**MANDATORY - no explicit `any`.** Type the value, or use `unknown` and narrow it. `npm run check:ts-any` counts every explicit `any`, oxlint for the `<script>` block and the Vue compiler for template expressions, and fails on a single one. The same check runs on every PR, as `Npm - check ts-any`. When you cannot type a value, stop, leave the check red and say in the PR which value defeated you and why, so a maintainer can decide.
 
 ### Testing UI
 
@@ -309,7 +297,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
+`npm run check:ts-any` fails on any explicit `any`, so type the value or use `unknown` and narrow it.
 
 Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 

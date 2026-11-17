@@ -2538,7 +2538,7 @@
           "planTitle": "Plano Proposto",
           "actionTitle": "Ação proposta",
           "approve": "Aprovar",
-          "approveExecute": "Aprovar e executar",
+          "approvePlan": "Aprovar plano",
           "reject": "Rejeitar",
           "pending": "Pendente de aprovação",
           "revise": "Responder para revisar"

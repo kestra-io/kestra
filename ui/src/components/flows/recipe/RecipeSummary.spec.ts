@@ -62,10 +62,10 @@ describe("RecipeSummary", () => {
     })
 
     it.each([
-        {missing: "both the channel and the trigger", hasChannel: false, triggerValid: false, hint: messages["recipe.summary.invalid_hint"]},
-        {missing: "only the channel", hasChannel: false, triggerValid: true, hint: messages["recipe.then.no_channel_warning"]},
-        {missing: "only the trigger", hasChannel: true, triggerValid: false, hint: messages["recipe.summary.invalid_hint_trigger"]},
-    ])("shows the matching hint when $missing is missing", ({hasChannel, triggerValid, hint}) => {
+        {scenario: "both the channel and the trigger are missing", hasChannel: false, triggerValid: false, hint: messages["recipe.summary.invalid_hint"]},
+        {scenario: "only the channel is missing", hasChannel: false, triggerValid: true, hint: messages["recipe.then.no_channel_warning"]},
+        {scenario: "only the trigger is missing", hasChannel: true, triggerValid: false, hint: messages["recipe.summary.invalid_hint_trigger"]},
+    ])("shows the matching hint when $scenario", ({hasChannel, triggerValid, hint}) => {
         const wrapper = mountSummary({isValid: false, hasChannel, triggerValid, hasInteracted: true})
 
         expect(wrapper.findComponent(KsAlert).text()).toBe(hint)

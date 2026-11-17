@@ -1,6 +1,6 @@
 import {beforeAll, describe, expect, it} from "vitest"
 import type {HighlighterCore, ThemedToken} from "shiki/core"
-import {kestraDark, kestraLight, pebbleBlocks, pebbleTransformer} from "./index.ts"
+import {kestraDark, kestraLight, pebbleTokens, pebbleTransformer} from "./index.ts"
 import {yamlCorpus} from "../tests/corpus.ts"
 import {highlighter} from "../tests/highlighter.ts"
 
@@ -25,18 +25,18 @@ function transform(code: string, options: Parameters<HighlighterCore["codeToToke
 }
 
 describe("pebbleTransformer", () => {
-    it.each(yamlCorpus().map(file => [file.path, file] as const))("paints exactly the Pebble blocks of %s", (_, {code}) => {
+    it.each(yamlCorpus().map(file => [file.path, file] as const))("paints exactly the Pebble tokens of %s", (_, {code}) => {
         const {before, after} = transform(code, {lang: "yaml", theme: "kestra-dark"})
-        const blocks = pebbleBlocks(code)
-        if (!blocks.length) return expect(after).toBe(before)
+        const tokens = pebbleTokens(code)
+        if (!tokens.length) return expect(after).toBe(before)
 
         const original = colorsPerChar(code, before)
         const painted = colorsPerChar(code, after!)
-        const inBlock = new Uint8Array(code.length)
-        for (const [start, end] of blocks) inBlock.fill(1, start, end)
+        const wanted = [...original]
+        for (const [start, end, role] of tokens) wanted.fill(kestraDark.syntax[role].toUpperCase(), start, end)
         const wrong: string[] = []
         for (let i = 0; i < code.length && wrong.length < 3; i++) {
-            const expected = inBlock[i] ? PEBBLE : original[i]
+            const expected = wanted[i]
             if (painted[i] !== expected && !(/\s/.test(code[i]!) && painted[i] === undefined)) {
                 wrong.push(`${i}: ${JSON.stringify(code.slice(i, i + 30))} is ${painted[i]}, expected ${expected}`)
             }
@@ -58,6 +58,19 @@ describe("pebbleTransformer", () => {
         expect(pebbleSpan(h.codeToHtml(code, {lang: "yaml", themes, transformers, defaultColor: "light-dark()"})))
             .toBe(`color:light-dark(${kestraLight.syntax.pebble}, ${PEBBLE});--shiki-light:${kestraLight.syntax.pebble};--shiki-dark:${PEBBLE}`)
         expect(pebbleSpan(h.codeToHtml(code, {lang: "yml", theme: "kestra-dark", transformers}))).toBe(`color:${PEBBLE}`)
+    })
+
+    it("colors the code inside a block by role, in every theme variant", () => {
+        const html = h.codeToHtml("at: \"{{ now() | date('yyyy') }}\"", {lang: "yaml", themes: {light: "kestra-light", dark: "kestra-dark"}, transformers: [pebbleTransformer()]})
+        const spans = [...html.matchAll(/<span style="([^"]*)">([^<]*)<\/span>/g)].map(match => [match[2], match[1]])
+        const style = (role: "pebble" | "function" | "string") => `color:${kestraLight.syntax[role]};--shiki-dark:${kestraDark.syntax[role]}`
+        expect(spans).toEqual(expect.arrayContaining([
+            ["{{ ", style("pebble")],
+            ["now", style("function")],
+            ["date", style("function")],
+            ["'yyyy'", style("string")],
+            [" }}", style("pebble")],
+        ]))
     })
 
     it("leaves other languages and non-Kestra themes alone", () => {

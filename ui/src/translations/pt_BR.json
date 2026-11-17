@@ -307,6 +307,7 @@
       "ongoing": "Em andamento",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Excluindo {count} execução | Excluindo {count} execuções",
           "EXECUTION_KILL": "Encerrando {count} execução | Encerrando {count} execuções",
           "EXECUTION_PAUSE": "Pausando {count} execução | Pausando {count} execuções",
           "EXECUTION_RESUME": "Retomando {count} execução | Retomando {count} execuções",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Pausando {count} backfill | Pausando {count} backfills",
           "BACKFILL_RESUME": "Retomando {count} backfill | Retomando {count} backfills",
           "BACKFILL_DELETE": "Excluindo {count} backfill | Excluindo {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Exclusão solicitada para {count} execução | Exclusão solicitada para {count} execuções",
+          "EXECUTION_KILL": "Solicitado kill para {count} execução | Solicitado kill para {count} execuções",
+          "EXECUTION_PAUSE": "Pausa solicitada para {count} execução | Pausa solicitada para {count} execuções",
+          "EXECUTION_RESUME": "Retomada solicitada para {count} execução | Retomada solicitada para {count} execuções",
+          "EXECUTION_RESTART": "Reinício solicitado para {count} execução | Reinício solicitado para {count} execuções",
+          "EXECUTION_REPLAY": "Replay solicitado para {count} execução | Replay solicitado para {count} execuções",
+          "EXECUTION_FORCE_RUN": "Execução forçada solicitada para {count} execução | Execução forçada solicitada para {count} execuções",
+          "EXECUTION_UNQUEUE": "Remoção da fila solicitada para {count} execução | Remoção da fila solicitada para {count} execuções",
+          "EXECUTION_CHANGE_STATUS": "Alteração de status solicitada para {count} execução | Alteração de status solicitada para {count} execuções",
+          "EXECUTION_SET_LABELS": "Atualização de label solicitada para {count} execução | Atualização de label solicitada para {count} execuções",
+          "TRIGGER_UNLOCK": "Desbloqueio solicitado para {count} trigger | Desbloqueio solicitado para {count} triggers",
+          "TRIGGER_DELETE": "Exclusão solicitada para {count} trigger | Exclusão solicitada para {count} triggers",
+          "TRIGGER_DISABLE": "Desativação solicitada para {count} trigger | Desativação solicitada para {count} triggers",
+          "TRIGGER_ENABLE": "Habilitação solicitada para {count} trigger | Habilitação solicitada para {count} triggers",
+          "BACKFILL_PAUSE": "Pausa solicitada para {count} backfill | Pausa solicitada para {count} backfills",
+          "BACKFILL_RESUME": "Retomada solicitada para {count} backfill | Retomada solicitada para {count} backfills",
+          "BACKFILL_DELETE": "Exclusão solicitada para {count} backfill | Exclusão solicitada para {count} backfills"
         },
         "processed": "{count} processadas",
         "rejected": "{count} rejeitadas",
@@ -1224,6 +1244,10 @@
     "trigger blocked policy check failed": "Não foi possível verificar as políticas de governança.",
     "trigger blocked unknown": "Bloqueado por um motivo desconhecido.",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
+    "trigger not toggleable": "Este Trigger não é avaliado pelo Scheduler, desative-o na fonte do Flow",
+    "bulk not toggleable warning": "{count} trigger(s) selecionado(s) será(ão) ignorado(s): o Scheduler não os avalia, então eles só podem ser desabilitados na origem do Flow.",
+    "bulk none applied": "Nenhum trigger foi afetado: nenhum dos selecionados pôde ser processado.",
+    "bulk partially applied": "{count} de {requested} triggers foram processados, os outros foram ignorados.",
     "trigger enable dialog": {
       "title": "Habilitar trigger",
       "bulk title": "Habilitar {count} triggers",
@@ -2381,6 +2405,9 @@
         "csv": "Exportar para CSV"
       },
       "ignoredFilters": "O filtro {filters} não se aplica a este gráfico. | Os filtros {filters} não se aplicam a este gráfico.",
+      "dataFrom": "Atualizado {date}",
+      "dataUnavailable": "Dados indisponíveis",
+      "dataTruncated": "O arquivo de saída foi truncado para suas {rows} primeiras linhas. Consulte a documentação para mais detalhes.",
       "show_all_statuses": "Mostrar todos os status",
       "quick_filters": {
         "all": "Todos",
@@ -2531,7 +2558,15 @@
         "unavailable": {
           "title": "AI Copilot não está disponível",
           "detail": "Nenhum provedor de IA está configurado para esta instância. Configure um no seu arquivo de configuração do Kestra para habilitar o AI Copilot.",
-          "docs": "Ver documentação"
+          "docs": "Ver documentação",
+          "sendTooltip": "O envio está desativado porque nenhum provedor de AI está configurado.",
+          "notSent": "Seu prompt não foi enviado"
+        },
+        "mcpTip": {
+          "title": "Use Kestra do Claude Code, Cursor e outros clientes MCP",
+          "description": "Junto com o Copilot, o Kestra oferece um servidor MCP. Conecte um cliente MCP externo a ele para gerenciar seus flows e execuções a partir das ferramentas que você já usa.",
+          "docs": "Ver documentação",
+          "dismiss": "Não mostrar novamente"
         },
         "thinkingWords": [
           "Orquestração",
@@ -2588,6 +2623,10 @@
           },
           "valid": "Válido",
           "invalid": "Precisa de mudanças"
+        },
+        "tray": {
+          "title": "Alterações pendentes",
+          "applyFirst": "Aplicar {flow} primeiro"
         }
       }
     },
@@ -2866,7 +2905,8 @@
       "open_in_secrets": "Abrir em secrets",
       "options_aria": "Opções de busca",
       "path_only_hint": "Busca apenas o caminho do arquivo, não o seu conteúdo. Não pode ser substituído.",
-      "preview_empty": "Selecione um resultado para pré-visualizar. Clique em um flow na lista de resultados para ver seu código-fonte.",
+      "preview_empty_title": "Selecione um resultado para pré-visualizar.",
+      "preview_empty_description": "Clique em um flow na lista de resultados para ver seu código-fonte.",
       "preview_error": "Falha ao carregar o código-fonte do flow",
       "previous_match": "Correspondência anterior",
       "rbac_banner": "{count} flows estão excluídos da substituição. Você tem acesso de leitura, mas não de edição em {namespace}. Peça a um administrador do namespace a permissão de {permission} para incluí-los.",

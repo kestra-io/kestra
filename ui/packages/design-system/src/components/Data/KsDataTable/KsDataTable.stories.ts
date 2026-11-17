@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {within, userEvent, expect, waitFor} from "storybook/test"
 import KsDataTable from "./KsDataTable.vue"
 import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -17,7 +17,8 @@ const SAMPLE_DATA = Array.from({length: 30}, (_, i) => ({
 
 const meta: Meta<typeof KsDataTable> = {
     title: "Components/Data/KsDataTable",
-    component: KsDataTable,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsDataTable as ConcreteComponent,
     tags: ["autodocs"],
     parameters: {
         controls: {disable: true},

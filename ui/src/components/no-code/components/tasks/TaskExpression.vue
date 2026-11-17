@@ -6,6 +6,7 @@
         :navbar="false"
         :options="{fullHeight: false, largeSuggestions: false}"
         :inline="true"
+        :readOnly="disabled"
         lang="yaml"
         :placeholder="$t('no_code.expression_placeholder', {field: root || 'value'})"
         @update:model-value="editorInput"
@@ -19,7 +20,7 @@
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import {useFocusedExpressionEditor} from "./useFocusedExpressionEditor"
-    import {computed, ref} from "vue"
+    import {computed, ref, type PropType} from "vue"
 
     const editorBindings = useEditorBindings()
     const editorRef = ref<KsEditorExposes>()
@@ -27,12 +28,15 @@
 
     const props = defineProps({
         modelValue: {
-            type: [String, Object],
-            default: undefined,
+            type: [String, Object] as PropType<unknown>,
         },
         root: {
             type: String,
             default: undefined,
+        },
+        disabled: {
+            type: Boolean,
+            default: false,
         },
     })
 

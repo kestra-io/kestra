@@ -50,6 +50,8 @@ const handleAuthError = (to: {fullPath: string}, error: unknown) => {
 let httpClient: ReturnType<typeof setupKestraHttp> | undefined
 
 function setupAxios(router: Router) {
+    if (httpClient) return useClient()
+
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
     const layoutStore = useLayoutStore()
@@ -171,8 +173,6 @@ initApp(app, routes, null, en as Record<string, unknown>, {}, {
     beforeResolve,
 }).then(({router, piniaStore}) => {
     setupTenantRouter(router, app)
-
-    setupAxios(router)
 
     const $http = setupAxios(router)
 

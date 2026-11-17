@@ -1,6 +1,5 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FormInput;
@@ -62,11 +61,11 @@ public class InputValidator implements ConstraintValidator<InputValidation, Inpu
             return false;
         }
 
-        if (Boolean.TRUE.equals(value.getSearchable()) && value.getType() != null && !Data.SEARCHABLE_TYPES.contains(value.getType())) {
+        if (Boolean.TRUE.equals(value.getSearchable()) && value.getType() != null && !Input.SEARCHABLE_TYPES.contains(value.getType())) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
                 "The input '%s' cannot be searchable: the type %s is not supported, a searchable input must be one of %s.".formatted(
-                    value.getId(), value.getType(), Data.SEARCHABLE_TYPES.stream().map(Type::name).collect(Collectors.joining(", "))
+                    value.getId(), value.getType(), Input.SEARCHABLE_TYPES.stream().map(Type::name).collect(Collectors.joining(", "))
                 )
             ).addConstraintViolation();
             return false;

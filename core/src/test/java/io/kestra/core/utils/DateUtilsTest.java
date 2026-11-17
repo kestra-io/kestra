@@ -29,4 +29,15 @@ class DateUtilsTest {
             .isInstanceOf(InternalException.class)
             .hasMessageContaining("out of the supported range");
     }
+
+    @Test
+    void shouldTruncateAnInstantToItsBucket() {
+        Instant wednesday = Instant.parse("2025-01-15T13:45:30Z");
+
+        assertThat(DateUtils.truncateToBucket(wednesday, DateUtils.GroupType.MINUTE)).isEqualTo(Instant.parse("2025-01-15T13:45:00Z"));
+        assertThat(DateUtils.truncateToBucket(wednesday, DateUtils.GroupType.HOUR)).isEqualTo(Instant.parse("2025-01-15T13:00:00Z"));
+        assertThat(DateUtils.truncateToBucket(wednesday, DateUtils.GroupType.DAY)).isEqualTo(Instant.parse("2025-01-15T00:00:00Z"));
+        assertThat(DateUtils.truncateToBucket(wednesday, DateUtils.GroupType.WEEK)).isEqualTo(Instant.parse("2025-01-13T00:00:00Z"));
+        assertThat(DateUtils.truncateToBucket(wednesday, DateUtils.GroupType.MONTH)).isEqualTo(Instant.parse("2025-01-01T00:00:00Z"));
+    }
 }

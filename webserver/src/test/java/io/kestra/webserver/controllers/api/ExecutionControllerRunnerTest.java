@@ -1135,6 +1135,48 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/replay-output-overrides.yaml" })
+    void shouldReadOverriddenOutputsWithoutRunningUpstreamTaskAgainWhenReplayingWithOverrides() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");
+        assertThat(failed.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        replayWithOverrides(failed, "adjust", "fetch", Map.of("values", Map.of("code", "KR-0412", "region", "us")));
+        Flow flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides").orElseThrow();
+        Execution replay = runnerUtils.awaitChildExecution(flow, failed, Duration.ofSeconds(15));
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(replay.findTaskRunsByTaskId("fetch").getFirst().getAttempts()).isEqualTo(failed.findTaskRunsByTaskId("fetch").getFirst().getAttempts());
+        assertThat(outputsOf(replay, "notify")).containsEntry("value", "KR-0412 in us");
+        assertThat(outputsOf(failed, "fetch")).containsEntry("values", Map.of("code", "KR-0412 ", "region", "eu"));
+        assertThat(replay.getLabels()).contains(new Label(Label.OVERRIDDEN_OUTPUTS, "fetch"));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-output-overrides.yaml" })
+    void shouldRefuseOverrideOfTaskRunTheReplayRunsAgain() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-output-overrides");
+
+        var exception = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "fetch", "adjust", Map.of("value", "x")));
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getResponse().getBody(String.class).orElse("")).contains("are not reused by the replay");
+    }
+
+    private void replayWithOverrides(Execution execution, String fromTaskId, String overriddenTaskId, Map<String, Object> outputs) {
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay-with-overrides?taskRunId=%s".formatted(execution.getId(), execution.findTaskRunsByTaskId(fromTaskId).getFirst().getId()),
+                Map.of("outputs", Map.of(execution.findTaskRunsByTaskId(overriddenTaskId).getFirst().getId(), outputs))
+            ),
+            Execution.class
+        );
+    }
+
+    private Map<String, Object> outputsOf(Execution execution, String taskId) throws InternalException {
+        return taskOutputService.getOutputs(execution.findTaskRunsByTaskId(taskId).getFirst().toBuilder().tenantId(TENANT_ID).build());
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/condition_with_input.yaml" })
     void replayExecutionFromTaskIdWithInputs() throws Exception {
         final String flowId = "condition_with_input";

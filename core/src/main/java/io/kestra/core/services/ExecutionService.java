@@ -629,6 +629,18 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, Map.of());
+    }
+
+    /**
+     * @param outputOverrides outputs to save in place of the copied ones, by id of a task run the replay reuses
+     */
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
+        String newExecutionId, Map<String, Map<String, Object>> outputOverrides) throws Exception {
+        if (taskRunId == null && !outputOverrides.isEmpty()) {
+            throw new IllegalArgumentException("Cannot replay execution '%s' with overridden outputs: outputs can only be overridden on a replay from a task run.".formatted(execution.getId()));
+        }
+
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -663,6 +675,15 @@ public class ExecutionService {
                 .map(TaskRun::getId)
                 .forEach(originalTaskRunToRemove::add);
 
+            List<String> notReused = outputOverrides.keySet().stream()
+                .filter(id -> taskRunToRestart.contains(id) || originalTaskRunToRemove.contains(id) || execution.findTaskRunByTaskRunIdIfPresent(id).isEmpty())
+                .toList();
+            if (!notReused.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' with overridden outputs: task runs %s are not reused by the replay.".formatted(execution.getId(), notReused)
+                );
+            }
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
@@ -679,7 +700,12 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        Map<String, Object> override = outputOverrides.get(originalTaskRun.getId());
+                        if (override == null) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        } else {
+                            taskOutputService.saveOutputs(newTaskRun, override);
+                        }
                         return newTaskRun;
                     }))
                     .toList()
@@ -700,6 +726,13 @@ public class ExecutionService {
         List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
+        }
+        if (!outputOverrides.isEmpty()) {
+            Set<String> taskIds = new TreeSet<>();
+            newLabels.stream().filter(label -> Label.OVERRIDDEN_OUTPUTS.equals(label.key())).forEach(label -> taskIds.addAll(List.of(label.value().split(","))));
+            outputOverrides.keySet().forEach(id -> execution.findTaskRunByTaskRunIdIfPresent(id).ifPresent(taskRun -> taskIds.add(taskRun.getTaskId())));
+            newLabels.removeIf(label -> Label.OVERRIDDEN_OUTPUTS.equals(label.key()));
+            newLabels.add(new Label(Label.OVERRIDDEN_OUTPUTS, String.join(",", taskIds)));
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));

@@ -941,6 +941,16 @@ export type ExecutionControllerLastExecutionResponse = {
     status: StateType;
 };
 
+export type ExecutionControllerReplayWithOverridesRequest = {
+    outputs: {
+        [key: string]: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
 export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
@@ -1793,7 +1803,7 @@ export type Output = {
     value: {
         [key: string]: unknown;
     } | string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
@@ -1810,11 +1820,13 @@ export type OutputControllerTaskOutputInformation = {
 export type OutputForExecution = {
     id: string;
     description?: string;
-    type: Type;
+    type: OutputType;
     displayName?: string;
     required?: boolean;
     searchable?: boolean;
 };
+
+export type OutputType = 'STRING' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'YAML' | 'ASSET' | 'UNKNOWN';
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
@@ -2669,7 +2681,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE' | 'ASSET';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -7516,6 +7528,57 @@ export type ReplayExecutionWithinputsResponses = {
 };
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
+
+export type ReplayExecutionWithOverridesData = {
+    /**
+     * The outputs to use, by id of a previous task run. They replace all the outputs of that task run.
+     */
+    body: ExecutionControllerReplayWithOverridesRequest;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay-with-overrides';
+};
+
+export type ReplayExecutionWithOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed, or if an overridden task run is not reused by the replay
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayExecutionWithOverridesError = ReplayExecutionWithOverridesErrors[keyof ReplayExecutionWithOverridesErrors];
+
+export type ReplayExecutionWithOverridesResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReplayExecutionWithOverridesResponse = ReplayExecutionWithOverridesResponses[keyof ReplayExecutionWithOverridesResponses];
 
 export type ValidateReplayExecutionData = {
     body?: never;

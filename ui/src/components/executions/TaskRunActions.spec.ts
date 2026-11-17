@@ -63,6 +63,7 @@ function mountActions(propsData: Partial<TaskRunActionsProps>) {
                 Metrics: true,
                 Outputs: true,
                 Restart: true,
+                ReplayWithOverrides: true,
                 ChangeStatus: true,
                 TaskEdit: true,
                 SubFlowLink: true,

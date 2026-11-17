@@ -1,0 +1,17 @@
+id: replay-output-overrides
+namespace: io.kestra.tests
+
+tasks:
+  - id: fetch
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      code: "KR-0412 "
+      region: eu
+
+  - id: adjust
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ outputs.fetch.values.code != 'KR-0412' }}"
+
+  - id: notify
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.fetch.values.code }} in {{ outputs.fetch.values.region }}"

@@ -29,6 +29,7 @@ public record Label(
     public static final String RESTARTED = SYSTEM_PREFIX + "restarted";
     public static final String REPLAY = SYSTEM_PREFIX + "replay";
     public static final String REPLAYED = SYSTEM_PREFIX + "replayed";
+    public static final String OVERRIDDEN_OUTPUTS = SYSTEM_PREFIX + "overriddenOutputs";
     public static final String SIMULATED_EXECUTION = SYSTEM_PREFIX + "simulatedExecution";
     public static final String TEST = SYSTEM_PREFIX + "test";
     public static final String FROM = SYSTEM_PREFIX + "from";

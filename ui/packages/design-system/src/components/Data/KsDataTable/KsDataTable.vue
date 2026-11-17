@@ -81,9 +81,36 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
+    import type {TableColumnCtx} from "element-plus"
+
+    export interface SortItem {
+        column: TableColumnCtx
+        prop: string | null
+        order: string | null
+    }
+
+    /** `T` is the row type and `M` the mapped selection type, matching the component's own generics. */
+    export type KsDataTableInstance<T = unknown, M = T> = {
+        isLoading: boolean
+        isReady: boolean
+        reload: () => Promise<void>
+        resetAndReload: () => void
+        setSelection: (selection: T[]) => void
+        clearSelection: () => void
+        toggleAllUnselected: () => void
+        toggleRowExpansion: (row: T, expand?: boolean) => void
+        waitTableRender: () => Promise<void>
+        getSelectionRows: () => T[]
+        toggleAllSelection: () => void
+        queryBulkAction: boolean
+        selection: M[]
+    }
+</script>
+
+<script setup lang="ts" generic="T extends object, M = T">
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
-    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes} from "vue"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes, type Ref} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -95,28 +122,28 @@
     import KsButton from "../../Basic/KsButton/KsButton.vue"
     import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({name: "KsDataTable", inheritAttrs: false})
 
     const DEFAULT_PAGE_SIZE = 25
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
     const props = withDefaults(defineProps<{
-        data?: any[]
+        data?: T[]
         total?: number
         currentPage?: number
         pageSize?: number
         loading?: boolean
         selectable?: boolean
-        rowSelectable?: (row: any, index: number) => boolean
+        rowSelectable?: (row: T, index: number) => boolean
         showSelection?: boolean
-        rowKey?: string | ((row: any) => string)
+        rowKey?: string | ((row: T) => string)
         noDataText?: string
         noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
         sortKeyMapper?: (key: string) => string
-        selectionMapper?: (element: any) => any
+        selectionMapper?: (element: T) => M
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
         noGutter?: boolean
@@ -149,21 +176,15 @@
         mobileColumns: undefined,
     })
 
-    export interface SortItem {
-        column: any; 
-        prop: string | null; 
-        order: string | null
-    }
-    
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
         "update:currentPage": [page: number]
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
-        "selection-change": [selection: any[]]
-        "row-click": [row: any, column: any, event: Event]
-        "row-dblclick": [row: any, column: any, event: Event]
+        "selection-change": [selection: T[]]
+        "row-click": [row: T, column: TableColumnCtx | null, event: Event]
+        "row-dblclick": [row: T, column: TableColumnCtx | null, event: Event]
         "ready": []
         "loaded": []
         "load-error": [error: unknown]
@@ -211,18 +232,26 @@
         }
     })
 
+    const getRowKey = (row: T): unknown => {
+        if (typeof props.rowKey === "function") {
+            return props.rowKey(row)
+        }
+        if (typeof props.rowKey === "string" && typeof row === "object" && row !== null && props.rowKey in row) {
+            return (row as Record<string, unknown>)[props.rowKey]
+        }
+        return undefined
+    }
+
     const composedRowClassName = computed(() => {
         const forced = new Set(props.forceExpandedRowKeys ?? [])
-        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+        const userClass = attrs.rowClassName as string | ((data: {row: T; rowIndex: number}) => string) | undefined
 
         if (!forced.size && !userClass) return undefined
 
-        return (arg: {row: any}) => {
+        return (arg: {row: T; rowIndex: number}) => {
             const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
             if (!forced.size) return base
-            const key = typeof props.rowKey === "function"
-                ? (props.rowKey as (row: any) => string)(arg.row)
-                : (arg.row as any)?.[props.rowKey as string]
+            const key = getRowKey(arg.row)
             return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
         }
     })
@@ -245,14 +274,12 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    type DataRow = NonNullable<typeof props.data>[number]
-
     interface KsTableHandle {
-        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        toggleRowSelection: (row: T, selected?: boolean) => void
         clearSelection: () => void
         toggleAllSelection: () => void
-        getSelectionRows: () => DataRow[]
-        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        getSelectionRows: () => T[]
+        toggleRowExpansion: (row: T, expanded?: boolean) => void
         setScrollTop: (top: number) => void
         sort: (prop: string, order: string) => void
         $el?: HTMLElement
@@ -264,7 +291,7 @@
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
     const queryBulkAction = ref(false)
-    const mappedSelection = ref<any[]>([])
+    const mappedSelection = ref([]) as Ref<M[]>
 
     const pageSelectableCount = computed(() => {
         if (!props.rowSelectable) {
@@ -280,10 +307,10 @@
             : props.total,
     )
 
-    const selectionChanged = (rawSelection: any[]) => {
+    const selectionChanged = (rawSelection: T[]) => {
         hasSelection.value = rawSelection.length > 0
 
-        const mapper = props.selectionMapper ?? ((e: any) => e)
+        const mapper = props.selectionMapper ?? ((e: T) => e as never)
         mappedSelection.value = rawSelection.map(mapper)
 
         if (queryBulkAction.value && props.data && rawSelection.length < pageSelectableCount.value) {
@@ -293,16 +320,12 @@
         emit("selection-change", rawSelection)
     }
 
-    const onSelect = async (selection: any[], row: any) => {
+    const onSelect = async (selection: T[], row: T) => {
         const data = props.data ?? []
         const currentIndex = data.indexOf(row)
-        const rowKey = props.rowKey
+        const targetKey = getRowKey(row)
 
-        const isChecked = selection.some(s =>
-            typeof rowKey === "function"
-                ? rowKey(s) === rowKey(row)
-                : s[rowKey as string] === row[rowKey as string],
-        )
+        const isChecked = selection.some(s => getRowKey(s) === targetKey)
 
         if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
@@ -332,21 +355,19 @@
         queryBulkAction.value = false
     }
 
-    const setSelection = (selection: any[]) => {
+    const setSelection = (selection: T[]) => {
         tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
-            const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
-                const row = props.data.find(r => isFunction
-                    ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
-                    : r[props.rowKey as string] === sel[props.rowKey as string])
+                const targetKey = getRowKey(sel)
+                const row = props.data?.find(r => getRowKey(r) === targetKey)
                 if (row) tableRef.value?.toggleRowSelection(row, true)
             })
         }
         selectionChanged(selection)
     }
 
-    const toggleRowExpansion = (row: any, expand?: boolean) => {
+    const toggleRowExpansion = (row: T, expand?: boolean) => {
         tableRef.value?.toggleRowExpansion(row, expand)
     }
 
@@ -433,12 +454,9 @@
             lastCheckedIndex.value = null
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
-            const rowKey = props.rowKey
             const validSelection = currentSelection.filter((sel) => {
-                const isFunction = typeof rowKey === "function"
-                return props.data.some(r => isFunction
-                    ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === sel[rowKey as string])
+                const targetKey = getRowKey(sel)
+                return (props.data ?? []).some(r => getRowKey(r) === targetKey)
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
@@ -490,13 +508,13 @@
     let restoringSort = false
 
     /** Element Plus clears the sort when the active caret is clicked again, even on a column whose sortOrders leave out null, so that sort is put back. */
-    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
+    const onSortChange = (sort: SortItem) => {
         if (restoringSort) {
             restoringSort = false
             return
         }
         const previous = lastSort ?? (attrs.defaultSort as {prop?: string; order?: string} | undefined)
-        if (!sort.order && sort.prop && previous?.prop === sort.prop && previous.order && !sort.column?.sortOrders?.includes(null)) {
+        if (!sort.order && sort.prop && previous && previous.prop === sort.prop && previous.order && !sort.column?.sortOrders?.includes(null)) {
             restoringSort = true
             tableRef.value?.sort(sort.prop, previous.order)
             return

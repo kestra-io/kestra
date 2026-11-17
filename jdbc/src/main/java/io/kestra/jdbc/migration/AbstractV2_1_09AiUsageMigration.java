@@ -1,9 +1,9 @@
 package io.kestra.jdbc.migration;
 
-public abstract class AbstractV2_0_23AiUsageMigration extends AbstractSQLMigrationScript {
+public abstract class AbstractV2_1_09AiUsageMigration extends AbstractSQLMigrationScript {
     @Override
     public String scriptId() {
-        return "2.0.23-ai-usage";
+        return "2.1.09-ai-usage";
     }
 
     @Override

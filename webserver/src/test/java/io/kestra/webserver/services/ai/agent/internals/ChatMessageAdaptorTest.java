@@ -64,6 +64,21 @@ class ChatMessageAdaptorTest {
     }
 
     @Test
+    void shouldCapPersistedOversizedToolResultWhenProjecting() {
+        // Given — a tool result persisted before the dispatch-side cap existed
+        AgentToolCall call = AgentToolCall.platform("c1", "get-plugin-schema", null, Map.of("pluginType", "x"));
+        String oversized = "x".repeat(ToolResultLimit.MAX_CHARS * 3);
+        AgentMessage result = toolResult(call, Map.of("outcome", "ok", "result", oversized));
+
+        // When
+        ToolExecutionResultMessage projected = (ToolExecutionResultMessage) ChatMessageAdaptor.project(List.of(result)).get(0);
+
+        // Then — the replayed text is bounded, so the thread can keep going
+        assertThat(projected.text().length()).isLessThan(ToolResultLimit.MAX_CHARS + 500);
+        assertThat(projected.text()).contains("[truncated:");
+    }
+
+    @Test
     void shouldReattachReasoningStateWhenProjectingToolCall() {
         // Given — a persisted tool call carrying the provider's reasoning state (thinking text + opaque
         // signature); projection must rebuild the AiMessage with both so the cross-turn replay stays valid

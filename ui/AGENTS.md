@@ -67,7 +67,9 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
-- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`.
+- Type a wrapper's props by extending the Element Plus interface (`interface KsInputProps extends Omit<InputProps, "modelValue">`) instead of copying them, and forward them with `usePassedProps`: Vue casts an omitted boolean to `false`, which would override defaults such as `validateEvent` or `teleported`. A default the wrapper sets in `withDefaults` was not passed, so bind it explicitly (`KsTag`'s `:effect`). Omit the `on*` keys some interfaces declare (`PopoverProps`): declared as props, they stop reaching the parent as listeners. In a `generic` wrapper, write the props as a local `type` alias, since an interface there cannot be exported and breaks declaration emit.
+- When Element Plus has no props interface, only a `*PropsPublic` type or a runtime object (`ExtractPublicPropTypes<typeof dropdownProps>`), put it in the `@vue-ignore` part below with the HTML attributes, so callers are checked and the props still reach Element Plus through `$attrs`.
+- Type the HTML attributes a wrapper forwards through `$attrs` with a `@vue-ignore` intersection, `defineProps<KsButtonProps & /* @vue-ignore */ Omit<NativeAttributes<ButtonHTMLAttributes>, keyof KsButtonProps>>()`: vue-tsc still checks every attribute a caller passes, while the compiler leaves them out of the runtime props so they stay in `$attrs`. `NativeAttributes` drops Vue's `on*` listener types, which would otherwise retype the wrapper's own events (`@change` receiving an `Event`). The type cannot see whether the template forwards them, so `htmlAttributes.test.ts` mounts each such wrapper and checks the attributes reach the DOM; add new wrappers to it.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
 - Add the new component or prop to the relevant table in this file, plus a Storybook story and a unit test, in the same PR.
 - Document tokens in code comments next to where they're declared in `ks-theme-*.css`. The `scripts/generate-palette.mjs` file is auto-generated — don't hand-edit it.
@@ -241,7 +243,7 @@ Rules:
 
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
-- Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- Put the icon component in `KsIcon`'s default slot (`<KsIcon><InformationOutline /></KsIcon>`); `KsIcon` has no `name` prop. Size and color come from props or the surrounding token context — don't override with inline `style`.
 - **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
@@ -266,21 +268,9 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+**A package with no types?** Give it a small `.d.ts` shim next to `src/material-icons.d.ts`.
 
-**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
-
-- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
-- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
-- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
-- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
-
-**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
-
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
-- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
-
-Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
+**MANDATORY - no explicit `any`.** Type the value, or use `unknown` and narrow it. `npm run check:ts-any` counts every explicit `any`, oxlint for the `<script>` block and the Vue compiler for template expressions, and fails on a single one. The same check runs on every PR, as `Npm - check ts-any`. When you cannot type a value, stop, leave the check red and say in the PR which value defeated you and why, so a maintainer can decide.
 
 ### Testing UI
 
@@ -305,7 +295,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
+`npm run check:ts-any` fails on any explicit `any`, so type the value or use `unknown` and narrow it.
 
 Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
@@ -380,7 +370,7 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
-| `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
+| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type` |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |

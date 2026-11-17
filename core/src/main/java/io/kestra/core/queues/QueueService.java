@@ -34,7 +34,6 @@ public class QueueService {
 
     private final MetricRegistry metricRegistry;
 
-    @Getter
     private final int vNodeCount;
 
     @Getter
@@ -76,6 +75,18 @@ public class QueueService {
         this.subscriberExecutorService.execute(runnable);
     }
 
+    /**
+     * @deprecated since 2.1, this is the scheduler's vNode count, not the one of every queue: use the count the queue was created with.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
+    public int getVNodeCount() {
+        return vNodeCount;
+    }
+
+    /**
+     * @deprecated since 2.1, this hashes with the scheduler's vNode count, not the one of every queue: use the count the queue was created with.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
     public int computeVNode(String key) {
         return VNodes.computeVNode(this.vNodeCount, key);
     }

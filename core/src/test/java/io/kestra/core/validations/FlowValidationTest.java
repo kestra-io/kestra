@@ -320,6 +320,37 @@ class FlowValidationTest {
     }
 
     @Test
+    void scheduledFlowNotSupplyingConditionalInput_valid() {
+        Flow flow = YamlParser.parse("""
+            id: dependson_schedule
+            namespace: company.team
+            inputs:
+              - id: initial_var
+                type: BOOL
+                defaults: false
+              - id: conditional_var
+                type: ARRAY
+                itemType: STRING
+                dependsOn:
+                  inputs:
+                    - initial_var
+                  condition: "{{ inputs.initial_var == true }}"
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ inputs.initial_var }}"
+            triggers:
+              - id: every_hour
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 * * * *"
+                inputs:
+                  initial_var: false
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
     void webhookFlowMissingRequiredInput_failValidation() {
         Flow flow = YamlParser.parse("""
             id: test

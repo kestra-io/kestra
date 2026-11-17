@@ -402,7 +402,7 @@ If your `<style>` block needs to exist:
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
-| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
+| `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants; `ariaLabel` names a `KsCheckboxButton` whose content is a glyph (`Aa`, `.*`) |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |

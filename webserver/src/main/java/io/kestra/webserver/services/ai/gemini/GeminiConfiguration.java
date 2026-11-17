@@ -38,6 +38,8 @@ public record GeminiConfiguration(
             temperature = 0.7;
         if (maxOutputTokens == 0)
             maxOutputTokens = 8000;
+        if (ThinkingEffort.NONE == thinkingEffort)
+            throw new IllegalArgumentException("Gemini has no 'none' thinking level, use 'low' or set thinking-enabled to false instead.");
     }
 
     @Override

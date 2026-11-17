@@ -52,14 +52,23 @@ public class LegacyConfigurationChecker {
             return;
         }
 
-        List<LegacyConfiguration> warnings = filterBySeverity(configured, LegacyConfiguration.Severity.WARN);
-        if (!warnings.isEmpty()) {
-            log.warn(message("Your configuration contains properties that are no longer supported and are ignored:", warnings));
-        }
+        // one log line per property, so that each one stands out in the startup logs
+        filterBySeverity(configured, LegacyConfiguration.Severity.WARN)
+            .forEach(legacy -> log.warn("{} This property is no longer supported and is ignored, read the migration guide at {}", legacy.describe(), MIGRATION_GUIDE_URL));
 
         List<LegacyConfiguration> errors = filterBySeverity(configured, LegacyConfiguration.Severity.ERROR);
         if (!errors.isEmpty()) {
-            throw new KestraRuntimeException(message("Your configuration contains properties that are no longer supported and that changed the behaviour of this instance:", errors));
+            errors.forEach(
+                legacy -> log
+                    .error("{} This property is no longer supported and changed the behaviour of this instance, read the migration guide at {}", legacy.describe(), MIGRATION_GUIDE_URL)
+            );
+            throw new KestraRuntimeException(
+                "Your configuration contains properties that are no longer supported and that changed the behaviour of this instance: %s. Read the migration guide at %s, then update your configuration."
+                    .formatted(
+                        errors.stream().map(legacy -> "`" + legacy.key() + "`").collect(Collectors.joining(", ")),
+                        MIGRATION_GUIDE_URL
+                    )
+            );
         }
     }
 
@@ -80,15 +89,5 @@ public class LegacyConfigurationChecker {
 
     private static List<LegacyConfiguration> filterBySeverity(final List<LegacyConfiguration> configured, final LegacyConfiguration.Severity severity) {
         return configured.stream().filter(legacy -> severity == legacy.severity()).toList();
-    }
-
-    private static String message(final String header, final List<LegacyConfiguration> legacies) {
-        return legacies.stream()
-            .map(legacy -> "  - " + legacy.describe())
-            .collect(Collectors.joining(
-                "\n",
-                header + "\n",
-                "\nRead the migration guide at %s, then update your configuration.".formatted(MIGRATION_GUIDE_URL)
-            ));
     }
 }

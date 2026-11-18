@@ -76,12 +76,11 @@ describe("useProductTourMenuEntry", () => {
 
     it("is hidden while dismissed", async () => {
         eligible.mockResolvedValue(true)
-        const store = useProductTourStore()
         const entry = setup(useProductTourMenuEntry)
         await settle()
         expect(entry.visible.value).toBe(true)
 
-        store.dismissMenuEntry()
+        entry.dismiss()
         expect(entry.visible.value).toBe(false)
     })
 
@@ -103,6 +102,21 @@ describe("useProductTourMenuEntry", () => {
         await settle()
 
         expect(eligible).toHaveBeenCalledTimes(1)
+        expect(entry.visible.value).toBe(false)
+    })
+
+    it("hides the entry again when a later eligibility check is rejected", async () => {
+        eligible.mockResolvedValue(true)
+        const store = useProductTourStore()
+        const entry = setup(useProductTourMenuEntry)
+        await settle()
+        expect(entry.visible.value).toBe(true)
+
+        eligible.mockRejectedValue(new Error("network down"))
+        store.state.status = "in_progress"
+        await settle()
+
+        expect(eligible).toHaveBeenCalledTimes(2)
         expect(entry.visible.value).toBe(false)
     })
 
@@ -145,6 +159,13 @@ describe("useProductTourMenuEntry", () => {
         expect(entry.translationKey("menu")).toBe("onboarding.tour.menu")
         expect(entry.translationKey("menu_resume")).toBe("onboarding.tour.menu_resume")
     })
+
+    it("builds the tour route from the tenant of the current route", () => {
+        eligible.mockResolvedValue(false)
+        const entry = setup(useProductTourMenuEntry)
+
+        expect(entry.tourRoute.value).toEqual({name: "welcome", params: {tenant: "main"}})
+    })
 })
 
 describe("useProductTourNudge", () => {
@@ -160,10 +181,10 @@ describe("useProductTourNudge", () => {
     })
 
     it("is hidden once the nudge is dismissed", () => {
-        const store = useProductTourStore()
         const nudge = setup(useProductTourNudge)
+        expect(nudge.visible.value).toBe(true)
 
-        store.dismissBlueprintsNudge()
+        nudge.dismiss()
         expect(nudge.visible.value).toBe(false)
     })
 
@@ -179,5 +200,10 @@ describe("useProductTourNudge", () => {
     it("prefixes translation keys with the variant's i18n prefix", () => {
         const nudge = setup(useProductTourNudge)
         expect(nudge.translationKey("nudge")).toBe("onboarding.tour.nudge")
+    })
+
+    it("builds the tour route from the tenant of the current route", () => {
+        const nudge = setup(useProductTourNudge)
+        expect(nudge.tourRoute.value).toEqual({name: "welcome", params: {tenant: "main"}})
     })
 })

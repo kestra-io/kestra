@@ -185,12 +185,19 @@
     const translationKey = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
-        if (route.query.tour !== "start") {
+        const mode = route.query.tour
+        if (mode !== "start" && mode !== "auto") {
             return false
         }
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
+        if (mode === "auto") {
+            syncTourScope()
+            if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
+                return false
+            }
+        }
         tourStore.startGuided(variant)
         return true
     }

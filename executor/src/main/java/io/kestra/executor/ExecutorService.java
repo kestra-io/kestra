@@ -912,6 +912,10 @@ public class ExecutorService {
 
     private void handlePausableCreated(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) throws Exception {
         RunContext runContext = runContextFactory.of(executor.getFlow(), (Task) pausableTask, executor.getExecution(), taskRun);
+        if (!TruthUtils.isTruthy(runContext.render(((Task) pausableTask).getRunIf()))) {
+            return;
+        }
+
         Map<String, Object> outputs = pausableTask.created(executor.getFlow(), executor.getExecution(), taskRun, runContext);
         if (!outputs.isEmpty()) {
             taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), outputs));

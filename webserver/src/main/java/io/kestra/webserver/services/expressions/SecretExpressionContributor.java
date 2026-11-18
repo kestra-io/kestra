@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Set;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContributor;
 import io.kestra.core.services.ExpressionRequest;
+import io.kestra.webserver.services.SecretListingService;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

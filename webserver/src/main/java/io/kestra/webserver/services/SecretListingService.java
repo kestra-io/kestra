@@ -1,4 +1,4 @@
-package io.kestra.core.secret;
+package io.kestra.webserver.services;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,14 +10,14 @@ import org.apache.commons.lang3.Strings;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.secret.SecretService;
 
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Lists the secrets shown to a user, which only a server holding the repositories does; a worker resolves values
- * through {@link SecretService} and never loads this bean.
+ * Lists the secrets shown to a user; a worker resolves values through {@link SecretService} and never has this class.
  */
 @Singleton
 public class SecretListingService<META> {

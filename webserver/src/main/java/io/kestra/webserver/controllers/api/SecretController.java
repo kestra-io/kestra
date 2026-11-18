@@ -6,12 +6,12 @@ import java.util.List;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.Pagination;
 import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
+import io.kestra.webserver.services.SecretListingService;
 
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;

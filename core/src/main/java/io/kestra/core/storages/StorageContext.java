@@ -3,9 +3,12 @@ package io.kestra.core.storages;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +20,8 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
+import io.kestra.plugin.core.flow.Subflow;
+import io.kestra.plugin.core.trigger.Flow;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -37,6 +42,9 @@ public class StorageContext {
 
     /** Prefix of namespace-level metadata directories ({@code _files}, {@code _kv}, …). */
     public static final String RESERVED_NAMESPACE_DIR_PREFIX = "_";
+
+    // only these set namespace, flowId and executionId from the engine, a plugin trigger output could carry the same keys
+    private static final Set<String> EXECUTION_TRIGGER_TYPES = Set.of(Flow.class.getName(), Subflow.class.getName());
 
     // /{namespace}/_files
     static final String PREFIX_FORMAT_NAMESPACE_FILE = "/%s/_files";
@@ -78,6 +86,39 @@ public class StorageContext {
     public static String namespaceAsPath(@NotNull String namespace) {
         Objects.requireNonNull(namespace, "namespace");
         return namespace.replace(".", "/");
+    }
+
+    /**
+     * Lists every namespace the given storage path may belong to, as each leading run of segments is a possible
+     * namespace: a namespace can contain words such as {@code executions}, so the path alone is ambiguous.
+     * Checking all of them is the only way to never miss the real one.
+     */
+    public static List<String> candidateNamespaces(URI path) {
+        String[] segments = Arrays.stream(path.getPath().split("/")).filter(s -> !s.isEmpty()).toArray(String[]::new);
+        List<String> namespaces = new ArrayList<>(Math.max(segments.length - 1, 0));
+        for (int end = 1; end < segments.length; end++) {
+            namespaces.add(String.join(".", Arrays.copyOfRange(segments, 0, end)));
+        }
+        return namespaces;
+    }
+
+    /**
+     * Gets the storage path prefix of the execution that triggered the current one (parent of a subflow, upstream
+     * of a flow trigger), read from the {@code trigger} variable of a run context.
+     *
+     * @return the prefix, or {@code null} when the current execution was not triggered by another execution.
+     */
+    @Nullable
+    public static String triggeringExecutionPrefix(Map<String, Object> variables) {
+        if (!(variables.get("trigger") instanceof Map<?, ?> trigger)
+            || !(trigger.get("_context") instanceof Map<?, ?> triggerContext)
+            || !EXECUTION_TRIGGER_TYPES.contains(triggerContext.get("type"))
+            || !(trigger.get("namespace") instanceof String namespace)
+            || !(trigger.get("flowId") instanceof String flowId)
+            || !(trigger.get("executionId") instanceof String executionId)) {
+            return null;
+        }
+        return forExecution(null, namespace, flowId, executionId).getExecutionStorageURI().getPath() + "/";
     }
 
     /**

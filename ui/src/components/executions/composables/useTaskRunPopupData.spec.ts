@@ -133,6 +133,33 @@ describe("useTaskRunPopupData", () => {
         expect(data.outputs.status.value).toBe("error")
         expect(data.outputs.value.value).toEqual({})
         expect(data.outputsCount.value).toBe(0)
+        expect(errorSpy).toHaveBeenCalledTimes(3)
+
+        errorSpy.mockRestore()
+    })
+
+    it("a rejected reload resets a previously loaded value to the empty one", async () => {
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+        const data = useTaskRunPopupData(createSource())
+        await flushPromises()
+
+        expect(data.metricsCount.value.value).toBe(5)
+        expect(data.logsCount.value.value).toBe(10)
+        expect(data.outputs.value.value).toEqual({out: "val"})
+
+        searchByExecution.mockRejectedValue(new Error("network failure"))
+        searchLogs.mockRejectedValue(new Error("logs error"))
+        loadTaskRunOutputs.mockRejectedValue(new Error("outputs error"))
+        data.reload()
+        await flushPromises()
+
+        expect(data.metricsCount.status.value).toBe("error")
+        expect(data.metricsCount.value.value).toBe(0)
+        expect(data.logsCount.status.value).toBe("error")
+        expect(data.logsCount.value.value).toBe(0)
+        expect(data.outputs.status.value).toBe("error")
+        expect(data.outputs.value.value).toEqual({})
+        expect(data.outputsCount.value).toBe(0)
 
         errorSpy.mockRestore()
     })
@@ -206,5 +233,111 @@ describe("useTaskRunPopupData", () => {
         await flushPromises()
         expect(searchByExecution).toHaveBeenCalledTimes(2)
         expect(loadTaskRunOutputs).toHaveBeenCalledTimes(2)
+    })
+
+    it("a slow load that rejects after a newer one has started is discarded without an error", async () => {
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+        const firstMetrics = deferred<{total: number}>()
+        const secondMetrics = deferred<{total: number}>()
+        searchByExecution
+            .mockReturnValueOnce(firstMetrics.promise)
+            .mockReturnValueOnce(secondMetrics.promise)
+
+        const data = useTaskRunPopupData(createSource())
+        taskRunId.value = "tr2"
+        await nextTick()
+
+        secondMetrics.resolve({total: 42})
+        await flushPromises()
+        firstMetrics.reject(new Error("stale failure"))
+        await flushPromises()
+
+        expect(data.metricsCount.status.value).toBe("ready")
+        expect(data.metricsCount.value.value).toBe(42)
+        expect(errorSpy).not.toHaveBeenCalled()
+
+        errorSpy.mockRestore()
+    })
+
+    it("a load still in flight when the key becomes undefined is discarded and the status goes back to idle", async () => {
+        const pendingMetrics = deferred<{total: number}>()
+        searchByExecution.mockReturnValueOnce(pendingMetrics.promise)
+
+        const data = useTaskRunPopupData(createSource())
+        expect(data.metricsCount.status.value).toBe("loading")
+
+        enabled.value = false
+        await nextTick()
+        expect(data.metricsCount.status.value).toBe("idle")
+
+        pendingMetrics.resolve({total: 42})
+        await flushPromises()
+
+        expect(data.metricsCount.status.value).toBe("idle")
+        expect(data.metricsCount.value.value).toBe(0)
+    })
+
+    it("the metrics count asks for a single metric of the task run and falls back to 0 without a total", async () => {
+        searchByExecution.mockResolvedValue({})
+        const data = useTaskRunPopupData(createSource())
+        await flushPromises()
+
+        expect(searchByExecution).toHaveBeenCalledWith({executionId: "e1", taskId: "t1", taskRunId: "tr1", page: 1, size: 1})
+        expect(data.metricsCount.status.value).toBe("ready")
+        expect(data.metricsCount.value.value).toBe(0)
+    })
+
+    it("the logs count requests the task run's attempt once and falls back to the page length without a total", async () => {
+        searchLogs.mockResolvedValue({results: [{}, {}, {}]})
+        const data = useTaskRunPopupData(createSource())
+        await flushPromises()
+
+        expect(searchLogs).toHaveBeenCalledTimes(1)
+        expect(searchLogs).toHaveBeenCalledWith({
+            filters: [
+                {field: "executionId", operation: "EQUALS", value: "e1"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "taskRunId", operation: "EQUALS", value: "tr1"},
+                {field: "attemptNumber", operation: "EQUALS", value: "0"},
+            ],
+            page: 1,
+            size: 1,
+        })
+        expect(data.logsCount.value.value).toBe(3)
+    })
+
+    it("the logs count adds the logs of the child task runs to the task run's own", async () => {
+        logChildTaskRunIds.value = ["c1", "c2"]
+        searchLogs.mockImplementation(({filters}: {filters: {operation: string}[]}) =>
+            Promise.resolve({total: filters.some((filter) => filter.operation === "IN") ? 4 : 10, results: []}),
+        )
+        const data = useTaskRunPopupData(createSource())
+        await flushPromises()
+
+        expect(searchLogs).toHaveBeenCalledTimes(2)
+        expect(searchLogs).toHaveBeenCalledWith(expect.objectContaining({
+            filters: [
+                {field: "executionId", operation: "EQUALS", value: "e1"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "taskRunId", operation: "IN", value: ["c1", "c2"]},
+            ],
+        }))
+        expect(data.logsCount.value.value).toBe(14)
+    })
+
+    it("changing the log attempt reloads the logs count and nothing else", async () => {
+        useTaskRunPopupData(createSource())
+        await flushPromises()
+        expect(searchLogs).toHaveBeenCalledTimes(1)
+
+        logAttemptNumber.value = 1
+        await flushPromises()
+
+        expect(searchLogs).toHaveBeenCalledTimes(2)
+        expect(searchLogs).toHaveBeenLastCalledWith(expect.objectContaining({
+            filters: expect.arrayContaining([{field: "attemptNumber", operation: "EQUALS", value: "1"}]),
+        }))
+        expect(searchByExecution).toHaveBeenCalledTimes(1)
+        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(1)
     })
 })

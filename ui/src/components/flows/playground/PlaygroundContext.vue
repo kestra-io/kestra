@@ -1,6 +1,6 @@
 <template>
     <div class="playground-context">
-        <KsEmpty v-if="!taskRuns.length" :description="$t('playground.context.empty')" :background="false" />
+        <KsNoData v-if="!taskRuns.length" :description="$t('playground.context.empty')" />
         <template v-else>
             <KsSelect
                 v-model="selectedTaskRunId"
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsAlert, KsEmpty, KsJsonTree, KsOption, KsSelect, vKsLoading} from "@kestra-io/design-system"
+    import {KsAlert, KsJsonTree, KsNoData, KsOption, KsSelect, vKsLoading} from "@kestra-io/design-system"
     import {useExecutionsStore} from "../../../stores/executions"
     import {usePlaygroundStore} from "../../../stores/playground"
 

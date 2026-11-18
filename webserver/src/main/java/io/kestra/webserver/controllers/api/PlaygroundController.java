@@ -7,12 +7,12 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.models.api.ApiLightExecution;
+import io.kestra.webserver.models.api.UnsortedPagination;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.playground.PlaygroundPlan;
 import io.kestra.webserver.services.playground.PlaygroundRunMode;
 import io.kestra.webserver.services.playground.PlaygroundService;
 import io.kestra.webserver.services.playground.PlaygroundService.ReusedTaskRun;
-import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -22,7 +22,7 @@ import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -32,8 +32,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 @Validated
@@ -54,9 +52,8 @@ public class PlaygroundController {
     public PagedResults<ApiLightExecution> listPlaygroundRuns(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        ArrayListTotal<Execution> runs = playgroundService.runs(tenantService.resolveTenant(), namespace, id, page, size);
+        @Valid @RequestBean UnsortedPagination paging) {
+        ArrayListTotal<Execution> runs = playgroundService.runs(tenantService.resolveTenant(), namespace, id, paging.page(), paging.size());
         return PagedResults.of(new ArrayListTotal<>(runs.stream().map(ApiLightExecution::of).toList(), runs.getTotal()));
     }
 

@@ -79,7 +79,7 @@ describe("dashboard Bar axis", () => {
         expect(options.xAxis.minInterval).toBe(1)
     })
 
-    it("leaves minInterval unset for non-COUNT aggregations", async () => {
+    it.each(["AVG", "SUM", "MIN", "MAX"])("leaves minInterval unset for the %s aggregation", async (agg) => {
         const chart: Chart = {
             id: "duration_per_flow",
             type: "io.kestra.plugin.core.dashboard.chart.Bar",
@@ -89,7 +89,7 @@ describe("dashboard Bar axis", () => {
                 type: "io.kestra.plugin.core.dashboard.data.Executions",
                 columns: {
                     flow: {field: "FLOW_ID"},
-                    duration: {agg: "AVG", field: "DURATION"},
+                    duration: {agg, field: "DURATION"},
                 },
             },
         }

@@ -570,7 +570,7 @@ public class ExecutionController {
     }
 
     private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
-        try {
+        try (PropagatedContext.Scope _ = Actor.propagate(actorResolver.resolve())) {
             executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
         } catch (RuntimeException e) {
             log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
@@ -1513,7 +1513,7 @@ public class ExecutionController {
 
         executionReplayService.validateReplay(execution, taskRunId, revision);
 
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1551,8 +1551,10 @@ public class ExecutionController {
 
             Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            String newExecutionId = IdUtils.create();
+
+            return flowInputOutput.readExecutionInputs(flow, current.toBuilder().id(newExecutionId).build(), inputs)
+                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints)));
         });
     }
 
@@ -1573,7 +1575,7 @@ public class ExecutionController {
 
         executionReplayService.validateReplay(execution, taskRunId, execution.getFlowRevision());
 
-        return blockingReplay(execution, taskRunId, null, Optional.empty(), request.outputs());
+        return blockingReplay(execution, IdUtils.create(), taskRunId, null, Optional.empty(), request.outputs());
     }
 
     public record ReplayWithOverridesRequest(@NotEmpty Map<String, Map<String, Object>> outputs) {
@@ -1598,11 +1600,11 @@ public class ExecutionController {
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
-        return blockingReplay(execution, taskRunId, revision, breakpoints, null);
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        return blockingReplay(execution, newExecutionId, taskRunId, revision, breakpoints, null);
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
         @Nullable Map<String, Map<String, Object>> outputOverrides) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
@@ -1610,7 +1612,6 @@ public class ExecutionController {
             }
         }
 
-        var newExecutionId = IdUtils.create();
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();

@@ -14,7 +14,7 @@ import {
     serializeFiltersToString,
     validStructureSignature,
 } from "../utils/helpers"
-import {END_DATE_FIELD, SEARCH_QUERY_KEY, START_DATE_FIELD, TIME_RANGE_KEY} from "../utils/constants"
+import {END_DATE_FIELD, SEARCH_QUERY_KEY, START_DATE_FIELD} from "../utils/constants"
 import {
     type AppliedFilter,
     type FilterConfiguration,
@@ -82,10 +82,7 @@ export function useRouteSync({
 
     const updateRoute = (shouldResetPage = false) => {
         const query = {...route.query}
-        const ownFields = new Set(configuration.keys?.map(({key}) => key))
-        if (ownFields.has(TIME_RANGE_KEY)) {
-            ownFields.add(START_DATE_FIELD).add(END_DATE_FIELD)
-        }
+        const ownFields = new Set([START_DATE_FIELD, END_DATE_FIELD, ...(configuration.keys ?? []).map(({key}) => key)])
         for (const key of Object.keys(query)) {
             const parsed = parseFilterKey(key)
             const ownedByPage = parsed !== null && parsed.chain.length === 0 && !ownFields.has(parsed.field)

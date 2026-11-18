@@ -1,6 +1,6 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
-import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
 /**
  * Normalizes a `filters[...]` query-param value after vue-router (or
@@ -259,9 +259,12 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
         ),
     )
 
+export const isFilterQueryKey = (key: string): boolean =>
+    key.startsWith("filters[") || key === DATE_FILTER_KEY
+
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
+        if (isFilterQueryKey(key)) delete query[key]
     }
 }
 

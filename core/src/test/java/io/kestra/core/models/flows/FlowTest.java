@@ -85,17 +85,6 @@ class FlowTest {
     }
 
     @Test
-    void workingDirectoryTaskInvalid() {
-        Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
-
-        assertThat(validate.get().getMessage()).contains("tasks[impossible]: Only runnable tasks are allowed as children of a WorkingDirectory task");
-    }
-
-    @Test
     void workingDirectoryNoTasks() {
         Flow flow = this.parse("flows/invalids/workingdirectory-no-tasks.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
@@ -104,6 +93,15 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("tasks[impossible]: The 'tasks' property cannot be empty");
+    }
+
+    @Test
+    void shouldRejectATaskIdOfAWorkingDirectoryInternalTask() {
+        Flow flow = this.parse("flows/invalids/workingdirectory-reserved-task-id.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [build_close]");
     }
 
     @Test

@@ -93,10 +93,10 @@
         return button.hasUnreadMarker === true && !!button.unread?.value
     }
 
-    const MIN_DRAWER_WIDTH = 200
+    const MIN_DRAWER_WIDTH = 360
     const drawerWidth = ref(640)
     const {width: windowWidth} = useWindowSize()
-    const maxDrawerWidth = computed(() => windowWidth.value * 0.5)
+    const maxDrawerWidth = computed(() => Math.min(windowWidth.value, Math.max(windowWidth.value * 0.5, MIN_DRAWER_WIDTH)))
 
     const spacerWidth = computed(() => Math.max(maxDrawerWidth.value - drawerWidth.value, 0))
 

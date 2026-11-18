@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #actions v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
@@ -58,7 +58,7 @@
             :mobileColumns="mobileColumns"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
-            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :defaultSort="defaultSort"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: Execution) => row.id"
@@ -86,7 +86,7 @@
                         <KsSegmented
                             :modelValue="chartMode"
                             :options="chartModeOptions"
-                            size="small"
+                            size="default"
                             @change="(value) => onChartModeChange(value as ChartMode)"
                         />
                     </template>
@@ -237,7 +237,7 @@
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
-                    <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
+                    <template v-else-if="col.prop === 'namespace'">
                         <KsEntityLink
                             v-if="scope.row?.namespace"
                             entity="namespace"
@@ -245,7 +245,7 @@
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
                         />
                     </template>
-                    <template v-else-if="col.prop === 'flowId' && routeFamily($route.name) !== 'flows/update'">
+                    <template v-else-if="col.prop === 'flowId'">
                         <KsEntityLink
                             v-if="scope.row?.flowId"
                             entity="flow"
@@ -276,7 +276,13 @@
                     <template v-else-if="col.prop === 'inputs'">
                         <KsTooltip>
                             <template #content>
-                                <pre class="inputs-preview">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
+                                <ExecutionInputsPreview
+                                    v-if="scope.row?.inputs"
+                                    :namespace="scope.row.namespace"
+                                    :flowId="scope.row.flowId"
+                                    :flowRevision="scope.row.flowRevision"
+                                    :inputs="scope.row.inputs"
+                                />
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="inputs-icon" />
@@ -343,7 +349,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="item.code" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="item.code" />
                         <i18n-t keypath="mark as" tag="span" scope="global">
                             <template #status><code>{{ item.code }}</code></template>
                         </i18n-t>
@@ -386,7 +392,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="state" />
+                        <KsExecutionStatus size="small" class="status-indicator" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
@@ -463,8 +469,7 @@
 <script setup lang="ts">
     import {filterHiddenLabels} from "../../utils/labels"
     import {useI18n} from "vue-i18n"
-    import {asProblem} from "@kestra-io/kestra-sdk"
-    import {problemBulkBody, problemTitle} from "../../utils/problem"
+    import {useBulkAction} from "../../composables/useBulkAction"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, useTemplateRef} from "vue"
@@ -479,6 +484,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Import from "vue-material-design-icons/Import.vue"
+    import ExecutionInputsPreview from "./ExecutionInputsPreview.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
@@ -492,7 +498,7 @@
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
     import Counter from "vue-material-design-icons/Counter.vue"
 
-    import {KsId} from "@kestra-io/design-system"
+    import {KsId, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import {State} from "@kestra-io/design-system"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
@@ -523,6 +529,7 @@
     import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
+    import {usePageSize} from "../../composables/usePageSize"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -530,7 +537,8 @@
     import resource from "../../models/resource"
 
     import useRouteContext from "../../composables/useRouteContext"
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {useIterationsListInfo} from "../../composables/useLoopLineage"
+    import {sortFromQuery, useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -546,7 +554,7 @@
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import type {ApiAsyncOperationResponse, BulkResponse, QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const {t, te} = useI18n()
+    const {t} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -750,7 +758,7 @@
         }
     })
 
-    const onRowClick = (row: Execution, column: {type?: string} | undefined, event: Event) => {
+    const onRowClick = (row: Execution, column: {type?: string} | null | undefined, event: Event) => {
         if (isMobile.value && isPlainRowActivation(column, event)) router.push({name: dblClickRouteName.value, params: executionParams(row)})
     }
 
@@ -785,6 +793,7 @@
         selection?: string[];
         queryBulkAction?: boolean;
     }>("dataTable")
+    const {runBulkAction} = useBulkAction(dataTable)
     const chartDefaultDuration = computed(() => defaultTimeRange(miscStore.configs?.chartDefaultDuration))
 
     let hasAttemptedTimeRangeWiden = false
@@ -850,7 +859,8 @@
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "state.startDate", order: "descending"})
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
     const localPage = ref(1)
     const localSize = ref(25)
     const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)
@@ -861,6 +871,7 @@
             localPage.value = page
             localSize.value = size
         } else {
+            rememberPageSize(size)
             router.push({query: {...route.query, page: String(page), size: String(size)}})
         }
     }
@@ -873,7 +884,8 @@
         dataTable.value?.resetAndReload()
     })
 
-    const routeInfo = computed(() => ({title: props.title ?? t("executions")}))
+    const iterationsListInfo = useIterationsListInfo(() => !props.embed && !props.title)
+    const routeInfo = computed<{title: string; breadcrumb?: KsBreadcrumbItem[]}>(() => iterationsListInfo.value ?? {title: props.title ?? t("executions")})
     useRouteContext(routeInfo, props.embed)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
@@ -1085,46 +1097,21 @@
             "bulkKill": executionsStore.bulkKill as BulkActionFn,
         }
 
-        if (queryBulkAction.value) {
-            const query = loadQuery({
-                sort: route.query.sort as string || "state.startDate:desc",
-                state: route.query.state ? [route.query.state] : props.statuses,
-            })
-            let options = {...query, ...actionOptions.value}
-            if (params) {
-                options = {...options, ...params}
-            }
-
-            const ac = actionMap[queryAction]
-            return ac(options)
-                .then((r) => {
-                    const count = affectedCount(r)
-                    toast.success(t(success, {executionCount: count}, count))
-                    toggleAllUnselected()
-                    dataTable.value?.reload()
-                })
-        } else {
-            const selectionData = {executionsId: selection.value}
-            let options = {...selectionData, ...actionOptions.value}
-            if (params) {
-                options = {...options, ...params}
-            }
-
-            const ac = actionMap[byIdAction]
-            return ac(options)
-                .then((r) => {
-                    const count = affectedCount(r)
-                    toast.success(t(success, {executionCount: count}, count))
-                    toggleAllUnselected()
-                    dataTable.value?.reload()
-                }).catch((e: unknown) => {
-                    const problem = asProblem(e)
-                    toast.error(
-                        problemBulkBody(problem, t, te),
-                        problemTitle(problem, t, te),
-                    )
-                })
-        }
+        return runBulkAction({
+            byQuery: () => actionMap[queryAction]({
+                ...loadQuery({
+                    sort: route.query.sort as string || "state.startDate:desc",
+                    state: route.query.state ? [route.query.state] : props.statuses,
+                }),
+                ...actionOptions.value,
+                ...params,
+            }),
+            byIds: () => actionMap[byIdAction]({executionsId: selection.value, ...actionOptions.value, ...params}),
+            success: (response) => {
+                const count = affectedCount(response)
+                return t(success, {executionCount: count}, count)
+            },
+        })
     }
 
     const resumeExecutions = () => {
@@ -1224,14 +1211,6 @@
         )
     }
 
-    const onSetLabelsError = (e: unknown) => {
-        const problem = asProblem(e)
-        toast.error(
-            problemBulkBody(problem, t, te),
-            problemTitle(problem, t, te),
-        )
-    }
-
     const setLabels = () => {
         const filtered = filterValidLabels(executionLabels.value)
 
@@ -1249,34 +1228,20 @@
             t("bulk set labels", {"executionCount": bulkActionCount.value}),
             t("confirmation"),
             {dangerouslyUseHTMLString: true},
-        ).then(() => {
-            if (queryBulkAction.value) {
-                return executionsStore
-                    .querySetLabels({
-                        params: loadQuery({
-                            sort: route.query.sort as string || "state.startDate:desc",
-                            state: route.query.state ? [route.query.state] : props.statuses,
-                        }),
-                        data: filtered.labels,
-                    })
-                    .then((r) => {
-                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    }).catch(onSetLabelsError)
-            } else {
-                return executionsStore
-                    .bulkSetLabels({
-                        executionsId: selection.value,
-                        executionLabels: filtered.labels,
-                    })
-                    .then((r) => {
-                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    }).catch(onSetLabelsError)
-            }
-        },
+        ).then(() => runBulkAction({
+            byQuery: () => executionsStore.querySetLabels({
+                params: loadQuery({
+                    sort: route.query.sort as string || "state.startDate:desc",
+                    state: route.query.state ? [route.query.state] : props.statuses,
+                }),
+                data: filtered.labels,
+            }),
+            byIds: () => executionsStore.bulkSetLabels({
+                executionsId: selection.value,
+                executionLabels: filtered.labels,
+            }),
+            success: (response) => t("Set labels done", {executionCount: affectedCount(response)}),
+        }),
         )
         isOpenLabelsModal.value = false
     }
@@ -1314,10 +1279,6 @@
 <style scoped>
 .stat-charts {
     margin-bottom: var(--ks-spacing-5);
-}
-
-.inputs-preview {
-    margin-bottom: 0;
 }
 
 .inputs-icon {

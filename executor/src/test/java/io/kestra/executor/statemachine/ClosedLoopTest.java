@@ -82,6 +82,21 @@ class ClosedLoopTest {
     }
 
     @Test
+    void aFailingExecutionTerminatedNotifierDoesNotKeepTheNextOneFromBeingNotified() {
+        FlowWithSource flow = Flows.of(Flows.log("a"));
+        harness.registerFlow(flow);
+        harness.notifyExecutionTerminatedFirstTo(execution -> {
+            throw new IllegalStateException("The notifier failed.");
+        });
+        Execution created = Executions.created(flow);
+
+        Trace trace = harness.run(created, ScriptedWorker.succeeding(T0));
+
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
+        assertThat(trace.emitted("executionTerminated")).hasSize(1);
+    }
+
+    @Test
     void terminationReleasesTheSlotAndRequeuesBeforeAnnouncingTheEnd() {
         // Given: one slot, two executions arriving back to back
         FlowWithSource flow = Flows.withConcurrency(Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build(), Flows.log("a"));

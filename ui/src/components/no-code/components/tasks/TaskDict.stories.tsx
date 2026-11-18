@@ -40,11 +40,30 @@ const render: Story["render"] = (args) => ({
     }
 });
 
+const expectKeyInputsFlush = async (canvasElement: HTMLElement) => {
+    const keyFields = await within(canvasElement).findAllByPlaceholderText("Key");
+    for (const keyField of keyFields) {
+        const wrapper = keyField.closest(".wrapper");
+        if (!wrapper) throw new Error("Key input wrapper not found");
+        const style = getComputedStyle(wrapper);
+        expect(style.marginTop).toBe("0px");
+        expect(style.marginBottom).toBe("0px");
+    }
+};
+
 export const Default: Story = {
     render,
     args: {
         modelValue: {}
     }
+}
+
+export const KeyInputsFlushInRow: Story = {
+    render,
+    args: {
+        modelValue: {key1: "value1", key2: "value2"}
+    },
+    play: ({canvasElement}) => expectKeyInputsFlush(canvasElement)
 }
 
 
@@ -155,7 +174,8 @@ export const ValuesAsObjects: Story = {
                 "script": "console.log('Hello World')"
             }
         }
-    }
+    },
+    play: ({canvasElement}) => expectKeyInputsFlush(canvasElement)
 }
 
 export const FlushesPendingEditOnUnmount: Story = {

@@ -42,11 +42,11 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
                 violations.add("Agg on column is required.");
             }
 
-            if (
-                column.getField() != null && column.getField().equals(Executions.Fields.LABELS)
-                    && !("elasticsearch".equals(repositoryConfiguration.type()))
-            ) {
-                violations.add("LABELS column is only supported with an ElasticSearch database.");
+            if (Executions.Fields.LABELS.equals(column.getField()) && !"elasticsearch".equals(repositoryConfiguration.type())) {
+                violations.add(
+                    "The column of chart '%s' uses the LABELS field, which requires an Elasticsearch repository (this instance uses '%s'). Filter on a label in `data.where` or `data.numerator` or use another field instead."
+                        .formatted(dataChart.getId(), repositoryConfiguration.type())
+                );
             }
         }
 

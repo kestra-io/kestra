@@ -3,10 +3,12 @@ package io.kestra.webserver.services.ai.agent;
 import java.util.Map;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.events.Actor;
 
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.LangChain4jManaged;
 import io.micronaut.core.annotation.Nullable;
+import lombok.Builder;
 
 /**
  * The per-call context a {@code @Tool} method runs against: the caller's tenant and principal, and the
@@ -26,14 +28,16 @@ public final class AgentCallContext {
     private AgentCallContext() {
     }
 
+    @Builder
     public record Context(
         String tenant,
         @Nullable AgentPrincipal principal,
         @Nullable String providerId,
-        @Nullable String conversationId) implements LangChain4jManaged {
+        @Nullable String conversationId,
+        @Nullable Actor actor) implements LangChain4jManaged {
 
         public static Context ofTenant(final String tenant) {
-            return new Context(tenant, null, null, null);
+            return Context.builder().tenant(tenant).build();
         }
     }
 

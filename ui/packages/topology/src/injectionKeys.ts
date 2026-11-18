@@ -6,6 +6,7 @@ import type {LoopLaneData} from "./utils/loopOutcome"
 export const EXECUTION_INJECTION_KEY = Symbol("execution-injection-key") as InjectionKey<ComputedRef<GraphExecution | undefined>>
 export const SUBFLOWS_EXECUTIONS_INJECTION_KEY = Symbol("subflows-executions-injection-key") as InjectionKey<ComputedRef<Record<string, GraphExecution>>>
 export const LOD_INJECTION_KEY = Symbol("lod-injection-key") as InjectionKey<ComputedRef<LodLevel>>
+export const PILL_ZOOM_COMPENSATION_INJECTION_KEY = Symbol("pill-zoom-compensation-injection-key") as InjectionKey<ComputedRef<number>>
 export const VALIDATION_ISSUES_INJECTION_KEY = Symbol("validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 export const FOCUSED_TASK_INJECTION_KEY = Symbol("focused-task-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DROP_EDGE_INJECTION_KEY = Symbol("drop-edge-injection-key") as InjectionKey<ComputedRef<string | undefined>>

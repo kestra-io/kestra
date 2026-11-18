@@ -4,9 +4,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.models.triggers.TriggerId;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +37,30 @@ class TriggerStateTest {
         TriggerState second = first.nextDispatchEpoch(clock);
 
         assertThat(second.getDispatchEpoch()).isGreaterThan(first.getDispatchEpoch());
+    }
+
+    @Test
+    void shouldClearTheBlockWhenDisabled() {
+        TriggerState blocked = TriggerState.of(TRIGGER_ID, TriggerType.SCHEDULE, null, 0)
+            .blockedBy(clockAt(NOW), new Blocker(Blocker.Reason.POLICY, List.of("deny-log"), "denied"));
+
+        assertThat(blocked.disabled(clockAt(NOW), true).getBlockedBy()).isNull();
+    }
+
+    @Test
+    void shouldClearTheBlockWhenReset() {
+        TriggerState blocked = TriggerState.of(TRIGGER_ID, TriggerType.SCHEDULE, null, 0)
+            .blockedBy(clockAt(NOW), new Blocker(Blocker.Reason.POLICY, List.of("deny-log"), "denied"));
+
+        assertThat(blocked.reset(clockAt(NOW)).getBlockedBy()).isNull();
+    }
+
+    @Test
+    void shouldNotExposeTheCauseOfAFailedPolicyCheck() {
+        Blocker blocker = Blocker.from(new FlowBlockedException(Blocker.Reason.POLICY_CHECK_FAILED, "Governance policy resolution failed: connection reset", List.of(), new RuntimeException()));
+
+        assertThat(blocker.reason()).isEqualTo(Blocker.Reason.POLICY_CHECK_FAILED);
+        assertThat(blocker.message()).doesNotContain("connection reset");
     }
 
     private static Clock clockAt(Instant instant) {

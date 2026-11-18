@@ -465,14 +465,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowId,
             this.flowRevision,
             null,
-            null, // we don't copy inputs to reduce the size, the RunVariables must get them from the parent execution
-            null, // same for the outputs, the RunVariables get them from the parent execution
+            null, // we don't copy inputs to reduce the size, the RunVariables must get them from the root execution
+            null, // same for the outputs, the RunVariables get them from the root execution
             this.labels,
             this.variables,
             this.state,
             this.id,
             null,
-            null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
+            null, // we don't copy triggers to reduce the size, the RunVariables must get them from the root execution
             this.deleted,
             // reset the task-run statistic accumulator to avoid double counting task runs
             this.metadata.withTaskRunStatistic(null),
@@ -483,6 +483,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.breakpoints,
             new LoopRun(this, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents(), parseValues)
         );
+    }
+
+    /**
+     * Resolves the execution that contains the persisted flow context for a loop execution.
+     *
+     * @return the original execution, or this execution when it is not a loop execution
+     */
+    public Execution rootExecution() {
+        Execution root = this;
+        while (root.getLoopRun() != null) {
+            root = root.getLoopRun().parent();
+        }
+        return root;
     }
 
     /**
@@ -674,14 +687,16 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return Collections.emptyList();
         }
 
-        // to avoid nested loops, we pre-compute a per-uid resolved task map for fast retrieval
-        Map<String, ResolvedTask> resolvedTaskMap = HashMap.newHashMap(resolvedTasks.size());
-        resolvedTasks.forEach(resolvedTask -> resolvedTaskMap.put(resolvedTask.uid(), resolvedTask));
+        // to avoid nested loops, we pre-compute the resolved task keys for fast retrieval
+        Set<TaskRunKey> resolvedTaskKeys = HashSet.newHashSet(resolvedTasks.size());
+        for (ResolvedTask resolvedTask : resolvedTasks) {
+            resolvedTaskKeys.add(TaskRunKey.of(resolvedTask));
+        }
         return this
             .getTaskRunList()
             .stream()
             .filter(
-                t -> resolvedTaskMap.containsKey(IdUtils.fromParts(t.getTaskId(), t.getValue()))
+                t -> resolvedTaskKeys.contains(TaskRunKey.of(t))
                     && (parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId()))
             )
             .toList();
@@ -751,14 +766,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         // A bare count of terminated task runs can be inflated by a duplicated task run
         // (e.g. a retry race appending a second run for the same task id), letting the
         // execution report terminated while a task never ran.
-        Set<String> terminatedTaskUids = this
-            .findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .filter(taskRun -> taskRun.getState().isTerminated())
-            .map(taskRun -> IdUtils.fromParts(taskRun.getTaskId(), taskRun.getValue()))
-            .collect(Collectors.toSet());
+        Set<TaskRunKey> terminatedTaskKeys = new HashSet<>();
+        for (TaskRun taskRun : this.findTaskRunByTasks(resolvedTasks, parentTaskRun)) {
+            if (taskRun.getState().isTerminated()) {
+                terminatedTaskKeys.add(TaskRunKey.of(taskRun));
+            }
+        }
 
-        return resolvedTasks.stream().allMatch(resolvedTask -> terminatedTaskUids.contains(resolvedTask.uid()));
+        for (ResolvedTask resolvedTask : resolvedTasks) {
+            if (!terminatedTaskKeys.contains(TaskRunKey.of(resolvedTask))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean hasFailed() {
@@ -1175,5 +1195,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         crc32.update(this.toStringState().getBytes());
 
         return crc32.getValue();
+    }
+
+    /**
+     * Task id and value of a task run, compared without building the uid string the executor would otherwise
+     * allocate per task run on every cycle: see ExecutionTerminationBenchmark in jmh-benchmarks.
+     */
+    private record TaskRunKey(String taskId, String value) {
+        static TaskRunKey of(TaskRun taskRun) {
+            return new TaskRunKey(taskRun.getTaskId(), taskRun.getValue());
+        }
+
+        static TaskRunKey of(ResolvedTask resolvedTask) {
+            return new TaskRunKey(resolvedTask.getTask().getId(), resolvedTask.getValue());
+        }
     }
 }

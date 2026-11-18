@@ -52,6 +52,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -127,6 +128,23 @@ class TriggerEventHandlerTest {
         assertThat(TriggerId.of(saved.get())).isEqualTo(triggerId);
         assertThat(saved.get().getLastEventId()).isNotNull();
         assertThat(saved.get().getNextEvaluationDate()).isNotNull();
+    }
+
+    @Test
+    void shouldCreateUnscheduledTriggerWithoutNextEvaluationDateGivenTriggerCreatedEvent() {
+        // GIVEN
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithTrigger(
+            Webhook.builder().id(triggerId.getTriggerId()).type(Webhook.class.getName()).key("a-key").build()
+        )));
+        TriggerCreated event = new TriggerCreated(triggerId, 0);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        TriggerState saved = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(saved.getType()).isEqualTo(TriggerType.UNSCHEDULED);
+        assertThat(saved.getNextEvaluationDate()).isNull();
     }
 
     @Test
@@ -524,6 +542,38 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(evaluatedAt.plusMinutes(15).toInstant());
+    }
+
+    @Test
+    void shouldResumeBackfillFromPendingDateWhenReEnablingTriggerWithoutRecovery() {
+        // GIVEN: a trigger disabled in the middle of a backfill, whose pending date is also the backfill's current date
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusDays(2);
+        ZonedDateTime pendingDate = evaluatedAt.plusMinutes(15);
+        Backfill backfill = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(3))
+            .end(SchedulerClock.now().minusDays(1))
+            .currentDate(evaluatedAt)
+            .paused(false)
+            .build();
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .backfill(CLOCK, backfill)
+                .updateForNextEvaluationDate(CLOCK, pendingDate)
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(pendingDate.toInstant());
+        assertThat(updated.get().getBackfill().getCurrentDate().toInstant()).isEqualTo(pendingDate.toInstant());
     }
 
     @Test
@@ -1066,6 +1116,23 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
+    }
+
+    @Test
+    void shouldIgnoreExecutionTerminatedGivenUnscheduledTrigger() {
+        // GIVEN — the state of a trigger the scheduler does not evaluate, such as an MCP tool trigger
+        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.UNSCHEDULED, List.of(State.Type.FAILED), 0));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-123", State.Type.FAILED);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the state is left untouched, so stopAfter cannot disable it
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getLastEventId()).isNull();
     }
 
     @Test

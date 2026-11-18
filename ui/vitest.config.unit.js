@@ -30,6 +30,8 @@ export default defineProject({
             "tests/unit/**/translation.spec.js",
             // Design system runs in its own CI job with its own config/setup; no more double run.
             "packages/design-system/**",
+            // Plumage runs under its own Node config (`npm run test --workspace @kestra-io/plumage`), not jsdom.
+            "packages/plumage/**",
         ],
         server: {
             deps: {

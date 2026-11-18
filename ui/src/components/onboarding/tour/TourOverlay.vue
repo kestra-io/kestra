@@ -114,7 +114,10 @@
                     class="guide-alert"
                 >
                     <template #title>
-                        <span v-if="error.isHtml" v-html="error.message" />
+                        <i18n-t v-if="'key' in error" :keypath="error.key" tag="span" scope="global">
+                            <template v-for="(value, name) in error.params" #[name] :key="name">{{ value }}</template>
+                            <template #task><code>notify</code></template>
+                        </i18n-t>
                         <span v-else>{{ error.message }}</span>
                     </template>
                 </KsAlert>
@@ -222,7 +225,7 @@
         return true
     }
 
-    type TourError = {message: string; isHtml: boolean}
+    type TourError = {key: string; params: Record<string, unknown>} | {message: string}
 
     const isBusy = ref(false)
     const isReady = ref(false)
@@ -522,9 +525,9 @@
 
     const describeError = (e: unknown): TourError => {
         if (e instanceof TourSceneError) {
-            return {message: t(e.key, e.params), isHtml: true}
+            return {key: e.key, params: e.params}
         }
-        return {message: (e as {message?: string} | null)?.message ?? String(e), isHtml: false}
+        return {message: (e as {message?: string} | null)?.message ?? String(e)}
     }
 
     const runScene = async () => {

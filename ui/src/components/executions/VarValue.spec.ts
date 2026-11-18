@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
 import * as Utils from "../../utils/utils"
@@ -19,7 +19,11 @@ vi.mock("./FilePreviewDrawer.vue", () => ({
 }))
 
 // vi.mock is hoisted above plain consts, so the spy has to be hoisted with it.
-const {copyToClipboard} = vi.hoisted(() => ({copyToClipboard: vi.fn()}))
+const {copyToClipboard, toastSuccess} = vi.hoisted(() => ({copyToClipboard: vi.fn(), toastSuccess: vi.fn()}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: () => ({success: toastSuccess}),
+}))
 
 vi.mock("@kestra-io/design-system", () => ({
     fileUtils: {isFileUri: () => false},
@@ -43,6 +47,9 @@ const i18n = createI18n({
     messages: {
         en: {
             copy: "Copy",
+            open: "Open",
+            email: "Email",
+            copied: "Copied",
             large_outputs: {
                 value_truncated: "Showing a truncated preview of this {size} value.",
             },
@@ -80,6 +87,49 @@ function editorContent(wrapper: ReturnType<typeof mountVarValue>) {
 }
 
 describe("VarValue", () => {
+    // new URL() accepts any `scheme:` prefix; such identifiers must stay readable text (Pylon 2622).
+    it.each([
+        "iso6523-actorid-upis::0088:5798000000001",
+        "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+        "arn:aws:s3:::my-bucket",
+        "mailto:someone@example.com",
+    ])("should show %s as text without an Open link", (value) => {
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        expect(wrapper.text()).not.toContain("Open")
+    })
+
+    // mailto: hands off to the mail client; target=_blank would leave an empty tab behind.
+    it("should show a mailto value as text next to an Email link in the same tab", () => {
+        const value = "mailto:ops@example.com?subject=Invoice%20rejected"
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        const link = wrapper.find("[data-test=var-value-mailto]")
+        expect(link.attributes("href")).toBe(value)
+        expect(link.attributes("target")).toBeUndefined()
+    })
+
+    it("should cap a very long web link like any other string", () => {
+        const value = "https://example.com/?q=" + "x".repeat(400 * 1024)
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text().length).toBeLessThan(value.length)
+        expect(wrapper.text()).toContain("Open")
+    })
+
+    it("should show a web link as text next to its Open button", () => {
+        const value = "https://kestra.io/docs"
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.text()).toContain(value)
+        expect(wrapper.text()).toContain("Open")
+    })
+
     it("should render an empty string as quoted text so the cell is not blank", () => {
         const wrapper = mountVarValue("")
 
@@ -138,7 +188,7 @@ describe("VarValue", () => {
         downloadText.mockRestore()
     })
 
-    it("should copy the whole value, not the truncated one", async () => {
+    it("should copy the whole value, not the truncated one, and confirm it", async () => {
         const value = "x".repeat(400 * 1024) + " not json"
         copyToClipboard.mockClear()
 
@@ -147,6 +197,8 @@ describe("VarValue", () => {
 
         expect(copyToClipboard).toHaveBeenCalledTimes(1)
         expect(copyToClipboard.mock.calls[0][0]).toBe(value)
+        await flushPromises()
+        expect(toastSuccess).toHaveBeenCalledWith("Copied")
     })
 
     it("should mount a large value without warning, since a warning trace carries the value", () => {

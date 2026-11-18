@@ -44,6 +44,7 @@ import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExe
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
+import io.micrometer.core.instrument.Timer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
@@ -114,6 +115,23 @@ class TriggerSchedulerTest {
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
+    }
+
+    @Test
+    void shouldRecordEvaluationLoopDurationWhenClockStepsBackDuringCycle() {
+        // GIVEN
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(Fixtures.flowWithSchedulePT15M(TEST_TZ)));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        Timer timer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION, MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION);
+        long countBefore = timer.count();
+        Instant scheduledTime = SchedulerClock.now().toInstant();
+        SchedulerClock.offset(Duration.ofSeconds(-1));
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), scheduledTime, NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(timer.count()).isEqualTo(countBefore + 1);
     }
 
     @Test
@@ -666,6 +684,34 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldNotDispatchRealtimeTriggerOfDeletedFlowAfterWorkerLost() throws Exception {
+        // region [GIVEN] — the flow of a realtime trigger was deleted, and its state was released
+        // (unlocked, no worker) after the worker holding it was lost, e.g. across a restart
+        FlowWithSource deletedFlow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
+        ).toDeleted();
+        TriggerState releasedState = TriggerState
+            .of(Fixtures.triggerId("realtime"), TriggerType.REALTIME, null, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(releasedState);
+
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(true);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow), publisher);
+        // endregion [GIVEN]
+
+        // WHEN — the scheduler runs its next cycle
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — no worker job is dispatched for the deleted flow, and its stale state is removed
+        Mockito.verify(publisher, Mockito.never()).send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime"))).isEmpty();
     }
 
     @Test

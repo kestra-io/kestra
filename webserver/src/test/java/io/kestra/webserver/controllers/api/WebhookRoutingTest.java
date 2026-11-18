@@ -1,6 +1,13 @@
 package io.kestra.webserver.controllers.api;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +22,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
@@ -47,6 +55,9 @@ public class WebhookRoutingTest {
     @Client("/")
     ReactorHttpClient client;
 
+    @Inject
+    EmbeddedServer embeddedServer;
+
     private static final String TESTS_FLOW_NS = "io.kestra.tests";
 
     @Test
@@ -62,6 +73,31 @@ public class WebhookRoutingTest {
         );
 
         assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
+    void shouldAcceptMultipartFileWhenItsFilenameHoldsCharactersAURIRejects() throws Exception {
+        // Given
+        String boundary = "webhook-boundary";
+        String body = Stream.of("ok.txt", "bad%.txt")
+            .map(filename -> "--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\nContent-Type: text/plain\r\n\r\ncontent\r\n".formatted(boundary, filename))
+            .collect(Collectors.joining()) + "--%s--\r\n".formatted(boundary);
+
+        // When
+        try (HttpClient http = HttpClient.newHttpClient()) {
+            var response = http.send(
+                java.net.http.HttpRequest.newBuilder(URI.create(embeddedServer.getURL() + "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/testkey"))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build(),
+                java.net.http.HttpResponse.BodyHandlers.ofString()
+            );
+
+            // Then
+            assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.getCode());
+        }
     }
 
     @Test

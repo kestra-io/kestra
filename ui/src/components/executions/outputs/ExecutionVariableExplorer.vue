@@ -94,14 +94,21 @@
                     />
                 </div>
 
-                <KsJsonTree
-                    v-else-if="isExpandableValue"
-                    :value="selectedValue"
-                    :basePath="selectedBase"
-                    :selectedPath="expressionPath"
-                    defaultExpanded
-                    @select="onSelectPath"
-                />
+                <template v-else-if="customViewer || isExpandableValue">
+                    <component
+                        :is="customViewer"
+                        v-if="customViewer"
+                        :value="selectedValue"
+                    />
+                    <KsJsonTree
+                        v-if="isExpandableValue"
+                        :value="selectedValue"
+                        :basePath="selectedBase"
+                        :selectedPath="expressionPath"
+                        defaultExpanded
+                        @select="onSelectPath"
+                    />
+                </template>
 
                 <template v-else>
                     <div v-if="isRawTruncated" class="truncated-banner">
@@ -213,12 +220,14 @@
     import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useIsMobile} from "../../../composables/useIsMobile"
+    import {useToast} from "../../../utils/toast"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import {loopTaskIds} from "../../../utils/flowUtils"
+    import {useVariableValueRenderer} from "override/components/executions/outputs/variableValueExtension"
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
@@ -237,6 +246,7 @@
     })
 
     const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
@@ -507,6 +517,8 @@
     const selectedSearchable = computed(() =>
         (selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
         || (selectedFlowInputId.value !== undefined && searchableInputIds.value.has(selectedFlowInputId.value)))
+    const variableValueRenderer = useVariableValueRenderer()
+    const customViewer = computed(() => selectedBase.value && selectedValue.value !== null ? variableValueRenderer(selectedBase.value, executionsStore.flow) : undefined)
     const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
@@ -643,8 +655,9 @@
 
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
-    function copyValue() {
-        copyToClipboard(rawValue.value)
+    async function copyValue() {
+        await copyToClipboard(rawValue.value)
+        toast.success(t("copied"))
     }
 
     function downloadValue() {

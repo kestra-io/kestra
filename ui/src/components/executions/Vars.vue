@@ -19,7 +19,7 @@
                 <DynamicScrollerItem
                     :item="item"
                     :active="active"
-                    :dataIndex="index"
+                    :data-index="index"
                 >
                     <div class="vars-row">
                         <code class="vars-key">{{ item.key }}</code>
@@ -34,7 +34,7 @@
                                 {{ item.value }}
                                 <SubFlowLink :executionId="item.value" />
                             </template>
-                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" :name="item.key" />
+                            <VarValue v-else :execution="execution ?? executionsStore.execution" :value="item.value" :name="item.key" />
                         </div>
                     </div>
                 </DynamicScrollerItem>
@@ -64,6 +64,7 @@
         defineProps<{
             data: Record<string, unknown>;
             keyLabelTranslationKey?: string;
+            execution?: {id: string};
         }>(),
         {
             keyLabelTranslationKey: "name",

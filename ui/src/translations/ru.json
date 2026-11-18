@@ -210,7 +210,7 @@
     "gantt_no_tasks_match_filters_title": "Нет задач, соответствующих выбранным фильтрам.",
     "logs": "Логи",
     "no_logs_data_description": "Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
-    "no_logs_data_title": "Для выбранных фильтров логи не найдены.",
+    "no_logs_data_title": "Логи не найдены",
     "duration": "Длительность",
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
@@ -307,6 +307,7 @@
       "ongoing": "В процессе",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Удаление выполнений: {count}",
           "EXECUTION_KILL": "Остановка выполнений: {count}",
           "EXECUTION_PAUSE": "Приостановка выполнений: {count}",
           "EXECUTION_RESUME": "Возобновление выполнений: {count}",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Приостановка backfills: {count}",
           "BACKFILL_RESUME": "Возобновление backfills: {count}",
           "BACKFILL_DELETE": "Удаление backfills: {count}"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Запрошено удаление {count} выполнения | Запрошено удаление {count} выполнений | Запрошено удаление {count} выполнений",
+          "EXECUTION_KILL": "Запрос на завершение {count} выполнения | Запрос на завершение {count} выполнений | Запрос на завершение {count} выполнений",
+          "EXECUTION_PAUSE": "Запрошена пауза для {count} выполнения | Запрошена пауза для {count} выполнений | Запрошена пауза для {count} выполнений",
+          "EXECUTION_RESUME": "Запрошено возобновление {count} выполнения | Запрошено возобновление {count} выполнений | Запрошено возобновление {count} выполнений",
+          "EXECUTION_RESTART": "Запрошен перезапуск {count} выполнения | Запрошен перезапуск {count} выполнений | Запрошен перезапуск {count} выполнений",
+          "EXECUTION_REPLAY": "Запрошен повтор {count} выполнения | Запрошен повтор {count} выполнений | Запрошен повтор {count} выполнений",
+          "EXECUTION_FORCE_RUN": "Запрошен принудительный запуск для {count} выполнения | Запрошен принудительный запуск для {count} выполнений | Запрошен принудительный запуск для {count} выполнений",
+          "EXECUTION_UNQUEUE": "Запрос на отмену постановки в очередь для {count} выполнения | Запрос на отмену постановки в очередь для {count} выполнений | Запрос на отмену постановки в очередь для {count} выполнений",
+          "EXECUTION_CHANGE_STATUS": "Запрошено изменение статуса для {count} выполнения | Запрошено изменение статуса для {count} выполнений | Запрошено изменение статуса для {count} выполнений",
+          "EXECUTION_SET_LABELS": "Запрошено обновление labels для {count} выполнения | Запрошено обновление labels для {count} выполнений | Запрошено обновление labels для {count} выполнений",
+          "TRIGGER_UNLOCK": "Запрошена разблокировка {count} триггера | Запрошена разблокировка {count} триггеров | Запрошена разблокировка {count} триггеров",
+          "TRIGGER_DELETE": "Запрошено удаление {count} триггера | Запрошено удаление {count} триггеров | Запрошено удаление {count} триггеров",
+          "TRIGGER_DISABLE": "Отключение запрошено для {count} триггера | Отключение запрошено для {count} триггеров | Отключение запрошено для {count} триггеров",
+          "TRIGGER_ENABLE": "Включить запрошено для {count} триггера | Включить запрошено для {count} триггеров | Включить запрошено для {count} триггеров",
+          "BACKFILL_PAUSE": "Запрошена пауза для {count} backfill | Запрошена пауза для {count} backfill | Запрошена пауза для {count} backfill",
+          "BACKFILL_RESUME": "Запрошено возобновление {count} backfill | Запрошено возобновление {count} backfill | Запрошено возобновление {count} backfill",
+          "BACKFILL_DELETE": "Запрошено удаление {count} backfill | Запрошено удаление {count} backfill | Запрошено удаление {count} backfill"
         },
         "processed": "Обработано: {count}",
         "rejected": "Отклонено: {count}",
@@ -344,6 +364,7 @@
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
+    "create_child_namespace": "Создать дочерний namespace",
     "from": "От",
     "to": "До",
     "steps": "Шаги",
@@ -451,7 +472,7 @@
       "whole_action": "Повторить всю egzekucję вместо этого",
       "whole_title": "Ревизия {revision} может быть повторно воспроизведена как полная egzekucja.",
       "whole_description": "Более ранние результаты не используются повторно, поэтому каждая Task запускается снова в версии {revision}. Исходная egzekucja сохраняется и связывается.",
-      "confirm_from_task": "Повторить с Task",
+      "confirm_from_task": "Повтор с {taskId}",
       "confirm_whole": "Повторить всю egzekucję"
     },
     "change execution state done": "Состояние выполнения обновлено",
@@ -488,17 +509,21 @@
         "decision": "Решение",
         "by": "Решено",
         "on": "Принято решение",
+        "cancelled by": "Отменено",
+        "cancelled on": "Отменено в",
         "decisions": {
           "approved": "Одобрено",
           "denied": "Отказано",
-          "expired": "Истекший"
+          "expired": "Истекший",
+          "cancelled": "Отменено",
+          "killed": "Убито"
         }
       },
       "cancel request": "Отменить запрос",
       "cancel confirm": "Вы уверены, что хотите отменить запрос на одобрение execution {id}? Ни одна ветка решения не будет запущена.",
       "cancel done": "Запрос на утверждение отменен",
       "banner": {
-        "pausing": "Эта egzekucja готовит запрос на утверждение и будет приостановлена для проверки.",
+        "pausing": "Эта Execution приостанавливается. Запрос на утверждение можно будет рассмотреть, как только все onWait Task'и завершатся.",
         "paused": "Эта egzekucja ожидает проверки. Одобрите или отклоните ее, чтобы продолжить."
       }
     },
@@ -540,6 +565,12 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "refresh": "Обновить",
     "filter by status": "Фильтровать выполнения по статусу {status}",
+    "loop-lineage": {
+      "iteration": "[{index}]",
+      "iteration-count": "[{index}/{count}]",
+      "iteration-value": "[{index} - {value}]",
+      "iteration-count-value": "[{index}/{count} - {value}]"
+    },
     "topology-graph": {
       "retried": "Эта Task была повторена",
       "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
@@ -863,7 +894,7 @@
     "last execution date": "Дата последнего выполнения",
     "revisions": "Редакции",
     "no revisions found": "Для этого flow существует только одна редакция",
-    "no revisions": "Нет ревизий",
+    "no revisions": "Ревизии не найдены",
     "side-by-side": "бок о бок",
     "line-by-line": "построчно",
     "template": "Шаблон",
@@ -1209,7 +1240,14 @@
     "unlock trigger": {
       "success": "Trigger разблокирован"
     },
+    "trigger blocked": "Заблокировано",
+    "trigger blocked policy check failed": "Не удалось проверить политики Governance.",
+    "trigger blocked unknown": "Заблокировано по неизвестной причине.",
     "trigger disabled": "Триггер отключен в источнике Flow",
+    "trigger not toggleable": "Этот триггер не обрабатывается Scheduler, отключите его в источнике Flow",
+    "bulk not toggleable warning": "{count} выбранный trigger будет пропущен: Scheduler не оценивает их, поэтому их можно отключить только в исходном коде Flow.",
+    "bulk none applied": "Ни один trigger не был затронут: ни один из выбранных не мог быть обработан.",
+    "bulk partially applied": "Обработано {count} из {requested} триггеров, остальные были пропущены.",
     "trigger enable dialog": {
       "title": "Включить trigger",
       "bulk title": "Включить {count} triggers",
@@ -1336,6 +1374,8 @@
     "pause backfill": "Приостановить заполнение",
     "continue backfills": "Продолжить заполнения",
     "delete backfills": "Удалить заполнения",
+    "delete backfill confirm": "Удалить backfill trigger {id}?",
+    "delete backfill success": "Backfill trigger {id} удалён",
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
@@ -1357,8 +1397,18 @@
     "pluginPage": {
       "search": "Поиск по {count}+ плагинам",
       "searchTasks": "Искать {count} tasks",
-      "noResults": "Нет плагинов, соответствующих вашему запросу.",
-      "loadError": "Не удалось загрузить плагины. Пожалуйста, попробуйте снова.",
+      "loadErrorTitle": "Не удалось загрузить список плагинов",
+      "loadErrorDescription": "Ваши Flow продолжают работать. Эта страница только считывает список plugin'ов.",
+      "showAll": "Показать все плагины",
+      "view": {
+        "cards": "Карточки",
+        "table": "Таблица",
+        "plugin": "Плагин"
+      },
+      "empty": {
+        "title": "Нет Plugin'ов, соответствующих вашим фильтрам",
+        "description": "Попробуйте другой поисковый запрос или очистите фильтры категорий."
+      },
       "notFound": "Этот плагин не найден.",
       "elementType": {
         "tasks": "Задача",
@@ -1367,8 +1417,13 @@
         "taskRunners": "Запуск задачи",
         "charts": "График",
         "apps": "Приложение",
+        "appBlocks": "Блок App",
+        "dataFilters": "Фильтр данных",
+        "dataFiltersKPI": "Фильтр данных KPI",
         "logExporters": "Экспортер логов",
-        "secrets": "Секрет"
+        "secrets": "Секрет",
+        "assets": "Тип Asset",
+        "additionalPlugins": "Дополнительный plugin"
       },
       "sortBy": "Сортировать по",
       "sort": {
@@ -1399,6 +1454,19 @@
         "enterpriseEdition": "Энтерпрайз-версия",
         "certified": "Сертифицированный",
         "back": "Назад к плагинам"
+      },
+      "management": {
+        "upload": "Загрузить",
+        "addPlugin": "Добавить plugin",
+        "lockedTitle": "Управление версиями Plugin",
+        "lockedDescription": "Устанавливайте plugins, храните несколько версий параллельно и обновляйте их без пересборки образа с Enterprise Edition.",
+        "learnMore": "Узнать больше",
+        "includedWithKestra": "Включено в Kestra",
+        "gateNote": "Установка и обновление плагинов доступны в Enterprise Edition.",
+        "upsellTitle": "Управление версиями Plugin — это функция Enterprise",
+        "upsellDescription": "Каждый plugin ниже поставляется с этим образом Kestra и готов к использованию в Flow. В Enterprise Edition вы также можете установить plugin, который не входит в комплект, закрепить версию для каждого plugin и обновить его без пересборки образа.",
+        "talkToUs": "Свяжитесь с нами",
+        "readTheDocs": "Читать документацию"
       }
     },
     "no inputs": "Этот flow не имеет входных данных.",
@@ -1459,11 +1527,13 @@
           "fields": {
             "app_font_size": "Размер шрифта приложения",
             "color_mode": "Режим цвета",
+            "editor_dark_theme": "Тема редактора в темном режиме",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
             "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
             "editor_pebble_hover": "Наведите курсор на ссылку Pebble, чтобы увидеть ее определение",
+            "editor_light_theme": "Тема редактора в светлом режиме",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",
             "environment_name_tooltip": "Имя этой среды установлено из конфигурации, но может быть изменено.",
@@ -1487,6 +1557,8 @@
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_hover_description": "Показывать описания свойств при наведении в редакторе.",
             "editor_pebble_hover": "Показать определение и документацию input, output, переменной, label или trigger переменной при наведении на ее Pebble ссылку в Flow-редакторе.",
+            "editor_dark_theme": "Цвета подсветки синтаксиса в редакторе кода при режиме цвета Темный 1.0 или Темный 2.0.",
+            "editor_light_theme": "Цвета подсветки синтаксиса в редакторе кода при режиме цвета Светлый.",
             "environment_name": "Отображаемое имя для текущей среды, показанное в навигации.",
             "environment_color": "Цвет акцента, используемый для текущей среды в навигации.",
             "app_font_size": "Коэффициент масштабирования, применяемый ко всем размерам шрифта интерфейса."
@@ -1495,6 +1567,9 @@
             "small": "Маленький",
             "medium": "Средний",
             "large": "Большой"
+          },
+          "editor_theme_options": {
+            "match_app": "Как в теме приложения"
           }
         },
         "localization": {
@@ -1802,9 +1877,9 @@
         },
         "errors": {
           "first_execution": "Первое выполнение завершилось со статусом {state} вместо успешного завершения. Откройте логи на этой странице, чтобы узнать причину, затем попробуйте снова.",
-          "expected_failure": "Это выполнение завершилось со статусом {state}, поэтому пока нечего исправлять. Убедитесь, что flow все еще содержит <code>notify</code> task, и повторите попытку.",
+          "expected_failure": "Эта Execution завершилась со статусом {state}, поэтому пока нет ошибок, которые нужно исправлять. Убедитесь, что Flow по-прежнему содержит Task {task}, затем повторите попытку.",
           "no_execution_to_replay": "Пока нет выполнения для повтора. Запустите flow на предыдущем шаге, затем попробуйте снова.",
-          "replay": "Повтор завершился как {state}. Откройте logs на этой странице, чтобы увидеть, что сообщил `notify`, и повторите попытку.",
+          "replay": "Replay завершился со статусом {state}. Откройте logs на этой странице, чтобы увидеть, что сообщил {task}, затем попробуйте снова.",
           "save_flow": "Ознакомительный flow не удалось сохранить. {reason}",
           "test_event": "Вебхук ответил со статусом {status}. Убедитесь, что flow сохранен и trigger включен, затем попробуйте снова."
         },
@@ -1871,7 +1946,8 @@
       "duplicate": "Этот key уже существует",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
-        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
+        "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>",
+        "deleted": "Удалено <code>{count}</code> KV из namespace <code>{namespace}</code>"
       },
       "inherited": "Наследуемые KV пары",
       "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."
@@ -2033,7 +2109,6 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
-      "task_details": "Детали task",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
@@ -2314,6 +2389,7 @@
       "default": "Панель по умолчанию",
       "set_default": "Установить по умолчанию",
       "empty": "Нет результатов для отображения.",
+      "overdue": "Просрочено — {date}",
       "edition": {
         "label": "Редактировать Dashboard",
         "chart": "Редактировать этот график"
@@ -2329,6 +2405,9 @@
         "csv": "Экспорт в CSV"
       },
       "ignoredFilters": "Фильтр {filters} не применяется к этому графику. | Фильтры {filters} не применяются к этому графику.",
+      "dataFrom": "Обновлено {date}",
+      "dataUnavailable": "Данные недоступны",
+      "dataTruncated": "Выходной файл был усечен до первых {rows} строк. Дополнительную информацию см. в документации.",
       "show_all_statuses": "Показать все статусы",
       "quick_filters": {
         "all": "Все",
@@ -2336,7 +2415,8 @@
         "paused": "Приостановлено",
         "success": "Успешно",
         "warning": "Предупреждение",
-        "failed": "Ошибка"
+        "failed": "Ошибка",
+        "upcoming": "Предстоящие"
       }
     },
     "setup": {
@@ -2405,6 +2485,13 @@
         "placeholder": "Расскажите, что создать…",
         "send": "Отправить",
         "stop": "Остановить",
+        "usage": {
+          "remaining": "Осталось {percent}%",
+          "help": "Доля оставшегося лимита использования ИИ этого провайдера в текущем окне.",
+          "warning": "Вы близки к лимиту использования AI этого провайдера. Запросы будут отклонены после его достижения.",
+          "exceeded": "Лимит использования ИИ для этого провайдера достигнут. Он будет сброшен по окончании текущего периода.",
+          "exceededUntil": "Лимит использования ИИ для этого провайдера достигнут. Он будет сброшен {when}."
+        },
         "mode": {
           "ask": "Спросить",
           "edit": "Редактировать",
@@ -2447,7 +2534,7 @@
           "planTitle": "Предложенный план",
           "actionTitle": "Предлагаемое действие",
           "approve": "Одобрить",
-          "approveExecute": "Утвердить и выполнить",
+          "approvePlan": "Утвердить план",
           "reject": "Отклонить",
           "pending": "Ожидает утверждения",
           "revise": "Ответить для доработки"
@@ -2478,7 +2565,15 @@
         "unavailable": {
           "title": "AI Copilot недоступен",
           "detail": "Для этого экземпляра не настроен ни один AI provider. Настройте его в файле конфигурации Kestra, чтобы включить AI Copilot.",
-          "docs": "Просмотреть документацию"
+          "docs": "Просмотреть документацию",
+          "sendTooltip": "Отправка отключена, так как не настроен ни один AI провайдер.",
+          "notSent": "Ваш запрос не был отправлен"
+        },
+        "mcpTip": {
+          "title": "Используйте Kestra из Claude Code, Cursor и других MCP-клиентов",
+          "description": "Помимо Copilot, Kestra предоставляет MCP-сервер. Подключите к нему внешний MCP-клиент, чтобы управлять своими flows и executions с помощью уже используемых вами инструментов.",
+          "docs": "Посмотреть документацию",
+          "dismiss": "Больше не показывать"
         },
         "thinkingWords": [
           "Оркестрация",
@@ -2535,6 +2630,10 @@
           },
           "valid": "Действительный",
           "invalid": "Требует изменений"
+        },
+        "tray": {
+          "title": "Ожидающие изменения",
+          "applyFirst": "Сначала примените {flow}"
         }
       }
     },
@@ -2556,7 +2655,7 @@
     "reject": "Отклонить",
     "last modified": "Последнее изменение",
     "run task in playground": "Запустить task в playground",
-    "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
+    "defaultsToNamespaceFile": "По умолчанию используется файл namespace: {name}",
     "no_file_choosen": "Файл не выбран",
     "dependency": {
       "controls": {
@@ -2755,7 +2854,8 @@
         "tooltip": "Просмотр тестов flow"
       },
       "errors": {
-        "label": "{count} Ошибка(и)"
+        "label": "{count} Ошибка(и)",
+        "action": "{count} ошибка(и), перейти к следующей ошибке"
       }
     },
     "invalid_source_code": "Недопустимый исходный код",
@@ -2812,7 +2912,8 @@
       "open_in_secrets": "Открыть в secrets",
       "options_aria": "Параметры поиска",
       "path_only_hint": "Ищет только путь файла, а не его содержимое. Заменить нельзя.",
-      "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
+      "preview_empty_title": "Выберите результат для предпросмотра.",
+      "preview_empty_description": "Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
       "preview_error": "Не удалось загрузить исходный код flow",
       "previous_match": "Предыдущее совпадение",
       "rbac_banner": "{count} flows исключены из замены. У вас есть доступ на чтение, но нет доступа на редактирование в {namespace}. Попросите администратора namespace предоставить разрешение {permission}, чтобы включить их.",

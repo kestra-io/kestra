@@ -15,7 +15,7 @@
             :rowKey="(row: TriggerRow) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
-            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
         >
             <template #navbar>
@@ -95,6 +95,11 @@
                 <template #default="scope">
                     <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
+                        <KsTooltip v-if="scope.row.blockedBy" :content="blockerMessage(scope.row.blockedBy, $t)" effect="light">
+                            <KsIcon data-test="trigger-blocked-icon" class="trigger-blocked-icon" color="var(--ks-text-warning)">
+                                <AlertCircle />
+                            </KsIcon>
+                        </KsTooltip>
                     </div>
                 </template>
             </KsTableColumn>
@@ -163,8 +168,17 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
+                        <KsTooltip
+                            v-if="scope.row.blockedBy"
+                            :content="blockerMessage(scope.row.blockedBy, $t)"
+                            effect="light"
+                        >
+                            <KsTag data-test="trigger-blocked" type="warning" size="small" effect="light">
+                                {{ $t("trigger blocked") }}
+                            </KsTag>
+                        </KsTooltip>
                         <KsTag
-                            v-if="!scope.row.nextEvaluationDate"
+                            v-else-if="!scope.row.nextEvaluationDate"
                             type="warning"
                             size="small"
                             effect="light"
@@ -209,8 +223,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="!scope.row.missingSource"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.codeDisabled"
+                        :content="notToggleableReason(scope.row as TriggerRow)"
+                        :disabled="!notToggleableReason(scope.row as TriggerRow)"
                         effect="light"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
@@ -218,7 +232,7 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row as TriggerRow, Boolean(value))"
-                            :disabled="scope.row.codeDisabled"
+                            :disabled="!!notToggleableReason(scope.row as TriggerRow)"
                         />
                     </KsTooltip>
                     <KsTooltip v-else :content="$t('flow source not found')" effect="light">
@@ -350,11 +364,14 @@
 
         <TriggerEnableDialog
             v-model="isEnableDialogOpen"
-            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : selection?.length)"
+            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : toggleableSelectionCount)"
             @confirm="onEnableDialogConfirm"
         >
             <p v-if="!enableDialogTrigger">
                 {{ $t("bulk action async warning") }}
+            </p>
+            <p v-if="!enableDialogTrigger && notToggleableSelectionCount">
+                {{ $t("bulk not toggleable warning", {count: notToggleableSelectionCount}) }}
             </p>
         </TriggerEnableDialog>
     </div>
@@ -363,7 +380,6 @@
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
-    import {asProblem} from "@kestra-io/kestra-sdk"
     import type {
         AbstractTrigger,
         ApiAsyncOperationResponse,
@@ -374,8 +390,8 @@
         TriggerControllerApiCreateBackfillRequest,
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
-    import {problemBulkBody, problemTitle} from "../../../utils/problem"
-    import {useRoute, useRouter, type LocationQuery} from "vue-router"
+    import {useBulkAction} from "../../../composables/useBulkAction"
+    import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
@@ -383,12 +399,14 @@
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
+    import {usePageSize} from "../../../composables/usePageSize"
     import {hasMissingRequiredInputs} from "../../../utils/inputs"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
+    import {blockerMessage, searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
+    import {latestRequest} from "../../../utils/latestRequest"
     import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
-    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
+    import {sortFromQuery, useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -414,7 +432,7 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const {t, te} = useI18n({useScope: "global"})
+    const {t} = useI18n({useScope: "global"})
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
@@ -560,6 +578,14 @@
 
     const isSchedule = (type?: string) => type === "io.kestra.plugin.core.trigger.Schedule"
 
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.codeDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
+
     const triggersMerged = computed<TriggerRow[]>(() =>
         triggers.value.map(tr => ({
             ...tr.trigger,
@@ -593,7 +619,6 @@
 
     const selection = computed<TriggerControllerApiTriggerId[]>(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed<boolean>(() => dataTable.value?.queryBulkAction ?? false)
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = <T extends object>(base: T): T => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
@@ -603,9 +628,12 @@
         return deepMerge(base, nonFilterRest)
     }
 
+    const startLoad = latestRequest()
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
 
+        const isLatest = startLoad()
         const previousSelection = selection.value
         const query = loadQuery({
             size,
@@ -615,6 +643,7 @@
         })
 
         const triggersData = await searchTriggers(query)
+        if (!isLatest()) return
         triggers.value = triggersData?.results ?? []
         total.value = triggersData?.total ?? 0
 
@@ -625,16 +654,14 @@
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
-    const urlSize = computed(() => Number(route.query.size) || 25)
+    const {pageSize: urlSize, rememberPageSize} = usePageSize(computed(() => route.query.size))
 
-    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
-        const parts = typeof sort === "string" ? sort.split(":") : []
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            return {prop: "triggerId", order: "ascending"}
-        }
-        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        rememberPageSize(size)
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
-    const defaultSort = sortFromQuery(route.query.sort)
+
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "triggerId", order: "ascending"})
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
@@ -775,7 +802,7 @@
             flowId: row.flowId,
             triggerId: row.triggerId,
         }).then(() => {
-            toast.saved(row.triggerId)
+            toast.success(t("delete backfill success", {id: row.triggerId}))
             triggerLoadDataAfterBulkEditAction()
         })
     }
@@ -836,6 +863,7 @@
                 "setDisabled",
                 "bulk success disabled status.false",
                 {disabled: false, recoverMissedSchedules},
+                queryBulkAction.value ? undefined : toggleableSelectionCount.value,
             )
         }
     }
@@ -869,8 +897,8 @@
         )
     }
 
-    const genericConfirmAction = (toastKey: string, actionName: BulkActionName, success: string, data?: BulkDisableData, extraWarning?: string) => {
-        let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning")
+    const genericConfirmAction = (toastKey: string, actionName: BulkActionName, success: string, data?: BulkDisableData, extraWarning?: string, count?: number) => {
+        let message = t(toastKey, {"count": count ?? (queryBulkAction.value ? total.value : selection.value?.length)}) + ". " + t("bulk action async warning")
 
         if (extraWarning) {
             message += "<br><br><strong>" + extraWarning + "</strong>"
@@ -878,7 +906,7 @@
 
         toast.confirm(
             message,
-            () => genericConfirmCallback(actionName, success, data),
+            () => genericConfirmCallback(actionName, success, data, count),
         )
     }
 
@@ -899,58 +927,56 @@
     const BULK_ACTIONS = {
         unpauseBackfill: {
             byQuery: options => TriggersAPI.unpauseBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.unpauseBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.unpauseBackfillByIds({body: ids}),
         },
         pauseBackfill: {
             byQuery: options => TriggersAPI.pauseBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.pauseBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.pauseBackfillByIds({body: ids}),
         },
         deleteBackfill: {
             byQuery: options => TriggersAPI.deleteBackfillByQuery(options),
-            byIds: triggers => TriggersAPI.deleteBackfillByIds({body: triggers}),
+            byIds: ids => TriggersAPI.deleteBackfillByIds({body: ids}),
         },
         unlock: {
             byQuery: options => TriggersAPI.unlockTriggersByQuery(options),
-            byIds: triggers => TriggersAPI.unlockTriggersByIds({body: triggers}),
+            byIds: ids => TriggersAPI.unlockTriggersByIds({body: ids}),
         },
         setDisabled: {
             byQuery: options => TriggersAPI.disabledTriggersByQuery(options),
-            byIds: (triggers, data) => TriggersAPI.disabledTriggersByIds({
-                triggers,
+            byIds: (ids, data) => TriggersAPI.disabledTriggersByIds({
+                triggers: ids,
                 disabled: data?.disabled ?? false,
                 recoverMissedSchedules: data?.recoverMissedSchedules,
             }),
         },
         delete: {
             byQuery: options => TriggersAPI.deleteTriggersByQuery(options),
-            byIds: triggers => TriggersAPI.deleteTriggersByIds({body: triggers}),
+            byIds: ids => TriggersAPI.deleteTriggersByIds({body: ids}),
         },
     } satisfies Record<string, BulkAction>
 
     type BulkActionName = keyof typeof BULK_ACTIONS
 
-    const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData) => {
-        const action = BULK_ACTIONS[actionName]
-        const onSubmitted = (response: ApiAsyncOperationResponse) => {
-            toast.success(t(success, {count: response.totalItems}))
-            toggleAllUnselected()
-            triggerLoadDataAfterBulkEditAction()
-        }
+    const {runBulkAction} = useBulkAction(dataTable, {refresh: triggerLoadDataAfterBulkEditAction})
 
-        if (queryBulkAction.value) {
-            const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
-            return action.byQuery({...query, ...data}).then(onSubmitted)
-        }
-
-        return action.byIds(selection.value, data)
-            .then(onSubmitted)
-            .catch((e: unknown) => {
-                const problem = asProblem(e)
-                toast.error(
-                    problemBulkBody(problem, t, te),
-                    problemTitle(problem, t, te),
-                )
-            })
+    const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData, expected?: number) => {
+        const bulkAction = BULK_ACTIONS[actionName]
+        const target = expected ?? (queryBulkAction.value ? total.value : selection.value.length)
+        return runBulkAction({
+            byQuery: () => bulkAction.byQuery({...loadQuery({filters: routeQueryToQueryFilters(route.query)}), ...data}),
+            byIds: () => bulkAction.byIds(selection.value, data),
+            // totalItems is what the API actually submitted, which is short of the target whenever it skipped rows it cannot act on.
+            report: (response) => {
+                const submitted = response.totalItems ?? 0
+                if (submitted === 0) {
+                    toast.warning(t("bulk none applied"))
+                } else if (submitted < target) {
+                    toast.warning(t("bulk partially applied", {count: submitted, requested: target}))
+                } else {
+                    toast.success(t(success, {count: submitted}))
+                }
+            },
+        })
     }
 
     const unpauseBackfills = () => {
@@ -983,8 +1009,25 @@
             "setDisabled",
             `bulk success disabled status.${bool}`,
             {disabled: bool},
+            notToggleableSelectionCount.value
+                ? t("bulk not toggleable warning", {count: notToggleableSelectionCount.value})
+                : undefined,
+            queryBulkAction.value ? undefined : toggleableSelectionCount.value,
         )
     }
+
+    /**
+     * The API skips the triggers the scheduler does not evaluate on a bulk enable/disable, so counting the
+     * whole selection would announce a change to rows that will not be touched. Only knowable in selection
+     * mode: a query-mode action targets rows this page has not loaded.
+     */
+    const notToggleableSelectionCount = computed<number>(() =>
+        queryBulkAction.value
+            ? 0
+            : selection.value.filter(sel => findRowBySelection(sel)?.kind === "UNSCHEDULED").length,
+    )
+
+    const toggleableSelectionCount = computed<number>(() => selection.value.length - notToggleableSelectionCount.value)
 
     const findRowBySelection = (sel: TriggerControllerApiTriggerId) => triggersMerged.value.find(row =>
         (row.triggerId ?? row.id) === sel.triggerId && row.flowId === sel.flowId && row.namespace === sel.namespace)
@@ -1031,6 +1074,9 @@
     }
 
     .trigger-id-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
         white-space: nowrap;
     }
 

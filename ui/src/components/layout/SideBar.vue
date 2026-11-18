@@ -16,6 +16,16 @@
             />
         </template>
 
+        <KsSideBarSection
+            v-if="bookmarksStore.pages?.length"
+            :title="$t('favourites')"
+            collapsible
+            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
+            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+        >
+            <BookmarkLinkList :pages="bookmarksStore.pages" />
+        </KsSideBarSection>
+
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
             <div v-if="!section.child" class="top-level-link">
                 <MenuLink
@@ -42,16 +52,6 @@
                 />
             </KsSideBarSection>
         </template>
-
-        <KsSideBarSection
-            v-if="bookmarksStore.pages?.length"
-            :title="$t('favourites')"
-            collapsible
-            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
-            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
-        >
-            <BookmarkLinkList :pages="bookmarksStore.pages" />
-        </KsSideBarSection>
 
         <template #footer>
             <slot name="footer" />

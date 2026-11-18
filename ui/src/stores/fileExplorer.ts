@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {computed, ref} from "vue"
+import {computed, ref, type Ref} from "vue"
 import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {makeToast} from "../utils/toast"
@@ -66,7 +66,7 @@ function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
 }
 
 export const useFileExplorerStore = defineStore("fileExplorer", () => {
-    const fileTree = ref<TreeNode[]>([])
+    const fileTree: Ref<TreeNode[]> = ref([])
     const searchResults = ref<string[]>([])
     const namespaceId = ref<string>()
     // whether the root level of the tree has been loaded at least once,

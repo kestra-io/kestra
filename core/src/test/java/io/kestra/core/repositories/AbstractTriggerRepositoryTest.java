@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -29,6 +30,7 @@ import io.kestra.core.notification.NotificationItemRepositoryInterface;
 import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.scheduler.model.Blocker;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
@@ -304,6 +306,24 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(updated));
         assertThat(result.get().getUpdatedAt()).isEqualTo(updatedAt);
+    }
+
+    @Test
+    void shouldKeepTheBlockWhenSavingABlockedState() {
+        // GIVEN a state blocked by governance
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Blocker block = new Blocker(Blocker.Reason.POLICY, List.of("deny-log"), "Log plugin is not allowed by policy");
+        TriggerState blocked = triggerStateStore.save(trigger(tenant).build().blockedBy(Clock.systemUTC(), block));
+
+        // WHEN the block is saved, then cleared
+        Optional<TriggerState> whileBlocked = triggerStateStore.findByIdWithoutAcl(blocked);
+        triggerStateStore.save(blocked.blockedBy(Clock.systemUTC(), null));
+        Optional<TriggerState> afterUnblock = triggerStateStore.findByIdWithoutAcl(blocked);
+
+        // THEN
+        assertThat(whileBlocked.map(TriggerState::getBlockedBy)).contains(block);
+        assertThat(afterUnblock).isPresent();
+        assertThat(afterUnblock.get().getBlockedBy()).isNull();
     }
 
     @Test
@@ -602,6 +622,26 @@ public abstract class AbstractTriggerRepositoryTest {
         // THEN
         assertThat(results.size()).isEqualTo(3);
         assertThat(results.stream().map(TriggerState::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C", "D");
+    }
+
+    @Test
+    void shouldExcludeUnscheduledTriggersFromFindTriggersEligibleForScheduling() {
+        // GIVEN three states the vNode, lock and evaluation-date predicates all accept, differing only by
+        // type: one the scheduler evaluates, one it never evaluates, and one whose type is unset because
+        // V2_0_03TriggerMigration leaves it so on rows migrated from 1.x
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant).triggerId("scheduled").type(TriggerType.SCHEDULE).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("unscheduled").type(TriggerType.UNSCHEDULED).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("migrated").type(null).locked(false).vnode(0).nextEvaluationDate(null).build());
+
+        // WHEN
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0), false)
+            .stream().filter(it -> tenant.equals(it.getTenantId())).toList();
+
+        // THEN the unscheduled one is left out, and the untyped one stays eligible: excluding it instead
+        // would stop every schedule firing on an instance upgraded from 1.x
+        assertThat(results.stream().map(TriggerState::getTriggerId).toList())
+            .containsExactlyInAnyOrder("scheduled", "migrated");
     }
 
     // -------------------------------------------------------------------------

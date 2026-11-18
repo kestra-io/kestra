@@ -155,10 +155,10 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
         setup(rawProps, {attrs}) {
-            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
-            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
+                // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+                const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
                 const Comp = RemoteComponents[taskType]
                 return Comp ? h(Comp, {...restProps, ...attrs}) : null
             }
@@ -173,12 +173,6 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!failedModules[taskType]
     }
 
-    // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
-    function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
-        const runnerType = task?.taskRunner?.type
-        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
-    }
-
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
@@ -186,7 +180,6 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         resolveRemoteComponent,
         hasResolvedComponent,
         hasFailedComponent,
-        componentTypeFor,
         subtitleResolvers,
     }
 }

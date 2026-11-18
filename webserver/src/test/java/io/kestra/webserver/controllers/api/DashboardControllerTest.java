@@ -160,7 +160,7 @@ class DashboardControllerTest {
         );
         assertThat(defaultDashboard).isNotNull();
         assertThat(defaultDashboard.getId()).isEqualTo("_default");
-        assertThat(defaultDashboard.getCharts()).hasSize(10);
+        assertThat(defaultDashboard.getCharts()).hasSize(9);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
@@ -354,8 +354,13 @@ class DashboardControllerTest {
         assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("oldest"));
     }
 
+    /**
+     * The Upcoming tab of the Executions table has no stored chart: the frontend builds this Triggers
+     * table and sends its YAML through the content-based routes, so the ordering it relies on is
+     * covered here rather than against a dashboard definition.
+     */
     @Test
-    void shouldSortNextExecutionsOfDefaultDashboardByUpcomingFirst() {
+    void shouldSortUpcomingTriggersBySoonestFirst() {
         String namespace = TestsUtils.randomNamespace();
         Instant now = Instant.now();
         // saved out of order on purpose, so a result sorted by insertion cannot pass
@@ -372,11 +377,60 @@ class DashboardControllerTest {
                     .build()
             );
         }
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("disabled")
+                .triggerId(IdUtils.create())
+                .workerId("worker")
+                .nextEvaluationDate(now)
+                .disabled(true)
+                .build()
+        );
 
-        String csv = exportDefaultChart("next_executions", namespace);
+        String csv = exportUpcomingChart(namespace);
 
+        assertThat(csv).doesNotContain("disabled");
         assertThat(csv.indexOf("soonest")).isPositive().isLessThan(csv.indexOf("middle"));
         assertThat(csv.indexOf("middle")).isLessThan(csv.indexOf("last"));
+    }
+
+    private String exportUpcomingChart(String namespace) {
+        String chartYaml = """
+            id: recent_executions__upcoming
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            chartOptions:
+              displayName: Executions
+              pagination:
+                enabled: true
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Triggers
+              columns:
+                namespace:
+                  field: NAMESPACE
+                flowId:
+                  field: FLOW_ID
+                triggerId:
+                  field: TRIGGER_ID
+                next_execution_date:
+                  field: NEXT_EXECUTION_DATE
+              where:
+                - field: DISABLED
+                  type: EQUAL_TO
+                  value: false
+              orderBy:
+                - column: next_execution_date
+                  order: ASC
+            """;
+        var globalFilter = ChartFiltersOverrides.builder().filters(
+            List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build())
+        ).build();
+        byte[] csv = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/export", new DashboardController.PreviewRequest(chartYaml, globalFilter)),
+            Argument.of(byte[].class)
+        );
+        return new String(csv, StandardCharsets.UTF_8);
     }
 
     private String exportDefaultChart(String chartId, String namespace) {

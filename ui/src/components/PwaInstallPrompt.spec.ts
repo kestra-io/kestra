@@ -27,12 +27,16 @@ function mountComponent() {
             stubs: {
                 KsAlert: {
                     name: "KsAlert",
-                    props: ["type", "title", "closable"],
+                    props: {
+                        type: String,
+                        title: String,
+                        closable: Boolean,
+                    },
                     emits: ["close"],
                     template: `
                         <div class="ks-alert" data-test="ks-alert">
                             <span class="ks-alert-title">{{ title }}</span>
-                            <button class="ks-alert-close" data-test="alert-close" @click="$emit('close')">close</button>
+                            <button v-if="closable" class="ks-alert-close" data-test="alert-close" @click="$emit('close')">close</button>
                             <slot />
                         </div>
                     `,

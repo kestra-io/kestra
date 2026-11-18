@@ -11,6 +11,7 @@ import {
     isPair,
     isMap,
     isSeq,
+    isScalar,
     visit,
     type Range,
     type ToStringOptions,
@@ -500,10 +501,9 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
         const parentPathWithoutKey = joinPath(segments.slice(0, -1))
         const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
         if (!parentNode) {
-            const newParentNode = createParentNode(parentPath)
-            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
-            parentParentNode?.items.push(newParentNode)
-            return newParentNode.value
+            const newParentSeq = new YAMLSeq<unknown>()
+            attachSequence(getParentNode(yamlDoc, parentPathWithoutKey), lastSegmentKey(parentPath), newParentSeq)
+            return newParentSeq
         }
         return parentNode
     }
@@ -516,26 +516,29 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
         const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."))
         const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
         if (!parentNode) {
-            const newParentNode = createParentNode(parentPathWithoutKey)
-            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
-            parentParentNode?.items.push(newParentNode)
-            return newParentNode.value
+            const newParentSeq = new YAMLSeq<unknown>()
+            attachSequence(getParentNode(yamlDoc, parentPathWithoutKey), lastSegmentKey(parentPathWithoutKey), newParentSeq)
+            return newParentSeq
         }
         return parentNode
     }
 }
 
-function createParentNode(parentPath: string) {
-    const newParentNode = new YAMLSeq()
-    const parentKey = lastSegmentKey(parentPath)
-    const parentKeyNode = new Pair(new Scalar(parentKey), newParentNode)
-    return parentKeyNode
-}
+// a key written with no value (`tasks:`) parses to a pair holding null, so
+// pushing a new pair for it would leave the document carrying the key twice
+function attachSequence(container: unknown, key: string, seq: YAMLSeq<unknown>) {
+    if (!isMap(container) && !isSeq(container)) {
+        return
+    }
+    const existing = isMap(container)
+        ? container.items.find((item) => (isScalar(item.key) ? item.key.value : item.key) === key)
+        : undefined
 
-function createPairNode(parentKey: string, newPropNode: Node) {
-    const newPairNodeValue = new YAMLSeq()
-    newPairNodeValue.add(newPropNode)
-    return new Pair(new Scalar(parentKey), newPairNodeValue)
+    if (existing) {
+        existing.value = seq
+    } else {
+        (container.items as unknown[]).push(new Pair(new Scalar(key), seq))
+    }
 }
 
 export function insertBlockWithPath({
@@ -562,9 +565,9 @@ export function insertBlockWithPath({
     const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
 
     if (!parentNode) {
-        const newPairNode = createPairNode(lastSegmentKey(parentPath), newPropNode)
-        const newParentNode = getParentNode(yamlDoc, parentPath)
-        newParentNode?.items.push(newPairNode)
+        const seq = new YAMLSeq<unknown>()
+        seq.add(newPropNode)
+        attachSequence(getParentNode(yamlDoc, parentPath), lastSegmentKey(parentPath), seq)
         return yamlDoc.toString(TOSTRING_OPTIONS)
     }
 

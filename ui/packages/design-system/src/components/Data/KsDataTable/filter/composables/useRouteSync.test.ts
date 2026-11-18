@@ -193,13 +193,8 @@ describe("useRouteSync", () => {
         })
     })
 
-    test("the time range's own date params and a grouped key with no configured field are still cleared", () => {
-        const {sync} = setup({
-            configuration: {
-                title: "Time range",
-                keys: [{key: "timeRange", label: "Interval", valueType: "time-range", comparators: [Comparators.EQUALS]}],
-            },
-        })
+    test("date params and a grouped key with no configured field are cleared, with or without a time range key", () => {
+        const {sync} = setup()
 
         mockRoute.query = {
             "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-01-01T00:00:00.000Z",

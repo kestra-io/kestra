@@ -2551,6 +2551,7 @@
           "generic": "出错了。请重试。"
         },
         "emptyHelper": "我可以编辑这个 flow，生成测试，搭建相关文件，或者解释它是如何工作的。",
+        "emptyHelperNoFlow": "我可以创建或编辑 flow、生成测试、搭建相关文件，或解释 Kestra 的工作原理。",
         "suggestions": {
           "errorHandling": "添加错误处理",
           "unitTest": "生成单元测试",

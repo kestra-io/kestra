@@ -2551,6 +2551,7 @@
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
         },
         "emptyHelper": "Puedo editar este flow, generar pruebas, generar archivos relacionados o explicar cómo funciona.",
+        "emptyHelperNoFlow": "Puedo crear o editar flows, generar pruebas, generar archivos relacionados o explicar cómo funciona Kestra.",
         "suggestions": {
           "errorHandling": "Añadir manejo de errores",
           "unitTest": "Generar una prueba unitaria",

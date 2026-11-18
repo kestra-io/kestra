@@ -2551,6 +2551,7 @@
           "generic": "Coś poszło nie tak. Spróbuj ponownie."
         },
         "emptyHelper": "Mogę edytować ten Flow, generować testy, tworzyć szkielety powiązanych plików lub wyjaśnić, jak to działa.",
+        "emptyHelperNoFlow": "Mogę tworzyć lub edytować Flowy, generować testy, tworzyć powiązane pliki lub wyjaśniać, jak działa Kestra.",
         "suggestions": {
           "errorHandling": "Dodaj obsługę błędów",
           "unitTest": "Wygeneruj test jednostkowy",

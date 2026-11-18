@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -458,7 +459,7 @@ public class FlowController {
         for (CompletedFileUpload flowFile : flowFiles) {
             String source = new String(flowFile.getBytes()).trim();
             if (override) {
-                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
+                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + Matcher.quoteReplacement(namespace));
             }
 
             genericFlows.add(parseFlowSource(source));

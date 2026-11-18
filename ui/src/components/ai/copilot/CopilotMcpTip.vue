@@ -32,7 +32,7 @@
     import {useStorage} from "@vueuse/core"
     import {storageKeys} from "../../../utils/constants"
 
-    const DOCS_URL = "https://kestra.io/docs/ai-orchestration/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-mcp#platform-mcp-server"
+    const DOCS_URL = "https://kestra.io/docs/develop-with-ai/kestra-mcp-server?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-mcp"
 
     const dismissed = useStorage(storageKeys.COPILOT_MCP_TIP_DISMISSED, false, undefined, {writeDefaults: false})
 </script>

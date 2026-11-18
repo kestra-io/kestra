@@ -4,6 +4,8 @@ import {flushPromises} from "@vue/test-utils"
 const validateReview = vi.hoisted(() => vi.fn())
 const review = vi.hoisted(() => vi.fn())
 const error = vi.hoisted(() => vi.fn())
+const success = vi.hoisted(() => vi.fn())
+const push = vi.hoisted(() => vi.fn())
 const loadTaskRunOutputs = vi.hoisted(() => vi.fn())
 const inputsForm = vi.hoisted(() => ({ready: () => {}, validation: undefined as undefined | ((payload: unknown) => void)}))
 
@@ -14,7 +16,11 @@ vi.mock("../../stores/executions", () => ({
 vi.mock("../../composables/useTaskRunOutputs", () => ({loadTaskRunOutputs}))
 
 vi.mock("../../utils/toast", () => ({
-    useToast: () => ({error, success: vi.fn()}),
+    useToast: () => ({error, success}),
+}))
+
+vi.mock("vue-router", () => ({
+    useRouter: () => ({push}),
 }))
 
 import ReviewDialog from "./ReviewDialog.vue"
@@ -31,7 +37,7 @@ const messages = {
     },
 }
 
-function mountDialog(decisions?: {approve?: string; deny?: string}, inputs?: InputMetaData[], commentRequired?: string) {
+function mountDialog(decisions?: {approve?: string; deny?: string}, inputs?: InputMetaData[], commentRequired?: string, afterReview?: {label: string; to: string}) {
     return i18nMount(ReviewDialog, {
         messages,
         props: {
@@ -39,6 +45,7 @@ function mountDialog(decisions?: {approve?: string; deny?: string}, inputs?: Inp
             execution: {id: "e1", namespace: "ns"} as unknown as Execution,
             taskRun: {id: "tr1", taskId: "approval"},
             task: {id: "approval", type: "io.kestra.plugin.core.flow.Approval", decisions, inputs, commentRequired},
+            afterReview,
         },
         global: {
             stubs: {
@@ -69,7 +76,33 @@ describe("ReviewDialog", () => {
         validateReview.mockReset().mockResolvedValue({})
         review.mockReset().mockResolvedValue(undefined)
         error.mockReset()
+        success.mockReset()
+        push.mockReset()
         loadTaskRunOutputs.mockReset().mockResolvedValue({})
+    })
+
+    it("offers the given way back in the confirmation of a decision", async () => {
+        const wrapper = mountDialog(undefined, undefined, undefined, {label: "Back to Approvals", to: "/approvals?page=2"})
+        await flushPromises()
+
+        await wrapper.find("[data-test='review-approve']").trigger("click")
+        await flushPromises()
+
+        const {action} = success.mock.lastCall![2] as {action: {label: string; onClick: () => void}}
+        expect(action.label).toBe("Back to Approvals")
+        action.onClick()
+        expect(push).toHaveBeenCalledWith("/approvals?page=2")
+    })
+
+    it("confirms a decision without any action when no way back is given", async () => {
+        const wrapper = mountDialog()
+        await flushPromises()
+
+        await wrapper.find("[data-test='review-approve']").trigger("click")
+        await flushPromises()
+
+        expect(success).toHaveBeenCalledOnce()
+        expect(success.mock.lastCall![2]?.action).toBeUndefined()
     })
 
     it("names the approval task and the execution in its header", async () => {

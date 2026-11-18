@@ -20,6 +20,11 @@ vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: () => true}}),
 }))
 
+const reviewReturn = vi.hoisted(() => ({value: undefined as undefined | {label: string; to: string}}))
+vi.mock("override/components/executions/overview/OverviewExtensions", () => ({
+    useReviewReturn: () => () => reviewReturn.value,
+}))
+
 import ReviewLink from "./ReviewLink.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import type {Execution} from "../../stores/executions"
@@ -35,7 +40,7 @@ function mountReview(state: string, otherState = "SUCCESS") {
         },
         global: {
             stubs: {
-                ReviewDialog: {props: ["modelValue"], template: "<div data-test=\"dialog\" :data-open=\"modelValue\" />"},
+                ReviewDialog: {props: ["modelValue", "afterReview"], template: "<div data-test=\"dialog\" :data-open=\"modelValue\" :data-after-review=\"afterReview && JSON.stringify(afterReview)\" />"},
                 ReviewedDialog: {props: ["modelValue"], template: "<div data-test=\"reviewed\" :data-open=\"modelValue\" />"},
             },
         },
@@ -46,6 +51,7 @@ describe("ReviewLink", () => {
     beforeEach(() => {
         route.query = {}
         replace.mockReset()
+        reviewReturn.value = undefined
         isReviewAllowed.mockReset().mockResolvedValue(false)
     })
 
@@ -104,5 +110,18 @@ describe("ReviewLink", () => {
         await flushPromises()
 
         expect(wrapper.find("[data-test='dialog']").attributes("data-open")).toBe("true")
+    })
+
+    it("hands the dialog the way back the review link came with, even once the link is cleared", async () => {
+        route.query = {review: "tr1"}
+        reviewReturn.value = {label: "Back to Approvals", to: "/approvals"}
+        replace.mockImplementation(() => {
+            reviewReturn.value = undefined
+        })
+        isReviewAllowed.mockResolvedValue(true)
+        const wrapper = mountReview("PAUSED")
+        await flushPromises()
+
+        expect(JSON.parse(wrapper.find("[data-test='dialog']").attributes("data-after-review")!)).toEqual({label: "Back to Approvals", to: "/approvals"})
     })
 })

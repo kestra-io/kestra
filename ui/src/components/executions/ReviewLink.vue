@@ -5,6 +5,7 @@
         :execution="execution"
         :taskRun="opened.taskRun"
         :task="opened.task"
+        :afterReview="opened.afterReview"
         @closed="opened = undefined"
     />
     <ReviewedDialog
@@ -25,6 +26,7 @@
     import {useApprovalReviewer} from "../../composables/useApprovalReviewer"
     import {findApprovalTask, type ApprovalTask, type ApprovalTaskRun} from "../../utils/approval"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {useReviewReturn, type ApprovalLink} from "override/components/executions/overview/OverviewExtensions"
 
     const props = defineProps<{
         execution: Execution;
@@ -33,12 +35,13 @@
     const route = useRoute()
     const router = useRouter()
     const executionsStore = useExecutionsStore()
+    const reviewReturn = useReviewReturn()
 
     const requestedId = computed(() => typeof route.query.review === "string" ? route.query.review : undefined)
     const {enabled, checked} = useApprovalReviewer(() => props.execution, () => requestedId.value)
 
     const dialogOpen = ref(false)
-    const opened = ref<{taskRun: ApprovalTaskRun; task: ApprovalTask; paused: boolean}>()
+    const opened = ref<{taskRun: ApprovalTaskRun; task: ApprovalTask; paused: boolean; afterReview?: ApprovalLink}>()
 
     const requested = () => {
         const taskRun = requestedId.value === undefined ? undefined : props.execution.taskRunList?.find(candidate => candidate.id === requestedId.value)
@@ -72,11 +75,12 @@
             if (found === undefined || (state as string) === State.PAUSING || (state === "PAUSED" && !checked.value)) {
                 return
             }
+            const afterReview = reviewReturn()
             clearRequest()
             if (state === "PAUSED" && !enabled.value) {
                 return
             }
-            opened.value = {taskRun: found.taskRun, task: found.task, paused: state === "PAUSED"}
+            opened.value = {taskRun: found.taskRun, task: found.task, paused: state === "PAUSED", afterReview}
             dialogOpen.value = true
         },
         {immediate: true},

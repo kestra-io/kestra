@@ -102,6 +102,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionCreationService;
+import io.kestra.webserver.services.ExecutionDeletionService;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionReplayService;
 import io.kestra.webserver.services.SearchableDataFilterService;
@@ -220,6 +221,9 @@ public class ExecutionController {
 
     @Inject
     private ExecutionOutputService executionOutputService;
+
+    @Inject
+    private ExecutionDeletionService executionDeletionService;
 
     @Inject
     private ExecutionStreamingService streamingService;
@@ -531,21 +535,24 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "202", description = "Accepted, when async is true", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
+        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage,
+        @Parameter(description = "Whether to delete in the background, tracked by a notification", required = false) @QueryValue(defaultValue = "false") Boolean async) throws IOException {
         List<Execution> executions = getExecutionsByIds(executionsId, "be deleted");
-        return deleteExecutions(BulkExecutionSource.of(executions), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+        return deleteExecutions(BulkExecutionSource.of(executions), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage, async);
     }
 
     @Delete(uri = "/by-query")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "202", description = "Accepted, when async is true", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
@@ -556,12 +563,13 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        return deleteExecutions(getExecutionsByQuery(filters), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage,
+        @Parameter(description = "Whether to delete in the background, tracked by a notification", required = false) @QueryValue(defaultValue = "false") Boolean async) throws IOException {
+        return deleteExecutions(getExecutionsByQuery(filters), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage, async);
     }
 
     private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
-        try {
+        try (PropagatedContext.Scope _ = Actor.propagate(actorResolver.resolve())) {
             executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
         } catch (RuntimeException e) {
             log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
@@ -569,7 +577,7 @@ public class ExecutionController {
         executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage);
     }
 
-    private HttpResponse<?> deleteExecutions(BulkExecutionSource source, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage) throws IOException {
+    private HttpResponse<?> deleteExecutions(BulkExecutionSource source, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage, Boolean async) throws IOException {
         List<String> executionIds = prepareBulkItems(
             source,
             BulkOperation.DELETE,
@@ -588,18 +596,29 @@ public class ExecutionController {
         );
 
         String tenantId = tenantService.resolveTenant();
-        executionIds.forEach(
-            throwConsumer(
-                executionId -> {
-                    Optional<Execution> execution = executionRepository.findById(tenantId, executionId);
-                    if (execution.isPresent()) {
-                        deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
-                    }
-                }
-            )
-        );
+        Rethrow.ConsumerChecked<String, IOException> delete = executionId ->
+        {
+            Optional<Execution> execution = executionRepository.findById(tenantId, executionId);
+            if (execution.isPresent()) {
+                deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
+            }
+        };
 
-        return HttpResponse.ok(BulkResponse.builder().count(executionIds.size()).build());
+        if (!async) {
+            executionIds.forEach(throwConsumer(delete));
+
+            return HttpResponse.ok(BulkResponse.builder().count(executionIds.size()).build());
+        }
+
+        List<BulkItem> items = executionIds.stream()
+            .map(executionId -> new BulkItem(executionId, (opId, actor) -> executionDeletionService.deleteAsync(tenantId, executionId, opId, actor, () -> delete.accept(executionId))))
+            .toList();
+        try {
+            return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_DELETE, items);
+        } catch (QueueException e) {
+            // submitNotifiedBatchAction's signature is shared with queue-based bulk actions; deletion never emits onto a queue, so this can never happen.
+            throw new IllegalStateException(e);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1493,7 +1512,7 @@ public class ExecutionController {
 
         executionReplayService.validateReplay(execution, taskRunId, revision);
 
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1531,8 +1550,10 @@ public class ExecutionController {
 
             Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            String newExecutionId = IdUtils.create();
+
+            return flowInputOutput.readExecutionInputs(flow, current.toBuilder().id(newExecutionId).build(), inputs)
+                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints)));
         });
     }
 
@@ -1555,14 +1576,13 @@ public class ExecutionController {
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var newExecutionId = IdUtils.create();
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();
@@ -3116,7 +3136,7 @@ public class ExecutionController {
      * Looks the execution up without blocking a thread, retrying for up to 10 seconds as it may not be indexed yet.
      * Emits a 404 {@link HttpStatusException} when it never shows up.
      */
-    private Mono<Execution> awaitExecution(String tenant, String executionId) {
+    protected Mono<Execution> awaitExecution(String tenant, String executionId) {
         return Mono.defer(() -> Mono.justOrEmpty(executionRepository.findById(tenant, executionId)))
             .subscribeOn(Schedulers.boundedElastic())
             .switchIfEmpty(Mono.error(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId)))

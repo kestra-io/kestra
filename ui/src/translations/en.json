@@ -307,6 +307,7 @@
       "ongoing": "In progress",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Deleting {count} execution | Deleting {count} executions",
           "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
           "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
           "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
           "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
           "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Deletion requested for {count} execution | Deletion requested for {count} executions",
+          "EXECUTION_KILL": "Kill requested for {count} execution | Kill requested for {count} executions",
+          "EXECUTION_PAUSE": "Pause requested for {count} execution | Pause requested for {count} executions",
+          "EXECUTION_RESUME": "Resume requested for {count} execution | Resume requested for {count} executions",
+          "EXECUTION_RESTART": "Restart requested for {count} execution | Restart requested for {count} executions",
+          "EXECUTION_REPLAY": "Replay requested for {count} execution | Replay requested for {count} executions",
+          "EXECUTION_FORCE_RUN": "Force run requested for {count} execution | Force run requested for {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueue requested for {count} execution | Unqueue requested for {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Status change requested for {count} execution | Status change requested for {count} executions",
+          "EXECUTION_SET_LABELS": "Label update requested for {count} execution | Label update requested for {count} executions",
+          "TRIGGER_UNLOCK": "Unlock requested for {count} trigger | Unlock requested for {count} triggers",
+          "TRIGGER_DELETE": "Deletion requested for {count} trigger | Deletion requested for {count} triggers",
+          "TRIGGER_DISABLE": "Disable requested for {count} trigger | Disable requested for {count} triggers",
+          "TRIGGER_ENABLE": "Enable requested for {count} trigger | Enable requested for {count} triggers",
+          "BACKFILL_PAUSE": "Pause requested for {count} backfill | Pause requested for {count} backfills",
+          "BACKFILL_RESUME": "Resume requested for {count} backfill | Resume requested for {count} backfills",
+          "BACKFILL_DELETE": "Deletion requested for {count} backfill | Deletion requested for {count} backfills"
         },
         "processed": "{count} processed",
         "rejected": "{count} rejected",
@@ -1224,6 +1244,10 @@
     "trigger blocked policy check failed": "Governance policies could not be checked.",
     "trigger blocked unknown": "Blocked for an unknown reason.",
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger not toggleable": "This trigger is not evaluated by the Scheduler, disable it in the Flow source",
+    "bulk not toggleable warning": "{count} selected trigger(s) will be skipped: the Scheduler does not evaluate them, so they can only be disabled in the Flow source.",
+    "bulk none applied": "No triggers were affected: none of the selected ones could be processed.",
+    "bulk partially applied": "{count} of {requested} triggers were processed, the others were skipped.",
     "trigger enable dialog": {
       "title": "Enable trigger",
       "bulk title": "Enable {count} triggers",
@@ -2461,6 +2485,13 @@
         "placeholder": "Tell me what to build…",
         "send": "Send",
         "stop": "Stop",
+        "usage": {
+          "remaining": "{percent}% left",
+          "help": "Share of this provider's AI usage limit left in the current window.",
+          "warning": "You are close to this provider's AI usage limit. Turns are refused once it is reached.",
+          "exceeded": "This provider's AI usage limit has been reached. It resets when the current period ends.",
+          "exceededUntil": "This provider's AI usage limit has been reached. It resets on {when}."
+        },
         "mode": {
           "ask": "Ask",
           "edit": "Edit",
@@ -2503,7 +2534,7 @@
           "planTitle": "Proposed plan",
           "actionTitle": "Proposed action",
           "approve": "Approve",
-          "approveExecute": "Approve & execute",
+          "approvePlan": "Approve plan",
           "reject": "Reject",
           "pending": "Pending approval",
           "revise": "Reply to revise"
@@ -2537,6 +2568,12 @@
           "docs": "View documentation",
           "sendTooltip": "Sending is disabled because no AI provider is configured.",
           "notSent": "Your prompt was not sent"
+        },
+        "mcpTip": {
+          "title": "Use Kestra from Claude Code, Cursor and other MCP clients",
+          "description": "Alongside the Copilot, Kestra provides an MCP server. Connect an external MCP client to it to manage your flows and executions from the tools you already use.",
+          "docs": "View documentation",
+          "dismiss": "Don't show again"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -2593,6 +2630,10 @@
           },
           "valid": "Valid",
           "invalid": "Needs changes"
+        },
+        "tray": {
+          "title": "Pending changes",
+          "applyFirst": "Apply {flow} first"
         }
       }
     },
@@ -2871,7 +2912,8 @@
       "open_in_secrets": "Open in secrets",
       "options_aria": "Search options",
       "path_only_hint": "Searches the file path only, not the file content. Cannot be replaced.",
-      "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
+      "preview_empty_title": "Select a result to preview.",
+      "preview_empty_description": "Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source",
       "previous_match": "Previous match",
       "rbac_banner": "{count} flows are excluded from replace. You have read access but not edit access on {namespace}. Ask a namespace admin for the {permission} permission to include them.",

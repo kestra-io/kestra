@@ -2,13 +2,18 @@ package io.kestra.core.searchable;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.utils.TypeConverter;
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public final class SearchableDataUtils {
@@ -36,7 +41,7 @@ public final class SearchableDataUtils {
             return List.of();
         }
 
-        if (Type.ARRAY == data.getType()) {
+        if (isArray(data)) {
             if (!(value instanceof Collection<?> collection)) {
                 throw new IllegalArgumentException("The value of the searchable array data '%s' is not a list.".formatted(data.getId()));
             }
@@ -83,10 +88,55 @@ public final class SearchableDataUtils {
             throw new IllegalArgumentException("Only scalar items are supported for the searchable array data '%s'.".formatted(data.getId()));
         }
 
-        if (!Data.SEARCHABLE_TYPES.contains(data.getType())) {
-            throw new IllegalArgumentException("The data '%s' cannot be searchable because its type %s is not supported.".formatted(data.getId(), data.getType()));
+        if (!isSearchableType(data)) {
+            throw new IllegalArgumentException("The data '%s' cannot be searchable because its type %s is not supported.".formatted(data.getId(), typeOf(data)));
         }
 
-        return value.toString();
+        Object type = arrayItem && data instanceof ItemTypeInterface typed && typed.getItemType() != null ? typed.getItemType() : typeOf(data);
+        if (type instanceof Type) {
+            return switch (type) {
+                case Type.DATETIME -> TypeConverter.toInstant(value).toString();
+                case Type.DATE -> TypeConverter.toLocalDate(value).toString();
+                case Type.TIME -> DateTimeFormatter.ISO_LOCAL_TIME.format(TypeConverter.toLocalTime(value));
+                case Type. DURATION -> toDuration(value).toString();
+                default -> value.toString();
+            };
+        } else if (type instanceof OutputType) {
+            return switch (type) {
+                case OutputType.DATETIME -> TypeConverter.toInstant(value).toString();
+                case OutputType.DATE -> TypeConverter.toLocalDate(value).toString();
+                case OutputType.TIME -> DateTimeFormatter.ISO_LOCAL_TIME.format(TypeConverter.toLocalTime(value));
+                case OutputType.DURATION -> toDuration(value).toString();
+                default -> value.toString();
+            };
+        } else {
+            throw new IllegalArgumentException("Unknow data type: " + Optional.ofNullable(type).map(it -> it.getClass().getName()).orElse("null"));
+        }
+
+    }
+
+    // A serialized output carries a duration as decimal seconds, an input as a Duration.
+    private static Duration toDuration(Object value) {
+        if (value instanceof Number number) {
+            BigDecimal seconds = new BigDecimal(number.toString());
+            return Duration.ofSeconds(seconds.longValue(), seconds.remainder(BigDecimal.ONE).movePointRight(9).longValue());
+        }
+        return TypeConverter.toDuration(value);
+    }
+
+    private static boolean isArray(Data data) {
+        return data instanceof Output output ? OutputType.ARRAY == output.getType() : Type.ARRAY == typeOf(data);
+    }
+
+    private static boolean isSearchableType(Data data) {
+        return data instanceof Output output ? Output.SEARCHABLE_TYPES.contains(output.getType()) : Input.SEARCHABLE_TYPES.contains(typeOf(data));
+    }
+
+    private static Object typeOf(Data data) {
+        return switch (data) {
+            case Output output -> output.getType();
+            case Input<?> input -> input.getType();
+            default -> null;
+        };
     }
 }

@@ -307,6 +307,7 @@
       "ongoing": "進行中",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "{count} 件の実行を削除中",
           "EXECUTION_KILL": "{count} 件の実行をキル中",
           "EXECUTION_PAUSE": "{count} 件の実行を一時停止中",
           "EXECUTION_RESUME": "{count} 件の実行を再開中",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "{count} 件の backfill を一時停止中",
           "BACKFILL_RESUME": "{count} 件の backfill を再開中",
           "BACKFILL_DELETE": "{count} 件の backfill を削除中"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "{count} 件の実行の削除がリクエストされました",
+          "EXECUTION_KILL": "{count} 件の実行に対して停止がリクエストされました",
+          "EXECUTION_PAUSE": "{count} 件の実行に一時停止がリクエストされました",
+          "EXECUTION_RESUME": "{count} 件の実行の再開がリクエストされました",
+          "EXECUTION_RESTART": "{count} 件の実行の再起動がリクエストされました",
+          "EXECUTION_REPLAY": "{count} 件の実行でリプレイがリクエストされました",
+          "EXECUTION_FORCE_RUN": "{count} 件の実行に対して強制実行がリクエストされました",
+          "EXECUTION_UNQUEUE": "{count} 件の実行のキュー解除がリクエストされました",
+          "EXECUTION_CHANGE_STATUS": "{count} 件の実行のステータス変更がリクエストされました",
+          "EXECUTION_SET_LABELS": "{count} 件の実行のラベル更新をリクエストしました",
+          "TRIGGER_UNLOCK": "{count} 個のトリガーのロック解除がリクエストされました",
+          "TRIGGER_DELETE": "{count}個のトリガーの削除がリクエストされました",
+          "TRIGGER_DISABLE": "{count} 個のトリガーに対して無効化がリクエストされました",
+          "TRIGGER_ENABLE": "{count} 個のトリガーに対して有効化がリクエストされました",
+          "BACKFILL_PAUSE": "{count} 件のバックフィルに一時停止がリクエストされました",
+          "BACKFILL_RESUME": "{count} 件のバックフィル再開がリクエストされました",
+          "BACKFILL_DELETE": "{count} 件のバックフィルの削除がリクエストされました"
         },
         "processed": "{count} 件処理済み",
         "rejected": "{count} 件拒否",
@@ -1224,6 +1244,10 @@
     "trigger blocked policy check failed": "ガバナンスポリシーを確認できませんでした。",
     "trigger blocked unknown": "不明な理由によりブロックされました。",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger not toggleable": "このTriggerはSchedulerでは評価されません。Flowソース内で無効にしてください",
+    "bulk not toggleable warning": "{count}個の選択されたTriggerはスキップされます。Schedulerはそれらを評価しないため、Flowソースでのみ無効にできます。",
+    "bulk none applied": "影響を受けたトリガーはありませんでした: 選択されたトリガーは処理できませんでした。",
+    "bulk partially applied": "{count}/{requested}個のトリガーが処理され、その他はスキップされました。",
     "trigger enable dialog": {
       "title": "trigger を有効化",
       "bulk title": "{count} triggers を有効にする",
@@ -2461,6 +2485,13 @@
         "placeholder": "何を作成するか教えてください…",
         "send": "送信",
         "stop": "停止",
+        "usage": {
+          "remaining": "残り{percent}%",
+          "help": "現在のウィンドウで、このプロバイダーのAI使用制限の残りの割合。",
+          "warning": "このプロバイダーのAI使用制限に近づいています。制限に達すると、ターンは拒否されます。",
+          "exceeded": "このプロバイダーのAI使用制限に達しました。現在の期間が終了するとリセットされます。",
+          "exceededUntil": "このプロバイダーのAI使用制限に達しました。{when}にリセットされます。"
+        },
         "mode": {
           "ask": "質問",
           "edit": "編集",
@@ -2503,7 +2534,7 @@
           "planTitle": "計画案",
           "actionTitle": "提案アクション",
           "approve": "承認",
-          "approveExecute": "承認して実行",
+          "approvePlan": "プランを承認",
           "reject": "拒否",
           "pending": "承認待ち",
           "revise": "修正に返信"
@@ -2537,6 +2568,12 @@
           "docs": "ドキュメントを見る",
           "sendTooltip": "AIプロバイダーが設定されていないため、送信は無効になっています。",
           "notSent": "プロンプトが送信されませんでした"
+        },
+        "mcpTip": {
+          "title": "Claude Code、Cursor、その他のMCPクライアントからKestraを使用する",
+          "description": "Copilot とともに、Kestra は MCP サーバーを提供します。外部 MCP クライアントを接続して、既存のツールから Flow と Execution を管理できます。",
+          "docs": "ドキュメントを表示",
+          "dismiss": "今後表示しない"
         },
         "thinkingWords": [
           "オーケストレーション",
@@ -2593,6 +2630,10 @@
           },
           "valid": "有効",
           "invalid": "変更が必要です"
+        },
+        "tray": {
+          "title": "保留中の変更",
+          "applyFirst": "最初に{flow}を適用"
         }
       }
     },
@@ -2871,7 +2912,8 @@
       "open_in_secrets": "Secretsで開く",
       "options_aria": "検索オプション",
       "path_only_hint": "ファイルパスのみを検索し、内容は検索しません。置換はできません。",
-      "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
+      "preview_empty_title": "プレビューする結果を選択してください。",
+      "preview_empty_description": "結果リストの flow をクリックするとソースが表示されます。",
       "preview_error": "flow ソースの読み込みに失敗しました",
       "previous_match": "前のマッチ",
       "rbac_banner": "{count} 個のflowが置換から除外されています。{namespace} に対する読み取りアクセス権はありますが、編集アクセス権はありません。これらを含めるには、namespace管理者に {permission} 権限を要求してください。",

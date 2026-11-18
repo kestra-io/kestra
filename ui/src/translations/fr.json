@@ -104,7 +104,7 @@
       "browse_blueprints": "Vous préférez partir d'un modèle ? Parcourez les blueprints système de la communauté",
       "start_blank": "Vous préférez l'écrire vous-même ? Ignorez les étapes et ouvrez un flow vide",
       "steps": {
-        "trigger_title": "Déclencheur",
+        "trigger_title": "Trigger",
         "trigger_desc": "Quand il s'exécute",
         "trigger_heading": "Quand ce flow doit-il s'exécuter ?",
         "notify_title": "Notifier",
@@ -127,12 +127,12 @@
     "remove this item": "Supprimer cet élément",
     "add label": "Ajouter un label",
     "remove label": "Supprimer le label",
-    "id": "Identifiant",
+    "id": "Id",
     "type": "Type",
     "ok": "OK",
     "valid": "Valide",
     "close": "Fermer",
-    "namespace": "Espace de nom",
+    "namespace": "Namespace",
     "description": "Description",
     "show description": "Afficher une description",
     "show details": "Afficher les détails",
@@ -208,7 +208,7 @@
     "gantt_no_tasks_executed": "Cette exécution s'est terminée sans exécuter de tâche.  \nConsultez son aperçu et ses logs pour en connaître la raison.",
     "gantt_no_tasks_match_filters": "Essayez d'ajuster les filtres de recherche, d'état ou de niveau de log.",
     "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
-    "logs": "Fichiers journaux",
+    "logs": "Logs",
     "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
     "no_logs_data_title": "Aucun log trouvé",
     "duration": "Durée",
@@ -307,6 +307,7 @@
       "ongoing": "En cours",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Suppression de {count} exécution | Suppression de {count} exécutions",
           "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
           "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
           "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
           "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
           "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Suppression demandée pour {count} exécution | Suppression demandée pour {count} exécutions",
+          "EXECUTION_KILL": "Demande de kill pour {count} exécution | Demande de kill pour {count} exécutions",
+          "EXECUTION_PAUSE": "Pause demandée pour {count} exécution | Pause demandée pour {count} exécutions",
+          "EXECUTION_RESUME": "Reprise demandée pour {count} exécution | Reprise demandée pour {count} exécutions",
+          "EXECUTION_RESTART": "Redémarrage demandé pour {count} exécution | Redémarrage demandé pour {count} exécutions",
+          "EXECUTION_REPLAY": "Replay demandé pour {count} exécution | Replay demandé pour {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Exécution forcée demandée pour {count} exécution | Exécution forcée demandée pour {count} exécutions",
+          "EXECUTION_UNQUEUE": "Demande de suppression de la file d'attente pour {count} exécution | Demande de suppression de la file d'attente pour {count} exécutions",
+          "EXECUTION_CHANGE_STATUS": "Modification de l'état demandée pour {count} exécution | Modification de l'état demandée pour {count} exécutions",
+          "EXECUTION_SET_LABELS": "Mise à jour du label demandée pour {count} exécution | Mise à jour du label demandée pour {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage demandé pour {count} trigger | Déverrouillage demandé pour {count} triggers",
+          "TRIGGER_DELETE": "Suppression demandée pour {count} trigger | Suppression demandée pour {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation demandée pour {count} trigger | Désactivation demandée pour {count} triggers",
+          "TRIGGER_ENABLE": "Activation demandée pour {count} trigger | Activation demandée pour {count} triggers",
+          "BACKFILL_PAUSE": "Pause demandée pour {count} backfill | Pause demandée pour {count} backfills",
+          "BACKFILL_RESUME": "Reprise demandée pour {count} backfill | Reprise demandée pour {count} backfills",
+          "BACKFILL_DELETE": "Suppression demandée pour {count} backfill | Suppression demandée pour {count} backfills"
         },
         "processed": "{count} traitées",
         "rejected": "{count} rejetées",
@@ -367,7 +387,7 @@
     "search": "Chercher",
     "source search": "Recherche de code source",
     "selected": "Sélectionné",
-    "task": "Tâche",
+    "task": "Task",
     "actions": "Actions",
     "select view": "Sélectionner la vue",
     "is required": "{field} est requis",
@@ -436,7 +456,7 @@
     "flow revision original": "Révision originale du flow",
     "flow revision latest": "Dernière révision du flow",
     "flow revision specific": "Révision spécifique du flow",
-    "replay inputs": "Entrées",
+    "replay inputs": "Inputs",
     "reuse original inputs": "Réutiliser les inputs d'origine",
     "modify inputs": "Modifier les inputs",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
@@ -527,10 +547,10 @@
     "metrics": "Mesures",
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
     "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
-    "outputs": "Sorties",
-    "flow_inputs": "Entrées du flow",
-    "output": "Sortie",
-    "flow_outputs": "Sorties du flow",
+    "outputs": "Outputs",
+    "flow_inputs": "Inputs du flow",
+    "output": "Output",
+    "flow_outputs": "Outputs du flow",
     "eval": {
       "title": "Expression de débogage",
       "preview": "Aperçu",
@@ -538,8 +558,8 @@
     },
     "attempt": "Essai",
     "name": "Nom",
-    "key": "Clé",
-    "value": "Valeur",
+    "key": "Key",
+    "value": "Value",
     "parent execution": "Exécution parente",
     "original execution": "Exécution d'origine",
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
@@ -662,8 +682,8 @@
     "workspace": "Espace de travail",
     "resources": "Ressources",
     "usage": "Utilisation",
-    "namespaces": "Espaces de nom",
-    "tasks": "Tâches",
+    "namespaces": "Namespaces",
+    "tasks": "Tasks",
     "executions duration (in minutes)": "Durée totale d'exécutions (en minutes)",
     "task runs": "Exécutions de Task",
     "task runs duration (in minutes)": "Durée totale des exécutions de Task (en minutes)",
@@ -683,8 +703,8 @@
     },
     "invalid flow": "Flow invalide",
     "invalid yaml": "YAML invalide",
-    "inputs": "Entrées",
-    "input": "Entré",
+    "inputs": "Inputs",
+    "input": "Input",
     "variables": "Variables",
     "task_run_popup": {
       "open": "Détails de la Task",
@@ -706,8 +726,8 @@
       "exit_fullscreen": "Quitter le mode plein écran"
     },
     "variable_explorer": {
-      "task_outputs": "Sorties de Task",
-      "title": "Entrée/Sortie",
+      "task_outputs": "Outputs de la task",
+      "title": "Input/Output",
       "search_placeholder": "Rechercher une Key ou une value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Expression",
@@ -775,9 +795,9 @@
         "alt": "Icône des Blueprints"
       },
       "custom": "Blueprints personnalisés",
-      "flows": "Plans de Flow",
-      "apps": "Plans d'application",
-      "dashboards": "Tableaux de bord Blueprints",
+      "flows": "Blueprints de flow",
+      "apps": "Blueprints d'application",
+      "dashboards": "Blueprints de tableau de bord",
       "detail": {
         "category": "Type de catégorie",
         "links": "Liens et ressources",
@@ -795,7 +815,7 @@
     },
     "use": "Utiliser",
     "plugin_card": {
-      "tasks": "tâche | tâches",
+      "tasks": "task | tasks",
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
@@ -878,8 +898,8 @@
     "side-by-side": "côte à côte",
     "line-by-line": "ligne par ligne",
     "template": "Template",
-    "trigger": "Déclencheur",
-    "triggers": "Déclencheurs",
+    "trigger": "Trigger",
+    "triggers": "Triggers",
     "test_event": {
       "title": "Envoyer un événement de test",
       "description": "Cela publie la charge utile ci-dessous à l'URL du webhook du trigger {trigger}.",
@@ -931,7 +951,7 @@
     "Fold content lines": "Replier les multilignes",
     "Unfold content lines": "Déplier les multilignes",
     "Total": "Total",
-    "sub flow": "Sous-flow",
+    "sub flow": "Subflow",
     "execute": "Exécuter",
     "execute flow behaviour": "Exécuter le flow",
     "open in same tab": "Dans le même onglet",
@@ -1158,7 +1178,7 @@
     "choice": "Choix",
     "can not delete": "Impossible de supprimer cette task",
     "can not have less than 1 task": "Un flow doit avoir au moins une task. Ajoutez une autre task avant de supprimer celle-ci.",
-    "task id": "ID de tâche",
+    "task id": "ID de task",
     "taskid column details": "ID de la dernière tâche exécuté ainsi que son nombre de tentatives.",
     "flow already exists message": "Le flow <code>{id}</code> existe déjà dans le namespace <code>{namespace}</code>. Voulez-vous créer une nouvelle révision ?",
     "editor": "Éditeur",
@@ -1170,8 +1190,8 @@
     "flow metadata locked": "`id` et `namespace` ne peuvent pas être modifiés après la création d'un flow.",
     "avg": "Moyenne",
     "sum": "Somme",
-    "min": "Minimum",
-    "max": "Maximum",
+    "min": "Min",
+    "max": "Max",
     "bar": "Bar",
     "line": "Ligne",
     "metric": "Métrique",
@@ -1224,6 +1244,10 @@
     "trigger blocked policy check failed": "Les politiques de gouvernance n'ont pas pu être vérifiées.",
     "trigger blocked unknown": "Bloqué pour une raison inconnue.",
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger not toggleable": "Ce trigger n'est pas évalué par le Scheduler, désactivez-le dans la source du flow",
+    "bulk not toggleable warning": "{count} trigger(s) sélectionné(s) seront ignorés : le Scheduler ne les évalue pas, ils ne peuvent donc être désactivés que dans la source du Flow.",
+    "bulk none applied": "Aucun trigger n'a été affecté : aucun des triggers sélectionnés n'a pu être traité.",
+    "bulk partially applied": "{count} sur {requested} triggers ont été traités, les autres ont été ignorés.",
     "trigger enable dialog": {
       "title": "Activer le trigger",
       "bulk title": "Activer {count} triggers",
@@ -1387,8 +1411,8 @@
       },
       "notFound": "Ce plugin est introuvable.",
       "elementType": {
-        "tasks": "Tâche",
-        "triggers": "Déclencheur",
+        "tasks": "Task",
+        "triggers": "Trigger",
         "conditions": "Condition",
         "taskRunners": "Exécuteur de task",
         "charts": "Graphique",
@@ -1410,7 +1434,7 @@
       },
       "group": {
         "plugins": "Plugins ({count})",
-        "tasks": "Tâches ({count})",
+        "tasks": "Tasks ({count})",
         "blueprints": "Blueprints ({count})"
       },
       "overview": {
@@ -1846,7 +1870,7 @@
             "revision": "Révisions",
             "webhook": "Webhook",
             "schedule": "Planification",
-            "flowTrigger": "Déclencheurs de flow",
+            "flowTrigger": "Triggers de flow",
             "namespace": "Namespaces",
             "secret": "Secrets"
           }
@@ -1915,7 +1939,7 @@
     },
     "workerId": "Worker Id",
     "kv": {
-      "name": "Stockage de clés/valeurs",
+      "name": "KV Store",
       "type": "Type",
       "add": "Créer",
       "update": "Mettre à jour la valeur pour la clé '{key}'",
@@ -2057,7 +2081,7 @@
       "go_to_failure": "Aller à l'échec",
       "task_runs": "Exécutions de Task",
       "iteration": "Itération",
-      "value": "Valeur",
+      "value": "Value",
       "index": "Index",
       "index_of": "#{index} sur {total}",
       "execution": "Exécution",
@@ -2096,8 +2120,8 @@
       },
       "sections": {
         "deprecated": "Propriétés obsolètes",
-        "tasks": "Tâches",
-        "triggers": "Déclencheurs",
+        "tasks": "Tasks",
+        "triggers": "Triggers",
         "errors": "Gestionnaires d'erreurs",
         "afterExecution": "Après l'Exécution",
         "finally": "Enfin",
@@ -2108,13 +2132,13 @@
           "id": "ID de flow",
           "namespace": "Namespace",
           "description": "Description",
-          "inputs": "Entrées"
+          "inputs": "Inputs"
         },
         "general": {
           "retry": "Réessayer",
           "sla": "SLA",
-          "labels": "Étiquettes",
-          "outputs": "Sorties",
+          "labels": "Labels",
+          "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrence",
           "disabled": "Désactivé",
@@ -2461,6 +2485,13 @@
         "placeholder": "Dites-moi quoi construire…",
         "send": "Envoyer",
         "stop": "Arrêter",
+        "usage": {
+          "remaining": "{percent}% restant",
+          "help": "Part de la limite d'utilisation de l'IA de ce fournisseur restante dans la fenêtre actuelle.",
+          "warning": "Vous êtes proche de la limite d'utilisation de l'IA de ce fournisseur. Les requêtes sont refusées une fois la limite atteinte.",
+          "exceeded": "La limite d'utilisation de l'IA de ce fournisseur a été atteinte. Elle sera réinitialisée à la fin de la période actuelle.",
+          "exceededUntil": "La limite d'utilisation de l'IA de ce fournisseur a été atteinte. Elle sera réinitialisée le {when}."
+        },
         "mode": {
           "ask": "Demander",
           "edit": "Modifier",
@@ -2475,7 +2506,7 @@
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "Tableau de bord : {dashboard}",
           "execution": "Exécution : {id}",
-          "flow": "Flux : {flow}",
+          "flow": "Flow : {flow}",
           "namespace": "Namespace : {namespace}",
           "plugin": "Extension : {plugin}",
           "test": "Test : {test}"
@@ -2503,7 +2534,7 @@
           "planTitle": "Plan proposé",
           "actionTitle": "Action proposée",
           "approve": "Approuver",
-          "approveExecute": "Approuver et exécuter",
+          "approvePlan": "Approuver le plan",
           "reject": "Rejeter",
           "pending": "En attente d'approbation",
           "revise": "Répondre pour réviser"
@@ -2537,6 +2568,12 @@
           "docs": "Voir la documentation",
           "sendTooltip": "L'envoi est désactivé car aucun fournisseur AI n'est configuré.",
           "notSent": "Votre invite n'a pas été envoyée"
+        },
+        "mcpTip": {
+          "title": "Utilisez Kestra depuis Claude Code, Cursor et d'autres clients MCP",
+          "description": "En plus du Copilot, Kestra fournit un serveur MCP. Connectez-y un client MCP externe pour gérer vos flows et vos Executions à partir des outils que vous utilisez déjà.",
+          "docs": "Voir la documentation",
+          "dismiss": "Ne plus afficher"
         },
         "thinkingWords": [
           "Orchestration",
@@ -2593,6 +2630,10 @@
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"
+        },
+        "tray": {
+          "title": "Modifications en attente",
+          "applyFirst": "Appliquer le {flow} en premier"
         }
       }
     },
@@ -2707,7 +2748,7 @@
       "success_page": {
         "items": {
           "blueprints": {
-            "title": "Plans",
+            "title": "Blueprints",
             "description": "Modèles de workflow préconstruits pour des cas d'utilisation courants"
           },
           "slack": {
@@ -2824,8 +2865,8 @@
       "confirm_bar_excluded": "{count} autre correspondance ne sera pas modifiée. | {count} autres correspondances ne seront pas modifiées.",
       "confirm_bar_message": "Remplacer {matches} dans {flows} flows éditables. {skipped} flows en lecture seule seront ignorés.",
       "count_flows": "{count} flow | {count} flows",
-      "count_keys": "{count} clé | {count} clés",
-      "count_namespaces": "{count} espace de nom | {count} espaces de nom",
+      "count_keys": "{count} key | {count} keys",
+      "count_namespaces": "{count} namespace | {count} namespaces",
       "count_paths": "{count} chemin | {count} chemins",
       "count_resources": "{count} ressource | {count} ressources",
       "count_types": "{count} type | {count} types",
@@ -2871,7 +2912,8 @@
       "open_in_secrets": "Ouvrir dans les secrets",
       "options_aria": "Options de recherche",
       "path_only_hint": "Recherche uniquement le chemin du fichier, pas son contenu. Ne peut pas être remplacé.",
-      "preview_empty": "Sélectionnez un résultat pour l'afficher. Cliquez sur un flow dans la liste des résultats pour voir sa source.",
+      "preview_empty_title": "Sélectionnez un résultat pour l'afficher.",
+      "preview_empty_description": "Cliquez sur un flow dans la liste des résultats pour voir sa source.",
       "preview_error": "Échec du chargement de la source du flow",
       "previous_match": "Correspondance précédente",
       "rbac_banner": "{count} flows sont exclus du remplacement. Vous avez un accès en lecture mais pas en édition sur le {namespace}. Demandez à un administrateur de namespace la permission {permission} pour les inclure.",
@@ -2902,8 +2944,8 @@
       "scope": "Portée",
       "scope_all": "Toutes les sources",
       "scope_inputs": "Inputs",
-      "scope_tasks": "Tâches",
-      "scope_triggers": "Déclencheurs",
+      "scope_tasks": "Tasks",
+      "scope_triggers": "Triggers",
       "search_aria": "Rechercher la source du flow",
       "search_failed": "La recherche a échoué",
       "search_in": "Rechercher dans",
@@ -2926,7 +2968,7 @@
       "turn_off": "Désactiver {option}",
       "type_files": "Fichiers du namespace",
       "type_flows": "Flows",
-      "type_kv": "Stockage de clés/valeurs",
+      "type_kv": "Keys du KV Store",
       "type_meta": "{matches} · {resources}",
       "type_search_failed": "{type} n'a pas pu être recherché",
       "type_secrets": "Secrets",
@@ -2953,7 +2995,7 @@
       "chip_inserted": "Inséré dans le champ",
       "cluster_collapse_aria": "Réduire {id}",
       "cluster_expand_aria": "Développer {id} ({count} tasks)",
-      "collapsed_summary": "{count} tâches",
+      "collapsed_summary": "{count} tasks",
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "contexte : {name}",
@@ -3016,18 +3058,18 @@
       "lane_else": "Autre",
       "lane_errors": "Erreurs",
       "lane_finally": "Enfin",
-      "lane_tasks": "Tâches",
+      "lane_tasks": "Tasks",
       "lane_then": "Alors",
       "move_down": "Déplacer vers le bas",
       "move_up": "Déplacer vers le haut",
       "namespace_files": "Fichiers du namespace",
-      "namespace_kv": "Clés du KV Store",
+      "namespace_kv": "Keys du KV Store",
       "namespace_secrets": "Secrets",
       "no_data_matches": "Aucun élément ne correspond à votre filtre",
       "no_recent": "Aucun type de task récent pour l'instant",
       "no_task_results": "Aucun type de task correspondant.",
       "open_in_split": "Ouvrir en fractionné",
-      "output": "Sortie",
+      "output": "Output",
       "output_sub": "ce que cette tâche produit",
       "pick_task_type": "Choisir un type de task",
       "picker_more_results": "{count} de plus, affinez votre recherche",

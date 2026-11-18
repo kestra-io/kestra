@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -298,6 +299,31 @@ public class ServiceLivenessManagerTest {
         serviceLivenessManager.onSchedule(Instant.now());
         Mockito.verify(serviceLivenessUpdater, Mockito.never())
             .update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class));
+    }
+
+    @Test
+    void shouldKeepNewServiceRegisteredWhenHeartbeatOfPreviousServiceIsInFlight() throws Exception {
+        // Given
+        Service previous = newServiceForState(Service.ServiceState.RUNNING);
+        serviceLivenessManager.updateServiceInstance(previous, serviceInstanceFor(previous));
+        Service replacement = newServiceForState(Service.ServiceState.CREATED);
+
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenAnswer(invocation ->
+            {
+                // A service of the same type registers while this heartbeat is still being sent.
+                Thread registration = Thread.ofPlatform().start(() -> serviceLivenessManager.onServiceStateChangeEvent(new ServiceStateChangeEvent(replacement)));
+                registration.join(Duration.ofMillis(300));
+                return new ServiceStateTransition.Response(SUCCEEDED, invocation.getArgument(0));
+            });
+
+        // When
+        serviceLivenessManager.onSchedule(Instant.now());
+
+        // Then
+        Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(
+            () -> Assertions.assertEquals(replacement.getId(), serviceLivenessManager.allServiceInstances().getFirst().uid())
+        );
     }
 
     public static Service newServiceForState(final Service.ServiceState state) {

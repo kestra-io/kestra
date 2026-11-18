@@ -1,5 +1,5 @@
 <template>
-    <div class="topology-shell ks-topology">
+    <div ref="shell" class="topology-shell ks-topology">
         <FlowSummaryChip
             v-if="flowId && !isReadOnly && isAllowedEdit"
             class="topology-flow-bar"
@@ -113,8 +113,6 @@
                     v-bind="triggerProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                     @delete="emit(EVENTS.DELETE, $event)"
                     @edit="emit(EVENTS.EDIT, $event)"
                     @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
@@ -151,12 +149,9 @@
             <template #edge-edge="EdgeProps">
                 <EdgeNode
                     v-bind="EdgeProps"
-                    :yamlSource="source"
                     @add-task="emit(EVENTS.ADD_TASK, $event)"
                     @drag-over-edge="dropEdgeId = $event"
                     @drop-task="onDropTask"
-                    :isReadOnly="isReadOnly"
-                    :isAllowedEdit="isAllowedEdit"
                 />
             </template>
 
@@ -176,7 +171,7 @@
                     </ControlButton>
                 </KsTooltip>
                 <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                    <ControlButton @click.stop="fitView()">
+                    <ControlButton @click.stop="fitGraph()">
                         <Fullscreen />
                     </ControlButton>
                 </KsTooltip>
@@ -258,6 +253,7 @@
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
+    import {useViewportRefit} from "./composables/useViewportRefit"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LOOP_LANES_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY, ARTIFACT_COUNTS_INJECTION_KEY} from "./injectionKeys"
     import type {LoopLaneData} from "./utils/loopOutcome"
     import BasicNode from "./nodes/BasicNode.vue"
@@ -340,7 +336,7 @@
     })
 
     const vueFlowStore = useVueFlow(props.id)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const {getNodes, getEdges, getElements, onNodesInitialized, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -473,18 +469,21 @@
         generateGraph()
     })
 
+    const shell = ref<HTMLDivElement>()
+    const {fitGraph} = useViewportRefit(shell, vueFlowStore)
+
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
             initialFitDone.value = true
             // A caller passing its own starting zoom (Storybook, tests) means fitView() would
             // immediately discard it.
-            if (!props.defaultViewport) fitView()
+            if (!props.defaultViewport) fitGraph()
             return
         }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
-            fitView()
+            fitGraph()
         }
     })
 

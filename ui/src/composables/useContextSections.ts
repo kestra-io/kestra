@@ -4,6 +4,7 @@ import {fetchContextSections} from "../components/flows/contextSections/fetchCon
 import {OSS_CONTEXT_SECTION_PROVIDERS} from "../components/flows/contextSections/providers"
 import {useContextSectionsExtension} from "override/components/flows/contextSectionsExtension"
 import type {DataSection} from "../components/flows/contextSections/types"
+import {latestRequest} from "../utils/latestRequest"
 
 export function useContextSections(namespace: Ref<string | undefined>) {
     const {t, locale} = useI18n()
@@ -11,15 +12,15 @@ export function useContextSections(namespace: Ref<string | undefined>) {
 
     const providers = [...OSS_CONTEXT_SECTION_PROVIDERS, ...useContextSectionsExtension()]
 
-    let latestRequest = 0
+    const startSections = latestRequest()
     watch([namespace, locale], async ([ns]) => {
-        const requestId = ++latestRequest
+        const isLatest = startSections()
         if (!ns) {
             sections.value = []
             return
         }
         const result = await fetchContextSections(providers, {namespace: ns}, t)
-        if (requestId === latestRequest) sections.value = result
+        if (isLatest()) sections.value = result
     }, {immediate: true})
 
     return {sections}

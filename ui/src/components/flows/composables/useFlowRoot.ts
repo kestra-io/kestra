@@ -124,7 +124,8 @@ export function useFlowRoot() {
             if (!namespace || !id) return
             flowStore.loadDependencies({subtype: "FLOW", namespace, id}, true)
         },
-        {debounce: 1000},
+        // Immediate because the route guard loads the flow before this page mounts, so the source may never change.
+        {debounce: 1000, immediate: true},
     )
 
     function setupLifecycle() {

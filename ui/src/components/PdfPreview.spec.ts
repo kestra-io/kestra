@@ -157,6 +157,19 @@ describe("PdfPreview", () => {
         expect(mounted.wrapper.find("nav").text()).toContain("2")
     })
 
+    test("renders the previous page when paging back within range", async () => {
+        const mounted = mountPreview()
+        await startDocument(mounted)
+        await resolveRender(1)
+        await mounted.wrapper.findAll("button")[1].trigger("click")
+        await resolveRender(2)
+
+        await mounted.wrapper.findAll("button")[0].trigger("click")
+
+        expect(pdfDocument.getPage).toHaveBeenLastCalledWith(1)
+        expect(mounted.wrapper.find("nav").text()).toContain("1")
+    })
+
     test("queues a page requested while rendering and renders it after the current page finishes", async () => {
         const mounted = mountPreview()
         await startDocument(mounted)
@@ -165,9 +178,12 @@ describe("PdfPreview", () => {
         await mounted.wrapper.findAll("button")[1].trigger("click")
         await mounted.wrapper.findAll("button")[1].trigger("click")
 
+        expect(pdfDocument.getPage).not.toHaveBeenCalledWith(3)
+
         await resolveRender(2)
 
-        expect(pdfDocument.getPage).toHaveBeenCalledWith(3)
+        expect(pdfDocument.getPage).toHaveBeenLastCalledWith(3)
+        expect(pdfDocument.getPage).toHaveBeenCalledTimes(3)
         expect(mounted.wrapper.find("nav").text()).toContain("3")
     })
 
@@ -185,7 +201,12 @@ describe("PdfPreview", () => {
         expect(pdfDocument.getPage).toHaveBeenCalledWith(2)
         expect(pdfDocument.getPage).toHaveBeenNthCalledWith(2, 2)
         expect(pdfDocument.getPage).toHaveBeenNthCalledWith(3, 2)
+        expect(pdfDocument.getPage).toHaveBeenCalledTimes(3)
         expect(mounted.wrapper.find("nav").text()).toContain("2")
+
+        await resolveRender(2)
+
+        expect(pdfDocument.getPage).toHaveBeenCalledTimes(3)
     })
 
     test("logs a document load failure and keeps navigation hidden", async () => {

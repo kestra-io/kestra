@@ -289,7 +289,7 @@ public class FlowService {
             // The delete marker copies a draft's triggers, so use those of the last published revision.
             var scheduled = previous != null && !previous.isDeleted() ? previous : flow;
             ListUtils.emptyOnNull(scheduled.getTriggers()).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
             );
             return;
         }
@@ -312,7 +312,7 @@ public class FlowService {
 
         if (previous != null) {
             FlowService.findRemovedTrigger(flow, previous).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), flow.getRevision()))
             );
         }
 

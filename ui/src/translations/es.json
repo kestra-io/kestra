@@ -647,6 +647,47 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "no iniciado"
+      },
+      "diff": {
+        "added": "añadido",
+        "removed": "eliminado",
+        "changed": "modificado",
+        "renamed": "renombrado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "copilot_heading": "Cambio propuesto por Copilot",
+      "review_changes": "Revisar cambios",
+      "reject": "Rechazar este cambio",
+      "rejected": "Rechazados ({count})",
+      "undo_reject": "Deshacer",
+      "all_changes": "Todos los cambios",
+      "filter_label": "Mostrar cambios de un tipo",
+      "changes": "Sin cambios | {count} cambio | {count} cambios",
+      "unchanged": "{count} sin cambios",
+      "no_changes": "No ha cambiado nada",
+      "graph_error": "No se pudo dibujar el grafo. Abre la pestaña YAML para ver el cambio.",
+      "back": "Todos los cambios",
+      "before": "Antes",
+      "after": "Después",
+      "not_set": "sin definir",
+      "renamed_from": "renombrado desde {id}",
+      "moved_from": "movido de {from} a {to}",
+      "added_description": "Nuevo task en {section}.",
+      "removed_description": "Este task se elimina de {section}.",
+      "renamed_description": "El id cambió de {from} a {to}. El tipo y las propiedades son los mismos, pero las expresiones que leen el id anterior deben usar el nuevo.",
+      "moved_description": "Movido de {from} a {to}, así que ahora se ejecuta bajo otro bloque.",
+      "unchanged_description": "Sin cambios en este task.",
+      "status": {
+        "added": "Añadido",
+        "removed": "Eliminado",
+        "changed": "Modificado",
+        "renamed": "Renombrado",
+        "moved": "Movido",
+        "unchanged": "Sin cambios"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -2616,7 +2657,8 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando un cambio sugerido por la IA: el editor es de solo lectura hasta que lo apliques o lo descartes.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe. Los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
+          "applyDraftTitle": "Al aplicar se guarda una revisión en borrador.",
+          "applyDraftHint": "Todavía no se activa nada. Los triggers y subflows ignoran los borradores hasta que publiques.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",

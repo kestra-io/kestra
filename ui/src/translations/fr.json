@@ -647,6 +647,47 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "non démarré"
+      },
+      "diff": {
+        "added": "ajouté",
+        "removed": "supprimé",
+        "changed": "modifié",
+        "renamed": "renommé",
+        "moved": "déplacé"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graphe",
+      "yaml": "YAML",
+      "copilot_heading": "Modification proposée par Copilot",
+      "review_changes": "Examiner les modifications",
+      "reject": "Rejeter cette modification",
+      "rejected": "Rejetées ({count})",
+      "undo_reject": "Annuler",
+      "all_changes": "Toutes les modifications",
+      "filter_label": "Afficher les modifications d'un seul type",
+      "changes": "Aucune modification | {count} modification | {count} modifications",
+      "unchanged": "{count} inchangés",
+      "no_changes": "Rien n'a changé",
+      "graph_error": "Le graphe n'a pas pu être dessiné. Ouvrez l'onglet YAML pour voir la modification.",
+      "back": "Toutes les modifications",
+      "before": "Avant",
+      "after": "Après",
+      "not_set": "non défini",
+      "renamed_from": "renommé depuis {id}",
+      "moved_from": "déplacé de {from} vers {to}",
+      "added_description": "Nouveau task dans {section}.",
+      "removed_description": "Ce task est supprimé de {section}.",
+      "renamed_description": "L'id est passé de {from} à {to}. Le type et les propriétés sont identiques, mais les expressions qui lisent l'ancien id doivent utiliser le nouveau.",
+      "moved_description": "Déplacé de {from} vers {to} : il s'exécute désormais sous un autre bloc.",
+      "unchanged_description": "Aucune modification sur ce task.",
+      "status": {
+        "added": "Ajouté",
+        "removed": "Supprimé",
+        "changed": "Modifié",
+        "renamed": "Renommé",
+        "moved": "Déplacé",
+        "unchanged": "Inchangé"
       }
     },
     "show task logs": "Afficher les journaux de la tâche",
@@ -2616,7 +2657,8 @@
           "applied": "Appliqué",
           "previewBanner": "Examen d'une modification suggérée par l'IA : l'éditeur est en lecture seule jusqu'à ce que vous l'appliquiez ou l'ignoriez.",
           "applyTitle": "Appliquer le flow",
-          "applyConfirm": "Enregistrer le flow {namespace}.{id} comme révision brouillon pour relecture ? Il sera créé, ou une nouvelle révision brouillon sera ajoutée s'il existe déjà. Les brouillons ne sont pas pris en compte par les triggers ni les subflows tant qu'ils ne sont pas publiés.",
+          "applyDraftTitle": "L'application enregistre une révision brouillon.",
+          "applyDraftHint": "Rien n'est encore en production. Les triggers et les subflows ignorent les brouillons tant que vous n'avez pas publié.",
           "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
           "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
           "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",

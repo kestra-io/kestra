@@ -647,6 +647,47 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "non avviato"
+      },
+      "diff": {
+        "added": "aggiunto",
+        "removed": "rimosso",
+        "changed": "modificato",
+        "renamed": "rinominato",
+        "moved": "spostato"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "copilot_heading": "Modifica proposta da Copilot",
+      "review_changes": "Rivedi le modifiche",
+      "reject": "Rifiuta questa modifica",
+      "rejected": "Rifiutate ({count})",
+      "undo_reject": "Annulla",
+      "all_changes": "Tutte le modifiche",
+      "filter_label": "Mostra le modifiche di un solo tipo",
+      "changes": "Nessuna modifica | {count} modifica | {count} modifiche",
+      "unchanged": "{count} invariati",
+      "no_changes": "Non è cambiato nulla",
+      "graph_error": "Impossibile disegnare il grafo. Apri la scheda YAML per vedere la modifica.",
+      "back": "Tutte le modifiche",
+      "before": "Prima",
+      "after": "Dopo",
+      "not_set": "non impostato",
+      "renamed_from": "rinominato da {id}",
+      "moved_from": "spostato da {from} a {to}",
+      "added_description": "Nuovo task in {section}.",
+      "removed_description": "Questo task viene rimosso da {section}.",
+      "renamed_description": "L'id è cambiato da {from} a {to}. Tipo e proprietà sono gli stessi, ma le espressioni che leggono il vecchio id devono usare quello nuovo.",
+      "moved_description": "Spostato da {from} a {to}, quindi ora viene eseguito sotto un altro blocco.",
+      "unchanged_description": "Nessuna modifica in questo task.",
+      "status": {
+        "added": "Aggiunto",
+        "removed": "Rimosso",
+        "changed": "Modificato",
+        "renamed": "Rinominato",
+        "moved": "Spostato",
+        "unchanged": "Invariato"
       }
     },
     "show task logs": "Mostra task logs",
@@ -2616,7 +2657,8 @@
           "applied": "Applicato",
           "previewBanner": "Stai esaminando una modifica suggerita dall'IA: l'editor è di sola lettura finché non la applichi o la ignori.",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già. Le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
+          "applyDraftTitle": "L'applicazione salva una revisione bozza.",
+          "applyDraftHint": "Nulla va ancora in produzione. Trigger e subflow ignorano le bozze finché non pubblichi.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",

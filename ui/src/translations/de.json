@@ -647,6 +647,47 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "nicht gestartet"
+      },
+      "diff": {
+        "added": "hinzugefügt",
+        "removed": "entfernt",
+        "changed": "geändert",
+        "renamed": "umbenannt",
+        "moved": "verschoben"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graph",
+      "yaml": "YAML",
+      "copilot_heading": "Vom Copilot vorgeschlagene Änderung",
+      "review_changes": "Änderungen prüfen",
+      "reject": "Diese Änderung ablehnen",
+      "rejected": "Abgelehnt ({count})",
+      "undo_reject": "Rückgängig",
+      "all_changes": "Alle Änderungen",
+      "filter_label": "Änderungen einer Art anzeigen",
+      "changes": "Keine Änderungen | {count} Änderung | {count} Änderungen",
+      "unchanged": "{count} unverändert",
+      "no_changes": "Nichts geändert",
+      "graph_error": "Der Graph konnte nicht gezeichnet werden. Öffnen Sie den YAML-Tab, um die Änderung zu sehen.",
+      "back": "Alle Änderungen",
+      "before": "Vorher",
+      "after": "Nachher",
+      "not_set": "nicht gesetzt",
+      "renamed_from": "umbenannt von {id}",
+      "moved_from": "verschoben von {from} nach {to}",
+      "added_description": "Neuer task in {section}.",
+      "removed_description": "Dieser task wird aus {section} entfernt.",
+      "renamed_description": "Die id wurde von {from} in {to} geändert. Typ und Eigenschaften sind gleich, aber Ausdrücke, die die alte id lesen, müssen die neue verwenden.",
+      "moved_description": "Von {from} nach {to} verschoben, der task läuft jetzt also unter einem anderen Block.",
+      "unchanged_description": "Keine Änderung an diesem task.",
+      "status": {
+        "added": "Hinzugefügt",
+        "removed": "Entfernt",
+        "changed": "Geändert",
+        "renamed": "Umbenannt",
+        "moved": "Verschoben",
+        "unchanged": "Unverändert"
       }
     },
     "show task logs": "Task-Logs anzeigen",
@@ -2616,7 +2657,8 @@
           "applied": "Angewendet",
           "previewBanner": "Eine KI-vorgeschlagene Änderung wird angezeigt – der Editor ist schreibgeschützt, bis du sie anwendest oder verwirfst.",
           "applyTitle": "Flow anwenden",
-          "applyConfirm": "{namespace}.{id} als Entwurfsrevision zur Überprüfung speichern? Der Flow wird erstellt oder, falls er bereits existiert, um eine neue Entwurfsrevision ergänzt – Entwürfe werden von Triggern oder Subflows erst nach der Veröffentlichung berücksichtigt.",
+          "applyDraftTitle": "Beim Anwenden wird eine Entwurfsrevision gespeichert.",
+          "applyDraftHint": "Noch geht nichts live. Trigger und Subflows ignorieren Entwürfe, bis Sie veröffentlichen.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
           "applyError": "Der Flow konnte nicht angewendet werden. Bitte versuche es erneut.",
           "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuche es erneut.",

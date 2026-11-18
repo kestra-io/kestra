@@ -1,11 +1,18 @@
 <template>
     <div class="ks-change-review">
-        <div class="ks-change-review__head">
-            <KsText tag="h3" size="large" class="ks-change-review__heading">{{ heading }}</KsText>
+        <div v-if="heading || meta.length" class="ks-change-review__head">
+            <KsText v-if="heading" tag="h3" size="large" class="ks-change-review__heading">
+                {{ heading }}
+            </KsText>
             <KsText v-if="meta.length" size="small" type="secondary">{{ meta.join(" · ") }}</KsText>
         </div>
 
-        <div v-if="shownSegments.length" class="ks-change-review__bar" aria-hidden="true" data-test="change-review-bar">
+        <div
+            v-if="!hideBar && shownSegments.length"
+            class="ks-change-review__bar"
+            aria-hidden="true"
+            data-test="change-review-bar"
+        >
             <span v-for="segment in shownSegments" :key="segment.name ?? segment.label" :style="{flex: segment.value, background: KS_CHANGE_REVIEW_TONES[segment.tone].color}" />
         </div>
 
@@ -89,14 +96,15 @@
     import KsTag from "./KsTag/KsTag.vue"
 
     const props = withDefaults(defineProps<{
-        heading: string
+        heading?: string
         meta?: string[]
         segments?: KsChangeReviewSegment[]
         allLabel: string
         allCount: number
         filterLabel: string
         tabs: KsChangeReviewTab[]
-    }>(), {meta: () => [], segments: () => []})
+        hideBar?: boolean
+    }>(), {heading: "", meta: () => [], segments: () => []})
 
     const tab = defineModel<string>("tab", {required: true})
     const filter = defineModel<string>("filter", {default: KS_CHANGE_REVIEW_ALL})

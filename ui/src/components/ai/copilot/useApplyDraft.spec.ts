@@ -29,6 +29,9 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
+// The review in the confirm draws a topology graph, which needs the real design system.
+vi.mock("./CopilotDraftReview.vue", () => ({default: {}}))
+
 // The YAML goes through topology's real parser, so each test states its target in its own source.
 
 const createFlow = vi.fn().mockResolvedValue({})

@@ -647,6 +647,47 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "não iniciado"
+      },
+      "diff": {
+        "added": "adicionado",
+        "removed": "removido",
+        "changed": "alterado",
+        "renamed": "renomeado",
+        "moved": "movido"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "copilot_heading": "Alteração proposta pelo Copilot",
+      "review_changes": "Rever alterações",
+      "reject": "Rejeitar esta alteração",
+      "rejected": "Rejeitadas ({count})",
+      "undo_reject": "Anular",
+      "all_changes": "Todas as alterações",
+      "filter_label": "Mostrar alterações de um só tipo",
+      "changes": "Sem alterações | {count} alteração | {count} alterações",
+      "unchanged": "{count} sem alterações",
+      "no_changes": "Nada foi alterado",
+      "graph_error": "Não foi possível desenhar o grafo. Abra o separador YAML para ver a alteração.",
+      "back": "Todas as alterações",
+      "before": "Antes",
+      "after": "Depois",
+      "not_set": "não definido",
+      "renamed_from": "renomeado de {id}",
+      "moved_from": "movido de {from} para {to}",
+      "added_description": "Novo task em {section}.",
+      "removed_description": "Este task é removido de {section}.",
+      "renamed_description": "O id mudou de {from} para {to}. O tipo e as propriedades são os mesmos, mas as expressões que leem o id antigo têm de usar o novo.",
+      "moved_description": "Movido de {from} para {to}, pelo que agora é executado noutro bloco.",
+      "unchanged_description": "Sem alterações neste task.",
+      "status": {
+        "added": "Adicionado",
+        "removed": "Removido",
+        "changed": "Alterado",
+        "renamed": "Renomeado",
+        "moved": "Movido",
+        "unchanged": "Sem alterações"
       }
     },
     "show task logs": "Mostrar task logs",
@@ -2616,7 +2657,8 @@
           "applied": "Aplicado",
           "previewBanner": "A rever uma alteração sugerida pela IA. O editor é apenas de leitura até aplicares ou descartares a alteração.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir. Os rascunhos não são acionados por triggers nem subflows até serem publicados.",
+          "applyDraftTitle": "Aplicar guarda uma revisão de rascunho.",
+          "applyDraftHint": "Ainda nada fica ativo. Os triggers e subflows ignoram os rascunhos até publicar.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

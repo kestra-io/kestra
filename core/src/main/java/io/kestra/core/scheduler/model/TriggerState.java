@@ -287,7 +287,7 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState updateOnExecutionCreated(final Clock clock, final State.Type stateType) {
-        boolean disabled = getStopAfter() != null ? getStopAfter().contains(stateType) : isDisabled();
+        boolean disabled = isDisabled() || (getStopAfter() != null && getStopAfter().contains(stateType));
         return update(clock)
             .disabled(disabled)
             .lastTriggeredDate(clock.instant())
@@ -306,7 +306,7 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState updateOnExecutionTerminated(final Clock clock, final State.Type state) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
-        boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
+        boolean disabled = isDisabled() || (getStopAfter() != null && getStopAfter().contains(state));
 
         return update(clock)
             .disabled(disabled)

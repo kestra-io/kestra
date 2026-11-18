@@ -307,6 +307,7 @@
       "ongoing": "진행 중",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "실행 {count}개 삭제 중",
           "EXECUTION_KILL": "실행 {count}개 종료 중",
           "EXECUTION_PAUSE": "실행 {count}개 일시 중지 중",
           "EXECUTION_RESUME": "실행 {count}개 재개 중",
@@ -323,6 +324,25 @@
           "BACKFILL_PAUSE": "backfill {count}개 일시 중지 중",
           "BACKFILL_RESUME": "backfill {count}개 재개 중",
           "BACKFILL_DELETE": "backfill {count}개 삭제 중"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "{count}개 실행 삭제 요청됨",
+          "EXECUTION_KILL": "{count}개 실행에 대해 종료 요청됨 | {count}개 실행에 대해 종료 요청됨",
+          "EXECUTION_PAUSE": "{count}개 실행에 일시 중지 요청됨",
+          "EXECUTION_RESUME": "{count}개 실행 재개 요청됨 | {count}개 실행 재개 요청됨",
+          "EXECUTION_RESTART": "{count}개 실행 재시작 요청됨",
+          "EXECUTION_REPLAY": "{count}개 실행에 대한 Replay 요청됨",
+          "EXECUTION_FORCE_RUN": "{count}개 실행에 대해 강제 실행 요청됨 | {count}개 실행에 대해 강제 실행 요청됨",
+          "EXECUTION_UNQUEUE": "{count}개 실행에 대한 대기열 해제 요청됨",
+          "EXECUTION_CHANGE_STATUS": "{count}개 실행에 대한 상태 변경 요청됨",
+          "EXECUTION_SET_LABELS": "{count}개 실행에 대한 Label 업데이트 요청 | {count}개 실행에 대한 Label 업데이트 요청",
+          "TRIGGER_UNLOCK": "{count}개 트리거 잠금 해제 요청됨",
+          "TRIGGER_DELETE": "{count}개 트리거 삭제 요청됨",
+          "TRIGGER_DISABLE": "{count}개 트리거 비활성화 요청됨",
+          "TRIGGER_ENABLE": "{count}개 트리거에 대해 활성화 요청됨",
+          "BACKFILL_PAUSE": "{count}개의 백필에 일시 중지 요청됨 | {count}개의 백필에 일시 중지 요청됨",
+          "BACKFILL_RESUME": "{count}개의 백필 재개 요청됨 | {count}개의 백필 재개 요청됨",
+          "BACKFILL_DELETE": "{count}개의 백필 삭제 요청됨"
         },
         "processed": "{count}개 처리됨",
         "rejected": "{count}개 거부됨",
@@ -1224,6 +1244,10 @@
     "trigger blocked policy check failed": "거버넌스 정책을 확인할 수 없습니다.",
     "trigger blocked unknown": "알 수 없는 이유로 차단됨.",
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
+    "trigger not toggleable": "이 Trigger는 Scheduler가 평가하지 않습니다. Flow 소스에서 비활성화하세요.",
+    "bulk not toggleable warning": "선택된 트리거 {count}개가 건너뛰어집니다. 스케줄러가 이를 평가하지 않으므로 Flow 소스에서만 비활성화할 수 있습니다.",
+    "bulk none applied": "영향을 받은 트리거가 없습니다: 선택된 트리거 중 처리할 수 있는 것이 없습니다.",
+    "bulk partially applied": "{requested}개의 트리거 중 {count}개가 처리되었으며, 나머지는 건너뛰었습니다.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
       "bulk title": "{count}개의 triggers 활성화",
@@ -2381,6 +2405,9 @@
         "csv": "CSV로 내보내기"
       },
       "ignoredFilters": "{filters} 필터는 이 차트에 적용되지 않습니다. | {filters} 필터는 이 차트에 적용되지 않습니다.",
+      "dataFrom": "업데이트됨 {date}",
+      "dataUnavailable": "데이터를 사용할 수 없음",
+      "dataTruncated": "출력 파일이 처음 {rows}개 행으로 잘렸습니다. 자세한 내용은 문서를 참조하세요.",
       "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",
@@ -2458,6 +2485,13 @@
         "placeholder": "무엇을 만들까요?",
         "send": "보내기",
         "stop": "중지",
+        "usage": {
+          "remaining": "{percent}% 남음",
+          "help": "현재 창에서 이 공급자의 AI 사용량 제한 중 남은 비율입니다.",
+          "warning": "이 공급자의 AI 사용량 한도에 거의 도달했습니다. 한도에 도달하면 턴이 거부됩니다.",
+          "exceeded": "이 공급자의 AI 사용량 한도에 도달했습니다. 현재 기간이 종료되면 재설정됩니다.",
+          "exceededUntil": "이 공급자의 AI 사용량 한도에 도달했습니다. {when}에 재설정됩니다."
+        },
         "mode": {
           "ask": "질문하기",
           "edit": "편집",
@@ -2500,7 +2534,7 @@
           "planTitle": "제안된 계획",
           "actionTitle": "제안된 조치",
           "approve": "승인",
-          "approveExecute": "승인 및 실행",
+          "approvePlan": "계획 승인",
           "reject": "거부",
           "pending": "승인 대기 중",
           "revise": "수정하려면 답장"
@@ -2531,7 +2565,15 @@
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
           "detail": "이 인스턴스에 구성된 AI provider가 없습니다. AI Copilot을 활성화하려면 Kestra 구성 파일에서 AI provider를 구성하세요.",
-          "docs": "문서 보기"
+          "docs": "문서 보기",
+          "sendTooltip": "AI provider가 구성되지 않아 전송이 비활성화되었습니다.",
+          "notSent": "프롬프트가 전송되지 않았습니다."
+        },
+        "mcpTip": {
+          "title": "Claude Code, Cursor 및 기타 MCP 클라이언트에서 Kestra 사용",
+          "description": "Copilot과 함께 Kestra는 MCP 서버를 제공합니다. 외부 MCP 클라이언트를 연결하여 이미 사용 중인 도구에서 flow 및 execution을 관리하세요.",
+          "docs": "문서 보기",
+          "dismiss": "다시 표시 안 함"
         },
         "thinkingWords": [
           "오케스트레이션",
@@ -2588,6 +2630,10 @@
           },
           "valid": "유효",
           "invalid": "수정 필요"
+        },
+        "tray": {
+          "title": "보류 중인 변경 사항",
+          "applyFirst": "먼저 {flow} 적용"
         }
       }
     },
@@ -2873,7 +2919,8 @@
       "open_in_secrets": "비밀에서 열기",
       "options_aria": "검색 옵션",
       "path_only_hint": "파일 경로만 검색하고 내용은 검색하지 않습니다. 바꿀 수 없습니다.",
-      "preview_empty": "미리 볼 결과를 선택하세요. 결과 목록에서 flow를 클릭하면 소스를 확인할 수 있습니다.",
+      "preview_empty_title": "미리 볼 결과를 선택하세요.",
+      "preview_empty_description": "결과 목록에서 flow를 클릭하면 소스를 확인할 수 있습니다.",
       "preview_error": "flow 소스를 불러오지 못했습니다",
       "previous_match": "이전 일치",
       "rbac_banner": "{count}개의 flow가 교체에서 제외되었습니다. {namespace}에 대한 읽기 권한은 있지만 편집 권한은 없습니다. 포함하려면 namespace 관리자에게 {permission} 권한을 요청하세요.",

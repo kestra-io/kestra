@@ -44,12 +44,11 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import {getPluginReleaseUrl, pluginDisplayTitle, pluginElementClasses, type Plugin} from "../../utils/pluginUtils"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
+    import type {PluginCatalogEntry} from "override/components/plugins/pluginCatalogExtension"
     import PluginCatalogTableName from "./PluginCatalogTableName.vue"
 
-    defineOptions({inheritAttrs: false})
-
     const props = defineProps<{
-        plugins: Plugin[]
+        entries: PluginCatalogEntry[]
     }>()
 
     const route = useRoute()
@@ -57,7 +56,9 @@
     const currentPage = ref(1)
     const pageSize = ref(25)
 
-    const pageRows = computed(() => props.plugins
+    const plugins = computed<Plugin[]>(() => props.entries.flatMap(({plugin}) => plugin ? [plugin] : []))
+
+    const pageRows = computed(() => plugins.value
         .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
         .map(plugin => {
             const enrichment = enrichmentStore.getEnrichment(plugin)
@@ -72,7 +73,7 @@
             }
         }))
 
-    watch(() => props.plugins.map(plugin => plugin.name).sort().join(), () => {
+    watch(() => plugins.value.map(plugin => plugin.name).sort().join(), () => {
         currentPage.value = 1
     })
 </script>

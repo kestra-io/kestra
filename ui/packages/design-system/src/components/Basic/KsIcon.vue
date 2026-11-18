@@ -29,7 +29,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElIcon, type Placement} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -43,7 +44,7 @@
         color?: string
         tooltip?: string
         placement?: Placement
-    }>()
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

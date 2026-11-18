@@ -1,7 +1,7 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
+import {asProblem, useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -17,6 +17,7 @@ import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../compone
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
+import {latestRequest} from "../utils/latestRequest"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
@@ -221,7 +222,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
-        latestValidation++
+        startValidation()
         setValidationErrors(undefined)
 
         return activeDashboard.value
@@ -257,12 +258,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const validation = ++latestValidation
-        const isLatest = () => validation === latestValidation
+        const isLatest = startValidation()
         try {
             const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
@@ -283,6 +283,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return data
         } catch (e: unknown) {
             if (handledIf(e, [404])) return undefined
+            if (handledIf(e, [410, 400])) return {results: [], total: 0, warning: asProblem(e)?.detail}
             throw e
         }
     }

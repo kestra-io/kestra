@@ -37,7 +37,6 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -53,7 +52,6 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -75,7 +73,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.security.InternalCallContext;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
@@ -106,7 +103,9 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionCreationService;
+import io.kestra.webserver.services.ExecutionDeletionService;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.ExecutionReplayService;
 import io.kestra.webserver.services.SearchableDataFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
@@ -117,6 +116,8 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.models.api.Pagination;
+import io.kestra.webserver.models.api.UnsortedPagination;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Value;
@@ -144,7 +145,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -178,7 +178,6 @@ public class ExecutionController {
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
     private static final Duration EXECUTION_LOOKUP_DELAY = Duration.ofMillis(500);
     private static final long EXECUTION_LOOKUP_RETRIES = 20;
-    private static final List<String> REPLAY_IGNORED_CHANGED_ATTRIBUTES = List.of("description", "retry", "timeout", "workerSelector", "allowFailure", "allowWarning");
     private static final Pattern NAMESPACE_FILE_REVISION = Pattern.compile("(.+)\\.v(\\d+)");
     private static final Duration FOLLOW_HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
     static final String FOLLOW_HEARTBEAT_ID = "heartbeat";
@@ -195,6 +194,9 @@ public class ExecutionController {
 
     @Inject
     private FlowService flowService;
+
+    @Inject
+    private ExecutionReplayService executionReplayService;
 
     @Inject
     private NamespaceService namespaceService;
@@ -222,6 +224,9 @@ public class ExecutionController {
 
     @Inject
     private ExecutionOutputService executionOutputService;
+
+    @Inject
+    private ExecutionDeletionService executionDeletionService;
 
     @Inject
     private ExecutionStreamingService streamingService;
@@ -340,14 +345,7 @@ public class ExecutionController {
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
     public PagedResults<ApiLightExecution> searchExecutions(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
-        @Parameter(
-            description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
-                @ExampleObject(name = "Sort by namespace in descending order", value = "namespace:desc"),
-            }
-        ) @Nullable @QueryValue List<String> sort,
+        @Valid @RequestBean Pagination paging,
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -357,7 +355,7 @@ public class ExecutionController {
     ) {
         var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
-            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            paging.toPageable(executionRepository.sortMapping()),
             tenantId,
             searchableDataFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
@@ -536,21 +534,24 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "202", description = "Accepted, when async is true", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
+        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage,
+        @Parameter(description = "Whether to delete in the background, tracked by a notification", required = false) @QueryValue(defaultValue = "false") Boolean async) throws IOException {
         List<Execution> executions = getExecutionsByIds(executionsId, "be deleted");
-        return deleteExecutions(BulkExecutionSource.of(executions), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+        return deleteExecutions(BulkExecutionSource.of(executions), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage, async);
     }
 
     @Delete(uri = "/by-query")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "202", description = "Accepted, when async is true", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
@@ -561,12 +562,13 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        return deleteExecutions(getExecutionsByQuery(filters), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+        @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage,
+        @Parameter(description = "Whether to delete in the background, tracked by a notification", required = false) @QueryValue(defaultValue = "false") Boolean async) throws IOException {
+        return deleteExecutions(getExecutionsByQuery(filters), includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage, async);
     }
 
     private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
-        try {
+        try (PropagatedContext.Scope _ = Actor.propagate(actorResolver.resolve())) {
             executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
         } catch (RuntimeException e) {
             log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
@@ -574,7 +576,7 @@ public class ExecutionController {
         executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage);
     }
 
-    private HttpResponse<?> deleteExecutions(BulkExecutionSource source, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage) throws IOException {
+    private HttpResponse<?> deleteExecutions(BulkExecutionSource source, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage, Boolean async) throws IOException {
         List<String> executionIds = prepareBulkItems(
             source,
             BulkOperation.DELETE,
@@ -593,18 +595,29 @@ public class ExecutionController {
         );
 
         String tenantId = tenantService.resolveTenant();
-        executionIds.forEach(
-            throwConsumer(
-                executionId -> {
-                    Optional<Execution> execution = executionRepository.findById(tenantId, executionId);
-                    if (execution.isPresent()) {
-                        deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
-                    }
-                }
-            )
-        );
+        Rethrow.ConsumerChecked<String, IOException> delete = executionId ->
+        {
+            Optional<Execution> execution = executionRepository.findById(tenantId, executionId);
+            if (execution.isPresent()) {
+                deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
+            }
+        };
 
-        return HttpResponse.ok(BulkResponse.builder().count(executionIds.size()).build());
+        if (!async) {
+            executionIds.forEach(throwConsumer(delete));
+
+            return HttpResponse.ok(BulkResponse.builder().count(executionIds.size()).build());
+        }
+
+        List<BulkItem> items = executionIds.stream()
+            .map(executionId -> new BulkItem(executionId, (opId, actor) -> executionDeletionService.deleteAsync(tenantId, executionId, opId, actor, () -> delete.accept(executionId))))
+            .toList();
+        try {
+            return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_DELETE, items);
+        } catch (QueueException e) {
+            // submitNotifiedBatchAction's signature is shared with queue-based bulk actions; deletion never emits onto a queue, so this can never happen.
+            throw new IllegalStateException(e);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -613,9 +626,8 @@ public class ExecutionController {
     public PagedResults<ApiLightExecution> searchExecutionsByFlowId(
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
+        @Valid @RequestBean UnsortedPagination paging) {
+        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, paging.toPageable());
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))
             .toList();
@@ -1406,7 +1418,7 @@ public class ExecutionController {
             description = "Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.", deprecated = true
         ) @Nullable @QueryValue Integer revision) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
-        this.controlRevision(execution, revision);
+        executionReplayService.controlRevision(execution, revision);
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
@@ -1500,13 +1512,9 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        controlRevision(execution, revision);
-        controlReplayable(execution, taskRunId, revision);
+        executionReplayService.validateReplay(execution, taskRunId, revision);
 
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
-
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1542,14 +1550,12 @@ public class ExecutionController {
         return MultipartUtils.guard(inputs, () -> {
             Execution current = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-            controlRevision(current, revision);
-            controlReplayable(current, taskRunId, revision);
+            Flow flow = executionReplayService.validateReplay(current, taskRunId, revision);
 
-            Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
-            ExecutionCreationService.controlDraftExecutableAs(flow, current.getKind());
+            String newExecutionId = IdUtils.create();
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            return flowInputOutput.readExecutionInputs(flow, current.toBuilder().id(newExecutionId).build(), inputs)
+                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints)));
         });
     }
 
@@ -1567,23 +1573,18 @@ public class ExecutionController {
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        controlRevision(execution, revision);
-        controlReplayable(execution, taskRunId, revision);
-
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
-        ExecutionCreationService.controlDraftExecutableAs(flow, execution.getKind());
+        executionReplayService.validateReplay(execution, taskRunId, revision);
 
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var newExecutionId = IdUtils.create();
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();
@@ -1659,175 +1660,6 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId).withActor(actor));
-    }
-
-    private void controlReplayable(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws InternalException {
-        // a replay inherits its source's owner label, so a colleague's Playground run would land in their session
-        if (ExecutionKind.PLAYGROUND == execution.getKind() && !playgroundService.isCallersRun(execution)) {
-            throw new NoSuchElementException("Unable to find the Playground run '%s'.".formatted(execution.getId()));
-        }
-        State state = execution.getState();
-        // the Playground replays its own execution that is suspended on a breakpoint to reuse the tasks already run
-        boolean isSuspendedPlayground = ExecutionKind.PLAYGROUND == execution.getKind() && (state.isBreakpoint() || state.isPaused());
-        if (!state.isTerminated() && !isSuspendedPlayground) {
-            throw new ConflictException(
-                "Cannot replay execution: current state is '%s', expected terminated.".formatted(state.getCurrent())
-            );
-        }
-
-        // if we want to replay from a taskrun to a different revision, we must check that both revisions are compatible
-        // TODO this will load two times the flow as controlRevision already loaded it once and is called just before
-        if (taskRunId != null && revision != null && !execution.getFlowRevision().equals(revision)) {
-            Flow executionflow = this.flowRepository.findByExecution(execution);
-            Flow newFlow = this.flowRepository.findById(
-                execution.getTenantId(),
-                execution.getNamespace(),
-                execution.getFlowId(),
-                Optional.of(revision)
-            ).orElseThrow(FlowNotFoundException::new);
-            TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
-
-            // 1. refuse if any task prior to this taskrun changed, looking inside flowable tasks recursively
-            controlReplayTasksUnchanged(executionflow.getTasks(), newFlow.getTasks(), taskRun.getTaskId(), taskRunId, revision);
-
-            // 2. refuse if any input definition is changed
-            for (Input<?> originalInput : ListUtils.emptyOnNull(executionflow.getInputs())) {
-                Input<?> newInput = ListUtils.emptyOnNull(newFlow.getInputs()).stream()
-                    .filter(input -> input.getId().equals(originalInput.getId()))
-                    .findFirst()
-                    .orElse(null);
-
-                if (newInput == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been removed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-
-                if (!originalInput.getType().equals(newInput.getType())) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' type has changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-
-                if (!Objects.equals(originalInput.getDefaults(), newInput.getDefaults())) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults have changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalInput.getId())
-                    );
-                }
-            }
-
-            // 3. Refuse if an input has been added
-            for (Input<?> newInput : ListUtils.emptyOnNull(newFlow.getInputs())) {
-                Input<?> originalInput = ListUtils.emptyOnNull(executionflow.getInputs()).stream()
-                    .filter(input -> input.getId().equals(newInput.getId()))
-                    .findFirst()
-                    .orElse(null);
-
-                if (originalInput == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been added. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, newInput.getId())
-                    );
-                }
-            }
-
-            // 4. refuse if any variable definition changed
-            for (Map.Entry<String, Object> originalVar : MapUtils.emptyOnNull(executionflow.getVariables()).entrySet()) {
-                Object newVar = MapUtils.emptyOnNull(newFlow.getVariables()).get(originalVar.getKey());
-
-                if (newVar == null) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has been removed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalVar.getKey())
-                    );
-                }
-
-                if (!originalVar.getValue().equals(newVar)) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has changed. Replay the whole execution instead."
-                            .formatted(taskRunId, revision, originalVar.getKey())
-                    );
-                }
-            }
-        }
-    }
-
-    // A flowable containing the task to replay from is compared without its children, which are then compared recursively.
-    private boolean controlReplayTasksUnchanged(List<Task> originalTasks, List<Task> newTasks, String targetTaskId, String taskRunId, Integer revision) {
-        for (int i = 0; i < originalTasks.size(); i++) {
-            Task originalTask = originalTasks.get(i);
-            Task newTask = newTasks.size() > i ? newTasks.get(i) : null;
-            if (newTask == null) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-            if (!originalTask.getId().equals(newTask.getId())) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been moved. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-            if (originalTask.getId().equals(targetTaskId)) {
-                return true;
-            }
-            if (!originalTask.getType().equals(newTask.getType())) {
-                throw new ConflictException(
-                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' type has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                );
-            }
-
-            boolean isFlowable = originalTask.isFlowable();
-            Map<String, Object> originalTaskAsMap = JacksonMapper.toMap(originalTask);
-            Map<String, Object> newTaskAsMap = JacksonMapper.toMap(newTask);
-            originalTaskAsMap.forEach((key, value) ->
-            {
-                if (REPLAY_IGNORED_CHANGED_ATTRIBUTES.contains(key) || (isFlowable && containsTask(value))) {
-                    return;
-                }
-                if (!Objects.equals(value, newTaskAsMap.get(key))) {
-                    throw new ConflictException(
-                        "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
-                    );
-                }
-            });
-
-            if (isFlowable && controlReplayTasksUnchanged(((FlowableTask<?>) originalTask).allChildTasks(), ((FlowableTask<?>) newTask).allChildTasks(), targetTaskId, taskRunId, revision)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // A serialized task is a map holding both an id and a type.
-    private static boolean containsTask(Object value) {
-        if (value instanceof Map<?, ?> map) {
-            return (map.containsKey("id") && map.containsKey("type")) || map.values().stream().anyMatch(ExecutionController::containsTask);
-        }
-        if (value instanceof Collection<?> collection) {
-            return collection.stream().anyMatch(ExecutionController::containsTask);
-        }
-        return false;
-    }
-
-    private void controlRevision(Execution execution, Integer revision) {
-        if (revision != null) {
-            Optional<Flow> flowRevision = this.flowRepository.findById(
-                execution.getTenantId(),
-                execution.getNamespace(),
-                execution.getFlowId(),
-                Optional.of(revision)
-            );
-
-            if (flowRevision.isEmpty()) {
-                throw new NoSuchElementException(
-                    "Unable to find revision " + revision +
-                        " on flow " + execution.getNamespace() + "." + execution.getFlowId()
-                );
-            }
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -3319,7 +3151,7 @@ public class ExecutionController {
      * Looks the execution up without blocking a thread, retrying for up to 10 seconds as it may not be indexed yet.
      * Emits a 404 {@link HttpStatusException} when it never shows up.
      */
-    private Mono<Execution> awaitExecution(String tenant, String executionId) {
+    protected Mono<Execution> awaitExecution(String tenant, String executionId) {
         return Mono.defer(() -> Mono.justOrEmpty(executionRepository.findById(tenant, executionId)))
             .subscribeOn(Schedulers.boundedElastic())
             .switchIfEmpty(Mono.error(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution " + executionId)))

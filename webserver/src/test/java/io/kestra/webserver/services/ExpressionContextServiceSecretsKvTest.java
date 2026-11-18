@@ -14,7 +14,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
-import io.kestra.core.secret.SecretService;
+import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;
@@ -43,7 +43,7 @@ class ExpressionContextServiceSecretsKvTest {
     private RunContextCache runContextCache;
     @Mock
     @SuppressWarnings("rawtypes")
-    private SecretService secretService;
+    private SecretListingService secretListingService;
     @Mock
     private KVStoreService kvStoreService;
     @Mock
@@ -58,7 +58,7 @@ class ExpressionContextServiceSecretsKvTest {
         String tenantId = "tenant-42";
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.ownAndInheritedSecrets(eq(tenantId), any())).thenReturn(
+        when(secretListingService.listSecretKeys(eq(tenantId), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("TENANT_SECRET"))
         );
         KVStore kvStore = mock(KVStore.class);
@@ -70,7 +70,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStoreService.get(eq(tenantId), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         // Simulate what AiService.buildPebbleExpressions does after parsing YAML with no tenantId:
@@ -86,7 +86,7 @@ class ExpressionContextServiceSecretsKvTest {
         ExpressionContext result = service.buildExpressionContext(flow, null);
 
         // Then — downstream services receive the correct tenantId, not null
-        verify(secretService).ownAndInheritedSecrets(eq(tenantId), any());
+        verify(secretListingService).listSecretKeys(eq(tenantId), any());
         verify(kvStoreService).get(eq(tenantId), any());
 
         List<String> secrets = result.categories().get(ExpressionCategory.SECRETS);
@@ -102,7 +102,7 @@ class ExpressionContextServiceSecretsKvTest {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
+        when(secretListingService.listSecretKeys(any(), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("DB_PASSWORD", "API_KEY"))
         );
         KVStore kvStore = mock(KVStore.class);
@@ -110,7 +110,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         Flow flow = Flow.builder()
@@ -136,7 +136,7 @@ class ExpressionContextServiceSecretsKvTest {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(Map.of());
+        when(secretListingService.listSecretKeys(any(), any())).thenReturn(Map.of());
 
         KVStore kvStore = mock(KVStore.class);
         when(kvStore.list()).thenReturn(
@@ -148,7 +148,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         Flow flow = Flow.builder()
@@ -174,7 +174,7 @@ class ExpressionContextServiceSecretsKvTest {
         // Given — own namespace has a secret, parent namespace has another
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
+        when(secretListingService.listSecretKeys(any(), any())).thenReturn(
             Map.of(
                 "io.kestra", Set.of("PARENT_SECRET"),
                 "io.kestra.test", Set.of("OWN_SECRET")
@@ -185,7 +185,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         Flow flow = Flow.builder()
@@ -214,7 +214,7 @@ class ExpressionContextServiceSecretsKvTest {
             )
         );
 
-        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
+        when(secretListingService.listSecretKeys(any(), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("SECRET_A", "SECRET_B"))
         );
 
@@ -228,7 +228,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         Flow flow = Flow.builder()
@@ -263,7 +263,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(pebbleExpressionService.functions()).thenReturn(List.of());
 
         ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
         );
 
         Flow flow = Flow.builder()
@@ -279,7 +279,7 @@ class ExpressionContextServiceSecretsKvTest {
         );
 
         // Then — backends never queried
-        verify(secretService, never()).ownAndInheritedSecrets(any(), any());
+        verify(secretListingService, never()).listSecretKeys(any(), any());
         verify(kvStoreService, never()).get(any(), any());
         verify(namespaceFactory, never()).of(any(), any(), any());
 

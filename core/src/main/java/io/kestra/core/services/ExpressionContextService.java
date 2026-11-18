@@ -18,7 +18,7 @@ import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
-import io.kestra.core.secret.SecretService;
+import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
@@ -75,7 +75,7 @@ public class ExpressionContextService {
     private final PebbleExpressionService pebbleExpressionService;
     private final RunContextCache runContextCache;
     @SuppressWarnings("rawtypes")
-    private final SecretService secretService;
+    private final SecretListingService secretListingService;
     private final KVStoreService kvStoreService;
     private final StorageInterface storageInterface;
     private final NamespaceFactory namespaceFactory;
@@ -86,14 +86,14 @@ public class ExpressionContextService {
         JsonSchemaGenerator jsonSchemaGenerator,
         PebbleExpressionService pebbleExpressionService,
         RunContextCache runContextCache,
-        SecretService secretService,
+        SecretListingService secretListingService,
         KVStoreService kvStoreService,
         StorageInterface storageInterface,
         NamespaceFactory namespaceFactory) {
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.pebbleExpressionService = pebbleExpressionService;
         this.runContextCache = runContextCache;
-        this.secretService = secretService;
+        this.secretListingService = secretListingService;
         this.kvStoreService = kvStoreService;
         this.storageInterface = storageInterface;
         this.namespaceFactory = namespaceFactory;
@@ -437,7 +437,7 @@ public class ExpressionContextService {
     @SuppressWarnings("unchecked")
     private List<String> buildSecrets(Flow flow) {
         try {
-            Map<String, Set<String>> inherited = secretService.ownAndInheritedSecrets(
+            Map<String, Set<String>> inherited = secretListingService.listSecretKeys(
                 flow.getTenantId(), flow.getNamespace()
             );
             return inherited.values().stream()

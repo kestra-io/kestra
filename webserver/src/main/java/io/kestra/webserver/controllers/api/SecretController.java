@@ -6,7 +6,7 @@ import java.util.List;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.secret.SecretService;
+import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.Pagination;
@@ -31,7 +31,7 @@ public class SecretController<META extends ApiSecretMeta> {
     protected TenantService tenantService;
 
     @Inject
-    protected SecretService<String> secretService;
+    protected SecretListingService<String> secretListingService;
 
     protected String sortMapper(String key) {
         if (key != null && key.equals("key")) {
@@ -50,7 +50,7 @@ public class SecretController<META extends ApiSecretMeta> {
 
         Pageable pageable = paging.toPageable(this::sortMapper);
 
-        ArrayListTotal<String> items = secretService.list(pageable, tenantId, filters);
+        ArrayListTotal<String> items = secretListingService.list(pageable, tenantId, filters);
         //noinspection unchecked
         return HttpResponse.ok(
             (ApiSecretListResponse<META>) new ApiSecretListResponse<>(

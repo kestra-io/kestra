@@ -66,6 +66,7 @@ import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.services.WorkerQueueService;
@@ -216,6 +217,7 @@ public final class ExecutorTestHarness {
             taskOutputRepository,
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
+            Mockito.mock(NamespaceService.class),
             new TaskOutputConfiguration(-1)
         );
         this.executionOutputService = new ExecutionOutputService(
@@ -223,6 +225,7 @@ public final class ExecutorTestHarness {
             Mockito.mock(SearchableDataRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
+            Mockito.mock(NamespaceService.class),
             new ExecutionOutputConfiguration(-1)
         );
         // Real Pebble engine without Micronaut: the mocked ApplicationContext returns no Extension

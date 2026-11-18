@@ -29,7 +29,7 @@ dependencies {
     def jacksonVersion = "2.23.0"
     def jacksonAnnotationsVersion = "2.23"
     def jugVersion = "5.2.0"
-    def langchain4jVersion = "1.22.0"
+    def langchain4jVersion = "1.23.0"
     def langchain4jCommunityVersion = "1.23.0-beta33"
     def jettyVersion = "12.0.41" // Wiremock uses an older version as Micronaut
 
@@ -48,7 +48,7 @@ dependencies {
     api platform('com.google.cloud:libraries-bom:26.93.0')
     api platform("io.grpc:grpc-bom:$grpcVersion")
     api platform("com.azure:azure-sdk-bom:1.3.9")
-    api platform('software.amazon.awssdk:bom:2.57.12')
+    api platform('software.amazon.awssdk:bom:2.57.13')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")

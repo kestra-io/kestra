@@ -9,6 +9,7 @@
         </KsCheckbox>
         <KsButtonGroup>
             <KsButton
+                data-test="bulk-select-all"
                 :type="selectAll ? 'primary' : 'default'"
                 @click="toggleAll"
                 v-if="total !== undefined && selectionCount < total"

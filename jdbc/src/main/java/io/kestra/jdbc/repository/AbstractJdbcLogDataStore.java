@@ -47,6 +47,9 @@ import lombok.Getter;
 import lombok.Setter;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
+
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
@@ -163,13 +166,33 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
         return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public Page<KeyedLog> findWithKeys(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
+        ArrayListTotal<KeyedLog> keyedLogs = this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            SelectConditionStep<Record> select = (SelectConditionStep) context
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(condition);
+
+            return this.jdbcRepository.fetchPage(context, select, pageable, record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)));
+        });
+        return toOffsetPage(keyedLogs, pageable);
+    }
+
+    private static Condition withDefaultKind(@Nullable List<QueryFilter> filters, Condition condition) {
+        if (QueryFilter.hasField(filters, QueryFilter.Field.KIND) || QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
+            return condition;
+        }
+        return NORMAL_KIND_CONDITION.and(condition);
     }
 
     /**
@@ -177,7 +200,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
      * Wrap the {@link ArrayListTotal} produced by the shared paging helpers into a Micronaut {@link Page}
      * carrying that total, so the interface can also expose cursor pages from external stores.
      */
-    private static Page<LogEntry> toOffsetPage(ArrayListTotal<LogEntry> result, Pageable pageable) {
+    private static <T> Page<T> toOffsetPage(ArrayListTotal<T> result, Pageable pageable) {
         return Page.of(result, pageable, result.getTotal());
     }
 
@@ -203,12 +226,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
 
@@ -219,11 +237,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         Instant afterTimestamp,
         @Nullable String afterKey,
         int pageSize) {
-        // Same default-kind rule as findAsync: NORMAL only unless a KIND or executionId filter is present.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
 
         // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
         // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
@@ -483,18 +497,38 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
+        deleteByFiltersAndCount(tenantId, filters);
+    }
+
+    @Override
+    public OptionalInt deleteByFiltersAndCount(String tenantId, List<QueryFilter> filters) {
         if (!canPurge()) {
-            return;
+            return OptionalInt.of(0);
         }
-        this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        return OptionalInt.of(this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
 
             var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
-            delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+            delete = delete.and(withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG)));
 
             return delete.execute();
-        });
+        }));
+    }
+
+    @Override
+    public int deleteByIds(String tenantId, List<String> ids) {
+        if (!canPurge() || ListUtils.isEmpty(ids)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .delete(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(KEY_FIELD.in(ids))
+                .execute()
+        );
     }
 
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Manifest;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,10 @@ public class RegisteredPlugin {
     public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
     public static final String FILE_RENDERERS_GROUP_NAME = "file-renderers";
     public static final String QUEUE_FACTORIES_GROUP_NAME = "queue-factories";
+
+    private static final Pattern CSS_COLOR_PAINT = Pattern.compile(
+        "(?i)\\b(?:fill|stroke|stop-color)\\s*:\\s*(?!(?:none|currentColor|inherit|transparent)\\b)[^;}\\s\"']"
+    );
 
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
@@ -374,7 +379,11 @@ public class RegisteredPlugin {
         String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
         String base64 = Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
 
-        return Optional.of(new IconAndMonochrome(base64, svg.contains("currentColor")));
+        return Optional.of(new IconAndMonochrome(base64, isMonochrome(svg)));
+    }
+
+    private static boolean isMonochrome(String svg) {
+        return svg.contains("currentColor") && !CSS_COLOR_PAINT.matcher(svg).find();
     }
 
     public record IconAndMonochrome(String icon, boolean monochrome) {

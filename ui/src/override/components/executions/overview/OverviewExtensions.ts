@@ -19,3 +19,8 @@ export function useApprovalLink(
 ): Readonly<Ref<ApprovalLink | undefined>> {
     return computed(() => undefined)
 }
+
+// No-op in OSS; EE offers a way back to where a review link was opened from, read when the review opens.
+export function useReviewReturn(): () => ApprovalLink | undefined {
+    return () => undefined
+}

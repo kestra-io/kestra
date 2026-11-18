@@ -47,6 +47,7 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRouter, type RouteLocationRaw} from "vue-router"
     import InputsForm from "../inputs/InputsForm.vue"
     import {inputsToFormData} from "../../utils/submitTask"
     import {decisionLabel, isCommentRequired, type ApprovalTask, type ApprovalTaskRun} from "../../utils/approval"
@@ -60,6 +61,7 @@
         execution: Execution;
         taskRun: ApprovalTaskRun;
         task: ApprovalTask;
+        afterReview?: {label: string; to: RouteLocationRaw};
     } & /* @vue-ignore */ {onClosed?: () => void}>()
 
     const visible = defineModel<boolean>({default: false})
@@ -70,6 +72,7 @@
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+    const router = useRouter()
 
     const form = ref<FormInstance | null>(null)
     const inputs = ref<Record<string, unknown>>({})
@@ -158,7 +161,8 @@
                 }
                 await executionsStore.review(options)
                 visible.value = false
-                toast.success(t("approval.review done"))
+                const afterReview = props.afterReview
+                toast.success(t("approval.review done"), undefined, afterReview && {action: {label: afterReview.label, onClick: () => router.push(afterReview.to)}})
             } finally {
                 submitting.value = false
             }

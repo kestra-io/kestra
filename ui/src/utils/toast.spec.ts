@@ -16,6 +16,7 @@ vi.mock("@kestra-io/design-system", () => {
     return {
         KsNotification,
         KsMarkdown: {name: "KsMarkdown"},
+        KsButton: {name: "KsButton"},
         KsMessageBox: {confirm: vi.fn()},
         KsTable: {name: "KsTable"},
         KsTableColumn: {name: "KsTableColumn"},
@@ -23,7 +24,7 @@ vi.mock("@kestra-io/design-system", () => {
 })
 
 import type {VNode} from "vue"
-import {KsMessageBox, KsNotification, KsTableColumn} from "@kestra-io/design-system"
+import {KsButton, KsMessageBox, KsNotification, KsTableColumn} from "@kestra-io/design-system"
 import {makeToast} from "./toast"
 
 const t = (key: string) => key
@@ -115,5 +116,26 @@ describe("toast.requestError", () => {
         makeToast(t).requestError(failure(400), "Could not delete")
 
         expect(KsNotification).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("toast.success", () => {
+    beforeEach(() => {
+        createdHandles.length = 0
+        vi.mocked(KsNotification).mockClear()
+    })
+
+    it("should run the action of its button and close itself", () => {
+        const onClick = vi.fn()
+
+        makeToast(t).success("Your review has been recorded", undefined, {action: {label: "Back to Approvals", onClick}})
+
+        const options = vi.mocked(KsNotification).mock.lastCall![0] as {message: VNode; action?: unknown}
+        expect(options).not.toHaveProperty("action")
+        const button = (options.message.children as VNode[]).find(child => child.type === KsButton)!
+        expect((button.children as {default: () => string}).default()).toBe("Back to Approvals")
+        ;(button.props!.onClick as () => void)()
+        expect(onClick).toHaveBeenCalledOnce()
+        expect(createdHandles[0].close).toHaveBeenCalledOnce()
     })
 })

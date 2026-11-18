@@ -1,4 +1,4 @@
-import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
+import {KsButton, KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
 import {App, type Component, h} from "vue"
 import {useI18n} from "vue-i18n"
 import {isReportedCentrally, type KestraHttpError} from "./kestraHttp"
@@ -17,6 +17,7 @@ type KsNotificationOptions = Extract<Parameters<typeof KsNotification>[0], Recor
 
 export type ToastOptions = Partial<KsNotificationOptions> & {
     multiple?: boolean
+    action?: {label: string; onClick: () => void}
     [key: string]: unknown
 }
 
@@ -93,12 +94,24 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
             })
         },
         success: function(message:string, title?:string, options?: ToastOptions) {
-            KsNotification({
+            const {action, ...notificationOptions} = options ?? {}
+            const handle = KsNotification({
                     title: title || t("success"),
-                    message: wrapMessage(message),
+                    message: action
+                        ? h("div", {style: {display: "flex", alignItems: "center", gap: "var(--ks-spacing-3)"}}, [
+                            wrapMessage(message),
+                            h(KsButton, {
+                                size: "small",
+                                onClick: () => {
+                                    handle.close()
+                                    action.onClick()
+                                },
+                            }, {default: () => action.label}),
+                        ])
+                        : wrapMessage(message),
                     position: "bottom-right",
                     type: "success",
-                ...options,
+                ...notificationOptions,
             })
         },
         warning: function(message:string, title?:string, options?: ToastOptions) {

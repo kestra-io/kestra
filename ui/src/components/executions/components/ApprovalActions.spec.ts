@@ -48,17 +48,17 @@ describe("ApprovalActions", () => {
         approvalLink.value = undefined
     })
 
-    it("offers the approval behind the request under the Review split button", async () => {
+    it("shows Open approval and Review as two separate buttons", async () => {
         approvalLink.value = {label: "Open approval", to: {name: "approvals/update", params: {id: "c1"}}}
 
         const wrapper = mountActions()
         await flushPromises()
 
-        const review = wrapper.find("[data-test='approval-review']")
-        expect(review.attributes()).toHaveProperty("data-split")
-        expect(review.find("[data-test='open-approval']").text()).toBe("Open approval")
+        expect(wrapper.find("[data-split]").exists()).toBe(false)
+        expect(wrapper.findAll("button").map(button => button.attributes("data-test"))).toEqual(["open-approval", "approval-review"])
+        expect(JSON.parse(wrapper.find("[data-test='open-approval']").attributes("data-to")!)).toEqual({name: "approvals/update", params: {id: "c1"}})
 
-        await review.trigger("click")
+        await wrapper.find("[data-test='approval-review']").trigger("click")
         expect(wrapper.find("[data-test='dialog']").attributes("data-task-run")).toBe("tr-a")
     })
 

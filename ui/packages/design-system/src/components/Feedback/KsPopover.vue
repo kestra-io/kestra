@@ -24,7 +24,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         visible?: boolean
         placement?: string
         trigger?: "click" | "hover" | "focus" | "contextmenu"
@@ -35,7 +35,7 @@
         disabled?: boolean
         title?: string
         content?: string
-    }>()
+    }>(), {visible: undefined, showArrow: false})
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]

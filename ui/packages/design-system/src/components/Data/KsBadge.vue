@@ -16,7 +16,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         value?: string | number
         type?: "primary" | "success" | "warning" | "danger" | "info"
         max?: number
@@ -24,7 +24,7 @@
         hidden?: boolean
         showZero?: boolean
         inline?: boolean
-    }>()
+    }>(), {showZero: false})
 
     const filteredProps = useFilteredProps(props, ["inline"])
 

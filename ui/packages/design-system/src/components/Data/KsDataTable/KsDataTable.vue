@@ -109,6 +109,7 @@
 </script>
 
 <script setup lang="ts" generic="T extends object, M = T">
+    import type {TableProps} from "element-plus"
     import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes, type Ref} from "vue"
 
@@ -128,7 +129,7 @@
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
-    const props = withDefaults(defineProps<{
+    type KsDataTableProps = {
         data?: T[]
         total?: number
         currentPage?: number
@@ -151,7 +152,9 @@
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
         mobileColumns?: KsDataTableMobileColumns
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
+    }
+
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
         data: () => [],
         total: 0,
         currentPage: 1,
@@ -213,22 +216,22 @@
 
     const composedExpandRowKeys = computed<string[] | undefined>(() => {
         const forced = props.forceExpandedRowKeys ?? []
-        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        const userKeys = (attrs.expandRowKeys ?? attrs["expand-row-keys"]) as string[] | undefined ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
     })
 
-    type CellStyleArg = {column: {property?: string; columnKey?: string}}
-    type CellStyle = Record<string, string | number> | undefined
+    type CellStyle = TableProps["cellStyle"]
+    type CellStyleArg = Parameters<Extract<NonNullable<CellStyle>, (...args: never[]) => unknown>>[0]
 
-    const composedCellStyle = computed(() => {
-        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as ((arg: CellStyleArg) => CellStyle) | CellStyle
+    const composedCellStyle = computed((): CellStyle => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as CellStyle
         const columns = props.mobileColumns
         if (!columns) return userStyle
         return (arg: CellStyleArg) => {
             const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
             const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
-            return order === undefined ? own : {...own, "--ks-mobile-order": order}
+            return order === undefined ? (own ?? {}) : {...own, "--ks-mobile-order": order}
         }
     })
 
@@ -244,7 +247,7 @@
 
     const composedRowClassName = computed(() => {
         const forced = new Set(props.forceExpandedRowKeys ?? [])
-        const userClass = attrs.rowClassName as string | ((data: {row: T; rowIndex: number}) => string) | undefined
+        const userClass = (attrs.rowClassName ?? attrs["row-class-name"]) as string | ((data: {row: T; rowIndex: number}) => string) | undefined
 
         if (!forced.size && !userClass) return undefined
 

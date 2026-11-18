@@ -353,11 +353,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         try {
             Map<String, Object> renderedInputs;
             if (this.inputs != null) {
-                if (outputs != null && !outputs.isEmpty()) {
-                    renderedInputs = runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)));
-                } else {
-                    renderedInputs = runContext.render(this.inputs);
-                }
+                Map<String, Object> rendered = outputs != null && !outputs.isEmpty()
+                    ? runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)))
+                    : runContext.render(this.inputs);
+                renderedInputs = runContext.inputAndOutput().readInputs(flow, execution, rendered);
             } else {
                 renderedInputs = new HashMap<>();
             }

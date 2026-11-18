@@ -32,7 +32,23 @@ public interface QueueFactoryInterface extends Plugin, Closeable {
 
     <Q extends BroadcastEvent> BroadcastQueueInterface<Q> broadcastQueue(Class<Q> clazz);
 
-    <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz);
+    /**
+     * @deprecated since 2.1, the queue it creates hashes its keys with the scheduler's vNode count: implement {@link #vNodeDispatchQueue(Class, int)} instead.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
+    default <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz) {
+        throw new UnsupportedOperationException("The queue backend '%s' must implement vNodeDispatchQueue(Class, int).".formatted(getClass().getName()));
+    }
+
+    /**
+     * Creates a queue whose keys are hashed into {@code vNodeCount} vNodes, the number of vNodes its consumers are assigned from.
+     * <p>
+     * The default delegates to {@link #vNodeDispatchQueue(Class)} for the backends that do not implement it yet, which then ignore
+     * {@code vNodeCount} and hash with the scheduler's vNode count.
+     */
+    default <Q extends VNodeDispatchEvent> VNodeDispatchQueueInterface<Q> vNodeDispatchQueue(Class<Q> clazz, int vNodeCount) {
+        return vNodeDispatchQueue(clazz);
+    }
 
     <Q extends KeyedDispatchEvent> KeyedDispatchQueueInterface<Q> keyedDispatchQueue(Class<Q> clazz);
 

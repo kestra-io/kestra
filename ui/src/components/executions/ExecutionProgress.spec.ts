@@ -31,8 +31,8 @@ const messages = {
 
 const averageDuration = vi.mocked(ExecutionsAPI.executionAverageDuration)
 
-function mountProgress(startDate = START) {
-    const execution = {namespace: "company.team", flowId: "my-flow", state: {startDate}} as unknown as Execution
+function mountProgress(startDate = START, current = "RUNNING") {
+    const execution = {namespace: "company.team", flowId: "my-flow", state: {startDate, current}} as unknown as Execution
     return i18nMount(ExecutionProgress, {
         props: {execution},
         messages,
@@ -86,6 +86,14 @@ describe("ExecutionProgress", () => {
     it("should render nothing when the request fails", async () => {
         averageDuration.mockRejectedValue(new Error("Request failed"))
         const wrapper = mountProgress()
+        await flushPromises()
+
+        expect(wrapper.text()).toBe("")
+    })
+
+    it("should render nothing when execution is not running", async () => {
+        averageDuration.mockResolvedValue({avgDurationMs: 60_000})
+        const wrapper = mountProgress(START, "SUCCESS")
         await flushPromises()
 
         expect(wrapper.text()).toBe("")

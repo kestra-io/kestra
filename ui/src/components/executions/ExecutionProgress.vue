@@ -120,7 +120,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-2) var(--ks-spacing-5) var(--ks-spacing-2-5);
+        padding: var(--ks-spacing-2) var(--ks-spacing-5);
         text-align: left;
         border-top: 1px solid var(--ks-border-default);
     }

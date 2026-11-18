@@ -1,16 +1,7 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
-
-const store = vi.hoisted(() => ({taskRunSelections: new Map<string, string>()}))
-
-vi.mock("../../../stores/executions", () => ({
-    useExecutionsStore: () => ({
-        taskRunSelections: {
-            get: (key: string) => store.taskRunSelections.get(key),
-            set: (key: string, value: string) => store.taskRunSelections.set(key, value),
-        },
-    }),
-}))
-
+import {beforeEach, describe, expect, it} from "vitest"
+import {setActivePinia} from "pinia"
+import {routedPinia} from "../../../../tests/unit/memoryRouter"
+import {useExecutionsStore} from "../../../stores/executions"
 import {useSelectedTaskRun} from "./useSelectedTaskRun"
 import type {Execution} from "../../../stores/executions"
 import type {ExecutionTaskRun} from "../executionTaskRun"
@@ -40,8 +31,11 @@ function execution(overrides: Partial<Execution> = {}): Execution {
     }
 }
 
+let selections: Map<string, string>
+
 beforeEach(() => {
-    store.taskRunSelections.clear()
+    setActivePinia(routedPinia())
+    selections = useExecutionsStore().taskRunSelections
 })
 
 describe("currentTaskRuns", () => {
@@ -70,14 +64,15 @@ describe("selectedTaskRunId", () => {
         expect(selectedTaskRunId.value).toBe("run-a")
     })
 
-    it("falls back to the first matching run when nothing is stored", () => {
+    it("falls back to the first matching run when nothing is stored and the passed run has no id", () => {
+        const passed = taskRun({id: "", taskId: "target"})
         const first = taskRun({id: "run-a", taskId: "target"})
         const second = taskRun({id: "run-b", taskId: "target"})
         const other = taskRun({id: "run-c", taskId: "other"})
         const {selectedTaskRunId} = useSelectedTaskRun({
             execution: () => execution(),
-            taskRun: () => first,
-            taskRuns: () => [first, second, other],
+            taskRun: () => passed,
+            taskRuns: () => [other, first, second],
         })
 
         expect(selectedTaskRunId.value).toBe("run-a")
@@ -86,7 +81,7 @@ describe("selectedTaskRunId", () => {
     it("stored selection wins over both fallbacks", () => {
         const run = taskRun({id: "run-a", taskId: "target"})
         const other = taskRun({id: "run-b", taskId: "target"})
-        store.taskRunSelections.set("exec-1|target", "run-b")
+        selections.set("exec-1|target", "run-b")
         const {selectedTaskRunId} = useSelectedTaskRun({
             execution: () => execution(),
             taskRun: () => run,
@@ -106,7 +101,7 @@ describe("selectedTaskRunId", () => {
         })
         selectedTaskRunId.value = "run-a"
 
-        expect(store.taskRunSelections.get("exec-1|target")).toBe("run-a")
+        expect(selections.get("exec-1|target")).toBe("run-a")
         const {selectedTaskRunId: otherId} = useSelectedTaskRun({
             execution: () => execution(),
             taskRun: () => unrelated,
@@ -120,7 +115,7 @@ describe("currentTaskRun", () => {
     it("resolves the selected id from the matching runs", () => {
         const run = taskRun({id: "run-a", taskId: "target"})
         const other = taskRun({id: "run-b", taskId: "target"})
-        store.taskRunSelections.set("exec-1|target", "run-b")
+        selections.set("exec-1|target", "run-b")
         const {currentTaskRun} = useSelectedTaskRun({
             execution: () => execution(),
             taskRun: () => run,
@@ -132,7 +127,7 @@ describe("currentTaskRun", () => {
 
     it("falls back to the passed run when the selected id matches nothing", () => {
         const run = taskRun({id: "run-a", taskId: "target"})
-        store.taskRunSelections.set("exec-1|target", "run-gone")
+        selections.set("exec-1|target", "run-gone")
         const {currentTaskRun} = useSelectedTaskRun({
             execution: () => execution(),
             taskRun: () => run,
@@ -184,14 +179,15 @@ describe("attempts", () => {
         const attempt1 = attempt("SUCCESS")
         const run = taskRun({taskId: "t", attempts: [attempt0, attempt1]})
         const exec = execution({state: {current: "SUCCESS", histories: []}})
-        const {selectedAttempt} = useSelectedTaskRun({
+        const {selectedAttempt, currentAttemptIndex} = useSelectedTaskRun({
             execution: () => exec,
             taskRun: () => run,
             taskRuns: () => [run],
-            forcedAttemptNumber: () => 0,
+            forcedAttemptNumber: () => 1,
         })
 
-        expect(selectedAttempt.value).toBe(attempt0)
+        expect(currentAttemptIndex.value).toBe(0)
+        expect(selectedAttempt.value).toBe(attempt1)
     })
 
     it("returns a synthetic attempt from the task run state when attempts is absent", () => {
@@ -225,7 +221,7 @@ describe("currentAttemptIndex", () => {
     it("clamps the attempt index to zero when it would go negative (empty list via forced attempt on non-running)", () => {
         const run = taskRun({attempts: undefined})
         const exec = execution({state: {current: "SUCCESS", histories: []}})
-        const {currentAttemptIndex} = useSelectedTaskRun({
+        const {currentAttemptIndex, selectedAttempt} = useSelectedTaskRun({
             execution: () => exec,
             taskRun: () => run,
             taskRuns: () => [run],
@@ -233,5 +229,6 @@ describe("currentAttemptIndex", () => {
         })
 
         expect(currentAttemptIndex.value).toBe(0)
+        expect(selectedAttempt.value).toBeUndefined()
     })
 })

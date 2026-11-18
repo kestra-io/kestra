@@ -1,0 +1,123 @@
+{
+    "nodes": [
+        {
+            "uid": "root.root-3uC7FTHIvekpo7jUB5Saua",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.end-4HIBoRTm9kMPnJukvSSBp0",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.only_loop.root-6cSZemZ4mhiqeOuzpkGlnf",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.only_loop.end-3FgtxzUzJmA1EumdwoXD8R",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.only_loop",
+            "task": {
+                "id": "only_loop",
+                "type": "io.kestra.plugin.core.flow.Loop",
+                "tasks": [
+                    {
+                        "id": "one_log",
+                        "type": "io.kestra.plugin.core.log.Log",
+                        "message": "{{ item.value }}"
+                    }
+                ],
+                "values": [
+                    "a",
+                    "b",
+                    "c"
+                ]
+            },
+            "relationType": "DYNAMIC",
+            "type": "io.kestra.core.models.hierarchies.GraphTask"
+        },
+        {
+            "uid": "root.only_loop.one_log",
+            "task": {
+                "id": "one_log",
+                "type": "io.kestra.plugin.core.log.Log",
+                "message": "{{ item.value }}"
+            },
+            "relationType": "SEQUENTIAL",
+            "type": "io.kestra.core.models.hierarchies.GraphTask"
+        }
+    ],
+    "edges": [
+        {
+            "source": "root.root-3uC7FTHIvekpo7jUB5Saua",
+            "target": "root.only_loop.root-6cSZemZ4mhiqeOuzpkGlnf",
+            "relation": {}
+        },
+        {
+            "source": "root.only_loop.end-3FgtxzUzJmA1EumdwoXD8R",
+            "target": "root.end-4HIBoRTm9kMPnJukvSSBp0",
+            "relation": {}
+        },
+        {
+            "source": "root.only_loop.root-6cSZemZ4mhiqeOuzpkGlnf",
+            "target": "root.only_loop",
+            "relation": {}
+        },
+        {
+            "source": "root.only_loop",
+            "target": "root.only_loop.one_log",
+            "relation": {
+                "relationType": "DYNAMIC"
+            }
+        },
+        {
+            "source": "root.only_loop.one_log",
+            "target": "root.only_loop.end-3FgtxzUzJmA1EumdwoXD8R",
+            "relation": {}
+        }
+    ],
+    "clusters": [
+        {
+            "cluster": {
+                "uid": "cluster_root.only_loop",
+                "type": "io.kestra.core.models.hierarchies.GraphCluster",
+                "relationType": "DYNAMIC",
+                "taskNode": {
+                    "uid": "root.only_loop",
+                    "task": {
+                        "id": "only_loop",
+                        "type": "io.kestra.plugin.core.flow.Loop",
+                        "tasks": [
+                            {
+                                "id": "one_log",
+                                "type": "io.kestra.plugin.core.log.Log",
+                                "message": "{{ item.value }}"
+                            }
+                        ],
+                        "values": [
+                            "a",
+                            "b",
+                            "c"
+                        ]
+                    },
+                    "relationType": "DYNAMIC",
+                    "type": "io.kestra.core.models.hierarchies.GraphTask"
+                },
+                "finally": {
+                    "uid": "only_loop.finally-2Rv74U5lBrRD6fyGAmXivy",
+                    "type": "io.kestra.core.models.hierarchies.GraphClusterFinally"
+                }
+            },
+            "nodes": [
+                "root.only_loop.root-6cSZemZ4mhiqeOuzpkGlnf",
+                "root.only_loop.end-3FgtxzUzJmA1EumdwoXD8R",
+                "root.only_loop",
+                "root.only_loop.one_log"
+            ],
+            "parents": [],
+            "start": "root.only_loop.root-6cSZemZ4mhiqeOuzpkGlnf",
+            "end": "root.only_loop.end-3FgtxzUzJmA1EumdwoXD8R"
+        }
+    ]
+}

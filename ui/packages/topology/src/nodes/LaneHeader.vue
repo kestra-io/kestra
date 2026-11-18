@@ -448,7 +448,8 @@
     .lane-loop-scope {
         display: inline-flex;
         align-items: center;
-        flex-shrink: 0;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     @container lane-header (max-width: 36rem) {
@@ -468,10 +469,6 @@
 
         .lane-outcome-min {
             display: inline;
-        }
-
-        .lane-loop-scope {
-            display: none;
         }
     }
 

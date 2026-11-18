@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {effectScope, nextTick, reactive, ref, shallowRef} from "vue"
+import type * as monaco from "monaco-editor/editor/editor.api"
 
 const route = reactive({query: {} as Record<string, unknown>, fullPath: "/flows/edit/company/a/edit"})
 
@@ -15,7 +16,7 @@ const fakeEditor = (lineCount: number) => ({
 })
 
 const setup = (editor: ReturnType<typeof fakeEditor> | undefined, enabled = true) => {
-    const editorRef = shallowRef(editor as any)
+    const editorRef = shallowRef(editor as unknown as monaco.editor.IStandaloneCodeEditor | undefined)
     const source = ref<string | undefined>("a")
     effectScope().run(() => useRevealRouteLine(editorRef, source, ref(enabled)))
     return {editorRef, source}

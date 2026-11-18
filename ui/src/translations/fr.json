@@ -2123,6 +2123,7 @@
           "generic": "Une erreur est survenue. Veuillez réessayer."
         },
         "emptyHelper": "Je peux modifier ce flow, générer des tests, échafauder les fichiers associés, ou expliquer comment il fonctionne.",
+        "emptyHelperNoFlow": "Je peux créer ou modifier des flows, générer des tests, échafauder des fichiers connexes ou expliquer comment Kestra fonctionne.",
         "suggestions": {
           "errorHandling": "Ajouter la gestion des erreurs",
           "unitTest": "Générer un test unitaire",

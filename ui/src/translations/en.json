@@ -2123,6 +2123,7 @@
           "generic": "Something went wrong. Please try again."
         },
         "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "emptyHelperNoFlow": "I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.",
         "suggestions": {
           "errorHandling": "Add error handling",
           "unitTest": "Generate a unit test",

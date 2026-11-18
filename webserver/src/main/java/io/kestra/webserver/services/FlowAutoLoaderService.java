@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.contexts.KestraConfig;
@@ -76,7 +77,7 @@ public class FlowAutoLoaderService {
                     {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + Matcher.quoteReplacement(kestraConfig.getSystemFlowNamespace()));
                         }
                         return body;
                     })

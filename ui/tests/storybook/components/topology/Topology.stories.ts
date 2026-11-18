@@ -929,6 +929,7 @@ export const PanelBottomOffset: StoryObj<typeof Topology> = {
         await expect(getComputedStyle(canvasElement.querySelector(".vue-flow__panel.bottom")!).bottom).toBe("32px")
     },
 }
+
 const NARROW_LANE_HEADER_WIDTH = 25 * 16
 
 const SINGLE_TASK_LOOP_SOURCE = `

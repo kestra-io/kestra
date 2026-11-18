@@ -1,10 +1,11 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
 import {expect, userEvent, waitFor} from "storybook/test"
-import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
+import {NODE_SIZES, Topology, type FlowGraph, type LoopLaneData} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
 import nestedLoopDemo from "../../../fixtures/flowgraphs/nested-loop-demo.json"
+import singleTaskLoop from "../../../fixtures/flowgraphs/single-task-loop.json"
 
 const ALLOW_FAILURE_SOURCE = `
 id: allow-failure-demo
@@ -926,5 +927,67 @@ export const PanelBottomOffset: StoryObj<typeof Topology> = {
     async play({canvasElement}) {
         await waitFor(() => expect(canvasElement.querySelector(".vue-flow__panel.bottom")).not.toBeNull())
         await expect(getComputedStyle(canvasElement.querySelector(".vue-flow__panel.bottom")!).bottom).toBe("32px")
+    },
+}
+
+const SINGLE_TASK_LOOP_SOURCE = `
+id: single_loop
+namespace: company.team
+tasks:
+  - id: only_loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["a", "b", "c"]
+    tasks:
+      - id: one_log
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ item.value }}"
+`.trim()
+
+const SINGLE_TASK_LOOP_EXECUTION = {
+    id: "story-execution-single-task-loop",
+    state: {current: "SUCCESS"},
+    taskRunList: [
+        taskRun("only_loop", "SUCCESS"),
+        taskRun("one_log", "SUCCESS"),
+    ],
+}
+
+const SINGLE_TASK_LOOP_LANES: Record<string, LoopLaneData> = {
+    "root.only_loop": {
+        taskId: "only_loop",
+        status: "ready",
+        parentScoped: true,
+        iterationCount: 3,
+        terminatedIterations: {SUCCESS: 3},
+        state: "SUCCESS",
+    },
+}
+
+export const SingleTaskLoopKeepsItsScopePicker: StoryObj<typeof Topology> = {
+    name: "Single-Task Loop Keeps Its Scope Picker",
+    render: (args) => ({
+        components: {Topology},
+        setup: () => ({args}),
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args">
+                <template #loopScope><button type="button" data-test="scope-picker">All iterations</button></template>
+            </Topology>
+        </div>`,
+    }),
+    args: {
+        id: "story-single-task-loop",
+        source: SINGLE_TASK_LOOP_SOURCE,
+        flowGraph: withExecutionId(singleTaskLoop, SINGLE_TASK_LOOP_EXECUTION.id) as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: SINGLE_TASK_LOOP_EXECUTION,
+        loopLanes: SINGLE_TASK_LOOP_LANES,
+    },
+    play: async ({canvasElement}) => {
+        await waitFor(() => expect(canvasElement.querySelector("[data-test='scope-picker']")).not.toBeNull())
+        const picker = canvasElement.querySelector<HTMLElement>("[data-test='scope-picker']")!
+
+        expect(getComputedStyle(picker.parentElement!).display).not.toBe("none")
+        expect(picker.getBoundingClientRect().width).toBeGreaterThan(0)
     },
 }

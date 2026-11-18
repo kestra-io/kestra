@@ -128,7 +128,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             })
 
             if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
-                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
+                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)
+                || !isEqual(lastExecutionFlow.variables, flowStore.flow.variables)){
                 return false
             };
         }
@@ -205,16 +206,19 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return executionReady && flowValid
     })
 
-    const readyToStart = ref(readyToStartPure.value)
+    const executionSettled = ref(readyToStartPure.value)
     watch(readyToStartPure, (newValue) => {
         if(newValue) {
             setTimeout(() => {
-                readyToStart.value = newValue
+                executionSettled.value = newValue
             }, 1000)
         } else {
-            readyToStart.value = newValue
+            executionSettled.value = newValue
         }
     })
+
+    const starting = ref(false)
+    const readyToStart = computed(() => !starting.value && readyToStartPure.value && executionSettled.value)
 
     const showInputPrompt = ref(false)
     const actionOptions = ref<{taskId?: string, runDownstreamTasks?: boolean}>()
@@ -265,8 +269,15 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (flowStore.haveChange && flowStore.flowErrors) {
             return
         }
-        readyToStart.value = false
+        starting.value = true
+        try {
+            await startRun(taskId, runDownstreamTasks, customFormData)
+        } finally {
+            starting.value = false
+        }
+    }
 
+    async function startRun(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
         if(flowStore.isCreating){
             toast.confirm(
                 t("playground.confirm_create"),
@@ -297,7 +308,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 }
             }
             if (hasMissing) {
-                readyToStart.value = true
                 actionOptions.value = {taskId, runDownstreamTasks}
                 executionsStore.flow = forExecution(flowStore.flow)
                 showInputPrompt.value = true
@@ -310,7 +320,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
         } catch (error: any) {
             if (error?.response?.status === 422) {
-                readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}
                     executionsStore.flow = forExecution(flowStore.flow)

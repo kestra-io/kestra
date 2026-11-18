@@ -4,8 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -91,7 +94,9 @@ class ConcurrencyLimitControllerTest {
             )
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        ProblemDetail problem = Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+        assertThat(problem.detail()).isEqualTo("running: must be greater than or equal to 0");
+        Problems.assertErrors(e).singleElement().satisfies(error -> assertThat(error.path()).isEqualTo("running"));
     }
 
     @Test

@@ -1,12 +1,34 @@
 <template>
     <DynamicScroller
-        v-if="followedExecution && currentTaskRuns.length > 0"
+        v-if="followedExecution && (currentTaskRuns.length > 0 || executionLogs.length > 0)"
         ref="taskRunScroller"
         :items="currentTaskRuns"
         :minItemSize="50"
         keyField="id"
         class="log-wrapper"
     >
+        <template #before>
+            <KsCard
+                v-if="executionLogs.length > 0"
+                class="attempt-wrapper"
+                shadow="never"
+                data-test="execution-logs"
+            >
+                <LogLine
+                    v-for="item in executionLogs"
+                    :key="item.index"
+                    class="line"
+                    :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
+                    :class="{
+                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
+                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
+                    }"
+                    :level="level as LogUtils.LevelKey"
+                    :log="item"
+                    :excludeMetas="excludeMetas as (keyof Log)[]"
+                />
+            </KsCard>
+        </template>
         <template
             #default="{
                 item: currentTaskRun,
@@ -270,6 +292,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
+    import type {Log} from "../../stores/logs"
     import {State, levelToRequestParams, type LevelFilterValue} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
@@ -526,6 +549,18 @@
         }
     })
 
+    // Logs written by the executor itself (e.g. a concurrency-limit failure) carry no task run.
+    const EXECUTION_LOGS_INDEX = -1
+    type LogLineItem = Log & {index: number}
+
+    const executionLogs = computed<LogLineItem[]>(() => {
+        if (props.taskRunId) return []
+        const search = props.filter.toLowerCase()
+        return filteredLogs.value
+            .filter((log) => !log.taskRunId && (search === "" || (log.message ?? "").toLowerCase().includes(search)))
+            .map((log, index) => ({...log, index}))
+    })
+
     const currentTaskRunsLogIndicesByLevel = computed(() =>
         currentTaskRuns.value.reduce(
             (indicesByLevel: Record<string, string[]>, taskRun, taskRunIndex: number) => {
@@ -545,7 +580,12 @@
                 }
                 return indicesByLevel
             },
-            {},
+            executionLogs.value.reduce((indicesByLevel: Record<string, string[]>, log) => {
+                if (log.level) {
+                    (indicesByLevel[log.level] ??= []).push(`${EXECUTION_LOGS_INDEX}/${log.index}`)
+                }
+                return indicesByLevel
+            }, {}),
         ),
     )
 
@@ -1101,6 +1141,10 @@
         const split = logId.split("/")
         const taskRunIndex = Number(split[0])
         const globalIndex = Number(split[1])
+        if (taskRunIndex === EXECUTION_LOGS_INDEX) {
+            ;(taskRunScroller.value as {scrollToPosition?: (position: number) => void} | null)?.scrollToPosition?.(0)
+            return
+        }
         ;(taskRunScroller.value as any)?.scrollToItem(taskRunIndex) // FIXME: any
 
         const taskRun = currentTaskRuns.value[taskRunIndex]

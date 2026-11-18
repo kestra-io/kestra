@@ -35,6 +35,7 @@
         showIcon?: boolean
         center?: boolean
     }>(), {
+        closable: false,
         showIcon: true,
     })
 

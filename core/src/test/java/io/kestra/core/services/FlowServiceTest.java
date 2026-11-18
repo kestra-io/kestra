@@ -29,6 +29,8 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerDeleted;
+import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
@@ -1432,6 +1434,99 @@ class FlowServiceTest {
             flowRepository.findByIdWithSource(published.getTenantId(), published.getNamespace(), published.getId())
                 .ifPresent(f -> flowRepository.delete(f));
         }
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenPublishingDraftThatAddedTrigger() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String withoutTrigger = flowSource(flowId, false, "", "");
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, withoutTrigger, scheduleSource(flowId, true, "0 0 * * *"), scheduleSource(flowId, false, "0 0 * * *"));
+
+        assertThat(events).singleElement().isInstanceOf(TriggerCreated.class);
+    }
+
+    @Test
+    void shouldEmitTriggerDeletedWhenPublishingDraftThatRemovedTrigger() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 * * *"), flowSource(flowId, true, "", ""), flowSource(flowId, false, "", ""));
+
+        assertThat(events).singleElement().isInstanceOf(TriggerDeleted.class);
+    }
+
+    @Test
+    void shouldEmitTriggerUpdatedWhenPublishingDraftThatChangedCron() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+
+        List<TriggerEvent> events = publishAfterDraft(flowId, scheduleSource(flowId, false, "0 0 1 * *"), scheduleSource(flowId, true, "0 * * * *"), scheduleSource(flowId, false, "0 * * * *"));
+
+        assertThat(events).singleElement().isInstanceOf(TriggerUpdated.class);
+    }
+
+    @Test
+    void shouldInitConcurrencyLimitWhenPublishingDraftThatAddedConcurrency() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String concurrency = "concurrency:\n  limit: 1\n";
+
+        publishAfterDraft(flowId, flowSource(flowId, false, "", ""), flowSource(flowId, true, concurrency, ""), flowSource(flowId, false, concurrency, ""));
+
+        assertThat(concurrencyLimitRepository.findById(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId)).isPresent();
+    }
+
+    @Test
+    void shouldEmitTriggerDeletedForPublishedTriggersWhenDeletingFlowWhoseLastRevisionIsDraft() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, scheduleSource(flowId, false, "0 0 * * *")));
+        FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, flowSource(flowId, true, "", "")), published);
+        reset(triggerEventQueue);
+
+        flowService.delete(draft);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerDeleted.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    private List<TriggerEvent> publishAfterDraft(String flowId, String publishedSource, String draftSource, String publishSource) throws FlowProcessingException, QueueException {
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishedSource));
+        try {
+            FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftSource), published);
+            reset(triggerEventQueue);
+
+            flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishSource), draft);
+
+            var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+            verify(triggerEventQueue, atLeast(0)).send(captor.capture());
+            return captor.getAllValues();
+        } finally {
+            flowRepository.findByIdWithSource(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId)
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    private static String scheduleSource(String flowId, boolean draft, String cron) {
+        return flowSource(flowId, draft, "", """
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "%s"
+            """.formatted(cron));
+    }
+
+    private static String flowSource(String flowId, boolean draft, String concurrency, String triggers) {
+        return """
+            id: %s
+            namespace: %s
+            %s
+            %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            %s
+            """.formatted(flowId, TEST_NAMESPACE, draft ? "draft: true" : "", concurrency, triggers);
     }
 
     @MockBean

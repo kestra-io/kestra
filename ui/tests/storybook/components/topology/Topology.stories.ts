@@ -929,6 +929,7 @@ export const PanelBottomOffset: StoryObj<typeof Topology> = {
         await expect(getComputedStyle(canvasElement.querySelector(".vue-flow__panel.bottom")!).bottom).toBe("32px")
     },
 }
+const NARROW_LANE_HEADER_WIDTH = 25 * 16
 
 const SINGLE_TASK_LOOP_SOURCE = `
 id: single_loop
@@ -986,7 +987,9 @@ export const SingleTaskLoopKeepsItsScopePicker: StoryObj<typeof Topology> = {
     play: async ({canvasElement}) => {
         await waitFor(() => expect(canvasElement.querySelector("[data-test='scope-picker']")).not.toBeNull())
         const picker = canvasElement.querySelector<HTMLElement>("[data-test='scope-picker']")!
+        const header = canvasElement.querySelector<HTMLElement>("[data-test='topology-lane-header']")!
 
+        expect(header.offsetWidth).toBeLessThan(NARROW_LANE_HEADER_WIDTH)
         expect(getComputedStyle(picker.parentElement!).display).not.toBe("none")
         expect(picker.getBoundingClientRect().width).toBeGreaterThan(0)
     },

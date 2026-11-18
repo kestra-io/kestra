@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.namespaces.NamespaceInterface;
@@ -244,6 +245,11 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
     }
 
     ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace);
+
+    default SourceCodeSearchOutcome findSourceCodeWithCapFlag(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
+        ArrayListTotal<SearchResult<Flow>> results = findSourceCode(pageable, query, caseSensitive, wholeWord, regex, scope, tenantId, namespace);
+        return new SourceCodeSearchOutcome(results, results.size() >= SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES);
+    }
 
     List<String> findDistinctNamespace(String tenantId);
 

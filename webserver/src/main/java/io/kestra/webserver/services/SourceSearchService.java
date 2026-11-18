@@ -1,14 +1,17 @@
 package io.kestra.webserver.services;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.SourceMatch;
@@ -20,11 +23,14 @@ import io.kestra.core.models.flows.SourceSearchScope;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SourceCodeSearchOutcome;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RegexUtils;
 import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.models.flows.KeyUsagesRequest;
+import io.kestra.webserver.models.flows.KeyUsagesResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkipReason;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkippedFlow;
@@ -71,6 +77,38 @@ public class SourceSearchService {
                 isEditable(result.getModel()),
                 result.getMatches()
             ));
+    }
+
+    public KeyUsagesResponse countKeyUsages(String tenantId, KeyUsagesRequest request) {
+        List<KeyUsagesResponse.KeyUsage> usages = new ArrayList<>(request.keys().size());
+        for (KeyUsagesRequest.Key target : request.keys()) {
+            usages.add(countKeyUsages(tenantId, request.kind(), target));
+        }
+        return new KeyUsagesResponse(usages);
+    }
+
+    private KeyUsagesResponse.KeyUsage countKeyUsages(String tenantId, KeyUsagesRequest.Kind kind, KeyUsagesRequest.Key target) {
+        if (target.key().contains("\n") || target.key().contains("\r")) {
+            throw new InvalidSourceSearchQueryException("A key must not contain a line break.");
+        }
+
+        String function = kind.functionName();
+        Set<String> usedBy = new HashSet<>();
+        boolean truncated = false;
+        for (String quote : List.of("'", "\"")) {
+            String query = function + "(" + quote + target.key() + quote;
+            SourceCodeSearchOutcome outcome = flowRepository.findSourceCodeWithCapFlag(Pageable.UNPAGED, query, true, false, false, SourceSearchScope.ALL, tenantId, null);
+            truncated |= outcome.candidatesCapped();
+            for (SearchResult<Flow> result : outcome.results()) {
+                String flowNamespace = result.getModel().getNamespace();
+                if (isInNamespaceScope(flowNamespace, target.namespace())
+                    || result.getMatches().stream().anyMatch(match -> namesNamespace(match.snippet(), target.namespace()))) {
+                    usedBy.add(flowNamespace + "\u0000" + result.getModel().getId());
+                }
+            }
+        }
+
+        return new KeyUsagesResponse.KeyUsage(target.namespace(), target.key(), usedBy.size(), truncated);
     }
 
     public SourceSearchReplacePreviewResponse preview(
@@ -247,6 +285,20 @@ public class SourceSearchService {
                 return new SourceSearchReplacePreviewResponse.Match(match.line(), before, after);
             })
             .toList();
+    }
+
+    private static boolean isInNamespaceScope(String flowNamespace, @Nullable String targetNamespace) {
+        return targetNamespace == null
+            || flowNamespace.equals(targetNamespace)
+            || flowNamespace.startsWith(targetNamespace + ".");
+    }
+
+    private static boolean namesNamespace(String snippet, @Nullable String targetNamespace) {
+        if (targetNamespace == null) {
+            return false;
+        }
+        String line = stripMarkers(snippet);
+        return line.contains("'" + targetNamespace + "'") || line.contains("\"" + targetNamespace + "\"");
     }
 
     private static String stripMarkers(String snippet) {

@@ -1158,10 +1158,12 @@ class ExecutionControllerRunnerTest {
         assertThat(replay.findTaskRunsByTaskId("fetch").getFirst().getAttempts()).isEqualTo(failed.findTaskRunsByTaskId("fetch").getFirst().getAttempts());
         assertThat(outputsOf(replay, "notify")).containsEntry("value", "KR-0412 in us");
         assertThat(outputsOf(failed, "fetch")).containsEntry("values", Map.of("code", "KR-0412 ", "region", "eu"));
-        String reusedFetchId = replay.findTaskRunsByTaskId("fetch").getFirst().getId();
+        TaskRun reusedFetch = replay.findTaskRunsByTaskId("fetch").getFirst();
         Await.until(
             () -> logRepository.findByExecutionIdAndTaskId(TENANT_ID, replay.getId(), "fetch", Level.WARN).stream()
-                .anyMatch(log -> reusedFetchId.equals(log.getTaskRunId()) && log.getMessage().contains(failed.getId())),
+                .anyMatch(log -> reusedFetch.getId().equals(log.getTaskRunId())
+                    && log.getAttemptNumber() == reusedFetch.getAttempts().size() - 1
+                    && log.getMessage().contains(failed.getId())),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );

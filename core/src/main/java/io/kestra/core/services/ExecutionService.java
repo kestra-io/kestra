@@ -716,6 +716,7 @@ public class ExecutionService {
                         } else {
                             taskOutputService.saveOutputs(newTaskRun, override);
                             logEntryEmitter.emits(LogEntry.of(newTaskRun, execution.getKind()).toBuilder()
+                                .attemptNumber(Math.max(newTaskRun.attemptNumber() - 1, 0))
                                 .level(Level.WARN)
                                 .timestamp(Instant.now())
                                 .thread(Thread.currentThread().getName())

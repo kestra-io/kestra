@@ -99,7 +99,7 @@
         "@typescript-eslint/parser": "^8.72.1",
         "@vitejs/plugin-vue": "^6.0.10",
         "@vitejs/plugin-vue-jsx": "^5.1.6",
-        "@vitest/browser": "^5.0.5",
+        "@vitest/browser": "^5.1.0",
         "@vitest/browser-playwright": "^5.0.5",
         "@vitest/coverage-v8": "^5.0.5",
         "@vue/compiler-sfc": "^3.5.44",

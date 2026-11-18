@@ -58,4 +58,54 @@ describe("isOffsetInPebbleBlock", () => {
         const text = "{{ }}"
         expect(isOffsetInPebbleBlock(text, 1)).toBe(false)
     })
+
+    it("returns true inside statement blocks {% ... %}", () => {
+        const text = "{% if inputs.foo %}"
+        // cursor after inputs. (offset 13)
+        expect(isOffsetInPebbleBlock(text, 13)).toBe(true)
+    })
+
+    it("returns true between {% and %} with a space", () => {
+        const text = "{% %}"
+        // cursor right after `{%` (offset 2): inside
+        expect(isOffsetInPebbleBlock(text, 2)).toBe(true)
+        // cursor between space and `%}` (offset 3): inside
+        expect(isOffsetInPebbleBlock(text, 3)).toBe(true)
+    })
+
+    it("returns true for the common Monaco auto-close case `{% %}` cursor right before `%}`", () => {
+        const text = "message: \"{% %}\""
+        const closingStart = text.indexOf("%}")
+        expect(isOffsetInPebbleBlock(text, closingStart)).toBe(true)
+    })
+
+    it("returns false right after the closing %}", () => {
+        const text = "{% if x %}"
+        const afterClose = text.indexOf("%}") + 2
+        expect(isOffsetInPebbleBlock(text, afterClose)).toBe(false)
+    })
+
+    it("handles mixed print and statement blocks on one line", () => {
+        const text = "{% for item in items %} {{ item.name }} {% endfor %}"
+        const firstClose = text.indexOf("%}")
+        const printOpen = text.indexOf("{{")
+        const printClose = text.indexOf("}}")
+        const secondStmtOpen = text.lastIndexOf("{%")
+
+        // inside first statement block
+        expect(isOffsetInPebbleBlock(text, 5)).toBe(true)
+        // between first statement and print block
+        expect(isOffsetInPebbleBlock(text, firstClose + 2)).toBe(false)
+        // inside print block
+        expect(isOffsetInPebbleBlock(text, printOpen + 3)).toBe(true)
+        // between print block and second statement
+        expect(isOffsetInPebbleBlock(text, printClose + 2)).toBe(false)
+        // inside second statement block
+        expect(isOffsetInPebbleBlock(text, secondStmtOpen + 4)).toBe(true)
+    })
+
+    it("returns false when only `%}` exists before cursor", () => {
+        const text = "%}abc"
+        expect(isOffsetInPebbleBlock(text, 4)).toBe(false)
+    })
 })

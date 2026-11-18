@@ -82,7 +82,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     details {
         overflow: hidden;
         interpolate-size: allow-keywords;

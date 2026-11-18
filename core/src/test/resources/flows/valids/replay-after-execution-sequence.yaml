@@ -1,0 +1,17 @@
+id: replay-after-execution-sequence
+namespace: io.kestra.tests
+
+tasks:
+  - id: ok
+    type: io.kestra.plugin.core.log.Log
+    message: "ok executed"
+
+afterExecution:
+  - id: first_after
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      carried: "yes"
+
+  - id: second_after
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.first_after.values.carried }}"

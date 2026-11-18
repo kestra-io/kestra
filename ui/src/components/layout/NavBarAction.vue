@@ -2,6 +2,9 @@
     <KsDropdownItem
         v-if="asItem"
         :icon="icon"
+        :disabled="disabled"
+        :divided="divided"
+        :danger="danger"
         v-bind="$attrs"
         @click="onClick"
     >
@@ -30,17 +33,23 @@
         v-else
         :type="type ?? 'default'"
         :icon="icon"
+        :disabled="disabled"
         v-bind="{...$attrs, ...linkAttrs}"
         :tag="tag"
         :to="props.to"
+        :square="iconOnly"
+        :aria-label="iconOnly ? label : undefined"
         @click="onClick"
     >
-        <slot>{{ label }}</slot>
+        <template v-if="!iconOnly" #default>
+            <slot>{{ label }}</slot>
+        </template>
     </KsButton>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, type Component} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useRouter, type RouteLocationRaw, RouterLink} from "vue-router"
     import {asItemKey, closeDropdownKey} from "./navBarActionsContext"
 
@@ -53,6 +62,9 @@
         to?: RouteLocationRaw;
         href?: string;
         download?: string;
+        disabled?: boolean;
+        divided?: boolean;
+        danger?: boolean;
     }>()
 
     const emit = defineEmits<{(e: "click"): void}>()
@@ -61,6 +73,9 @@
     const closeDropdown = inject(closeDropdownKey, undefined)
 
     const router = useRouter()
+    const isMobile = useIsMobile()
+
+    const iconOnly = computed(() => isMobile.value && !!props.icon && !!props.label)
 
     const tag = computed(() => props.to ? RouterLink : props.href ? "a" : "button")
 
@@ -81,7 +96,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* The link fills the dropdown row so a modifier click anywhere on it reaches the anchor. */
     .nav-bar-action-link {
         flex: 1;

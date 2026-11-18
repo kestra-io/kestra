@@ -122,7 +122,114 @@ tasks:
         expect(tasks.find((t) => t.id === "dbt")).toMatchObject({taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}})
     })
 
+    it("getAllTasks keeps tasks whose id is a number, and skips objects without a usable id or type", () => {
+        const tasks = [{id: "ok", type: "task"}, {id: 123, type: "task"}, {id: "no-type", type: null}, {id: null, type: "task"}, {id: {}, type: "task"}]
+
+        expect(FlowUtils.getAllTasks(tasks).map((task) => task.id)).toEqual(["ok", 123])
+    })
+
+    it("getAllTaskIds returns a numeric task id as a string", () => {
+        expect(FlowUtils.getAllTaskIds(YAML_UTILS.parse("tasks:\n  - id: 123\n    type: io.kestra.plugin.core.log.Log"))).toEqual(["123"])
+    })
+
     it("getAllTasks handles missing tasks", () => {
         expect(FlowUtils.getAllTasks(undefined)).toEqual([])
+    })
+
+    it("loopOver traverses nested arrays and objects in order", () => {
+        const input = {
+            first: [
+                {id: "a", type: "task"},
+                {
+                    nested: [
+                        {id: "b", type: "task"},
+                        {id: "c", type: "task"},
+                    ],
+                },
+            ],
+            last: {id: "d", type: "task"},
+        }
+
+        const result = FlowUtils.loopOver(
+            input,
+            (value): value is {id: string; type: string} => value instanceof Object && "type" in value && value.type === "task",
+        )
+
+        expect(result.map((value) => value.id)).toEqual(["a", "b", "c", "d"])
+    })
+
+    it("loopOver handles empty and primitive values", () => {
+        const matchAll = (_value: unknown): _value is unknown => true
+
+        expect(FlowUtils.loopOver([], matchAll)).toEqual([[]])
+        expect(FlowUtils.loopOver({}, matchAll)).toEqual([{}])
+        expect(FlowUtils.loopOver(null, matchAll)).toEqual([null])
+        expect(FlowUtils.loopOver("value", matchAll)).toEqual(["value"])
+    })
+
+    it("getAllTaskIds returns task ids from top-level and deeply nested tasks", () => {
+        const flow = YAML_UTILS.parse(flowable)
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "nest-1",
+            "nest-2",
+            "nest-3",
+            "nest-4",
+            "1-1",
+            "1-2",
+            "end",
+        ])
+    })
+
+    it("getAllTaskIds includes tasks from errors", () => {
+        const flow = {
+            tasks: [
+                {
+                    id: "main",
+                    type: "io.kestra.plugin.core.log.Log",
+                },
+            ],
+            errors: [
+                {
+                    id: "error-handler",
+                    type: "io.kestra.plugin.core.log.Log",
+                },
+                {
+                    id: "nested-error",
+                    type: "io.kestra.plugin.core.flow.Parallel",
+                    tasks: [
+                        {
+                            id: "nested-error-task",
+                            type: "io.kestra.plugin.core.log.Log",
+                        },
+                    ],
+                },
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "main",
+            "error-handler",
+            "nested-error",
+            "nested-error-task",
+        ])
+    })
+
+    it("getAllTaskIds removes duplicate task ids", () => {
+        const flow = {
+            tasks: [
+                {id: "duplicate", type: "task"},
+                {id: "duplicate", type: "task"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual(["duplicate"])
+    })
+
+    it("getAllTaskIds handles empty or missing flows", () => {
+        expect(FlowUtils.getAllTaskIds(undefined)).toEqual([])
+        expect(FlowUtils.getAllTaskIds(null)).toEqual([])
+        expect(FlowUtils.getAllTaskIds({})).toEqual([])
+        expect(FlowUtils.getAllTaskIds({tasks: []})).toEqual([])
     })
 })

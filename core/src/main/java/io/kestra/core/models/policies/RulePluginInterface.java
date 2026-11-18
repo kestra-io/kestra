@@ -1,7 +1,5 @@
 package io.kestra.core.models.policies;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import io.kestra.core.models.annotations.Plugin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,9 +11,11 @@ import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 
 /**
  * Top-level marker interface for Kestra's plugin of type Rule (Enterprise Edition governance policies).
+ * <p>
+ * Deserialized via {@link io.kestra.core.plugins.serdes.PluginDeserializer} — never add {@code @JsonTypeInfo} back,
+ * since that would silently bypass the registered deserializer.
  */
 @Plugin
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public interface RulePluginInterface extends io.kestra.core.models.Plugin {
     @Schema(
         title = "The type of the rule."

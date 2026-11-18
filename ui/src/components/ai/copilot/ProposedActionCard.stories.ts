@@ -20,7 +20,7 @@ const meta: Meta<typeof ProposedActionCard> = {
 export default meta
 type Story = StoryObj<typeof ProposedActionCard>
 
-// Plan-mode card: no concrete tool → title + "Pending approval" + numbered steps + "Approve & execute".
+// Plan-mode card: no concrete tool → title + "Pending approval" + numbered steps + "Approve plan".
 export const PlanCard: Story = {
     args: {action: {
         confirmationId: "c1",
@@ -37,12 +37,12 @@ export const PlanCard: Story = {
 
 // Edit-mode card: a concrete mutating tool → "Proposed action" + "Approve" + family tag.
 export const ActionCard: Story = {
-    args: {action: {confirmationId: "c2", tool: "restart-execution", family: "MUTATE", summary: "Run `restart-execution` with {id: exec-42}", arguments: {id: "exec-42"}}},
+    args: {action: {confirmationId: "c2", tool: "restart_execution", family: "MUTATE", summary: "Run `restart_execution` with {id: exec-42}", arguments: {id: "exec-42"}}},
 }
 
 // While a decision is being sent, the card's controls are disabled.
 export const Disabled: Story = {
-    args: {action: {confirmationId: "c3", tool: "restart-execution", family: "MUTATE", summary: "Restart exec-42"}, disabled: true},
+    args: {action: {confirmationId: "c3", tool: "restart_execution", family: "MUTATE", summary: "Restart exec-42"}, disabled: true},
 }
 
 // A mutating action carrying the new flow YAML: shown as a diff instead of a raw arg, since there's

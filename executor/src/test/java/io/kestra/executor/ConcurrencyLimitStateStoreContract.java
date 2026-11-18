@@ -3,7 +3,6 @@ package io.kestra.executor;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -180,14 +179,14 @@ public abstract class ConcurrencyLimitStateStoreContract {
         });
 
         // When: the running execution terminates and frees its slot
-        Optional<Execution> popped = store().releaseThenPop(
+        List<Execution> popped = store().releaseThenPop(
             flow, limits, queuedStore(),
             candidate -> limits,
             (txContext, queued) -> queued
         );
 
         // Then: FIFO by date, and the popped execution took over the freed slot
-        assertThat(popped).map(Execution::getId).contains(first.getId());
+        assertThat(popped).map(Execution::getId).containsExactly(first.getId());
         assertThat(currentCount(flow)).isEqualTo(1);
     }
 
@@ -199,7 +198,7 @@ public abstract class ConcurrencyLimitStateStoreContract {
         store().countThenProcess(flow, (txContext, limit) -> Pair.of(null, limit.withRunning(1)));
 
         // When
-        Optional<Execution> popped = store().releaseThenPop(
+        List<Execution> popped = store().releaseThenPop(
             flow, limits, queuedStore(),
             candidate -> limits,
             (txContext, queued) -> queued
@@ -223,7 +222,7 @@ public abstract class ConcurrencyLimitStateStoreContract {
         });
 
         // When: a termination decrements 3 -> 2, still >= limit
-        Optional<Execution> popped = store().releaseThenPop(
+        List<Execution> popped = store().releaseThenPop(
             flow, limits, queuedStore(),
             candidate -> limits,
             (txContext, queued) -> queued
@@ -232,6 +231,34 @@ public abstract class ConcurrencyLimitStateStoreContract {
         // Then: nothing is dequeued (the queued-protection guard)
         assertThat(popped).isEmpty();
         assertThat(currentCount(flow)).isEqualTo(2);
+    }
+
+    @Test
+    void shouldPopEveryQueuedExecutionWhenTheFlowLimitWasRemoved() {
+        // Given: a flow whose limit was removed while one execution held its slot and two were queued
+        Flow limited = flow(1);
+        Flow unlimited = limited.toBuilder().concurrency(null).build();
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.fromUid(ScopedConcurrencyLimit.ofFlow(limited).uid(), null));
+        Execution first = Execution.newExecution(limited, List.of());
+        Execution second = Execution.newExecution(limited, List.of());
+        Instant now = Instant.now();
+        store().countThenProcess(limited, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(limited, first, now.minusSeconds(60)));
+            queuedStore().save(txContext, queued(limited, second, now));
+            return Pair.of(null, limit.withRunning(1));
+        });
+
+        // When: the admitted execution terminates
+        List<Execution> popped = store().releaseThenPop(
+            unlimited, limits, queuedStore(),
+            candidate -> List.of(),
+            (txContext, queued) -> queued
+        );
+
+        // Then: nothing keeps them queued anymore, so both are released, oldest first
+        assertThat(popped).map(Execution::getId).containsExactly(first.getId(), second.getId());
+        assertThat(currentCount(limited)).isZero();
     }
 
     private int currentCount(Flow flow) {

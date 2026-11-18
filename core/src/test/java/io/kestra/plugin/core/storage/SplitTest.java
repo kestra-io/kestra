@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -107,6 +109,23 @@ class SplitTest {
     }
 
     @Test
+    void rowsWithoutExtensionUnderFolderWithDot() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        URI put = storageUpload(10, "/file/storage/%s/inputs/sales.data/data".formatted(IdUtils.create()));
+
+        Split result = Split.builder()
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(5))
+            .build();
+
+        Split.Output run = result.run(runContext);
+
+        assertThat(run.getUris().size()).isEqualTo(2);
+        assertThat(run.getUris().getFirst().getPath()).endsWith(".tmp");
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(10)) + "\n");
+    }
+
+    @Test
     void bytes() throws Exception {
         RunContext runContext = runContextFactory.of();
         URI put = storageUpload(12288);
@@ -120,6 +139,42 @@ class SplitTest {
 
         assertThat(run.getUris().size()).isEqualTo(251);
         assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(12288)) + "\n");
+    }
+
+    @Test
+    void shouldSplitWhenByteCounterExceedsIntegerMaxValue() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        Class<?> splitStrategyType = Class.forName("io.kestra.core.services.StorageService$SplitStrategy");
+        Class<?> recordWriterType = Class.forName("io.kestra.core.services.StorageService$RecordWriter");
+        AtomicInteger writes = new AtomicInteger();
+        Object writer = mock(recordWriterType, invocation ->
+        {
+            if (invocation.getMethod().getName().equals("write")) {
+                writes.incrementAndGet();
+                return 1_500_000_000;
+            }
+            return null;
+        });
+        Object strategy = mock(splitStrategyType, invocation -> switch (invocation.getMethod().getName()) {
+            case "records" -> List.of(1, 2, 3).iterator();
+            case "newWriter" -> writer;
+            default -> null;
+        });
+        Method splitByPredicate = Class.forName("io.kestra.core.services.StorageService")
+            .getDeclaredMethod("splitByPredicate", RunContext.class, String.class, splitStrategyType, java.util.function.BiFunction.class);
+        splitByPredicate.setAccessible(true);
+
+        @SuppressWarnings("unchecked")
+        List<Path> files = (List<Path>) splitByPredicate.invoke(
+            null,
+            runContext,
+            ".txt",
+            strategy,
+            (java.util.function.BiFunction<Long, Integer, Boolean>) (totalBytes, totalRows) -> totalBytes >= 3_000_000_000L
+        );
+
+        assertThat(files).hasSize(2);
+        assertThat(writes).hasValue(3);
     }
 
     @Test
@@ -568,6 +623,10 @@ class SplitTest {
     }
 
     URI storageUpload(int count) throws URISyntaxException, IOException {
+        return storageUpload(count, "/file/storage/%s/get.yml".formatted(IdUtils.create()));
+    }
+
+    URI storageUpload(int count, String path) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("unit", "");
 
         Files.write(tempFile.toPath(), content(count));
@@ -575,7 +634,7 @@ class SplitTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
+            new URI(path),
             new FileInputStream(tempFile)
         );
     }

@@ -28,7 +28,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {size: "lg"},
+    args: {size: "lg", color: "", tooltip: "", placement: "top"},
 }
 
 /** Loading animation – spinning icon */
@@ -46,6 +46,7 @@ export const Loading: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Colors */
@@ -66,6 +67,7 @@ export const Colors: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Sizes — full token scale (xs / sm / base / lg / xl) */
@@ -92,6 +94,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Tooltip */

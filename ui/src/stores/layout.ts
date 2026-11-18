@@ -1,6 +1,7 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
 import {storageKeys} from "../utils/constants"
+import {MOBILE_QUERY} from "../composables/useIsMobile"
 
 const MENU_SECTIONS_COLLAPSED_KEY = "menuSectionsCollapsed"
 const MENU_ITEM_VISIBILITY_KEY = "menuItemVisibility"
@@ -24,7 +25,7 @@ export const useLayoutStore = defineStore("layout", () => {
             return false
         }
 
-        return localStorage.getItem(storageKeys.MENU_COLLAPSED) === "true" || window.matchMedia("(max-width: 768px)").matches
+        return localStorage.getItem(storageKeys.MENU_COLLAPSED) === "true" || window.matchMedia(MOBILE_QUERY).matches
     })())
     const menuSectionsCollapsed = ref<Record<string, boolean>>(readObject<Record<string, boolean>>(MENU_SECTIONS_COLLAPSED_KEY))
     const menuItemVisibility = ref<Record<string, boolean>>(readObject<Record<string, boolean>>(MENU_ITEM_VISIBILITY_KEY))
@@ -52,13 +53,24 @@ export const useLayoutStore = defineStore("layout", () => {
         envColor.value = value
     }
 
-    function setSideMenuCollapsed(value: boolean) {
+    function applySideMenuCollapsed(value: boolean) {
         sideMenuCollapsed.value = value
-        localStorage.setItem(storageKeys.MENU_COLLAPSED, value ? "true" : "false")
 
         const htmlElement = document.documentElement
         htmlElement.classList.toggle("menu-collapsed", value)
         htmlElement.classList.toggle("menu-not-collapsed", !value)
+    }
+
+    function setSideMenuCollapsed(value: boolean) {
+        if (!window.matchMedia?.(MOBILE_QUERY).matches) {
+            localStorage.setItem(storageKeys.MENU_COLLAPSED, value ? "true" : "false")
+        }
+        applySideMenuCollapsed(value)
+    }
+
+    function restoreSideMenuCollapsed() {
+        applySideMenuCollapsed(localStorage.getItem(storageKeys.MENU_COLLAPSED) === "true")
+        return sideMenuCollapsed.value
     }
 
     function setMenuSectionCollapsed(id: string, collapsed: boolean) {
@@ -95,6 +107,7 @@ export const useLayoutStore = defineStore("layout", () => {
         setEnvName,
         setEnvColor,
         setSideMenuCollapsed,
+        restoreSideMenuCollapsed,
         setMenuSectionCollapsed,
         setMenuItemVisibility,
         setMenuItemOrder,

@@ -2,7 +2,8 @@
 /* eslint-disable kestra-tokens/no-undeclared-ks-token */
 import {spawnSync} from "node:child_process"
 import {describe, expect, it} from "vitest"
-import {RuleTester} from "eslint"
+import {ESLint, RuleTester} from "eslint"
+import css from "@eslint/css"
 // @ts-expect-error - plain .mjs modules, so that both linters and this test load the same code
 import {declarationsIn, knownTokens, suggest, usagesIn} from "../../../scripts/tokens/knownTokens.mjs"
 // @ts-expect-error - see above
@@ -82,14 +83,58 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
         expect(warningsFor(".x { --ks-Just-Typed: red; color: var(--ks-Just-Typed); }")).toEqual([])
     })
 
-    it("reads the style block of a single-file component", () => {
-        const sfc = "<template><i /></template>\n<style scoped>\n.x { color: var(--ks-nowhere); }\n</style>\n"
-        expect(warningsFor(sfc, "probe.vue"))
-            .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
+    it("reads both the scss and the plain css blocks of a single-file component", () => {
+        const sfc = "<template><i /></template>\n<style scoped lang=\"scss\">\n.x { color: var(--ks-nowhere); }\n</style>\n"
+            + "<style scoped>\n.y { color: var(--ks-elsewhere); }\n</style>\n"
+        expect(warningsFor(sfc, "probe.vue")).toEqual([
+            expect.stringContaining("\"--ks-nowhere\" is not declared"),
+            expect.stringContaining("\"--ks-elsewhere\" is not declared"),
+        ])
     })
 })
 
-describe("the eslint rule", () => {
+describe("the stylesheet rule, kestra-tokens/no-undeclared-css-token", () => {
+    it("reports the same names as the stylelint rule, wherever CSSTree puts them", () => {
+        const tester = new RuleTester({plugins: {css}, language: "css/css"})
+
+        expect(() => tester.run("no-undeclared-css-token", eslintPlugin.rules["no-undeclared-css-token"], {
+            valid: [
+                {code: ".x { color: var(--ks-text-link); }"},
+                {code: ".x { --ks-Just-Typed: red; color: var(--ks-Just-Typed); }"},
+            ],
+            invalid: [
+                {code: ".x { color: var(--ks-nowhere); }", errors: [{messageId: "undeclared", column: 17}]},
+                {code: ".x { --local: var(--ks-nowhere); }", errors: [{messageId: "undeclared", column: 19}]},
+                {code: ".x { color: var(--ks-text-link, var(--ks-nowhere)); }", errors: [{messageId: "undeclared", column: 37}]},
+                {code: ".x { color: var(--ks-nowhere, red); }", errors: [{message: /the fallback is what renders/}]},
+            ],
+        })).not.toThrow()
+    })
+
+    it("lints the plain style blocks and style attributes of an SFC at their own position", async () => {
+        const sfc = "<template>\n    <i style=\"color: var(--ks-in-attribute)\" />\n</template>\n"
+            + "<style lang=\"scss\">\n.x { color: var(--ks-in-scss); }\n</style>\n"
+            + "<style scoped>\n.y { color: v-bind(color); background: var(--ks-in-block); }\n</style>\n"
+        const [result] = await new ESLint().lintText(sfc, {filePath: "src/probe.vue"})
+
+        expect(result.messages.filter(m => m.ruleId === "kestra-tokens/no-undeclared-css-token")
+            .map(({line, column, message}) => [line, column, message.slice(0, message.indexOf("\" "))]))
+            .toEqual([[2, 26, "\"--ks-in-attribute"], [8, 44, "\"--ks-in-block"]])
+        expect(result.messages.filter(m => m.ruleId?.startsWith("css/"))).toEqual([])
+    })
+
+    it("lints each style block and style attribute as its own stylesheet", async () => {
+        const sfc = "<template>\n    <i style=\"color: red\" />\n</template>\n"
+            + "<style>\n@import \"./a.css\";\n.x { color: red; }\n</style>\n"
+            + "<style scoped>\n@import \"./a.css\";\n.y { color: red; }\n</style>\n"
+        const [result] = await new ESLint({fix: true}).lintText(sfc, {filePath: "src/probe.vue"})
+
+        expect(result.messages.filter(m => m.ruleId?.startsWith("css/"))).toEqual([])
+        expect(result.output ?? sfc).toBe(sfc)
+    })
+})
+
+describe("the eslint rule for scripts", () => {
     it("covers the tokens stylelint cannot see", () => {
         const tester = new RuleTester({languageOptions: {ecmaVersion: 2022, sourceType: "module"}})
 

@@ -1,7 +1,7 @@
 name: Translations - Generate for a pull request
 
-# The pull request workflow generates translations only for branches of this repository: a fork has
-# no GEMINI_API_KEY, so its generate job is skipped and the gate then rejects the missing keys. An
+# The pull request workflow generates translations only for branches of this repository: a fork is
+# withheld the GCP credentials, so its generate job is skipped and the gate then rejects the missing keys. An
 # external contributor cannot get a green PR on their own. This is the maintainer's one-click
 # replacement for "check the branch out, run the generator with my key, push to the fork": pick the
 # PR number in the Actions tab and the run generates the missing and stale translations for that
@@ -11,14 +11,15 @@ name: Translations - Generate for a pull request
 # out the branch this workflow was dispatched on, which has to be the branch the pull request targets,
 # installs its dependencies without lifecycle scripts, and swaps its data files for the ones of the
 # pull request (the language JSON files, the fingerprints and the design-system `*.locale.ts` files,
-# which the generator parses without evaluating). It holds the Gemini key and a read-only token. The
+# which the generator parses without evaluating). It holds the Vertex AI access and a read-only token. The
 # `publish` job holds the write tokens and never runs anything from the pull request: it checks that
 # the patch touches only those data files, applies it and pushes.
 #
-# Pushing to a fork needs a token with write access to the fork (GITHUB_TOKEN never has it). When the
-# PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN secret holds a maintainer token,
-# the commit is pushed straight onto the PR branch; otherwise the run leaves the commit as a patch
-# artifact and says so on the PR.
+# A branch of this repository is pushed to as the Kestra GitHub App, so the push starts the PR checks
+# (a push made with GITHUB_TOKEN starts none). Pushing to a fork needs a token with write access to the
+# fork, which neither has. When the PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN
+# secret holds a maintainer token, the commit is pushed straight onto the PR branch; otherwise the run
+# leaves the commit as a patch artifact and says so on the PR.
 on:
   workflow_dispatch:
     inputs:
@@ -101,7 +102,7 @@ jobs:
           fi
           git write-tree > "$RUNNER_TEMP/overlay-tree"
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: 'ui/.nvmrc'
 
@@ -109,11 +110,17 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: ui
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Generate missing and stale translations
         run: npm run translations:generate
         working-directory: ui
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: kestra-prd
+          GOOGLE_CLOUD_LOCATION: global
 
       - name: Save what the generator changed as a patch
         id: patch
@@ -128,7 +135,7 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.patch.outputs.changed == 'true'
         with:
           name: translations-generated-pr-${{ inputs.pr_number }}
@@ -142,7 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -153,6 +160,16 @@ jobs:
         name: Checkout
         with:
           persist-credentials: false
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+          permission-contents: write
 
       - name: Resolve the pull request
         id: pr
@@ -170,7 +187,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: translations-generated-pr-${{ inputs.pr_number }}
 
@@ -201,18 +218,18 @@ jobs:
 
       - name: Commit them
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "actions@github.com"
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
           git apply --index translations.patch
           git -c core.hooksPath=/dev/null commit -m "chore(core): localize to languages other than english"
 
-      # Same-repository branches take GITHUB_TOKEN; a fork takes the maintainer token, and only when
+      # Same-repository branches take the app token; a fork takes the maintainer token, and only when
       # the contributor allowed maintainer edits. Anything else falls through to the patch below.
       - name: Push onto the pull request branch
         id: push
         continue-on-error: true
         env:
-          PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || github.token }}
+          PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || steps.app-token.outputs.token }}
           CROSS: ${{ steps.pr.outputs.cross }}
           MAINTAINER_CAN_MODIFY: ${{ steps.pr.outputs.maintainer_can_modify }}
           HEAD_REPO: ${{ steps.pr.outputs.head_repo }}
@@ -230,13 +247,23 @@ jobs:
             echo "::error::Unexpected head repository name."
             exit 1
           fi
+          # A pull request whose head is a long-lived branch of this repository (a merge-up PR) would
+          # get a direct push onto it: those branches only take reviewed changes.
+          if [ "$CROSS" != "true" ]; then
+            case "$HEAD_REF" in
+              develop|main|master|releases/*|next/*)
+                echo "::error::Refusing to push onto $HEAD_REF: apply the patch through a pull request instead."
+                exit 1
+                ;;
+            esac
+          fi
           git -c core.hooksPath=/dev/null push "https://x-access-token:${PUSH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:refs/heads/${HEAD_REF}"
 
       - name: Save the commit as a patch instead
         if: steps.push.outcome == 'failure'
         run: git format-patch -1 HEAD --output-directory translations-patch
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.push.outcome == 'failure'
         with:
           name: translations-patch-pr-${{ inputs.pr_number }}

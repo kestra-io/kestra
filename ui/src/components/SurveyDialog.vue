@@ -6,7 +6,6 @@
         :closeOnClickModal="false"
         :closeOnPressEscape="true"
         @close="handleClose"
-        customClass="hello-survey-dialog"
         scrollable
     >
         <div class="survey-content">
@@ -47,7 +46,7 @@
 
             <div class="newsletter-section">
                 <KsCheckbox v-model="subscribeNewsletter">
-                    <span v-html="$t('setup.survey.newsletter')" />
+                    <span>{{ $t("setup.survey.newsletter") }}</span>
                 </KsCheckbox>
             </div>
         </div>
@@ -167,39 +166,7 @@
     }
 </script>
 
-<style scoped lang="scss">
-:deep(.hello-survey-dialog) {
-    border-radius: 8px;
-    border: 1px solid var(--ks-border-default);
-
-    .kel-dialog {
-        border-radius: 8px;
-    }
-
-    .kel-dialog__header {
-        background-color: var(--ks-bg-surface);
-        border-bottom: 1px solid var(--ks-border-default);
-        padding: 20px 24px;
-
-        .kel-dialog__title {
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-md);
-            font-weight: 600;
-        }
-    }
-
-    .kel-dialog__body {
-        padding: 24px;
-        background-color: var(--ks-bg-surface);
-    }
-
-    .kel-dialog__footer {
-        background-color: var(--ks-bg-surface);
-        border-top: 1px solid var(--ks-border-default);
-        padding: 20px 24px;
-    }
-}
-
+<style scoped>
 .survey-content {
     padding: 1rem;
 
@@ -215,7 +182,7 @@
     }
 
     .company-size-options {
-        :deep(.kel-radio-group) {
+        & :deep(.kel-radio-group) {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
@@ -267,7 +234,7 @@
     }
 
     .use-case-options {
-        :deep(.kel-checkbox-group) {
+        & :deep(.kel-checkbox-group) {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px 24px;
@@ -312,7 +279,7 @@
     .newsletter-section {
         padding-top: 4px;
 
-        :deep(.kel-checkbox) {
+        & :deep(.kel-checkbox) {
             .kel-checkbox__input {
                 .kel-checkbox__inner {
                     background-color: transparent;

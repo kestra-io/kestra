@@ -1,10 +1,11 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {reactive, ref} from "vue"
 import type {RouteParams} from "vue-router"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {ChatMessage} from "./useAiChat"
 import type {ProposedActionEvent, ThreadSummary} from "./types"
+import type {FlowPreviewBanner} from "../../../stores/flow"
 import {mountGlobal} from "../../../../tests/unit/components/ai/copilot/_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -47,6 +48,7 @@ const miscStore = reactive({
     copilotPrompt: null as string | null,
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
+    copilotSendInitialMessage: false,
     configs: {isAiApiKeyConfigured: true} as MiscControllerConfiguration | undefined,
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
@@ -55,14 +57,22 @@ vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 // CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
 // create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
 // `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
-const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined, previewBanner: undefined as FlowPreviewBanner | undefined})
 vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "./CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
+import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
 
-const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
+// Unmounted after each test, or a leaked instance's watcher would consume the next test's seeded prompt.
+const mounted: ReturnType<typeof mount>[] = []
+
+const mountChat = (props = {}) => {
+    const wrapper = mount(CopilotChat, {props, global: mountGlobal})
+    mounted.push(wrapper)
+    return wrapper
+}
 
 describe("CopilotChat", () => {
     beforeEach(() => {
@@ -87,9 +97,15 @@ describe("CopilotChat", () => {
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
+        miscStore.copilotSendInitialMessage = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
         flowStore.previewSource = undefined
+        flowStore.previewBanner = undefined
+    })
+
+    afterEach(() => {
+        mounted.splice(0).forEach((wrapper) => wrapper.unmount())
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -122,6 +138,54 @@ describe("CopilotChat", () => {
         expect(textarea.value).toBe("Fix this error")
         // Consumed once, so it doesn't re-seed on the next open.
         expect(miscStore.copilotPrompt).toBeNull()
+        // Seeded, not sent — the user reviews and submits it.
+        expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("sends the seeded prompt itself instead of leaving it in the composer", async () => {
+        // "Generate a unit test" and friends: the user already committed by picking the action.
+        miscStore.copilotPrompt = "Generate a unit test for the flow hello"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("")
+        expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    it("starts a fresh thread before sending the seeded prompt", async () => {
+        // "Generate a unit test" must not inherit whatever the restored conversation was about.
+        state.thread.value = {uid: "t-1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Generate a unit test for the flow hello"
+        miscStore.copilotSendInitialMessage = true
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        // Reset first, then send — never the other way round.
+        expect(state.reset.mock.invocationCallOrder[0]).toBeLessThan(state.sendChat.mock.invocationCallOrder[0])
+    })
+
+    it("does not touch the current conversation for a plain seeded prompt", async () => {
+        miscStore.copilotPrompt = "Fix this error"
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+    })
+
+    it("falls back to seeding the prompt while a turn is in flight", async () => {
+        // Nothing is dropped: the prompt lands in the composer for the user to send when free.
+        state.canSend.value = false
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("Generate a unit test")
     })
 
     // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
@@ -148,6 +212,124 @@ describe("CopilotChat", () => {
         await flushPromises()
         expect(state.reset).not.toHaveBeenCalled()
         expect(state.nextThreadTitle.value).toBe("Fix task extract")
+    })
+
+    it("waits for the provider list before sending, so the turn carries a providerId", async () => {
+        // Providers held open so the restore lands first: sending then would drop providerId.
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        // Visible while the wait lasts: a slow provider fetch must never hide the prompt entirely.
+        const textarea = () => w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea().value).toBe("Generate a unit test")
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: "gemini"}))
+        // Cleared on the send path, so the sent turn isn't left sitting in the composer too.
+        expect(textarea().value).toBe("")
+    })
+
+    it("sends on the backend default rather than waiting on a hanging provider fetch", async () => {
+        // `/ai/providers` has no client timeout: the turn goes out once the bounded wait elapses.
+        vi.useFakeTimers()
+        try {
+            vi.mocked(providersMock).mockReturnValueOnce(new Promise(() => {}))
+            miscStore.copilotPrompt = "Generate a unit test"
+            miscStore.copilotSendInitialMessage = true
+            mountChat()
+            await vi.advanceTimersByTimeAsync(2000)
+            expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: undefined}))
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it("does not start a turn when the dock closes while the send is still waiting", async () => {
+        // Resuming after unmount would stream an SSE turn `onBeforeUnmount(cancel)` already missed.
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        w.unmount()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("keeps the user's edit rather than sending the stale seeded prompt when they edit during the wait", async () => {
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        const input = w.find("[data-test=\"copilot-composer-input\"]")
+        await input.setValue("Generate a unit test covering the error branch")
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((input.element as HTMLTextAreaElement).value).toBe("Generate a unit test covering the error branch")
+    })
+
+    it("does not re-seed the prompt the user already sent during the wait", async () => {
+        // Re-seeding a prompt the user already sent would invite a duplicate send.
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        const input = w.find("[data-test=\"copilot-composer-input\"]")
+        await input.trigger("keydown", {key: "Enter"})
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect((input.element as HTMLTextAreaElement).value).toBe("")
+    })
+
+    it("sends once when the same prompt is seeded again while the first send is still waiting", async () => {
+        // A double-click: the second seed lands while the first run is parked on the provider wait.
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        await flushPromises()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("")
+        expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    it("seeds a different prompt handed over while the first send is still waiting", async () => {
+        // A different prompt isn't dropped: with the first turn in flight it lands in the composer.
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        miscStore.copilotPrompt = "Fix the task extract"
+        await flushPromises()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test"}))
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Fix the task extract")
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
@@ -269,7 +451,7 @@ describe("CopilotChat", () => {
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
         // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
         vi.mocked(providersMock).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
-        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
+        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
         await flushPromises() // let the provider list resolve so selectedProvider is set
         const card = w.findComponent({name: "ProposedActionCard"})
@@ -381,6 +563,19 @@ describe("CopilotChat", () => {
             ]
             mountChat()
             expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
+        })
+
+        it("drops the banner another preview left, so its own draft gets the Copilot banner", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            mountChat()
+            flowStore.previewSource = "id: my-flow\nnamespace: company.team\nlabels:\n  managed-by: governance"
+            flowStore.previewBanner = {message: "Previewing policy changes", actionLabel: "Turn off preview", onAction: vi.fn()}
+
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            await flushPromises()
+
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+            expect(flowStore.previewBanner).toBeUndefined()
         })
 
         it("clears once the pending mutate confirmation is approved", async () => {
@@ -580,53 +775,79 @@ describe("CopilotChat", () => {
         expect(mountChat().findComponent(CopilotThreadControls).exists()).toBe(true)
     })
 
-    it("shows the AI-unavailable state (and no composer) when unavailable", () => {
-        state.unavailable.value = true
+    // The composer and the quick suggestions stay on screen with no provider, but nothing can be sent.
+    it("keeps the regular home with an info notice and disabled controls when no AI provider is configured", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
         const w = mountChat()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
+
+        expect(w.text()).toContain("Turn your idea into a workflow")
+        const notice = w.find("[data-test=\"copilot-unavailable\"]")
+        expect(notice.attributes("role")).toBe("status")
+        expect(notice.text()).toContain("No AI provider is configured")
+
+        const composer = w.findComponent({name: "CopilotComposer"})
+        expect(composer.props("disabledReason")).toContain("no AI provider is configured")
+        expect(w.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeDefined()
+        expect(w.find("[data-test=\"copilot-send\"]").attributes("disabled")).toBeDefined()
+
+        const suggestions = w.findAll("[data-test=\"copilot-suggestion\"]")
+        expect(suggestions.length).toBeGreaterThan(0)
+        suggestions.forEach((s) => {
+            expect(s.attributes("disabled")).toBeDefined()
+            expect(s.attributes("aria-describedby")).toBe(notice.attributes("id"))
+        })
+
+        await suggestions[0].trigger("click")
+        expect(state.sendChat).not.toHaveBeenCalled()
     })
 
-    // Configuring a provider is an instance-config change, so the unavailable state points at the
-    // docs rather than offering a retry that could never succeed within the session.
-    it("offers the configuration docs — not a retry — from the unavailable state", () => {
-        state.unavailable.value = true
-        const w = mountChat()
-        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
+    it("opens the configuration docs in a new tab from the notice", () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const docs = mountChat().find("[data-test=\"copilot-unavailable-docs\"]")
         expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
         expect(docs.attributes("target")).toBe("_blank")
-        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
     })
 
-    // kestra-io/kestra-ee#10739: `/configs` says up front that no provider is configured, but the
-    // copilot still opens on the regular chat — the unavailable state waits for a send attempt.
-    it("opens on the regular chat when no AI provider is configured", () => {
-        miscStore.configs = {isAiApiKeyConfigured: false}
+    // The provider can still refuse a send (a 503 on an instance whose flag says configured): the
+    // chat stays in place, the prompt goes back into the composer and an alert explains.
+    it("restores the prompt and shows an error alert when a send is refused, never the full-view screen", async () => {
+        state.sendChat.mockImplementation(async () => {
+            state.unavailable.value = true
+        })
         const w = mountChat()
+
+        await w.find("[data-test=\"copilot-composer-input\"]").setValue("build me a flow")
+        await w.find("[data-test=\"copilot-send\"]").trigger("click")
+        await flushPromises()
+
+        const alert = w.find("[data-test=\"copilot-not-sent\"]")
+        expect(alert.attributes("role")).toBe("alert")
+        expect(alert.text()).toContain("Your prompt was not sent")
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("build me a flow")
+        expect(w.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeUndefined()
         expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-        expect(w.text()).toContain("Turn your idea into a workflow")
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
-        expect(w.find(".copilot-suggestions").exists()).toBe(true)
-    })
-
-    it("shows the unavailable state once a prompt is attempted with no AI provider configured", async () => {
-        miscStore.configs = {isAiApiKeyConfigured: false}
-        const w = mountChat()
-
-        // A quick-start suggestion is a send attempt like any other.
-        await w.find(".copilot-suggestion").trigger("click")
-
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        // The turn is short-circuited: it could only ever come back 503.
-        expect(state.sendChat).not.toHaveBeenCalled()
+        expect(w.find("[data-test=\"copilot-notice-retry\"]").exists()).toBe(false)
     })
 
     it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
         miscStore.configs = {}
-        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        const absent = mountChat()
+        expect(absent.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(absent.find("[data-test=\"copilot-composer-input\"]").attributes("disabled")).toBeUndefined()
 
         miscStore.configs = undefined
         expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+    })
+
+    it("does not send a seeded prompt with no AI provider, leaving it in the composer", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        miscStore.copilotPrompt = "Fix this error"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Fix this error")
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {
@@ -667,7 +888,7 @@ describe("CopilotChat", () => {
     it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
         state.messages.value = [
             {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
-            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", kind: "AUTHORING", arguments: {}}},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author_flow", kind: "AUTHORING", arguments: {}}},
         ]
         state.streaming.value = true
         const w = mountChat()
@@ -678,7 +899,7 @@ describe("CopilotChat", () => {
         // Its result arrives → the tool call is no longer the last message, so the spinner clears.
         state.messages.value = [
             ...state.messages.value,
-            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author-flow", outcome: "ok"}},
+            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author_flow", outcome: "ok"}},
         ]
         await flushPromises()
         expect(w.find(".copilot-tool-spinner").exists()).toBe(false)

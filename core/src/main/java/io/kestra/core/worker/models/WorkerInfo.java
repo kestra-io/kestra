@@ -1,13 +1,10 @@
 package io.kestra.core.worker.models;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.kestra.core.runners.Worker;
+import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.context.annotation.Context;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 /**
  * Provides information about the current worker.
@@ -15,12 +12,8 @@ import jakarta.inject.Provider;
 @Context
 public class WorkerInfo {
 
-    private final Supplier<String> workerId;
-
-    @Inject
-    public WorkerInfo(Provider<Worker> workerProvider) {
-        workerId = Suppliers.memoize(() -> workerProvider.get().getId());
-    }
+    private final String workerId = IdUtils.create();
+    private final AtomicBoolean workerIdClaimed = new AtomicBoolean();
 
     /**
      * The worker unique id.
@@ -28,6 +21,15 @@ public class WorkerInfo {
      * @return The worker id.
      */
     public String getWorkerId() {
-        return workerId.get();
+        return workerId;
+    }
+
+    /**
+     * Hands the worker id to the first worker built in this context, and a fresh id to any later one, so that two workers started side by side (as tests do) never register under the same id.
+     *
+     * @return The id the calling worker must identify itself with.
+     */
+    public String claimWorkerId() {
+        return workerIdClaimed.compareAndSet(false, true) ? workerId : IdUtils.create();
     }
 }

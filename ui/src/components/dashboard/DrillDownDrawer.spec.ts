@@ -4,7 +4,6 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
-import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
 
 const mockPush = vi.fn()
 vi.mock("vue-router", () => ({
@@ -78,7 +77,7 @@ describe("DrillDownDrawer", () => {
         const rowDetail = vi.fn().mockReturnValue({name: "executions/update", params: {tenant: "main", id: "e1"}})
         registerDrillDownPreview("test/drawer-table/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "start date"}],
             fetch: fetchMock,
             rowDetail,
         })
@@ -95,9 +94,10 @@ describe("DrillDownDrawer", () => {
             size: 25,
         }))
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(dataTable.props("data")).toEqual([{id: "e1", namespace: "ns", flowId: "f1"}])
         expect(dataTable.props("total")).toBe(1)
+        expect(wrapper.findComponent({name: "KsTableColumn"}).props("label")).toBe("Start date")
 
         await dataTable.vm.$emit("row-dblclick", {id: "e1", namespace: "ns", flowId: "f1"})
 
@@ -113,7 +113,7 @@ describe("DrillDownDrawer", () => {
         })
         registerDrillDownPreview("test/drawer-pagination/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })
@@ -122,7 +122,7 @@ describe("DrillDownDrawer", () => {
         useDrillDownStore().open({name: "test/drawer-pagination/list", query: {}, timeFiltered: false})
         await flushPromises()
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({page: 1, size: 25}))
 
         await dataTable.vm.$emit("page-changed", {page: 2, size: 25})
@@ -137,7 +137,7 @@ describe("DrillDownDrawer", () => {
             .mockResolvedValueOnce({results: [{id: "from-second-target"}], total: 1})
         registerDrillDownPreview("test/drawer-retarget/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })
@@ -147,14 +147,14 @@ describe("DrillDownDrawer", () => {
         store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "SUCCESS"}, timeFiltered: false})
         await flushPromises()
 
-        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-first-target"}])
+        expect(wrapper.findComponent({name: "KsDataTable"}).props("data")).toEqual([{id: "from-first-target"}])
 
         // The drawer stays mounted between drill-downs, so nothing but the target changes here.
         store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "FAILED"}, timeFiltered: false})
         await flushPromises()
 
         expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({"filters[state][IN]": "FAILED"}))
-        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-second-target"}])
+        expect(wrapper.findComponent({name: "KsDataTable"}).props("data")).toEqual([{id: "from-second-target"}])
         expect(fetchMock).toHaveBeenCalledTimes(2)
     })
 
@@ -168,7 +168,7 @@ describe("DrillDownDrawer", () => {
             .mockResolvedValueOnce({results: [{id: "current"}], total: 1})
         registerDrillDownPreview("test/drawer-race/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })
@@ -184,7 +184,7 @@ describe("DrillDownDrawer", () => {
         resolveStale({results: [{id: "stale"}], total: 99})
         await flushPromises()
 
-        const dataTable = wrapper.findComponent(KsDataTable)
+        const dataTable = wrapper.findComponent({name: "KsDataTable"})
         expect(dataTable.props("data")).toEqual([{id: "current"}])
         expect(dataTable.props("total")).toBe(1)
     })

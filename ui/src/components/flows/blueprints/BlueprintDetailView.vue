@@ -45,7 +45,6 @@
                 <KsSplitterPanel v-if="flowGraph" min="20%">
                     <LowCodeEditor
                         class="pane"
-                        viewType="blueprints"
                         isReadOnly
                         :flowId="parsedFlow.id"
                         :namespace="parsedFlow.namespace"
@@ -131,7 +130,7 @@
     onMounted(ensureInstalledPluginsLoaded)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprint-detail {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 16.1875rem;

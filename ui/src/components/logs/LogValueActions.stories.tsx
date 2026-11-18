@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from "@storybook/vue3"
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {userEvent, within, expect, waitFor} from "storybook/test"
 import LogValueActions from "./LogValueActions.vue"
 

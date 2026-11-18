@@ -1,0 +1,99 @@
+<style>
+    #dev-boot-status {
+        display: none;
+        position: fixed;
+        top: calc(50% + 4.5rem);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1001;
+        width: min(28rem, calc(100vw - 2rem));
+        font: 0.875rem/1.5 Inter, system-ui, sans-serif;
+        color: #5f5f7c;
+    }
+    #loader-wrapper.is-visible ~ #dev-boot-status { display: block; }
+    html.dark #dev-boot-status, html.dark-2 #dev-boot-status { color: #cfd3d6; }
+    #dev-boot-status ul { list-style: none; margin: 0; padding: 0; }
+    #dev-boot-status li { position: relative; padding-left: 1.75rem; margin-bottom: 0.5rem; }
+    #dev-boot-status li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.2rem;
+        width: 1rem;
+        height: 1rem;
+        box-sizing: border-box;
+        border: 2px solid currentColor;
+        border-radius: 0.25rem;
+        opacity: 0.5;
+        font-size: 0.75rem;
+        line-height: 0.75rem;
+        text-align: center;
+    }
+    #dev-boot-status li[data-state="active"]::before { animation: dev-boot-status-pulse 1s ease-in-out infinite alternate; }
+    #dev-boot-status li[data-state="done"]::before { content: "\2713"; color: #15b983; opacity: 1; }
+    #dev-boot-status li[data-state="warning"]::before { content: "!"; color: #f95800; opacity: 1; }
+    #dev-boot-status small { display: block; opacity: 0.8; }
+    #dev-boot-status small:empty, #dev-boot-status p:empty { display: none; }
+    #dev-boot-status p { margin: 0.75rem 0 0; color: #ed0011; }
+    @keyframes dev-boot-status-pulse { to { opacity: 0.1; } }
+</style>
+<ul>
+    <li data-step="backend" data-state="active">Backend API connected <small></small></li>
+    <li data-step="scan" data-state="active">Scanning dependencies <small></small></li>
+    <li data-step="bundle">Bundling dependencies <small></small></li>
+    <li data-step="ui" data-state="active">Loading <small></small></li>
+</ul>
+<p role="alert"></p>
+<script>
+    (function () {
+        var root = document.getElementById("dev-boot-status")
+        var backendHints = {
+            starting: "__BACKEND_URL__ accepts connections but does not answer yet: still starting.",
+            gradle: "Nothing listens on __BACKEND_URL__ yet: Gradle is still building.",
+            idle: "Nothing listens on __BACKEND_URL__ and no Gradle build is running. Start one with ./gradlew runLocal.",
+            unknown: "Nothing listens on __BACKEND_URL__ yet. Still building, or not started (./gradlew runLocal)?",
+        }
+
+        function setStep(name, state, hint) {
+            var step = root.querySelector("[data-step=" + name + "]")
+            step.dataset.state = state
+            step.querySelector("small").textContent = hint || ""
+        }
+
+        function backendHint(status) {
+            if (status.backend === "starting") return backendHints.starting
+            if (status.gradleRunning === true) return backendHints.gradle
+            if (status.gradleRunning === false) return backendHints.idle
+            return backendHints.unknown
+        }
+
+        function poll() {
+            var loader = document.getElementById("loader-wrapper")
+            if (!loader || loader.style.display === "none") return
+
+            fetch("__STATUS_PATH__", {cache: "no-store", signal: AbortSignal.timeout(10000)})
+                .then(function (response) { return response.json() })
+                .then(function (status) {
+                    root.querySelector("p").textContent = ""
+                    if (status.backend === "up") setStep("backend", "done")
+                    else setStep("backend", status.gradleRunning === false ? "warning" : "active", backendHint(status))
+                    setStep("scan", status.deps === "scanning" ? "active" : "done")
+                    setStep("bundle", {scanning: "pending", bundling: "active"}[status.deps] || "done")
+                })
+                .catch(function (error) {
+                    root.querySelector("p").textContent = error.name === "TimeoutError"
+                        ? "The Vite dev server has not answered for 10s, it is probably busy optimizing dependencies."
+                        : "The Vite dev server does not respond. Is npm run dev still running?"
+                })
+                .then(function () { setTimeout(poll, 1000) })
+        }
+
+        window.__kestraDevBootStatus = function () { setStep("ui", "done") }
+        window.addEventListener("unhandledrejection", function () {
+            if (root.querySelector("[data-step=ui]").dataset.state === "done") return
+            setStep("ui", "warning", "The app failed to load, see the browser console.")
+        })
+
+        poll()
+    })()
+</script>

@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest"
+import {afterAll, describe, it, expect} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
@@ -6,6 +6,8 @@ import Add from "./Add.vue"
 import TaskArray from "./tasks/TaskArray.vue"
 import TaskDict from "./tasks/TaskDict.vue"
 import TaskObjectField from "./tasks/TaskObjectField.vue"
+import {taskComponentsReady} from "./tasks/useBlockComponent"
+import type {Schema} from "./tasks/getTaskComponent"
 
 const messages = {
     no_code: {
@@ -33,6 +35,8 @@ const globalConfig = {
         KsIconButton: {inheritAttrs: false, template: "<button v-bind='$attrs'><slot /></button>"},
     },
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("Add", () => {
     it("shows the generic label without a target", () => {
@@ -100,7 +104,7 @@ describe("TaskDict add label", () => {
 describe("TaskObjectField anyOf containment", () => {
     // The field type resolver loads asynchronously on mount — flush it before
     // asserting which presentation branch rendered.
-    async function mountField({schema, fieldKey = "retry"}: {schema: unknown, fieldKey?: string}) {
+    async function mountField({schema, fieldKey = "retry"}: {schema: Schema, fieldKey?: string}) {
         const wrapper = i18nMount(TaskObjectField, {
             messages,
             props: {schema, fieldKey, task: {}, required: []},

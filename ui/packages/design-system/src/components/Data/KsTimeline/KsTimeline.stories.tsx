@@ -7,6 +7,7 @@ const meta: Meta<typeof KsTimeline> = {
     component: KsTimeline,
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {description: {component: "KsTimeline is the Kestra design-system abstraction over `ElTimeline` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
 }

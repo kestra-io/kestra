@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -29,6 +32,8 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 
 public final class YamlParser {
+    public static final Pattern DOCUMENT_SEPARATOR = Pattern.compile("(?m)^---[ \\t]*(?:#.*)?\\r?$");
+
     private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
@@ -40,6 +45,24 @@ public final class YamlParser {
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
+    }
+
+    /**
+     * Splits a multi-document YAML string into individual document strings using the standard
+     * line-anchored document separator ({@code (?m)^---[ \\t]*(?:#.*)?\\r?$}).
+     *
+     * @param yaml the multi-document YAML string, may be {@code null} or empty.
+     * @return a list of trimmed, non-empty YAML document strings.
+     */
+    public static List<String> splitDocuments(String yaml) {
+        if (yaml == null || yaml.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(DOCUMENT_SEPARATOR.split(yaml))
+            .map(String::trim)
+            .filter(Predicate.not(String::isEmpty))
+            .toList();
     }
 
     public static <T> T parse(String input, Class<T> cls) {

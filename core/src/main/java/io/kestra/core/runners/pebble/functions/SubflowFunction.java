@@ -50,8 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  * carry or check that depth.
  * <p>
  * <b>Bean wiring.</b> The function is only registered on server types that render execute forms
- * ({@code WEBSERVER}, {@code STANDALONE}); on other server types the bean is absent and the function
- * is not exposed. {@link Extension} injects it {@code @Nullable} and skips registration when absent.
+ * ({@code WEBSERVER}, {@code STANDALONE}); on other server types the bean is absent and
+ * {@link Extension} injects it {@code @Nullable}, registering {@link #unavailable()} instead.
  */
 @Slf4j
 @Singleton
@@ -59,12 +59,16 @@ import lombok.extern.slf4j.Slf4j;
 public class SubflowFunction implements KestraFunction {
     public static final String NAME = "subflow";
 
+    private static final String UNAVAILABLE_MESSAGE = "The 'subflow' function is only available when an execution is created from the UI or the API, "
+        + "not in task or trigger properties. When the flow is started by a Subflow task or a trigger, pass the value of this input from the caller.";
+
     private static final String NAMESPACE_ARG = "namespace";
     private static final String ID_ARG = "id";
     private static final String INPUTS_ARG = "inputs";
     private static final String REVISION_ARG = "revision";
     private static final String LABELS_ARG = "labels";
     private static final String TIMEOUT_ARG = "timeout";
+    private static final List<String> ARGUMENT_NAMES = List.of(NAMESPACE_ARG, ID_ARG, INPUTS_ARG, REVISION_ARG, LABELS_ARG, TIMEOUT_ARG);
 
     /**
      * Guards against runaway recursion: a subflow's own inputs may call {@code subflow()}, which is
@@ -89,9 +93,32 @@ public class SubflowFunction implements KestraFunction {
     @Inject
     private Provider<ExecutionOutputService> executionOutputService;
 
+    /**
+     * Stand-in registered where the real function is not wired, so that a call fails with an actionable
+     * message instead of "Function or Macro [subflow] does not exist".
+     */
+    public static KestraFunction unavailable() {
+        return new KestraFunction() {
+            @Override
+            public List<String> getArgumentNames() {
+                return ARGUMENT_NAMES;
+            }
+
+            @Override
+            public Map<String, String> getArgumentDefaults() {
+                return Map.of();
+            }
+
+            @Override
+            public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
+                throw new PebbleException(null, UNAVAILABLE_MESSAGE, lineNumber, self.getName());
+            }
+        };
+    }
+
     @Override
     public List<String> getArgumentNames() {
-        return List.of(NAMESPACE_ARG, ID_ARG, INPUTS_ARG, REVISION_ARG, LABELS_ARG, TIMEOUT_ARG);
+        return ARGUMENT_NAMES;
     }
 
     @Override
@@ -113,10 +140,7 @@ public class SubflowFunction implements KestraFunction {
         // blocking-friendly thread (flow-input rendering on the webserver). A top-level 'taskrun' or
         // 'trigger' variable means we are rendering a task or trigger property, which may run on a worker.
         if (context.getVariable("taskrun") != null || context.getVariable("trigger") != null) {
-            throw new PebbleException(
-                null, "The 'subflow' function can only be used at flow-input render time (e.g. an input's 'values'); it is not supported inside task or trigger properties.", lineNumber,
-                self.getName()
-            );
+            throw new PebbleException(null, UNAVAILABLE_MESSAGE, lineNumber, self.getName());
         }
 
         String namespace = (String) args.get(NAMESPACE_ARG);

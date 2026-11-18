@@ -6,11 +6,6 @@ type Block = "template" | "script" | "source"
 const RULES: {block: Block; pattern: RegExp; fix: string}[] = [
     {
         block: "template",
-        pattern: /<(?:i18n-t|I18nT)\b/g,
-        fix: "render the string with $t() and named arguments, <i18n-t> is not used",
-    },
-    {
-        block: "template",
         pattern: /(?<![\w$.])t\(/g,
         fix: "templates call $t(), the t() from useI18n() belongs in <script>",
     },

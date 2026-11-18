@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../index"
+import {ElColorPicker} from "element-plus"
 import KsColorPicker from "./KsColorPicker.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
@@ -28,5 +29,25 @@ describe("KsColorPicker", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-color-picker--small").exists()).toBe(true)
+    })
+
+    test("alphaOnSurface marks the trigger and adds its class to the caller's popper class", () => {
+        const wrapper = mount(KsColorPicker, {
+            props: {modelValue: "rgba(5, 66, 182, 0.08)", showAlpha: true, alphaOnSurface: true},
+            attrs: {popperClass: "caller-class"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-color-picker.ks-color-picker--alpha-on-surface").exists()).toBe(true)
+        expect(wrapper.findComponent(ElColorPicker).props("popperClass")).toEqual(["caller-class", "ks-color-picker--alpha-on-surface"])
+    })
+
+    test("without alphaOnSurface the checkerboard is kept and the caller's popper class is untouched", () => {
+        const wrapper = mount(KsColorPicker, {
+            props: {modelValue: "rgba(5, 66, 182, 0.08)", showAlpha: true},
+            attrs: {popperClass: "caller-class"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-color-picker--alpha-on-surface").exists()).toBe(false)
+        expect(wrapper.findComponent(ElColorPicker).props("popperClass")).toBe("caller-class")
     })
 })

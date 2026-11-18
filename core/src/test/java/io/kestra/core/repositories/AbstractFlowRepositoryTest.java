@@ -308,6 +308,21 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void shouldKeepFlowsDistinctWhenIdsDifferOnlyByCase() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource upper = flowRepository.create(GenericFlow.of(builder(tenant, "Report", TEST_FLOW_ID).build()));
+        FlowWithSource lower = flowRepository.create(GenericFlow.of(builder(tenant, "report", TEST_FLOW_ID).build()));
+        try {
+            assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, "Report").map(Flow::getId)).contains("Report");
+            assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, "report").map(Flow::getId)).contains("report");
+            assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, "REPORT")).isEmpty();
+        } finally {
+            deleteFlow(upper);
+            deleteFlow(lower);
+        }
+    }
+
+    @Test
     void shouldFilterFlowsWithNotEqualsLabelOperator() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 

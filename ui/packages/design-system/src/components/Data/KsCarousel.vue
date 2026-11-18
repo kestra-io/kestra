@@ -15,7 +15,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         initialIndex?: number
         height?: string
         trigger?: "hover" | "click"
@@ -29,7 +29,7 @@
         direction?: "horizontal" | "vertical"
         pauseOnHover?: boolean
         motionBlur?: boolean
-    }>()
+    }>(), {autoplay: undefined, loop: undefined, pauseOnHover: undefined})
 
     const emit = defineEmits<{
         change: [current: number, prev: number]
@@ -46,4 +46,7 @@
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/carousel';
     @use 'element-plus/theme-chalk/src/carousel-item';
+</style>
+
+<style>
 </style>

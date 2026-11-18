@@ -8,7 +8,7 @@ type TranslationValue = string | TranslationValue[] | {[key: string]: Translatio
 type LocaleMessages = Record<string, TranslationValue>
 type TranslationMessages = Record<string, LocaleMessages>
 type TranslationModule = {default: TranslationMessages}
-type TranslationProvider = Record<string, () => Promise<TranslationModule>>
+export type TranslationProvider = Record<string, () => Promise<TranslationModule>>
 type AppI18n = I18n<TranslationMessages, Record<string, unknown>, Record<string, unknown>, Locales, false>
 
 const translations = import.meta.glob<TranslationModule>(["./*.json", "!./en.json"])

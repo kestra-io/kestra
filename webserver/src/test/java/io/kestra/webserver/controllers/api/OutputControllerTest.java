@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
@@ -32,6 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class OutputControllerTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutputControllerTest.class);
+
     @Inject
     @Client("/")
     private ReactorHttpClient client;
@@ -173,7 +178,7 @@ class OutputControllerTest {
             .state(new State(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
-        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+        executionOutputService.saveOutputs(LOGGER, Flow.builder().id("flowId").namespace("namespace").build(), execution, Map.of("some", "output"));
 
         // When - every route now has a literal second segment ('executions' or 'tasks'), so there is no ambiguity
         Map<String, Object> response = client.toBlocking().retrieve(
@@ -197,7 +202,7 @@ class OutputControllerTest {
             .state(new State(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
-        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+        executionOutputService.saveOutputs(LOGGER, Flow.builder().id("flowId").namespace("namespace").build(), execution, Map.of("some", "output"));
 
         // When / Then - the request is resolved on the MAIN tenant, so it must not see another tenant's outputs
         assertThrows(

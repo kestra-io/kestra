@@ -1,0 +1,35 @@
+id: approval-parallel
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: approvalA
+        type: io.kestra.plugin.core.flow.Approval
+        onWait:
+          - id: waitA
+            type: io.kestra.plugin.core.flow.Sleep
+            duration: PT3S
+        onApprove:
+          - id: approvedA
+            type: io.kestra.plugin.core.log.Log
+            message: "Approved A"
+        onDeny:
+          - id: deniedA
+            type: io.kestra.plugin.core.log.Log
+            message: "Denied A"
+      - id: approvalB
+        type: io.kestra.plugin.core.flow.Approval
+        onWait:
+          - id: waitB
+            type: io.kestra.plugin.core.log.Log
+            message: "Approval B requested"
+        onApprove:
+          - id: approvedB
+            type: io.kestra.plugin.core.log.Log
+            message: "Approved B"
+        onDeny:
+          - id: deniedB
+            type: io.kestra.plugin.core.log.Log
+            message: "Denied B"

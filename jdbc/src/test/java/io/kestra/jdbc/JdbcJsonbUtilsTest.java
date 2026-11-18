@@ -1,9 +1,12 @@
 package io.kestra.jdbc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.jooq.JSONB;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,5 +80,43 @@ class JdbcJsonbUtilsTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.data()).doesNotContain("\\u0000");
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "x\\uD835 y, x\\uFFFD y",
+            "\\udc59, \\uFFFD",
+            "\\uD835\\u0000, \\uFFFD",
+            "\\uD835\\uD835\\uDC59, \\uFFFD\\uD835\\uDC59",
+            "\\uD835\\\\uDC59, \\uFFFD\\\\uDC59",
+            "a\\u0000b, ab"
+        }
+    )
+    void shouldReplaceLoneSurrogateEscapesGivenUnicodeEscapes(String value, String expected) {
+        assertThat(JdbcJsonbUtils.sanitize("{\"key\":\"" + value + "\"}")).isEqualTo("{\"key\":\"" + expected + "\"}");
+    }
+
+    @Test
+    void shouldKeepSurrogatePairWhenSerializedByJackson() throws JsonProcessingException {
+        String json = new String(MAPPER.writeValueAsBytes(Map.of("key", "\uD835\uDC59")), StandardCharsets.UTF_8);
+
+        assertThat(json).contains("\\uD835\\uDC59");
+        assertThat(JdbcJsonbUtils.valueOf(json).data()).isEqualTo(json);
+    }
+
+    @Test
+    void shouldNotFixTextWhenBackslashIsEscaped() throws JsonProcessingException {
+        // The text backslash-u-0000 and backslash-u-D835 are serialized with an escaped backslash, which PostgreSQL accepts.
+        String json = MAPPER.writeValueAsString(Map.of("key", "a\\u0000b \\uD835"));
+
+        assertThat(JdbcJsonbUtils.sanitize(json)).isEqualTo(json);
+    }
+
+    @Test
+    void shouldReturnTheSameInstanceWhenNothingNeedsFixing() {
+        String json = "{\"key\":\"caf\u00e9 \\uD835\\uDC59 \\n\"}";
+
+        assertThat(JdbcJsonbUtils.sanitize(json)).isSameAs(json);
     }
 }

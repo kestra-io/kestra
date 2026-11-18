@@ -1,5 +1,5 @@
 import {vueRouter} from "storybook-vue3-router";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import type {ExecutionTrigger} from "@kestra-io/kestra-sdk";
 import {waitFor, within, userEvent, expect} from "storybook/test";
 

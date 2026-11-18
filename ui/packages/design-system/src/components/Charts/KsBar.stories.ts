@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
 import {expect} from "storybook/test"
 import KsBar from "./KsBar.vue"
-import {ChartFeature, TooltipType} from "../.."
+import {ChartFeature, ChartRenderer, TooltipType} from "../.."
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const ALL_FEATURES = ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"] as const
@@ -16,6 +16,7 @@ const meta: Meta<typeof KsBar> = {
         stack: {control: "boolean"},
         disableFeatures: {control: "multi-select", options: ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"]},
         tooltipType: {control: "select", options: ["native", "external"]},
+        renderer: {control: "select", options: ["canvas", "svg"]},
     },
     parameters: {
         docs: {
@@ -45,6 +46,11 @@ export const Default: Story = {
     args: {
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
         loading: false,
+        stack: false,
+        disableFeatures: [],
+        tooltipType: TooltipType.NATIVE,
+        renderer: ChartRenderer.CANVAS,
+        maxPixelRatio: 2,
     },
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
@@ -72,6 +78,7 @@ export const StackedExternalTooltip: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Single series bar chart */
@@ -119,6 +126,7 @@ export const Loading: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Simulates fetching then populating the chart */
@@ -154,6 +162,7 @@ export const AsyncData: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom colors via options override */
@@ -182,6 +191,7 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────
@@ -225,6 +235,7 @@ export const MiniStacked: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Mini loading state */
@@ -234,4 +245,5 @@ export const MiniLoading: Story = {
         setup() { return {ALL_FEATURES} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-bar :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }

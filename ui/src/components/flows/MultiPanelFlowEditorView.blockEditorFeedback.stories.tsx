@@ -35,6 +35,13 @@ export const FullExperienceMultiPanelFlowEditor: Story = {
     ],
     render: () => ({
         setup() {
+            localStorage.setItem(
+                "el-fl-company.platform-deploy_service",
+                JSON.stringify([
+                    {tabs: ["nocode"], activeTab: "nocode", size: 50},
+                    {tabs: ["doc"], activeTab: "doc", size: 50},
+                ]),
+            )
             mockNoCodeTransport()
             const flowStore = useFlowStore()
             flowStore.flow = {id: "deploy_service", namespace: "company.platform", source: CICD_PIPELINE_YAML} as Flow

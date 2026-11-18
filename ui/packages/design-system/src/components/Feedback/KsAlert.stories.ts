@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
 import KsAlert from "./KsAlert.vue"
+import KsButton from "../Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsAlert> = {
     title: "Components/Feedback/KsAlert",
@@ -10,7 +11,6 @@ const meta: Meta<typeof KsAlert> = {
         type: {control: "select", options: ["success", "warning", "info", "error"]},
         showIcon: {control: "boolean"},
         closable: {control: "boolean"},
-        effect: {control: "select", options: ["light", "dark"]},
         center: {control: "boolean"},
         banner: {control: "boolean"},
     },
@@ -27,10 +27,19 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-alert v-bind=\"args\" /></div>",
     }),
-    args: {type: "info", title: "This is an info alert", showIcon: true},
+    args: {
+        type: "info",
+        title: "This is an info alert",
+        description: "",
+        closable: true,
+        showIcon: true,
+        center: false,
+        banner: false,
+    },
 }
 
 export const Types: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -42,9 +51,32 @@ export const Types: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const resolved = (token: string) => {
+            const probe = document.createElement("span")
+            probe.style.color = `var(${token})`
+            canvasElement.append(probe)
+            const color = getComputedStyle(probe).color
+            probe.remove()
+            return color
+        }
+
+        const alerts = [...canvasElement.querySelectorAll(".kel-alert")]
+        await expect(alerts).toHaveLength(4)
+
+        for (const [index, type] of ["success", "info", "warning", "error"].entries()) {
+            const styles = getComputedStyle(alerts[index])
+            await expect(styles.backgroundColor).toBe(resolved(`--ks-bg-${type}`))
+            await expect(styles.borderTopColor).toBe(resolved(`--ks-border-${type}`))
+            await expect(styles.color).toBe(resolved(`--ks-text-${type}`))
+            await expect(getComputedStyle(alerts[index].querySelector(".kel-alert__icon") as Element).color)
+                .toBe(resolved(`--ks-icon-${type}`))
+        }
+    },
 }
 
 export const WithDescription: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -63,6 +95,7 @@ export const WithDescription: Story = {
 
 /** With icon and description – all types */
 export const WithNoIconAndDescription: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -78,6 +111,7 @@ export const WithNoIconAndDescription: Story = {
 
 /** A one-line alert centres in its box, and a wrapped one keeps the icon on its first line */
 export const IconAlignment: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -111,6 +145,7 @@ export const IconAlignment: Story = {
 
 /** Centered text */
 export const Centered: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -125,6 +160,7 @@ export const Centered: Story = {
 
 /** Full-width system banner: square, bottom rule only, body text in the primary text colour */
 export const Banner: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -160,6 +196,7 @@ export const Banner: Story = {
 
 /** Closable */
 export const Closable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -169,4 +206,31 @@ export const Closable: Story = {
             </div>
         `,
     }),
+}
+
+/** An action on the right of the title, such as the button that acts on what the alert reports. */
+export const WithAction: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsAlert, KsButton},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="info" title="This execution is waiting for a review. Approve or deny it to continue." :closable="false">
+                    <template #action><ks-button size="small">Review</ks-button></template>
+                </ks-alert>
+                <ks-alert type="warning" title="Two flows use this secret." :closable="true">
+                    <template #action><ks-button size="small">Show them</ks-button></template>
+                </ks-alert>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        for (const alert of canvasElement.querySelectorAll(".kel-alert")) {
+            const title = alert.querySelector(".ks-alert-title-text")!.getBoundingClientRect()
+            const action = alert.querySelector(".ks-alert-action")!.getBoundingClientRect()
+            const content = alert.querySelector(".kel-alert__content")!.getBoundingClientRect()
+            await expect(action.left).toBeGreaterThan(title.right)
+            await expect(Math.round(content.right - action.right)).toBeLessThanOrEqual(1)
+        }
+    },
 }

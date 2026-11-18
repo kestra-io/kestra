@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ElPopover} from "element-plus"
 import KestraDesignSystem from "../../index"
 import KsPopover from "./KsPopover.vue"
 
@@ -25,5 +26,30 @@ describe("KsPopover", () => {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()
+    })
+
+    test("closes on Escape when visibility is externally controlled", async () => {
+        const wrapper = mount(KsPopover, {
+            props: {trigger: "click", visible: true},
+            slots: {
+                default: "<p>Popover content</p>",
+                reference: "<button>Click me</button>",
+            },
+            global: globalConfig,
+        })
+        await wrapper.vm.$nextTick()
+
+        document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.emitted("update:visible")?.[0]).toEqual([false])
+    })
+
+    test("hides the arrow when the parent sets nothing", () => {
+        const wrapper = mount(KsPopover, {
+            slots: {reference: "<button>Click me</button>"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(ElPopover).props("showArrow")).toBe(false)
     })
 })

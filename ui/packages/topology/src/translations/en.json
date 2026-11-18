@@ -1,0 +1,132 @@
+{
+    "topology-graph": {
+        "retried": "This task was retried",
+        "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+        "graph-orientation": "Graph orientation",
+        "zoom-in": "Zoom in",
+        "zoom-out": "Zoom out",
+        "zoom-reset": "Reset zoom",
+        "zoom-fit": "Fit",
+        "invalid": "Graph error",
+        "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
+        "load_error": "Could not load the topology graph. Please try again.",
+        "expand_subflow_error": "Couldn't expand subflow",
+        "add-task": "Add task",
+        "add-trigger": "Add a trigger",
+        "child-count": "{count} task | {count} tasks",
+        "loop": {
+            "not-run": "Not run",
+            "pick-first": "Pick {loop} first",
+            "picker-label": "Iteration of {loop}",
+            "search-by-index": "Search by index",
+            "all-iterations": "All iterations",
+            "iteration-index": "index {index}",
+            "iteration-value-index": "{value} · index {index}",
+            "previous-iteration": "Previous iteration",
+            "next-iteration": "Next iteration",
+            "previous-page": "Previous page",
+            "next-page": "Next page",
+            "failed-group": "Failed · {count}",
+            "other-group": "Other iterations",
+            "matching": "Match",
+            "failure-forbidden": "You do not have access to this iteration.",
+            "failure-not-found": "This iteration no longer exists.",
+            "failure-ambiguous": "This loop ran several times in this execution, so its iterations cannot be told apart.",
+            "failure-not-located": "The failed iteration could not be located.",
+            "failure-unknown": "Iterations could not be loaded.",
+            "scope": "Scope",
+            "whole-execution": "Whole execution",
+            "clear-scopes": "Clear scopes",
+            "jump-to-first-failure": "Jump to first failure",
+            "loops-with-failures": "Loops with failures",
+            "task-runs": "{runs} run | {runs} runs",
+            "task-runs-failed": "{runs} run · {failed} failed | {runs} runs · {failed} failed",
+            "retry": "Retry",
+            "load-more": "Load more",
+            "retry-loading": "Retry loading iterations"
+        },
+        "loop-chip": {
+            "failed": {
+                "full": "{failed} of {total} failed",
+                "mid": "{failed} / {total}",
+                "min": "{failed}"
+            },
+            "failed-not-started": {
+                "full": "{failed} failed · {notStarted} not started of {total}",
+                "mid": "{failed} / {total}",
+                "min": "{failed}"
+            },
+            "progress": {
+                "full": "{done} of {total} done",
+                "mid": "{done} / {total}",
+                "min": "{done}"
+            },
+            "progress-failed": {
+                "full": "{done} of {total} done · {failed} failed",
+                "mid": "{done} / {total}",
+                "min": "{done}"
+            },
+            "success": {
+                "full": "{total} iteration | {total} iterations",
+                "mid": "{total}",
+                "min": "{total}"
+            }
+        },
+        "loop-state-bar": {
+            "item": "{count} {state}",
+            "not-started": "not started"
+        }
+    },
+    "state_history": {
+        "title": "State history",
+        "open": "State history",
+        "aria_open": "Show the state history",
+        "aria_open_for": "Show the state history for {subject}",
+        "started_at": "Started {time}",
+        "failed_at": "Failed at {time}",
+        "skipped_at": "Skipped at {time}",
+        "created_at": "Created {time}",
+        "did_not_run": "This task did not run",
+        "waiting_to_start": "Waiting to start",
+        "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
+        "copy": "Copy state history"
+    },
+    "add error handler": "Add an error handler",
+    "block_editor": {
+        "configure": "Configure",
+        "duplicate": "Duplicate"
+    },
+    "close": "Close",
+    "collapse": "Collapse",
+    "collapse all": "Collapse all",
+    "copy": "Copy",
+    "delete": "Delete",
+    "download": "Download",
+    "duration": "Duration",
+    "edit": "Edit",
+    "error detected": "Error(s) detected.",
+    "expand": "Expand",
+    "expand all": "Expand all",
+    "export_as": "Export as .{format}",
+    "flow_editor_stats": {
+        "errors": {
+            "label": "{count} Error(s)"
+        }
+    },
+    "more actions": "More actions",
+    "no_history": "No history available",
+    "open": "Open",
+    "paused duration": "Paused duration",
+    "queued duration": "Queued duration",
+    "replay": "Replay",
+    "run task in playground": "Run task in playground",
+    "running duration": "Running duration",
+    "show description": "Show a description",
+    "show details": "Show details",
+    "show task condition": "Show task condition",
+    "show task logs": "Show task logs",
+    "show task outputs": "Show task outputs",
+    "skipped": "Skipped",
+    "total_duration": "Total duration"
+}

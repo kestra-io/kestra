@@ -2,9 +2,15 @@ package io.kestra.core.validations.validator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.test.TestSuite;
+import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.test.flow.UnitTest;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TestSuiteValidation;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -31,8 +37,23 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
 
         List<String> violations = new ArrayList<>();
 
-        if (flowService.findById(value.getTenantId(), value.getNamespace(), value.getFlowId()).isEmpty()) {
+        Optional<Flow> maybeFlow = flowService.findById(value.getTenantId(), value.getNamespace(), value.getFlowId());
+        if (maybeFlow.isEmpty()) {
             violations.add("Flow with id: '%s' does not exist on Namespace: '%s'.".formatted(value.getFlowId(), value.getNamespace()));
+        } else {
+            Flow flow = maybeFlow.get();
+
+            if (!ListUtils.isEmpty(value.getTestCases())) {
+                // validate no duplicate it test id
+                List<String> ids = value.getTestCases().stream().map(it -> it.getId()).toList();
+                List<String> duplicateIds = ListUtils.getDuplicates(ids);
+                if (!duplicateIds.isEmpty()) {
+                    violations.add("Duplicate unit test id with name [" + String.join(", ", duplicateIds) + "]");
+                }
+
+                // validate each unit test
+                value.getTestCases().forEach(it -> validate(flow, it, violations));
+            }
         }
 
         if (!violations.isEmpty()) {
@@ -42,6 +63,39 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
             return false;
         } else {
             return true;
+        }
+    }
+
+    private void validate(Flow flow, UnitTest unitTest, List<String> violations) {
+        if (unitTest == null || unitTest.getFixtures() == null) {
+            return;
+        }
+
+        if (!MapUtils.isEmpty(unitTest.getFixtures().getInputs())) {
+            unitTest.getFixtures().getInputs().forEach((key, _) -> validateInput(flow, key, violations));
+        }
+
+        if (!ListUtils.isEmpty(unitTest.getFixtures().getTasks())) {
+            unitTest.getFixtures().getTasks().forEach(it -> validateTask(flow, it, violations));
+        }
+
+        // validate no duplicate taskId in fixture
+        List<String> ids = ListUtils.emptyOnNull(unitTest.getFixtures().getTasks()).stream().map(it -> it.getId()).toList();
+        List<String> duplicateIds = ListUtils.getDuplicates(ids);
+        if (!duplicateIds.isEmpty()) {
+            violations.add("Duplicate task id in fixtures with name [" + String.join(", ", duplicateIds) + "]");
+        }
+    }
+
+    private void validateTask(Flow flow, TaskFixture taskFixture, List<String> violations) {
+        if (flow.allTasksWithChilds().stream().noneMatch(it -> it.getId().equals(taskFixture.getId()))) {
+            violations.add("Task '" + taskFixture.getId() + "' does not exist in the flow");
+        }
+    }
+
+    private void validateInput(Flow flow, String inputs, List<String> violations) {
+        if (ListUtils.emptyOnNull(flow.getInputs()).stream().noneMatch(it -> it.getId().equals(inputs))) {
+            violations.add("Input '" + inputs + "' does not exist in the flow");
         }
     }
 }

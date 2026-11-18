@@ -113,7 +113,7 @@
 
     defineExpose({toggleDialog, isDialogVisible})
 </script>
-<style lang="scss" scoped>
+<style scoped>
 .edit-container {
     display: contents;
 }
@@ -126,7 +126,7 @@
     bottom: 0;
     z-index: var(--ks-z-dropdown);
 
-    .edit-popup {
+    & .edit-popup {
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
         border-radius: 8px;

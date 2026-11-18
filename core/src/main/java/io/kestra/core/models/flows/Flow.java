@@ -81,6 +81,12 @@ public class Flow extends AbstractFlow implements HasUID {
         return this._finally;
     }
 
+    @Schema(hidden = false)
+    @Override
+    public List<Output> getOutputs() {
+        return super.getOutputs();
+    }
+
     List<@Valid Task> afterExecution;
 
     List<@Valid AbstractTrigger> triggers;
@@ -153,7 +159,7 @@ public class Flow extends AbstractFlow implements HasUID {
             .toList();
     }
 
-    private Stream<Task> allTasksWithChilds(Task task) {
+    public Stream<Task> allTasksWithChilds(Task task) {
         if (task == null) {
             return Stream.empty();
         } else if (task.isFlowable()) {

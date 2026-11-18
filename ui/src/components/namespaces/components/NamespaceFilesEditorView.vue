@@ -111,7 +111,7 @@
     useFilesPanels(panels, computed(() => props.namespace))
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .namespace-files-loading {
         height: 100%;
         position: relative;

@@ -5,6 +5,7 @@ import type {FieldNavigation} from "./utils/useFieldNavigation"
 import type {BlockDragContext} from "./blocks/useBlockDragAndDrop"
 import type {UnsetRequiredField} from "./utils/requiredFields"
 import type {Schema} from "./components/tasks/getTaskComponent"
+import type {TaskBlockComponent} from "./components/tasks/useBlockComponent"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -20,6 +21,7 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) => void>
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 export const UPDATE_YAML_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
+export const OPEN_EDITOR_TAB_INJECTION_KEY = Symbol("open-editor-tab-injection-key") as InjectionKey<(uid: string) => void>
 export const SAVE_FLOW_FUNCTION_INJECTION_KEY = Symbol("save-flow-function-injection-key") as InjectionKey<() => void>
 export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>
 export const VISIBLE_PANELS_INJECTION_KEY = Symbol("visible-panels-injection-key") as InjectionKey<Ref<Panel[]>>
@@ -47,6 +49,11 @@ export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as Inje
 
 export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 
+export const FIELD_VALIDATION_ERRORS_INJECTION_KEY = Symbol("field-validation-errors-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
+
 export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
 export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
 export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>
+
+/** `null` hides the field, `undefined` keeps the schema-driven component. */
+export const BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY = Symbol("block-component-override-injection-key") as InjectionKey<(fieldKey: string, task: unknown) => TaskBlockComponent | null | undefined>

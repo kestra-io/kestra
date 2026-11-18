@@ -35,9 +35,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {disabled: false},
 }
 
 export const Group: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioGroup, KsRadio},
         setup() {
@@ -58,6 +60,7 @@ export const Group: Story = {
 }
 
 export const ButtonGroup: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioGroup, KsRadioButton},
         setup() {
@@ -78,6 +81,7 @@ export const ButtonGroup: Story = {
 }
 
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioGroup, KsRadioButton},
         setup() {
@@ -118,6 +122,7 @@ export const Sizes: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsRadioGroup, KsRadio},
         setup() { return {value: ref("B")} },

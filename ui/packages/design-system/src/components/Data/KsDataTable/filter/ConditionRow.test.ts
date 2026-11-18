@@ -2,6 +2,7 @@ import {describe, test, expect} from "vitest"
 import {nextTick, type ComponentPublicInstance} from "vue"
 import ConditionRow from "./ConditionRow.vue"
 import FilterMultiSelect from "./layout/FilterMultiSelect.vue"
+import FilterNumber from "./layout/FilterNumber.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "./utils/filterTypes"
 import {i18nMount} from "../../../../../tests/units/i18nMount"
 
@@ -226,5 +227,31 @@ describe("ConditionRow key-value comparator changes", () => {
             value: ["environment:staging", "team:platform"],
             valueLabel: "environment:staging",
         })
+    })
+})
+
+describe("ConditionRow number field", () => {
+    const attemptsKey: FilterKeyConfig = {
+        key: "attempts",
+        label: "Attempts",
+        valueType: "number",
+        comparators: [Comparators.GREATER_THAN, Comparators.BETWEEN],
+    }
+
+    test("shouldSwapTheSingleValueForAnEmptyRangeWhenSwitchingToBetween", async () => {
+        const wrapper = i18nMount(ConditionRow, {
+            props: {
+                filter: {id: "f1", key: "attempts", keyLabel: "Attempts", comparator: Comparators.GREATER_THAN, comparatorLabel: "Greater Than", value: "3", valueLabel: "3"},
+                allKeys: [attemptsKey],
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(FilterNumber).props("range")).toBe(false)
+
+        wrapper.findComponent(".cond-op").vm.$emit("update:modelValue", Comparators.BETWEEN)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]>
+        expect(updates.at(-1)![0]).toMatchObject({comparator: Comparators.BETWEEN, value: [], valueLabel: ""})
     })
 })

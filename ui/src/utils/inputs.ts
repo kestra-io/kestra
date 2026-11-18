@@ -55,7 +55,7 @@ export function formChildName(id: string, formIds: string[]): string {
  */
 export function unflattenToForms(
     leaves: InputMetaData[] | undefined,
-    formGroups: Record<string, {displayName?: string; description?: string}> | undefined,
+    formGroups: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: InputMetaData["descriptionDisplayMode"]}> | undefined,
 ): InputMetaData[] {
     if (!leaves) return []
     const formIds = Object.keys(formGroups ?? {})
@@ -76,6 +76,7 @@ export function unflattenToForms(
                 type: "FORM",
                 displayName: formGroups?.[owner]?.displayName,
                 description: formGroups?.[owner]?.description,
+                descriptionDisplayMode: formGroups?.[owner]?.descriptionDisplayMode,
                 inputs: [],
             }
             nodes.set(owner, node)
@@ -100,6 +101,7 @@ export interface WizardStep {
     title?: string;
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: InputMetaData["descriptionDisplayMode"];
     leafIds?: string[];
 }
 
@@ -123,7 +125,7 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
             flushRun()
             const leafIds = flattenInputs([input]).map((l) => l.id)
             if (leafIds.length) {
-                result.push({kind: "form", title: input.displayName || input.id, displayName: input.displayName, description: input.description, leafIds})
+                result.push({kind: "form", title: input.displayName || input.id, displayName: input.displayName, description: input.description, descriptionDisplayMode: input.descriptionDisplayMode, leafIds})
             }
         } else {
             run.push(input.id)
@@ -134,7 +136,23 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
-export function normalize(type: InputType | undefined, value: any) {
+/** The asset ids an `ASSET` input value designates: an id, a JSON array of ids, or the assets the server resolved. */
+export function assetInputIds(value: unknown): string[] {
+    let parsed = value
+    if (typeof value === "string" && value.trim().startsWith("[")) {
+        try {
+            parsed = JSON.parse(value)
+        } catch {
+            parsed = value
+        }
+    }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    return items
+        .map((item) => (item !== null && typeof item === "object" ? (item as {id?: unknown}).id : item))
+        .filter((id): id is string => typeof id === "string" && id !== "")
+}
+
+export function normalize(type: InputType | undefined, value: unknown): unknown {
     let res = value
 
     if (type === "BOOL") {
@@ -147,7 +165,7 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
-        res = dayjs(res).toISOString()
+        res = dayjs(res as dayjs.ConfigType).toISOString()
     } else if (type === "TIME") {
         const [hours, minutes, seconds = "0"] = String(res).split(":")
         res = dayjs()
@@ -156,10 +174,13 @@ export function normalize(type: InputType | undefined, value: any) {
             .minute(Number(minutes))
             .second(Number(seconds))
             .toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "TABLE" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }
+    } else if ((type as string) === "ASSET") {
+        const ids = assetInputIds(res)
+        res = Array.isArray(res) || (typeof res === "string" && res.trim().startsWith("[")) ? JSON.stringify(ids) : ids[0]
     } else if (type === "YAML") {
         if (typeof res !== "string") {
             res = YAML_UTILS.stringify(res).toString()
@@ -168,4 +189,20 @@ export function normalize(type: InputType | undefined, value: any) {
         res = res.toString()
     }
     return res
+}
+
+type RequiredInputLike = {id?: string; type?: string; required?: boolean; inputs?: RequiredInputLike[]}
+
+/**
+ * Values are keyed by leaf id, so FORM children are checked under their dotted id
+ * (`env.region`) instead of the FORM id itself, like `flattenInputs`.
+ */
+export function hasMissingRequiredInputs(flowInputs: (RequiredInputLike | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
+    const leaves = (flowInputs ?? []).flatMap(input =>
+        input?.type === "FORM"
+            ? (input.inputs ?? []).map(child => ({...child, id: `${input.id}.${child.id}`}))
+            : [input],
+    )
+    const requiredIds = leaves.filter(input => input?.required !== false).map(input => input?.id)
+    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
 }

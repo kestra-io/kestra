@@ -11,39 +11,37 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class QueueServiceTest {
 
-    private final QueueService queueService = new QueueService();
-
     @Test
     void shouldReturnUidWhenObjectImplementsHasUid() {
         HasUID object = () -> "uid";
 
-        assertThat(queueService.key(object)).isEqualTo("uid");
+        assertThat(QueueService.key(object)).isEqualTo("uid");
     }
 
     @Test
     void shouldReturnNullWhenObjectIsLogEntry() {
         LogEntry object = LogEntry.builder().build();
 
-        assertThat(queueService.key(object)).isNull();
+        assertThat(QueueService.key(object)).isNull();
     }
 
     @Test
     void shouldReturnNullWhenObjectIsMetricEntry() {
         MetricEntry object = MetricEntry.builder().build();
 
-        assertThat(queueService.key(object)).isNull();
+        assertThat(QueueService.key(object)).isNull();
     }
 
     @Test
     void shouldPreserveNullUidWhenHasUidReturnsNull() {
         HasUID object = () -> null;
 
-        assertThat(queueService.key(object)).isNull();
+        assertThat(QueueService.key(object)).isNull();
     }
 
     @Test
     void shouldThrowExceptionWhenObjectIsNull() {
-        assertThatThrownBy(() -> queueService.key(null))
+        assertThatThrownBy(() -> QueueService.key(null))
             .isInstanceOf(NullPointerException.class);
     }
 
@@ -51,7 +49,7 @@ class QueueServiceTest {
     void shouldThrowExceptionWhenObjectHasUnsupportedType() {
         Object object = new Object();
 
-        assertThatThrownBy(() -> queueService.key(object))
+        assertThatThrownBy(() -> QueueService.key(object))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Unknown type 'java.lang.Object'");
     }

@@ -1,0 +1,159 @@
+:root {
+    --ks-topology-icon-color: var(--ks-gray-neutral-800);
+    --ks-topology-icon-bg: var(--ks-white);
+    --ks-border-radius-pill: 50rem;
+    --ks-node-success: var(--ks-green-500);
+    --ks-node-primary: var(--ks-primary-500);
+    --ks-node-danger: var(--ks-red-500);
+    --ks-node-blue: var(--ks-blue-500);
+    /* design-system-disable-next-line: the default node blue has no palette entry, and the palette is generated from Figma */
+    --ks-node-default: #7081b9;
+    --ks-node-warning: var(--ks-orange-300);
+}
+
+html.dark {
+    --ks-node-default: var(--ks-gray-neutral-400);
+}
+
+.text-danger { color: var(--ks-text-error); }
+
+.button-icon { font-size: var(--ks-font-size-2xs); }
+
+.circle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    margin-left: 0.25rem;
+    border-radius: 1rem;
+    z-index: 2000;
+    cursor: pointer;
+}
+
+.vue-flow {
+    background-color: var(--ks-bg-base);
+}
+
+.vue-flow .material-design-icon {
+    width: 1em;
+    height: 1em;
+
+    & > .material-design-icon__svg {
+        width: 1em;
+        height: 1em;
+        bottom: 0;
+    }
+}
+
+.vue-flow__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ks-spacing-1);
+    background-color: var(--ks-bg-surface);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-sm);
+    box-shadow: 0 1px 2px var(--ks-shadow-element);
+}
+
+.vue-flow .vue-flow__controls-button {
+    padding: var(--ks-spacing-1);
+    border: none;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
+    color: var(--ks-text-primary);
+
+    &:hover,
+    &.active {
+        background-color: var(--ks-bg-hover);
+    }
+
+    & .material-design-icon,
+    & .material-design-icon__svg {
+        width: 1rem;
+        height: 1rem;
+        max-width: none;
+        max-height: none;
+    }
+
+    & .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
+}
+
+.node-action-button {
+    & .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
+}
+
+.vue-flow__container {
+    & .vue-flow__node.topology-node-hovered {
+        outline: none !important;
+    }
+
+    & .vue-flow__node.topology-node-hovered .node-wrapper {
+        border-color: var(--ks-border-default) !important;
+    }
+
+    & .top-button-div {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        display: flex;
+        justify-content: center;
+        padding-right: 3px;
+        color: var(--ks-btn-primary-text);
+    }
+    & .vue-flow__node-cluster { pointer-events: none !important; }
+    & .vue-flow__handle       { opacity: 0 !important; }
+
+    & .vue-flow__edge-path {
+        stroke: var(--ks-topology-dash);
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        fill: none;
+    }
+
+    & .ks-topology-triggers-border {
+        background-color: var(--ks-topology-bg-triggers);
+        border: 1px solid var(--ks-topology-border-triggers);
+    }
+
+    & .ks-topology-subflow-border {
+        background-color: var(--ks-topology-bg-subflow);
+        border: 1px solid var(--ks-topology-border-subflow);
+    }
+
+    & .ks-topology-flowable-task-border {
+        background-color: var(--ks-topology-bg-flowable-task);
+        border: 1px solid var(--ks-topology-border-flowable-task);
+    }
+
+    & .ks-topology-errors-border {
+        background-color: var(--ks-topology-bg-errors);
+        border: 1px solid var(--ks-topology-border-errors);
+    }
+}
+
+.is-exporting {
+    & .vue-flow__controls,
+    & .vue-flow__controls-button,
+    & .vue-flow__handle,
+    & .top-button-div,
+    & .circle-button,
+    & .node-action-button {
+        display: none !important;
+    }
+}

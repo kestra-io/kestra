@@ -20,41 +20,20 @@
 </template>
 
 <script setup lang="ts" generic="T">
-    import {ref} from "vue"
+    import {ref, type HTMLAttributes} from "vue"
     import {ElTable} from "element-plus"
     import type {TableColumnCtx, TableInstance, TableProps} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {usePassedProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
     import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
     type TableRow = NonNullable<TableProps["data"]>[number]
 
-    const props = withDefaults(defineProps<{
-        data?: T[]
-        tableLayout?: "fixed" | "auto"
-        size?: "large" | "default" | "small"
-        rowKey?: string | ((row: T) => string)
-        emptyText?: string
-        defaultSort?: {prop: string; order: "ascending" | "descending" | null}
-        showHeader?: boolean
-        maxHeight?: string | number
-        fit?: boolean
-        cellClassName?: string | ((data: {row: T; rowIndex: number; column: TableColumnCtx<TableRow>; columnIndex: number}) => string)
-        rowClassName?: string | ((data: {row: T; rowIndex: number}) => string)
-    }>(), {
-        data: undefined,
-        tableLayout: undefined,
-        size: undefined,
-        rowKey: undefined,
-        emptyText: undefined,
-        defaultSort: undefined,
-        showHeader: undefined,
-        maxHeight: undefined,
-        fit: undefined,
-        cellClassName: undefined,
-        rowClassName: undefined,
-    })
+    type KsTableProps = Omit<TableProps<T & TableRow>, "data"> & {data?: T[]}
+
+    const props = defineProps<KsTableProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsTableProps>>()
 
     const emit = defineEmits<{
         selectionChange: [selection: T[]]
@@ -71,7 +50,7 @@
 
     const tableRef = ref<TableInstance>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
@@ -82,61 +61,64 @@
         setCurrentRow: (row: T) => tableRef.value?.setCurrentRow(row as TableRow),
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),
+        setScrollTop: (top: number) => tableRef.value?.setScrollTop(top),
     })
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/table';
+</style>
 
+<style>
     .kel-table {
         --kel-table-border-color: transparent;
         --kel-table-border: none;
-
         --kel-table-bg-color: var(--ks-bg-overlay);
         --kel-table-header-text-color: var(--ks-text-secondary);
         --kel-table-header-bg-color: var(--ks-bg-overlay);
         --kel-table-row-hover-bg-color: var(--ks-bg-hover);
         --kel-table-tr-bg-color: var(--ks-bg-overlay);
         --kel-table-current-row-bg-color: var(--ks-bg-overlay);
-
         border-radius: 0;
         background-color: var(--ks-bg-overlay);
         border: none;
         font-size: var(--ks-font-size-sm);
         height: 100%;
+    }
 
-        &--striped {
-            .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
-                background: var(--ks-bg-tag);
+    .kel-table--striped {
+        & .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
+            background: var(--ks-bg-tag);
 
-                html.dark & {
-                    background: var(--ks-bg-base);
-                }
+            html.dark & {
+                background: var(--ks-bg-base);
             }
         }
+    }
 
-        .cell {
+    .kel-table {
+        & .cell {
             padding: 0 8px;
             word-break: break-word;
             font-weight: 400;
             font-size: var(--ks-font-size-sm);
         }
 
-        .kel-table__inner-wrapper::before {
+        & .kel-table__inner-wrapper::before {
             display: none;
         }
 
-        .kel-table__empty-text {
+        & .kel-table__empty-text {
             color: var(--ks-text-dim) !important;
         }
 
-        .kel-table__body tr:hover > td.kel-table__cell,
-        .kel-table__body tr.hover-row > td.kel-table__cell {
+        & .kel-table__body tr:hover > td.kel-table__cell,
+        & .kel-table__body tr.hover-row > td.kel-table__cell {
             background-color: var(--ks-table-row-hover-bg, var(--ks-bg-hover));
         }
 
-        th {
+        & th {
             white-space: nowrap;
             background-color: var(--ks-bg-overlay);
             border-bottom: 1px solid var(--ks-border-default);
@@ -144,7 +126,7 @@
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
 
-            div.cell {
+            & div.cell {
                 word-break: normal;
                 white-space: nowrap;
                 font-weight: 600;
@@ -153,14 +135,14 @@
             }
         }
 
-        th.row-action, td.row-action {
+        & th.row-action, & td.row-action {
             width: 24px;
 
-            .cell {
+            & .cell {
                 white-space: nowrap;
             }
 
-            a, button, .kicon, .kel-button {
+            & a, & button, & .kicon, & .kel-button {
                 color: var(--ks-text-primary);
                 width: 24px;
                 height: 24px;
@@ -174,56 +156,64 @@
                 box-shadow: none;
                 padding: 0;
                 cursor: pointer;
-
-                .material-design-icon,
-                .material-design-icon > .material-design-icon__svg {
-                    width: var(--ks-icon-size-sm);
-                    height: var(--ks-icon-size-sm);
-                }
             }
 
-            a:hover,
-            button:hover,
-            .kicon:hover,
-            .kel-button:hover {
+            /* Listed out: nested under the mixed list above, each branch would take its highest specificity. */
+            & a .material-design-icon,
+            & a .material-design-icon > .material-design-icon__svg,
+            & button .material-design-icon,
+            & button .material-design-icon > .material-design-icon__svg,
+            & .kicon .material-design-icon,
+            & .kicon .material-design-icon > .material-design-icon__svg,
+            & .kel-button .material-design-icon,
+            & .kel-button .material-design-icon > .material-design-icon__svg {
+                width: var(--ks-icon-size-sm);
+                height: var(--ks-icon-size-sm);
+            }
+
+            & a:hover,
+            & button:hover,
+            & .kicon:hover,
+            & .kel-button:hover {
                 background-color: var(--ks-bg-tag);
             }
-
         }
 
-        th.shrink {
+        & th.shrink {
             width: 16px;
         }
 
-        td.shrink {
+        & td.shrink {
             white-space: nowrap;
         }
 
-        th.row-graph {
+        & th.row-graph {
             width: 250px;
             min-width: 250px;
         }
 
-        td.row-graph {
+        & td.row-graph {
             padding: 0.75rem 0 0;
             vertical-align: bottom;
         }
 
-        tr.disabled {
-            td {
+        & tr.disabled {
+            & td {
                 opacity: 0.5;
             }
         }
 
-        td {
-            .kel-tag {
+        & td {
+            & .kel-tag {
                 margin-right: .3rem;
             }
 
-            // Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling.
-            a:not(.kel-button) {
+            /* Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling. */
+
+            & a:not(.kel-button) {
                 color: var(--ks-text-primary);
-                &:hover{
+
+                &:hover {
                     text-decoration: underline;
                 }
             }

@@ -140,6 +140,17 @@ class StateTest {
     }
 
     @Test
+    void shouldFormatHumanDurationWithMillisecondsAndUncappedHours() {
+        Instant start = Instant.parse("2026-01-01T00:00:00Z");
+        State state = new State(State.Type.SUCCESS, List.of(
+            new State.History(State.Type.CREATED, start),
+            new State.History(State.Type.SUCCESS, start.plus(Duration.ofHours(100).plusMinutes(2).plusSeconds(3).plusMillis(45)))
+        ));
+
+        assertThat(state.humanDuration()).isEqualTo("100:02:03.045");
+    }
+
+    @Test
     void shouldFormatHumanDurationAsHoursMinutesSeconds() {
         // Given / When / Then
         assertThat(terminatedState().humanDuration()).isEqualTo("01:01:01.000");
@@ -253,5 +264,23 @@ class StateTest {
 
         // When / Then
         assertThat(state.isResumingFromBreakpoint()).isFalse();
+    }
+
+    @Test
+    void shouldClassifyPausingAsRunningButNotOnlyRunningNorTerminatedNorPaused() {
+        // Given / When / Then: an execution running its Approval onWait tasks is still schedulable
+        // like RUNNING, but must not be picked up by anything gated on onlyRunning() (e.g. a plain
+        // "is actively executing a task" check) nor mistaken for the terminal PAUSED state.
+        assertThat(State.Type.PAUSING.isRunning()).isTrue();
+        assertThat(State.Type.PAUSING.onlyRunning()).isFalse();
+        assertThat(State.Type.PAUSING.isTerminated()).isFalse();
+        assertThat(State.Type.PAUSING.isPaused()).isFalse();
+        assertThat(State.Type.PAUSING.isCreated()).isFalse();
+    }
+
+    @Test
+    void shouldIncludePausingInRunningTypes() {
+        // Given / When / Then
+        assertThat(State.runningTypes()).contains(State.Type.PAUSING);
     }
 }

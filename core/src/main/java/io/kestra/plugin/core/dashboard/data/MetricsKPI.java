@@ -21,35 +21,34 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Metrics are data exposed by tasks after execution.",
-    description = "A chart using Metrics could display the number of rows loaded in a bigQuery task or an output count from a SQL Query; anything exposed by an execution."
+    title = "Display a single Metric value in a KPI chart.",
+    description = "Aggregates Metrics exposed by tasks into a single value, such as the total number of rows loaded by a BigQuery task or an output count from a SQL query, to be displayed in a KPI chart."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with rows inserted by Namespace.",
+            title = "Display the total number of rows inserted in a given namespace.",
             full = true,
             code = { """
                 charts:
-                  - id: table_metrics
-                    type: io.kestra.plugin.core.dashboard.chart.Table
+                  - id: kpi_inserted_rows
+                    type: io.kestra.plugin.core.dashboard.chart.KPI
                     chartOptions:
-                      displayName: Rows Inserted by Namespace
+                      displayName: Rows Inserted
+                      numberType: FLAT
+                      width: 3
                     data:
-                      type: io.kestra.plugin.core.dashboard.data.Metrics
+                      type: io.kestra.plugin.core.dashboard.data.MetricsKPI
                       columns:
-                        namespace:
-                          field: NAMESPACE
-                        inserted_rows:
-                          field: VALUE
-                          agg: SUM
+                        field: VALUE
+                        agg: SUM
                       where:
                         - field: NAME
                           type: EQUAL_TO
                           value: rows
-                      orderBy:
-                        - column: inserted_rows
-                          order: DESC
+                        - field: NAMESPACE
+                          type: EQUAL_TO
+                          value: "company.team"
                 """
             }
         )

@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from "@storybook/vue3"
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import LogLevelNavigator from "./LogLevelNavigator.vue"
 
 const LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const

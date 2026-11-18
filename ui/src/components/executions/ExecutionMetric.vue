@@ -6,8 +6,10 @@
         :showTask="true"
         :execution="executionsStore.execution"
         :optionalColumns="optionalColumns"
+        :fitHeight
     >
         <template #navbar>
+            <LoopIterationsNotice kind="metrics" />
             <KSFilter
                 :configuration="metricFilter"
                 :properties="{
@@ -33,7 +35,10 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useMetricFilter} from "../filter/configurations/metricFilters"
     import MetricsTable from "../executions/MetricsTable.vue"
+    import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
+
+    withDefaults(defineProps<{fitHeight?: boolean}>(), {fitHeight: true})
 
     const {t} = useI18n()
     const route = useRoute()

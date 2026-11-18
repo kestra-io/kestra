@@ -137,6 +137,38 @@ public class QueryFilterUtilsTest {
         assertThat(appended.operation()).isEqualTo(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO);
     }
 
+    @Test
+    void replaceTimeRange_allTimeAllowed_dropsTimeRangeAndAddsNoStartDate() {
+        var labelsLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("foo:bar")
+            .build();
+        var filters = List.of(labelsLeaf, allTimeFilter());
+
+        var result = QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE, true);
+
+        assertThat(result).containsExactly(labelsLeaf);
+    }
+
+    @Test
+    void replaceTimeRange_allTimeNotAllowed_fallsBackToDefaultStartDate() {
+        var result = QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(List.of(allTimeFilter()), DateFilter.START_DATE);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().field()).isEqualTo(QueryFilter.Field.START_DATE);
+        assertThat(ZonedDateTime.parse((String) result.getFirst().value()))
+            .isBetween(ZonedDateTime.now().minusDays(8).minusMinutes(1), ZonedDateTime.now().minusDays(8).plusMinutes(1));
+    }
+
+    private static QueryFilter allTimeFilter() {
+        return QueryFilter.builder()
+            .field(QueryFilter.Field.TIME_RANGE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(TimeLineSearch.ALL_TIME)
+            .build();
+    }
+
     private static List<QueryFilter> timeRangeFilter() {
         return List.of(
             QueryFilter.builder()

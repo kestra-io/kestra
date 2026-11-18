@@ -73,19 +73,23 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/step';
+</style>
 
+<style>
     .kel-steps {
         --ks-step-badge-size: 2.25rem;
         --ks-step-icon-size: var(--ks-spacing-5);
         --ks-step-title-size: var(--ks-font-size-lg);
+    }
 
-        &--small {
-            --ks-step-badge-size: 1.75rem;
-            --ks-step-icon-size: var(--ks-spacing-4);
-            --ks-step-title-size: var(--ks-font-size-md);
-        }
+    .kel-steps--small {
+        --ks-step-badge-size: 1.75rem;
+        --ks-step-icon-size: var(--ks-spacing-4);
+        --ks-step-title-size: var(--ks-font-size-md);
+    }
 
-        .kel-step__icon {
+    .kel-steps {
+        & .kel-step__icon {
             width: var(--ks-step-badge-size) !important;
             height: var(--ks-step-badge-size) !important;
             border-radius: 50%;
@@ -95,51 +99,51 @@
             box-shadow: 0 1px 2px var(--ks-shadow-element);
         }
 
-        .kel-step__icon:empty {
+        & .kel-step__icon:empty {
             display: none;
         }
 
-        .kel-step__icon .material-design-icon,
-        .kel-step__icon .material-design-icon__svg {
+        & .kel-step__icon .material-design-icon,
+        & .kel-step__icon .material-design-icon__svg {
             width: var(--ks-step-icon-size);
             height: var(--ks-step-icon-size);
         }
 
-        .kel-step__icon-inner[class*="kel-icon"]:not(.is-status) {
+        & .kel-step__icon-inner[class*="kel-icon"]:not(.is-status) {
             font-size: var(--ks-step-icon-size);
         }
 
-        .is-process .kel-step__icon {
+        & .is-process .kel-step__icon {
             border-color: var(--ks-border-focus);
             background: var(--ks-bg-overlay);
             color: var(--ks-icon-active);
             box-shadow: 0 8px 12px var(--ks-shadow-elevated);
         }
 
-        .is-finish .kel-step__icon,
-        .is-success .kel-step__icon {
+        & .is-finish .kel-step__icon,
+        & .is-success .kel-step__icon {
             border-color: var(--ks-border-success);
             background: var(--ks-bg-overlay);
             color: var(--ks-icon-success);
             box-shadow: 0 8px 12px var(--ks-shadow-elevated);
         }
 
-        .kel-step-icon--success {
+        & .kel-step-icon--success {
             display: none;
         }
 
-        .is-finish,
-        .is-success {
-            .kel-step-icon--main {
+        & .is-finish,
+        & .is-success {
+            & .kel-step-icon--main {
                 display: none;
             }
 
-            .kel-step-icon--success {
+            & .kel-step-icon--success {
                 display: inline-flex;
             }
         }
 
-        .kel-step__title {
+        & .kel-step__title {
             font-size: var(--ks-step-title-size);
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-text-inactive);
@@ -151,30 +155,30 @@
             }
         }
 
-        .kel-step__description {
+        & .kel-step__description {
             &.is-finish,
             &.is-success {
                 color: var(--ks-text-success);
             }
         }
 
-        .kel-step__line-inner {
+        & .kel-step__line-inner {
             display: none;
         }
 
-        .kel-step.is-vertical {
-            .kel-step__line {
+        & .kel-step.is-vertical {
+            & .kel-step__line {
                 left: calc(var(--ks-step-badge-size) / 2);
                 background: transparent;
                 border-left: 1px dashed var(--ks-border-strong);
             }
 
-            .kel-step__main {
+            & .kel-step__main {
                 padding-left: var(--ks-spacing-4);
             }
         }
 
-        .kel-step.is-horizontal .kel-step__line {
+        & .kel-step.is-horizontal .kel-step__line {
             top: calc(var(--ks-step-badge-size) / 2);
             background: transparent;
             border-top: 1px dashed var(--ks-border-strong);

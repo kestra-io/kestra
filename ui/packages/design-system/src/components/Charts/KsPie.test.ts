@@ -7,6 +7,7 @@ import KsPie from "./KsPie.vue"
 // latch flips and <VChart> mounts.
 vi.mock("@vueuse/core", () => ({
     useElementSize: () => ({width: ref(800), height: ref(400)}),
+    useDevicePixelRatio: () => ({pixelRatio: ref(1)}),
 }))
 
 vi.mock("vue-echarts", () => ({

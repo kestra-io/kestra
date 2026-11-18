@@ -6,8 +6,8 @@ import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginGroup from "./PluginGroup.vue"
 
-vi.mock("axios", () => ({
-    default: {get: vi.fn().mockResolvedValue({data: []})},
+vi.mock("../../utils/publicApi", () => ({
+    publicFetchJson: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
@@ -94,14 +94,15 @@ vi.mock("../../stores/pluginsEnrichment", () => ({
     }),
 }))
 
-async function mountGroup(name: string) {
+async function mountGroup(name: string, subGroup?: string) {
     Object.keys(routeParams).forEach(key => delete routeParams[key])
     routeParams.name = name
+    if (subGroup) routeParams.subGroup = subGroup
     const wrapper = i18nMount(PluginGroup, {
         global: {
             plugins: [KestraDesignSystem],
             stubs: {
-                PluginLayout: {template: "<div><slot /></div>"},
+                PluginLayout: {template: "<div><slot /><slot name=\"versions\" /></div>"},
                 TaskIcon: true,
             },
         },
@@ -148,5 +149,13 @@ describe("PluginGroup", () => {
         expect(titles).toContain("dbt CLI")
         expect(titles).toContain("dbt Cloud")
         expect(titles).not.toContain("DbtCLI")
+    })
+
+    test("offers version management on the artifact page only, not on a subgroup page", async () => {
+        const artifactPage = await mountGroup("plugin-dbt")
+        const subGroupPage = await mountGroup("plugin-dbt", "io.kestra.plugin.dbt.cli")
+
+        expect(artifactPage.find("[data-test=plugin-versions-locked]").exists()).toBe(true)
+        expect(subGroupPage.find("[data-test=plugin-versions-locked]").exists()).toBe(false)
     })
 })

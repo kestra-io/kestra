@@ -8,14 +8,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
-import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
-import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -31,16 +30,16 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.DisabledAssetInputResolver;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -62,6 +61,7 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -77,6 +77,7 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.StickyWorkerRouting;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.DefaultExecutor;
 import io.kestra.executor.ExecutionDelayProcessor;
@@ -101,6 +102,7 @@ import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.validation.Validator;
 
@@ -108,8 +110,8 @@ import jakarta.validation.Validator;
  * Composition root for executor unit tests: the real {@link ExecutorService}, message handlers,
  * processors and {@link DefaultExecutor} wired over in-memory fakes — no Micronaut context, no
  * database, no threads. Collaborators without executor logic ({@link KillSwitchService},
- * {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService},
- * {@link KillSwitchActionService}) are Mockito mocks exposed for per-test stubbing.
+ * {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService}) are Mockito
+ * mocks exposed for per-test stubbing.
  */
 public final class ExecutorTestHarness {
     private static final int MAX_STEPS = 500;
@@ -130,6 +132,7 @@ public final class ExecutorTestHarness {
     private final SLAMonitorProcessor slaMonitorProcessor;
     private final List<Runnable> loops = new ArrayList<>();
     private final List<Trace.Emission> journal = new ArrayList<>();
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers = new ArrayList<>(List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution))));
     private int workerJobsAnswered = 0;
 
     // in-memory fakes
@@ -161,13 +164,14 @@ public final class ExecutorTestHarness {
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final WorkerTaskResultListener workerTaskResultListener;
-    private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
     private final FlowTriggerService flowTriggerService;
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
+    private final ExecutionRepositoryInterface executionRepository;
+    private final WorkerQueueService workerQueueService;
     private final KitRunContextFactory runContextFactory;
     private final Storage storage;
     private final MutableClock clock;
@@ -216,6 +220,7 @@ public final class ExecutorTestHarness {
         );
         this.executionOutputService = new ExecutionOutputService(
             executionOutputRepository,
+            Mockito.mock(SearchableDataRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new ExecutionOutputConfiguration(-1)
@@ -244,7 +249,9 @@ public final class ExecutorTestHarness {
             () -> runContextFactoryRef[0],
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander(),
-            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false))
+            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
+            Mockito.mock(SearchableDataRepositoryInterface.class),
+            new DisabledAssetInputResolver()
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {
@@ -268,13 +275,15 @@ public final class ExecutorTestHarness {
         this.storage = Mockito.mock(Storage.class);
         this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator, storage);
         runContextFactoryRef[0] = runContextFactory;
-        WorkerQueueService workerQueueService = new WorkerQueueService.Default();
+        // a spy so tests can route jobs to Worker Queues, which the default service never does
+        this.workerQueueService = Mockito.spy(new WorkerQueueService.Default());
 
         // a spy so tests can stub the methods that reach for other services while the rest stays real
+        this.executionRepository = Mockito.mock(ExecutionRepositoryInterface.class);
         this.executionService = Mockito.spy(
             new ExecutionService(
                 Mockito.mock(StorageInterface.class),
-                Mockito.mock(ExecutionRepositoryInterface.class),
+                executionRepository,
                 Mockito.mock(LogDataStoreInterface.class),
                 Mockito.mock(MetricRepositoryInterface.class),
                 Mockito.mock(FlowInputOutput.class),
@@ -282,12 +291,17 @@ public final class ExecutorTestHarness {
                 Mockito.mock(ConcurrencyLimitService.class),
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
+                runContextFactory,
+                Mockito.mock(ApprovalRequestHandler.class),
                 executionOutputService,
+                Mockito.mock(SearchableDataRepositoryInterface.class),
+                Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,
                 loopExecutionEventQueue,
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
+                Mockito.mock(TriggerEventQueue.class),
                 Optional.empty()
             )
         );
@@ -296,9 +310,8 @@ public final class ExecutorTestHarness {
             KillSwitchService.class,
             invocation -> "evaluate".equals(invocation.getMethod().getName()) ? EvaluationType.PASS : Mockito.RETURNS_DEFAULTS.answer(invocation)
         );
-        this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
+        this.killSwitchActionService = new KillSwitchActionService(executionStateStore, killQueue);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
-        this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
@@ -324,12 +337,11 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             workerQueueService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             Optional.empty(),
             killQueue,
             loopExecutionEventQueue,
             runContextLoggerFactory,
-            new AssetService.NoopAssetService(),
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
@@ -344,7 +356,6 @@ public final class ExecutorTestHarness {
             concurrencyLimitStateStore,
             concurrencyLimitResolver,
             executorService,
-            workerQueueService,
             quotaService,
             flowMetaStore,
             workerJobEventQueue,
@@ -353,14 +364,18 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             killSwitchService,
             killSwitchActionService,
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             metricRegistry,
             tracerFactory,
-            clock
+            clock,
+            stickyWorkerRouting()
         );
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
+            flowService,
             taskOutputService,
             executionOutputService,
             asyncOperationService,
@@ -442,7 +457,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             runContextFactory,
             metricRegistry
         );
@@ -470,8 +485,7 @@ public final class ExecutorTestHarness {
             loopExecutionEventQueue,
             executionStatisticQueue,
             triggerEventQueue,
-            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
-            workerJobRunningStateStore,
+            executionTerminatedNotifiers,
             executionCommandMessageHandler,
             executionEventMessageHandler,
             workerTaskResultMessageHandler,
@@ -517,6 +531,11 @@ public final class ExecutorTestHarness {
         );
         executor.initMetrics();
         executor.run();
+    }
+
+    public ExecutorTestHarness notifyExecutionTerminatedFirstTo(ExecutionTerminatedNotifier notifier) {
+        executionTerminatedNotifiers.addFirst(notifier);
+        return this;
     }
 
     /**
@@ -634,6 +653,19 @@ public final class ExecutorTestHarness {
 
     private List<Trace.Emission> emittedSince(int from) {
         return List.copyOf(journal.subList(from, journal.size()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static BeanProvider<StickyWorkerRouting> stickyWorkerRouting() {
+        StickyWorkerRouting routing = Mockito.mock(StickyWorkerRouting.class);
+        Mockito.when(routing.route(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(invocation -> new WorkerJobEvent(
+            invocation.getArgument(1),
+            invocation.getArgument(0),
+            new WorkerJobEvent.StickyRouting(invocation.getArgument(2), StickyWorkerRouting.routingKey(0))
+        ));
+        BeanProvider<StickyWorkerRouting> provider = Mockito.mock(BeanProvider.class);
+        Mockito.when(provider.get()).thenReturn(routing);
+        return provider;
     }
 
     private void answerWorkerJobs(ScriptedWorker worker) {
@@ -815,16 +847,8 @@ public final class ExecutorTestHarness {
         return killSwitchService;
     }
 
-    public KillSwitchActionService killSwitchActionService() {
-        return killSwitchActionService;
-    }
-
     public WorkerTaskResultListener workerTaskResultListener() {
         return workerTaskResultListener;
-    }
-
-    public WorkerJobRunningStateStore workerJobRunningStateStore() {
-        return workerJobRunningStateStore;
     }
 
     public ConcurrencyLimitResolver concurrencyLimitResolver() {
@@ -849,6 +873,14 @@ public final class ExecutorTestHarness {
 
     public ExecutionService executionService() {
         return executionService;
+    }
+
+    public ExecutionRepositoryInterface executionRepository() {
+        return executionRepository;
+    }
+
+    public WorkerQueueService workerQueueService() {
+        return workerQueueService;
     }
 
     /**

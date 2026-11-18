@@ -20,7 +20,7 @@ import jakarta.inject.Singleton;
  * this allows the ELS repository to use an H2-backed queue.
  */
 @Singleton
-@Requires(property = "kestra.queue.type", pattern = "h2|memory")
+@Requires(property = "kestra.queue.type", pattern = "(?i)h2|memory")
 public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init-queue";

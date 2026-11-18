@@ -37,6 +37,7 @@ public class DailyExecutionStatistics {
             .put(State.Type.WARNING, 0L)
             .put(State.Type.FAILED, 0L)
             .put(State.Type.KILLED, 0L)
+            .put(State.Type.PAUSING, 0L)
             .put(State.Type.PAUSED, 0L)
             .put(State.Type.QUEUED, 0L)
             .put(State.Type.CANCELLED, 0L)

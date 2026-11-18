@@ -40,7 +40,7 @@
                                     <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                         <template #suffix v-if="getFieldError('username')">
                                             <KsTooltip placement="top" :content="getFieldError('username')">
-                                                <KsIcon name="information-outline" class="validation-icon error" />
+                                                <KsIcon class="validation-icon error"><InformationOutline /></KsIcon>
                                             </KsTooltip>
                                         </template>
                                     </KsInput>
@@ -62,7 +62,7 @@
                                 </KsFormItem>
                                 <KsPasswordRequirements
                                     :password="userFormData.password"
-                                    v-model:valid="isPasswordValid"
+                                    @update:valid="isPasswordValid = $event"
                                 />
                             </div>
                             <div class="user-field">
@@ -79,7 +79,7 @@
                                 </KsCheckItem>
                             </div>
                         </KsForm>
-                        <div class="d-flex justify-content-end gap-1">
+                        <div class="setup-actions user-actions">
                             <KsButton type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
                             </KsButton>
@@ -125,7 +125,7 @@
                             </KsFormItem>
                         </KsForm>
 
-                        <div class="d-flex justify-content-end">
+                        <div class="setup-actions">
                             <KsButton type="primary" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
                             </KsButton>
@@ -168,6 +168,7 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {storageKeys} from "../../utils/constants"
 
     interface UserFormData {
@@ -412,4 +413,15 @@
     }
 </script>
 
-<style src="./setup.scss" scoped lang="scss" />
+<style src="./setup.css" scoped />
+
+<style scoped>
+    .setup-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .user-actions {
+        gap: var(--ks-spacing-1);
+    }
+</style>

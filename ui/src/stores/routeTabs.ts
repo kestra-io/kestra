@@ -9,6 +9,8 @@ export interface RouteTab {
     hidden?: boolean;
     disabled?: boolean;
     count?: number;
+    /** Caps the count badge display (e.g. 99), showing "<max>+" once exceeded. */
+    max?: number;
     query?: Record<string, unknown>;
     component?: Component;
     props?: Record<string, unknown>;

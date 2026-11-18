@@ -71,8 +71,8 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
     public Execution update(Execution execution, RunContext runContext) throws Exception {
         // the executor reuses the task instance of its cached flow for every execution of the flow,
         // so the rendering cache of the properties must be skipped to render with the current execution context
-        List<String> renderedVariables = runContext.render(this.variables.skipCache()).asList(String.class);
-        boolean renderedIgnoreMissing = runContext.render(this.ignoreMissing.skipCache()).as(Boolean.class).orElseThrow();
+        List<String> renderedVariables = runContext.render(this.variables).asList(String.class);
+        boolean renderedIgnoreMissing = runContext.render(this.ignoreMissing).as(Boolean.class).orElseThrow();
         Map<String, Object> variables = execution.getVariables();
         for (String key : renderedVariables) {
             removeVar(variables, key, renderedIgnoreMissing);

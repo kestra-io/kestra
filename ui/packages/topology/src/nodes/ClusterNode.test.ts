@@ -14,14 +14,16 @@ function taskRun(taskId: string, state: string) {
     return {taskId, state: {current: state}}
 }
 
-function mountClusterNode({childTaskIds = [], taskRuns = [], isReadOnly = false, isFlowableLane = true, replayEnabled = false}: {
+function mountClusterNode({childTaskIds = [], taskRuns = [], isReadOnly = false, isFlowableLane = true, replayEnabled = false, slots}: {
     childTaskIds?: string[],
     taskRuns?: Record<string, unknown>[],
     isReadOnly?: boolean,
     isFlowableLane?: boolean,
     replayEnabled?: boolean,
+    slots?: Record<string, string>,
 }) {
     return i18nMount(ClusterNode, {
+        slots,
         props: {
             id: "cluster_root.parallel_task",
             replayEnabled,
@@ -165,6 +167,24 @@ describe("ClusterNode actions", () => {
         })
 
         expect(actionKeys(wrapper)).not.toContain("replay")
+    })
+})
+
+describe("ClusterNode taskActions slot", () => {
+    it("should render the taskActions slot in the lane header in place of the default menu", () => {
+        const wrapper = mountClusterNode({
+            taskRuns: [taskRun("parallel_task", "SUCCESS")],
+            slots: {taskActions: "<template #taskActions=\"{task, taskRun}\"><button data-test=\"custom-actions\">{{ task.id }}:{{ taskRun.state.current }}</button></template>"},
+        })
+
+        expect(wrapper.find("[data-test='custom-actions']").text()).toBe("parallel_task:SUCCESS")
+        expect(wrapper.findComponent(NodeMenu).exists()).toBe(false)
+    })
+
+    it("should keep the default menu when no taskActions slot is provided", () => {
+        const wrapper = mountClusterNode({})
+
+        expect(wrapper.findComponent(NodeMenu).exists()).toBe(true)
     })
 })
 

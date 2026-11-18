@@ -1,0 +1,268 @@
+@import "./layout/element-plus-overload.css";
+@import "./components/markdown.css";
+
+html, body, #app, #app-container {
+    height: 100%;
+}
+
+html {
+    scroll-padding-top: 80px;
+    transition: padding-left 0.3s ease;
+
+    & code[class*="language-"], & pre[class*="language-"]  {
+        white-space: pre-wrap !important;
+    }
+
+    &.menu-collapsed {
+        --offset-from-menu: 1rem;
+    }
+
+    &.menu-not-collapsed {
+        --offset-from-menu: 1rem;
+        @media only screen and (min-width: 1200px) {
+            --offset-from-menu: 4rem;
+        }
+    }
+}
+
+@media not (pointer: coarse) {
+    * > ::-webkit-scrollbar {
+        width: 15px !important;
+    }
+
+    * > ::-webkit-scrollbar:horizontal {
+        height: 15px !important;
+    }
+
+    * > ::-webkit-scrollbar-track {
+        background: var(--ks-bg-base) !important;
+    }
+
+    * > ::-webkit-scrollbar-thumb {
+        background: var(--ks-border-default) !important;
+        border-radius: 8px !important;
+        border: 4px solid var(--ks-bg-base) !important;
+    }
+
+    * > ::-webkit-scrollbar-corner {
+        background: var(--ks-bg-base) !important;
+    }
+}
+
+/* main layout */
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+
+    &:has(section.full-container) {
+        max-height: 100%;
+    }
+
+    & > section.container {
+        margin: 2rem 0;
+        min-width: 100%;
+        transition: padding 0.3s ease;
+        padding: 0 2rem;
+
+        &:has(section.empty) {
+            transition: none;
+        }
+
+        &.full-height {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            & > * {
+                flex: 1;
+            }
+        }
+    }
+
+    & section.container.tabs-flush-top:has(> section.empty) {
+        margin: 0;
+        padding: 0;
+    }
+
+    & section.container:has(.dashboard-sections-container) {
+        padding-inline: 0;
+    }
+
+    & section.container:has(:is(.ks-data-table-wrapper, .full-width-table)),
+    & section.main-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
+        padding-inline: 0;
+        margin-bottom: 0;
+        &:has(.empty-state) {
+            flex: 1;
+            min-height: 0;
+
+            /* Every ancestor of the table is matched here, so keep the stretch out of
+               collapsible sections, which have to hug their summary when closed. */
+            & :has(.ks-data-table-wrapper):not(details, details *) {
+                height: 100%;
+            }
+        }
+    }
+
+    & section.main-container.full-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
+        padding-top: 2rem;
+        padding-bottom: 0;
+    }
+
+    & .full-width-table {
+        & th.kel-table__cell:first-child > .cell,
+        & td.kel-table__cell:first-child > .cell {
+            padding-left: var(--ks-spacing-5);
+        }
+    }
+
+
+    & > section.full-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding-top: 2rem;
+
+        & > * {
+            flex: 1;
+        }
+
+        &.flush-top {
+            padding-top: 0;
+        }
+    }
+}
+
+/* Browser autofill background color */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+input[data-autocompleted] {
+    background-color: transparent !important;
+}
+
+/* full page */
+html.full-screen {
+    --menu-width: 0;
+
+    & body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    & #app {
+
+        height: 100%;
+        & main {
+            transition: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--ks-bg-base);
+        }
+
+    }
+}
+
+:root{
+    --kel-box-shadow: 0 .5rem 1rem var(--ks-shadow-elevated);
+    --kel-box-shadow-light: 0 .125rem .25rem var(--ks-shadow-element);
+    --kel-box-shadow-lighter: 0 .125rem .25rem var(--ks-shadow-element);
+    --kel-box-shadow-dark: 0 1rem 3rem var(--ks-shadow-surface);
+
+    --kel-transition-duration: 0.2s;
+    --kel-transition-duration-fast: 0.2s;
+
+    --top-navbar-height: 49px;
+    &:has(.top-bar .description) {
+        --top-navbar-height: 74px;
+    }
+
+    --menu-width: 268px;
+    --menu-collapsed-width: 65px;
+}
+
+body{
+    background-color: var(--ks-bg-base);
+}
+
+
+
+@keyframes skeleton-animation {
+    0% {
+        background-position: -55% -30%;
+    }
+    100% {
+        background-position: 185% 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    main > section.container:has(.empty-template) {
+        padding: 0 0;
+    }
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+#app-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+#app-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+
+    @media (max-width: 767px) {
+        position: relative;
+        flex-direction: column;
+    }
+}
+#bottom-actions-slot:empty {
+    display: none;
+}
+#app main {
+    flex: 1;
+    overflow: auto;
+}
+
+#ks-monaco-overflow-widgets {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--ks-z-top);
+}
+
+/* Overrides nprogress's own sheet, so it has to load after vendor.css, which a design-system chunk cannot. */
+#nprogress {
+    & .bar {
+        background: var(--ks-primary-500);
+        z-index: var(--ks-z-top);
+    }
+
+    & .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    & .peg {
+        box-shadow: 0 0 10px var(--ks-primary-500), 0 0 5px var(--ks-primary-500);
+    }
+
+    & .spinner-icon {
+        border-top-color: var(--ks-primary-500);
+        border-left-color: var(--ks-primary-500);
+    }
+}

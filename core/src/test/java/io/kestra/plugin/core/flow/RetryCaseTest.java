@@ -2,15 +2,19 @@ package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.Await;
 
 import io.micronaut.data.model.Pageable;
@@ -28,6 +32,8 @@ public class RetryCaseTest {
     protected TestRunnerUtils runnerUtils;
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+    @Inject
+    private TaskOutputService taskOutputService;
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -101,6 +107,17 @@ public class RetryCaseTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("read").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void retryNewExecutionInLoop(String tenant) throws TimeoutException, QueueException, InternalException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "loop-retry-new-execution", Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        TaskRun loopTaskRun = execution.findTaskRunsByTaskId("loop").getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 2)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 2));
     }
 
     private void runAndAssertThereWasTwoRetriesAndFinishedFailed(Flow flow) throws TimeoutException, QueueException {

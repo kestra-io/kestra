@@ -2,6 +2,8 @@ import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+import {handledIf} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 
 import {useMiscStore} from "override/stores/misc"
@@ -11,6 +13,7 @@ import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {Input} from "./flow.ts"
 import type {ValidationResponse} from "./executions"
+import {latestRequest} from "../utils/latestRequest"
 
 export type BlueprintType = "community" | "custom";
 export type BlueprintKind = "flow" | "dashboard" | "app";
@@ -51,7 +54,6 @@ export interface BlueprintTag {
 }
 
 const API_URL = "https://api.kestra.io/v1"
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 
 export const useBlueprintsStore = defineStore("blueprints", () => {
     const axios = useClient()
@@ -70,18 +72,20 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return lines.length ? lines : undefined
     })
 
-    const getBlueprints = async (options: Options) => {
+    type BlueprintSearchResult = {results: FlowBlueprint[]; total: number}
+
+    const getBlueprints = async (options: Options): Promise<BlueprintSearchResult> => {
         if (options.type === "community") {
-            const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-            const response = await axios.get(COMMUNITY, PARAMS)
+            const response = await axios.get<BlueprintSearchResult>(COMMUNITY, {params: options.params})
             return response.data
         }
 
         try {
-            const {data} = await axios.get(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
+            const {data} = await axios.get<BlueprintSearchResult>(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: unknown) {
+            // Either catalog answers 401 to a caller it does not serve, which is an empty catalog here.
             if ((e as KestraHttpError).status === 401) return {results: [], total: 0}
             throw e
         }
@@ -99,10 +103,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return converted
     }
 
+    const startBlueprintLoad = latestRequest()
+
     const getBlueprint = async (options: Options) => {
+        const isLatest = startBlueprintLoad()
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<Blueprint>(COMMUNITY)
+            if (!isLatest()) {
+                return response.data
+            }
             if (response.data?.id) {
                 trackBlueprintSelection(response.data.id)
             }
@@ -110,8 +120,11 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}`)
-        const blueprintData = data as unknown as Blueprint
+        const {data} = await axios.get<Blueprint>(`${apiUrl()}/blueprints/custom/${options.id!}`)
+        const blueprintData = data
+        if (!isLatest()) {
+            return blueprintData
+        }
         if (blueprintData?.id) {
             trackBlueprintSelection(blueprintData.id)
         }
@@ -119,35 +132,33 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return blueprintData
     }
 
-    const getBlueprintSource = async (options: Options) => {
+    const getBlueprintSource = async (options: Options): Promise<string> => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<string>(COMMUNITY)
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
+        const {data} = await axios.get<string>(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
         return data
     }
 
-    const getBlueprintGraph = async (options: Options) => {
+    const getBlueprintGraph = async (options: Options): Promise<FlowGraph> => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`
 
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
+        const response = await axios.get<FlowGraph>(options.type == "community" ? COMMUNITY : CUSTOM)
 
         return response.data
     }
 
     const getBlueprintTags = async (options: Options): Promise<BlueprintTag[]> => {
-        if (options.type === "community") {
-            const PARAMS = {params: options.params, ...VALIDATE}
-            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
-            const response = await axios.get<BlueprintTag[]>(COMMUNITY, PARAMS)
-            return response.data
-        }
-
         try {
+            if (options.type === "community") {
+                const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
+                const response = await axios.get<BlueprintTag[]>(COMMUNITY, {params: options.params})
+                return response.data
+            }
             const {data} = await axios.get<BlueprintTag[]>(`${apiUrl()}/blueprints/custom/tags`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: unknown) {
@@ -178,11 +189,15 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     }
 
     const validateFlowBlueprint = async (source: string): Promise<void> => {
-        const {data} = await axios.post<{errors?: ValidationError[]}>(`${apiUrl()}/blueprints/flows/validate`, source, {
-            headers: {"Content-Type": "application/x-yaml"},
-            showMessageOnError: false,
-        })
-        validation.value = data
+        try {
+            const {data} = await axios.post<{errors?: ValidationError[]}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+                headers: {"Content-Type": "application/x-yaml"},
+            })
+            validation.value = data
+        } catch (e: unknown) {
+            handledIf(e, [422])
+            throw e
+        }
     }
 
     const deleteFlowBlueprint = async (idToDelete: string) => {

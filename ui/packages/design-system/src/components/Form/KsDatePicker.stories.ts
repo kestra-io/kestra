@@ -1,10 +1,12 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
+import {expect, userEvent, waitFor} from "storybook/test"
 import KsDatePicker from "./KsDatePicker.vue"
 
 const meta: Meta<typeof KsDatePicker> = {
     title: "Components/Form/KsDatePicker",
-    component: KsDatePicker,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsDatePicker as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         type: {control: "select", options: ["date", "datetime", "daterange", "datetimerange", "week", "month", "year"]},
@@ -33,11 +35,21 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {type: "date", placeholder: "Select date"},
+    args: {
+        type: "date",
+        placeholder: "Select date",
+        startPlaceholder: "Start date",
+        endPlaceholder: "End date",
+        size: "default",
+        disabled: false,
+        clearable: true,
+        unlinkPanels: false,
+    },
 }
 
 /** Week picker */
 export const WeekPicker: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -51,6 +63,7 @@ export const WeekPicker: Story = {
 
 /** Month picker */
 export const MonthPicker: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -64,6 +77,7 @@ export const MonthPicker: Story = {
 
 /** Disabled dates */
 export const DisabledDates: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() {
@@ -86,6 +100,7 @@ export const DisabledDates: Story = {
 
 /** Date + time (datetime type) */
 export const DateTime: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -98,6 +113,7 @@ export const DateTime: Story = {
 }
 
 export const DateRange: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -113,4 +129,30 @@ export const DateRange: Story = {
             </div>
         `,
     }),
+}
+
+/**
+ * Clearable inside a shrink-to-fit container, as in the KsFilter date popover. The clear icon only
+ * appears on hover, so the picker reserves its room: the width stays put instead of flickering.
+ */
+export const ClearableNoReflow: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {value: ref(new Date("2026-01-15T10:00:00Z"))} },
+        template: `
+            <div style="padding:24px;display:inline-flex;border:1px dashed var(--ks-border-default)">
+                <KsDatePicker v-model="value" type="datetime" />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const editor = canvasElement.querySelector<HTMLElement>(".kel-date-editor")!
+        const widthBefore = editor.getBoundingClientRect().width
+
+        await userEvent.hover(editor)
+        await waitFor(() => expect(canvasElement.querySelector(".clear-icon")).not.toBeNull())
+
+        await expect(editor.getBoundingClientRect().width).toBe(widthBefore)
+    },
 }

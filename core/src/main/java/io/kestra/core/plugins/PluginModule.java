@@ -36,18 +36,18 @@ public class PluginModule extends SimpleModule {
      */
     public PluginModule() {
         super(NAME);
-        addDeserializer(ExecutableTask.class, new PluginDeserializer<>());
-        addDeserializer(Task.class, new PluginDeserializer<>());
-        addDeserializer(Chart.class, new PluginDeserializer<>());
-        addDeserializer(DataFilter.class, new PluginDeserializer<>());
-        addDeserializer(DataFilterKPI.class, new PluginDeserializer<>());
-        addDeserializer(AbstractTrigger.class, new PluginDeserializer<>());
-        addDeserializer(TaskRunner.class, new PluginDeserializer<>());
-        addDeserializer(StorageInterface.class, new PluginDeserializer<>());
-        addDeserializer(SecretPluginInterface.class, new PluginDeserializer<>());
-        addDeserializer(AppPluginInterface.class, new PluginDeserializer<>());
-        addDeserializer(LogExporter.class, new PluginDeserializer<>());
+        addDeserializer(ExecutableTask.class, new PluginDeserializer<>(ExecutableTask.class));
+        addDeserializer(Task.class, new PluginDeserializer<>(Task.class));
+        addDeserializer(Chart.class, new PluginDeserializer<>(Chart.class));
+        addDeserializer(DataFilter.class, new PluginDeserializer<>(DataFilter.class));
+        addDeserializer(DataFilterKPI.class, new PluginDeserializer<>(DataFilterKPI.class));
+        addDeserializer(AbstractTrigger.class, new PluginDeserializer<>(AbstractTrigger.class));
+        addDeserializer(TaskRunner.class, new PluginDeserializer<>(TaskRunner.class));
+        addDeserializer(StorageInterface.class, new PluginDeserializer<>(StorageInterface.class));
+        addDeserializer(SecretPluginInterface.class, new PluginDeserializer<>(SecretPluginInterface.class));
+        addDeserializer(AppPluginInterface.class, new PluginDeserializer<>(AppPluginInterface.class));
+        addDeserializer(LogExporter.class, new PluginDeserializer<>(LogExporter.class));
         addDeserializer(Asset.class, new AssetDeserializer());
-        addDeserializer(AssetExporter.class, new PluginDeserializer<>());
+        addDeserializer(AssetExporter.class, new PluginDeserializer<>(AssetExporter.class));
     }
 }

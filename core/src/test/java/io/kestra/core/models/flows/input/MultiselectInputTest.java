@@ -8,13 +8,16 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.DescriptionDisplayMode;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 
 import jakarta.inject.Inject;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
@@ -22,6 +25,52 @@ class MultiselectInputTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Test
+    void shouldKeepDescriptionDisplayModeWhenRenderingExpression() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
+        MultiselectInput input = MultiselectInput
+            .builder()
+            .id("id")
+            .description("A description")
+            .descriptionDisplayMode(DescriptionDisplayMode.TOOLTIP)
+            .expression("{{ values }}")
+            .build();
+        // When
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s ->
+        {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        // Then
+        assertThat(renderInput.getDescriptionDisplayMode()).isEqualTo(DescriptionDisplayMode.TOOLTIP);
+    }
+
+    @Test
+    void shouldKeepPrefillWhenRenderingExpression() {
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
+        MultiselectInput input = MultiselectInput
+            .builder()
+            .id("id")
+            .prefill(Property.ofValue(List.of("V1")))
+            .expression("{{ values }}")
+            .build();
+
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s ->
+        {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertThat(renderInput.getPrefill()).isEqualTo(Property.ofValue(List.of("V1")));
+    }
 
     @Test
     void shouldRenderInputGivenExpressionReturningStrings() {

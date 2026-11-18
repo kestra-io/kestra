@@ -17,6 +17,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(since = "2.1.0", forRemoval = true)
 public class FlowDeleteCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "0", description = "The namespace of the flow")
@@ -30,6 +31,7 @@ public class FlowDeleteCommand extends AbstractApiCommand {
 
     @Override
     public Integer call() throws Exception {
+        emitReplacedByKestractl();
         super.call();
 
         try (DefaultHttpClient client = client()) {

@@ -167,7 +167,7 @@ export function useFlowEditorActions() {
     function reportSaveError(error: unknown) {
         const httpError = error as KestraHttpError
         if (httpError?.status === 401) {
-            toast.error("401 Unauthorized", undefined, {duration: 2000})
+            toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
         } else if (!isReportedCentrally(httpError)) {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
@@ -176,13 +176,23 @@ export function useFlowEditorActions() {
         }
     }
 
+    /** The Save button: publishes, so on a draft, where it sits in the menu behind Publish, it is an explicit way out of draft mode. */
     async function save() {
+        await saveFlow(false)
+    }
+
+    /** The Ctrl/Cmd+S shortcut: a draft stays a draft and a published flow stays published. */
+    async function saveKeepingDraftState() {
+        await saveFlow(undefined)
+    }
+
+    async function saveFlow(draft: boolean | undefined) {
         try {
             // Skip the save when the install did not succeed: it would only fail downstream as an
             // unknown type, burying the real cause under a second, unrelated-looking error.
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
-            await persistAll(false)
+            await persistAll(draft)
         } catch (error) {
             reportSaveError(error)
         }
@@ -202,7 +212,7 @@ export function useFlowEditorActions() {
             await flushDirtyFiles()
         } catch (error) {
             if ((error as KestraHttpError)?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
+                toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
             }
         }
     }
@@ -283,8 +293,7 @@ export function useFlowEditorActions() {
     function exportYaml() {
         if (!flowStore.flow || !flowStore.flowYaml) return
         const {id, namespace} = flowStore.flow
-        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"})
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`)
+        localUtils.downloadBlob(new Blob([flowStore.flowYaml], {type: "text/yaml"}), `${namespace}.${id}.yaml`)
     }
 
     function copyFlow() {
@@ -333,6 +342,7 @@ export function useFlowEditorActions() {
         isPlaygroundAllowed,
         // actions
         save,
+        saveKeepingDraftState,
         saveAsDraft,
         publishDraft,
         saveAndExecute,

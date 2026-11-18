@@ -31,7 +31,7 @@
                     :tooltip="$t('delete')"
                     @click="removeSegment(index)"
                 >
-                    <Close />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import Close from "vue-material-design-icons/Close.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
     import {durationUtils} from "@kestra-io/design-system"
@@ -131,9 +131,10 @@
                 totals[segment.unit] += Math.round(segment.value)
             }
         }
+        // java.time.Duration rejects the W designator, so weeks are emitted as days (https://github.com/kestra-io/kestra/issues/21197).
+        const days = totals.d + totals.w * 7
         let date = ""
-        if (totals.w) date += `${totals.w}W`
-        if (totals.d) date += `${totals.d}D`
+        if (days) date += `${days}D`
         let time = ""
         if (totals.h) time += `${totals.h}H`
         if (totals.m) time += `${totals.m}M`
@@ -194,7 +195,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .task-duration {
     display: flex;
     flex-direction: column;

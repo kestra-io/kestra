@@ -4,6 +4,7 @@
         :hideAfter="0"
         transition=""
         :visible="internalVisible"
+        :showArrow="showArrow"
         v-bind="({...filteredProps(), ...$attrs} as PopoverProps)"
         @update:visible="handleUpdateVisible"
         @hide="emit('hide')"
@@ -20,23 +21,17 @@
 <script setup lang="ts">
     import {ElPopover} from "element-plus"
     import type {PopoverProps} from "element-plus"
-    import {ref, watch} from "vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {onBeforeUnmount, ref, watch, type HTMLAttributes} from "vue"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        visible?: boolean
-        placement?: string
-        trigger?: "click" | "hover" | "focus" | "contextmenu"
-        width?: number | string
-        effect?: "light" | "dark"
-        popperClass?: string
-        showArrow?: boolean
-        disabled?: boolean
-        title?: string
-        content?: string
-    }>()
+    // Element Plus types its listeners as props; declared here, they would stop being the parent's listeners.
+    export type KsPopoverProps = Omit<PopoverProps, "onUpdate:visible" | "onMouseenter" | "onMouseleave" | "onClick" | "onKeydown" | "onFocus" | "onBlur" | "onContextmenu">
+
+    // The popper keeps the id Element Plus gives it, since the reference's aria-describedby points at it.
+    const props = withDefaults(defineProps<KsPopoverProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsPopoverProps | "id">>(), {visible: undefined, showArrow: false})
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]
@@ -50,8 +45,19 @@
 
     const internalVisible = ref(false)
 
+    // ElTooltip does not wire up Escape-to-close itself.
+    function handleEscapeKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") handleUpdateVisible(false)
+    }
+
+    // Must be declared before the props.visible watch below, and without `immediate`.
+    watch(internalVisible, (visible) => {
+        if (visible) document.addEventListener("keydown", handleEscapeKeydown)
+        else document.removeEventListener("keydown", handleEscapeKeydown)
+    })
+
     watch(() => props.visible, (val) => {
-        if (val !== undefined) internalVisible.value = val
+        if (val !== undefined && val !== null) internalVisible.value = val
     }, {immediate: true})
 
     function handleUpdateVisible(v: boolean) {
@@ -59,10 +65,15 @@
         emit("update:visible", v)
     }
 
-    const filteredProps = useFilteredProps(props, ["visible"])
+    onBeforeUnmount(() => document.removeEventListener("keydown", handleEscapeKeydown))
+
+    const filteredProps = usePassedProps(props, ["visible"])
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/popover';
+</style>
+
+<style>
 </style>

@@ -23,6 +23,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -43,6 +44,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Integer> VNODE_FIELD = field("vnode", Integer.class);
     private static final Field<Object> FLOW_ID_FIELD = field("flow_id");
     private static final Field<Object> WORKER_ID_FIELD = field("worker_id");
+    private static final Field<String> TYPE_FIELD = field("type", String.class);
     private static final Field<Object> VALUE_FIELD = field("value");
     private static final String NEXT_EVALUATION_DATE_COLUMN = "next_evaluation_date";
     private static final String LAST_TRIGGERED_DATE_COLUMN = "last_triggered_date";
@@ -144,8 +146,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public ArrayListTotal<TriggerState> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findPage(pageable, tenantId, condition);
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, tenantId));
     }
 
     @Override
@@ -169,8 +170,44 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Flux<TriggerState> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findAsync(tenantId, condition);
+        return findAsync(tenantId, this.computeFindCondition(filters, tenantId));
+    }
+
+    private Condition computeFindCondition(List<QueryFilter> filters, String tenantId) {
+        // Validated here, on the full list, because OPERATION_ID/OPERATION_OUTCOME leaves are
+        // pulled out below before `remainingFilters` ever reaches the nested `filter(...)` call
+        // that would otherwise run this same validation.
+        QueryFilter.validateQueryFilters(filters, Resource.TRIGGER);
+
+        List<QueryFilter> operationFilters = filters == null ? List.of()
+            : filters.stream()
+                .filter(f -> f.isLeaf() && (f.field() == QueryFilter.Field.OPERATION_ID || f.field() == QueryFilter.Field.OPERATION_OUTCOME))
+                .toList();
+        List<QueryFilter> remainingFilters = filters == null ? null
+            : filters.stream()
+                .filter(f -> !operationFilters.contains(f))
+                .toList();
+
+        return filter(remainingFilters, null, Resource.TRIGGER).and(combinedNotificationItemCondition(tenantId, operationFilters));
+    }
+
+    /**
+     * Same pattern as {@code AbstractJdbcExecutionRepository.combinedNotificationItemCondition}:
+     * operationId/operationOutcome must match the same notification_items row, combined into a
+     * single tenant-scoped IN subquery rather than built as two independent conditions.
+     */
+    private static Condition combinedNotificationItemCondition(String tenantId, List<QueryFilter> operationFilters) {
+        if (operationFilters.isEmpty()) {
+            return DSL.noCondition();
+        }
+        Condition combined = operationFilters.stream()
+            .map(f -> AbstractJdbcRepository.notificationItemLeafCondition(f.field(), f.value(), f.operation()))
+            .reduce(AbstractJdbcRepository.TENANT_ID_FIELD.eq(tenantId), Condition::and);
+        return AbstractJdbcRepository.KEY_FIELD.in(
+            DSL.select(AbstractJdbcRepository.notificationItemResourceIdField())
+                .from(AbstractJdbcRepository.NOTIFICATION_ITEMS_TABLE)
+                .where(combined)
+        );
     }
 
     protected Condition fullTextCondition(String query) {
@@ -326,6 +363,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                     .where(NEXT_EVALUATION_EPOCH_FIELD.le(epochMilli).or(NEXT_EVALUATION_EPOCH_FIELD.isNull()))
                     .and(LOCKED_FIELD.isNull().or(LOCKED_FIELD.eq(locked)))
                     .and(VNODE_FIELD.in(vNodes))
+                    .and(TYPE_FIELD.isDistinctFrom(TriggerType.UNSCHEDULED.name()))
                     .orderBy(NEXT_EVALUATION_EPOCH_FIELD.asc())
                     .fetch()
             )

@@ -8,10 +8,12 @@
             <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
-        <div v-if="showSearch" class="search">
+        <div class="search">
             <KsInput
+                ref="searchInput"
                 v-model="search"
                 size="small"
+                borderless
                 clearable
                 :placeholder="$t('filter.search columns')"
             >
@@ -40,12 +42,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, ref, watch} from "vue"
     import {Close, Magnify} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
-
-    const SEARCH_THRESHOLD = 12
 
     const props = defineProps<{
         storageKey: string;
@@ -62,8 +62,9 @@
     // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
     const search = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
 
-    const showSearch = computed(() => props.columns.length > SEARCH_THRESHOLD)
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
 
     watch(() => props.visibleColumns, (columns) => {
         currentVisibleColumns.value = columns
@@ -80,7 +81,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .customize-columns-panel {
     height: fit-content;
     max-height: 500px;
@@ -88,12 +89,12 @@
     flex-direction: column;
     border-radius: 0.5rem;
 
-    small {
+    & small {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-dim);
     }
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -105,15 +106,15 @@
         top: 0;
         z-index: 1;
 
-        .title {
-            h6 {
+        & .title {
+            & h6 {
                 margin: 0;
                 font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
@@ -125,14 +126,14 @@
         }
     }
 
-    .search {
+    & .search {
         padding: var(--ks-spacing-2) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
         background-color: var(--ks-bg-surface);
         flex-shrink: 0;
     }
 
-    .list {
+    & .list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -143,7 +144,7 @@
         }
     }
 
-    .footer {
+    & .footer {
         border-top: 1px solid var(--ks-border-default);
         background-color: var(--ks-bg-surface);
         flex-shrink: 0;

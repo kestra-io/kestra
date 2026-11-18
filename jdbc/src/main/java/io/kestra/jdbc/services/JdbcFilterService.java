@@ -140,11 +140,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> or(SelectConditionStep<Record> query, Map<F, String> fieldsMapping, Or<F> filter) {
-        SelectConditionStep<Record> orQuery = query;
-        for (AbstractFilter<F> subFilter : filter.getValues()) {
-            orQuery = orQuery.or(this.buildWhere(fieldsMapping, subFilter));
-        }
-        return orQuery;
+        return query.and(orCondition(fieldsMapping, filter));
     }
 
     @Override
@@ -195,11 +191,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
             return executionRepositoryInterface.get()
                 .findLabelCondition(
                     Either.left(Map.of(filter.getKey(), filter.getValues())),
-                    QueryFilter.Op.NOT_IN
+                    QueryFilter.Op.IN
                 );
         }
 
-        return field(field).notIn(filter.getValues());
+        return field(field).in(filter.getValues());
     }
 
     private <F extends Enum<F>> org.jooq.Condition isFalseCondition(String field, IsFalse<F> filter) {

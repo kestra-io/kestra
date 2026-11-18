@@ -26,7 +26,7 @@
     const {visible, menuKey, tourRoute, translationKey, dismiss} = useProductTourMenuEntry()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour {
         position: relative;
 

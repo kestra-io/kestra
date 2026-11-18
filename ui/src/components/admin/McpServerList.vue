@@ -1,7 +1,7 @@
 <template>
     <TopNavBar
         :title="$t('mcp.servers')"
-        :longDescription="$t('mcp.page_description')"
+        :description="$t('mcp.page_description')"
     >
         <template
             v-if="showCreate"
@@ -184,7 +184,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .loading {
         display: flex;
         justify-content: center;

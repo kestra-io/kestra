@@ -1,4 +1,4 @@
-import {ChartChartOption, DashboardControllerDashboardResponse} from "@kestra-io/kestra-sdk"
+import {ChartChartOption, type ChartMetadata, DashboardControllerDashboardResponse, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 export interface Dashboard extends DashboardControllerDashboardResponse {
     charts: Chart[]
@@ -18,6 +18,19 @@ export interface Column {
 export interface ChartResults {
     results?: Record<string, unknown>[];
     total?: number;
+    /** The dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them. */
+    ignoredFilters?: QueryFilterField[];
+    /** What the data source tells about the rows, for the data sources that read an execution output. */
+    metadata?: ChartMetadata | null;
+    /** Why the chart has no rows although its data source is fine, e.g. the file of an output was deleted by the retention. */
+    warning?: string;
+}
+
+export interface ColorByValue {
+    value: string;
+    label?: string;
+    /** A hex color, or an execution state or log level name. */
+    color?: string;
 }
 
 export interface Chart extends ChartChartOption {
@@ -37,6 +50,8 @@ export interface Chart extends ChartChartOption {
         limit?: number;
         /** Bar.vue and TimeSeries.vue: the column whose value colours and labels each stack. */
         colorByColumn?: string;
+        /** Pie, Bar and TimeSeries: label, color and order of the values the chart is split by. */
+        colorByValues?: ColorByValue[];
         [key: string]: unknown;
     };
     data?: {

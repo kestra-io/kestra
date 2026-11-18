@@ -31,10 +31,10 @@ export function getTypeAtPosition(
     const lineCounter = new LineCounter()
     parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column - 1
 
-    for (const type of types.reverse()) {
-        if (cursorIndex >= type.range[0]) {
+    for (const type of [...types].reverse()) {
+        if (cursorIndex >= type.range[0] && cursorIndex <= type.range[1]) {
             return typeof type.type === "string" ? type.type : null
         }
     }
@@ -49,10 +49,10 @@ export function getVersionAtPosition(
     const lineCounter = new LineCounter()
     parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column - 1
 
-    for (const version of versions.reverse()) {
-        if (cursorIndex >= version.range[0]) {
+    for (const version of [...versions].reverse()) {
+        if (cursorIndex >= version.range[0] && cursorIndex <= version.range[1]) {
             return version.version == null ? undefined : String(version.version)
         }
     }
@@ -66,7 +66,7 @@ function extractAllVersions(source: string){
 const yamlKeyCapture = "([^:\\n]+): *"
 
 const indentAndYamlKeyCapture = new RegExp(
-    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`,
+    `(( *)(?:- )?(?:${yamlKeyCapture})?)[^\\n]*?$`,
 )
 
 function getParentKeyByChildIndent(
@@ -78,6 +78,7 @@ function getParentKeyByChildIndent(
     }
 
     const matches = stringToSearch.matchAll(
+        // nosemgrep: detect-non-literal-regexp -- only a numeric indent and a constant pattern are interpolated.
         new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g"),
     )
     const lastMatch = [...matches].pop()

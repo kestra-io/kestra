@@ -59,6 +59,8 @@ public class ToolCatalog {
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
+    private final AgentToolCallScope callScope;
+    private final ToolResultBudget toolResultBudget;
 
     private volatile Map<String, ToolEntry> registry;
 
@@ -67,11 +69,15 @@ public class ToolCatalog {
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
         final DocsMcpToolProvider docsMcpToolProvider,
-        final AgentToolPermissionEvaluator permissionEvaluator) {
+        final AgentToolPermissionEvaluator permissionEvaluator,
+        final AgentToolCallScope callScope,
+        final ToolResultBudget toolResultBudget) {
         this.platformTools = platformTools;
         this.authoringTools = authoringTools;
         this.docsMcpToolProvider = docsMcpToolProvider;
         this.permissionEvaluator = permissionEvaluator;
+        this.callScope = callScope;
+        this.toolResultBudget = toolResultBudget;
     }
 
     public record ToolEntry(
@@ -186,11 +192,30 @@ public class ToolCatalog {
 
         // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
         // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
-        ToolExecutionResult executed = entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context));
+        ToolExecutionResult executed = callScope.call(
+            context,
+            () -> entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context))
+        );
         // A tool's single output is its return value; if that value is publishable, the caller (the
         // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
         ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;
+        ensureWithinBudget(entry.name(), executed.resultText(), context.providerId());
         return new DispatchResult(executed.resultText(), artefact);
+    }
+
+    /**
+     * Rejects, rather than truncates, a result the model could not take whole: a cut-off result would leave
+     * the model reasoning on partial data without knowing it. The orchestrator turns this into a failed tool
+     * call, so the model can retry with a narrower request.
+     */
+    private void ensureWithinBudget(final String tool, @Nullable final String resultText, @Nullable final String providerId) {
+        if (resultText == null) {
+            return;
+        }
+        int limit = toolResultBudget.limitFor(providerId);
+        if (resultText.length() > limit) {
+            throw new ToolResultTooLargeException(tool, resultText.length(), limit);
+        }
     }
 
     /**

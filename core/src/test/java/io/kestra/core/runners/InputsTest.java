@@ -505,7 +505,7 @@ public class InputsTest {
                 Map.of("input1", "any")
             )
         );
-        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: input1: it must match the pattern `(?=.{8,})(?=.*[A-Z])(?=.*[0-9]).*`");
+        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: it must match the pattern `(?=.{8,})(?=.*[A-Z])(?=.*[0-9]).*`");
 
         Map<String, Object> resolvedInputs = flowIO.readExecutionInputs(
             flow,

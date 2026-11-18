@@ -8,6 +8,7 @@ const meta: Meta<typeof KsDivider> = {
     argTypes: {
         direction: {control: "select", options: ["horizontal", "vertical"]},
         contentPosition: {control: "select", options: ["left", "center", "right"]},
+        borderStyle: {control: "select", options: ["solid", "dashed", "dotted"]},
     },
     parameters: {
         docs: {description: {component: "KsDivider is the Kestra design-system abstraction over `ElDivider` from Element Plus."}},
@@ -17,16 +18,18 @@ export default meta
 type Story = StoryObj<typeof KsDivider>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsDivider},
+        setup() { return {args} },
         template: `
             <div style="padding:24px">
                 <p>Content above the divider</p>
-                <ks-divider />
+                <ks-divider v-bind="args">Section</ks-divider>
                 <p>Content below the divider</p>
             </div>
         `,
     }),
+    args: {direction: "horizontal", contentPosition: "center", borderStyle: "solid"},
 }
 
 export const WithText: Story = {
@@ -44,6 +47,7 @@ export const WithText: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Dashed border style */
@@ -60,6 +64,7 @@ export const Dashed: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Vertical: Story = {
@@ -75,4 +80,5 @@ export const Vertical: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

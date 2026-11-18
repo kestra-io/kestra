@@ -8,6 +8,7 @@ import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.AbstractWorker;
 import io.kestra.worker.WorkerJobExecutor;
@@ -48,6 +49,7 @@ public class SystemWorker extends AbstractWorker {
         MetricRegistry metricRegistry,
         ServerConfig serverConfig) {
         super(
+            IdUtils.create(),
             ServiceType.SYSTEM_WORKER,
             eventPublisher,
             workerJobExecutor,

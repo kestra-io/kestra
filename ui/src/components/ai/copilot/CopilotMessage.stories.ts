@@ -40,13 +40,13 @@ export const AssistantMarkdown: Story = {
 }
 
 export const ToolCall: Story = {
-    args: {message: {id: "3", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "read-execution", family: "READ", arguments: {executionId: "exec-42", withLogs: true}}}},
+    args: {message: {id: "3", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "read_execution", family: "READ", arguments: {executionId: "exec-42", withLogs: true}}}},
 }
 
 export const ToolResultOk: Story = {
-    args: {message: {id: "4", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "restart-execution", outcome: "ok"}}},
+    args: {message: {id: "4", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "restart_execution", outcome: "ok"}}},
 }
 
 export const ToolResultRejected: Story = {
-    args: {message: {id: "5", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "restart-execution", outcome: "rejected"}}},
+    args: {message: {id: "5", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "restart_execution", outcome: "rejected"}}},
 }

@@ -10,6 +10,7 @@ const meta: Meta = {
     title: "Components/Feedback/KsMessageBox",
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 component:

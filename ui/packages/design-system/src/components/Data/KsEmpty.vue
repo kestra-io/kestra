@@ -6,7 +6,7 @@
         <template #description>
             <slot name="description">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="description ?? $t('no_data').replaceAll('\n', '<br >')" />
+                <span v-html="description ?? $t('no_data').replaceAll('\n', '<br >')" /> <!-- nosemgrep: kestra-vue-avoid-v-html -- description is translated markup from the caller, who must escape any interpolated value. -->
             </slot>
         </template>
         <template v-if="$slots.image" #image>
@@ -20,6 +20,7 @@
     import {useFilteredProps} from "../../utils/filteredProps"
     import noDataImage from "../../assets/images/no-data.png"
 
+    /** @deprecated since 2.0: use KsNoData, or KsEmptyState when the empty state has its own illustration. */
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
@@ -47,13 +48,15 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/empty' as *;
+</style>
 
+<style>
     .kel-empty {
         background-color: var(--ks-bg-surface);
+    }
 
-        &--no-background {
-            background-color: transparent;
-        }
+    .kel-empty--no-background {
+        background-color: transparent;
     }
 
     .kel-empty__description {

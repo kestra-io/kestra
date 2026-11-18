@@ -110,7 +110,7 @@
     ])
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .notify-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));

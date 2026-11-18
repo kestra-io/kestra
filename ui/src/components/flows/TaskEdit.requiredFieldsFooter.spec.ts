@@ -54,6 +54,11 @@ const FakeFormWithOneMissingRequiredField = {
     },
 }
 
+vi.mock("../../composables/useContextSections", async () => {
+    const {ref} = await import("vue")
+    return {useContextSections: () => ({sections: ref([])})}
+})
+
 vi.mock("./TaskEditData.vue", () => ({
     default: {name: "TaskEditData", props: ["kind", "title", "subtitle", "sections", "filterable", "collapsible", "isCollapsed", "side"], template: "<div />"},
 }))

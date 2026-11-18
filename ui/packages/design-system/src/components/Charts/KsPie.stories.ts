@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
 import KsPie from "./KsPie.vue"
+import {ChartRenderer, TooltipType} from "../../utils/chart"
 
 const STATUS_DATA = [
     {name: "Success", value: 1204},
@@ -17,6 +18,8 @@ const meta: Meta<typeof KsPie> = {
     argTypes: {
         loading: {control: "boolean"},
         donut: {control: "boolean"},
+        tooltipType: {control: "select", options: ["native", "external"]},
+        renderer: {control: "select", options: ["canvas", "svg"]},
     },
     parameters: {
         docs: {
@@ -45,6 +48,10 @@ export const Default: Story = {
     args: {
         data: STATUS_DATA,
         loading: false,
+        donut: false,
+        tooltipType: TooltipType.NATIVE,
+        renderer: ChartRenderer.CANVAS,
+        maxPixelRatio: 2,
     },
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()
@@ -82,6 +89,7 @@ export const Loading: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom colors via options override */
@@ -103,4 +111,5 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

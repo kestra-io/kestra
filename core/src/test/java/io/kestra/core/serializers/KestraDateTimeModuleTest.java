@@ -2,8 +2,15 @@ package io.kestra.core.serializers;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
@@ -104,6 +111,45 @@ class KestraDateTimeModuleTest {
 
         // Then microsecond precision survives a full round trip
         assertThat(result.instant()).isEqualTo(holder.instant());
+    }
+
+    @Test
+    void shouldMatchTheJdkFormatterAcrossTheWholeFastRangeAndAtItsEdges() throws JsonProcessingException {
+        DateTimeFormatter jdk = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC);
+        Random random = new Random(42);
+        List<Instant> instants = new ArrayList<>(List.of(
+            Instant.EPOCH,
+            Instant.parse("2000-02-29T23:59:59.999999999Z"),
+            Instant.parse("1900-03-01T00:00:00Z"),
+            Instant.parse("9999-12-31T23:59:59.999999999Z"),
+            Instant.parse("-0001-12-31T23:59:59Z"),
+            Instant.parse("+10000-01-01T00:00:00Z")
+        ));
+        for (int i = 0; i < 20_000; i++) {
+            instants.add(Instant.ofEpochSecond(random.nextLong(0, 253_402_300_800L), random.nextInt(1_000_000_000)));
+        }
+
+        for (Instant instant : instants) {
+            String written = MAPPER.writeValueAsString(new Holder(instant, null));
+            assertThat(written).as(instant.toString()).contains("\"instant\":\"" + jdk.format(instant) + "\"");
+            assertThat(read(jdk.format(instant))).as(instant.toString()).isEqualTo(instant.truncatedTo(ChronoUnit.MICROS));
+        }
+    }
+
+    @Test
+    void shouldParseLikeTheJdkFormatterAcrossYearsDaysAndFractionWidths() throws JsonProcessingException {
+        String[] valid = {
+            "0000-01-15T00:00:00Z", "0000-02-29T00:00:00.5Z", "0000-03-01T00:00:00Z", "2000-02-29T23:59:59.123456789Z",
+            "1970-01-01T00:00:00Z", "1969-12-31T23:59:59.999Z", "9999-12-31T23:59:59.999999999Z", "2024-06-01T10:00:00.1Z",
+            "2024-06-01T10:00:00.12Z", "2024-06-01T10:00:00.1234567Z",
+        };
+        for (String value : valid) {
+            assertThat(read(value)).as(value).isEqualTo(Instant.parse(value));
+        }
+
+        for (String value : new String[] {"1900-02-29T00:00:00Z", "2100-02-29T00:00:00Z", "2023-02-30T00:00:00Z", "2023-04-31T00:00:00Z"}) {
+            assertThatThrownBy(() -> read(value)).as(value).isInstanceOf(InvalidFormatException.class);
+        }
     }
 
     @Test

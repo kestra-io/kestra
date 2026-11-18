@@ -40,11 +40,30 @@ const render: Story["render"] = (args) => ({
     }
 });
 
+const expectKeyInputsFlush = async (canvasElement: HTMLElement) => {
+    const keyFields = await within(canvasElement).findAllByPlaceholderText("Key");
+    for (const keyField of keyFields) {
+        const wrapper = keyField.closest(".wrapper");
+        if (!wrapper) throw new Error("Key input wrapper not found");
+        const style = getComputedStyle(wrapper);
+        expect(style.marginTop).toBe("0px");
+        expect(style.marginBottom).toBe("0px");
+    }
+};
+
 export const Default: Story = {
     render,
     args: {
         modelValue: {}
     }
+}
+
+export const KeyInputsFlushInRow: Story = {
+    render,
+    args: {
+        modelValue: {key1: "value1", key2: "value2"}
+    },
+    play: ({canvasElement}) => expectKeyInputsFlush(canvasElement)
 }
 
 
@@ -155,6 +174,43 @@ export const ValuesAsObjects: Story = {
                 "script": "console.log('Hello World')"
             }
         }
+    },
+    play: ({canvasElement}) => expectKeyInputsFlush(canvasElement)
+}
+
+export const FlushesPendingEditOnUnmount: Story = {
+    render: (args) => ({
+        components: {TaskDict},
+        setup() {
+            const model = ref(args.modelValue || {});
+            const open = ref(true);
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            return () => <>
+                <button data-testid="sb-close-editor" onClick={() => open.value = false}>Close editor</button>
+                {open.value && <TaskDict modelValue={model.value} schema={{}} onUpdate:modelValue={val => model.value = val}/>}
+                <pre data-testid="sb-meta-data-result">
+                    {JSON.stringify(model.value, null, 2)}
+                </pre>
+            </>
+        }
+    }),
+    args: {
+        modelValue: {key1: "value1"}
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement);
+
+        // rename the existing key, which debounces the model update by 200ms,
+        // and close the panel before that timer fires
+        const keyField = await canvas.findByPlaceholderText("Key");
+        await userEvent.clear(keyField);
+        await userEvent.type(keyField, "renamed", {delay: 0});
+        await userEvent.click(canvas.getByTestId("sb-close-editor"));
+
+        // without the flush on unmount the pending update is dropped and the model keeps the old key
+        await waitFor(function pendingEditFlushed() {
+            expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"renamed\": \"value1\"");
+        }, {timeout: 15000});
     }
 }
 

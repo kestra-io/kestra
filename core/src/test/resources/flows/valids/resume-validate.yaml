@@ -7,7 +7,7 @@ labels:
 tasks:
   - id: pause
     type: io.kestra.plugin.core.flow.Pause
-    onResume:
+    inputs:
       - id: approved
         description: Whether to approve the request
         type: BOOL

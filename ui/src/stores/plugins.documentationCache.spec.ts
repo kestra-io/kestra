@@ -1,3 +1,4 @@
+import {nextTick} from "vue"
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 import type {usePluginsStore} from "./plugins"
@@ -55,5 +56,16 @@ describe("plugins store documentation cache", () => {
         expect(pluginDocumentationMock).toHaveBeenCalledTimes(2)
         expect(pluginDocumentationMock.mock.calls[0][0]).toMatchObject({cls: CLS, all: true})
         expect(pluginDocumentationMock.mock.calls[1][0].all).toBeUndefined()
+    })
+
+    it("leaves the displayed plugin alone when a lookup without commit is served from the cache", async () => {
+        const displayed = {cls: "io.kestra.plugin.core.flow.If", schema: {properties: {}}}
+        await store.load({cls: CLS, commit: false})
+        store.plugin = displayed
+
+        await store.load({cls: CLS, commit: false})
+        await nextTick()
+
+        expect(store.plugin).toStrictEqual(displayed)
     })
 })

@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter, 'ks-data-table-wrapper--cards': mobileColumns}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -13,11 +13,11 @@
                 <slot name="top" />
             </div>
 
-            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}">
                 <slot name="table" />
             </div>
 
-            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter, 'ks-data-table-content--cards': mobileColumns, 'ks-data-table-content--leading': mobileColumns?.leading}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                 <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                     <KsBulkSelect
                         :selectAll="queryBulkAction"
@@ -42,6 +42,7 @@
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
                     :rowClassName="composedRowClassName"
+                    :cellStyle="composedCellStyle"
                     :emptyText="noDataText"
                     @selection-change="selectionChanged"
                     @select="onSelect"
@@ -74,53 +75,86 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="my-3"
+                class="pagination"
             />
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
-    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+<script lang="ts">
+    import type {TableColumnCtx} from "element-plus"
+
+    export interface SortItem {
+        column: TableColumnCtx
+        prop: string | null
+        order: string | null
+    }
+
+    /** `T` is the row type and `M` the mapped selection type, matching the component's own generics. */
+    export type KsDataTableInstance<T = unknown, M = T> = {
+        isLoading: boolean
+        isReady: boolean
+        reload: () => Promise<void>
+        resetAndReload: () => void
+        setSelection: (selection: T[]) => void
+        clearSelection: () => void
+        toggleAllUnselected: () => void
+        toggleRowExpansion: (row: T, expand?: boolean) => void
+        waitTableRender: () => Promise<void>
+        getSelectionRows: () => T[]
+        toggleAllSelection: () => void
+        queryBulkAction: boolean
+        selection: M[]
+    }
+</script>
+
+<script setup lang="ts" generic="T extends object, M = T">
+    import type {TableProps} from "element-plus"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import {ref, computed, provide, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch, type HTMLAttributes, type Ref} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
+    import {MOBILE_COLUMNS_KEY, mobileColumnOrder, type KsDataTableMobileColumns} from "./mobileColumns"
     import KsNoData from "../KsNoData.vue"
     import KsButton from "../../Basic/KsButton/KsButton.vue"
     import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({name: "KsDataTable", inheritAttrs: false})
 
     const DEFAULT_PAGE_SIZE = 25
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
-    const props = withDefaults(defineProps<{
-        data?: any[]
+    type KsDataTableProps = {
+        data?: T[]
         total?: number
         currentPage?: number
         pageSize?: number
         loading?: boolean
         selectable?: boolean
-        rowSelectable?: (row: any, index: number) => boolean
+        rowSelectable?: (row: T, index: number) => boolean
         showSelection?: boolean
-        rowKey?: string | ((row: any) => string)
+        rowKey?: string | ((row: T) => string)
         noDataText?: string
         noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
         sortKeyMapper?: (key: string) => string
-        selectionMapper?: (element: any) => any
+        selectionMapper?: (element: T) => M
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
         noGutter?: boolean
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
-    }>(), {
+        mobileColumns?: KsDataTableMobileColumns
+    }
+
+    const props = withDefaults(defineProps<KsDataTableProps & /* @vue-ignore */ Omit<NativeAttributes<TableProps<T> & HTMLAttributes>, keyof KsDataTableProps | "emptyText">>(), {
         data: () => [],
         total: 0,
         currentPage: 1,
@@ -142,23 +176,18 @@
         noFirstColumnGutter: false,
         tableLayout: "auto",
         fitHeight: false,
+        mobileColumns: undefined,
     })
 
-    export interface SortItem {
-        column: any; 
-        prop: string | null; 
-        order: string | null
-    }
-    
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
         "update:currentPage": [page: number]
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
-        "selection-change": [selection: any[]]
-        "row-click": [row: any, column: any, event: Event]
-        "row-dblclick": [row: any, column: any, event: Event]
+        "selection-change": [selection: T[]]
+        "row-click": [row: T, column: TableColumnCtx | null, event: Event]
+        "row-dblclick": [row: T, column: TableColumnCtx | null, event: Event]
         "ready": []
         "loaded": []
         "load-error": [error: unknown]
@@ -175,6 +204,8 @@
         "select-actions"?(): unknown
     }>()
 
+    provide(MOBILE_COLUMNS_KEY, computed(() => props.mobileColumns))
+
     const slots = useSlots()
     const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
@@ -185,23 +216,45 @@
 
     const composedExpandRowKeys = computed<string[] | undefined>(() => {
         const forced = props.forceExpandedRowKeys ?? []
-        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        const userKeys = (attrs.expandRowKeys ?? attrs["expand-row-keys"]) as string[] | undefined ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
     })
 
+    type CellStyle = TableProps["cellStyle"]
+    type CellStyleArg = Parameters<Extract<NonNullable<CellStyle>, (...args: never[]) => unknown>>[0]
+
+    const composedCellStyle = computed((): CellStyle => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as CellStyle
+        const columns = props.mobileColumns
+        if (!columns) return userStyle
+        return (arg: CellStyleArg) => {
+            const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
+            const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
+            return order === undefined ? (own ?? {}) : {...own, "--ks-mobile-order": order}
+        }
+    })
+
+    const getRowKey = (row: T): unknown => {
+        if (typeof props.rowKey === "function") {
+            return props.rowKey(row)
+        }
+        if (typeof props.rowKey === "string" && typeof row === "object" && row !== null && props.rowKey in row) {
+            return (row as Record<string, unknown>)[props.rowKey]
+        }
+        return undefined
+    }
+
     const composedRowClassName = computed(() => {
         const forced = new Set(props.forceExpandedRowKeys ?? [])
-        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+        const userClass = (attrs.rowClassName ?? attrs["row-class-name"]) as string | ((data: {row: T; rowIndex: number}) => string) | undefined
 
         if (!forced.size && !userClass) return undefined
 
-        return (arg: {row: any}) => {
+        return (arg: {row: T; rowIndex: number}) => {
             const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
             if (!forced.size) return base
-            const key = typeof props.rowKey === "function"
-                ? (props.rowKey as (row: any) => string)(arg.row)
-                : (arg.row as any)?.[props.rowKey as string]
+            const key = getRowKey(arg.row)
             return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
         }
     })
@@ -224,23 +277,24 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    type DataRow = NonNullable<typeof props.data>[number]
-
     interface KsTableHandle {
-        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        toggleRowSelection: (row: T, selected?: boolean) => void
         clearSelection: () => void
         toggleAllSelection: () => void
-        getSelectionRows: () => DataRow[]
-        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        getSelectionRows: () => T[]
+        toggleRowExpansion: (row: T, expanded?: boolean) => void
+        setScrollTop: (top: number) => void
+        sort: (prop: string, order: string) => void
         $el?: HTMLElement
     }
     const tableRef = ref<KsTableHandle>()
     const container = ref<HTMLElement | null>(null)
+    const wrapper = ref<HTMLElement | null>(null)
     const hasSelection = ref(false)
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
     const queryBulkAction = ref(false)
-    const mappedSelection = ref<any[]>([])
+    const mappedSelection = ref([]) as Ref<M[]>
 
     const pageSelectableCount = computed(() => {
         if (!props.rowSelectable) {
@@ -256,10 +310,10 @@
             : props.total,
     )
 
-    const selectionChanged = (rawSelection: any[]) => {
+    const selectionChanged = (rawSelection: T[]) => {
         hasSelection.value = rawSelection.length > 0
 
-        const mapper = props.selectionMapper ?? ((e: any) => e)
+        const mapper = props.selectionMapper ?? ((e: T) => e as never)
         mappedSelection.value = rawSelection.map(mapper)
 
         if (queryBulkAction.value && props.data && rawSelection.length < pageSelectableCount.value) {
@@ -269,16 +323,12 @@
         emit("selection-change", rawSelection)
     }
 
-    const onSelect = async (selection: any[], row: any) => {
+    const onSelect = async (selection: T[], row: T) => {
         const data = props.data ?? []
         const currentIndex = data.indexOf(row)
-        const rowKey = props.rowKey
+        const targetKey = getRowKey(row)
 
-        const isChecked = selection.some(s =>
-            typeof rowKey === "function"
-                ? rowKey(s) === rowKey(row)
-                : s[rowKey as string] === row[rowKey as string],
-        )
+        const isChecked = selection.some(s => getRowKey(s) === targetKey)
 
         if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
@@ -308,21 +358,19 @@
         queryBulkAction.value = false
     }
 
-    const setSelection = (selection: any[]) => {
+    const setSelection = (selection: T[]) => {
         tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
-            const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
-                const row = props.data.find(r => isFunction
-                    ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
-                    : r[props.rowKey as string] === sel[props.rowKey as string])
+                const targetKey = getRowKey(sel)
+                const row = props.data?.find(r => getRowKey(r) === targetKey)
                 if (row) tableRef.value?.toggleRowSelection(row, true)
             })
         }
         selectionChanged(selection)
     }
 
-    const toggleRowExpansion = (row: any, expand?: boolean) => {
+    const toggleRowExpansion = (row: T, expand?: boolean) => {
         tableRef.value?.toggleRowExpansion(row, expand)
     }
 
@@ -409,12 +457,9 @@
             lastCheckedIndex.value = null
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
-            const rowKey = props.rowKey
             const validSelection = currentSelection.filter((sel) => {
-                const isFunction = typeof rowKey === "function"
-                return props.data.some(r => isFunction
-                    ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === sel[rowKey as string])
+                const targetKey = getRowKey(sel)
+                return (props.data ?? []).some(r => getRowKey(r) === targetKey)
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
@@ -434,19 +479,51 @@
 
     watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
 
+    const scrollingAncestor = computed(() => {
+        for (let ancestor = wrapper.value?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (/auto|scroll/.test(getComputedStyle(ancestor).overflowY)) return ancestor
+        }
+        return undefined
+    })
+
+    const scrollBackToTop = () => {
+        tableRef.value?.setScrollTop(0)
+
+        if (!wrapper.value) return
+        const visibleTop = scrollingAncestor.value?.getBoundingClientRect().top ?? 0
+        if (wrapper.value.getBoundingClientRect().top < visibleTop) wrapper.value.scrollIntoView({block: "start"})
+    }
+
     const onPageChange = (page: number) => {
+        scrollBackToTop()
         emit("update:currentPage", page)
         emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
+        scrollBackToTop()
         emit("update:currentPage", 1)
         emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
     }
 
-    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
+    let lastSort: {prop?: string; order?: string} | undefined
+    let restoringSort = false
+
+    /** Element Plus clears the sort when the active caret is clicked again, even on a column whose sortOrders leave out null, so that sort is put back. */
+    const onSortChange = (sort: SortItem) => {
+        if (restoringSort) {
+            restoringSort = false
+            return
+        }
+        const previous = lastSort ?? (attrs.defaultSort as {prop?: string; order?: string} | undefined)
+        if (!sort.order && sort.prop && previous && previous.prop === sort.prop && previous.order && !sort.column?.sortOrders?.includes(null)) {
+            restoringSort = true
+            tableRef.value?.sort(sort.prop, previous.order)
+            return
+        }
         if (sort.prop && sort.order) {
+            lastSort = {prop: sort.prop, order: sort.order}
             const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
             internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
@@ -473,9 +550,10 @@
     })
 </script>
 
-<style lang="scss">
-    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
-    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+<style>
+    /* Registered rather than declared on the wrapper: a plain declaration there would shadow a value */
+    /* an ancestor sets, which is the opposite of the override hook this is meant to be. */
+
     @property --ks-data-table-navbar-padding-block-start {
         syntax: "<length>";
         inherits: true;
@@ -490,7 +568,7 @@
         gap: var(--ks-spacing-2);
         text-align: center;
 
-        strong {
+        & strong {
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             font-weight: var(--ks-font-weight-bold);
@@ -509,20 +587,20 @@
         display: flex;
         flex-direction: column;
 
-        > .ks-data-table-navbar,
-        .ks-data-table-top {
+        & > .ks-data-table-navbar,
+        & .ks-data-table-top {
             padding-inline: var(--ks-data-table-gutter);
         }
 
-        > .ks-data-table-navbar {
+        & > .ks-data-table-navbar {
             padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
-        .kel-pagination {
+        & .kel-pagination {
             display: flex;
             padding-inline: var(--ks-data-table-gutter);
 
-            .kel-pagination__sizes {
+            & .kel-pagination__sizes {
                 display: flex;
                 flex: 1;
             }
@@ -533,14 +611,14 @@
         }
 
         &.no-gutter {
-            > .ks-data-table-navbar,
-            .ks-data-table-top,
-            .kel-pagination {
+            & > .ks-data-table-navbar,
+            & .ks-data-table-top,
+            & .kel-pagination {
                 padding-inline: 0;
             }
         }
 
-        .kel-checkbox__inner {
+        & .kel-checkbox__inner {
             width: 16px;
             height: 16px;
             border-radius: 4.8px;
@@ -548,7 +626,7 @@
             border: 0.8px solid var(--ks-border-strong);
         }
 
-        .kel-scrollbar__view {
+        & .kel-scrollbar__view {
             height: 100%;
         }
     }
@@ -557,38 +635,47 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+    }
 
-        &--fit {
+    .ks-data-table-body--fit {
+        min-height: 0;
+
+        & .ks-data-table-content {
+            flex: 1 1 0;
             min-height: 0;
+            overflow: hidden;
+        }
 
-            .ks-data-table-content {
-                flex: 1 1 0;
-                min-height: 0;
-                overflow: hidden;
+        & .ks-data-table-content--slot {
+            overflow: auto;
+        }
 
-                &--slot {
-                    overflow: auto;
-                }
-            }
-
-            .kel-pagination {
-                margin-top: auto;
-            }
+        & .kel-pagination {
+            margin-top: auto;
         }
     }
 
     .ks-data-table-content {
         position: relative;
-        height:100%;
+        height: 100%;
 
-        &.no-selection-gutter {
-            .kel-table th.kel-table__cell:first-child > .cell,
-            .kel-table td.kel-table__cell:first-child > .cell {
+        &.no-selection-gutter:not(.ks-data-table-content--cards) {
+            & .kel-table th.kel-table__cell:first-child > .cell,
+            & .kel-table td.kel-table__cell:first-child > .cell {
                 padding-left: var(--ks-spacing-5);
             }
         }
 
-        .bulk-select-header {
+        @media (min-width: 768px) {
+            &.no-selection-gutter.ks-data-table-content--cards {
+                & .kel-table th.kel-table__cell:first-child > .cell,
+                & .kel-table td.kel-table__cell:first-child > .cell {
+                    padding-left: var(--ks-spacing-5);
+                }
+            }
+        }
+
+        & .bulk-select-header {
             z-index: 1;
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
@@ -602,7 +689,7 @@
             }
         }
 
-        .kel-table__empty-text {
+        & .kel-table__empty-text {
             @media (max-width: 500px) {
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -610,16 +697,159 @@
             }
         }
 
-        // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
-        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
-        // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
-        .kel-table__empty-block {
+        /* element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own */
+        /* height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any */
+        /* empty-state layout). Subtract the header height we already track for the bulk-select overlay above. */
+
+        & .kel-table__empty-block {
             height: calc(100% - var(--table-header-height, 0px)) !important;
         }
 
-        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+        & .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
         }
     }
+
+    @media (max-width: 767px) {
+        .ks-data-table-wrapper--cards {
+            --ks-data-table-gutter: var(--ks-spacing-4);
+        }
+
+        .ks-data-table-content--leading {
+            --ks-data-table-leading-offset: calc(var(--ks-data-table-leading-width) + var(--ks-spacing-2));
+        }
+
+        .ks-data-table-content--cards {
+            --ks-data-table-leading-width: 0.625rem;
+
+            & .kel-table {
+                --kel-table-bg-color: transparent;
+                --kel-table-tr-bg-color: transparent;
+            }
+
+            & .kel-table__header-wrapper,
+            & .kel-table__body colgroup,
+            & .kel-table__body thead {
+                display: none;
+            }
+
+            & .kel-scrollbar__view {
+                max-width: 100%;
+            }
+
+            & .kel-table__body,
+            & .kel-table__body tbody {
+                display: block;
+                max-width: 100%;
+            }
+
+            & .kel-table__row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: var(--ks-spacing-2);
+                margin: 0 var(--ks-data-table-gutter) var(--ks-spacing-2);
+                padding: var(--ks-spacing-3);
+                background: var(--ks-bg-surface);
+                border: 1px solid var(--ks-border-default);
+                border-radius: var(--ks-radius-base);
+
+                &::after {
+                    content: "";
+                    order: 4;
+                    flex-basis: 100%;
+                    height: 0;
+                }
+            }
+
+            & .kel-table__cell {
+                min-width: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+
+                & > .cell {
+                    padding: 0;
+                    line-height: var(--ks-line-height-base);
+                    word-break: normal;
+                    overflow-wrap: anywhere;
+                }
+            }
+
+            & .ks-mobile-hidden {
+                display: none;
+            }
+
+            & .ks-mobile-leading {
+                order: 1;
+                flex: none;
+                width: var(--ks-data-table-leading-width);
+            }
+
+            & .ks-mobile-title {
+                order: 2;
+                flex: 1 1 0;
+                color: var(--ks-text-primary);
+
+                & > .cell,
+                & .ks-entity-link {
+                    font-weight: var(--ks-font-weight-bold);
+                }
+            }
+
+            & .ks-mobile-actions {
+                order: 3;
+            }
+
+            & .ks-mobile-title-aside {
+                order: 3;
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta,
+            & .ks-mobile-meta-aside {
+                margin-top: var(--ks-spacing-1);
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
+            }
+
+            & .ks-mobile-meta {
+                order: calc(10 + var(--ks-mobile-order, 0));
+            }
+
+            & .ks-mobile-meta-first {
+                margin-inline-start: var(--ks-data-table-leading-offset, 0);
+            }
+
+            & .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
+                content: "·";
+                margin-inline-end: var(--ks-spacing-2);
+            }
+
+            & .ks-mobile-meta-aside {
+                order: 20;
+                margin-left: auto;
+            }
+
+            & .kel-table__cell .ks-entity-link {
+                padding: 0;
+                background: transparent;
+                color: inherit;
+                font-weight: inherit;
+
+                & .ks-entity-link__icon {
+                    display: none;
+                }
+            }
+        }
+    }
 </style>
+
+<style scoped>
+    .ks-data-table-wrapper :deep(.pagination) {
+        margin-block: var(--ks-spacing-4);
+    }
+</style>
+

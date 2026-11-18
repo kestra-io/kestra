@@ -60,11 +60,12 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: loop
                     type: io.kestra.plugin.core.flow.LoopUntil
-                    condition: "{{ outputs.return.value == '4' }}"
+                    condition: "{{ outputs.return.values.result == '4' }}"
                     tasks:
                       - id: return
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ outputs.loop.iterationCount }}"
+                        type: io.kestra.plugin.core.output.OutputValues
+                        values:
+                          result: "{{ outputs.loop.iterationCount }}"
                 """
         )
     },
@@ -123,7 +124,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
 
     public Instant nextExecutionDate(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!this.reachedMaximums(runContext, execution, parentTaskRun, false)) {
-            String continueLoop = runContext.render(this.condition).skipCache().as(String.class).orElse(null);
+            String continueLoop = runContext.render(this.condition).as(String.class).orElse(null);
             if (!TruthUtils.isTruthy(continueLoop)) {
                 return Instant.now().plus(runContext.render(this.getCheckFrequency().getInterval()).as(Duration.class).orElseThrow());
             }

@@ -1,6 +1,6 @@
-import {nextTick} from "vue"
+import {type App, nextTick} from "vue"
 import {isDeepEqual} from "@kestra-io/design-system"
-import type {RouteLocationNormalized} from "vue-router"
+import type {RouteLocationNormalized, Router} from "vue-router"
 import {useApiStore} from "../stores/api"
 import {routeSection} from "./analytics/activation"
 
@@ -30,7 +30,7 @@ export const pageFromRoute = (route: RouteLocationNormalized): PageInfo => {
     }
 }
 
-export default (_app: any, router: any) => {
+export default (_app: App, router: Router) => {
     const apiStore = useApiStore()
     router.afterEach((to: RouteLocationNormalized, from: RouteLocationNormalized) => {
         nextTick().then(() => {

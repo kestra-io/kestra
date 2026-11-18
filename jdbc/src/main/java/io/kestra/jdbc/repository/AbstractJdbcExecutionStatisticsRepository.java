@@ -1,19 +1,18 @@
 package io.kestra.jdbc.repository;
 
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.kestra.core.utils.ListUtils;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -42,6 +41,7 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
     // Package-private: referenced by ExecutionStatisticsCompactor, which shares this table but isn't part of this class's hierarchy.
     static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     static final Field<String> FLOW_ID_FIELD = field("flow_id", String.class);
+    static final Field<String> STATE_FIELD = field("state", String.class);
     static final Field<Object> DATE_FIELD = field("date");
 
     public AbstractJdbcExecutionStatisticsRepository(io.kestra.jdbc.AbstractJdbcRepository<ExecutionStatistic> jdbcRepository) {
@@ -66,6 +66,7 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
         String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        List<State.Type> states,
         Instant startDate,
         Instant endDate,
         DateUtils.GroupType groupBy) {
@@ -90,6 +91,10 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
 
                 if (flowId != null) {
                     select = select.and(FLOW_ID_FIELD.eq(flowId));
+                }
+
+                if (!ListUtils.isEmpty(states)) {
+                    select = select.and(STATE_FIELD.in(states));
                 }
 
                 return this.jdbcRepository.fetch(select);
@@ -126,13 +131,13 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
 
     private List<DailyExecutionStatistics> mapStatistics(List<ExecutionStatistic> rows, Instant startDate, Instant endDate, DateUtils.GroupType groupByType) {
         Map<Instant, List<ExecutionStatistic>> byBucket = rows.stream()
-            .collect(Collectors.groupingBy(row -> truncateToBucket(row.date(), groupByType)));
+            .collect(Collectors.groupingBy(row -> DateUtils.truncateToBucket(row.date(), groupByType)));
 
         List<DailyExecutionStatistics> results = byBucket.entrySet().stream()
             .map(entry -> dailyExecutionStatisticsMap(entry.getKey(), entry.getValue(), groupByType.val()))
             .toList();
 
-        return fillDate(results, truncateToBucket(startDate, groupByType), truncateToBucket(endDate, groupByType), groupByType);
+        return fillDate(results, DateUtils.truncateToBucket(startDate, groupByType), DateUtils.truncateToBucket(endDate, groupByType), groupByType);
     }
 
     /**
@@ -153,25 +158,6 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
      */
     static Condition tenantCondition(String tenantId) {
         return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
-    }
-
-    /**
-     * Truncates an instant to the start of its bucket for the given group type. Operates directly
-     * on the real (deserialized) {@link Instant}, in UTC — no SQL-side date-part extraction is
-     * involved, so there is no risk of the system-default-zone reconstruction bug that a
-     * digit-extraction approach (year/month/day/hour/minute columns) would be exposed to.
-     */
-    private static Instant truncateToBucket(Instant instant, DateUtils.GroupType groupType) {
-        return switch (groupType) {
-            case MINUTE -> instant.truncatedTo(ChronoUnit.MINUTES);
-            case HOUR -> instant.truncatedTo(ChronoUnit.HOURS);
-            case DAY -> instant.truncatedTo(ChronoUnit.DAYS);
-            case WEEK -> instant.truncatedTo(ChronoUnit.DAYS)
-                .atZone(ZoneOffset.UTC)
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                .toInstant();
-            case MONTH -> instant.atZone(ZoneOffset.UTC).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).toInstant();
-        };
     }
 
     /**

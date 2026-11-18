@@ -19,7 +19,7 @@
                     >
                         <ContentCopy
                             class="copy"
-                            :aria-label="$t('copy_to_clipboard')"
+                            :title="$t('copy_to_clipboard')"
                             @click="copyUrl"
                         />
                     </KsTooltip>
@@ -66,7 +66,7 @@
                 >
                     <CheckIcon
                         v-if="copied"
-                        class="text-success"
+                        class="check-icon-success"
                     />
                     <ContentCopy v-else />
                 </KsIconButton>
@@ -289,7 +289,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-connect {
         max-width: 653px;
         border: 1px solid var(--ks-border-default);
@@ -356,14 +356,18 @@
     }
 
     .url {
-        :deep(.kel-input__wrapper) {
+        & :deep(.kel-input__wrapper) {
             height: 42px;
         }
 
-        :deep(.kel-input__inner) {
+        & :deep(.kel-input__inner) {
             font-family: var(--ks-font-family-mono);
             font-size: var(--ks-font-size-sm);
         }
+    }
+
+    .check-icon-success {
+        color: var(--ks-icon-success);
     }
 
     .copy {

@@ -22,9 +22,15 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsSkeleton},
         setup() { return {args} },
-        template: "<div style=\"padding:24px;width:300px\"><ks-skeleton v-bind=\"args\" /></div>",
+        template: `
+            <div style="padding:24px;width:300px">
+                <ks-skeleton v-bind="args">
+                    <p>Flow etl-pipeline, last run 2 minutes ago</p>
+                </ks-skeleton>
+            </div>
+        `,
     }),
-    args: {animated: true, rows: 3},
+    args: {animated: true, loading: true, rows: 3, count: 1, throttle: 0},
 }
 
 /** Configurable rows */
@@ -44,6 +50,7 @@ export const Rows: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Animated loading state */
@@ -56,6 +63,7 @@ export const Animated: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Loading toggle – switch between skeleton and real content */
@@ -82,6 +90,7 @@ export const LoadingState: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithContent: Story = {
@@ -97,4 +106,5 @@ export const WithContent: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

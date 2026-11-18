@@ -12,6 +12,7 @@
                 :options="pieOptions"
                 :disableFeatures="[ChartFeature.LEGEND]"
                 :tooltipType="TooltipType.EXTERNAL"
+                :seriesLabel="seriesLabel"
                 @echarts-click="onSegmentClick"
             />
             <div class="pie-center-label">
@@ -39,10 +40,12 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, byCategoryRank, categoryDisplayName, categoryRank, chartCategoryColors, toEchartsParams, type EchartsParams} from "../composables/charts"
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
+    import {getLanguageTag} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
@@ -59,10 +62,13 @@
     })
 
     const route = useRoute()
+    const theme = useTheme()
 
     const {drillDown} = useChartDrillDown(props.chart)
 
     const {chartOptions} = props.chart
+    const colorByValues = computed(() => props.chart.chartOptions?.colorByValues)
+    const seriesLabel = (name: string) => categoryDisplayName(name, colorByValues.value)
     const columns = props.chart.data?.columns ?? {}
     const isDuration = Object.values(columns).find((c: Column) => c.agg !== undefined)?.field === "DURATION"
 
@@ -79,7 +85,7 @@
 
     function parseValue(value: unknown): string {
         const date = dateUtils.parseIso(value)
-        return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
+        return date.isValid() ? date.tz(dateUtils.currentTimezone()).format("YYYY-MM-DD") : String(value)
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {
@@ -92,17 +98,19 @@
             results[field] = (results[field] || 0) + (row[aggregator.value?.key ?? ""] as number)
         })
 
-        return Object.entries(results).map(([name, value]) => ({
+        const names = Object.keys(results).sort(byCategoryRank(colorByValues.value))
+        const colors = chartCategoryColors(theme.value, names, colorByValues.value)
+        return names.map((name) => ({
             name,
-            value,
-            itemStyle: {color: getConsistentHEXColor("light", name)},
+            value: results[name],
+            itemStyle: {color: colors.get(name)},
         }))
     })
 
     const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
     const totalValue = computed(() =>
-        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(),
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(getLanguageTag()),
     )
 
     const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
@@ -118,6 +126,8 @@
             label: String(item.name),
             color: (item.itemStyle as {color?: string} | undefined)?.color ?? "",
             count: Number(item.value),
+            displayName: seriesLabel(String(item.name)),
+            rank: categoryRank(String(item.name), colorByValues.value),
         })),
     )
 
@@ -136,8 +146,8 @@
     })
 
     function onSegmentClick(rawParams: unknown) {
-        const params = rawParams as EchartsParams
-        if (!params?.name) return
+        const params = toEchartsParams(rawParams)
+        if (!params.name) return
         drillDown([{column: dimensionColumn.value, value: params.name}])
     }
 
@@ -147,10 +157,10 @@
 
     defineExpose({refresh})
 
-    watch(() => route.params.filters, () => refresh(), {deep: true})
+    watch(() => route.fullPath, () => refresh())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .pie {
         display: flex;
         flex-direction: column;
@@ -184,17 +194,17 @@
         max-width: min(52%, 7rem);
         text-align: center;
         line-height: 1.2;
+    }
 
-        &__total {
-            font-size: var(--ks-font-size-3xl);
-            color: var(--ks-text-primary);
-            font-weight: 700;
-            white-space: nowrap;
-        }
+    .pie-center-label__total {
+        font-size: var(--ks-font-size-3xl);
+        color: var(--ks-text-primary);
+        font-weight: 700;
+        white-space: nowrap;
+    }
 
-        &__success {
-            font-size: var(--ks-font-size-2xs);
-            color: var(--ks-text-success);
-        }
+    .pie-center-label__success {
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-success);
     }
 </style>

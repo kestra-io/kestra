@@ -22,23 +22,31 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsPagination},
         setup() {
-            const currentPage = ref(1)
-            const pageSize = ref(10)
+            const currentPage = ref(args.currentPage ?? 1)
+            const pageSize = ref(args.pageSize ?? 10)
             return {args, currentPage, pageSize}
         },
         template: `
             <div style="padding:24px">
                 <ks-pagination
+                    v-bind="args"
                     v-model:current-page="currentPage"
                     v-model:page-size="pageSize"
-                    :total="100"
-                    layout="prev, pager, next"
-                    v-bind="args"
                 />
                 <div style="margin-top:12px;font-size:13px;opacity:0.6">Page: {{ currentPage }}</div>
             </div>
         `,
     }),
+    args: {
+        total: 100,
+        currentPage: 1,
+        pageSize: 10,
+        pagerCount: 7,
+        layout: "prev, pager, next",
+        size: "default",
+        background: false,
+        disabled: false,
+    },
 }
 
 export const WithBackground: Story = {
@@ -57,6 +65,7 @@ export const WithBackground: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Number of pagers – controls visible page buttons */
@@ -77,6 +86,7 @@ export const PagerCount: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Full layout – sizes, prev, pager, next, jumper, total */
@@ -103,6 +113,7 @@ export const FullLayout: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const SmallSize: Story = {
@@ -121,4 +132,5 @@ export const SmallSize: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

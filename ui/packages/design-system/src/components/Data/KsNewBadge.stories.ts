@@ -18,9 +18,10 @@ export default meta
 type Story = StoryObj<typeof KsNewBadge>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsNewBadge},
-        template: "<div style=\"padding:24px\"><ks-new-badge /></div>",
+        setup() { return {args} },
+        template: "<div style=\"padding:24px\"><ks-new-badge v-bind=\"args\" /></div>",
     }),
 }
 
@@ -30,6 +31,7 @@ export const CustomLabel: Story = {
         template: "<div style=\"padding:24px\"><ks-new-badge>Nouveau</ks-new-badge></div>",
     }),
     parameters: {
+        controls: {disable: true},
         docs: {description: {story: "The default slot overrides the label — pass a localized string such as `t(\"new\")`. CSS uppercasing keeps the visual consistent regardless of input casing."}},
     },
 }
@@ -44,4 +46,5 @@ export const NextToLabel: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

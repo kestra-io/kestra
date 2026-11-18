@@ -166,6 +166,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
+    public boolean existsInstanceResource(@Nullable String namespace, URI uri) {
+        return Files.exists(getInstancePath(uri));
+    }
+
+    @Override
     public List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getLocalPath(tenantId, uri))) {
             return stream
@@ -370,13 +375,24 @@ public class LocalStorage implements StorageInterface {
             return List.of();
         }
 
+        boolean isDirectory = Files.isDirectory(path);
+
+        List<URI> result;
         try (Stream<Path> walk = Files.walk(path)) {
-            return walk.sorted(Comparator.reverseOrder())
+            result = walk.sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .peek(File::delete)
+                .filter(f -> !f.getName().endsWith(".metadata"))
                 .map(r -> getKestraUri(tenantId, r.toPath()))
                 .toList();
         }
+
+        if (!isDirectory) {
+            Files.deleteIfExists(Path.of(path + ".metadata"));
+        }
+
+        return result;
+
     }
 
     private URI getKestraUri(String tenantId, Path path) {

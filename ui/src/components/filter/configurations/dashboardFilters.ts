@@ -25,7 +25,6 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "multi-select",
                     valueProvider: namespaceValueProvider(),
-                    searchable: true,
                 },
                 {
                     key: "timeRange",
@@ -49,7 +48,6 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions")
                         return VALUES.EXECUTION_STATES
                     },
-                    searchable: true,
                     showComparatorSelection: true,
                     colored: true,
                 },
@@ -114,7 +112,6 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     //     const flowIds = await flowStore.loadDistinctFlowIds();
                     //     return flowIds.map((flowId: string) => ({label: flowId, value: flowId}));
                     // },
-                    searchable: true,
                 },
                 {
                     key: "timeRange",

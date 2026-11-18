@@ -1,5 +1,7 @@
 package io.kestra.worker.services;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +21,8 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
+import io.kestra.core.runners.WorkingDir;
+import io.kestra.core.runners.WorkingDirFactory;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -35,14 +39,33 @@ class ExecutionKilledManagerTest {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private WorkingDirFactory workingDirFactory;
+
     private ExecutionKilledManager manager;
 
     @BeforeEach
     void setUp() {
-        manager = new ExecutionKilledManager(metricRegistry);
+        manager = new ExecutionKilledManager(metricRegistry, workingDirFactory);
     }
 
-    // --- isExecutionKilled ---
+    @Test
+    void shouldDeleteTheWorkingDirectoryFoldersOfAKilledExecution() throws IOException {
+        // Given the folders of two WorkingDirectories of the killed execution, and one of another execution
+        Path first = workingDirFactory.createWorkingDirectory("killed-exec", "wd-1").path(true);
+        Path second = workingDirFactory.createWorkingDirectory("killed-exec", "wd-2").path(true);
+        WorkingDir otherWorkingDir = workingDirFactory.createWorkingDirectory("other-exec", "wd-3");
+        Path other = otherWorkingDir.path(true);
+
+        // When
+        manager.onKillReceived(ExecutionKilledExecution.builder().executionId("killed-exec").build());
+
+        // Then
+        assertThat(first).doesNotExist();
+        assertThat(second).doesNotExist();
+        assertThat(other).exists();
+        otherWorkingDir.cleanup();
+    }
 
     @Test
     void shouldReturnFalseForUnknownExecution() {
@@ -338,6 +361,45 @@ class ExecutionKilledManagerTest {
         assertThat(killed.get()).isFalse();
     }
 
+    @Test
+    void shouldApplyPendingTriggerKillOnLateRegisterForSameDispatchEpoch() {
+        // Given: the kill arrives before the worker registers the trigger it was issued for
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", 3L));
+
+        // When
+        AtomicReference<State.Type> reportedState = new AtomicReference<>();
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 3L), reportedState::set);
+
+        // Then
+        assertThat(reportedState.get()).isEqualTo(State.Type.KILLED);
+    }
+
+    @Test
+    void shouldNotApplyPendingTriggerKillToANewerDispatch() {
+        // Given: a pending kill issued for an earlier dispatch of the same trigger
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", 3L));
+
+        // When
+        AtomicBoolean killed = new AtomicBoolean(false);
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 4L), state -> killed.set(true));
+
+        // Then
+        assertThat(killed.get()).isFalse();
+    }
+
+    @Test
+    void shouldNotRetainTriggerKillWithoutDispatchEpoch() {
+        // Given
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", null));
+
+        // When
+        AtomicBoolean killed = new AtomicBoolean(false);
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 0L), state -> killed.set(true));
+
+        // Then
+        assertThat(killed.get()).isFalse();
+    }
+
     // --- Mixed scenarios ---
 
     @Test
@@ -521,7 +583,20 @@ class ExecutionKilledManagerTest {
         return workerTask;
     }
 
+    private static ExecutionKilledTrigger killTrigger(String namespace, String flowId, String triggerId, Long dispatchEpoch) {
+        return ExecutionKilledTrigger.builder()
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .dispatchEpoch(dispatchEpoch)
+            .build();
+    }
+
     private static WorkerTrigger createMockWorkerTrigger(String namespace, String flowId, String triggerId, String tenantId) {
+        return createMockWorkerTrigger(namespace, flowId, triggerId, tenantId, 0L);
+    }
+
+    private static WorkerTrigger createMockWorkerTrigger(String namespace, String flowId, String triggerId, String tenantId, long dispatchEpoch) {
         AbstractTrigger trigger = mock(AbstractTrigger.class);
         when(trigger.getId()).thenReturn(triggerId);
 
@@ -534,7 +609,8 @@ class ExecutionKilledManagerTest {
         when(workerTrigger.getTrigger()).thenReturn(trigger);
         when(workerTrigger.getData()).thenReturn(data);
         when(workerTrigger.triggerId()).thenReturn(TriggerId.of(tenantId, namespace, flowId, triggerId));
-        when(workerTrigger.uid()).thenReturn("trigger-" + namespace + "-" + flowId + "-" + triggerId);
+        when(workerTrigger.uid()).thenReturn(TriggerId.of(tenantId, namespace, flowId, triggerId).uid());
+        when(workerTrigger.getDispatchEpoch()).thenReturn(dispatchEpoch);
         return workerTrigger;
     }
 }

@@ -4,17 +4,17 @@
         :title="$t('duplicate-pair', {label: $t('key'), key: duplicatedKeys[0]})"
         type="error"
         :closable="false"
-        class="mb-2"
+        class="duplicate-alert"
     />
     <div class="task-collection" :class="{'task-collection--filled': currentValue.length > 0}">
         <template v-if="componentType">
             <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
                 <template #tasks>
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => { if (el) keyInputRefs[index] = el as InstanceType<typeof InputText> }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
-                        margin="m-0"
+                        noMargin
                         :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                     />
@@ -32,20 +32,20 @@
                     />
                     <div class="delete-container">
                         <button @click="removeItem(index)" class="remove-entry">
-                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <DeleteOutline />
+                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <Delete />
                         </button>
                     </div>
                 </template>
             </Wrapper>
         </template>
         <template v-else>
-            <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="dict-row" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
                 <KsCol :span="6">
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => { if (el) keyInputRefs[index] = el as InstanceType<typeof InputText> }"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
-                        margin="m-0"
+                        noMargin
                         :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                         :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
@@ -56,13 +56,11 @@
                         :modelValue="item[1]"
                         @update:model-value="onValueChange(index, $event)"
                         :root="getKey(item[0])"
-                        :schema="schema.additionalProperties"
-                        :required="isRequired(item[0])"
                         :disabled
                     />
                 </KsCol>
-                <KsCol :span="2" class="col align-self-center delete">
-                    <DeleteOutline @click="removeItem(index)" />
+                <KsCol :span="2" class="delete">
+                    <Delete @click="removeItem(index)" />
                 </KsCol>
             </KsRow>
         </template>
@@ -71,16 +69,17 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, nextTick} from "vue"
+    import {computed, ref, watch, nextTick, onBeforeUnmount} from "vue"
     import {rowKey, debounce} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
-    import {DeleteOutline} from "../../utils/icons"
+    import {Delete} from "../../utils/icons"
 
     import InputText from "../inputs/InputText.vue"
     import TaskExpression from "./TaskExpression.vue"
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
 
     const {te} = useI18n()
 
@@ -89,8 +88,8 @@
     })
 
     const props = withDefaults(defineProps<{
-        modelValue?: Record<string, any>;
-        schema?: any;
+        modelValue?: Record<string, unknown> | null;
+        schema?: Schema;
         root?: string;
         disabled?: boolean;
     }>(), {
@@ -106,14 +105,15 @@
         props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const componentType = computed(() => {
-        return props.schema?.additionalProperties ? getBlockComponent.value(
-            props.schema.additionalProperties,
+        const additionalProperties = props.schema?.additionalProperties
+        return additionalProperties ? getBlockComponent.value(
+            additionalProperties === true ? {} : additionalProperties,
             props.root,
         ) : undefined
     })
 
-    const currentValue = ref<[string, any][]>([])
-    const keyInputRefs: Record<number, any> = {}
+    const currentValue = ref<[string, unknown][]>([])
+    const keyInputRefs: Record<number, InstanceType<typeof InputText>> = {}
 
     const localEdit = ref(false)
 
@@ -152,7 +152,12 @@
         emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
     }, 200)
 
-    const emit = defineEmits(["update:modelValue"])
+    // A debounced update still pending when the panel closes would be dropped, losing the user's last edit
+    onBeforeUnmount(() => emitUpdate.flush())
+
+    const emit = defineEmits<{
+        "update:modelValue": [value: Record<string, unknown>];
+    }>()
 
     function getKey(key: string) {
         if (!props.root) return key
@@ -168,7 +173,7 @@
         emitUpdate()
     }
 
-    function onValueChange(key: number, val: any) {
+    function onValueChange(key: number, val: unknown) {
         currentValue.value[key][1] = val
         emitUpdate()
     }
@@ -191,9 +196,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-container{
     margin-bottom: 1rem;
 }
@@ -224,5 +228,17 @@
 .item-wrapper {
     margin: .25rem 0;
     background-color: var(--ks-bg-surface);
+}
+
+.duplicate-alert {
+    margin-bottom: var(--ks-spacing-2);
+}
+
+.dict-row {
+    width: 100%;
+}
+
+.delete {
+    align-self: center;
 }
 </style>

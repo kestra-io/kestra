@@ -312,7 +312,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .breadcrumb {
     padding: 0.5rem 1rem;
     border-bottom: 1px solid var(--ks-border-default);
@@ -333,7 +333,7 @@
         display: inline-flex;
         align-items: center;
 
-        :deep(svg) {
+        & :deep(svg) {
             font-size: var(--ks-font-size-lg);
         }
     }
@@ -342,7 +342,7 @@
         width: 35%;
         margin-left: auto;
 
-        :deep(.kel-input__inner) {
+        & :deep(.kel-input__inner) {
             font-size: var(--ks-font-size-sm);
         }
     }

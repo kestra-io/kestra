@@ -2,51 +2,30 @@
     <DemoBlueprints v-if="tab === 'custom'" />
     <DemoDashboards v-else-if="kind === 'dashboard'" blueprints />
     <DemoApps v-else-if="kind === 'app'" blueprints />
-    <template v-else>
-        <TopNavBar v-if="!embed" :title="routeInfo.title" />
-        <section
-            v-bind="$attrs"
-            class="main-container"
-            :class="{'blueprints-margin': !combinedView, 'detail-view': !!selectedBlueprintId, 'full-container': !embed}"
-        >
-            <BlueprintDetail
-                v-if="selectedBlueprintId"
-                :embed
-                :combinedView
-                :blueprintId="selectedBlueprintId"
-                blueprintType="community"
-                @back="selectedBlueprintId = undefined"
-            />
-            <BlueprintsBrowser
-                :class="{'d-none': !!selectedBlueprintId}"
-                :embed
-                :blueprintKind="kind"
-                blueprintType="community"
-                @loaded="emit('loaded')"
-                @go-to-detail="(id: string) => (selectedBlueprintId = id)"
-            />
-        </section>
-    </template>
+    <BlueprintsPage
+        v-else
+        v-bind="$attrs"
+        :kind
+        :tabs="blueprintTabs"
+        :combinedView
+        :embed
+        @loaded="emit('loaded')"
+    />
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-
-    import TopNavBar from "../../../../components/layout/TopNavBar.vue"
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
-    import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue"
+    import BlueprintsPage from "../../../../components/flows/blueprints/BlueprintsPage.vue"
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue"
     import DemoDashboards from "../../../../components/demo/Dashboards.vue"
     import DemoApps from "../../../../components/demo/Apps.vue"
-
-    import useRouteContext from "../../../../composables/useRouteContext"
-    import {useRouteTabsStore} from "../../../../stores/routeTabs"
+    import type {BlueprintKind} from "../../../../stores/blueprints"
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
-        kind: "flow" | "dashboard" | "app";
+    withDefaults(defineProps<{
+        kind: BlueprintKind;
         tab?: string;
         combinedView?: boolean;
         embed?: boolean;
@@ -59,20 +38,6 @@
     const emit = defineEmits<{loaded: []}>()
 
     const {t} = useI18n()
-    const routeTabsStore = useRouteTabsStore()
-    const tabsOwnerId = Symbol("blueprints-route-tabs")
-
-    const selectedBlueprintId = ref<string>()
-
-    const routeInfo = computed(() => ({
-        title: props.kind === "flow"
-            ? t("blueprints.flows")
-            : props.kind === "dashboard"
-                ? t("blueprints.dashboards")
-                : t("blueprints.title"),
-    }))
-
-    useRouteContext(routeInfo)
 
     const blueprintTabs = computed(() => [
         {
@@ -99,26 +64,4 @@
             locked: true,
         },
     ])
-
-    function syncBlueprintTabs() {
-        if (props.embed) return
-        routeTabsStore.setTabs({
-            ownerId: tabsOwnerId,
-            tabs: blueprintTabs.value,
-        })
-    }
-
-    onMounted(syncBlueprintTabs)
-    watch(blueprintTabs, syncBlueprintTabs)
-    onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 </script>
-
-<style scoped lang="scss">
-    .main-container {
-        padding: var(--ks-spacing-6) !important;
-
-        &:not(.blueprints-margin):not(.detail-view) {
-            padding: 0 !important;
-        }
-    }
-</style>

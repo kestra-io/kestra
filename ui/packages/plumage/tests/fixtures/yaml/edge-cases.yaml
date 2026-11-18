@@ -1,0 +1,78 @@
+id: pebble_edge_cases
+namespace: company.team
+description: "{{ flow.id }} runs on {{ now() | date('yyyy-MM-dd') }}" # trailing {{ comment }}
+
+labels:
+  owner: "{{ inputs.owner ?? 'nobody' }}"
+  "{{ vars.dynamic_key }}": value_with_pebble_key
+  plain: no pebble here, just text: with colons
+
+inputs:
+  - id: payload
+    type: JSON
+    defaults: '{"retries": 3, "nested": {"a": {"b": 1}}}'
+
+variables:
+  map_literal: "{{ {'a': 1, 'b': [1, 2, 3]} | json }}"
+  whitespace_control: "{{- inputs.value -}}"
+  statement: "{%- if inputs.enabled -%}on{%- else -%}off{%- endif -%}"
+  pebble_comment: "before {# a pebble comment #} after"
+  escaped: "{{ \"quoted \\\" inside\" | upper }}"
+  trim_empty: "{{-}}"
+  accented: "{{ forçado ?? orçamento() | inégal }} {{ étape.for }} {{ éif }} {{ 日本語 }}"
+  wrapped_pipe: "{{ inputs.list |
+    join(', ') |
+    upper }}"
+  single: '{{ outputs[''task-with-dash''].value }}'
+  flow_seq: ["{{ inputs.a }}", '{{ inputs.b }}', plain, 42, true, null]
+  flow_map: {first: "{{ inputs.a }}", second: 3.14, third: ~}
+  numbers: [0, -1, 1.5e+10, 0x1F, 0o17, .inf, .nan]
+  dates: 2024-01-31T10:00:00Z
+  anchor: &defaults
+    retries: 3
+    timeout: PT10M
+  alias: *defaults
+  tagged: !!str 123
+
+tasks:
+  - id: shell
+    type: io.kestra.plugin.scripts.shell.Commands
+    commands:
+      - echo "{{ inputs.payload | json }}" > out.json
+      - |
+        for f in {{ inputs.files | join(' ') }}; do
+          echo "processing $f"
+        done
+      - printf '::{"outputs":{%s"done":true}}::\n' "$json"
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      import json
+      data = json.loads('{{ outputs.shell.vars | json }}')
+      result = {{
+          inputs.payload
+          | json
+      }}
+      print(f"{{{{ escaped braces }}}} {data}")
+  - id: sql
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    sql: >-
+      SELECT * FROM {{ vars.table }}
+      WHERE created_at > '{{ trigger.date ?? execution.startDate }}'
+      {% for col in inputs.columns %}AND {{ col }} IS NOT NULL {% endfor %}
+  - id: raw
+    type: io.kestra.plugin.core.log.Log
+    message: "{% raw %}{{ not evaluated }}{% endraw %}"
+  - id: unterminated_on_this_line
+    type: io.kestra.plugin.core.log.Log
+    message: "starts {{ here and closes on the next line"
+    level: "}} INFO"
+
+# commented out: {{ inputs.never }} and {% if x %}
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/15 * * * *"
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExpressionCondition
+        expression: "{{ trigger.date | date('HH') | number > 8 }}"

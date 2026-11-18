@@ -76,6 +76,22 @@ class SubflowRunnerTest {
     private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
+    @LoadFlows({ "flows/valids/subflow-select-expression-child.yaml", "flows/valids/subflow-select-expression-parent.yaml" })
+    void shouldSkipSelectExpressionWhenSubflowPassesCustomValue() throws QueueException, TimeoutException {
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-select-expression-parent");
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/subflow-select-expression-child.yaml", "flows/valids/subflow-select-expression-parent-no-value.yaml" })
+    void shouldFailWhenSubflowPassesNoValueForSelectWithSubflowExpression() throws QueueException, TimeoutException {
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-select-expression-parent-no-value");
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/subflow-inherited-labels-child.yaml", "flows/valids/subflow-inherited-labels-parent.yaml" })
     void inheritedLabelsAreOverridden() throws QueueException, TimeoutException, io.kestra.core.exceptions.InternalException {
         Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-inherited-labels-parent");

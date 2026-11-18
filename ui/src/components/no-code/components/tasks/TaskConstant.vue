@@ -15,16 +15,18 @@
     const props = defineProps({
         schema: {
             type: Object,
-            required: true,
+            default: () => ({}),
         },
     })
 
     const constValue = computed(() => {
-        return props.schema.const
+        return props.schema?.const
     })
 
     watch(constValue, (val) => {
-        model.value = val
+        if (val !== undefined && model.value !== val) {
+            model.value = val
+        }
     }, {immediate: true})
 </script>
 

@@ -49,7 +49,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .field-nav-breadcrumb {
         display: flex;
         align-items: center;

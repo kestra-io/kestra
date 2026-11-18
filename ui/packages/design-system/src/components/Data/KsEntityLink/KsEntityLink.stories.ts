@@ -25,6 +25,7 @@ export const Namespace: Story = {
         entity: "namespace",
         value: "company.team",
         to: "/namespaces/edit/company.team",
+        noIcon: false,
     },
 }
 
@@ -38,6 +39,7 @@ export const Flow: Story = {
         entity: "flow",
         value: "order_pipeline",
         to: "/flows/edit/company.team/order_pipeline",
+        noIcon: false,
     },
 }
 
@@ -54,6 +56,7 @@ export const Truncated: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const NoIcon: Story = {
@@ -82,6 +85,7 @@ export const NoIcon: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {description: {story: "At the same width, dropping the icon gives the value the 16px icon plus the 4px gap back. For dense embedded tables such as the dashboard Executions panel, where the column is around 90px wide."}},
     },
 }
@@ -125,4 +129,5 @@ export const States: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

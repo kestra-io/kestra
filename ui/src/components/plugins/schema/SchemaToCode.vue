@@ -18,6 +18,7 @@
                 @click="copyToClipboard"
             />
         </KsTooltip>
+        <!-- nosemgrep: kestra-vue-avoid-v-html -- Shiki's codeToHtml escapes the source and only adds its own span markup. -->
         <div v-html="codeData" />
     </div>
 </template>
@@ -26,6 +27,7 @@
     import {computed, ref, watchEffect} from "vue"
     import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
     import {isSpecialLang, loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
+    import {pebbleTransformer} from "@kestra-io/plumage"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -39,7 +41,7 @@
     }>(), {
         code: "",
         language: null,
-        theme: "github-dark",
+        theme: "kestra-dark",
     })
 
     const isHoveringCode = ref(false)
@@ -69,6 +71,7 @@
     const codeData = computed(() => props.highlighter.codeToHtml(props.code, {
         lang: resolvedLanguage.value,
         theme: props.theme,
+        transformers: [pebbleTransformer()],
     }))
 
     function copyToClipboard() {
@@ -83,7 +86,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .code-block {
         position: relative;
         padding: 0.75rem;
@@ -96,13 +99,13 @@
             color: var(--ks-text-dim);
         }
 
-        :deep(pre) {
+        & :deep(pre) {
             margin-bottom: 0;
             padding: 0;
             border: 0 !important;
         }
 
-        :deep(.shiki) {
+        & :deep(.shiki) {
             background-color: transparent !important;
 
             code {
@@ -114,7 +117,7 @@
         .copy {
             color: var(--ks-text-primary);
 
-            :deep(.material-design-icon) {
+            & :deep(.material-design-icon) {
                 &, & * {
                     height: 1.125rem !important;
                     width: 1.125rem !important;

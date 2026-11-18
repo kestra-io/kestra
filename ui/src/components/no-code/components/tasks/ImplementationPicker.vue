@@ -31,7 +31,7 @@
             >
                 <TaskIcon
                     class="implementation-picker-option-icon"
-                    :cls="option.branch.ref"
+                    :cls="option.branch.type"
                     :icons="pluginsStore.icons"
                     :loadIcon="pluginsStore.loadIcon"
                     :onlyIcon="true"
@@ -43,23 +43,24 @@
                 <Check v-if="option.branch.ref === current" class="implementation-picker-option-check" />
             </button>
         </div>
-        <KsEmpty v-else data-test="plugin-implementation-picker-empty">
-            <template #description>
-                <strong>{{ $t("block_editor.plugin_implementation.no_results_title", {query: search}) }}</strong>
-                <p>{{ $t("block_editor.plugin_implementation.no_results_description", {count: branches.length}) }}</p>
-            </template>
-        </KsEmpty>
+        <KsNoData
+            v-else
+            data-test="plugin-implementation-picker-empty"
+            :title="$t('block_editor.plugin_implementation.no_results_title', {query: search})"
+        >
+            {{ $t("block_editor.plugin_implementation.no_results_description", {count: branches.length}) }}
+        </KsNoData>
     </KsDialog>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {KsDialog, KsInput, KsEmpty} from "@kestra-io/design-system"
+    import {KsDialog, KsInput, KsNoData} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {humanizeClassName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
+    import {branchDisplayName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
 
     const props = defineProps<{
         title: string
@@ -93,7 +94,7 @@
 
     const options = computed(() => props.branches.map((branch) => ({
         branch,
-        name: humanizeClassName(simpleClassName(branch.ref)),
+        name: branchDisplayName(branch, props.branches),
         description: leadSentence(
             branch.definition.title ?? branch.definition.description ?? branch.definition.markdownDescription,
         ),
@@ -104,7 +105,7 @@
         if (!query) return options.value
         return options.value.filter((option) =>
             option.name.toLowerCase().includes(query)
-            || simpleClassName(option.branch.ref).toLowerCase().includes(query)
+            || simpleClassName(option.branch.type).toLowerCase().includes(query)
             || option.description.toLowerCase().includes(query),
         )
     })
@@ -114,7 +115,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .implementation-picker-search {
     margin-bottom: var(--ks-spacing-3);
 }

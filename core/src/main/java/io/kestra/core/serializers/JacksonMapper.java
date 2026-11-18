@@ -6,7 +6,9 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.TimeZone;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -14,11 +16,14 @@ import org.yaml.snakeyaml.LoaderOptions;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.util.JsonRecyclerPools;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -48,6 +53,8 @@ public final class JacksonMapper {
     public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {
     };
 
+    private static final int RECYCLER_POOL_CAPACITY = 100;
+
     private JacksonMapper() {
     }
 
@@ -59,7 +66,13 @@ public final class JacksonMapper {
 
     // Registered the KestraDateTimeModule only for the JSON mapper.
     // YAML should not change the date format as it would break compatibility, and ION has its own date format.
-    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper())
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper(
+        JsonFactory.builder()
+            // the default thread-local pool never reuses a buffer on virtual threads, where most of Kestra's serialization runs,
+            // and the lock-free pool is deprecated because it grows without bound under contention (jackson-core#1260)
+            .recyclerPool(JsonRecyclerPools.newBoundedPool(RECYCLER_POOL_CAPACITY))
+            .build()
+    ))
         .registerModule(new KestraDateTimeModule());
 
     private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
@@ -171,8 +184,19 @@ public final class JacksonMapper {
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
+            .registerModules(additionalModules())
             .registerModule(durationDeserialization)
             .setTimeZone(TimeZone.getDefault());
+    }
+
+    /** Modules contributed via {@link JacksonMapperModuleProvider}, since {@code core} can't depend on them directly. */
+    private static Module[] additionalModules() {
+        return StreamSupport.stream(
+            ServiceLoader.load(JacksonMapperModuleProvider.class, JacksonMapper.class.getClassLoader()).spliterator(),
+            false
+        )
+            .map(JacksonMapperModuleProvider::module)
+            .toArray(Module[]::new);
     }
 
     private static ObjectMapper createIonObjectMapper(boolean binary) {

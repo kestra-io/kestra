@@ -1,8 +1,19 @@
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, ref} from "vue"
+const mockAiEnabled = ref(true)
+vi.mock("../../../src/composables/useAiEnabled", () => ({useAiEnabled: () => mockAiEnabled}))
 const mockFeeds: {value: Array<{publicationDate: string}>} = {value: []}
 vi.mock("../../stores/api", () => ({
     useApiStore: () => ({feeds: mockFeeds.value}),
+}))
+
+const mockUnreadCount = {value: 0}
+vi.mock("../../stores/notifications", () => ({
+    useNotificationsStore: () => ({
+        get unreadCount() {
+            return mockUnreadCount.value
+        },
+    }),
 }))
 
 vi.mock("@vueuse/core", async (importOriginal) => {
@@ -21,7 +32,7 @@ function mountButtons() {
             return () => null
         },
     })
-    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star"}}})
+    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star", notifications: "Notifications"}}})
     return api!
 }
 
@@ -29,10 +40,27 @@ describe("useContextButtons news unread", () => {
     beforeEach(() => {
         localStorage.clear()
         mockFeeds.value = []
+        mockUnreadCount.value = 0
     })
 
     afterAll(() => {
         localStorage.clear()
+    })
+
+    it("marks the notifications button unread when the store reports an unread count", () => {
+        mockUnreadCount.value = 3
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.notifications.unread?.value).toBe(true)
+    })
+
+    it("marks the notifications button read when the store reports no unread count", () => {
+        mockUnreadCount.value = 0
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.notifications.unread?.value).toBe(false)
     })
 
     it("is unread when no read date has been stored yet", () => {
@@ -68,5 +96,15 @@ describe("useContextButtons news unread", () => {
         const {buttons} = mountButtons()
 
         expect(buttons.news.unread?.value).toBe(false)
+    })
+})
+
+describe("useContextButtons AI tab", () => {
+    it("is hidden when the instance has AI disabled", () => {
+        mockAiEnabled.value = false
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.ai.hidden).toBe(true)
     })
 })

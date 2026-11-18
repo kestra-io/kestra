@@ -23,7 +23,7 @@
             v-if="disabled"
             :modelValue="String(modelValue ?? '')"
             disabled
-            class="w-100 disabled-field"
+            class="disabled-field"
         />
         <KsEditor
             v-else-if="pebble || (!schema?.format && schema?.type !== 'boolean')"
@@ -133,7 +133,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.placeholder) {
     top: -7px !important;
 }
@@ -148,12 +148,13 @@
     width: 100%;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
-    :deep(.disabled-field) {
+    & :deep(.disabled-field) {
         margin: 0!important;
         border-radius: 4px;
+        width: 100%;
     }
 
-    :deep(.ks-editor){
+    & :deep(.ks-editor){
         flex: 1;
     }
 }
@@ -196,4 +197,5 @@
     --ks-editor-single-line-border-color: var(--ks-border-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--ks-border-focus) 22%, transparent);
 }
+
 </style>

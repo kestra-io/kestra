@@ -29,14 +29,14 @@ type Story = StoryObj<typeof KsSideBar>
 const wrapperStyle = "height:600px;width:240px;border:1px solid var(--ks-border-default);"
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, ChartLineVariant, FileTreeOutline, PlayOutline, FileDocumentOutline, FolderOpenOutline, PuzzleOutline},
         setup() {
-            return {ChartLineVariant, FileTreeOutline, PlayOutline, FileDocumentOutline, FolderOpenOutline, PuzzleOutline}
+            return {args, ChartLineVariant, FileTreeOutline, PlayOutline, FileDocumentOutline, FolderOpenOutline, PuzzleOutline}
         },
         template: `
             <div style="${wrapperStyle}">
-                <ks-side-bar>
+                <ks-side-bar v-bind="args">
                     <ks-side-bar-section title="Workspace" collapsible>
                         <ks-side-bar-item title="Dashboards" :icon="ChartLineVariant" href="/dashboards" active />
                         <ks-side-bar-item title="Flows" :icon="FileTreeOutline" href="/flows" />
@@ -51,9 +51,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {ariaLabel: "Sidebar"},
 }
 
 export const CollapsedSection: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, ChartLineVariant, FileTreeOutline, FolderOpenOutline},
         setup() {
@@ -76,6 +78,7 @@ export const CollapsedSection: Story = {
 }
 
 export const WithHeaderAndFooter: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, ChartLineVariant, FileTreeOutline},
         setup() {
@@ -101,6 +104,7 @@ export const WithHeaderAndFooter: Story = {
 }
 
 export const States: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, FileTreeOutline},
         setup() {
@@ -122,6 +126,7 @@ export const States: Story = {
 }
 
 export const LongLabelTruncates: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, FileTreeOutline},
         setup() {
@@ -140,6 +145,7 @@ export const LongLabelTruncates: Story = {
 }
 
 export const NewFeatureSpotlight: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSideBar, KsSideBarSection, KsSideBarItem, KsNewBadge, ChartLineVariant, FileTreeOutline, FolderOpenOutline, PuzzleOutline},
         setup() {

@@ -1,6 +1,7 @@
-import {mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
+import {config, mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {isRouter, memoryRouter} from "./memoryRouter"
 
 type MessageValue = string | MessageValue[] | {[key: string]: MessageValue}
 type Messages = {[key: string]: MessageValue}
@@ -16,7 +17,7 @@ export type I18nMountOptions<T> = ComponentMountingOptions<T> & AppOptions
 
 function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...mountOptions}: I18nMountOptions<T>) {
     // A spec that asserts on raw keys leaves most of them unset on purpose, so the warnings are off.
-    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: locales ?? {en: messages}})
+    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, warnHtmlMessage: false, messages: locales ?? {en: messages}})
     const callerPlugins = globalOptions.plugins ?? []
     // A caller's plugin can be the plugin itself or a [plugin, ...options] tuple; installing it
     // twice warns rather than failing, so both forms have to be recognised.
@@ -27,7 +28,14 @@ function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...moun
             ...globalOptions,
             // The app registers the design system at bootstrap, so a mount without it resolves no
             // Ks component and warns once per mount, with the offending props in every trace.
-            plugins: [i18n, ...(installsDesignSystem ? [] : [KestraDesignSystem]), ...callerPlugins],
+            plugins: [
+                i18n,
+                ...(installsDesignSystem ? [] : [KestraDesignSystem]),
+                // The app always has a router; a spec that asserts on navigation passes its own, and a
+                // suite whose setup installs one globally (ui-ee) keeps it, or RouterLink registers twice.
+                ...([...(config.global.plugins ?? []), ...callerPlugins].some(isRouter) ? [] : [memoryRouter()]),
+                ...callerPlugins,
+            ],
         },
     } as ComponentMountingOptions<T>
 }

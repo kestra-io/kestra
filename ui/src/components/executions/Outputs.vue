@@ -7,7 +7,7 @@
         <div v-ks-loading="isLoading">
             <Vars
                 :execution="props.execution"
-                class="mt-1"
+                class="outputs-vars"
                 :data="outputs"
             />
         </div>
@@ -34,7 +34,7 @@
             required: true,
         },
         execution: {
-            type: Object as PropType<object>,
+            type: Object as PropType<{id: string}>,
             required: true,
         },
     })
@@ -63,3 +63,9 @@
         }
     })
 </script>
+
+<style scoped>
+    .outputs-vars {
+        margin-top: var(--ks-spacing-1);
+    }
+</style>

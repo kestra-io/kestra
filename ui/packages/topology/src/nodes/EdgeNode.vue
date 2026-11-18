@@ -60,7 +60,13 @@
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import {edgeTurnPosition, fanOutSplitPosition, type AddTaskTarget} from "../utils/vueFlowUtils"
+    import {
+        edgeTurnPosition,
+        fanOutSplitPosition,
+        loopReturnPath,
+        type AddTaskTarget,
+        type LoopReturnBounds,
+    } from "../utils/vueFlowUtils"
     import {
         CANVAS_HOVERED_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
@@ -76,6 +82,7 @@
         fansOut?: boolean;
         laneGap?: {leaving: number; entering: number};
         bypass?: "source" | "target";
+        loopReturn?: LoopReturnBounds;
     }
 
     const props = defineProps({
@@ -144,11 +151,17 @@
         }),
     )
 
-    const path = computed(() => getSmoothStepPath({
-        ...props,
-        centerX: flowsHorizontally.value ? laneTurn.value : undefined,
-        centerY: flowsHorizontally.value ? undefined : laneTurn.value,
-    }))
+    const path = computed(() => props.data?.loopReturn
+        ? [loopReturnPath(
+            {x: props.sourceX, y: props.sourceY},
+            props.data.loopReturn,
+            flowsHorizontally.value,
+        )] as const
+        : getSmoothStepPath({
+            ...props,
+            centerX: flowsHorizontally.value ? laneTurn.value : undefined,
+            centerY: flowsHorizontally.value ? undefined : laneTurn.value,
+        }))
 
     const showCaseLabel = computed(
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),

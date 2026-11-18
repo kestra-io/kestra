@@ -13,9 +13,11 @@ vi.mock("../../stores/api", () => ({
     useApiStore: () => ({posthogEvents}),
 }))
 
-const {pluginsStoreState, insertedChipText} = vi.hoisted(() => ({
+const {pluginsStoreState, insertedChipText, loadPlugin, validateTask} = vi.hoisted(() => ({
     pluginsStoreState: {plugin: undefined as {schema?: {outputs?: {properties?: Record<string, unknown>}}} | undefined},
     insertedChipText: vi.fn(),
+    loadPlugin: vi.fn(() => Promise.resolve()),
+    validateTask: vi.fn(() => Promise.resolve({})),
 }))
 
 vi.mock("../../stores/plugins", () => ({
@@ -25,7 +27,7 @@ vi.mock("../../stores/plugins", () => ({
             return pluginsStoreState.plugin
         },
         editorPlugin: undefined,
-        load: vi.fn(() => Promise.resolve()),
+        load: loadPlugin,
     }),
 }))
 
@@ -40,7 +42,7 @@ vi.mock("../../stores/flow", () => ({
         flow: {namespace: "company.team"},
         flowParsed: {},
         taskErrors: undefined,
-        validateTask: vi.fn(() => Promise.resolve({})),
+        validateTask,
     }),
 }))
 
@@ -151,6 +153,58 @@ describe("TaskEdit", () => {
         expect(emitted).toBeTruthy()
         expect(emitted![0][0]).toContain("message: edited")
 
+        vi.useRealTimers()
+    })
+
+    it("does not emit an edit the debounce already committed again when it is unmounted", async () => {
+        // Regression: the debounced commit left its timer set, so unmounting re-emitted the edit; in the
+        // task modal that stale edit landed on the block the user had just navigated to.
+        vi.useFakeTimers()
+        const onUpdateTask = vi.fn()
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "hi"},
+                section: "tasks",
+                flowId: "my_flow",
+                namespace: "company.team",
+                presentation: "panel",
+                "onUpdate:task": onUpdateTask,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        wrapper.findComponent({name: "TaskEditPanes"}).vm.$emit("input", "id: verify_backups\ntype: io.kestra.plugin.core.log.Log\nmessage: edited")
+        vi.advanceTimersByTime(500)
+        wrapper.unmount()
+
+        expect(onUpdateTask).toHaveBeenCalledTimes(1)
+
+        vi.useRealTimers()
+    })
+
+    it("shows an edit made to the task from inside the panel, such as deleting an entry of a nested list", async () => {
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+        wrapper.get("[data-test='fake-editor-focus']").element.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        await wrapper.setProps({task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log"}})
+
+        expect(wrapper.findComponent({name: "TaskEditPanes"}).props("modelValue")).not.toContain("message")
+    })
+
+    it("keeps an edit still being typed when the task changes while the panel has focus", async () => {
+        vi.useFakeTimers()
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+        const panes = wrapper.findComponent({name: "TaskEditPanes"})
+        wrapper.get("[data-test='fake-editor-focus']").element.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+        panes.vm.$emit("input", "id: verify_backups\ntype: io.kestra.plugin.core.log.Log\nmessage: typing")
+
+        await wrapper.setProps({task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "from elsewhere"}})
+
+        expect(panes.props("modelValue")).toContain("message: typing")
         vi.useRealTimers()
     })
 
@@ -354,6 +408,33 @@ describe("TaskEdit", () => {
 
         const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
         expect(namespace.value).toBe("company.team")
+    })
+
+    it("leaves out what only a flow task has when the block is outside a flow", async () => {
+        pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
+        loadPlugin.mockClear()
+        validateTask.mockClear()
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "env", type: "STRING"},
+                section: "tasks",
+                flowId: "",
+                namespace: "company.team",
+                presentation: "panel",
+                outsideFlow: true,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findAllComponents({name: "TaskEditData"})).toHaveLength(0)
+        const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
+        expect(namespace.value).toBeUndefined()
+        expect(loadPlugin).not.toHaveBeenCalled()
+        expect(validateTask).not.toHaveBeenCalled()
+
+        pluginsStoreState.plugin = undefined
     })
 
     describe("chip drop telemetry", () => {

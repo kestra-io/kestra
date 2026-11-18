@@ -4,7 +4,7 @@
         destroyOnClose
         lockScroll
         :resizable="resizable"
-        :size="resizable ? drawerSize : ''"
+        :size="resizable ? drawerSize : (props.size ?? '')"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
         v-bind="{...filteredProps(), ...$attrs}"
@@ -30,33 +30,28 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
-    import {ElDrawer} from "element-plus"
+    import {ref, computed, type HTMLAttributes} from "vue"
+    import {ElDrawer, type DrawerProps} from "element-plus"
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<boolean>()
+    const model = defineModel<boolean>({default: false})
 
-    const props = withDefaults(defineProps<{
-        title?: string
+    export interface KsDrawerProps extends Omit<DrawerProps, "modelValue"> {
         isFullScreen?: boolean
-        withHeader?: boolean
-        resizable?: boolean
-        beforeClose?: (done: () => void) => void
         dirty?: boolean
         dirtyMessage?: string
-    }>(), {
-        title: undefined,
+    }
+
+    const props = withDefaults(defineProps<KsDrawerProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsDrawerProps>>(), {
         isFullScreen: false,
-        withHeader: true,
         resizable: false,
-        beforeClose: undefined,
         dirty: false,
-        dirtyMessage: undefined,
     })
 
     const emit = defineEmits<{
@@ -73,27 +68,37 @@
 
     const fullScreenToggle = ref(props.isFullScreen)
     const drawerWidth = ref<number | null>(null)
+    const widthBeforeFullScreen = ref<number | null>(null)
 
-    const resizableFull = computed(() =>
-        props.resizable && drawerWidth.value != null && drawerWidth.value >= window.innerWidth * FULLSCREEN_THRESHOLD,
-    )
+    const isFullScreenWidth = (width: number | null) => width != null && width >= window.innerWidth * FULLSCREEN_THRESHOLD
+
+    const resizableFull = computed(() => props.resizable && isFullScreenWidth(drawerWidth.value))
     const fullScreen = computed(() => (props.resizable ? resizableFull.value : fullScreenToggle.value))
 
-    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : (props.size ?? "65%")))
 
     const onResizeEnd = (_event: MouseEvent, size: number) => {
-        drawerWidth.value = Math.round(size)
+        const width = Math.round(size)
+        if (!resizableFull.value && isFullScreenWidth(width)) {
+            widthBeforeFullScreen.value = drawerWidth.value
+        }
+        drawerWidth.value = width
     }
 
     const toggleFullScreen = () => {
         if (props.resizable) {
-            drawerWidth.value = resizableFull.value ? null : window.innerWidth
+            if (resizableFull.value) {
+                drawerWidth.value = widthBeforeFullScreen.value
+            } else {
+                widthBeforeFullScreen.value = drawerWidth.value
+                drawerWidth.value = window.innerWidth
+            }
         } else {
             fullScreenToggle.value = !fullScreenToggle.value
         }
     }
 
-    const filteredProps = useFilteredProps(props, ["beforeClose", "dirty", "dirtyMessage"])
+    const filteredProps = usePassedProps(props, ["beforeClose", "dirty", "dirtyMessage", "isFullScreen", "size"])
 
     const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
     const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))
@@ -102,8 +107,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/drawer';
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+</style>
 
+<style>
     .kel-drawer {
         --kel-drawer-bg-color: var(--ks-bg-sidebar);
 
@@ -126,15 +132,18 @@
         &.ltr,
         &.rtl {
             width: 70%;
-            @include res(xs) {
+
+            @media only screen and (max-width: 767px) {
                 width: 95%;
+                min-width: 0;
+                max-width: 92vw;
             }
 
-            @include res(md) {
+            @media only screen and (min-width: 992px) {
                 width: 70%;
             }
 
-            @include res(lg) {
+            @media only screen and (min-width: 1200px) {
                 width: 35%;
                 min-width: 800px;
             }
@@ -142,15 +151,15 @@
             &.sm {
                 min-width: auto;
 
-                @include res(xs) {
+                @media only screen and (max-width: 767px) {
                     width: 95%;
                 }
 
-                @include res(sm) {
+                @media only screen and (min-width: 768px) {
                     width: 50%;
                 }
 
-                @include res(lg) {
+                @media only screen and (min-width: 1200px) {
                     width: 30%;
                 }
             }
@@ -159,15 +168,16 @@
         &.ttb,
         &.btt {
             height: 70%;
-            @include res(xs) {
+
+            @media only screen and (max-width: 767px) {
                 height: 95%;
             }
 
-            @include res(lg) {
+            @media only screen and (min-width: 1200px) {
                 height: 50%;
             }
 
-            @include res(lg) {
+            @media only screen and (min-width: 1200px) {
                 height: 35%;
                 min-height: 600px;
             }
@@ -175,15 +185,15 @@
             &.sm {
                 height: 30%;
                 min-width: auto;
-
             }
         }
 
         &.full-screen {
             width: 99% !important;
+            max-width: none;
         }
 
-        .kel-drawer__header {
+        & .kel-drawer__header {
             padding: 1rem;
             margin-bottom: 0;
             background-color: var(--ks-bg-base);
@@ -191,14 +201,15 @@
             color: var(--ks-text-primary);
             font-weight: bold;
 
-            h3 {
+            & h3 {
                 font-size: var(--kel-font-size-large);
                 margin-bottom: 0;
             }
 
-            .full-screen {
+            & .full-screen {
                 margin-right: 1rem;
-                > .material-design-icon__svg {
+
+                & > .material-design-icon__svg {
                     width: 1.375rem;
                     height: 1.375rem;
                     bottom: -0.250rem;
@@ -206,5 +217,4 @@
             }
         }
     }
-
 </style>

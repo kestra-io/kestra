@@ -4,7 +4,7 @@
         :disabled="!enabled"
         trigger="click"
         placement="bottom-start"
-        :width="376"
+        width="min(376px, 92vw)"
         :showArrow="false"
         popperClass="change-state-popover"
         :popperStyle="POPPER_STYLE"
@@ -79,16 +79,19 @@
     import Close from "vue-material-design-icons/Close.vue"
     import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue"
     import {State} from "@kestra-io/design-system"
+    import {asProblem} from "@kestra-io/kestra-sdk"
 
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
 
     const props = defineProps<{ execution: Execution }>()
 
-    const {t} = useI18n({useScope: "global"})
+    const {t, te} = useI18n({useScope: "global"})
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -122,90 +125,101 @@
     const changeStatus = async () => {
         visible.value = false
 
-        await executionsStore.changeExecutionStatus({
-            executionId: props.execution.id,
-            state: selectedStatus.value!,
-        })
+        try {
+            await executionsStore.changeExecutionStatus({
+                executionId: props.execution.id,
+                state: selectedStatus.value!,
+            })
 
-        const execution = await executionsStore.waitForStateChange(props.execution) as Execution
+            const execution = await executionsStore.waitForStateChange(props.execution) as Execution
 
-        executionsStore.execution = execution
-        // Re-subscribe to the execution SSE stream directly via the store
-        // instead of bubbling a `follow` event up to the route component.
-        executionsStore.followExecution({id: props.execution.id}, t)
-        toast.success(t("change execution state done"))
+            executionsStore.execution = execution
+            // Re-subscribe to the execution SSE stream directly via the store
+            // instead of bubbling a `follow` event up to the route component.
+            executionsStore.followExecution({id: props.execution.id}, t)
+            toast.success(t("change execution state done"))
+        } catch (error) {
+            executionsStore.followExecution({id: props.execution.id}, t)
+            if (!isReportedCentrally(error as KestraHttpError)) {
+                const problem = asProblem(error)
+                toast.error(
+                    problemBulkBody(problem, t, te),
+                    problemTitle(problem, t, te),
+                )
+            }
+        }
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .change-state {
         display: flex;
         flex-direction: column;
+    }
 
-        &__header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-5) var(--ks-spacing-4);
-            padding-bottom: var(--ks-spacing-4);
+    .change-state__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-5) var(--ks-spacing-4);
+        padding-bottom: var(--ks-spacing-4);
+    }
+
+    .change-state__title {
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-lg);
+    }
+
+    .change-state__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-3) var(--ks-spacing-6);
+    }
+
+    .change-state__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+    }
+
+    .change-state__label {
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
+
+    .change-state__select {
+        width: 120px;
+        flex-shrink: 0;
+
+        & :deep(.kel-select__wrapper) {
+            padding: 4px 8px 5px 4px;
         }
+    }
 
-        &__title {
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-lg);
-        }
+    .change-state__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border-top: 1px solid var(--ks-border-default);
+        border-bottom-left-radius: 0.875rem;
+        border-bottom-right-radius: 0.875rem;
+        background: var(--ks-bg-base);
+    }
 
-        &__body {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-3) var(--ks-spacing-6);
-        }
+    .change-state__question {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+    }
 
-        &__row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-        }
-
-        &__label {
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
-
-        &__select {
-            width: 120px;
-            flex-shrink: 0;
-
-            :deep(.kel-select__wrapper) {
-                padding: 4px 8px 5px 4px;
-            }
-        }
-
-        &__footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-3) var(--ks-spacing-4);
-            border-top: 1px solid var(--ks-border-default);
-            border-bottom-left-radius: 0.875rem;
-            border-bottom-right-radius: 0.875rem;
-            background: var(--ks-bg-base);
-        }
-
-        &__question {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-        }
-
-        &__actions {
-            display: flex;
-            justify-content: flex-end;
-            flex-shrink: 0;
-        }
+    .change-state__actions {
+        display: flex;
+        justify-content: flex-end;
+        flex-shrink: 0;
     }
 </style>

@@ -1,0 +1,13 @@
+id: subflow-select-expression-child
+namespace: io.kestra.tests
+
+inputs:
+  - id: choice
+    type: SELECT
+    allowCustomValue: true
+    expression: "{{ [subflow(namespace='io.kestra.tests', id='subflow-function-child').outputs.value] }}"
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ inputs.choice }}"

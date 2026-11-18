@@ -11,6 +11,7 @@ const columns = Array.from({length: 12}, (_, index) => ({
 const meta: Meta<typeof CustomColumns> = {
     title: "Components/Data/CustomColumns",
     component: CustomColumns,
+    parameters: {controls: {disable: true}},
     args: {
         storageKey: "custom-columns-story",
         columns,

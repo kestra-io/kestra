@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.impl.DSL;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
@@ -34,6 +35,11 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     @Override
     protected Condition statesFilter(List<State.Type> state) {
         return PostgresExecutionRepositoryService.statesFilter(state);
+    }
+
+    @Override
+    protected Field<Object> loopRunValueField() {
+        return DSL.field("value -> 'loopRun' ->> 'value'");
     }
 
     @Override

@@ -31,6 +31,8 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowParsingService flowParsingService;
     private final RunContextLoggerFactory runContextLoggerFactory;
     private final ConcurrentHashMap<String, FlowWithSource> cache = new ConcurrentHashMap<>();
+    // revision of the last applied deletion, so that an older event cannot bring a deleted flow back
+    private final ConcurrentHashMap<String, Integer> deletedRevisions = new ConcurrentHashMap<>();
     private final BroadcastQueueInterface<FlowInterface> flowQueue;
     private final FlowWithDefaultCache withDefaultCache;
 
@@ -51,6 +53,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     @VisibleForTesting
     void clearCache() {
         cache.clear();
+        deletedRevisions.clear();
     }
 
     @PostConstruct
@@ -61,18 +64,37 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
             if (either.isRight()) {
                 log.error("Unable to deserialize a flow event: {}", either.getRight().getMessage());
             } else {
-                FlowInterface flow = either.getLeft();
-                // we only keep the last version of a flow so we use uidWithoutRevision
-                if (flow.isDeleted()) {
-                    cache.remove(flow.uidWithoutRevision());
-                } else {
-                    cache.put(flow.uidWithoutRevision(), parseOrKeepAsException(flow));
-                }
-
-                // always clear the withDefault cache so it's recomputed
-                withDefaultCache.invalidate(flow.uid());
+                onFlowEvent(either.getLeft());
             }
         });
+    }
+
+    @VisibleForTesting
+    void onFlowEvent(FlowInterface flow) {
+        // we only keep the last version of a flow so we use uidWithoutRevision
+        cache.compute(flow.uidWithoutRevision(), (key, current) ->
+        {
+            // events are emitted after the revision is stored, so overlapping saves can deliver an older revision last
+            if (isNewer(current == null ? null : current.getRevision(), flow.getRevision()) || isNewer(deletedRevisions.get(key), flow.getRevision())) {
+                log.debug("Ignoring the outdated event for flow '{}' revision {}.", key, flow.getRevision());
+                return current;
+            }
+
+            if (flow.isDeleted()) {
+                deletedRevisions.put(key, flow.getRevision());
+                return null;
+            }
+
+            deletedRevisions.remove(key);
+            return parseOrKeepAsException(flow);
+        });
+
+        // always clear the withDefault cache so it's recomputed
+        withDefaultCache.invalidate(flow.uid());
+    }
+
+    private static boolean isNewer(@Nullable Integer known, @Nullable Integer event) {
+        return known != null && event != null && known > event;
     }
 
     @PreDestroy

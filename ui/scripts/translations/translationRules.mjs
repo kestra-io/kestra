@@ -184,7 +184,7 @@ const NEVER_TRANSLATED_WORDS = new Set([
     "subflows", "task", "tasks", "log", "logs", "blueprint", "blueprints", "id", "ids", "trigger",
     "triggers", "label", "labels", "key", "keys", "value", "values", "input", "inputs", "output",
     "outputs", "port", "ports", "worker", "workers", "backfill", "backfills", "healthcheck",
-    "min", "max",
+    "artifact", "artifacts", "min", "max",
     // Terms of the same kind the model declines to translate in every locale, so an English value
     // for them is a deliberate choice rather than a skipped translation. Execution and asset are
     // Kestra entity nouns the German and Polish glossaries in the prompt already keep in English.
@@ -192,8 +192,8 @@ const NEVER_TRANSLATED_WORDS = new Set([
     "secret", "secrets", "token", "tokens", "payload", "payloads", "context", "email", "webhook",
     "webhooks", "true", "false",
     // Brands, product and format names.
-    "kestra", "copilot", "github", "gitlab", "bitbucket", "slack", "docker", "kubernetes", "markdown",
-    "terraform", "python", "java", "javascript", "node", "npm", "linux", "macos", "windows",
+    "kestra", "console", "copilot", "github", "gitlab", "bitbucket", "slack", "docker", "kubernetes",
+    "markdown", "terraform", "python", "java", "javascript", "node", "npm", "linux", "macos", "windows",
     "claude", "codex", "openai", "gemini", "anthropic", "cursor", "pebble", "elasticsearch",
     "kafka", "postgres", "mysql", "redis", "aws", "gcp", "azure",
     // Acronyms and units.
@@ -247,6 +247,7 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     "tenant.create.steps.secret",
     "tenant.type.infraNav.mappingsPage.flavor",
     "assets.filter.table_column.assets.metadata_key",
+    "pluginPage.view.plugin",
 ])
 
 /**

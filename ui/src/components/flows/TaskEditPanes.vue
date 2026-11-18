@@ -7,7 +7,6 @@
             <div class="task-editor-pane">
                 <TaskEditor
                     :modelValue="modelValue"
-                    :section="section"
                     :hideRunButton="hideRunButton"
                     @update:model-value="(v) => emit('input', v ?? '')"
                 />
@@ -21,7 +20,7 @@
                 v-bind="editorBindings"
                 :readOnly="readOnly"
                 :modelValue="modelValue"
-                :schemaType="section.toLowerCase()"
+                :schemaType="sectionSchemaType(section)"
                 :path="editorPath"
                 :options="{fullHeight: false}"
                 :navbar="false"
@@ -45,6 +44,7 @@
     import {KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import TaskEditor from "../no-code/components/TaskEditor.vue"
+    import {sectionSchemaType} from "./sectionSchemaType"
 
     withDefaults(defineProps<{
         modelValue: string
@@ -70,7 +70,7 @@
     const editorBindings = useEditorBindings()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .documentation {
         padding: var(--ks-spacing-4);
     }

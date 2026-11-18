@@ -14,7 +14,7 @@ interface UseInputsWizardDeps {
         initialInputs?: InputMetaData[];
         flow?: Flow;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
     };
     inputsMetaData: Ref<InputMetaData[]>;
     inputsValues: Record<string, unknown>;

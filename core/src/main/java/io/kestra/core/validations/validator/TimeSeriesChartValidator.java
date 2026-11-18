@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.kestra.core.models.dashboards.GraphStyle;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TimeSeriesChartValidation;
 import io.kestra.plugin.core.dashboard.chart.TimeSeries;
 import io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor;
@@ -31,7 +32,9 @@ public class TimeSeriesChartValidator implements ConstraintValidator<TimeSeriesC
 
         List<String> violations = new ArrayList<>();
 
-        timeSeriesChart.getData().getColumns().entrySet().forEach(columnWithKey ->
+        var columns = MapUtils.emptyOnNull(timeSeriesChart.getData().getColumns());
+
+        columns.entrySet().forEach(columnWithKey ->
         {
             GraphStyle graphStyle = columnWithKey.getValue().getGraphStyle();
             if (columnWithKey.getValue().getAgg() == null && graphStyle != null) {
@@ -39,7 +42,7 @@ public class TimeSeriesChartValidator implements ConstraintValidator<TimeSeriesC
             }
         });
 
-        List<? extends TimeSeriesColumnDescriptor<?>> aggregationsColumns = timeSeriesChart.getData().getColumns().values().stream().filter(column -> column.getAgg() != null).toList();
+        List<? extends TimeSeriesColumnDescriptor<?>> aggregationsColumns = columns.values().stream().filter(column -> column.getAgg() != null).toList();
         Set<GraphStyle> graphStyles = aggregationsColumns.stream().map(TimeSeriesColumnDescriptor::getGraphStyle).filter(Objects::nonNull).collect(Collectors.toSet());
         if (graphStyles.size() != aggregationsColumns.size()) {
             violations.add("All aggregations must have unique `graphStyle`.");

@@ -27,15 +27,15 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .sdk-drift-banner {
         border-left: none;
         border-right: none;
         border-top: none;
         border-radius: 0;
         flex-shrink: 0;
-        // Capped at 70px per design review — no --ks-spacing-* token lands exactly there, so this
-        // falls back to a raw rem value rather than a hardcoded px per ui/AGENTS.md.
+        /* Capped at 70px per design review — no --ks-spacing-* token lands exactly there, so this */
+        /* falls back to a raw rem value rather than a hardcoded px per ui/AGENTS.md. */
         max-height: 4.375rem;
         padding-top: var(--ks-spacing-2);
         padding-bottom: var(--ks-spacing-2);

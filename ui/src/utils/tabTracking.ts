@@ -49,7 +49,19 @@ export function getTabType(tab: TrackedTab): string {
     }
 }
 
-function sendTrackingEvent(eventData: any) {
+export interface TrackingEventMetadata extends AuthoringActionMetadata {
+    blueprint_name?: string
+    documentation_page?: string
+    file_name?: string
+}
+
+interface TrackingEventData {
+    action?: string
+    tab_type?: string
+    metadata?: TrackingEventMetadata
+}
+
+function sendTrackingEvent(eventData: TrackingEventData) {
     try {
         const apiStore = useApiStore()
         const miscStore = useMiscStore()
@@ -94,7 +106,7 @@ function sendTrackingEvent(eventData: any) {
     }
 }
 
-export function makeEvent(action: string, tab_type: string, metadata?: Record<string, any>) {
+export function makeEvent(action: string, tab_type: string, metadata?: TrackingEventMetadata) {
     sendTrackingEvent({
         action,
         tab_type,

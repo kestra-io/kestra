@@ -19,18 +19,22 @@
                 <DynamicScrollerItem
                     :item="item"
                     :active="active"
-                    :dataIndex="index"
+                    :data-index="index"
                 >
                     <div class="vars-row">
                         <code class="vars-key">{{ item.key }}</code>
 
                         <div class="vars-value">
-                            <KsDateAgo v-if="item.date" :inverted="true" :date="item.value" />
-                            <template v-else-if="item.subflow">
+                            <KsDateAgo
+                                v-if="item.date && typeof item.value === 'string'"
+                                :inverted="true"
+                                :date="item.value"
+                            />
+                            <template v-else-if="item.subflow && typeof item.value === 'string'">
                                 {{ item.value }}
                                 <SubFlowLink :executionId="item.value" />
                             </template>
-                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" :name="item.key" />
+                            <VarValue v-else :execution="execution ?? executionsStore.execution" :value="item.value" :name="item.key" />
                         </div>
                     </div>
                 </DynamicScrollerItem>
@@ -49,18 +53,18 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import {useExecutionsStore} from "../../stores/executions"
 
-
     interface VariableRow {
         key: string;
-        value: any;
+        value: string | object | boolean | number;
         date?: boolean;
         subflow?: boolean;
     }
 
     const props = withDefaults(
         defineProps<{
-            data: Record<string, any>;
+            data: Record<string, unknown>;
             keyLabelTranslationKey?: string;
+            execution?: {id: string};
         }>(),
         {
             keyLabelTranslationKey: "name",
@@ -74,7 +78,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .vars {
     display: flex;
     flex-direction: column;

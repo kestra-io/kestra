@@ -35,9 +35,9 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
 
     watch(ctx.selectedId, async (id) => {
         internalSelectedId.value = id
-        if (!id || !ctx.editorEl.value) return
+        if (!id) return
         await nextTick()
-        const card = ctx.editorEl.value.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null
+        const card = ctx.editorEl.value?.querySelector<HTMLElement>(`[data-block-id="${id}"]`)
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
         card?.scrollIntoView({block: "nearest", behavior: reduceMotion ? "auto" : "smooth"})
     })

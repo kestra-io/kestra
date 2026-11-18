@@ -44,16 +44,16 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.core.flow.Sequential
                     tasks:
                       - id: first_task
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.startDate }}"
 
                       - id: second_task
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.id }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.id }}"
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
     }

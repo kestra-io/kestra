@@ -121,9 +121,13 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     public <R extends Record> T map(R record) {
         if (deserializer != null) {
             return deserializer.apply(record);
-        } else {
-            return this.deserialize(record.get("value", JSONB.class).data());
         }
+
+        Object value = record.get("value");
+        if (value instanceof byte[] bytes) {
+            return this.deserialize(bytes);
+        }
+        return this.deserialize(record.get("value", JSONB.class).data());
     }
 
     static class PostgresCondition implements io.micronaut.context.condition.Condition {

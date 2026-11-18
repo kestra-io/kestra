@@ -19,11 +19,16 @@ export default meta
 type Story = StoryObj<typeof KsEmptyState>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsEmptyState},
-        template:
-            "<ks-empty-state title=\"You have no items yet!\" description=\"Add an item to get started.\" />",
+        setup() { return {args} },
+        template: "<ks-empty-state v-bind=\"args\" />",
     }),
+    args: {
+        title: "You have no items yet!",
+        description: "Add an item to get started.",
+        learnMore: "",
+    },
 }
 
 export const WithAction: Story = {
@@ -37,6 +42,7 @@ export const WithAction: Story = {
             </ks-empty-state>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithLearnMore: Story = {
@@ -54,6 +60,7 @@ export const WithLearnMore: Story = {
             </ks-empty-state>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithoutArtwork: Story = {
@@ -62,6 +69,7 @@ export const WithoutArtwork: Story = {
         template:
             "<ks-empty-state title=\"Nothing here\" description=\"This variant has no artwork tile.\" />",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const TitleOnly: Story = {
@@ -69,4 +77,5 @@ export const TitleOnly: Story = {
         components: {KsEmptyState},
         template: "<ks-empty-state title=\"Nothing to show.\" />",
     }),
+    parameters: {controls: {disable: true}},
 }

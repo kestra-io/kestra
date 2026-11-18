@@ -2,7 +2,7 @@
     <div class="quick-filters">
         <template v-if="hasQuickFilters">
             <button
-                v-for="tab in QUICK_FILTER_TABS"
+                v-for="tab in tabs"
                 :key="tab.key"
                 class="quick-filter-tab"
                 :class="{active: activeTab === tab.key}"
@@ -31,28 +31,33 @@
     import type {Chart} from "../types.ts"
     import {
         QUICK_FILTER_TABS,
-        QuickFilterTabKey,
+        UPCOMING_TAB,
+        type TabKey,
         hasQuickFilters as chartHasQuickFilters,
         stateFilterForTab,
     } from "./quickFilters"
 
-    const props = defineProps<{chart: Chart}>()
+    const props = defineProps<{chart: Chart; showUpcoming?: boolean}>()
 
-    const emit = defineEmits<{change: [filter: QueryFilter | null, tab: QuickFilterTabKey]}>()
+    const emit = defineEmits<{change: [filter: QueryFilter | null, tab: TabKey]}>()
 
 
     const hasQuickFilters = computed(() => chartHasQuickFilters(props.chart))
 
-    const activeTab = ref<QuickFilterTabKey>("all")
+    const tabs = computed<readonly {key: TabKey; token: string}[]>(() =>
+        props.showUpcoming ? [...QUICK_FILTER_TABS, UPCOMING_TAB] : QUICK_FILTER_TABS,
+    )
 
-    const selectTab = (key: QuickFilterTabKey) => {
+    const activeTab = ref<TabKey>("all")
+
+    const selectTab = (key: TabKey) => {
         if (activeTab.value === key) return
         activeTab.value = key
-        emit("change", stateFilterForTab(props.chart, key), key)
+        emit("change", key === UPCOMING_TAB.key ? null : stateFilterForTab(props.chart, key), key)
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .quick-filters {
         display: flex;
         align-items: center;

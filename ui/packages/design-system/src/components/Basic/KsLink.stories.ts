@@ -7,7 +7,7 @@ const meta: Meta<typeof KsLink> = {
     tags: ["autodocs"],
     argTypes: {
         type: {control: "select", options: ["", "default", "primary", "success", "warning", "danger", "info"]},
-        underline: {control: "boolean"},
+        underline: {control: "select", options: ["", "always", "hover", "never"]},
         disabled: {control: "boolean"},
     },
     parameters: {
@@ -23,7 +23,7 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-link v-bind=\"args\">Click me</ks-link></div>",
     }),
-    args: {type: "primary", href: "#"},
+    args: {type: "primary", underline: "hover", disabled: false, href: "#", target: ""},
 }
 
 export const Types: Story = {
@@ -40,6 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Underline control */
@@ -54,6 +55,7 @@ export const Underline: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** With icon slot */
@@ -71,6 +73,7 @@ export const WithIcon: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Disabled: Story = {
@@ -82,4 +85,5 @@ export const Disabled: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

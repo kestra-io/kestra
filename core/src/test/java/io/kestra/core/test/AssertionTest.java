@@ -316,6 +316,40 @@ class AssertionTest {
     }
 
     @Test
+    void in_success_numbers() {
+        var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("num", 42))));
+
+        assertThat(
+            Assertion.builder()
+                .value(Property.ofExpression("{{ outputs.my_task.num }}"))
+                .in(Property.ofValue(List.of(42, 43)))
+                .build()
+                .run(runContext)
+                .results()
+        )
+            .hasSize(1)
+            .first()
+            .extracting(AssertionResult::isSuccess).isEqualTo(true);
+    }
+
+    @Test
+    void notIn_failure_numbers() {
+        var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("num", 42))));
+
+        assertThat(
+            Assertion.builder()
+                .value(Property.ofExpression("{{ outputs.my_task.num }}"))
+                .notIn(Property.ofValue(List.of(42, 43)))
+                .build()
+                .run(runContext)
+                .results()
+        )
+            .hasSize(1)
+            .first()
+            .extracting(AssertionResult::isSuccess).isEqualTo(false);
+    }
+
+    @Test
     void notIn_success() {
         testAssertionResultSuccess(
             Assertion.builder()

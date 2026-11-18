@@ -21,6 +21,7 @@ import io.kestra.controller.config.WorkerControllersConfiguration.Endpoint;
 import io.kestra.controller.config.WorkerControllersConfiguration.HealthCheck;
 import io.kestra.controller.config.WorkerControllersConfiguration.LoadBalancing;
 import io.kestra.controller.config.WorkerControllersConfiguration.StaticConfig;
+import io.kestra.controller.grpc.CheckpointServiceGrpc;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
@@ -50,6 +51,7 @@ class GrpcChannelManagerTest {
         KVMetadataServiceGrpc.getServiceDescriptor(),
         NamespaceFileMetadataServiceGrpc.getServiceDescriptor(),
         ExecutionLogsServiceGrpc.getServiceDescriptor(),
+        CheckpointServiceGrpc.getServiceDescriptor(),
         WorkerReportingServiceGrpc.getServiceDescriptor()
     );
 
@@ -491,12 +493,15 @@ class GrpcChannelManagerTest {
             KVMetadataServiceGrpc.getFindMethod().getFullMethodName(),
             NamespaceFileMetadataServiceGrpc.getFindByPathMethod().getFullMethodName(),
             ExecutionLogsServiceGrpc.getErrorLogsMethod().getFullMethodName(),
+            CheckpointServiceGrpc.getListMethod().getFullMethodName(),
+            CheckpointServiceGrpc.getGetMethod().getFullMethodName(),
             WorkerFlowMetaStoreServiceGrpc.getIsNamespaceExistsMethod().getFullMethodName()
         );
         assertThat(covered).doesNotContain(
             KVMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
             KVMetadataServiceGrpc.getDeleteByNameMethod().getFullMethodName(),
             NamespaceFileMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            CheckpointServiceGrpc.getSetMethod().getFullMethodName(),
             WorkerControllerServiceGrpc.getSendWorkerLogEntriesMethod().getFullMethodName(),
             WorkerControllerServiceGrpc.getStreamWorkerJobsMethod().getFullMethodName(),
             ConnectControllerServiceGrpc.getConnectMethod().getFullMethodName(),
@@ -517,6 +522,7 @@ class GrpcChannelManagerTest {
             KVMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
             KVMetadataServiceGrpc.getDeleteByNameMethod().getFullMethodName(),
             NamespaceFileMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            CheckpointServiceGrpc.getSetMethod().getFullMethodName(),
             WorkerControllerServiceGrpc.getStreamWorkerJobsMethod().getFullMethodName(),
             WorkerControllerServiceGrpc.getSendWorkerTaskResultsMethod().getFullMethodName(),
             WorkerControllerServiceGrpc.getSendWorkerTriggerResultsMethod().getFullMethodName(),

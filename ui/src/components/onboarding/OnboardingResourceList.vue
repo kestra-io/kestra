@@ -5,10 +5,7 @@
             v-for="item in items"
             :key="item.titleKey"
             class="onboarding-resource-item"
-            :href="item.href"
-            :to="item.to"
-            :target="item.href ? '_blank' : undefined"
-            :rel="item.href ? 'noreferrer' : undefined"
+            v-bind="item.href ? {href: item.href, target: '_blank', rel: 'noreferrer'} : {to: item.to}"
             @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
@@ -56,7 +53,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .onboarding-resource-list {
         overflow: hidden;

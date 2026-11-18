@@ -54,7 +54,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .task-nested {
     border-left: 2px solid var(--ks-border-subtle);
     padding-left: var(--ks-spacing-4);

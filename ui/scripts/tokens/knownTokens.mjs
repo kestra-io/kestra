@@ -4,9 +4,13 @@ import {fileURLToPath} from "node:url"
 
 const UI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const PALETTE = path.join(UI_ROOT, "packages/design-system/tests/storybook/Basic/Color-variables.json")
-// EE points this at `ui-ee/src` so a token it declares is not reported as undeclared there.
-const EXTRA_ROOTS = (process.env.KS_TOKEN_ROOTS ?? "").split(path.delimiter).filter(Boolean)
-const ROOTS = [path.join(UI_ROOT, "src"), path.join(UI_ROOT, "packages"), ...EXTRA_ROOTS]
+// EE points this at `ui-ee/src` so a token it declares is not reported as undeclared there. Read per scan,
+// since an ESM config that sets it runs after this module is imported.
+const roots = () => [
+    path.join(UI_ROOT, "src"),
+    path.join(UI_ROOT, "packages"),
+    ...(process.env.KS_TOKEN_ROOTS ?? "").split(path.delimiter).filter(Boolean),
+]
 
 const SCANNED_EXTENSIONS = new Set([".vue", ".scss", ".css", ".ts", ".tsx", ".js", ".jsx", ".mjs"])
 const IGNORED_DIRECTORIES = new Set(["node_modules", "dist", "coverage", "storybook-static", ".git", "playwright-report"])
@@ -69,7 +73,7 @@ const scan = () => {
     // Names are compared exactly: custom properties are case-sensitive, so `--ks-Artwork-fill` and
     // `--ks-artwork-fill` are two different tokens and only one of them is ever declared.
     const known = new Set(JSON.parse(fs.readFileSync(PALETTE, "utf-8")))
-    for (const root of ROOTS) {
+    for (const root of roots()) {
         if (!fs.existsSync(root)) continue
         for (const file of walk(root)) {
             declarationsIn(fs.readFileSync(file, "utf-8")).forEach(name => known.add(name))

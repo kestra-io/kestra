@@ -1,19 +1,23 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type AxiosLikeConfig, type ChartFiltersOverrides, type ExportFormat} from "@kestra-io/kestra-sdk"
+import {asProblem, useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
+import {useAuthStore} from "override/stores/auth"
 import * as Utils from "../utils/utils"
+import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-import type {KestraHttpError} from "../utils/kestraHttp"
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import resource from "../models/resource"
+import action from "../models/action"
+import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
+import {latestRequest} from "../utils/latestRequest"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
@@ -24,16 +28,6 @@ interface LoadChartResult {
     error: string | null;
     data: LoadedChart | null;
     raw: Record<string, unknown>;
-}
-
-/** Returns false when the export carried nothing the user can open. Only ION can: a CSV always carries
- *  its header row, while an empty ION chart is a 0 byte body that looks like a failed download. */
-const downloadHandler = (data: Blob, filename: string, format: ExportFormat): boolean => {
-    const blob = new Blob([data], {type: "application/octet-stream"})
-    if (format === "ION" && blob.size === 0) return false
-
-    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${format.toLowerCase()}`)
-    return true
 }
 
 export const DEFAULT_DASHBOARD = {
@@ -74,7 +68,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: DashboardListOptions, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
+        const canList = useAuthStore().user?.hasAnyAction(resource.DASHBOARD, action.LIST) ?? true
+        const res = canList ? await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined}) : {results: []}
         await loadDefaults()
         let isThereADefault = false
         dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {
@@ -119,10 +114,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
         try {
-            const dashboard = await DashboardsAPI.dashboard({id}, {ignoreNotFound: true} as Parameters<typeof DashboardsAPI.dashboard>[1]) as Dashboard
+            const dashboard = await DashboardsAPI.dashboard({id}) as Dashboard
             return dashboard.charts ?? []
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return []
+            if (handledIf(e, [404])) return []
             throw e
         }
     }
@@ -214,20 +209,20 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
-    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
-
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
-        } catch {
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
+        } catch (e: unknown) {
+            // The page falls back to the bundled default on any failure; only the 404 is its own report.
+            handledIf(e, [404])
             return undefined
         }
 
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
-        latestValidation++
+        startValidation()
         setValidationErrors(undefined)
 
         return activeDashboard.value
@@ -238,13 +233,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
+        const {data} = await axios.post<Dashboard>(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
+        const {data} = await axios.put<Dashboard>(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
@@ -263,14 +258,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const validation = ++latestValidation
-        const isLatest = () => validation === latestValidation
+        const isLatest = startValidation()
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
                 setValidationErrors(data.errors)
             }
@@ -285,16 +279,17 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return undefined
+            if (handledIf(e, [404])) return undefined
+            if (handledIf(e, [410, 400])) return {results: [], total: 0, warning: asProblem(e)?.detail}
             throw e
         }
     }
 
     async function validateChart(source: string) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
         return data
     }
@@ -303,14 +298,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    /** Resolves to false when the export carried nothing the user can open, so the caller can tell
-     *  them instead of silently downloading an empty file. Only ION resolves that way. */
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: ExportFormat = "CSV"): Promise<boolean> {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
         const data = dashboard.id === "default"
-            ? await DashboardsAPI.exportChart({format, chart: chart.content ?? "", globalFilter: parameters})
-            : await DashboardsAPI.exportDashboardChart({format, id: dashboard.id, chartId: chart.id ?? "", ...parameters})
+            ? await DashboardsAPI.exportChart({format: "CSV", chart: chart.content ?? "", globalFilter: parameters})
+            : await DashboardsAPI.exportDashboardChart({format: "CSV", id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        return downloadHandler(data, `chart__${chart.id}`, format)
+        Utils.downloadBlob(new Blob([data], {type: "application/octet-stream"}), `chart__${chart.id}.csv`)
     }
 
     const pluginsStore = usePluginsStore()

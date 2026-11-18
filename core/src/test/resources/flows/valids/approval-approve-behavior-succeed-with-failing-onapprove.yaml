@@ -1,0 +1,18 @@
+id: approval-approve-behavior-succeed-with-failing-onapprove
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    approveBehavior: SUCCEED
+    onWait:
+      - id: notify
+        type: io.kestra.plugin.core.log.Log
+        message: "Approval requested"
+    onApprove:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"

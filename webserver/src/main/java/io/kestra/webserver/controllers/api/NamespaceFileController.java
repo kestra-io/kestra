@@ -17,7 +17,6 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -28,7 +27,6 @@ import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -41,6 +39,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -310,19 +309,25 @@ public class NamespaceFileController {
     @Operation(tags = { "Files" }, summary = "Move a file or directory")
     public void moveFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri to move from") @QueryValue URI from,
-        @Parameter(description = "The internal storage uri to move to") @QueryValue URI to) throws Exception {
+        @Parameter(description = "The internal storage uri to move from", schema = @Schema(type = "string", format = "uri")) @QueryValue String from,
+        @Parameter(description = "The internal storage uri to move to", schema = @Schema(type = "string", format = "uri")) @QueryValue String to) throws Exception {
         innerMoveFileDirectory(namespace, from, to);
     }
 
-    protected List<Pair<NamespaceFile, NamespaceFile>> innerMoveFileDirectory(String namespace, URI from, URI to) throws Exception {
-        ensureWritableNamespaceFile(from);
-        ensureWritableNamespaceFile(to);
+    protected List<Pair<NamespaceFile, NamespaceFile>> innerMoveFileDirectory(String namespace, String from, String to) throws Exception {
+        if (from.isBlank() || to.isBlank()) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "The 'from' and 'to' paths are both required.");
+        }
+
+        URI fromUri = toMoveUri(from);
+        URI toUri = toMoveUri(to);
+        ensureWritableNamespaceFile(fromUri);
+        ensureWritableNamespaceFile(toUri);
 
         String tenantId = tenantService.resolveTenant();
 
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
-        return namespaceStorage.move(Path.of(from.getPath()), Path.of(to.getPath()));
+        return namespaceStorage.move(Path.of(fromUri.getPath()), Path.of(toUri.getPath()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -345,21 +350,22 @@ public class NamespaceFileController {
         String pathWithoutScheme = encodedPath.getPath();
 
         String tenantId = tenantService.resolveTenant();
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
+
+        // Without this, a retried delete would see the remaining sibling as the parent's only child and delete the parent.
+        if (!namespaceStorage.exists(Path.of(pathWithoutScheme))) {
+            return List.of();
+        }
 
         String zombieAwarePathToDelete = pathWithoutScheme;
         String parentPathToCheck = NamespaceFileMetadata.parentPath(zombieAwarePathToDelete);
         while (
-            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceFileService.findMetadata(
-                Pageable.from(1, 2), tenantService.resolveTenant(), List.of(
-                    QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.EQUALS).value(parentPathToCheck).build()
-                ), false
-            ).size() == 1
+            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceStorage.children(parentPathToCheck, false).size() == 1
         ) {
             zombieAwarePathToDelete = parentPathToCheck;
             parentPathToCheck = NamespaceFileMetadata.parentPath(parentPathToCheck);
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.delete(Path.of(zombieAwarePathToDelete));
     }
 
@@ -373,6 +379,19 @@ public class NamespaceFileController {
         return new URI(null, null, path, null);
     }
 
+    /** Reads a move parameter as a URI and falls back to a raw path when it holds characters a URI cannot, such as a space. */
+    private static URI toMoveUri(String value) {
+        try {
+            return new URI(value);
+        } catch (URISyntaxException notAUri) {
+            try {
+                return toFileUri(value.startsWith("/") ? value : "/" + value);
+            } catch (URISyntaxException e) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid path.".formatted(value));
+            }
+        }
+    }
+
     private void forbiddenPathsGuard(URI path) {
         if (path == null) {
             return;
@@ -382,8 +401,9 @@ public class NamespaceFileController {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid hierarchical path.".formatted(path));
         }
 
-        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
-            throw new IllegalArgumentException("Forbidden path: " + path.getPath());
+        String normalizedPath = NamespaceFile.normalize(Path.of(path.getPath())).toString();
+        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(normalizedPath).matches())) {
+            throw new IllegalArgumentException("Forbidden path: " + normalizedPath);
         }
     }
 

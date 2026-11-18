@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
 import {date, humanizeDuration, humanizeNumber} from "./filters"
 import {storageKeys} from "./constants"
+import {SUPPORT_LOCALES} from "../translations/languages"
 
 describe("humanizeNumber", () => {
     afterEach(() => {
@@ -25,6 +26,26 @@ describe("humanizeNumber", () => {
 
         expect(humanizeNumber("1234567")).toBe((1234567).toLocaleString("de"))
     })
+
+    // The Metrics tab passes double values: they used to go through parseInt, so 0.75 showed as 0.
+    it.each([
+        [0.75, "0.75"],
+        [12.5, "12.5"],
+        [1234.56, "1,234.56"],
+        [5e-7, "0.0000005"],
+        [1e21, "1,000,000,000,000,000,000,000"],
+        [0.1 + 0.2, "0.3"],
+    ])("keeps the value of the metric %s", (value, expected) => {
+        expect(humanizeNumber(value)).toBe(expected)
+        expect(humanizeNumber(String(value))).toBe(expected)
+    })
+
+    it("uses the locale decimal separator for metric values", () => {
+        localStorage.setItem("lang", "de")
+
+        expect(humanizeNumber(0.75)).toBe("0,75")
+        expect(humanizeNumber(1234.56)).toBe("1.234,56")
+    })
 })
 
 describe("date", () => {
@@ -41,8 +62,8 @@ describe("date", () => {
         expect(date(INSTANT, "HH:mm:ss")).toBe("06:16:00")
     })
 
-    // The Gantt scale divides a time span into tick timestamps, so it has epoch millis rather
-    // than a string. Pre-serialising those with toISOString() threw on a non-finite value.
+    // Callers computing a timestamp hold epoch millis rather than a string. Pre-serialising
+    // those with toISOString() threw on a non-finite value.
     it.each([
         ["an epoch millisecond timestamp", dayjs(INSTANT).valueOf()],
         ["a Date", new Date(INSTANT)],
@@ -53,8 +74,8 @@ describe("date", () => {
         expect(date(value as string | number | Date, "HH:mm:ss")).toBe("06:16:00")
     })
 
-    // An execution cancelled before any task started yields a non-finite span; the label must
-    // degrade rather than throw, which is what `new Date(NaN).toISOString()` did.
+    // A non-finite timestamp must degrade to a placeholder rather than throw, which is what
+    // `new Date(NaN).toISOString()` did.
     it.each([
         ["NaN", NaN],
         ["-Infinity", -Infinity],
@@ -118,5 +139,18 @@ describe("humanizeDuration", () => {
         expect(result).not.toBe("")
         expect(result).not.toMatch(/nan/i)
         expect(result).toBe("5s")
+    })
+})
+
+describe("humanizeDuration in every supported language", () => {
+    afterEach(() => {
+        localStorage.removeItem("lang")
+    })
+
+    // humanize-duration only knows base languages such as "pt", so a regional locale like "pt_BR" must fall back instead of throwing.
+    it.each([...SUPPORT_LOCALES])("formats a duration without throwing for %s", (lang) => {
+        localStorage.setItem("lang", lang)
+        expect(() => humanizeDuration(5025)).not.toThrow()
+        expect(humanizeDuration(5025)).not.toBe("")
     })
 })

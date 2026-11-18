@@ -1,7 +1,5 @@
 package io.kestra.cli.commands.flows;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,8 +26,6 @@ class FlowExportCommandTest {
         // holds 3 flows in `io.kestra.cli`, 1 in the child namespace `io.kestra.cli.sub`, and 1 in the
         // unrelated `io.kestra.outsider` which must not be exported
         URL directory = FlowExportCommandTest.class.getClassLoader().getResource("flows");
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             ctx.getBean(MigrationRunnerInterface.class).runAlways();

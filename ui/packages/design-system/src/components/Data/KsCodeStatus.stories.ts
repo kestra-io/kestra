@@ -28,7 +28,7 @@ export const Valid: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-code-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "valid", label: "Valid"},
+    args: {status: "valid", label: "Valid", iconOnly: false},
 }
 
 export const Error: Story = {
@@ -37,7 +37,7 @@ export const Error: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-code-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "error", label: "Error(s)"},
+    args: {status: "error", label: "Error(s)", iconOnly: false},
 }
 
 export const Warning: Story = {
@@ -46,7 +46,7 @@ export const Warning: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-code-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "warning", label: "Warning detected"},
+    args: {status: "warning", label: "Warning detected", iconOnly: false},
 }
 
 export const Info: Story = {
@@ -55,7 +55,7 @@ export const Info: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-code-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "info", label: "Informative notice"},
+    args: {status: "info", label: "Informative notice", iconOnly: false},
 }
 
 export const ErrorWithCount: Story = {
@@ -69,6 +69,7 @@ export const ErrorWithCount: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const IconOnly: Story = {
@@ -84,6 +85,7 @@ export const IconOnly: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {description: {story: "When `iconOnly` is true the textual label is hidden and the badge collapses to a square icon — used for responsive editor toolbars on narrow viewports. The `label` prop should still be set so it remains in the DOM for tooltips / screen readers."}},
     },
 }
@@ -98,6 +100,7 @@ export const SlotContent: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const AllVariants: Story = {
@@ -112,4 +115,5 @@ export const AllVariants: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

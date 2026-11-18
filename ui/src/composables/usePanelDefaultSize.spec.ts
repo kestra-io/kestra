@@ -6,7 +6,7 @@ import {usePanelDefaultSize} from "./usePanelDefaultSize"
 function createPanel(size: number): Panel {
     const tab: Panel["activeTab"] = {
         uid: "tab",
-        button: {icon: "", label: "Tab"},
+        button: {icon: {}, label: "Tab"},
         component: {},
     }
 

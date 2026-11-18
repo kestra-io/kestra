@@ -93,3 +93,27 @@ describe("SidebarList search", () => {
         expect(wrapper.emitted("search-change")?.at(-1)).toEqual(["code"])
     })
 })
+
+describe("SidebarList searchable tag", () => {
+    test("tags only the searchable items", () => {
+        const wrapper = i18nMount(SidebarList, {
+            messages,
+            props: {
+                sections: [{
+                    key: "flowOutputs",
+                    label: "Flow outputs",
+                    items: [
+                        {label: "orderIds", value: [], type: "array", preview: "[]", expression: "outputs.orderIds", searchable: true},
+                        {label: "other", value: "x", type: "string", preview: "x", expression: "outputs.other", searchable: false},
+                    ],
+                }],
+            },
+            global: {stubs: {KsNoData: true}},
+        })
+
+        const items = wrapper.findAll("[data-test=explorer-item]")
+
+        expect(items[0].find("[data-test=searchable-tag]").exists()).toBe(true)
+        expect(items[1].find("[data-test=searchable-tag]").exists()).toBe(false)
+    })
+})

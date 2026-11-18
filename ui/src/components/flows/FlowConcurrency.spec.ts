@@ -1,7 +1,8 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
+import type {Flow} from "../../stores/flow"
 
-let mockFlow: Record<string, any> | undefined
+let mockFlow: Partial<Flow> | undefined
 vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({
         get flow() {
@@ -67,7 +68,6 @@ describe("FlowConcurrency", () => {
         // instance-owner-only /search, which 403s for any other user on a QUEUED execution.
         expect(getMock).toHaveBeenCalledWith(
             "/api/v1/main/concurrency-limit/io.kestra.tests/flow",
-            {ignoreNotFound: true, showMessageOnError: false},
         )
     })
 

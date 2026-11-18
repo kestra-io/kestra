@@ -25,7 +25,7 @@ public interface SLAMonitorStateStore {
     /**
      * Process expired SLA monitors using the provided consumer.
      * This method is used periodically by the {@link io.kestra.core.runners.Executor} to check if some SLA monitors are expired.
-     * Expired SLA monitors will be sent to the consumer for processing via the {@link SLAService#evaluateExecutionMonitoringSLA(RunContext, Execution, SLA)}.
+     * Expired SLA monitors will be sent to the consumer for processing via the {@link SLAService#evaluateExecutionMonitoringSLA(RunContext, Execution, SLA, java.time.Duration)}.
      *
      * @implNote Implementors must use some sort of transaction (FOR UPDATE SKIP LOCKED or {@link io.kestra.core.lock.LockService#tryLock(String, String, Runnable)}) for accuracy.
      */

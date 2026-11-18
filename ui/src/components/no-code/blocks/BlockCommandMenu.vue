@@ -154,7 +154,7 @@
     onMounted(() => nextTick(() => searchInput.value?.focus()))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-command-menu-overlay {
         position: fixed;
         inset: 0;
@@ -230,8 +230,7 @@
         text-align: left;
         transition: background-color 0.12s;
 
-        &:hover,
-        &--active {
+        &:hover {
             background: var(--ks-bg-hover);
         }
 
@@ -244,6 +243,10 @@
                 background: transparent;
             }
         }
+    }
+
+    .block-command-menu-item--active {
+        background: var(--ks-bg-hover);
     }
 
     .block-command-menu-item-ico {

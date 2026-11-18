@@ -32,6 +32,12 @@ public class ExecutionKilledTrigger extends ExecutionKilled implements TenantInt
 
     String triggerId;
 
+    /**
+     * The dispatch epoch of the trigger instance to kill, or {@code null} when the kill is not fenced
+     * to a dispatch. Only a fenced kill is retained by a worker that has not yet registered the instance.
+     */
+    Long dispatchEpoch;
+
     public boolean isEqual(TriggerId triggerId) {
         return (triggerId.getTenantId() == null || Objects.equals(triggerId.getTenantId(), this.tenantId)) &&
             triggerId.getNamespace().equals(this.namespace) &&

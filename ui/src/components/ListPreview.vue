@@ -29,7 +29,6 @@
         <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :sizes="[10, 20, 50, 100]"
             v-model:pageSize="pageSize"
             v-model:currentPage="currentPage"
         />
@@ -121,7 +120,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .list-preview-container {
         width: 100%;
         overflow: auto;
@@ -131,7 +130,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.kel-table__body-wrapper) {
+        & :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }

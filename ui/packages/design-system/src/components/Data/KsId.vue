@@ -3,17 +3,18 @@
         <template #content>
             <code>{{ value }}</code>
         </template>
-        <code :id="uid" @click="emit('click')" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}">
+        <code :id="uid" @click="emit('click')" class="ks-id" :class="{'ks-id--clickable': hasClickListener}">
             {{ transformValue }}
         </code>
     </KsTooltip>
-    <code v-else :id="uid" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
+    <code v-else :id="uid" class="ks-id" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
         {{ transformValue }}
     </code>
 </template>
 
 <script setup lang="ts">
     import {computed, useId, getCurrentInstance} from "vue"
+    import type {Placement} from "element-plus"
     import KsTooltip from "../Feedback/KsTooltip.vue"
 
     const props = withDefaults(defineProps<{
@@ -21,7 +22,7 @@
         shrink?: boolean
         size?: number
         /** Tooltip placement. Defaults to "top". */
-        placement?: string
+        placement?: Placement
     }>(), {
         value: undefined,
         shrink: true,
@@ -53,13 +54,18 @@
         }
 
         return props.value.toString().substring(0, size.value) +
-            (props.value.length > size.value && size.value !== 8 ? "…" : "")
+            (props.value.length > size.value ? "…" : "")
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    code.ks-id {
+        white-space: nowrap;
+    }
+
     code.ks-id--clickable {
         cursor: pointer;
+
         &:hover {
             text-decoration: underline;
         }

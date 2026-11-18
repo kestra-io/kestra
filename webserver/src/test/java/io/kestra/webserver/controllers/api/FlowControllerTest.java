@@ -754,6 +754,99 @@ class FlowControllerTest {
     }
 
     @Test
+    void bulkWithDocumentSeparatorInsideAValue() {
+        String flows = """
+            id: bulkseparator
+            namespace: io.kestra.bulk
+            description: a --- b
+            tasks:
+              - id: t
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """;
+
+        List<FlowWithSource> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?namespace=io.kestra.bulk", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+
+        assertThat(updated.size()).isEqualTo(1);
+        assertThat(updated.getFirst().getDescription()).isEqualTo("a --- b");
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/bulkseparator"));
+    }
+
+    @Test
+    void bulkWithLeadingDocumentSeparatorAndComments() {
+        String flows = """
+            --- # first flow comment
+            id: bulksepcomment1
+            namespace: io.kestra.bulk
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            --- # second flow comment
+            id: bulksepcomment2
+            namespace: io.kestra.bulk
+            tasks:
+              - id: t2
+                type: io.kestra.plugin.core.log.Log
+                message: bye
+            """;
+
+        List<FlowWithSource> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?namespace=io.kestra.bulk", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+
+        assertThat(updated.size()).isEqualTo(2);
+        assertThat(updated.stream().map(FlowWithSource::getId).toList())
+            .containsExactlyInAnyOrder("bulksepcomment1", "bulksepcomment2");
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/bulksepcomment1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/bulksepcomment2"));
+    }
+
+    @Test
+    void updateFlowsInNamespaceWithLeadingSeparatorAndComments() {
+        String flows = """
+            --- # leading separator with comment
+            id: namespaceleading1
+            namespace: io.kestra.updatenamespace
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.log.Log
+                message: one
+            --- # second separator
+            id: namespaceleading2
+            namespace: io.kestra.updatenamespace
+            tasks:
+              - id: t2
+                type: io.kestra.plugin.core.log.Log
+                message: two
+            """;
+
+        List<Flow> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace?delete=false", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(Flow.class)
+            );
+
+        assertThat(updated.size()).isEqualTo(2);
+        assertThat(updated.stream().map(Flow::getId).toList())
+            .containsExactlyInAnyOrder("namespaceleading1", "namespaceleading2");
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/namespaceleading1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/namespaceleading2"));
+    }
+
+    @Test
     void shouldCreateBothFlowsGivenSameIdInDifferentNamespacesWhenBulkUpdate() {
         String id = "samebulkid";
         String flows = String.join(
@@ -1085,7 +1178,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(20);
+        assertThat(namespaces.size()).isEqualTo(21);
     }
 
     @Test
@@ -1550,6 +1643,35 @@ class FlowControllerTest {
         // nothing when any id in the batch does not exist.
         String flow = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.deletebyidspartial/keepMe"), String.class);
         assertThat(flow).isNotNull();
+    }
+
+    @Test
+    void validateShouldRejectASearchableOutputOfAnUnsupportedType() {
+        String flow = """
+            id: searchable_outputs_validation
+            namespace: io.kestra.tests
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+
+            outputs:
+              - id: orderIds
+                type: ARRAY
+                value: ["a"]
+                searchable: true
+              - id: payload
+                type: JSON
+                value: "{}"
+                searchable: true
+            """;
+
+        List<ValidateConstraintViolation> body = client.toBlocking()
+            .retrieve(POST("/api/v1/main/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("The output 'payload' cannot be searchable").doesNotContain("The output 'orderIds'");
     }
 
     @Test

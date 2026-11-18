@@ -13,17 +13,17 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCard, type CardProps} from "element-plus"
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {usePassedProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        shadow?: "always" | "hover" | "never"
-    }>()
+    const props = defineProps<CardProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof CardProps>>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = usePassedProps(props)
 
     defineSlots<{
         default?(): unknown
@@ -35,7 +35,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/card';
+</style>
 
+<style>
     .kel-card {
         border-radius: var(--kel-border-radius-round);
         --kel-card-border-color: var(--ks-border-default);
@@ -44,7 +46,7 @@
         color: var(--ks-text-primary);
         background-color: var(--ks-bg-surface);
 
-        .kel-card__header {
+        & .kel-card__header {
             padding: 0.5rem 1rem;
             font-weight: bold;
         }

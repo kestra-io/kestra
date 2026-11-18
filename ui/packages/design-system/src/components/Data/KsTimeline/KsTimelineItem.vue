@@ -36,9 +36,11 @@
 </script>
 
 <style lang="scss">
-@use "../../../assets/styles/el-ns";
-@use "element-plus/theme-chalk/src/timeline-item";
+    @use "../../../assets/styles/el-ns";
+    @use "element-plus/theme-chalk/src/timeline-item";
+</style>
 
+<style>
 .kel-timeline-item__node.is-hollow {
     background-color: var(--ks-bg-base);
 }

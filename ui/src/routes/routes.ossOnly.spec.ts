@@ -8,6 +8,7 @@ const DEMO_PAGES = [
     "apps/list",
     "tests/list",
     "assets/list",
+    "credentials/list",
     "cases/list",
     "admin/iam",
     "admin/tenants/list",

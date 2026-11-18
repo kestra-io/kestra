@@ -1,7 +1,6 @@
 package io.kestra.executor;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -61,20 +60,20 @@ public class ConcurrencySlotReleaseProcessor {
     /**
      * Releases the slots held by the terminated execution of {@code executor} in every
      * applicable concurrency scope — a no-op when no limit applies to its flow — and returns
-     * the next queued execution, already marked RUNNING, when one was popped. The caller must
-     * emit the returned execution only after this method returns — never from inside the
+     * the queued executions popped by the release, already marked RUNNING. The caller must
+     * emit the returned executions only after this method returns — never from inside the
      * state-store transaction (see the class Javadoc).
      *
      * @param terminatedByThisCycle whether this executor cycle is the one that terminated the
      *        execution. A terminated execution keeps being processed by late events.
      */
-    public Optional<Execution> release(ExecutorContext executor, boolean terminatedByThisCycle) {
+    public List<Execution> release(ExecutorContext executor, boolean terminatedByThisCycle) {
         Execution execution = executor.getExecution();
 
         // LOOP executions are virtual iterations that never acquired a concurrency slot;
         // they inherit the parent's metadata but must not release the parent's slot.
         if (execution.getKind() == ExecutionKind.LOOP) {
-            return Optional.empty();
+            return List.of();
         }
 
         try {
@@ -96,14 +95,14 @@ public class ConcurrencySlotReleaseProcessor {
                     )
                     .toList();
             if (limits.isEmpty()) {
-                return Optional.empty();
+                return List.of();
             }
 
             // Two independent facts decide a release: whether this execution ever claimed a slot,
             // and whether this is the cycle that terminated it.
             boolean claimedASlot = admittedScopes != null || claimedASlotAccordingToHistory(execution);
             if (!claimedASlot || !terminatedByThisCycle) {
-                return Optional.empty();
+                return List.of();
             }
 
             // a flow-scoped-only release pops through the legacy flow-keyed path, which claims
@@ -124,9 +123,7 @@ public class ConcurrencySlotReleaseProcessor {
                     // the popped execution claimed one slot in every incremented scope: stamp
                     // them the same way the gate does for directly admitted executions
                     if (newExecution.getMetadata() != null) {
-                        List<String> claimedScopes = flowScopedRelease
-                            ? List.of(queued.getTenantId() + "|" + queued.getNamespace() + "|" + queued.getFlowId())
-                            : candidateLimits(queued).stream().map(ScopedConcurrencyLimit::uid).toList();
+                        List<String> claimedScopes = claimedScopes(queued, limits, flowScopedRelease);
                         newExecution = newExecution.withMetadata(newExecution.getMetadata().withConcurrencyScopes(claimedScopes));
                     }
 
@@ -145,7 +142,7 @@ public class ConcurrencySlotReleaseProcessor {
                 "Cannot release the concurrency slots held by execution '{}' of flow '{}.{}': the running count stays at its current value until it is corrected manually.",
                 execution.getId(), executor.getFlow().getNamespace(), executor.getFlow().getId(), e
             );
-            return Optional.empty();
+            return List.of();
         }
     }
 
@@ -171,6 +168,19 @@ public class ConcurrencySlotReleaseProcessor {
             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
 
         return !queuedThenKilled && !concurrencyShortCircuitState;
+    }
+
+    private List<String> claimedScopes(Execution queued, List<ScopedConcurrencyLimit> releasedLimits, boolean flowScopedRelease) {
+        if (!flowScopedRelease) {
+            return candidateLimits(queued).stream().map(ScopedConcurrencyLimit::uid).toList();
+        }
+
+        // a drained flow whose limit was removed has no counter to claim a slot in
+        if (releasedLimits.getFirst().concurrency() == null) {
+            return List.of();
+        }
+
+        return List.of(queued.getTenantId() + "|" + queued.getNamespace() + "|" + queued.getFlowId());
     }
 
     private List<ScopedConcurrencyLimit> candidateLimits(Execution candidate) {

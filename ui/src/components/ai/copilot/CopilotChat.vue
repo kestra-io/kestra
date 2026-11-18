@@ -10,34 +10,49 @@
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the copilot has no provider to run on — either `/configs` said so and the
-             user tried to send anyway, or the turn came back 503. It only ever replaces the chat once
-             a prompt has been attempted; opening the copilot never lands here (kestra-io/kestra-ee#10739).
-             Configuring a provider is an instance-config change (a restart), never something a retry in
-             this panel could pick up, so the only action here points at the docs. -->
-        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
-            <KsIcon class="copilot-unavailable-icon">
-                <RobotOffOutline />
-            </KsIcon>
-            <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
-            <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton
-                size="small"
-                tag="a"
-                target="_blank"
-                :href="docsUrl"
-                data-test="copilot-unavailable-docs"
-            >
-                {{ $t("ai.copilot.unavailable.docs") }}
-            </KsButton>
-        </div>
-
-        <div v-else-if="isEmpty" class="copilot-empty">
+        <div v-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
                     <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ $t("ai.copilot.empty.title") }}</KsText>
+                <KsAlert
+                    v-if="noProviderConfigured"
+                    :id="noticeId"
+                    type="info"
+                    showIcon
+                    :closable="false"
+                    role="status"
+                    class="copilot-provider-alert"
+                    :title="$t('ai.copilot.unavailable.title')"
+                    data-test="copilot-unavailable"
+                >
+                    <div class="copilot-provider-body">
+                        <span>{{ $t("ai.copilot.unavailable.detail") }}</span>
+                        <KsButton
+                            size="small"
+                            tag="a"
+                            target="_blank"
+                            :href="docsUrl"
+                            class="copilot-docs-link"
+                            data-test="copilot-unavailable-docs"
+                        >
+                            {{ $t("ai.copilot.unavailable.docs") }}
+                        </KsButton>
+                    </div>
+                </KsAlert>
+                <KsAlert
+                    v-else-if="unavailable"
+                    type="error"
+                    showIcon
+                    :closable="false"
+                    role="alert"
+                    class="copilot-provider-alert"
+                    :title="$t('ai.copilot.unavailable.notSent')"
+                    data-test="copilot-not-sent"
+                >
+                    {{ $t("ai.copilot.unavailable.detail") }}
+                </KsAlert>
                 <CopilotContextChip v-if="activeScope" :scope="activeScope" @remove="removeContext" />
                 <CopilotComposer
                     ref="emptyComposer"
@@ -45,7 +60,10 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
+                    :disabledReason="disabledReason"
+                    :describedBy="describedBy"
                     :streaming="streaming"
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
@@ -58,12 +76,16 @@
                         :key="suggestion"
                         size="small"
                         class="copilot-suggestion"
-                        :disabled="!canSend"
+                        data-test="copilot-suggestion"
+                        :disabled="!canSend || noProviderConfigured"
+                        :aria-describedby="describedBy"
                         @click="onSubmit(suggestion)"
                     >
                         {{ suggestion }}
                     </KsButton>
                 </div>
+
+                <CopilotMcpTip />
 
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
@@ -109,10 +131,21 @@
                 </div>
             </KsScrollbar>
 
+            <CopilotDraftTray v-if="trayDrafts.length" :items="trayDrafts" @dismiss="dismissDraft" @applied="markDraftApplied" />
+
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
-            <div v-if="error || errorDetail || notice" class="copilot-banner">
-                <KsAlert v-if="error || errorDetail" type="error" role="alert" data-test="copilot-error">
+            <div v-if="error || errorDetail || notice || unavailable" class="copilot-banner">
+                <KsAlert
+                    v-if="unavailable"
+                    type="error"
+                    role="alert"
+                    :title="$t('ai.copilot.unavailable.notSent')"
+                    data-test="copilot-not-sent"
+                >
+                    {{ $t("ai.copilot.unavailable.detail") }}
+                </KsAlert>
+                <KsAlert v-else-if="error || errorDetail" type="error" role="alert" data-test="copilot-error">
                     {{ errorDetail || $t(`ai.copilot.error.${error}`) }}
                 </KsAlert>
                 <KsAlert v-else-if="notice" type="warning" role="status" data-test="copilot-notice">
@@ -133,7 +166,10 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
+                    :disabledReason="disabledReason"
+                    :describedBy="describedBy"
                     :streaming="streaming"
                     @submit="onSubmit"
                     @stop="onStop"
@@ -144,11 +180,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, onBeforeUnmount, onMounted} from "vue"
+    import {ref, computed, nextTick, useId, watch, onBeforeUnmount, onMounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
     import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
@@ -157,11 +192,15 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotDraftTray from "./CopilotDraftTray.vue"
     import CopilotHelp from "./CopilotHelp.vue"
+    import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
+    import {collectPendingDrafts, type PendingDraft} from "./pendingDrafts"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -251,7 +290,11 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
+
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -259,7 +302,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
     // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
@@ -334,11 +377,17 @@
     // callback isn't tracked the same way — it only re-runs when the signal below actually changes
     // (a message added, dismissed/applied tracking changed, or the route changed), never on a token tick.
     const pendingDraft = ref<{draftId: string; yaml: string} | undefined>(undefined)
+    const trayDrafts = ref<PendingDraft[]>([])
     const draftScanSignal = computed(() =>
         `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${dismissedDraftIds.value.size}|${appliedDraftIds.value.size}|${route.fullPath}`,
     )
     watch(draftScanSignal, () => {
         pendingDraft.value = findPendingDraft()
+        trayDrafts.value = collectPendingDrafts(
+            messages.value,
+            (draftId) => dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId),
+            flowStore.flowYaml,
+        )
     }, {immediate: true})
 
     function findPendingDraft(): {draftId: string; yaml: string} | undefined {
@@ -371,9 +420,12 @@
     // whatever's pending yet (nothing, since `messages`/`pendingConfirmation` start empty) — a harmless
     // `undefined` write in the common case, but it's what clears a stale `previewSource` left over from a
     // prior CopilotChat instance sharing this same (persistent) flow store.
-    watch(activeFlowPreview, (value) => {
-        flowStore.previewSource = value
-    }, {immediate: true})
+    function mirrorEditorPreview(source: string | undefined): void {
+        flowStore.previewSource = source
+        flowStore.previewBanner = undefined
+    }
+
+    watch(activeFlowPreview, mirrorEditorPreview, {immediate: true})
 
     /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back
      *  to my own editing" action behind both the transcript card's Dismiss button and the main editor's
@@ -383,7 +435,7 @@
         // confirmation takes priority in `activeFlowPreview`, and declining that one goes through its
         // own Reject action on the interactive card, not this shared "drop the preview" shortcut.
         if (!pendingConfirmationFlowSource.value && pendingDraft.value) dismissDraft(pendingDraft.value.draftId)
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     }
 
     flowStore.declinePreview = declineActivePreview
@@ -391,17 +443,18 @@
         if (flowStore.declinePreview === declineActivePreview) flowStore.declinePreview = null
     })
 
-    // `/configs` reports whether any AI provider is configured. It's known up front, but the copilot
-    // waits for the user to actually try sending something before acting on it: an instance with no
-    // provider opens on the regular chat, not on the unavailable state (kestra-io/kestra-ee#10739).
-    // An older backend that doesn't send the flag leaves it undefined and the copilot usable.
+    // `/configs` reports whether any AI provider is configured; an older backend that doesn't send the
+    // flag leaves it undefined and the copilot usable. With no provider the chat keeps its regular
+    // home but says so up front and disables the controls, instead of refusing a prompt later.
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
+    const noticeId = useId()
+    const describedBy = computed(() => noProviderConfigured.value ? noticeId : undefined)
+    const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
-    /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
+    /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
     const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -459,6 +512,8 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            // Ahead of the cancel guard below: a cancelled turn still spent whatever the provider generated.
+            refreshUsage()
             const last = lastMessage.value
             // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
             if (!last || last.type === "CANCELLED") {
@@ -479,30 +534,32 @@
         ending.value ? "end" : answering.value ? "answering" : "thinking",
     )
 
-    function onSubmit(prompt: string): void {
-        // Known-unconfigured instance: the turn could only come back 503, so raise the unavailable
-        // state here rather than round-tripping for it.
-        if (noProviderConfigured.value) {
-            unavailable.value = true
-            return
-        }
+    async function onSubmit(prompt: string): Promise<void> {
+        if (noProviderConfigured.value) return
         // A new turn drops the editor's diff preview even before it resolves: `sendChat` already nulls
         // `pendingConfirmation` (self-clearing `pendingConfirmationFlowSource`), but a past draft card
         // stays in the transcript forever with no such reset, so it must be cleared here explicitly.
-        flowStore.previewSource = undefined
-        sendChat({
+        mirrorEditorPreview(undefined)
+        await sendChat({
             prompt,
             mode: mode.value,
             additionalContext: scopeToContext(activeScope.value, editorFlowSource.value),
             providerId: selectedProvider.value,
         })
+
+        // The provider refused the turn: hand the prompt back so nothing the user wrote is lost.
+        if (unavailable.value && !composerText.value) {
+            composerText.value = prompt
+            await nextTick()
+            focusActiveComposer()
+        }
     }
 
     /** "New chat": same stale-preview reasoning as `onSubmit` — a leftover draft card's preview
      *  otherwise survives into the fresh conversation since `reset()` clears the transcript, not the
      *  editor. */
     function onNewChat(): void {
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
         resetDraftTracking()
         reset()
     }
@@ -549,26 +606,81 @@
         focusActiveComposer()
     })
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
-    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
-    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    /** How long the first message waits on the provider list before going out on the backend default. */
+    const PROVIDERS_WAIT_MS = 2000
+
+    /** Set on unmount only: `KeepAlive` deactivation deliberately isn't disposal, so a parked send still goes out. */
+    let disposed = false
+
+    /** A seed arriving while one is parked on an await is handled once that one finishes, never alongside it. */
+    let consuming = false
+
+    // Entry points stash a prompt in miscStore; it's seeded into the composer, or sent straight away when `sendInitialMessage` is set and no turn is in flight.
     async function consumeSeededPrompt(): Promise<void> {
+        if (consuming) return
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
+        consuming = true
+        try {
+            await consumeSeeded(seeded)
+        } finally {
+            consuming = false
+        }
+
+        // Same text means the entry point was clicked twice while this run was parked: drop the repeat rather than send it again.
+        if (miscStore.copilotPrompt === seeded) clearSeededPrompt()
+        else if (miscStore.copilotPrompt) consumeSeededPrompt()
+    }
+
+    function clearSeededPrompt(): void {
+        miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
+        miscStore.copilotSendInitialMessage = false
+    }
+
+    async function consumeSeeded(seeded: string): Promise<void> {
+        const newThread = miscStore.copilotNewThread
+        const threadTitle = miscStore.copilotThreadTitle
+        const sendInitialMessage = miscStore.copilotSendInitialMessage
+        clearSeededPrompt()
+
+        // Resetting before the restore lands would be undone by it, and sending before it would fork a second thread.
+        if (newThread || sendInitialMessage) await restored
+        if (disposed) return
+
         // EE seeds each fix as its own conversation: drop the active thread (still reachable from
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
         // where resetting would discard the only conversation for good.
-        if (miscStore.copilotNewThread) {
+        if (newThread) {
             if (thread.value || messages.value.length > 0) {
                 resetDraftTracking()
                 reset()
             }
-            nextThreadTitle.value = miscStore.copilotThreadTitle
+            nextThreadTitle.value = threadTitle
         }
+
+        // Seeded before the provider wait, so a slow `/ai/providers` never hides the prompt.
         composerText.value = seeded
-        miscStore.copilotPrompt = null
-        miscStore.copilotThreadTitle = null
-        miscStore.copilotNewThread = false
+
+        if (sendInitialMessage) {
+            // Bounded, so a hanging `/ai/providers` falls back to the backend's default provider instead of never sending.
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                await Promise.race([providersLoaded, new Promise((resolve) => { timer = setTimeout(resolve, PROVIDERS_WAIT_MS) })])
+            } finally {
+                clearTimeout(timer)
+            }
+            if (disposed) return
+
+            if (composerText.value !== seeded) return
+            if (canSend.value && !noProviderConfigured.value) {
+                composerText.value = ""
+                onSubmit(seeded)
+                return
+            }
+        }
+
         await nextTick()
         focusActiveComposer()
     }
@@ -579,10 +691,11 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
         cancel()
         // The editor's diff preview must not outlive this panel — e.g. closing the copilot dock
         // while a draft/proposal is still pending.
-        flowStore.previewSource = undefined
+        mirrorEditorPreview(undefined)
     })
 </script>
 
@@ -636,7 +749,7 @@
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+    /* `ui/src/styles/app.css` themes only the WebKit scrollbar, so Firefox needs this to avoid
        a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
        because Chromium ignores those rules as soon as `scrollbar-color` is set. */
     @supports not selector(::-webkit-scrollbar) {
@@ -645,31 +758,21 @@
         }
     }
 
-    /* AI-unavailable state (no provider configured): centered message + docs link, no composer. */
-    .copilot-unavailable {
-        flex: 1 1 auto;
-        min-height: 0;
+    .copilot-provider-alert {
+        text-align: start;
+    }
+
+    .copilot-provider-body {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-6) var(--ks-spacing-5);
-        text-align: center;
+        align-items: flex-start;
+        gap: var(--ks-spacing-2);
     }
 
-    .copilot-unavailable-icon {
-        font-size: var(--ks-spacing-8);
-        color: var(--ks-text-secondary);
-    }
-
-    .copilot-unavailable-title {
-        font-weight: 600;
-    }
-
-    .copilot-unavailable-detail {
-        --kel-text-color: var(--ks-text-secondary);
-        max-width: 22rem;
+    @media (pointer: coarse) {
+        .copilot-docs-link {
+            min-height: 2.75rem;
+        }
     }
 
     .copilot-empty-inner {
@@ -727,6 +830,12 @@
         box-shadow: var(--ks-shadow-element);
     }
 
+    .copilot-suggestion:disabled {
+        background: var(--ks-bg-inactive);
+        color: var(--ks-text-inactive);
+        box-shadow: none;
+    }
+
     /* Wider horizontal breathing room for the transcript; the footer/error keep the same
        inset so bubbles and the composer stay aligned to one gutter. */
     .copilot-body {
@@ -766,6 +875,7 @@
        page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
        stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-tray,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

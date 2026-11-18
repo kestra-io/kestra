@@ -53,6 +53,7 @@ export function symlinkAlias(root) {
     const links = findLinkedPackages(path.resolve(root, "node_modules"))
     return {
         name: "kestra:symlink-alias-hmr",
+        enforce: "pre",
 
         hotUpdate({file, modules}) {
             for (const {real, sym} of links) {

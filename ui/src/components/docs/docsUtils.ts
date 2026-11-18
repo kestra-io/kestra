@@ -1,4 +1,8 @@
+import type {ComputedRef, InjectionKey} from "vue"
 import type {DocMetadata} from "../../stores/doc"
+
+/** Path of the doc being rendered (`docs/ui/dashboard`), against which its relative images resolve. */
+export const DOC_PATH_INJECTION_KEY = Symbol("doc-path-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 
 export const SECTIONS = {
     "Get Started with Kestra": [

@@ -1,6 +1,6 @@
 <template>
     <KsTable tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
-        <KsTableColumn prop="key" rowspan="3" :label="$t('name')">
+        <KsTableColumn prop="key" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
@@ -16,7 +16,7 @@
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <KsButton @click="emit('on-copy')" size="small" class="ms-2">
+                    <KsButton @click="emit('on-copy')" size="small" class="copy-button">
                         {{ $t('copy url') }}
                     </KsButton>
                 </template>
@@ -59,7 +59,11 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .copy-button {
+        margin-inline-start: var(--ks-spacing-2);
+    }
+
     :deep(.markdown) {
         p {
             margin-bottom: auto;

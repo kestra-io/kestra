@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.sla.types;
 
+import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,8 +29,8 @@ public class ExecutionAssertionSLA extends SLA implements ExecutionChangedSLA {
     private String _assert;
 
     @Override
-    public Optional<Violation> evaluate(RunContext runContext, Execution execution) throws InternalException {
-        String result = runContext.render(this.get_assert());
+    public Optional<Violation> evaluate(RunContext runContext, Execution execution, Map<String, Object> additionalParameters) throws InternalException {
+        String result = runContext.render(this.get_assert(), additionalParameters);
         if (!TruthUtils.isTruthy(result)) {
             String reason = "assertion is false: " + this.get_assert() + ".";
             return Optional.of(new Violation(this.getId(), this.getBehavior(), this.getLabels(), reason));

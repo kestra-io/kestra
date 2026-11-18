@@ -31,7 +31,11 @@ public class AbstractService implements Service {
     private final ServiceLifecycleGuard lifecycleGuard = new ServiceLifecycleGuard();
 
     public AbstractService(ServiceType serviceType, ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
-        this.id = IdUtils.create();
+        this(IdUtils.create(), serviceType, eventPublisher);
+    }
+
+    protected AbstractService(String id, ServiceType serviceType, ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
+        this.id = id;
         this.serviceType = serviceType;
         this.eventPublisher = eventPublisher;
     }

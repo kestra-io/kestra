@@ -15,9 +15,25 @@
             />
         </div>
 
+        <div class="search">
+            <KsInput
+                ref="searchInput"
+                v-model="search"
+                size="small"
+                borderless
+                clearable
+                :placeholder="$t('filter.search options')"
+                @keydown.enter="(event: KeyboardEvent) => !event.isComposing && addFirstMatch()"
+            >
+                <template #prefix>
+                    <Magnify :size="16" />
+                </template>
+            </KsInput>
+        </div>
+
         <div class="list">
             <div
-                v-for="key in groupableKeys"
+                v-for="key in visibleKeys"
                 :key="key.key"
                 class="item"
                 @click="addFilterForKey(key)"
@@ -36,6 +52,17 @@
                     @click.stop="addFilterForKey(key)"
                 />
             </div>
+            <KsAlert
+                v-if="visibleKeys.length === 0"
+                type="info"
+                :closable="false"
+                class="no-options"
+            >
+                {{ $t('filter.no options found') }}
+                <template #icon>
+                    <InformationOutline />
+                </template>
+            </KsAlert>
         </div>
 
         <div class="advanced" @click="$emit('open-advanced')">
@@ -57,8 +84,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {Close, Plus} from "../utils/icons"
+    import {computed, nextTick, onMounted, ref} from "vue"
+    import {Close, InformationOutline, Magnify, Plus} from "../utils/icons"
     import {
         type FilterConfiguration,
         type FilterKeyConfig,
@@ -82,6 +109,18 @@
         props.configuration.keys.filter((key) => key.groupable !== false),
     )
 
+    const search = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
+
+    const visibleKeys = computed(() => {
+        const query = search.value.trim().toLowerCase()
+        if (!query) return groupableKeys.value
+        return groupableKeys.value.filter((key) =>
+            key.label.toLowerCase().includes(query) ||
+            (key.description ?? "").toLowerCase().includes(query),
+        )
+    })
+
     const selectedCount = computed(() =>
         new Set(props.appliedFilters.map(f => f.key)).size,
     )
@@ -92,9 +131,16 @@
         if (newFilter) emits("add-filter", newFilter)
     }
 
+    const addFirstMatch = () => {
+        if (!search.value.trim()) return
+        const [first] = visibleKeys.value
+        if (first) addFilterForKey(first)
+    }
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filters-panel {
     height: fit-content;
     max-height: 500px;
@@ -102,13 +148,13 @@
     flex-direction: column;
     border-radius: var(--ks-radius-lg);
 
-    small {
+    & small {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-dim);
         font-weight: 400;
     }
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -120,15 +166,15 @@
         top: 0;
         z-index: 1;
 
-        .title {
-            h6 {
+        & .title {
+            & h6 {
                 margin: 0;
                 font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
@@ -140,7 +186,20 @@
         }
     }
 
-    .list {
+    & .search {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
+        flex-shrink: 0;
+    }
+
+    & .no-options {
+        text-align: center;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-sm);
+    }
+
+    & .list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -151,7 +210,7 @@
         }
     }
 
-    .item {
+    & .item {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -168,12 +227,12 @@
             border-bottom: none;
         }
 
-        .info {
+        & .info {
             display: flex;
             align-items: start;
             flex-direction: column;
 
-            .label {
+            & .label {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 400;
                 line-height: 1.375rem;
@@ -181,7 +240,7 @@
         }
     }
 
-    .advanced {
+    & .advanced {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -195,14 +254,14 @@
             background-color: var(--ks-bg-hover-elevated);
         }
 
-        .label {
+        & .label {
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
             color: var(--ks-text-link);
         }
     }
 
-    .footer {
+    & .footer {
         border-top: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;

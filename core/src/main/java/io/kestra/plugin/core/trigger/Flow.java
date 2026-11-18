@@ -72,13 +72,14 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 
                 tasks:
                   - id: final_date
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      result: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
 
                 outputs:
                   - id: date
                     type: STRING
-                    value: "{{ outputs.final_date.value }}"
+                    value: "{{ outputs.final_date.values.result }}"
                 ```
 
                 The `transform` flow is triggered after the `extract` flow finishes successfully.""",
@@ -97,10 +98,6 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     Now transforming data up to {{ inputs.date }}
 
                 tasks:
-                  - id: run_transform
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ render(vars.result) }}"
-
                   - id: log
                     type: io.kestra.plugin.core.log.Log
                     message: "{{ render(vars.result) }}"
@@ -195,10 +192,10 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                 - id: failed_prod_workflows
                   type: io.kestra.plugin.core.trigger.Flow
                   dependsOn:
-                  - states
-                      - FAILED
-                      - WARNING
-                    namespace: company.payroll"""
+                    - namespace: company.payroll
+                      states:
+                        - FAILED
+                        - WARNING"""
         ),
         @Example(
             full = true,
@@ -356,11 +353,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         try {
             Map<String, Object> renderedInputs;
             if (this.inputs != null) {
-                if (outputs != null && !outputs.isEmpty()) {
-                    renderedInputs = runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)));
-                } else {
-                    renderedInputs = runContext.render(this.inputs);
-                }
+                Map<String, Object> rendered = outputs != null && !outputs.isEmpty()
+                    ? runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)))
+                    : runContext.render(this.inputs);
+                renderedInputs = runContext.inputAndOutput().readInputs(flow, execution, rendered);
             } else {
                 renderedInputs = new HashMap<>();
             }

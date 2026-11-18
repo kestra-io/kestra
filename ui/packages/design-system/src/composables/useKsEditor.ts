@@ -17,18 +17,20 @@ import * as monaco from "monaco-editor/editor/editor.api"
 import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
 import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
-import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {codeThemeOf, configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {PEBBLE_ROLES} from "@kestra-io/plumage"
 import {useTaskIcon} from "./taskIcon"
-import {findDuplicateTaskIds} from "../utils/yamlValidation"
 import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
 import {useEditorDecorations} from "./useEditorDecorations"
 import {useEditorContentWidget} from "./useEditorContentWidget"
 import {useEditorScrollMemory} from "./useEditorScrollMemory"
 import {useEditorDatePicker} from "./useEditorDatePicker"
+import {useFlowYamlEditor} from "./useFlowYamlEditor"
 import {useSuggestWidgetIcons} from "./useSuggestWidgetIcons"
 import {registerEditorActions} from "./useEditorActions"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
+import {editorFontFamily} from "../utils/editorFont"
 type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
@@ -52,6 +54,7 @@ export function useKsEditor(
     emit: KsEditorEmit,
     refs: KsEditorTemplateRefs,
 ) {
+    let markerListenerDisposable: monaco.IDisposable | undefined
     const {editorRef, container, datePickerWrapper, datePicker} = refs
     const {t} = useI18n()
 
@@ -106,6 +109,10 @@ export function useKsEditor(
 
     let lastTimeout: number | undefined
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
+    let diffViewModel: monaco.editor.IDiffEditorViewModel | undefined
+    let placeholderWidget: PlaceholderContentWidget | undefined
+    /** What the parent was last sent, until the prop catches up a tick later. */
+    let emittedValue: string | undefined
     const disposeCompletions = ref<() => void>()
 
 
@@ -159,24 +166,32 @@ export function useKsEditor(
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "")
 
-    const isFlowYamlEditor = computed(() => props.lang === "yaml" && props.schemaType === "flow")
-
     const pebbleEnabled = computed(() => isPebbleEnabled({
         pebble: mergedOptions.value.pebble,
         lang: props.lang,
         schemaType: props.schemaType,
     }))
 
-    const duplicateTaskIdsEnabled = computed(() => {
-        if (mergedOptions.value.duplicateTaskIdMarkers !== undefined) return mergedOptions.value.duplicateTaskIdMarkers
-        return props.schemaType === "flow" && props.lang === "yaml"
+    const flowYamlEditor = useFlowYamlEditor({
+        isFlowYaml: () => props.lang === "yaml" && props.schemaType === "flow",
+        duplicateTaskIdMarkers: () => mergedOptions.value.duplicateTaskIdMarkers,
+        value: () => props.modelValue,
+        codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
+        duplicateTaskIdMessage: (ids) => t("ks_editor.duplicate_task_id", {ids}),
     })
+
+    const codeTheme = computed(() => codeThemeOf(props.theme))
 
     const containerClass = computed(() => [
         !props.inline ? "" : "single-line",
         "theme-" + props.theme,
-        props.theme === "dark" ? "custom-dark-vs-theme" : "",
+        codeTheme.value.kind === "dark" ? "custom-dark-vs-theme" : "",
     ])
+
+    const containerStyle = computed(() => ({
+        ...Object.fromEntries(PEBBLE_ROLES.map(role => [`--code-${role}`, codeTheme.value.syntax[role]])),
+        ...(props.inline ? {} : {"--code-background": codeTheme.value.editor.background}),
+    }))
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
@@ -250,7 +265,7 @@ export function useKsEditor(
             // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
             // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
             editContext: false,
-            fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
+            fontFamily: editorFontFamily(),
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
@@ -276,14 +291,6 @@ export function useKsEditor(
 
     function getOriginalEditor() {
         return isDiff.value ? localDiffEditor.value?.getOriginalEditor() : localEditor.value
-    }
-
-    function hasVisibleInlineGhostText(codeEditor: monaco.editor.IStandaloneCodeEditor): boolean {
-        return codeEditor.getDomNode()?.querySelector(".ghost-text") !== null
-    }
-
-    function isTypeLine(lineContent: string): boolean {
-        return /^\s*(?:-\s*)?type\s*:\s*.+\s*$/.test(lineContent)
     }
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
@@ -319,13 +326,27 @@ export function useKsEditor(
         initMonaco()
     }
 
+    function editorValidationListener() {
+        markerListenerDisposable?.dispose()
+        markerListenerDisposable = monaco.editor.onDidChangeMarkers((uris) => {
+            const model = localEditor.value?.getModel()
+            if (!model) return
+            if (!uris.some(uri => uri.toString() === model.uri.toString())) return
+            const markers = monaco.editor.getModelMarkers({resource: model.uri})
+            const warnings = markers
+                .filter(m => m.severity === monaco.MarkerSeverity.Warning && m.owner !== "backend-validation")
+                .map(m => ({line: m.startLineNumber, message: m.message}))
+            emit("editor-warnings", warnings)
+        })
+    }
+
     async function initMonaco() {
         const editorOpts: EditorOptions = {
             value: props.modelValue,
             theme: props.theme,
             language: props.lang,
             suggest: {showClasses: false, showWords: false},
-            ...(isFlowYamlEditor.value ? {inlineSuggest: {enabled: true}} : {}),
+            ...flowYamlEditor.constructionOptions.value,
             ...editorOptions.value,
         }
 
@@ -345,7 +366,9 @@ export function useKsEditor(
                 props.lang,
                 monaco.Uri.file(prefix.value + uid() + (props.lang ? `.${props.lang}` : "")),
             )
-            localDiffEditor.value.setModel({original: originalModel, modified: modifiedModel})
+            // setModel({original, modified}) never releases the view model it creates, which then diffs disposed models.
+            diffViewModel = localDiffEditor.value.createViewModel({original: originalModel, modified: modifiedModel})
+            localDiffEditor.value.setModel(diffViewModel)
 
             let modifiedBackspaceTimeout: number | null = null
             const modifiedEditor = localDiffEditor.value.getModifiedEditor()
@@ -389,40 +412,9 @@ export function useKsEditor(
             let localBackspaceTimeout: number | null = null
             let suggestController: {model: {state: 0 | 1 | 2}, cancelSuggestWidget: () => void} | undefined
 
+            flowYamlEditor.attach(localEditor.value, () => suggestController?.model.state !== 0)
+
             localEditor.value.onKeyDown((e) => {
-                if (isFlowYamlEditor.value && suggestController?.model.state !== 0
-                    && (e.keyCode === monaco.KeyCode.Enter || e.keyCode === monaco.KeyCode.Tab)) {
-                    const currentLine = localEditor.value?.getModel()?.getLineContent(localEditor.value.getPosition()?.lineNumber ?? 0) ?? ""
-                    if (isTypeLine(currentLine)) {
-                        setTimeout(() => {
-                            const ed = localEditor.value
-                            if (!ed) return
-                            const position = ed.getPosition()
-                            if (!position) return
-                            const acceptedLine = ed.getModel()?.getLineContent(position.lineNumber) ?? ""
-                            if (!isTypeLine(acceptedLine)) return
-                            ed.trigger("typeAcceptedInsertLine", "editor.action.insertLineAfter", {})
-                            ed.trigger("typeAcceptedInlineSuggest", "editor.action.inlineSuggest.trigger", {})
-                        }, 0)
-                    }
-                }
-
-                if (isFlowYamlEditor.value && hasVisibleInlineGhostText(localEditor.value!)) {
-                    if (e.keyCode === monaco.KeyCode.Tab) {
-                        e.preventDefault(); e.stopPropagation()
-                        localEditor.value?.trigger("inlineSuggestCommit", "editor.action.inlineSuggest.commit", {})
-                        return
-                    }
-                    if (e.keyCode === monaco.KeyCode.Enter) {
-                        localEditor.value?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {})
-                        return
-                    }
-                }
-
-                if (isFlowYamlEditor.value && e.keyCode === monaco.KeyCode.Enter) {
-                    setTimeout(() => localEditor.value?.trigger("inlineSuggestTrigger", "editor.action.inlineSuggest.trigger", {}), 0)
-                }
-
                 if (e.keyCode === monaco.KeyCode.Backspace) {
                     if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout)
                     if (!localEditor.value || !isCursorInPebbleBlock(localEditor.value)) return
@@ -439,7 +431,7 @@ export function useKsEditor(
             }
 
             if (props.placeholder !== undefined && props.placeholder !== "") {
-                new PlaceholderContentWidget(String(props.placeholder), localEditor.value)
+                placeholderWidget = new PlaceholderContentWidget(String(props.placeholder), localEditor.value)
             }
 
             suggestController = localEditor.value.getContribution("editor.contrib.suggestController") as unknown as {
@@ -457,6 +449,10 @@ export function useKsEditor(
             const triggerSuggestionsOnCursorSettle = debounce(() => {
                 if (!localEditor.value) return
                 const enteredPebble = pebbleEntryTracker.consumeEntered()
+                if (localEditor.value.getSelection()?.isEmpty() === false) {
+                    if (suggestController!.model.state !== 0) suggestController!.cancelSuggestWidget()
+                    return
+                }
                 if (suggestController!.model.state !== 0) {
                     suggestController!.cancelSuggestWidget()
                     localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {})
@@ -481,7 +477,9 @@ export function useKsEditor(
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
-            if (props.modelValue !== value) emit("update:modelValue", value)
+            if ((emittedValue ?? props.modelValue) === value) return
+            emittedValue = value
+            emit("update:modelValue", value)
         })
 
         observeAndResizeSuggestWidget()
@@ -621,17 +619,22 @@ export function useKsEditor(
     }
 
     function destroy() {
+        markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
         resizeObserver.value?.disconnect()
         resizeObserver.value = undefined
         if (localDiffEditor.value) {
             localDiffEditor.value?.dispose()
+            diffViewModel?.dispose()
+            diffViewModel = undefined
             localDiffEditor.value?.getModel()?.modified?.dispose()
             localDiffEditor.value?.getModel()?.original?.dispose()
             localDiffEditor.value = undefined
         }
         if (localEditor.value) {
+            placeholderWidget?.dispose()
+            placeholderWidget = undefined
             localEditor.value?.dispose()
             localEditor.value?.getModel()?.dispose()
             localEditor.value = undefined
@@ -661,27 +664,7 @@ export function useKsEditor(
     })
 
     watch(() => props.modelValue, (newValue) => {
-        if (!duplicateTaskIdsEnabled.value) return
-        if (!localEditor.value || !isCodeEditor(localEditor.value)) return
-        const model = localEditor.value.getModel()
-        if (!model) return
-
-        const duplicateMarkers = findDuplicateTaskIds(newValue)
-        monaco.editor.setModelMarkers(
-            model,
-            "duplicate-task-ids",
-            duplicateMarkers.map((m) => ({
-                startLineNumber: m.startLineNumber,
-                startColumn: m.startColumn,
-                endLineNumber: m.endLineNumber,
-                endColumn: m.endColumn,
-                message: m.message,
-                severity: monaco.MarkerSeverity.Error,
-            })),
-        )
-    }, {immediate: true})
-
-    watch(() => props.modelValue, (newValue) => {
+        emittedValue = undefined
         if (localEditor.value) {
             const modEditor = getModifiedEditor()
             if (newValue !== modEditor?.getValue()) modEditor?.setValue(newValue)
@@ -723,6 +706,7 @@ export function useKsEditor(
     onMounted(async () => {
         await document.fonts.ready
         await initMonaco()
+        editorValidationListener()
 
         if (props.lang !== undefined && props.configureLanguage) {
             await props.configureLanguage(
@@ -739,7 +723,7 @@ export function useKsEditor(
             }])
         }
         window.clearEditor = () => localEditor.value?.getModel()?.setValue("")
-        window .acceptSuggestion = () =>
+        window.acceptSuggestion = () =>
             localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {})
         window.nextSuggestion = () =>
             localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {})
@@ -755,6 +739,7 @@ export function useKsEditor(
         t,
         icon,
         containerClass,
+        containerStyle,
         showPlaceholder,
         textAreaValue,
         showWidgetContent,

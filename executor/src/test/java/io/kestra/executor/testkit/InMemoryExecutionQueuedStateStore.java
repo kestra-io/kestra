@@ -39,6 +39,15 @@ public class InMemoryExecutionQueuedStateStore implements ExecutionQueuedStateSt
     }
 
     @Override
+    public int count(String tenantId, String namespace, String flowId) {
+        return (int) queued.stream()
+            .filter(entry -> java.util.Objects.equals(entry.getTenantId(), tenantId))
+            .filter(entry -> namespace == null || entry.getNamespace().equals(namespace) || (flowId == null && entry.getNamespace().startsWith(namespace + ".")))
+            .filter(entry -> flowId == null || entry.getFlowId().equals(flowId))
+            .count();
+    }
+
+    @Override
     public void pop(TransactionContext txContext, String tenantId, String namespace, String flowId, BiConsumer<TransactionContext, Execution> consumer) {
         Optional<ExecutionQueued> next = queued.stream()
             .filter(entry -> entry.getTenantId().equals(tenantId) && entry.getNamespace().equals(namespace) && entry.getFlowId().equals(flowId))
@@ -51,10 +60,8 @@ public class InMemoryExecutionQueuedStateStore implements ExecutionQueuedStateSt
         });
     }
 
-    /**
-     * Every queued execution, in insertion order.
-     */
-    public List<ExecutionQueued> queued() {
-        return List.copyOf(queued);
+    @Override
+    public List<ExecutionQueued> getAllForAllTenants() {
+        return queued.stream().sorted(Comparator.comparing(ExecutionQueued::getDate)).toList();
     }
 }

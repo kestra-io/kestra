@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
@@ -192,10 +193,9 @@ public class LockServiceTest {
         assertTrue(startLatch.await(1, TimeUnit.SECONDS));
 
         List<Lock> released = lockService.releaseAllLocks(ServerInstance.INSTANCE_ID);
-        assertThat(released).hasSize(1);
-        assertThat(released.getFirst().getOwner()).isEqualTo(ServerInstance.INSTANCE_ID);
-        assertThat(released.getFirst().getCategory()).isEqualTo("category");
-        assertThat(released.getFirst().getId()).isEqualTo("lockThenDeleteByOwner");
+        // Other beans of this context, such as AsyncOperationAggregator, hold locks under the same owner.
+        assertThat(released).extracting(Lock::getOwner).containsOnly(ServerInstance.INSTANCE_ID);
+        assertThat(released).extracting(Lock::getCategory, Lock::getId).contains(tuple("category", "lockThenDeleteByOwner"));
     }
 
     @Test

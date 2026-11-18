@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
+    import type {HTMLAttributes} from "vue"
     import {ElCheckTag, type CheckTagProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -28,7 +30,7 @@
         disabled?: boolean
         size?: "large" | "default" | "small"
         pill?: boolean
-    }>(), {
+    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>(), {
         size: "small",
         pill: false,
     })
@@ -48,7 +50,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/check-tag';
+</style>
 
+<style>
     .kel-check-tag {
         --kel-color-info-light-9: var(--ks-bg-tag);
         --kel-color-info-light-7: var(--ks-bg-tag-hover);
@@ -56,29 +60,29 @@
         --kel-color-primary-light-8: var(--ks-bg-tag-active);
         --kel-color-primary-light-7: var(--ks-bg-tag-active);
         --kel-color-primary: var(--ks-text-primary);
+    }
 
-        &--small {
-            --kel-font-size-base: var(--ks-font-size-xs);
-            padding: 3px 8px;
-        }
+    .kel-check-tag--small {
+        --kel-font-size-base: var(--ks-font-size-xs);
+        padding: 3px 8px;
+    }
 
-        &--default {
-            --kel-font-size-base: var(--ks-font-size-base);
-            padding: 7px 15px;
-        }
+    .kel-check-tag--default {
+        --kel-font-size-base: var(--ks-font-size-base);
+        padding: 7px 15px;
+    }
 
-        &--large {
-            --kel-font-size-base: var(--ks-font-size-md);
-            padding: 9px 18px;
-        }
+    .kel-check-tag--large {
+        --kel-font-size-base: var(--ks-font-size-md);
+        padding: 9px 18px;
+    }
 
-        &__icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            vertical-align: middle;
-        }
+    .kel-check-tag__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        vertical-align: middle;
     }
 
     .kel-check-tag.is-disabled {

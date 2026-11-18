@@ -132,20 +132,6 @@ public class NamespaceFileService {
         );
     }
 
-    /**
-     * Finds namespace file metadata entries with pagination and filters.
-     * Used by the controller for deletion zombie-awareness checks.
-     *
-     * @param pageable the pagination parameters.
-     * @param tenantId the tenant ID.
-     * @param filters the query filters.
-     * @param allowDeleted whether to include deleted entries.
-     * @return the paginated list of {@link NamespaceFileMetadata}.
-     */
-    public ArrayListTotal<NamespaceFileMetadata> findMetadata(Pageable pageable, String tenantId, List<QueryFilter> filters, boolean allowDeleted) {
-        return getRepository().find(pageable, tenantId, filters, allowDeleted);
-    }
-
     private NamespaceFileMetadataRepositoryInterface getRepository() {
         return this.namespaceFileMetadataRepository.orElseThrow(
             () -> new IllegalStateException("The namespace file metadata repository is not available. This operation cannot be performed on a worker.")

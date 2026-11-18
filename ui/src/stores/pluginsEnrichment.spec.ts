@@ -1,12 +1,12 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import axios, {type AxiosResponse} from "axios"
+import {publicFetchJson} from "../utils/publicApi"
 import type {usePluginsEnrichmentStore, PluginVersion} from "./pluginsEnrichment"
 
-vi.mock("axios")
+vi.mock("../utils/publicApi")
 vi.mock("./api", () => ({API_URL: "https://api.test"}))
 
-const mockedGet = vi.mocked(axios.get)
+const mockedGet = vi.mocked(publicFetchJson)
 
 describe("pluginsEnrichment store — fetchVersions cache", () => {
     let store: ReturnType<typeof usePluginsEnrichmentStore>
@@ -20,7 +20,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
 
     it("caches a successful response and does not refetch", async () => {
         const data: PluginVersion[] = [{version: "1.0.0"}, {version: "0.9.0"}]
-        mockedGet.mockResolvedValue({data} as AxiosResponse<PluginVersion[]>)
+        mockedGet.mockResolvedValue(data)
 
         const first = await store.fetchVersions("io.kestra.plugin.x.Y")
         const second = await store.fetchVersions("io.kestra.plugin.x.Y")
@@ -32,7 +32,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
     })
 
     it("dedupes concurrent in-flight requests for the same cls", async () => {
-        mockedGet.mockResolvedValue({data: [{version: "1.0.0"}]} as AxiosResponse<PluginVersion[]>)
+        mockedGet.mockResolvedValue([{version: "1.0.0"}])
 
         const [a, b] = await Promise.all([
             store.fetchVersions("io.kestra.plugin.x.Y"),
@@ -54,7 +54,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
         expect(store.getVersions("io.kestra.plugin.x.Y")).toEqual([])
 
         const data: PluginVersion[] = [{version: "1.0.0"}]
-        mockedGet.mockResolvedValueOnce({data} as AxiosResponse<PluginVersion[]>)
+        mockedGet.mockResolvedValueOnce(data)
         const retried = await store.fetchVersions("io.kestra.plugin.x.Y")
 
         expect(retried).toEqual(data)
@@ -77,11 +77,11 @@ describe("pluginsEnrichment store — fetchEnrichment titles", () => {
     it("enriches display titles from the public subgroups catalog", async () => {
         mockedGet.mockImplementation((url: string) => {
             if (url.endsWith("/v1/plugins/subgroups")) {
-                return Promise.resolve({data: [
+                return Promise.resolve([
                     {group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug", title: "Debug"},
                     {group: "io.kestra.plugin.core", subGroup: null, title: "Core Plugins and tasks"},
                     {group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"},
-                ]} as AxiosResponse<unknown>)
+                ])
             }
             return Promise.reject(new Error("unavailable"))
         })
@@ -91,5 +91,20 @@ describe("pluginsEnrichment store — fetchEnrichment titles", () => {
         expect(store.getEnrichment({name: "core", title: "Core", group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug"})?.title).toBe("Debug")
         expect(store.getEnrichment({name: "core", title: "Core", group: "io.kestra.plugin.core"})?.title).toBe("Core Plugins and tasks")
         expect(store.getEnrichment({name: "x", title: "X", group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"})).toBeNull()
+    })
+
+    it("links an Enterprise artifact to the release notes of its latest version", async () => {
+        mockedGet.mockImplementation((url: string) => url.endsWith("/v1/plugins/subgroups")
+            ? Promise.resolve([
+                {group: "io.kestra.plugin.ee.secrets", subGroup: null, name: "plugin-ee-secrets", version: "1.2.0"},
+                {group: "io.kestra.plugin.aws", subGroup: null, name: "plugin-aws", version: "3.2.1"},
+            ])
+            : Promise.reject(new Error("unavailable")))
+
+        await store.fetchEnrichment()
+
+        expect(store.getEnrichment({name: "plugin-ee-secrets", title: "Secrets", group: "io.kestra.plugin.ee.secrets"})?.releaseNotesUrl)
+            .toBe("https://api.test/v1/plugins/artifacts/ee/release-notes/plugin-ee-secrets?version=1.2.0")
+        expect(store.getEnrichment({name: "plugin-aws", title: "AWS", group: "io.kestra.plugin.aws"})).toBeNull()
     })
 })

@@ -1,7 +1,7 @@
 <template>
     <NavBarAction
         v-if="isAllowedDelete"
-        :icon="TrashCanOutline"
+        :icon="Delete"
         @click="deleteExecution"
     >
         {{ $t("delete") }}
@@ -33,7 +33,7 @@
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
 
-    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useExecutionDeletionDialog} from "../../../composables/useExecutionDeletionDialog"
 

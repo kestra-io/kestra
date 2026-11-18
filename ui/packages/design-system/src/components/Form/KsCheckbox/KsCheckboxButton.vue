@@ -13,14 +13,17 @@
     import {ElCheckboxButton, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {NativeAttributes} from "../../../utils/nativeAttributes"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    export interface KsCheckboxButtonProps {
         value?: boolean | string | number
         disabled?: boolean
         checked?: boolean
-    }>()
+    }
+
+    const props = defineProps<KsCheckboxButtonProps & /* @vue-ignore */ Omit<NativeAttributes<CheckboxProps>, keyof KsCheckboxButtonProps>>()
 
     const emit = defineEmits<{
         change: [value: CheckboxValueType]
@@ -36,7 +39,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox-button';
+</style>
 
+<style>
     .kel-checkbox-button:not(.is-checked):not(.is-disabled):hover .kel-checkbox-button__inner {
         color: var(--ks-text-link);
         border-color: var(--ks-text-link);

@@ -1,11 +1,14 @@
 import * as Utils from "./utils"
 import {dateUtils, durationUtils} from "@kestra-io/design-system"
+import type {Options as HumanizeDurationOptions} from "humanize-duration"
 
-export function humanizeDuration (value:number | string, options?:any) {
+export function humanizeDuration (value:number | string, options?: HumanizeDurationOptions) {
     return durationUtils.humanDuration(value, options)
 }
-export function humanizeNumber (value:string) {
-    return parseInt(value).toLocaleString(Utils.getLanguageTag())
+export function humanizeNumber (value:number | string) {
+    // Metric values are doubles: keep their decimals, and up to 15 significant digits
+    // so very small values such as 5e-7 are not rounded to 0.
+    return Number(value).toLocaleString(Utils.getLanguageTag(), {maximumSignificantDigits: 15})
 }
 export function cap (value:string) {
     return value ? value.toString().capitalize() : ""

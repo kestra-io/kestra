@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
-import {defineComponent, h} from "vue"
+import {defineComponent, h, markRaw} from "vue"
 
 import OnboardingResourceList, {type OnboardingResourceItem} from "./OnboardingResourceList.vue"
 
@@ -14,7 +14,7 @@ const RouterLinkStub = defineComponent({
     setup: (_props, {slots, attrs}) => () => h("a", attrs, slots.default?.()),
 })
 
-const Icon = defineComponent({name: "Icon", setup: () => () => h("span")})
+const Icon = markRaw(defineComponent({name: "Icon", setup: () => () => h("span")}))
 
 const internal: OnboardingResourceItem = {
     titleKey: "t.internal",

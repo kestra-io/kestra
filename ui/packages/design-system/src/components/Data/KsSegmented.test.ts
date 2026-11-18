@@ -23,6 +23,14 @@ describe("KsSegmented", () => {
         expect(wrapper.find(".kel-segmented.is-disabled").exists()).toBe(true)
     })
 
+    test("neutral variant adds its class", () => {
+        const wrapper = mount(KsSegmented, {
+            props: {modelValue: "a", options: ["a", "b"], variant: "neutral"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-segmented.ks-segmented-neutral").exists()).toBe(true)
+    })
+
     test("small size applies correct class", () => {
         const wrapper = mount(KsSegmented, {
             props: {modelValue: "a", options: ["a", "b"], size: "small"},

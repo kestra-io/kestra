@@ -136,12 +136,12 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-toc {
         height: 100%;
+    }
 
-        &__search {
-            width: 100%;
-        }
+    .plugin-toc__search {
+        width: 100%;
     }
 </style>

@@ -148,7 +148,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .test-event-description {
         margin-bottom: var(--ks-spacing-2);
         color: var(--ks-text-secondary);

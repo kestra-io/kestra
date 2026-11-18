@@ -2,7 +2,9 @@ import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils";
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
 import allowFailureDemo from "../../../tests/fixtures/flowgraphs/allow-failure-demo.json";
+import loopUntilDemo from "../../../tests/fixtures/flowgraphs/loop-until-demo.json";
 import flowSchema from "../../stores/flow-schema.json";
 import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback, mockResponse} from "../../../.storybook/apiMock";
@@ -28,7 +30,7 @@ export default {
     ]
 } as Meta<typeof MultiPanelFlowEditorView>;
 
-const Template: StoryFn<{flow: string}> = (args) => ({
+const Template: StoryFn<{flow: string; flowGraph?: FlowGraph}> = (args) => ({
     setup() {
         const axios: Partial<AxiosLikeClient> = {}
         const flowStore = useFlowStore()
@@ -48,7 +50,7 @@ const Template: StoryFn<{flow: string}> = (args) => ({
         }
         axios.post = async <T,>(uri: string, data?: unknown) => {
             if (uri.endsWith("/graph")) {
-                return mockResponse<T>(allowFailureDemo)
+                return mockResponse<T>(args.flowGraph ?? allowFailureDemo)
             }
             if (uri.endsWith("/validate")) {
                 return mockResponse<T>({})
@@ -62,6 +64,7 @@ const Template: StoryFn<{flow: string}> = (args) => ({
             flow.source = args.flow
             flowStore.flow = flow
         }
+        flowStore.flowGraph = (args.flowGraph ?? allowFailureDemo) as FlowGraph
         flowStore.flowYaml = args.flow
 
         return () =>
@@ -138,4 +141,25 @@ triggers:
     disabled: true
     cron: 0 9 * * *
 `.trim(),
+};
+
+export const LoopUntil = Template.bind({});
+LoopUntil.args = {
+    flow: `
+id: loop-until-demo
+namespace: tutorial
+tasks:
+  - id: wait_for_link
+    type: io.kestra.plugin.core.flow.LoopUntil
+    checkFrequency:
+      interval: PT30S
+      maxDuration: PT5M
+      maxIterations: 5
+    condition: "{{ fromJson(outputs.generate_download_link.body).status == 'ok' }}"
+    tasks:
+      - id: generate_download_link
+        type: io.kestra.plugin.core.log.Log
+        message: "Hello"
+`.trim(),
+    flowGraph: loopUntilDemo,
 };

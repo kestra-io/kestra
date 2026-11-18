@@ -94,7 +94,7 @@
         allHaveGlyphs.value ? COMPARATOR_GLYPHS[comparator] : getLabel(comparator)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .comparator-segments {
     display: flex;
     align-items: center;

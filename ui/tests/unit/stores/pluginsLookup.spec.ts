@@ -17,7 +17,16 @@ vi.mock("../../../src/utils/tabTracking", () => ({
 
 const idOf = (p: any) => `${p?.name ?? ""}#${p?.subGroup ?? ""}`
 
-const PARENT = {name: "gcp", group: "io.kestra.plugin.gcp", title: "GCP"}
+const PARENT = {
+    name: "gcp",
+    group: "io.kestra.plugin.gcp",
+    title: "GCP",
+    tasks: [
+        {cls: "io.kestra.plugin.gcp.bigquery.Query", deprecated: false},
+        {cls: "io.kestra.plugin.gcp.bigquery.Load", deprecated: false},
+        {cls: "io.kestra.plugin.gcp.gcs.Upload", deprecated: false},
+    ],
+}
 const SUBGROUP_BQ = {
     name: "gcp",
     group: "io.kestra.plugin.gcp",
@@ -42,6 +51,45 @@ const STANDALONE = {
     tasks: [{cls: "io.kestra.plugin.core.flow.Subflow", deprecated: false}],
 }
 
+const FS_ALIAS = "io.kestra.plugin.fs.http.Request"
+const CORE_HTTP = {
+    name: "core",
+    group: "io.kestra.plugin.core",
+    title: "Core",
+    aliases: [FS_ALIAS],
+    tasks: [{cls: "io.kestra.plugin.core.http.Request", deprecated: false}],
+}
+const FS_HTTP = {
+    name: "fs",
+    group: "io.kestra.plugin.fs",
+    subGroup: "io.kestra.plugin.fs.http",
+    title: "FS HTTP",
+    tasks: [{cls: FS_ALIAS, deprecated: false}],
+}
+const FS_HTTP_SIBLING = {
+    name: "fs",
+    group: "io.kestra.plugin.fs",
+    subGroup: "io.kestra.plugin.fs.http",
+    title: "FS HTTP",
+    tasks: [{cls: "io.kestra.plugin.fs.http.Download", deprecated: false}],
+}
+
+const DOCKER_ALIAS = "io.kestra.plugin.docker.Run"
+const DOCKER = {
+    name: "docker",
+    group: "io.kestra.plugin.docker",
+    title: "Docker",
+    aliases: [DOCKER_ALIAS],
+}
+const DOCKER_CLI = {
+    name: "docker",
+    group: "io.kestra.plugin.docker",
+    subGroup: "io.kestra.plugin.docker.cli",
+    title: "Docker CLI",
+    aliases: [DOCKER_ALIAS],
+    tasks: [{cls: "io.kestra.plugin.docker.cli.Run", deprecated: false}],
+}
+
 describe("plugins store lookups", () => {
     let store: any
 
@@ -49,7 +97,7 @@ describe("plugins store lookups", () => {
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
-        store.plugins = [PARENT, SUBGROUP_BQ, SUBGROUP_GCS, STANDALONE]
+        store.plugins = [PARENT, SUBGROUP_BQ, SUBGROUP_GCS, STANDALONE, DOCKER, DOCKER_CLI]
     })
 
     describe("findPluginByCls", () => {
@@ -63,6 +111,25 @@ describe("plugins store lookups", () => {
 
         it("falls back to scanning element entries when no subgroup matches", () => {
             expect(idOf(store.findPluginByCls("io.kestra.plugin.core.flow.Subflow"))).toBe(idOf(STANDALONE))
+        })
+
+        it("resolves an aliased cls to the group entry that declares the alias", () => {
+            expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER))
+        })
+
+        it("prefers the alias owner over a subgroup that only prefixes the alias", () => {
+            store.plugins = [CORE_HTTP, FS_HTTP_SIBLING]
+            expect(idOf(store.findPluginByCls(FS_ALIAS))).toBe(idOf(CORE_HTTP))
+        })
+
+        it("prefers the plugin declaring the class over the one only aliasing it", () => {
+            store.plugins = [CORE_HTTP, FS_HTTP]
+            expect(idOf(store.findPluginByCls(FS_ALIAS))).toBe(idOf(FS_HTTP))
+        })
+
+        it("falls back to a subgroup entry when no group entry carries the alias", () => {
+            store.plugins = [DOCKER_CLI]
+            expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER_CLI))
         })
 
         it("returns null when cls is unknown", () => {

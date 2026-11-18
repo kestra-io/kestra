@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.searchable.SearchableData;
 import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import org.reactivestreams.Publisher;
@@ -116,6 +117,7 @@ public class ExecutionService {
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
     private final TriggerEventQueue triggerEventQueue;
+    private final LogEntryEmitter logEntryEmitter;
     private final Optional<OpenTelemetry> openTelemetry;
 
     @Inject
@@ -140,6 +142,7 @@ public class ExecutionService {
         AsyncOperationWaiter asyncOperationWaiter,
         AsyncOperationsConfiguration asyncOperationsConfiguration,
         TriggerEventQueue triggerEventQueue,
+        LogEntryEmitter logEntryEmitter,
         Optional<OpenTelemetry> openTelemetry) {
         this.storageInterface = Objects.requireNonNull(storageInterface);
         this.executionRepository = Objects.requireNonNull(executionRepository);
@@ -161,6 +164,7 @@ public class ExecutionService {
         this.asyncOperationWaiter = Objects.requireNonNull(asyncOperationWaiter);
         this.asyncOperationsConfiguration = Objects.requireNonNull(asyncOperationsConfiguration);
         this.triggerEventQueue = Objects.requireNonNull(triggerEventQueue);
+        this.logEntryEmitter = Objects.requireNonNull(logEntryEmitter);
         this.openTelemetry = Objects.requireNonNull(openTelemetry);
     }
 
@@ -711,6 +715,12 @@ public class ExecutionService {
                             taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         } else {
                             taskOutputService.saveOutputs(newTaskRun, override);
+                            logEntryEmitter.emits(LogEntry.of(newTaskRun, execution.getKind()).toBuilder()
+                                .level(Level.WARN)
+                                .timestamp(Instant.now())
+                                .thread(Thread.currentThread().getName())
+                                .message("The outputs of this task run were replaced when replaying it from execution '%s'; the original values remain on task run '%s' there.".formatted(execution.getId(), originalTaskRun.getId()))
+                                .build());
                         }
                         return newTaskRun;
                     }))
@@ -732,13 +742,6 @@ public class ExecutionService {
         List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
-        }
-        if (!outputOverrides.isEmpty()) {
-            Set<String> taskIds = new TreeSet<>();
-            newLabels.stream().filter(label -> Label.OVERRIDDEN_OUTPUTS.equals(label.key())).forEach(label -> taskIds.addAll(List.of(label.value().split(","))));
-            outputOverrides.keySet().forEach(id -> execution.findTaskRunByTaskRunIdIfPresent(id).ifPresent(taskRun -> taskIds.add(taskRun.getTaskId())));
-            newLabels.removeIf(label -> Label.OVERRIDDEN_OUTPUTS.equals(label.key()));
-            newLabels.add(new Label(Label.OVERRIDDEN_OUTPUTS, String.join(",", taskIds)));
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));

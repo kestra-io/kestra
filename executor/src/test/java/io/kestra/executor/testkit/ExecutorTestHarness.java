@@ -38,6 +38,7 @@ import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
@@ -302,6 +303,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
                 Mockito.mock(TriggerEventQueue.class),
+                Mockito.mock(LogEntryEmitter.class),
                 Optional.empty()
             )
         );

@@ -29,6 +29,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
@@ -66,6 +67,7 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
@@ -160,6 +162,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     SearchableDataRepositoryInterface searchableDataRepository;
+
+    @Inject
+    LogDataStoreInterface logRepository;
 
     @Inject
     @Client("/")
@@ -1153,7 +1158,13 @@ class ExecutionControllerRunnerTest {
         assertThat(replay.findTaskRunsByTaskId("fetch").getFirst().getAttempts()).isEqualTo(failed.findTaskRunsByTaskId("fetch").getFirst().getAttempts());
         assertThat(outputsOf(replay, "notify")).containsEntry("value", "KR-0412 in us");
         assertThat(outputsOf(failed, "fetch")).containsEntry("values", Map.of("code", "KR-0412 ", "region", "eu"));
-        assertThat(replay.getLabels()).contains(new Label(Label.OVERRIDDEN_OUTPUTS, "fetch"));
+        String reusedFetchId = replay.findTaskRunsByTaskId("fetch").getFirst().getId();
+        Await.until(
+            () -> logRepository.findByExecutionIdAndTaskId(TENANT_ID, replay.getId(), "fetch", Level.WARN).stream()
+                .anyMatch(log -> reusedFetchId.equals(log.getTaskRunId()) && log.getMessage().contains(failed.getId())),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(10)
+        );
     }
 
     @Test

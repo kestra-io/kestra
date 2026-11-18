@@ -9,9 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.secret.SecretListingService;
@@ -19,10 +17,14 @@ import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.expressions.FilterExpressionContributor;
+import io.kestra.core.services.expressions.FunctionExpressionContributor;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
+import io.kestra.webserver.services.expressions.KvExpressionContributor;
+import io.kestra.webserver.services.expressions.NamespaceFileExpressionContributor;
+import io.kestra.webserver.services.expressions.SecretExpressionContributor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,18 +38,12 @@ import static org.mockito.Mockito.when;
 class ExpressionContextServiceSecretsKvTest {
 
     @Mock
-    private JsonSchemaGenerator jsonSchemaGenerator;
-    @Mock
     private PebbleExpressionService pebbleExpressionService;
-    @Mock
-    private RunContextCache runContextCache;
     @Mock
     @SuppressWarnings("rawtypes")
     private SecretListingService secretListingService;
     @Mock
     private KVStoreService kvStoreService;
-    @Mock
-    private StorageInterface storageInterface;
     @Mock
     private NamespaceFactory namespaceFactory;
 
@@ -69,9 +65,7 @@ class ExpressionContextServiceSecretsKvTest {
         );
         when(kvStoreService.get(eq(tenantId), any())).thenReturn(kvStore);
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         // Simulate what AiService.buildPebbleExpressions does after parsing YAML with no tenantId:
         //   flow = JacksonMapper.ofYaml().readValue(flowYaml, Flow.class).toBuilder().tenantId(tenantId).build()
@@ -109,9 +103,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStore.list()).thenReturn(List.of());
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         Flow flow = Flow.builder()
             .id("test-flow")
@@ -147,9 +139,7 @@ class ExpressionContextServiceSecretsKvTest {
         );
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         Flow flow = Flow.builder()
             .id("test-flow")
@@ -184,9 +174,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(kvStore.list()).thenReturn(List.of());
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         Flow flow = Flow.builder()
             .id("test-flow")
@@ -227,9 +215,7 @@ class ExpressionContextServiceSecretsKvTest {
         );
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         Flow flow = Flow.builder()
             .id("test-flow")
@@ -262,9 +248,7 @@ class ExpressionContextServiceSecretsKvTest {
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
 
-        ExpressionContextService service = new ExpressionContextService(
-            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretListingService, kvStoreService, storageInterface, namespaceFactory
-        );
+        ExpressionContextService service = service();
 
         Flow flow = Flow.builder()
             .id("test-flow")
@@ -286,6 +270,19 @@ class ExpressionContextServiceSecretsKvTest {
         // And — excluded categories absent from result
         assertThat(result.categories()).doesNotContainKeys(
             ExpressionCategory.SECRETS, ExpressionCategory.KV_PAIRS, ExpressionCategory.NAMESPACE_FILES
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private ExpressionContextService service() {
+        return new ExpressionContextService(
+            List.of(
+                new SecretExpressionContributor(secretListingService),
+                new KvExpressionContributor(kvStoreService),
+                new NamespaceFileExpressionContributor(namespaceFactory),
+                new FilterExpressionContributor(pebbleExpressionService),
+                new FunctionExpressionContributor(pebbleExpressionService)
+            )
         );
     }
 }

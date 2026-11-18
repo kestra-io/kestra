@@ -1,0 +1,8 @@
+id: approval-ee-property-run-if-false
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    runIf: "{{ false }}"
+    title: "Deploy to production"

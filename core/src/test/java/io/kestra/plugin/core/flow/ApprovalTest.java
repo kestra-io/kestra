@@ -285,6 +285,15 @@ public class ApprovalTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-ee-property-run-if-false.yaml" })
+    void shouldSkipAnApprovalUsingAnEnterpriseOnlyPropertyWhenRunIfIsFalse() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-ee-property-run-if-false", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/approval-basic.yaml" })
     void shouldKillAnExecutionPausedOnAnApproval() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));

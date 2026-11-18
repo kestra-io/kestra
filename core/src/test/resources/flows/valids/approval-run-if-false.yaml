@@ -1,0 +1,16 @@
+id: approval-run-if-false
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    runIf: "{{ false }}"
+  - id: sequential
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: nested
+        type: io.kestra.plugin.core.flow.Approval
+        runIf: "{{ false }}"
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after the approvals

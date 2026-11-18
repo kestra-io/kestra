@@ -65,12 +65,10 @@ describe("useValues", () => {
         miscStore.configs = {edition: "OSS"}
         const ossValues = useValues(undefined).VALUES
         expect(ossValues.KINDS.map((kind) => kind.value)).toEqual(["NORMAL", "PLAYGROUND", "LOOP"])
-        expect(ossValues.KINDS.map((kind) => kind.value)).not.toContain("TEST")
 
         miscStore.configs = {edition: "EE"}
         const eeValues = useValues(undefined).VALUES
         expect(eeValues.KINDS.map((kind) => kind.value)).toEqual(["NORMAL", "PLAYGROUND", "LOOP", "TEST"])
-        expect(eeValues.KINDS.map((kind) => kind.value)).toContain("TEST")
     })
 
     it.each([
@@ -121,11 +119,6 @@ describe("useValues", () => {
         const {VALUES} = useValues(undefined)
 
         expect(VALUES.TRIGGER_LOCK_STATES.map((state) => state.value)).toEqual(["true", "false"])
-        for (const state of VALUES.TRIGGER_LOCK_STATES) {
-            expect(typeof state.value).toBe("string")
-            expect(state.value).not.toBe(true)
-            expect(state.value).not.toBe(false)
-        }
     })
 
     it("an explicitly passed translator is used instead of the global one", () => {

@@ -30,7 +30,7 @@ describe("parseHeaderLines", () => {
     })
 
     it("skips a line starting with a colon, since the name would be empty", () => {
-        expect(parseHeaderLines(": no-name\nContent-Type: application/json")).toEqual({
+        expect(parseHeaderLines(": no-name\n   : indented-no-name\nContent-Type: application/json")).toEqual({
             "Content-Type": "application/json",
         })
     })

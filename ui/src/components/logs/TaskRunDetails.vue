@@ -1386,10 +1386,6 @@
     padding-bottom: 1rem;
   }
 
-  & .line {
-    padding-left: 0;
-  }
-
   .loop-progress {
     display: flex;
     gap: var(--ks-spacing-3);

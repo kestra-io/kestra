@@ -224,3 +224,40 @@ export const ExpandsCollapsedLogGroup: Story = {
         );
     },
 };
+
+const EXECUTION_LEVEL_WARN_LOG: Log = {
+    ...BASE_LOG,
+    taskRunId: undefined,
+    taskId: undefined,
+    index: 0,
+    level: "WARN",
+    timestamp: "2025-01-01T00:00:00.000Z",
+    message: "Execution is cancelled because the concurrency limit has been reached",
+};
+
+export const KeepsLeftPaddingOnExecutionLevelLogs: Story = {
+    args: {taskRunId: undefined},
+    decorators: [
+        () => ({
+            setup() {
+                useExecutionsStore().loadLogs = async () => [EXECUTION_LEVEL_WARN_LOG];
+            },
+            template: "<story />",
+        }),
+    ],
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const line = await waitFor(
+            () => {
+                const renderedLine = canvasElement.querySelector<HTMLElement>("[data-test='execution-logs'] .line");
+                if (!renderedLine) throw new Error("execution-level log line not rendered");
+                return renderedLine;
+            },
+            {timeout: 5000},
+        );
+
+        const levelLeft = line.querySelector<HTMLElement>(".log-level")!.getBoundingClientRect().left;
+        const lineLeft = line.getBoundingClientRect().left;
+        expect(getComputedStyle(line).paddingLeft).not.toBe("0px");
+        expect(levelLeft - lineLeft).toBeGreaterThan(8);
+    },
+};

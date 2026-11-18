@@ -12,7 +12,7 @@
             <span v-if="$slots.buttonRight" class="collapse-button__right">
                 <slot name="buttonRight" :collapsed="collapsed" />
             </span>
-            <KsIcon v-if="arrow" size="base" class="collapse-button__chevron">
+            <KsIcon v-if="arrow" size="sm" class="collapse-button__chevron">
                 <component :is="collapsed ? ChevronDown : ChevronUp" />
             </KsIcon>
         </summary>

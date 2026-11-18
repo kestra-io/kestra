@@ -30,9 +30,8 @@ public class H2ExecutionDelayStateStore extends AbstractJdbcExecutionDelayStateS
 
     @Override
     protected Condition expiredCondition(Instant now) {
-        // jOOQ would bind a LocalDateTime as a Timestamp via Timestamp.valueOf, which reads the JVM
-        // zone, and H2 would re-render that instant in the session zone, so the cutoff shifts
-        // whenever the two zones differ. The column holds zone-free digits, so compare digits.
+        // A LocalDateTime or Instant bind is converted to a Timestamp and re-rendered in the
+        // session zone, so the cutoff is formatted to the column's digits instead.
         String cutoff = UTC_WALL_CLOCK.format(LocalDateTime.ofInstant(now, ZoneOffset.UTC));
         return DATE_FIELD.lessOrEqual(DSL.cast(DSL.val(cutoff), SQLDataType.LOCALDATETIME));
     }

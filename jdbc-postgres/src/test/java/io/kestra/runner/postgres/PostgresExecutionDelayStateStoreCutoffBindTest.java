@@ -23,8 +23,7 @@ class PostgresExecutionDelayStateStoreCutoffBindTest extends PostgresExecutionDe
         assertThat(cutoff).isEqualTo(now);
 
         var context = DSL.using(SQLDialect.POSTGRES);
-        var predicate = DSL.field(DSL.quotedName("date")).lessOrEqual(cutoff);
 
-        assertThat(context.renderInlined(predicate)).contains("timestamp with time zone");
+        assertThat(context.renderInlined(expiredCondition(now))).contains("timestamp with time zone");
     }
 }

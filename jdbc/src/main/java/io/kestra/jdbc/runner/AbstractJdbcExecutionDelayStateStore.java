@@ -50,7 +50,7 @@ public abstract class AbstractJdbcExecutionDelayStateStore extends AbstractJdbcR
         return now;
     }
 
-    /** The predicate matching delays due at or before {@code now}; dialects override it to compare in the stored column's digit space. */
+    /** The predicate selecting delays due at or before {@code now}; dialects may override it to compare in the column's stored representation. */
     protected Condition expiredCondition(Instant now) {
         return DATE_FIELD.lessOrEqual(getNow(now));
     }

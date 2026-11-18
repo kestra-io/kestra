@@ -10,20 +10,17 @@ import io.kestra.repository.h2.H2RepositoryEnabled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-/**
- * Fixes the {@code executordelayed."date"} generated column so it stores a UTC wall clock
- * independent of the session time zone, as {@code 2.0.01-schema-h2.sql} did for the trigger columns.
- */
+/** OSS H2 execution-delay date generated-column fix: store a UTC wall clock independent of the session zone. */
 @Singleton
 @H2RepositoryEnabled
-public class V2_1_05FixExecutionDelayDateMigration extends AbstractSQLMigrationScript {
+public class V2_1_10FixExecutionDelayDateMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.1.05-fix-execution-delay-date";
+    private static final String SCRIPT_ID = "2.1.10-fix-execution-delay-date";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_1_05FixExecutionDelayDateMigration(final DataSource dataSource) {
+    public V2_1_10FixExecutionDelayDateMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -44,6 +41,6 @@ public class V2_1_05FixExecutionDelayDateMigration extends AbstractSQLMigrationS
 
     @Override
     public List<String> sqlResources() {
-        return List.of("/migrations/2.1.05-fix-execution-delay-date-h2.sql");
+        return List.of("/migrations/2.1.10-fix-execution-delay-date-h2.sql");
     }
 }

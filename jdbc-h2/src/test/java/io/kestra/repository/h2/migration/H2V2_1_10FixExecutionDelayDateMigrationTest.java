@@ -17,17 +17,10 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * H2-specific integration test for the {@code executordelayed."date"} fix applied by
- * {@link V2_1_05FixExecutionDelayDateMigration}.
- *
- * <p>
- * The timezone dependency only shows on a server whose timezone is not UTC, so the session timezone
- * is forced — otherwise these would pass unchanged on a UTC CI machine even with the fix reverted.
- */
+/** Inserts under a +05:30 session zone so a zone-shifted value cannot pass as UTC. */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
-class H2V2_1_05FixExecutionDelayDateMigrationTest {
+class H2V2_1_10FixExecutionDelayDateMigrationTest {
 
     private static final Field<Object> KEY = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE = DSL.field(DSL.quotedName("value"));
@@ -53,10 +46,10 @@ class H2V2_1_05FixExecutionDelayDateMigrationTest {
 
     private final JooqDSLContextWrapper dslContextWrapper;
 
-    private final V2_1_05FixExecutionDelayDateMigration migration;
+    private final V2_1_10FixExecutionDelayDateMigration migration;
 
     @Inject
-    H2V2_1_05FixExecutionDelayDateMigrationTest(JooqDSLContextWrapper dslContextWrapper, V2_1_05FixExecutionDelayDateMigration migration) {
+    H2V2_1_10FixExecutionDelayDateMigrationTest(JooqDSLContextWrapper dslContextWrapper, V2_1_10FixExecutionDelayDateMigration migration) {
         this.dslContextWrapper = Objects.requireNonNull(dslContextWrapper);
         this.migration = Objects.requireNonNull(migration);
     }
@@ -80,41 +73,33 @@ class H2V2_1_05FixExecutionDelayDateMigrationTest {
 
     @Test
     void shouldResolveThreeDigitTimestampToUtcWhenTheServerIsNotUtc() throws Exception {
-        // Given
         migration.migrate();
 
-        // When
         insertWithSessionTimeZone(LEGACY_KEY, LEGACY_VALUE);
 
-        // Then — 2031-01-15T10:00:00Z, not shifted by the +05:30 session offset
+        // 2031-01-15T10:00:00Z, not shifted by the +05:30 session offset
         assertThat(read(DATE, LEGACY_KEY)).isEqualTo("2031-01-15 10:00:00");
     }
 
     @Test
     void shouldKeepMicrosecondPrecisionWhenTheValueUsesSixFractionalDigits() throws Exception {
-        // Given
         migration.migrate();
 
-        // When
         insertWithSessionTimeZone(CURRENT_KEY, CURRENT_VALUE);
 
-        // Then
         assertThat(read(DATE, CURRENT_KEY)).isEqualTo("2031-01-15 10:00:00.123456");
     }
 
     @Test
     void shouldRecomputeStoredRowsWhenTheColumnStillUsesThePreFixExpression() throws Exception {
-        // Given a row written while "date" still parsed the value as TIMESTAMP WITH TIME ZONE
         execute(PRE_FIX_DATE);
         insertWithSessionTimeZone(LEGACY_KEY, LEGACY_VALUE);
         assertThat(read(DATE, LEGACY_KEY))
             .as("the pre-fix expression must shift the value by the +05:30 session offset")
             .isEqualTo("2031-01-15 15:30:00");
 
-        // When
         migration.migrate();
 
-        // Then the already-stored row has been recomputed, not just newly inserted ones
         assertThat(read(DATE, LEGACY_KEY)).isEqualTo("2031-01-15 10:00:00");
     }
 
@@ -122,13 +107,7 @@ class H2V2_1_05FixExecutionDelayDateMigrationTest {
         dslContextWrapper.transaction(configuration -> DSL.using(configuration).execute(sql));
     }
 
-    /**
-     * Inserts under a non-UTC session timezone, which is what makes the timezone dependency
-     * observable. The generated columns are computed and stored at insert time, so the timezone is
-     * restored before reading. jOOQ binds one connection for the lambda and cannot hand it to
-     * another thread while it is checked out, so the {@code finally} keeps the setting from leaking
-     * back into the pool even if the insert throws.
-     */
+    /** Inserts under a non-UTC session zone; the finally restores the URL's UTC session zone. */
     private void insertWithSessionTimeZone(String key, String valueJson) {
         dslContextWrapper.transaction(configuration ->
         {
@@ -140,7 +119,7 @@ class H2V2_1_05FixExecutionDelayDateMigrationTest {
                     .set(VALUE, (Object) valueJson)
                     .execute();
             } finally {
-                context.execute("SET TIME ZONE LOCAL");
+                context.execute("SET TIME ZONE 'UTC'");
             }
         });
     }

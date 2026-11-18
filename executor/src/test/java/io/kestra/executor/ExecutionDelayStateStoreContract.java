@@ -19,20 +19,16 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The behavior a delay store must honor when the cutoff is compared against the stored date
- * column, driven by a fixed anchor so the store cannot fall back on the system clock.
- */
+/** Delay-store contract driven by a fixed anchor so the store cannot fall back on the system clock. */
 @MicronautTest(transactional = false)
 public abstract class ExecutionDelayStateStoreContract {
 
-    // Far from the wall clock so a fixed clock can drive the store; the contract starts no Executor.
+    // Far from the wall clock so a store that read the system clock would select nothing.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
-    // Tags every row this contract creates, deterministically, so leftovers from a crashed run are
-    // still recognized as ours and cleared.
+    // Prefix so leftovers from a crashed run are still recognized as ours and cleared.
     protected static final String OWNED_EXECUTION_ID_PREFIX = "delay-contract-";
 
     // TimeZone.setDefault is process-wide, so the zone is taken and given back under one lock.
@@ -52,7 +48,7 @@ public abstract class ExecutionDelayStateStoreContract {
         return executionDelayStateStore;
     }
 
-    /** The JVM zone the contract runs in; jOOQ binds the cutoff with Timestamp.valueOf, which reads it. */
+    /** The JVM zone the contract runs in, which the store must not depend on. */
     protected TimeZone testTimeZone() {
         return TimeZone.getTimeZone("UTC");
     }
@@ -60,8 +56,7 @@ public abstract class ExecutionDelayStateStoreContract {
     @BeforeEach
     void clearLeftoversFromEarlierClasses() {
         prepare();
-        // No cleanup() on failure: JUnit runs @AfterEach even when @BeforeEach throws, and its
-        // finally is the single place that gives the zone and the lock back.
+        // The zone and lock are released in @AfterEach, which still runs when @BeforeEach throws.
         drainOwnedDelays(DRAIN);
     }
 
@@ -82,8 +77,7 @@ public abstract class ExecutionDelayStateStoreContract {
     }
 
     private void cleanup() {
-        // Idempotent: a second call must not unlock the ReentrantLock again, or the
-        // IllegalMonitorStateException would mask the failure that triggered the cleanup.
+        // Idempotent: unlocking twice would mask the failure that triggered cleanup.
         if (!zoneTaken) {
             return;
         }
@@ -95,11 +89,7 @@ public abstract class ExecutionDelayStateStoreContract {
         }
     }
 
-    /**
-     * Consumes the delays due at or before {@code cutoff} and returns this contract's own rows.
-     * The store can only select by date, so rows another suite owns are consumed too; they are
-     * saved back untouched, which is safe because the test task runs a single fork.
-     */
+    /** A drain also consumes foreign rows, so they are saved back untouched. */
     protected List<ExecutionDelay> drainOwnedDelays(Instant cutoff) {
         List<ExecutionDelay> owned = new ArrayList<>();
         List<ExecutionDelay> foreign = new ArrayList<>();
@@ -163,8 +153,6 @@ public abstract class ExecutionDelayStateStoreContract {
 
         drainOwnedDelays(DRAIN);
 
-        // The drain re-saves rows it does not own instead of deleting them, so the row is still
-        // there. Other suites may share the database, so only its survival is asserted.
         List<ExecutionDelay> remaining = new ArrayList<>();
         store().processExpired(DRAIN, remaining::add);
         remaining.forEach(store()::save);

@@ -398,6 +398,40 @@ describe("revertChanges", () => {
         expect(Object.values(statuses(before, reverted))).toEqual(["unchanged", "unchanged", "unchanged"])
     })
 
+    test("keeps the comments and blank lines of the proposal", () => {
+        const before = "id: f\nnamespace: n\ntasks:\n  - {id: a, type: t}\n"
+        const kept = [
+            "id: f",
+            "namespace: n",
+            "",
+            "tasks:",
+            "  # fetch the orders",
+            "  - id: a",
+            "    type: t",
+            "",
+        ]
+        const after = [...kept, "  - id: b", "    type: t", ""].join("\n")
+
+        expect(revertChanges(before, after, ["b"])).toBe(kept.join("\n"))
+    })
+
+    test("brings a removed flowable back once when one of its tasks is rejected too", () => {
+        const before = [
+            "id: f",
+            "namespace: n",
+            "tasks:",
+            "  - id: gate",
+            "    type: If",
+            "    condition: x",
+            "    then:",
+            "      - {id: a, type: t}",
+            "",
+        ].join("\n")
+        const after = "id: f\nnamespace: n\ntasks: []\n"
+
+        expect(revertChanges(before, after, ["a", "gate"]).match(/id: a/g)).toHaveLength(1)
+    })
+
     test("returns the proposal untouched when nothing is rejected", () => {
         const untouched = revertChanges(ORDERS_BEFORE, ORDERS_AFTER, [])
         expect(statuses(ORDERS_BEFORE, untouched)).toEqual(statuses(ORDERS_BEFORE, ORDERS_AFTER))

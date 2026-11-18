@@ -1,5 +1,12 @@
 import {isDeepEqual} from "@kestra-io/design-system"
-import {parse, stringify} from "./yaml/serialization"
+import {
+    extractBlockWithPath,
+    getPathFromSectionAndId,
+    insertBlockWithPath,
+    replaceBlockWithPath,
+} from "./yaml/blocks"
+import {appendKeyToPath, joinPath, parsePath} from "./yaml/paths"
+import {parse} from "./yaml/serialization"
 import type {FlowGraph, FlowGraphCluster, MinimalNode} from "./vueFlowUtils"
 import {CLUSTER_PREFIX} from "./constants"
 
@@ -56,6 +63,11 @@ function isTaskLike(value: unknown): value is Record<string, unknown> & {id: str
 function holdsTasks(value: unknown): boolean {
     if (Array.isArray(value)) return value.some(isTaskLike)
     return isRecord(value) && Object.values(value).some((v) => Array.isArray(v) && v.some(isTaskLike))
+}
+
+/** The keys of a task that are its own: not `id`, and not the tasks it contains. */
+function ownPropertiesOf(item: Record<string, unknown>) {
+    return Object.keys(item).filter((key) => key !== "id" && !holdsTasks(item[key]))
 }
 
 /** Every task and trigger of a flow by id, with its section, own properties and children. */
@@ -281,102 +293,80 @@ export function mergeFlowGraphs(
     return {graph: {nodes, clusters, edges}, statusByUid}
 }
 
-interface Located {
-    list: unknown[];
-    index: number;
-    item: Record<string, unknown>;
-}
-
-/** Where a task sits in a flow: its list, its index in it, and the task itself. */
-function findTask(flow: FlowDocument, id: string): Located | undefined {
-    const inList = (list: unknown): Located | undefined => {
-        if (!Array.isArray(list)) return undefined
-        for (let index = 0; index < list.length; index++) {
-            const item = list[index]
-            if (!isTaskLike(item)) continue
-            if (item.id === id) return {list, index, item}
-            for (const value of Object.values(item)) {
-                const found = Array.isArray(value)
-                    ? inList(value)
-                    : isRecord(value) ? Object.values(value).map(inList).find(Boolean) : undefined
-                if (found) return found
-            }
-        }
-        return undefined
+/** The path of a task in a flow source, such as `tasks[1].then[0]`. */
+function pathOf(source: string, id: string): string | undefined {
+    for (const section of ROOT_SECTIONS) {
+        const path = getPathFromSectionAndId({source, section, id})
+        if (path && path !== section) return path
     }
-    return ROOT_SECTIONS.map((section) => inList(flow[section])).find(Boolean)
-}
-
-/** The task list of a section, created when the flow does not have it yet. */
-function listAt(flow: FlowDocument, section: string): unknown[] | undefined {
-    const [head, key, branch] = section.split(".")
-    const owner = key === undefined ? flow : findTask(flow, head)?.item
-    if (!owner) return undefined
-    const slot = key === undefined ? head : key
-    if (branch === undefined) {
-        if (!Array.isArray(owner[slot])) owner[slot] = []
-        return owner[slot] as unknown[]
-    }
-    if (!isRecord(owner[slot])) owner[slot] = {}
-    const branches = owner[slot] as Record<string, unknown>
-    if (!Array.isArray(branches[branch])) branches[branch] = []
-    return branches[branch] as unknown[]
-}
-
-/** The keys of a task that are its own: not `id`, and not the tasks it contains. */
-function ownPropertiesOf(item: Record<string, unknown>) {
-    return Object.keys(item).filter((key) => key !== "id" && !holdsTasks(item[key]))
+    return undefined
 }
 
 /** The `after` flow with the given tasks put back the way they are in `before`. */
 export function revertChanges(before: string | undefined, after: string, ids: Iterable<string>): string {
-    const previous = parseFlow(before) ?? {}
-    const flow = parseFlow(after)
-    if (!flow) return after
+    if (!parseFlow(after)) return after
+    const previous = before ?? ""
+    const rejected = new Set(ids)
     const diff = diffFlowSources(before, after)
-    const byId = new Map(diff.tasks.map((task) => [task.id, task]))
-    const oldEntries = collectTasks(previous)
-    const reverted = [...ids]
-        .map((id) => byId.get(id))
-        .filter((task): task is TaskDiff => task !== undefined && task.status !== "unchanged")
-    const currentId = (oldId: string) => diff.tasks
-        .find((task) => task.renamedFrom === oldId && !reverted.includes(task))?.id ?? oldId
+    const renamedTo = new Map(diff.tasks.map((task) => [task.renamedFrom ?? task.id, task.id]))
+    const reverted = new Map(
+        diff.tasks
+            .filter((task) => rejected.has(task.id) && task.status !== "unchanged")
+            .map((task) => [task.renamedFrom ?? task.id, task]),
+    )
+    let source = after
 
-    const putBack = (item: Record<string, unknown>, id: string) => {
-        const entry = oldEntries.get(id)
-        const list = entry ? listAt(flow, entry.section) ?? listAt(flow, "tasks") : undefined
-        if (!entry || !list) return
-        const previousId = entry.previousId && currentId(entry.previousId)
-        const anchor = previousId
-            ? list.findIndex((other) => isTaskLike(other) && other.id === previousId)
-            : -1
-        list.splice(anchor + 1, 0, item)
+    /** Where a task of `before` is now, under its old id or the one it was renamed to. */
+    const locate = (oldId: string) => pathOf(source, oldId) ?? pathOf(source, renamedTo.get(oldId) ?? oldId)
+
+    /** Inserts a task block in the list it had in `before`, after the task it followed there. */
+    const putBack = (entry: TaskEntry, newBlock: string | undefined) => {
+        if (!newBlock) return
+        const [head, ...keys] = entry.section.split(".")
+        const parent = keys.length ? locate(head) : head
+        const parentPath = parent ? keys.reduce(appendKeyToPath, parent) : "tasks"
+        const anchor = parsePath(entry.previousId ? locate(entry.previousId) ?? "" : "")
+        const index = joinPath(anchor.slice(0, -1)) === parentPath ? anchor.at(-1) : undefined
+        source = insertBlockWithPath({
+            source,
+            parentPath,
+            newBlock,
+            refPath: index ?? 0,
+            position: index === undefined ? "before" : "after",
+        })
     }
 
-    for (const task of reverted.filter((t) => t.status === "added")) {
-        const found = findTask(flow, task.id)
-        found?.list.splice(found.index, 1)
-    }
-    for (const task of reverted) {
-        if (task.status === "added") continue
-        if (task.status === "removed") {
-            const original = findTask(previous, task.id)
-            if (original) putBack(structuredClone(original.item), task.id)
+    for (const [oldId, task] of reverted) {
+        const path = pathOf(source, task.id)
+        if (!path) continue
+        if (task.status === "added") {
+            source = replaceBlockWithPath({source, path, newContent: ""})
             continue
         }
-        const found = findTask(flow, task.id)
-        if (!found) continue
-        const oldId = task.renamedFrom ?? task.id
-        const oldItem = findTask(previous, oldId)?.item
-        if (oldItem) {
-            ownPropertiesOf(found.item).forEach((key) => delete found.item[key])
-            ownPropertiesOf(oldItem).forEach((key) => (found.item[key] = structuredClone(oldItem[key])))
-        }
-        if (task.status === "renamed") found.item.id = oldId
-        if (task.status === "moved") {
-            found.list.splice(found.index, 1)
-            putBack(found.item, task.id)
+        const oldPath = pathOf(previous, oldId) ?? ""
+        const keys = [...task.changes.map((change) => change.key), ...(task.renamedFrom ? ["id"] : [])]
+        for (const key of keys) {
+            source = replaceBlockWithPath({
+                source,
+                path: appendKeyToPath(path, key),
+                newContent: extractBlockWithPath({
+                    source: previous,
+                    path: appendKeyToPath(oldPath, key),
+                }) ?? "",
+            })
         }
     }
-    return stringify(flow)
+
+    for (const entry of collectTasks(parseFlow(before)).values()) {
+        const task = reverted.get(entry.id)
+        const path = pathOf(source, entry.id)
+        if (task?.status === "removed" && !path) {
+            putBack(entry, extractBlockWithPath({source: previous, path: pathOf(previous, entry.id) ?? ""}))
+        } else if (task?.previousSection && path) {
+            const block = extractBlockWithPath({source, path})
+            source = replaceBlockWithPath({source, path, newContent: ""})
+            putBack(entry, block)
+        }
+    }
+    return source
 }

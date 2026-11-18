@@ -109,7 +109,7 @@ jobs:
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew check --parallel --max-workers=3 --console=plain
+          ./gradlew cleanTest check --no-build-cache --parallel --max-workers=3 --console=plain
 
       - name: comment PR with test report
         if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository}}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<style type="text/css">
+    .outline{fill:#283037;}
+    .face{fill:#FFFFFF;}
+    .accent{fill:#4DA825;}
+    .unused{fill:none;stroke-miterlimit:10;}
+</style>
+<path class="face" d="M0 0h256v256H0z" fill="currentColor"/>
+<path class="outline" d="M10 10h236v236H10z" fill="currentColor"/>
+<path class="accent" d="M20 20h20v20H20z" fill="currentColor"/>
+</svg>

@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
+import io.kestra.webserver.services.SecretListingService;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;

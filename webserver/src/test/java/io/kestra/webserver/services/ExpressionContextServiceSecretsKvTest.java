@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
-import io.kestra.core.secret.SecretListingService;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;

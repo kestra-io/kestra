@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Resolves secret values, on a worker as well as on any other server, so it must not depend on a bean a worker
- * lacks; listing secrets belongs to {@link SecretListingService}.
+ * lacks; listing secrets belongs to the webserver's {@code SecretListingService}.
  */
 @Singleton
 @Slf4j
@@ -61,7 +61,7 @@ public class SecretService {
         return new SecretObject(findSecret(tenantId, namespace, key));
     }
 
-    Set<String> environmentSecretKeys() {
+    public Set<String> environmentSecretKeys() {
         return decodedSecrets.keySet();
     }
 }

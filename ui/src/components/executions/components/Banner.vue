@@ -98,11 +98,11 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs" class="action" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
-                <KsButton v-if="aiEnabled && isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                <KsButton v-if="aiEnabled && isFailed" class="action fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
                     {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
@@ -459,13 +459,7 @@
             overflow-wrap: anywhere;
         }
 
-        & :deep(.kel-button) {
-            color: var(--ks-text-secondary);
-
-            &:hover {
-                color: var(--ks-text-primary);
-            }
-        }
+        --ks-icon-button-color: var(--ks-text-secondary);
     }
 
     .execution-banner__replay, .execution-banner__restart {
@@ -496,7 +490,7 @@
         gap: var(--ks-spacing-2);
         flex-shrink: 0;
 
-        & :deep(.kel-button) {
+        & .action {
             color: var(--ks-text-secondary);
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
@@ -506,13 +500,9 @@
             }
         }
 
-        & :deep(.fix-with-ai.kel-button) {
+        & .action.fix-with-ai {
             color: var(--ks-text-link);
             box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-            .material-design-icon {
-                color: var(--ks-text-link);
-            }
         }
     }
 

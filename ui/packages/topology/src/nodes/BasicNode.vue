@@ -456,6 +456,7 @@
         border: 1px solid var(--ks-border-strong);
 
         .main-content {
+            position: relative;
             display: flex;
             padding: var(--ks-spacing-2);
             padding-right: var(--ks-spacing-4);

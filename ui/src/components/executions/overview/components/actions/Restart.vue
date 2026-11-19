@@ -51,7 +51,7 @@
                 <h3 class="modal-title">
                     {{ $t("restart execution title") }}
                 </h3>
-                <KsDivider />
+                <KsDivider class="divider" />
             </div>
         </template>
 
@@ -97,7 +97,7 @@
                 <h3 class="modal-title">
                     {{ $t("replay execution title") }}
                 </h3>
-                <KsDivider />
+                <KsDivider class="divider" />
             </div>
         </template>
 
@@ -616,46 +616,13 @@
     align-items: flex-start;
 }
 
-.modal-header :deep(.kel-divider--horizontal) {
+.modal-header .divider {
     margin-bottom: 8px;
 }
 
 .radio-item {
-    & :deep(.kel-radio__input) {
-        .kel-radio__inner {
-            width: 18px;
-            height: 18px;
-
-            &::after {
-                width: 8px;
-                height: 8px;
-                background-color: var(--ks-btn-primary-bg-default);
-            }
-        }
-    }
-
-    & :deep(.kel-radio__label) {
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-primary);
-        padding-left: 8px;
-    }
-
-
-    &.is-checked {
-        & :deep(.kel-radio__input) {
-            .kel-radio__inner {
-                border-color: var(--ks-btn-primary-bg-default);
-                background-color: var(--ks-btn-primary-bg-default);
-
-                &::after {
-                    background-color: var(--ks-white);
-                }
-            }
-        }
-
-        & :deep(.kel-radio__label) {
-            color: var(--ks-text-primary) !important;
-        }
-    }
+    --ks-radio-size: 18px;
+    --ks-radio-dot-size: 8px;
+    --ks-radio-label-font-size: var(--ks-font-size-xs);
 }
 </style>

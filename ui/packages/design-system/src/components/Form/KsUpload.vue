@@ -68,7 +68,8 @@
     }
 
     .kel-upload-dragger {
-        background-color: var(--ks-bg-input);
+        padding: var(--ks-upload-dragger-padding, var(--kel-upload-dragger-padding-vertical) var(--kel-upload-dragger-padding-horizontal));
+        background-color: var(--ks-upload-dragger-bg, var(--ks-bg-input));
         border-color: var(--ks-border-default);
         border-radius: var(--ks-radius-base);
 
@@ -77,7 +78,8 @@
         }
 
         &.is-dragover {
-            background-color: var(--ks-bg-hover);
+            padding: var(--ks-upload-dragger-padding, calc(var(--kel-upload-dragger-padding-vertical) - 1px) calc(var(--kel-upload-dragger-padding-horizontal) - 1px));
+            background-color: var(--ks-upload-dragger-bg, var(--ks-bg-hover));
             border-color: var(--ks-border-focus);
             border-width: 2px;
         }

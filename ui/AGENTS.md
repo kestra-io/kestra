@@ -27,7 +27,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 1. **Use a `Ks*` component if one exists.** Check the tables below before writing anything custom or importing from `element-plus`. New screens that mix `<el-button>` and `<KsButton>` are a regression.
 2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.css` / `ks-theme-dark.css` / `ks-theme-dark-2.css` — do not pick a one-off color.
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `--ks-font-family-*` and `--ks-font-size-*` tokens; feature code should not redefine them.
-4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream.
+4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream. `tests/unit/designSystem/deepSelectorGuard.spec.ts` (and its `ui-ee` twin) fails on any new one outside `packages/design-system`; the few left are listed there with their reason.
 5. **No SCSS variables (`$...`) in feature components.** Use `var(--ks-*)` CSS custom properties inside `<style>` blocks. SCSS variables don't react to dark mode, can't be overridden at runtime, and bind your component to a specific theme. SCSS variables are only acceptable inside `ui/packages/design-system/` itself, in mixins, or for math at build time.
 6. **No magic numbers for theme values.** Spacing, radii, font sizes, and shadows must reference tokens — never `padding: 13px`, never `border-radius: 6px`. For spacing (`padding`/`margin`/`gap`), reach for the `--ks-spacing-*` scale first (`--ks-spacing-1` = 0.25rem, `-2` = 0.5rem, `-3` = 0.75rem, `-4` = 1rem, `-5` = 1.5rem, `-6` = 2rem, `-7` = 2.5rem, `-8` = 3rem, `-10` = 4rem, `-12` = 5rem, `-16` = 6rem; declared in [`ks-tokens.css`](packages/design-system/src/assets/styles/ks-tokens.css)). Only fall back to a raw `rem` value when no token fits — never a hardcoded `px` value (`margin: 0 24px` → `margin: 0 var(--ks-spacing-5)`).
 7. **Never override Element Plus classes directly.** Don't write `.el-button { ... }` in feature code. If a `Ks*` component is missing a behavior, extend the component in the design system instead of patching CSS at the call site.
@@ -372,21 +372,21 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace` |
-| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type` |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width; renders as a link with `tag="a"` + `href` / `target` / `rel`, or `:tag="RouterLink"` + `to` and `replace`; `--ks-button-adjacent-margin` sets the gap Element Plus puts before a button that follows another (default 12px); `--ks-button-link-color` colours a `link` button at rest |
+| `KsIcon` / `KsIconButton` | Material Design icon display (the icon component goes in the default slot); icon-only button (always with `aria-label`), which takes `KsButton`'s `type`; `--ks-icon-button-color` sets the glyph colour at rest; a material icon's drawn size is `--ks-icon-glyph-size` and its box `--ks-icon-box-size` (both 1rem), set on the icon or an ancestor |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
 | `KsContainer` / `KsHeader` / `KsMain` | Page layout shell |
 | `KsRow` / `KsCol` | Responsive grid |
-| `KsSplitter` / `KsSplitterPanel` | Resizable split-pane layout |
+| `KsSplitter` / `KsSplitterPanel` | Resizable split-pane layout; set on the splitter, `--ks-splitter-panel-bg` paints the panels, `--ks-splitter-panel-display` / `--ks-splitter-panel-rows` lay them out, and `--ks-splitter-bar-size` gives the bars room. A panel renders as a fragment, so a class on it never gets the parent's scope: style it through these variables or its `style` attribute |
 
 ### Feedback
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review) |
-| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint. An `#action` slot puts a button on the right of the title (the approval banner's Review); `fill` stretches the content across the row with no gap under the title and clips a description that would widen it |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not; its form labels read `--ks-form-item-label-font-size` / `--ks-form-item-label-font-weight` (md semibold by default) |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close; `resizable` adds a drag handle, `size` sets the initial width (default 65%) and leaving full screen restores the width held before |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
@@ -399,52 +399,54 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace) |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters"); `highlight` pulses the focus ring once, to point at the field a page has just opened on (the prefilled id of a child namespace); `--ks-input-border-color` replaces the border colour in every state (`transparent` when a container draws the border), `--ks-input-icon-color` the prefix and suffix icons; `--ks-input-font-size`, `--ks-input-text-color` and `--ks-input-bg-color` set the text size, colour and background; `--ks-input-wrapper-height`, `--ks-input-border`, `--ks-input-radius` and `--ks-input-inner-padding-end` draw a real border, round the corners and keep text clear of an overlay on the right (`KsAutocomplete` follows the background, `KsDatePicker` the font size); `thinScrollbar` gives a textarea a thin rounded scrollbar where the pointer is coarse |
+| `KsSearch` | Search field with a leading magnifier; `borderless` drops the border, shadow and background so it sits flush in a container that draws them (the global search) |
 | `KsInputNumber` | Numeric input with increment / decrement |
-| `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
+| `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select; `--ks-select-height`, `--ks-select-padding` (default size only) and `--ks-select-font-size` size the field; `--ks-select-bg`, `--ks-select-hover-bg`, `--ks-select-border` and `--ks-select-gap` style the field, and `--ks-select-padding` applies at every size, each keeping its own default |
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
-| `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants; `--ks-radio-size`, `--ks-radio-dot-size` and `--ks-radio-label-font-size` size the control and its label; `KsRadioButton` reads `--ks-radio-button-padding`, `--ks-radio-button-radius` (every corner, whatever the position), `--ks-radio-button-bg`, `--ks-radio-button-active-bg`, `--ks-radio-button-active-color` and `--ks-radio-button-active-border-color` |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
-| `KsDatePicker` / `KsTimePicker` | Date and time pickers |
+| `KsDatePicker` / `KsTimePicker` | Date and time pickers; follow `KsInput`'s `--ks-input-border-color` |
 | `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
-| `KsUpload` | File upload |
-| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields) |
+| `KsUpload` | File upload; `--ks-upload-dragger-padding` and `--ks-upload-dragger-bg` style the drop area, and a background set this way holds while a file is dragged over |
+| `KsEditor` | Code editor (Monaco); `--ks-editor-height` / `--ks-editor-max-height` size the editor area, `--ks-editor-overflow-x` clips it horizontally, `--ks-editor-placeholder-top` moves the placeholder |
+| `KsForm` / `KsFormItem` | Form container with validation; `inline` on a `KsFormItem` puts the label and the control on one row, `stacked` puts each child of the content on its own full-width line (the no-code fields); `wideLabel` stretches the label across the row for a `#label` slot that lays out its own content; `--ks-form-item-label-font-size`, `--ks-form-item-label-font-weight` and `--ks-form-item-label-color` style the labels below where they are set; `--ks-form-item-content-width` fixes the control column of an `inline` item |
 
 ### Data Display
 
 | Component | Purpose |
 |-----------|---------|
-| `KsCard` | Card container |
-| `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A root-level `filters[field][OP]` URL key whose field has no filter key in the configuration belongs to the page: the bar leaves it in place when it rewrites the query (the apps catalog's tag pills). `startDate` and `endDate` are the exception: the time range filter writes them, so the bar always clears them. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
+| `KsCard` | Card container; `bodyStyle` sets the body's padding and size, `--ks-card-header-padding` the header's padding |
+| `KsTable` / `KsTableColumn` | Basic table; a row whose `rowClassName` is `selected` gets the selected background; `--ks-table-empty-text-width` widens the empty state (default 50%); `flushExpand` renders expanded rows edge to edge (no cell padding, no border); `--ks-table-action-header-padding-right` sets the right padding of the `row-action` column header (8px by default) |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A root-level `filters[field][OP]` URL key whose field has no filter key in the configuration belongs to the page: the bar leaves it in place when it rewrites the query (the apps catalog's tag pills). `startDate` and `endDate` are the exception: the time range filter writes them, so the bar always clears them. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. `expandableRow` (`(row) => boolean`) removes the expand arrow from the rows it rejects, next to `forceExpandedRowKeys` for rows that are always open. `--ks-data-table-pagination-margin-bottom` trims the space under the pagination, and `--ks-data-table-pagination-wrap: wrap` lets it wrap onto a second line in a narrow container. `--ks-data-table-content-border` / `--ks-data-table-content-padding-block` rule and pad the area above and below the rows (dashboard tables). |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it; `type="neutral"` is a grey pill for counts next to content (the KsFilter value counts) |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
-| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
+| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container; `--ks-tag-close-color` colours the close glyph at rest; `--ks-tag-font-size` / `--ks-tag-font-weight` set the label and its icon (semibold at the inherited size by default), set on a container of tags |
 | `KsAvatar` | Avatar with fallback |
-| `KsProgress` | Progress bar |
+| `KsProgress` | Progress bar; `--ks-progress-track-color` paints the unfilled track; the default slot replaces the percentage text |
 | `KsPagination` | Pagination controls |
 | `KsNoData` | Default empty state: an icon, a title and a description (`icon`, `title`, `description`, or the default slot for the description) |
 | `KsEmptyState` | Page-level empty state: an illustration (`image`), a title, a description, an `#action` slot and a `learnMore` link |
 | `KsEmpty` | Deprecated since 2.0 and rejected by eslint in `ui/` and `ui-ee/`: use `KsNoData` or `KsEmptyState` |
 | `KsSkeleton` | Skeleton loader |
-| `KsId` | Copyable ID display |
+| `KsId` | Copyable ID display; `--ks-id-color` replaces the link colour |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments |
-| `KsCollapse` / `KsCollapseItem` | Collapsible sections |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments; `equalWidth` gives every item the width of the widest one while the control still shrink-wraps |
+| `KsCollapse` / `KsCollapseItem` | Collapsible sections; `flush` makes a compact navigation tree (no padding, arrow beside the title: the docs table of contents); `--ks-collapse-item-disabled-cursor` replaces the not-allowed cursor of a disabled item; `--ks-collapse-header-padding`, `--ks-collapse-header-border` (kept while the item is open), `--ks-collapse-header-radius`, `--ks-collapse-header-bg` and `--ks-collapse-content-padding` restyle the rows |
 | `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
-| `KsTree` | Hierarchical tree view |
+| `KsTree` | Hierarchical tree view; `--ks-tree-node-height`, `--ks-tree-node-radius`, `--ks-tree-node-hover-bg`, `--ks-tree-node-focus-bg` and `--ks-tree-node-overflow` style the rows; `variant="files"` is the namespace file explorer: a guide line per level, outlined on hover, filled when current or when the node's class is `is-selected` |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsChangeReview` | A change to review before it is applied (a Terraform plan, an Ansible check run): a bar of each kind of change, a filter chip per named segment (`v-model:filter`) and a tab per slot (`v-model:tab`) |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel; `lead` bolds an opening paragraph; `dense` gives small secondary paragraphs for a description in a list; `reference` turns headings into section labels and stacks table rows; `--ks-markdown-paragraph-color` / `-size` / `-line-height` / `-spacing`, `--ks-markdown-list-color`, `--ks-markdown-code-block-spacing`, `--ks-markdown-h3-margin-top`, `--ks-markdown-copy-hover-background` and `--ks-markdown-code-token-size` tune it from a wrapper |
 
 ### Charts
 
@@ -458,9 +460,9 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsTabs` / `KsTabPane` | Tabbed interface |
+| `KsTabs` / `KsTabPane` | Tabbed interface; in `box` tabs a disabled tab cannot be clicked through; `hideDisabledArrows` hides a scroll arrow once it is disabled; `--ks-tabs-header-margin` spaces the header of `box` and `segmented` tabs |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
-| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
+| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover; `--ks-dropdown-danger-bg` / `--ks-dropdown-danger-color` replace that hover's colours |
 | `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsSelectableListItem` | Button list item with title, optional subtitle and leading slot, selected and disabled states |

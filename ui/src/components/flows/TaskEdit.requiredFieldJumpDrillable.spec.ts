@@ -152,8 +152,7 @@ describe("TaskEdit jump into a collapsed drillable array item", () => {
         // jsdom has no layout, so the real scrollIntoView would throw before scrollThenFocus
         // ever reaches the rAF-driven focus() call; the target element only exists after the
         // jump has drilled in, so it cannot be stubbed individually ahead of time.
-        const scrollIntoView = vi.fn()
-        Element.prototype.scrollIntoView = scrollIntoView
+        const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
 
         const wrapper = mountTaskEdit()
         await flushPromises()

@@ -125,7 +125,7 @@ function mountTaskEdit(task: Record<string, unknown>) {
 }
 
 async function mountAndSettle(task: Record<string, unknown>) {
-    Element.prototype.scrollIntoView = vi.fn()
+    vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
     const wrapper = mountTaskEdit(task)
     await flushPromises()
     await wrapper.vm.$nextTick()

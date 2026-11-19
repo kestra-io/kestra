@@ -45,10 +45,20 @@ describe("setupKestraHttp router NProgress hooks", () => {
         onError: vi.fn((cb: () => void) => { onErrorCb = cb }),
     }
 
-    beforeEach(() => {
+    let setupKestraHttp: typeof import("./kestraHttp").setupKestraHttp
+
+    // The progress counters and their timers are module state that other tests leave unbalanced.
+    beforeEach(async () => {
+        vi.resetModules()
+        ;({setupKestraHttp} = await import("./kestraHttp"))
+        vi.useFakeTimers()
         nprogressStart.mockClear()
         nprogressSet.mockClear()
         nprogressDone.mockClear()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it("settles the progress counter via afterEach on a normal navigation", async () => {
@@ -56,7 +66,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
 
         beforeEachCb()
         afterEachCb()
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
     })
@@ -69,7 +79,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
         // settle the counter and unstick the loading bar.
         beforeEachCb()
         onErrorCb()
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
     })
@@ -109,7 +119,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
         onRequest(new Request("http://example.test/x"), skip)
         onResponse(new Response(), new Request("http://example.test/x"), skip)
         onError(new DOMException("Aborted", "AbortError"), undefined, new Request("http://example.test/x"), skip)
-        await new Promise((r) => setTimeout(r, 60))
+        vi.advanceTimersByTime(60)
 
         expect(nprogressStart).not.toHaveBeenCalled()
         expect(nprogressDone).not.toHaveBeenCalled()

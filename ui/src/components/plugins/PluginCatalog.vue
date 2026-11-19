@@ -240,7 +240,7 @@
 
     const matchesSearch = (plugin: Plugin): boolean =>
         isPluginMatched(plugin, searchInput.value)
-        || (subGroupTitlesByName.value.get(plugin.name) ?? []).some(title => title.includes(searchInput.value))
+        || (subGroupTitlesByName.value.get(plugin.name) ?? []).some(subGroupTitle => subGroupTitle.includes(searchInput.value))
 
     const toggleCategory = (category: string) => {
         const categories = selectedCategories.value.includes(category)

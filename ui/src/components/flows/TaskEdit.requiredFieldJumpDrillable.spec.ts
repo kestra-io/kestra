@@ -67,8 +67,8 @@ vi.mock("../../composables/playground/usePlaygroundRun", () => ({
 }))
 
 vi.mock("../../composables/useContextSections", async () => {
-    const {ref} = await import("vue")
-    return {useContextSections: () => ({sections: ref([])})}
+    const {ref: vueRef} = await import("vue")
+    return {useContextSections: () => ({sections: vueRef([])})}
 })
 
 vi.mock("./TaskEditData.vue", () => ({

@@ -242,7 +242,7 @@
         <ReplayWithInputs
             :execution="execution"
             :taskRun="replayTaskRun"
-            :revision="revisionsSelected"
+            :revision="effectiveRevision"
             @execution-trigger="closeReplayWithInputsModal"
         />
     </KsDialog>
@@ -414,7 +414,7 @@
     }
 
     const loadFlowForReplay = async () => {
-        const revision = replayRevisionMode.value !== "latest" ? revisionsSelected.value : undefined
+        const revision = replayRevisionMode.value !== "latest" ? effectiveRevision.value : undefined
         await executionsStore.loadFlowForExecution({
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,

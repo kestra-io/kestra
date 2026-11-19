@@ -59,7 +59,7 @@
                                 {{ $t("system_namespace") }}
                             </span>
                         </div>
-                        <KsButton size="small">
+                        <KsButton size="small" tabindex="-1" aria-hidden="true">
                             <TextSearch />
                         </KsButton>
                     </router-link>

@@ -92,7 +92,7 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         expect(form).toBeDefined()
 
         // 1. Initial state: no error is shown
-        expect(wrapper.find(".kel-form-item__error, .el-form-item__error").exists()).toBe(false)
+        expect(wrapper.text()).not.toContain("reason is required")
 
         // 2. Submit with required reason empty: form.validate() triggers validation
         let isValid: boolean | undefined
@@ -105,10 +105,7 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
 
         // 3. Verify 'reason is required' appears
         expect(isValid).toBe(false)
-        const errorEl = wrapper.find(".kel-form-item__error, .el-form-item__error")
-        expect(errorEl.exists()).toBe(true)
-        expect(errorEl.text()).toContain("reason")
-        expect(errorEl.text()).toContain("is required")
+        expect(wrapper.text()).toContain("reason is required")
 
         // 4. Type a valid value into the KsEditor
         const textarea = wrapper.find("textarea")
@@ -123,7 +120,7 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await flushPromises()
 
         // 6. Verify the error disappears without another form submission
-        expect(wrapper.find(".kel-form-item__error, .el-form-item__error").exists()).toBe(false)
+        expect(wrapper.text()).not.toContain("reason is required")
     })
 
     test("clears error on dotted field paths without clearing unrelated field errors", async () => {
@@ -154,9 +151,10 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await new Promise(r => setTimeout(r, 150))
         await flushPromises()
 
-        // Both fields have errors initially
-        const errorsBefore = wrapper.findAll(".kel-form-item__error, .el-form-item__error")
-        expect(errorsBefore).toHaveLength(2)
+        // Both fields have required error messages initially
+        expect(wrapper.text().match(/is required/g)).toHaveLength(2)
+        expect(wrapper.text()).toContain("approval.approver is required")
+        expect(wrapper.text()).toContain("reason is required")
 
         // Type into dotted field approval.approver only
         const textareas = wrapper.findAll("textarea")
@@ -168,10 +166,9 @@ describe("InputsForm real form validation lifecycle (#22065)", () => {
         await new Promise(r => setTimeout(r, 150))
         await flushPromises()
 
-        // approval.approver error is cleared, reason error remains
-        const errorsAfter = wrapper.findAll(".kel-form-item__error, .el-form-item__error")
-        expect(errorsAfter).toHaveLength(1)
-        expect(errorsAfter[0].text()).toContain("reason")
-        expect(errorsAfter[0].text()).toContain("is required")
+        // approval.approver error is cleared, only reason error remains
+        expect(wrapper.text().match(/is required/g)).toHaveLength(1)
+        expect(wrapper.text()).not.toContain("approval.approver is required")
+        expect(wrapper.text()).toContain("reason is required")
     })
 })

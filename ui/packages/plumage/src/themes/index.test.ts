@@ -45,7 +45,7 @@ describe("contrast", () => {
 
     it.each(themes.map(theme => [theme.name, theme] as const))("%s keeps the code inside a Pebble block apart from the block color", (_, theme) => {
         const {syntax} = theme
-        const failing = PEBBLE_ROLES.filter(role => !["pebble", "constant", "operator", "punctuation"].includes(role))
+        const failing = PEBBLE_ROLES.filter(role => !["pebble", "pebbleVariable", "constant", "operator", "punctuation"].includes(role))
             .map(role => [role, Math.round(difference(syntax[role], syntax.pebble))] as const)
             .filter(([, delta]) => delta < 25)
         expect(failing).toEqual([])

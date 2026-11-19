@@ -127,8 +127,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         List<Pattern> inputsWithMinusPatterns = ListUtils.emptyOnNull(value.getInputs())
             .stream()
-            .filter(input -> input.getId().contains("-"))
-            .map(input -> Pattern.compile("\\{\\{\\s*inputs." + input.getId() + "\\s*\\}\\}"))
+            .filter(input -> Optional.ofNullable(input.getId()).orElse("").contains("-"))
+            .map(input -> Pattern.compile("\\{\\{\\s*inputs\\." + Pattern.quote(input.getId()) + "\\s*\\}\\}"))
             .collect(Collectors.toList());
 
         List<String> invalidTasks = allTasks.stream()
@@ -145,7 +145,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         List<Pattern> outputsWithMinusPattern = allTasks.stream()
             .filter(output -> Optional.ofNullable(output.getId()).orElse("").contains("-"))
-            .map(output -> Pattern.compile("\\{\\{\\s*outputs\\." + output.getId() + "\\.[^}]+\\s*\\}\\}"))
+            .map(output -> Pattern.compile("\\{\\{\\s*outputs\\." + Pattern.quote(output.getId()) + "\\.[^}]+\\}\\}"))
             .collect(Collectors.toList());
 
         invalidTasks = allTasks.stream()

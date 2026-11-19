@@ -219,6 +219,30 @@ class FlowTopologyServiceTest {
     }
 
     @Test
+    void isChildShouldReturnFalseWhenNamespaceOnlyMatchesAsRegex() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .inputs(
+                List.of(
+                    SelectInput.builder().id("select").type(Type.SELECT).expression("{{subflow(id='child', namespace='ioXkestraXee')}}").build()
+                )
+            )
+            .tasks(List.of(returnTask()))
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isNull();
+    }
+
+    @Test
     void isChildShouldReturnTrueForMultiSelectInput() {
         Flow parent = Flow.builder()
             .namespace("io.kestra.ee")

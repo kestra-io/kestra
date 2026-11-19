@@ -2493,6 +2493,13 @@
         "placeholder": "何を作成するか教えてください…",
         "send": "送信",
         "stop": "停止",
+        "usage": {
+          "remaining": "残り{percent}%",
+          "help": "現在のウィンドウで、このプロバイダーのAI使用制限の残りの割合。",
+          "warning": "このプロバイダーのAI使用制限に近づいています。制限に達すると、ターンは拒否されます。",
+          "exceeded": "このプロバイダーのAI使用制限に達しました。現在の期間が終了するとリセットされます。",
+          "exceededUntil": "このプロバイダーのAI使用制限に達しました。{when}にリセットされます。"
+        },
         "mode": {
           "ask": "質問",
           "edit": "編集",
@@ -2535,7 +2542,7 @@
           "planTitle": "計画案",
           "actionTitle": "提案アクション",
           "approve": "承認",
-          "approveExecute": "承認して実行",
+          "approvePlan": "プランを承認",
           "reject": "拒否",
           "pending": "承認待ち",
           "revise": "修正に返信"
@@ -2569,6 +2576,12 @@
           "docs": "ドキュメントを見る",
           "sendTooltip": "AIプロバイダーが設定されていないため、送信は無効になっています。",
           "notSent": "プロンプトが送信されませんでした"
+        },
+        "mcpTip": {
+          "title": "Claude Code、Cursor、その他のMCPクライアントからKestraを使用する",
+          "description": "Copilot とともに、Kestra は MCP サーバーを提供します。外部 MCP クライアントを接続して、既存のツールから Flow と Execution を管理できます。",
+          "docs": "ドキュメントを表示",
+          "dismiss": "今後表示しない"
         },
         "thinkingWords": [
           "オーケストレーション",

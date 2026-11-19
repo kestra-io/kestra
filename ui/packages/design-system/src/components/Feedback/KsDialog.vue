@@ -38,7 +38,8 @@
 </script>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import type {NativeAttributes} from "../../utils/nativeAttributes"
+    import {computed, type HTMLAttributes} from "vue"
     import {ElDialog} from "element-plus"
     import KsScrollbar from "../Basic/KsScrollbar.vue"
     import {usePassedProps} from "../../utils/filteredProps"
@@ -48,7 +49,7 @@
 
     const model = defineModel<boolean>({default: false})
 
-    const props = withDefaults(defineProps<KsDialogProps>(), {
+    const props = withDefaults(defineProps<KsDialogProps & /* @vue-ignore */ Omit<NativeAttributes<HTMLAttributes>, keyof KsDialogProps>>(), {
         large: false,
         formLayout: false,
         fill: false,

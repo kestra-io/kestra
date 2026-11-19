@@ -2493,6 +2493,13 @@
         "placeholder": "告诉我构建什么…",
         "send": "发送",
         "stop": "停止",
+        "usage": {
+          "remaining": "剩余 {percent}%",
+          "help": "此提供商在当前窗口中剩余的 AI 使用限额。",
+          "warning": "您已接近此提供商的 AI 使用限制。达到限制后，将拒绝轮次。",
+          "exceeded": "此提供商的 AI 使用限制已达上限。它将在当前周期结束时重置。",
+          "exceededUntil": "此提供商的 AI 使用限制已达到。它将在 {when} 重置。"
+        },
         "mode": {
           "ask": "询问",
           "edit": "编辑",
@@ -2535,7 +2542,7 @@
           "planTitle": "建议计划",
           "actionTitle": "建议操作",
           "approve": "批准",
-          "approveExecute": "批准并执行",
+          "approvePlan": "批准计划",
           "reject": "拒绝",
           "pending": "待批准",
           "revise": "回复以修改"
@@ -2569,6 +2576,12 @@
           "docs": "查看文档",
           "sendTooltip": "发送已禁用，因为未配置 AI provider。",
           "notSent": "您的提示未发送"
+        },
+        "mcpTip": {
+          "title": "从 Claude Code、Cursor 和其他 MCP 客户端使用 Kestra",
+          "description": "除了 Copilot，Kestra 还提供 MCP 服务器。连接外部 MCP 客户端以通过您已使用的工具管理您的 flow 和 execution。",
+          "docs": "查看文档",
+          "dismiss": "不再显示"
         },
         "thinkingWords": [
           "编排",

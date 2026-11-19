@@ -2493,6 +2493,13 @@
         "placeholder": "Tell me what to build…",
         "send": "Send",
         "stop": "Stop",
+        "usage": {
+          "remaining": "{percent}% left",
+          "help": "Share of this provider's AI usage limit left in the current window.",
+          "warning": "You are close to this provider's AI usage limit. Turns are refused once it is reached.",
+          "exceeded": "This provider's AI usage limit has been reached. It resets when the current period ends.",
+          "exceededUntil": "This provider's AI usage limit has been reached. It resets on {when}."
+        },
         "mode": {
           "ask": "Ask",
           "edit": "Edit",
@@ -2535,7 +2542,7 @@
           "planTitle": "Proposed plan",
           "actionTitle": "Proposed action",
           "approve": "Approve",
-          "approveExecute": "Approve & execute",
+          "approvePlan": "Approve plan",
           "reject": "Reject",
           "pending": "Pending approval",
           "revise": "Reply to revise"
@@ -2569,6 +2576,12 @@
           "docs": "View documentation",
           "sendTooltip": "Sending is disabled because no AI provider is configured.",
           "notSent": "Your prompt was not sent"
+        },
+        "mcpTip": {
+          "title": "Use Kestra from Claude Code, Cursor and other MCP clients",
+          "description": "Alongside the Copilot, Kestra provides an MCP server. Connect an external MCP client to it to manage your flows and executions from the tools you already use.",
+          "docs": "View documentation",
+          "dismiss": "Don't show again"
         },
         "thinkingWords": [
           "Orchestrating",

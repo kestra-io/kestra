@@ -2493,6 +2493,13 @@
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
         "stop": "Zatrzymaj",
+        "usage": {
+          "remaining": "Pozostało {percent}%",
+          "help": "Pozostała część limitu użycia AI tego dostawcy w bieżącym oknie.",
+          "warning": "Zbliżasz się do limitu użycia AI tego dostawcy. Tury są odrzucane po jego osiągnięciu.",
+          "exceeded": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany po zakończeniu bieżącego okresu.",
+          "exceededUntil": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany {when}."
+        },
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",
@@ -2535,7 +2542,7 @@
           "planTitle": "Proponowany plan",
           "actionTitle": "Proponowana akcja",
           "approve": "Zatwierdź",
-          "approveExecute": "Zatwierdź i wykonaj",
+          "approvePlan": "Zatwierdź plan",
           "reject": "Odrzuć",
           "pending": "Oczekuje na zatwierdzenie",
           "revise": "Odpowiedz, aby poprawić"
@@ -2569,6 +2576,12 @@
           "docs": "Wyświetl dokumentację",
           "sendTooltip": "Wysyłanie jest wyłączone, ponieważ nie skonfigurowano żadnego dostawcy AI.",
           "notSent": "Twoje zapytanie nie zostało wysłane"
+        },
+        "mcpTip": {
+          "title": "Używaj Kestra z Claude Code, Cursor i innych klientów MCP",
+          "description": "Oprócz Copilota, Kestra udostępnia serwer MCP. Podłącz do niego zewnętrznego klienta MCP, aby zarządzać swoimi Flowami i egzekucjami za pomocą narzędzi, których już używasz.",
+          "docs": "Wyświetl dokumentację",
+          "dismiss": "Nie pokazuj ponownie"
         },
         "thinkingWords": [
           "Orchestrowanie",

@@ -65,7 +65,7 @@
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
                     :streaming="streaming"
-                    :placeholder="$t('ai.copilot.emptyHelper')"
+                    :placeholder="emptyPlaceholder"
                     :rows="3"
                     @submit="onSubmit"
                     @stop="onStop"
@@ -315,6 +315,8 @@
         }
         previousProvider = now
     })
+
+    const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [

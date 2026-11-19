@@ -2571,6 +2571,7 @@
           "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
         },
         "emptyHelper": "Ich kann diesen Flow bearbeiten, Tests generieren, zugehörige Dateien anlegen oder erklären, wie er funktioniert.",
+        "emptyHelperNoFlow": "Ich kann Flows erstellen oder bearbeiten, Tests generieren, zugehörige Dateien gerüstet erstellen oder erklären, wie Kestra funktioniert.",
         "suggestions": {
           "errorHandling": "Fehlerbehandlung hinzufügen",
           "unitTest": "Unit-Test generieren",

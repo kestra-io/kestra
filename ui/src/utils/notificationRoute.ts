@@ -38,6 +38,14 @@ function resolveAsyncOperationRoute(notification: Notification): NotificationRou
     }
 }
 
+export function isRelativeNotificationUrl(url: string | null | undefined): url is string {
+    return !!url && url.startsWith("/") && !url.startsWith("//")
+}
+
+export function isAbsoluteNotificationUrl(url: string | null | undefined): url is string {
+    return !!url && /^https?:\/\/[^/\s]/i.test(url)
+}
+
 export function registerNotificationRoute(type: string, resolver: RouteResolver) {
     NOTIFICATION_ROUTES[type] = resolver
 }

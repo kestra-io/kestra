@@ -61,9 +61,6 @@
                     @confirm="onSubmit"
                 />
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'SELECT' && !input.isRadio"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
@@ -99,9 +96,6 @@
                     />
                 </KsRadioGroup>
                 <KsSelect
-                    :fullHeight="false"
-                    :input="true"
-                    :navbar="false"
                     v-if="input.type === 'MULTISELECT'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="multiSelectInputs[input.id]"
@@ -335,7 +329,7 @@
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
 
-        <div v-if="isWizard" class="wizard-nav">
+        <div v-if="isWizard && !(isOnRecap && hideRecapNavigation)" class="wizard-nav">
             <KsButton v-if="currentStep > 0" :icon="ChevronLeft" @click="goBack" data-testid="wizard-back">
                 {{ $t('back') }}
             </KsButton>
@@ -415,6 +409,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
+        hideRecapNavigation?: boolean;
         formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
@@ -426,6 +421,7 @@
         execution: undefined,
         selectedTrigger: undefined,
         mode: "flat",
+        hideRecapNavigation: false,
         formGroups: undefined,
         renderLabels: undefined,
     })
@@ -1116,6 +1112,7 @@
     })
 
     defineExpose({
+        goBack,
         validateInputs,
         inputsValues,
         multiSelectInputs,
@@ -1307,6 +1304,8 @@
         flex-wrap: wrap;
         align-items: center;
         padding: 5px;
+        min-height: 32px;
+        box-sizing: border-box;
         gap: 4px;
 
         & :deep(.kel-tag) {

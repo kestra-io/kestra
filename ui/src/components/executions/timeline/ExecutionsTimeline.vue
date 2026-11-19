@@ -46,10 +46,8 @@
 
                 <KsAlert v-if="error" type="error" :title="$t('executionsTimeline.error.title')" :description="error" :closable="false" />
 
-                <KsEmpty v-else-if="rows.length === 0">
-                    <template #description>
-                        {{ $t("executionsTimeline.empty.description") }}
-                    </template>
+                <template v-else-if="rows.length === 0">
+                    <KsNoData :description="$t('executionsTimeline.empty.description')" />
                     <div class="empty-actions">
                         <KsButton @click="emit('reset-filters')">
                             {{ $t("executionsTimeline.empty.resetFilters") }}
@@ -58,7 +56,7 @@
                             {{ $t("executionsTimeline.empty.widenRange") }}
                         </KsButton>
                     </div>
-                </KsEmpty>
+                </template>
 
                 <template v-else>
                     <div class="timeline-axis">
@@ -119,6 +117,7 @@
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
     import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, stateChartColor, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {latestRequest} from "../../../utils/latestRequest"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
@@ -359,11 +358,11 @@
             }))
     }
 
-    let latestFetchId = 0
+    const startFetch = latestRequest()
 
     async function fetchExecutions() {
-        const fetchId = ++latestFetchId
-        const isStale = () => fetchId !== latestFetchId
+        const isLatest = startFetch()
+        const isStale = () => !isLatest()
         loading.value = true
         error.value = undefined
         try {

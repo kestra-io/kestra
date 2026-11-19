@@ -131,9 +131,10 @@
                 totals[segment.unit] += Math.round(segment.value)
             }
         }
+        // java.time.Duration rejects the W designator, so weeks are emitted as days (https://github.com/kestra-io/kestra/issues/21197).
+        const days = totals.d + totals.w * 7
         let date = ""
-        if (totals.w) date += `${totals.w}W`
-        if (totals.d) date += `${totals.d}D`
+        if (days) date += `${days}D`
         let time = ""
         if (totals.h) time += `${totals.h}H`
         if (totals.m) time += `${totals.m}M`

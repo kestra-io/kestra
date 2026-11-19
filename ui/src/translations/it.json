@@ -1244,6 +1244,10 @@
     "trigger blocked policy check failed": "Impossibile controllare le Policy di governance.",
     "trigger blocked unknown": "Bloccato per una ragione sconosciuta.",
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger not toggleable": "Questo trigger non viene valutato dallo Scheduler, disabilitalo nella sorgente del flow",
+    "bulk not toggleable warning": "{count} trigger selezionati verranno saltati: lo Scheduler non li valuta, quindi possono essere disabilitati solo nella sorgente del Flow.",
+    "bulk none applied": "Nessun trigger è stato interessato: nessuno di quelli selezionati è stato elaborato.",
+    "bulk partially applied": "{count} di {requested} trigger sono stati elaborati, gli altri sono stati saltati.",
     "trigger enable dialog": {
       "title": "Abilita trigger",
       "bulk title": "Abilita {count} triggers",
@@ -2481,6 +2485,13 @@
         "placeholder": "Dimmi cosa costruire…",
         "send": "Invia",
         "stop": "Interrompi",
+        "usage": {
+          "remaining": "{percent}% rimanente",
+          "help": "Quota rimanente del limite di utilizzo dell'IA di questo provider nella finestra corrente.",
+          "warning": "Sei vicino al limite di utilizzo dell'IA di questo provider. Le richieste vengono rifiutate una volta raggiunto il limite.",
+          "exceeded": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si resetta alla fine del periodo corrente.",
+          "exceededUntil": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si ripristina il {when}."
+        },
         "mode": {
           "ask": "Chiedi",
           "edit": "Modifica",
@@ -2523,7 +2534,7 @@
           "planTitle": "Piano proposto",
           "actionTitle": "Azione proposta",
           "approve": "Approva",
-          "approveExecute": "Approva ed esegui",
+          "approvePlan": "Approva piano",
           "reject": "Rifiuta",
           "pending": "In attesa di approvazione",
           "revise": "Rispondi per revisionare"
@@ -2557,6 +2568,12 @@
           "docs": "Visualizza la documentazione",
           "sendTooltip": "L'invio è disabilitato perché nessun provider AI è configurato.",
           "notSent": "Il tuo prompt non è stato inviato"
+        },
+        "mcpTip": {
+          "title": "Usa Kestra da Claude Code, Cursor e altri client MCP",
+          "description": "Oltre al Copilot, Kestra fornisce un server MCP. Collega un client MCP esterno ad esso per gestire i tuoi flow e le tue egzecuzioni dagli strumenti che già utilizzi.",
+          "docs": "Visualizza la documentazione",
+          "dismiss": "Non mostrare più"
         },
         "thinkingWords": [
           "Orchestrazione",
@@ -2613,6 +2630,10 @@
           },
           "valid": "Valido",
           "invalid": "Richiede modifiche"
+        },
+        "tray": {
+          "title": "Modifiche in sospeso",
+          "applyFirst": "Applica prima {flow}"
         }
       }
     },
@@ -2891,7 +2912,8 @@
       "open_in_secrets": "Apri nei secrets",
       "options_aria": "Opzioni di ricerca",
       "path_only_hint": "Cerca solo il percorso del file, non il suo contenuto. Non può essere sostituito.",
-      "preview_empty": "Seleziona un risultato per visualizzarne l'anteprima. Fai clic su un flow nell'elenco dei risultati per vedere il suo sorgente.",
+      "preview_empty_title": "Seleziona un risultato per visualizzarne l'anteprima.",
+      "preview_empty_description": "Fai clic su un flow nell'elenco dei risultati per vedere il suo sorgente.",
       "preview_error": "Impossibile caricare il sorgente del flow",
       "previous_match": "Corrispondenza precedente",
       "rbac_banner": "{count} flow sono esclusi dalla sostituzione. Hai accesso in lettura ma non in modifica su {namespace}. Chiedi a un amministratore del namespace il permesso di {permission} per includerli.",

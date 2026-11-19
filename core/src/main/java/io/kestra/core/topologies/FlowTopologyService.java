@@ -2,6 +2,7 @@ package io.kestra.core.topologies;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -236,8 +237,8 @@ public class FlowTopologyService {
     private boolean isSubflowFunctionFor(String expression, Flow child) {
         return expression != null && PebbleUtil.containsOpeningBlockDelimiter(expression) &&
             expression.matches(".*subflow\\s*\\(.*\\).*") &&
-            expression.matches(".*id\\s*=\\s*['\"]?" + child.getId() + "['\"]?\\s*[\\s,)].*") &&
-            expression.matches(".*namespace\\s*=\\s*['\"]?" + child.getNamespace() + "['\"]?\\s*[\\s,)].*");
+            expression.matches(".*id\\s*=\\s*['\"]?" + Pattern.quote(child.getId()) + "['\"]?\\s*[\\s,)].*") &&
+            expression.matches(".*namespace\\s*=\\s*['\"]?" + Pattern.quote(child.getNamespace()) + "['\"]?\\s*[\\s,)].*");
     }
 
     private boolean validateDependsOn(List<io.kestra.plugin.core.trigger.Flow.Dependency> dependsOn, FlowInterface child, Execution execution, RunContext runContext) {

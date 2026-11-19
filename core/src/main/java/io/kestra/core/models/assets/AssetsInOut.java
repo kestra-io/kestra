@@ -8,6 +8,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import lombok.Getter;
 
+/**
+ * @deprecated assets are written when the task emits them through {@link io.kestra.core.runners.AssetEmitter}; kept so plugins built against 2.0 keep linking.
+ */
+@Deprecated(forRemoval = true, since = "2.1.0")
 @Getter
 public class AssetsInOut {
     private List<AssetIdentifier> inputs;

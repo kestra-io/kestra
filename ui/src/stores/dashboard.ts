@@ -17,6 +17,7 @@ import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../compone
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
+import {latestRequest} from "../utils/latestRequest"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
@@ -221,7 +222,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
-        latestValidation++
+        startValidation()
         setValidationErrors(undefined)
 
         return activeDashboard.value
@@ -257,12 +258,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
-    let latestValidation = 0
+    const startValidation = latestRequest()
 
     /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const validation = ++latestValidation
-        const isLatest = () => validation === latestValidation
+        const isLatest = startValidation()
         try {
             const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {

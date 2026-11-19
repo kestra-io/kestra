@@ -108,11 +108,16 @@
     }
 
     async function saveEditRunning(){
-        if(editingRow.value){
-            editingRow.value.running = newRunningCount.value
-            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value)
+        const row = editingRow.value
+        if(row){
+            await axios.put(`${apiUrlWithoutTenants()}/${row.tenantId}/concurrency-limit`, {
+                namespace: row.namespace,
+                flowId: row.flowId,
+                running: newRunningCount.value,
+            })
         }
         editRunning.value = false
+        await loadData()
     }
 
     watch(baseUrl, () => loadData(), {immediate: true})

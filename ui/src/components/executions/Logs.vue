@@ -123,7 +123,6 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
                     :emitUpdate="true"
@@ -175,7 +174,7 @@
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
-    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "../../utils/virtualScroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
 
     import * as Utils from "../../utils/utils"

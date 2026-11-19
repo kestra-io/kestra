@@ -380,6 +380,13 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("ancestorId")
+        ANCESTOR_ID("ancestorId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         @JsonProperty("origin")
         ORIGIN("origin") {
             @Override
@@ -812,7 +819,8 @@ public record QueryFilter(
                     Field.ASSET_EXPIRY,
                     Field.UPDATED,
                     Field.LOCKED,
-                    Field.PARENT_ID
+                    Field.PARENT_ID,
+                    Field.ANCESTOR_ID
                 );
             }
         },

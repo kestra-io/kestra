@@ -109,6 +109,15 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     private List<@Valid AssetRelationRef> related;
 
     @Nullable
+    @Size(max = 50)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(
+        title = "Assets this one depends on without being part of them.",
+        description = "Declaration only: turned into DEPENDS_ON relations from this asset when it is written, and not persisted on the asset by the platform. For a link `partOf` cannot hold because the asset already has a parent, such as a database a team creates inside its own deployment on a server another team owns."
+    )
+    private List<@Valid AssetRelationRef> dependsOn;
+
+    @Nullable
     @Hidden
     private Instant created;
 
@@ -271,6 +280,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.related = related;
     }
 
+    @JsonProperty("dependsOn")
+    public void setDependsOn(List<AssetRelationRef> dependsOn) {
+        this.dependsOn = dependsOn;
+    }
+
     @Override
     public String uid() {
         return Asset.uid(tenantId, id);
@@ -343,6 +357,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withRelated(List<AssetRelationRef> related) {
         this.related = related;
+        return this;
+    }
+
+    public Asset withDependsOn(List<AssetRelationRef> dependsOn) {
+        this.dependsOn = dependsOn;
         return this;
     }
 }

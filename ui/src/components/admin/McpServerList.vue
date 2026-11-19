@@ -21,7 +21,7 @@
         >
             <KsIcon
                 class="is-loading"
-                :size="32"
+                size="sm"
             >
                 <Loading />
             </KsIcon>

@@ -25,7 +25,7 @@
                 <section id="row" :class="statusOf(row.data) ? `status-${statusOf(row.data)}` : undefined">
                     <KsIcon
                         v-if="showStatus && statusOf(row.data)"
-                        size="xs"
+                        size="sm"
                         class="row-status"
                         :color="statusColorOf(statusOf(row.data))"
                         :tooltip="$t(`dependency.dag.status.${statusOf(row.data)}`)"

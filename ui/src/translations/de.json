@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "nicht gestartet"
+      },
+      "diff": {
+        "added": "hinzugefügt",
+        "removed": "entfernt",
+        "changed": "geändert",
+        "renamed": "umbenannt",
+        "moved": "verschoben"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Graph",
+      "yaml": "YAML",
+      "unchanged": "{count} unverändert",
+      "graph_error": "Der Graph konnte nicht gezeichnet werden. Öffnen Sie den YAML-Tab, um die Änderung zu sehen.",
+      "status": {
+        "added": "Hinzugefügt",
+        "removed": "Entfernt",
+        "changed": "Geändert",
+        "renamed": "Umbenannt",
+        "moved": "Verschoben"
       }
     },
     "show task logs": "Task-Logs anzeigen",
@@ -2485,6 +2505,13 @@
         "placeholder": "Sag mir, was ich bauen soll…",
         "send": "Senden",
         "stop": "Stopp",
+        "usage": {
+          "remaining": "{percent}% verbleibend",
+          "help": "Verbleibender Anteil des AI-Nutzungslimits dieses Anbieters im aktuellen Fenster.",
+          "warning": "Sie nähern sich dem KI-Nutzungslimit dieses Anbieters. Sobald es erreicht ist, werden weitere Anfragen abgelehnt.",
+          "exceeded": "Das KI-Nutzungslimit dieses Anbieters wurde erreicht. Es wird am Ende des aktuellen Zeitraums zurückgesetzt.",
+          "exceededUntil": "Das KI-Nutzungslimit dieses Anbieters wurde erreicht. Es wird zurückgesetzt am {when}."
+        },
         "mode": {
           "ask": "Fragen",
           "edit": "Bearbeiten",
@@ -2544,6 +2571,7 @@
           "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
         },
         "emptyHelper": "Ich kann diesen Flow bearbeiten, Tests generieren, zugehörige Dateien anlegen oder erklären, wie er funktioniert.",
+        "emptyHelperNoFlow": "Ich kann Flows erstellen oder bearbeiten, Tests generieren, zugehörige Dateien gerüstet erstellen oder erklären, wie Kestra funktioniert.",
         "suggestions": {
           "errorHandling": "Fehlerbehandlung hinzufügen",
           "unitTest": "Unit-Test generieren",
@@ -2609,7 +2637,8 @@
           "applied": "Angewendet",
           "previewBanner": "Eine KI-vorgeschlagene Änderung wird angezeigt – der Editor ist schreibgeschützt, bis du sie anwendest oder verwirfst.",
           "applyTitle": "Flow anwenden",
-          "applyConfirm": "{namespace}.{id} als Entwurfsrevision zur Überprüfung speichern? Der Flow wird erstellt oder, falls er bereits existiert, um eine neue Entwurfsrevision ergänzt – Entwürfe werden von Triggern oder Subflows erst nach der Veröffentlichung berücksichtigt.",
+          "applyDraftTitle": "Beim Anwenden wird eine Entwurfsrevision gespeichert.",
+          "applyDraftHint": "Noch geht nichts live. Trigger und Subflows ignorieren Entwürfe, bis Sie veröffentlichen.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
           "applyError": "Der Flow konnte nicht angewendet werden. Bitte versuche es erneut.",
           "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuche es erneut.",

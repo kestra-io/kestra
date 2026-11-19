@@ -112,6 +112,22 @@ describe("CopilotChat", () => {
         expect(mountChat().text()).toContain("Turn your idea into a workflow")
     })
 
+    // The standalone AI Copilot page has no flow open, so its placeholder must not say "this flow".
+    it("uses a flow-agnostic placeholder when no flow is open", () => {
+        const placeholder = mountChat().findComponent({name: "CopilotComposer"}).props("placeholder")
+        expect(placeholder).toBe("I can create or edit flows, generate tests, scaffold related files, or explain how Kestra works.")
+        expect(placeholder).not.toContain("this flow")
+    })
+
+    it.each([
+        ["flows/update/edit", {namespace: "company.team", id: "my-flow"}],
+        ["flows/create", {}],
+    ])("keeps the \"this flow\" placeholder on %s, where a flow is open", (name, params) => {
+        routeStub = {name, params}
+        expect(mountChat().findComponent({name: "CopilotComposer"}).props("placeholder"))
+            .toBe("I can edit this flow, generate tests, scaffold related files, or explain how it works.")
+    })
+
     it("renders one message per transcript entry (and hides the empty state)", () => {
         state.messages.value = [
             {id: "1", role: "USER", type: "TEXT", content: "hi"},
@@ -804,7 +820,8 @@ describe("CopilotChat", () => {
     it("opens the configuration docs in a new tab from the notice", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const docs = mountChat().find("[data-test=\"copilot-unavailable-docs\"]")
-        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/develop-with-ai/ai-copilot")
+        expect(docs.attributes("href")).toMatch(/#configure-an-llm-provider$/)
         expect(docs.attributes("target")).toBe("_blank")
     })
 

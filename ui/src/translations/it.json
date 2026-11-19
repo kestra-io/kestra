@@ -647,6 +647,26 @@
       "loop-state-bar": {
         "item": "{count} {state}",
         "not-started": "non avviato"
+      },
+      "diff": {
+        "added": "aggiunto",
+        "removed": "rimosso",
+        "changed": "modificato",
+        "renamed": "rinominato",
+        "moved": "spostato"
+      }
+    },
+    "flow_change_review": {
+      "graph": "Grafo",
+      "yaml": "YAML",
+      "unchanged": "{count} invariati",
+      "graph_error": "Impossibile disegnare il grafo. Apri la scheda YAML per vedere la modifica.",
+      "status": {
+        "added": "Aggiunto",
+        "removed": "Rimosso",
+        "changed": "Modificato",
+        "renamed": "Rinominato",
+        "moved": "Spostato"
       }
     },
     "show task logs": "Mostra task logs",
@@ -2485,6 +2505,13 @@
         "placeholder": "Dimmi cosa costruire…",
         "send": "Invia",
         "stop": "Interrompi",
+        "usage": {
+          "remaining": "{percent}% rimanente",
+          "help": "Quota rimanente del limite di utilizzo dell'IA di questo provider nella finestra corrente.",
+          "warning": "Sei vicino al limite di utilizzo dell'IA di questo provider. Le richieste vengono rifiutate una volta raggiunto il limite.",
+          "exceeded": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si resetta alla fine del periodo corrente.",
+          "exceededUntil": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si ripristina il {when}."
+        },
         "mode": {
           "ask": "Chiedi",
           "edit": "Modifica",
@@ -2544,6 +2571,7 @@
           "generic": "Qualcosa è andato storto. Riprova."
         },
         "emptyHelper": "Posso modificare questo flow, generare test, generare file correlati o spiegare come funziona.",
+        "emptyHelperNoFlow": "Posso creare o modificare Flow, generare test, creare file correlati o spiegare come funziona Kestra.",
         "suggestions": {
           "errorHandling": "Aggiungi gestione degli errori",
           "unitTest": "Genera un test di unità",
@@ -2609,7 +2637,8 @@
           "applied": "Applicato",
           "previewBanner": "Stai esaminando una modifica suggerita dall'IA: l'editor è di sola lettura finché non la applichi o la ignori.",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già. Le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
+          "applyDraftTitle": "L'applicazione salva una revisione bozza.",
+          "applyDraftHint": "Nulla va ancora in produzione. Trigger e subflow ignorano le bozze finché non pubblichi.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",

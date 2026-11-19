@@ -119,7 +119,7 @@ public class RunContextInitializer {
 
         DefaultRunContext runContext = buildAndInitRunContext(variables, data.traceParent(), workingDir);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
-        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory, StorageContext.triggeringExecutionPrefix(variables)));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
         runContext.setAssetEmitContext(AssetEmitContext.of(workerTask, variables));

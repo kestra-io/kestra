@@ -60,11 +60,12 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
                     :streaming="streaming"
-                    :placeholder="$t('ai.copilot.emptyHelper')"
+                    :placeholder="emptyPlaceholder"
                     :rows="3"
                     @submit="onSubmit"
                     @stop="onStop"
@@ -165,6 +166,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :disabledReason="disabledReason"
                     :describedBy="describedBy"
@@ -194,6 +196,7 @@
     import CopilotHelp from "./CopilotHelp.vue"
     import CopilotMcpTip from "./CopilotMcpTip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
@@ -287,6 +290,10 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
+
     const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
@@ -308,6 +315,8 @@
         }
         previousProvider = now
     })
+
+    const emptyPlaceholder = computed(() => t(routeInFocus.value?.kind === "FLOW" ? "ai.copilot.emptyHelper" : "ai.copilot.emptyHelperNoFlow"))
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
@@ -445,7 +454,7 @@
     const disabledReason = computed(() => noProviderConfigured.value ? t("ai.copilot.unavailable.sendTooltip") : undefined)
 
     /** Where the no-provider notice sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
+    const docsUrl = "https://kestra.io/docs/develop-with-ai/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configure-an-llm-provider"
 
     const restored = restoreThread()
 
@@ -505,6 +514,8 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            // Ahead of the cancel guard below: a cancelled turn still spent whatever the provider generated.
+            refreshUsage()
             const last = lastMessage.value
             // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
             if (!last || last.type === "CANCELLED") {

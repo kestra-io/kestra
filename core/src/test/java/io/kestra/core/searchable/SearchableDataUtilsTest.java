@@ -4,7 +4,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +22,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.OutputType;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.ArrayInput;
+import io.kestra.core.serializers.JacksonMapper;
 
 import static io.kestra.core.searchable.SearchableDataUtils.MAX_SEARCHABLE_ARRAY_ITEMS;
 import static io.kestra.core.searchable.SearchableDataUtils.MAX_SEARCHABLE_VALUE_LENGTH;
@@ -29,6 +42,34 @@ class SearchableDataUtilsTest {
 
     private static List<SearchableData> toSearchableData(Data data, Object value) {
         return SearchableDataUtils.toSearchableData(LOGGER, EXECUTION, data, value);
+    }
+
+    static Stream<Arguments> temporalValues() {
+        return Stream.of(
+            Arguments.of(OutputType.DATETIME, Instant.parse("2026-10-27T10:00:00Z"), "2026-10-27T10:00:00Z"),
+            Arguments.of(OutputType.DATE, LocalDate.parse("2026-10-27"), "2026-10-27"),
+            Arguments.of(OutputType.TIME, LocalTime.parse("10:15"), "10:15:00"),
+            Arguments.of(OutputType.DURATION, Duration.parse("PT1H30M"), "PT1H30M"),
+            Arguments.of(OutputType.DURATION, Duration.parse("PT1.5S"), "PT1.5S"),
+            Arguments.of(OutputType.DURATION, Duration.ofMillis(-1500), "PT-1.5S")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("temporalValues")
+    void shouldStoreTheSameValueForTypedAndSerializedForms(OutputType type, Object typed, String expected) {
+        Object serialized = JacksonMapper.toMap(Map.of("v", typed)).get("v");
+
+        assertThat(toSearchableData(data(type), typed)).extracting(SearchableData::value).containsExactly(expected);
+        assertThat(toSearchableData(data(type), serialized)).extracting(SearchableData::value).containsExactly(expected);
+    }
+
+    @Test
+    void shouldNormalizeTheItemsOfAnArrayByItemType() {
+        Data array = ArrayInput.builder().id("data").type(Type.ARRAY).itemType(Type.DURATION).searchable(true).build();
+
+        assertThat(toSearchableData(array, List.of(Duration.parse("PT1H30M"), 60))).extracting(SearchableData::value)
+            .containsExactly("PT1H30M", "PT1M");
     }
 
     @Test

@@ -17,13 +17,15 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    export interface KsDropdownItemProps {
         command?: string | number | object
         disabled?: boolean
         divided?: boolean
         icon?: string | Component
         danger?: boolean
-    } & /* @vue-ignore */ NativeAttributes<HTMLAttributes>>()
+    }
+
+    const props = defineProps<KsDropdownItemProps & /* @vue-ignore */ Omit<NativeAttributes<ExtractPublicPropTypes<typeof dropdownItemProps> & HTMLAttributes>, keyof KsDropdownItemProps>>()
 
     const filteredProps = useFilteredProps(props, ["danger"])
 

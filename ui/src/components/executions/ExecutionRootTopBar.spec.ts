@@ -6,6 +6,7 @@ const executionState = {current: "SUCCESS"}
 const permissions = {execute: true}
 const storeState = vi.hoisted(() => ({taskRunList: [] as {id?: string; taskId: string; state: {current: string}}[], flow: undefined as unknown, reviewAllowed: true}))
 const routeMeta = vi.hoisted(() => ({value: {} as Record<string, unknown>}))
+const mobile = vi.hoisted(() => ({value: false}))
 const loadedFlow = {id: "f", namespace: "ns", revision: 1, tasks: []}
 
 vi.mock("vue-router", () => ({
@@ -13,6 +14,11 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
     RouterLink: {template: "<a><slot /></a>"},
 }))
+
+vi.mock("../../composables/useIsMobile", async () => {
+    const {ref} = await import("vue")
+    return {useIsMobile: () => ref(mobile.value)}
+})
 
 vi.mock("../../stores/executions", () => ({
     useExecutionsStore: () => ({
@@ -47,9 +53,10 @@ beforeEach(() => {
     storeState.flow = loadedFlow
     storeState.reviewAllowed = true
     routeMeta.value = {}
+    mobile.value = false
 })
 
-function mountTopBar() {
+function mountTopBar(stubs: Record<string, unknown> = {}) {
     return i18nMount(ExecutionRootTopBar, {
         messages: {actions: "Actions"},
         props: {routeInfo: {title: "e", breadcrumb: []}},
@@ -70,6 +77,7 @@ function mountTopBar() {
                 Api: {template: "<button>API</button>"},
                 Delete: {template: "<button>Delete</button>"},
                 EditFlow: {template: "<button>Edit Flow</button>"},
+                ...stubs,
             },
         },
     })
@@ -236,13 +244,27 @@ describe("ExecutionRootTopBar — an execution paused on an Approval", () => {
         return {visible, all: [...visible, ...menu]}
     }
 
-    it.each(["overview", "gantt", "logs"])("leaves Review to the banner on the %s tab and keeps Execute", async (tab) => {
-        routeMeta.value = {tab, banner: true}
+    it("leaves Review to the banner on a tab that shows it, with Execute and Edit Flow in the top bar", async () => {
+        routeMeta.value = {tab: "overview", banner: true}
 
         const {visible, all} = await labels(mountTopBar())
 
         expect(visible).toContain("Execute")
+        expect(visible).toContain("Edit Flow")
         expect(all).not.toContain("Review")
+    })
+
+    it("keeps Review in the bottom bar on mobile, where no banner is shown", async () => {
+        routeMeta.value = {tab: "gantt", banner: true}
+        mobile.value = true
+
+        const wrapper = mountTopBar({
+            BottomActionBar: {template: "<div data-test=\"bottom-action-bar\"><slot /></div>"},
+            NavBarActionsDropdown: {template: "<div />"},
+        })
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='bottom-action-bar']").text()).toContain("Review")
     })
 
     it("shows Review in place of Execute on a tab without the banner, with Execute in the menu", async () => {

@@ -292,6 +292,16 @@
     "last execution status": "Последний статус выполнения",
     "jump to": "Перейти",
     "jump to...": "Перейти к...",
+    "global_search": {
+      "open_flow": "Открыть flow",
+      "flow_executions": "Выполнения flow",
+      "move": "Переместить",
+      "menu": "Меню",
+      "sources": "Меню + flows + namespaces",
+      "sources_flows": "Меню + Flows",
+      "sources_namespaces": "Меню + namespace'ы",
+      "search_failed": "Не удалось загрузить flows или namespaces"
+    },
     "contextBar": {
       "ai": "ИИ",
       "news": "Новости",

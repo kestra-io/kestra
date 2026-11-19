@@ -19,6 +19,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
@@ -26,6 +28,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
 
@@ -53,6 +56,9 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private ExecutionService executionService;
+
+    @Inject
+    private ConcurrencyLimitService concurrencyLimitService;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -335,6 +341,61 @@ public class FlowConcurrencyCaseTest {
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
             runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
+        }
+    }
+
+    public void flowConcurrencyQueuedSlaCancel(String tenantId) throws Exception {
+        String flowId = "flow-concurrency-queue-sla";
+        String sourceWithoutSla = """
+            id: flow-concurrency-queue-sla
+            namespace: io.kestra.tests
+
+            concurrency:
+              behavior: QUEUE
+              limit: 1
+
+            tasks:
+              - id: sleep
+                type: io.kestra.plugin.core.flow.Sleep
+                duration: PT1M
+            """;
+        Flow flow1 = flowRepository.findById(tenantId, NAMESPACE, flowId, Optional.empty()).orElseThrow();
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, flowId, null, null, Duration.ofSeconds(30));
+
+        // only the second revision has an SLA, so only the second execution can be ended by it while queued
+        FlowWithSource flow2 = flowRepository.update(
+            GenericFlow.fromYaml(
+                tenantId, sourceWithoutSla + """
+                    sla:
+                      - id: deadline
+                        type: MAX_DURATION
+                        duration: PT2S
+                        behavior: CANCEL
+                    """
+            ),
+            flow1
+        );
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow2, null, null, Optional.empty()));
+        FlowWithSource flow3 = flowRepository.update(GenericFlow.fromYaml(tenantId, sourceWithoutSla + "\ndescription: without SLA\n"), flow2);
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow3, null, null, Optional.empty()));
+
+        try {
+            assertThat(concurrencyLimitService.findById(tenantId, NAMESPACE, flowId).orElseThrow().getRunning()).isEqualTo(1);
+
+            // the SLA ends the second execution while it is still queued
+            Execution cancelled = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), execution2);
+            assertThat(cancelled.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
+
+            // it never held a slot: the first one still runs, the third one is still queued and the counter is untouched
+            Thread.sleep(500); // wait a little to be sure the executor did not release anything
+            Execution queued = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution3);
+            assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
+            assertThat(concurrencyLimitService.findById(tenantId, NAMESPACE, flowId).orElseThrow().getRunning()).isEqualTo(1);
+        } finally {
+            // kill everything to avoid dangling executions
+            runnerUtils.killExecution(execution1);
+            runnerUtils.killExecution(execution3);
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, flowId);
         }
     }
 

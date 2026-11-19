@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -106,6 +107,11 @@ class ExecutionServiceTest {
 
     @Inject
     TestRunnerUtils runnerUtils;
+
+    @BeforeEach
+    void resetResumeEvents() {
+        ResumeEventListener.reset();
+    }
 
     @Test
     @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
@@ -1269,22 +1275,70 @@ class ExecutionServiceTest {
         assertThat(event.getInputs()).containsExactlyEntriesOf(Map.of("reason", "too risky"));
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
+    void shouldMaskAPlainTextSecretInputWhenResumingAPause() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        executionService.resume(execution, flow, State.Type.RUNNING, Map.of("asked", "yes", "secret_pause", "s3cr3t"), PausableTask.Resumed.now("john"));
+
+        assertThat(ResumeEventListener.find(execution.getId()).getInputs())
+            .containsEntry("asked", "yes")
+            .containsEntry("secret_pause", ExecutionResumedEvent.MASK);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-inputs.yaml" })
+    void shouldPublishTheCancelledTaskRunWithoutDecisionWhenCancellingAnApproval() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-inputs", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository.findByExecution(execution);
+        String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        executionService.cancelApproval(execution, flow, taskRunId, null, false);
+
+        ExecutionResumedEvent event = ResumeEventListener.find(execution.getId());
+        assertThat(event.getTaskRunId()).isEqualTo(taskRunId);
+        assertThat(event.getTaskId()).isEqualTo("approval");
+        assertThat(event.getState()).isEqualTo(State.Type.CANCELLED);
+        assertThat(event.getDecision()).isNull();
+        assertThat(event.getInputs()).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause_no_tasks.yaml" })
+    void shouldNotPublishAResumeEventWhenKillingAPausedExecution() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        executionService.kill(execution, flow);
+
+        assertThat(ResumeEventListener.events(execution.getId())).isEmpty();
+    }
+
     @Singleton
     public static class ResumeEventListener implements ApplicationEventListener<CrudEvent<Execution>> {
-        private static final List<CrudEvent<Execution>> EVENTS = new CopyOnWriteArrayList<>();
+        private static final List<ExecutionResumedEvent> EVENTS = new CopyOnWriteArrayList<>();
 
         @Override
         public void onApplicationEvent(CrudEvent<Execution> event) {
-            if (event.getModel() instanceof Execution) {
-                EVENTS.add(event);
+            if (event instanceof ExecutionResumedEvent resumed) {
+                EVENTS.add(resumed);
             }
         }
 
-        static ExecutionResumedEvent find(String executionId) {
+        static void reset() {
+            EVENTS.clear();
+        }
+
+        static List<ExecutionResumedEvent> events(String executionId) {
             return EVENTS.stream()
-                .filter(event -> event.getModel() != null && executionId.equals(event.getModel().getId()))
-                .filter(ExecutionResumedEvent.class::isInstance)
-                .map(ExecutionResumedEvent.class::cast)
+                .filter(event -> executionId.equals(event.getModel().getId()))
+                .toList();
+        }
+
+        static ExecutionResumedEvent find(String executionId) {
+            return events(executionId).stream()
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No resume event was published for execution '%s'.".formatted(executionId)));
         }

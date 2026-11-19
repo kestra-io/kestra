@@ -1350,7 +1350,9 @@ public class ExecutionService {
             unpausedExecution = execution.withState(newState);
         }
 
-        this.eventPublisher.publishEvent(new ExecutionResumedEvent(execution, unpausedExecution, pausedTaskRun.orElse(null), null, newState, inputs, inputDefinitions));
+        this.eventPublisher.publishEvent(newState == State.Type.KILLING
+            ? CrudEvent.of(execution, unpausedExecution)
+            : new ExecutionResumedEvent(execution, unpausedExecution, pausedTaskRun.orElse(null), null, newState, inputs, inputDefinitions));
         this.notifyLoopParent(unpausedExecution, unpausedExecution.getState().getCurrent());
         return unpausedExecution;
     }

@@ -116,7 +116,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null, null));
     }
 
     @Test
@@ -135,7 +135,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null, null));
     }
 
     @Test

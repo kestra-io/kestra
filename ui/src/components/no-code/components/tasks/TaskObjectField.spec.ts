@@ -2,7 +2,7 @@ import {afterAll, describe, test, expect} from "vitest"
 import {defineComponent, h, ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObjectField from "./TaskObjectField.vue"
-import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY, POLICY_SUPPLIED_PATHS_INJECTION_KEY} from "../../injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import {taskComponentsReady} from "./useBlockComponent"
@@ -40,6 +40,47 @@ describe("TaskObjectField required-field indicator", () => {
 
         expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(true)
         expect(wrapper.find("[data-required-path='level']").exists()).toBe(true)
+    })
+})
+
+describe("TaskObjectField policy-supplied required field", () => {
+    function mountSuppliedField(modelValue: string | undefined, supplied: string[]) {
+        return i18nMount(TaskObjectField, {
+            props: {
+                schema: {type: "string"},
+                fieldKey: "level",
+                task: {},
+                required: ["level"],
+                modelValue,
+            },
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {
+                    [POLICY_SUPPLIED_PATHS_INJECTION_KEY as symbol]: ref(new Set(supplied)),
+                },
+            },
+        })
+    }
+
+    test("is neither flagged as missing nor locatable, and shows the policy hint", () => {
+        const wrapper = mountSuppliedField(undefined, ["level"])
+
+        expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(false)
+        expect(wrapper.find("[data-required-path]").exists()).toBe(false)
+        expect(wrapper.find("[data-test='field-policy-supplied']").exists()).toBe(true)
+    })
+
+    test("is still flagged when the policy supplies a different path", () => {
+        const wrapper = mountSuppliedField(undefined, ["other"])
+
+        expect(wrapper.find("[data-required-path='level']").exists()).toBe(true)
+        expect(wrapper.find("[data-test='field-policy-supplied']").exists()).toBe(false)
+    })
+
+    test("drops the hint when the user already set a value", () => {
+        const wrapper = mountSuppliedField("WARN", ["level"])
+
+        expect(wrapper.find("[data-test='field-policy-supplied']").exists()).toBe(false)
     })
 })
 

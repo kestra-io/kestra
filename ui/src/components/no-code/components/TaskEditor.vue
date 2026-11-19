@@ -76,7 +76,7 @@
         FIELD_NAV_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         PLUGIN_DEFAULTS_INJECTION_KEY,
-        UNSET_REQUIRED_FIELDS_INJECTION_KEY,
+        UNSET_REQUIRED_FIELDS_INJECTION_KEY, POLICY_SUPPLIED_PATHS_INJECTION_KEY,
         NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY,
     } from "../injectionKeys"
     import {removeNullAndUndefined} from "../utils/cleanUp"
@@ -475,8 +475,10 @@
         properties: (schema.value as Schema | undefined)?.properties ?? properties.value,
     }))
 
+    const policySuppliedPaths = inject(POLICY_SUPPLIED_PATHS_INJECTION_KEY, undefined)
+
     const unsetRequiredFields = computed(() =>
-        countUnsetRequiredFields(taskModel.value, requiredFieldsSchema.value, definitions.value),
+        countUnsetRequiredFields(taskModel.value, requiredFieldsSchema.value, definitions.value, "", policySuppliedPaths?.value),
     )
 
     const unsetRequiredFieldsState = inject(UNSET_REQUIRED_FIELDS_INJECTION_KEY, undefined)

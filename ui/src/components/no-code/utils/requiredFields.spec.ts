@@ -144,6 +144,51 @@ describe("countUnsetRequiredFields", () => {
     })
 })
 
+describe("countUnsetRequiredFields with policy-supplied paths", () => {
+    it("skips a top-level required field supplied by a policy", () => {
+        const schema = {type: "object", properties: {message: {type: "string"}, level: {type: "string"}}, required: ["message", "level"]}
+
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["message"]))
+
+        expect(result).toEqual([{path: "level", label: "level"}])
+    })
+
+    it("skips a nested required field supplied by a policy", () => {
+        const schema = {
+            type: "object",
+            properties: {auth: {type: "object", properties: {user: {type: "string"}, token: {type: "string"}}, required: ["user", "token"]}},
+        }
+
+        const result = countUnsetRequiredFields({auth: {}}, schema, {}, "", new Set(["auth.user"]))
+
+        expect(result).toEqual([{path: "auth.token", label: "token"}])
+    })
+
+    it("still counts the unsupplied required children of an absent parent a policy partially supplies", () => {
+        const schema = {
+            type: "object",
+            properties: {auth: {type: "object", properties: {user: {type: "string"}, token: {type: "string"}}, required: ["user", "token"]}},
+            required: ["auth"],
+        }
+
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["auth.user"]))
+
+        expect(result).toEqual([{path: "auth.token", label: "token"}])
+    })
+
+    it("counts an absent required parent when nothing under it is supplied", () => {
+        const schema = {
+            type: "object",
+            properties: {auth: {type: "object", properties: {user: {type: "string"}}, required: ["user"]}},
+            required: ["auth"],
+        }
+
+        const result = countUnsetRequiredFields({}, schema, {}, "", new Set(["other"]))
+
+        expect(result).toEqual([{path: "auth", label: "auth"}])
+    })
+})
+
 describe("findRequiredFieldFrames", () => {
     it("returns a frame for a drillable array item, so the jump can open it before focusing the field", () => {
         const itemSchema = {

@@ -191,6 +191,7 @@
     import TaskEditData from "./TaskEditData.vue"
     import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
+    import {usePolicySuppliedPaths} from "../no-code/utils/usePolicySuppliedPaths"
     import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
     import {validationErrorLines, type ValidationError as ApiValidationError} from "../../utils/validationErrors"
@@ -418,6 +419,7 @@
     const flowStore = useFlowStore()
     const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
     const localTaskErrors = ref<ApiValidationError[] | undefined>()
+    const {track: trackValidation, reset: resetPolicySuppliedPaths} = usePolicySuppliedPaths()
     const errors = computed(() => {
         const split = validationErrorLines(localTaskErrors.value)
         return split.length === 0 ? undefined : split
@@ -586,23 +588,28 @@
         }
         if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
-            flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskErrors.value = result?.errors })
-                .catch(() => { localTaskErrors.value = undefined })
+            trackValidation(
+                flowStore.validateTask({task: taskYaml.value, section: props.section, namespace: props.namespace || undefined}),
+                (result) => { localTaskErrors.value = result?.errors },
+                () => { localTaskErrors.value = undefined },
+            )
         } else {
             localTaskErrors.value = undefined
+            resetPolicySuppliedPaths()
         }
     }
 
     const commitEdit = () => {
         if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
-            flowStore.validateTask({
-                task: taskYaml.value,
-                section: props.section,
-            }).then((result) => {
-                localTaskErrors.value = result?.errors
-            }).catch(() => { /* leave prior errors in place on transient failure */ })
+            trackValidation(
+                flowStore.validateTask({
+                    task: taskYaml.value,
+                    section: props.section,
+                    namespace: props.namespace || undefined,
+                }),
+                (result) => { localTaskErrors.value = result?.errors },
+            )
         }
         if (props.presentation === "panel") {
             let parsed: unknown

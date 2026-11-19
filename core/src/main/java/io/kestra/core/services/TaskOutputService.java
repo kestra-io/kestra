@@ -27,8 +27,8 @@ public class TaskOutputService extends AbstractOutputService {
     private final TaskOutputRepositoryInterface outputRepository;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
-        TaskOutputConfiguration taskOutputConfiguration) {
-        super(storageInterface, namespaceFactory, taskOutputConfiguration.limit());
+        NamespaceService namespaceService, TaskOutputConfiguration taskOutputConfiguration) {
+        super(storageInterface, namespaceFactory, namespaceService, taskOutputConfiguration.limit());
         this.outputRepository = outputRepository;
     }
 

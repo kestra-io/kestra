@@ -24,6 +24,7 @@ import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
@@ -91,7 +92,8 @@ class WorkerJobFetcherUndecodableJobTest {
             mock(ExecutionKilledManager.class),
             null,
             List.of(),
-            new GrpcConfiguration(false, 10485760)
+            new GrpcConfiguration(false, 10485760),
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
         );
         fetcher.init(context);
     }

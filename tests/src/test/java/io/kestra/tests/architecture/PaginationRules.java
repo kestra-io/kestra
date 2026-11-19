@@ -35,7 +35,7 @@ public final class PaginationRules {
     }
 
     /**
-     * No controller method re-declares a page or size query parameter, and every allowlist entry still matches a method.
+     * No controller method redeclares a page or size query parameter, and every allowlist entry still matches a method.
      *
      * @param allowed {@code SimpleClassName#method} (all its overloads) to the reason why its paging contract differs from the shared beans
      */
@@ -43,7 +43,7 @@ public final class PaginationRules {
         return methods()
             .that().areDeclaredInClassesThat().areAnnotatedWith(CONTROLLER)
             .should(notDeclarePageOrSizeParameter(allowed))
-            .because("page, size and sort are declared once by Pagination or UnsortedPagination, use @Valid @RequestBean instead of re-declaring them");
+            .because("page, size and sort are declared once by Pagination or UnsortedPagination, use @Valid @RequestBean instead of redeclaring them");
     }
 
     /**

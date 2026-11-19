@@ -9,6 +9,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -50,6 +51,7 @@ public class WorkerJobReconciler {
     private final StickyWorkerRouting stickyWorkerRouting;
     private final ExecutionRepositoryInterface executionRepository;
     private final KillSwitchService killSwitchService;
+    private final MetricRegistry metricRegistry;
 
     @Inject
     public WorkerJobReconciler(WorkerJobRunningStateStore workerJobRunningStateStore,
@@ -57,13 +59,15 @@ public class WorkerJobReconciler {
         TriggerEventQueue triggerEventQueue,
         StickyWorkerRouting stickyWorkerRouting,
         ExecutionRepositoryInterface executionRepository,
-        KillSwitchService killSwitchService) {
+        KillSwitchService killSwitchService,
+        MetricRegistry metricRegistry) {
         this.workerJobRunningStateStore = Objects.requireNonNull(workerJobRunningStateStore, "workerJobRunningStateStore must not be null");
         this.workerJobEventQueue = Objects.requireNonNull(workerJobEventQueue, "workerJobEventQueue must not be null");
         this.triggerEventQueue = Objects.requireNonNull(triggerEventQueue, "triggerEventQueue must not be null");
         this.stickyWorkerRouting = Objects.requireNonNull(stickyWorkerRouting, "stickyWorkerRouting must not be null");
         this.executionRepository = Objects.requireNonNull(executionRepository, "executionRepository must not be null");
         this.killSwitchService = Objects.requireNonNull(killSwitchService, "killSwitchService must not be null");
+        this.metricRegistry = Objects.requireNonNull(metricRegistry, "metricRegistry must not be null");
     }
 
     /**
@@ -71,10 +75,11 @@ public class WorkerJobReconciler {
      * {@code heldJobIds}.
      *
      * @param workerId the worker that sent the sync
+     * @param workerGroupId the worker group of that worker
      * @param streamGeneration the generation of the stream the sync was sent on; {@code 0} disables reconciliation
      * @param heldJobIds the jobs the worker holds: received, and whose terminal result the controller has not accepted
      */
-    public void reconcile(String workerId, long streamGeneration, Collection<String> heldJobIds) {
+    public void reconcile(String workerId, String workerGroupId, long streamGeneration, Collection<String> heldJobIds) {
         if (streamGeneration <= 0) {
             return;
         }
@@ -85,23 +90,29 @@ public class WorkerJobReconciler {
             if (held.contains(workerJobRunning.uid()) || workerJobRunning.getWorkerInstance().streamGeneration() >= streamGeneration) {
                 return;
             }
-            resubmit(txContext, workerJobRunning, workerId);
+            if (resubmit(txContext, workerJobRunning, workerId)) {
+                metricRegistry.counter(
+                    MetricRegistry.METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL,
+                    MetricRegistry.METRIC_CONTROLLER_JOB_RESUBMITTED_TOTAL_DESCRIPTION,
+                    metricRegistry.workerGroupAndQueueTags(workerGroupId, workerJobRunning.getWorkerInstance().workerQueueId())
+                ).increment();
+            }
         });
     }
 
-    private void resubmit(TransactionContext txContext, WorkerJobRunning workerJobRunning, String workerId) {
+    private boolean resubmit(TransactionContext txContext, WorkerJobRunning workerJobRunning, String workerId) {
         log.warn(
             "Resubmitting the job '{}': it was sent to worker '{}' on job stream {}, which the worker has left without receiving it.",
             workerJobRunning.uid(), workerId, workerJobRunning.getWorkerInstance().streamGeneration()
         );
-        if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-            resubmitTask(txContext, workerTaskRunning, workerId);
-        } else if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
-            releaseTrigger(txContext, workerTriggerRunning, workerId);
-        }
+        return switch (workerJobRunning) {
+            case WorkerTaskRunning workerTaskRunning -> resubmitTask(txContext, workerTaskRunning, workerId);
+            case WorkerTriggerRunning workerTriggerRunning -> releaseTrigger(txContext, workerTriggerRunning, workerId);
+            default -> false;
+        };
     }
 
-    private void resubmitTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning, String workerId) {
+    private boolean resubmitTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning, String workerId) {
         if (mustNotRun(workerTaskRunning.getTaskRun())) {
             log.warn(
                 "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended, its execution was stopped or no longer exists, or a kill switch applies to it.",
@@ -109,7 +120,7 @@ public class WorkerJobReconciler {
                 workerTaskRunning.getTaskRun().getExecutionId()
             );
             workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerId);
-            return;
+            return false;
         }
 
         String workerQueueId = workerTaskRunning.getWorkerInstance().workerQueueId();
@@ -130,8 +141,10 @@ public class WorkerJobReconciler {
             // The entry is released only once the job is back on the queue, otherwise the next sync would resubmit it again.
             workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerId);
             Logs.logTaskRun(workerTaskRunning.getTaskRun(), Level.WARN, "Resubmit WorkerTask: it never reached its worker.");
+            return true;
         } catch (QueueException e) {
             Logs.logTaskRun(workerTaskRunning.getTaskRun(), Level.ERROR, "Unable to resubmit WorkerTask.", e);
+            return false;
         }
     }
 
@@ -158,10 +171,11 @@ public class WorkerJobReconciler {
      * Hands the trigger back to the scheduler, which resubmits it from the current flow definition rather than from the
      * recorded one, the same way it does for a trigger whose worker is gone.
      */
-    private void releaseTrigger(TransactionContext txContext, WorkerTriggerRunning workerTriggerRunning, String workerId) {
+    private boolean releaseTrigger(TransactionContext txContext, WorkerTriggerRunning workerTriggerRunning, String workerId) {
         TriggerId triggerId = workerTriggerRunning.triggerId();
         workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTriggerRunning.uid(), workerId);
         triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerId, workerTriggerRunning.getDispatchEpoch()));
         Logs.logTrigger(triggerId, Level.WARN, "Trigger never reached worker '{}', notifying the scheduler.", workerId);
+        return true;
     }
 }

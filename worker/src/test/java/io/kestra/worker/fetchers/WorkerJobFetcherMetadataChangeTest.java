@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.MetadataChangePayload;
@@ -16,6 +18,8 @@ import io.kestra.core.worker.WorkerMetadataChangeHandler;
 import io.kestra.worker.WorkerJobStreamConfig;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.doThrow;
@@ -35,7 +39,8 @@ class WorkerJobFetcherMetadataChangeTest {
             (BroadcastQueueInterface<ClusterEvent>) mock(BroadcastQueueInterface.class),
             handlers,
             new GrpcConfiguration(false, 10485760),
-            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65)),
+            new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig())
         );
     }
 
@@ -103,7 +108,8 @@ class WorkerJobFetcherMetadataChangeTest {
             null,
             List.of(handler),
             new GrpcConfiguration(false, 10485760),
-            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65))
+            new WorkerJobStreamConfig(Duration.ofSeconds(30), Duration.ofSeconds(65)),
+            new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig())
         );
 
         io.kestra.core.models.executions.ExecutionKilled k = io.kestra.core.models.executions.ExecutionKilledExecution.builder()

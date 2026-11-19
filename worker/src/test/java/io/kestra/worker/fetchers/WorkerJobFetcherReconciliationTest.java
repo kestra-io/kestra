@@ -17,6 +17,8 @@ import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.WorkerJobStreamConfig;
@@ -27,6 +29,8 @@ import io.kestra.worker.services.ExecutionKilledManager;
 import io.grpc.Status;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +50,7 @@ class WorkerJobFetcherReconciliationTest {
     private final AtomicReference<ClientResponseObserver<WorkerJobRequest, WorkerJobResponse>> responseObserver = new AtomicReference<>();
     private ClientCallStreamObserver<WorkerJobRequest> requestStream;
     private WorkerJobFetcher fetcher;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -53,6 +58,7 @@ class WorkerJobFetcherReconciliationTest {
         KestraContext kestraContext = mock(KestraContext.class);
         when(kestraContext.getVersion()).thenReturn("test");
         KestraContext.setContext(kestraContext);
+        meterRegistry = new SimpleMeterRegistry();
 
         WorkerControllerServiceStub stub = mock(WorkerControllerServiceStub.class);
         requestStream = mock(ClientCallStreamObserver.class);
@@ -81,7 +87,8 @@ class WorkerJobFetcherReconciliationTest {
             null,
             List.of(),
             new GrpcConfiguration(false, 10485760),
-            new WorkerJobStreamConfig(Duration.ZERO, SYNC_TIMEOUT)
+            new WorkerJobStreamConfig(Duration.ZERO, SYNC_TIMEOUT),
+            new MetricRegistry(meterRegistry, new MetricConfig())
         );
         fetcher.init(context);
     }
@@ -137,6 +144,15 @@ class WorkerJobFetcherReconciliationTest {
 
         // Then
         verify(requestStream).cancel(anyString(), any());
+
+        // When
+        responseObserver.get().onError(Status.CANCELLED.asRuntimeException());
+        fetcher.resetBackoff();
+        fetcher.doOnLoop();
+
+        // Then
+        assertThat(reconnections("sync_unacknowledged")).isEqualTo(1.0);
+        assertThat(reconnections("stream_error")).isZero();
     }
 
     @Test
@@ -150,6 +166,13 @@ class WorkerJobFetcherReconciliationTest {
 
         // Then
         verify(requestStream, never()).cancel(anyString(), any());
+    }
+
+    private double reconnections(String reason) {
+        Counter counter = meterRegistry.find(MetricRegistry.METRIC_WORKER_STREAM_RECONNECT_COUNT)
+            .tag(MetricRegistry.TAG_REASON, reason)
+            .counter();
+        return counter == null ? 0.0 : counter.count();
     }
 
     @Test

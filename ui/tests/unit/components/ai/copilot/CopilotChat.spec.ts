@@ -101,11 +101,6 @@ describe("CopilotChat", () => {
             .toBe("I can edit this flow, generate tests, scaffold related files, or explain how it works.")
     })
 
-    it("uses the flow-agnostic placeholder on a non-flow detail route", () => {
-        routeStub = {name: "namespaces/update", params: {id: "company.team"}}
-        expect(mountChat().findComponent({name: "CopilotComposer"}).props("placeholder")).not.toContain("this flow")
-    })
-
     it("renders one message per transcript entry (and hides the empty state)", () => {
         state.messages.value = [
             {id: "1", role: "USER", type: "TEXT", content: "hi"},

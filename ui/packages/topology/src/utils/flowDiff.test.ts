@@ -168,6 +168,18 @@ tasks:
     test("returns an empty diff for YAML it cannot parse instead of throwing", () => {
         expect(diffFlowSources("tasks: [", ORDERS_AFTER).counts.added).toBe(6)
     })
+
+    test("compares a trigger and a task that share an id apart", () => {
+        const diff = diffFlowSources(
+            "tasks:\n  - {id: notify, type: t}\n",
+            "tasks:\n  - {id: notify, type: t}\ntriggers:\n  - {id: notify, type: s}\n",
+        )
+
+        expect(diff.tasks.map((task) => [task.section, task.id, task.status])).toEqual([
+            ["triggers", "notify", "added"],
+            ["tasks", "notify", "unchanged"],
+        ])
+    })
 })
 
 describe("mergeFlowGraphs", () => {
@@ -335,5 +347,72 @@ describe("mergeFlowGraphs", () => {
 
         expect(graph.nodes.map((n) => n.uid)).toEqual(["root.gate.a", "root.gate.load"])
         expect(graph.edges).toHaveLength(1)
+    })
+
+    const trigger = (id: string) => ({
+        uid: `root.Triggers.${id}`,
+        type: "io.kestra.core.models.hierarchies.GraphTrigger",
+        triggerDeclaration: {id},
+    })
+    const triggersBox = (...nodes: string[]) => ({
+        cluster: {uid: "cluster_root.Triggers"},
+        nodes,
+        parents: [],
+        start: nodes[0],
+        end: nodes[1],
+    })
+
+    test("gives a trigger node the status of its trigger, not of a task with the same id", () => {
+        const {statusByUid} = mergeFlowGraphs(
+            {nodes: [node("root.notify", "notify")], edges: []},
+            {nodes: [trigger("notify"), node("root.notify", "notify")], edges: []},
+            diffFlowSources(
+                "tasks:\n  - {id: notify, type: t}\n",
+                "tasks:\n  - {id: notify, type: t}\ntriggers:\n  - {id: notify, type: s}\n",
+            ),
+        )
+
+        expect(Object.fromEntries(statusByUid)).toEqual({
+            "root.Triggers.notify": "added",
+            "root.notify": "unchanged",
+        })
+    })
+
+    test("keeps the triggers box, with its dots and edges, when the last trigger is removed", () => {
+        const {graph, statusByUid} = mergeFlowGraphs(
+            {
+                nodes: [
+                    node("root.root-aaa"),
+                    node("root.Triggers.root-bbb"),
+                    node("root.Triggers.end-ccc"),
+                    trigger("daily"),
+                    node("root.load", "load"),
+                ],
+                clusters: [triggersBox("root.Triggers.root-bbb", "root.Triggers.end-ccc", "root.Triggers.daily")],
+                edges: [
+                    {source: "root.Triggers.root-bbb", target: "root.Triggers.daily"},
+                    {source: "root.Triggers.daily", target: "root.Triggers.end-ccc"},
+                    {source: "root.Triggers.end-ccc", target: "root.root-aaa"},
+                    {source: "root.root-aaa", target: "root.load"},
+                ],
+            },
+            {
+                nodes: [node("root.root-zzz"), node("root.load", "load")],
+                edges: [{source: "root.root-zzz", target: "root.load"}],
+            },
+            diffFlowSources(
+                "tasks:\n  - {id: load, type: t}\ntriggers:\n  - {id: daily, type: s}\n",
+                "tasks:\n  - {id: load, type: t}\n",
+            ),
+        )
+
+        expect(statusByUid.get("root.Triggers.daily")).toBe("removed")
+        expect(graph.clusters?.map((cluster) => cluster.cluster.uid)).toEqual(["cluster_root.Triggers"])
+        expect(graph.edges.map((edge) => `${edge.source} > ${edge.target}`)).toEqual([
+            "root.root-zzz > root.load",
+            "root.Triggers.root-bbb > root.Triggers.daily",
+            "root.Triggers.daily > root.Triggers.end-ccc",
+            "root.Triggers.end-ccc > root.root-zzz",
+        ])
     })
 })

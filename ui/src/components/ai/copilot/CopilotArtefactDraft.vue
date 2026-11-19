@@ -2,7 +2,7 @@
     <div class="copilot-draft" data-test="copilot-draft">
         <div class="copilot-draft-header">
             <KsText size="small" class="copilot-draft-title">
-                <KsIcon><FileDocumentOutline /></KsIcon>
+                <KsIcon class="copilot-draft-icon"><FileDocumentOutline /></KsIcon>
                 {{ $t(`ai.copilot.draft.title.${draft.kind.toLowerCase()}`) }}
             </KsText>
             <KsCodeStatus
@@ -30,12 +30,19 @@
         </div>
         <div
             v-if="view === 'graph'"
-            v-ks-loading="base === undefined"
+            v-ks-loading="base === undefined && !baseError"
             class="copilot-draft-graph"
             data-test="copilot-draft-graph"
         >
+            <KsAlert
+                v-if="baseError"
+                type="warning"
+                :closable="false"
+                :title="$t('flow_change_review.graph_error')"
+                data-test="copilot-draft-graph-error"
+            />
             <FlowChangeReview
-                v-if="base !== undefined"
+                v-else-if="base !== undefined"
                 :before="base || undefined"
                 :after="draft.yaml"
             />
@@ -47,14 +54,11 @@
             :content="yamlBlock"
         />
 
-        <div
-            v-if="dismissed || applied"
-            class="copilot-draft-footer"
-            :data-test="dismissed ? 'copilot-draft-dismissed' : 'copilot-draft-applied'"
-        >
-            <KsText size="small" type="secondary" class="copilot-draft-status">
-                {{ $t(dismissed ? "ai.copilot.draft.dismissed" : "ai.copilot.draft.applied") }}
-            </KsText>
+        <div v-if="dismissed" class="copilot-draft-footer" data-test="copilot-draft-dismissed">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.dismissed") }}</KsText>
+        </div>
+        <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
         </div>
         <div v-else class="copilot-draft-footer">
             <KsButton
@@ -118,32 +122,32 @@
 
     const view = ref<"yaml" | "graph">("yaml")
     const base = ref<string>()
+    const baseError = ref(false)
 
-    const yamlBlock = computed(() => `\`\`\`yaml\n${props.draft.yaml}\n\`\`\``)
-    const showActions = computed(() => {
-        const {kind} = props.draft
-        if (kind === "DASHBOARD") {
-            return dashboardSupported.value
-        }
-        if (kind === "APP") {
-            return appSupported
-        }
-        if (kind === "TEST_SUITE") {
-            return testSuiteSupported
-        }
-        return kind === "FLOW"
-    })
+    const showActions = computed(
+        () => props.draft.kind === "FLOW"
+            || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)
+            || (props.draft.kind === "APP" && appSupported)
+            || (props.draft.kind === "TEST_SUITE" && testSuiteSupported),
+    )
 
     watch(view, async (value) => {
         if (value !== "graph" || base.value !== undefined) {
             return
         }
-        base.value = await draftBaseSource(props.draft).catch(() => "")
+        baseError.value = false
+        try {
+            base.value = await draftBaseSource(props.draft)
+        } catch {
+            baseError.value = true
+        }
     })
 
     async function onApply(): Promise<void> {
         if (await apply(props.draft)) emit("applied", props.draft.draftId)
     }
+
+    const yamlBlock = computed(() => "```yaml\n" + props.draft.yaml + "\n```")
 </script>
 
 <style scoped>
@@ -155,21 +159,13 @@
         background: var(--ks-bg-base);
     }
 
-    .copilot-draft-header,
-    .copilot-draft-footer {
+    .copilot-draft-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         background: var(--ks-bg-elevated);
-    }
-
-    .copilot-draft-header {
-        justify-content: space-between;
-    }
-
-    .copilot-draft-footer {
-        justify-content: flex-end;
     }
 
     .copilot-draft-title {
@@ -200,11 +196,21 @@
         font-size: var(--ks-font-size-sm);
     }
 
+    .copilot-draft-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-elevated);
+    }
+
     .copilot-draft-dismiss {
+        --ks-button-text-color: var(--ks-text-secondary);
         color: var(--ks-text-secondary);
     }
 
-    .copilot-draft-status {
+    .copilot-draft-status-label {
+        --kel-text-color: var(--ks-text-muted);
         font-style: italic;
     }
 </style>

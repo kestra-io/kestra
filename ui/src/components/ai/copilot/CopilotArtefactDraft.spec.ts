@@ -88,6 +88,17 @@ describe("CopilotArtefactDraft", () => {
         expect(review.props()).toMatchObject({before: "id: before", after: "id: after"})
     })
 
+    it("shows the graph error instead of an all-added graph when the current flow cannot be loaded", async () => {
+        draftBaseSource.mockRejectedValueOnce(new Error("500"))
+        const w = mountDraft({draftId: "v5", kind: "FLOW", yaml: "id: after", valid: true, constraints: null})
+
+        w.findComponent({name: "KsTabs"}).vm.$emit("update:modelValue", "graph")
+        await flushPromises()
+
+        expect(w.find("[data-test='copilot-draft-graph-error']").exists()).toBe(true)
+        expect(w.findComponent({name: "FlowChangeReview"}).exists()).toBe(false)
+    })
+
     it("shows an error badge and the constraints when the draft is invalid", () => {
         const w = mountDraft({draftId: "d2", kind: "DASHBOARD", yaml: "x: 1", valid: false, constraints: "charts is required"})
         expect(w.text()).toContain("Proposed dashboard")

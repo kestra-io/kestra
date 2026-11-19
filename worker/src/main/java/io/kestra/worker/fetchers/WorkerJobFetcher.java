@@ -30,6 +30,7 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -111,6 +112,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final List<WorkerMetadataChangeHandler> metadataChangeHandlers;
     private final WorkerJobStreamConfig jobStreamConfig;
+    private final MetricRegistry metricRegistry;
 
     private WorkerQueue<WorkerJob> workerJobQueue;
     private WorkerContext workerContext;
@@ -189,6 +191,11 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private volatile boolean streamDropRequested = false;
 
     /**
+     * Why the previous stream was lost, recorded on the reconnection metric when the next stream opens.
+     */
+    private volatile ReconnectReason reconnectReason;
+
+    /**
      * Latch to detect when stream completes.
      */
     private volatile CountDownLatch streamCompleted;
@@ -230,6 +237,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      *        and on stream (re-)connection. Typically one handler per cached metastore;
      *        may be empty on workers that do not participate in metastore caching.
      * @param jobStreamConfig how the worker syncs the jobs it holds with the controller.
+     * @param metricRegistry the metric registry.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
@@ -239,7 +247,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         @Nullable @Named(WORKER_LOCAL_CLUSTER_EVENTS) final BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         final List<WorkerMetadataChangeHandler> metadataChangeHandlers,
         final GrpcConfiguration grpcConfiguration,
-        final WorkerJobStreamConfig jobStreamConfig) {
+        final WorkerJobStreamConfig jobStreamConfig,
+        final MetricRegistry metricRegistry) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
@@ -249,6 +258,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         this.clusterEventQueue = clusterEventQueue;
         this.metadataChangeHandlers = metadataChangeHandlers;
         this.jobStreamConfig = jobStreamConfig;
+        this.metricRegistry = metricRegistry;
     }
 
     /**
@@ -363,6 +373,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                 jobStreamConfig.syncTimeout()
             );
             streamDropRequested = true;
+            reconnectReason = ReconnectReason.SYNC_UNACKNOWLEDGED;
             observer.cancel("The controller stopped acknowledging the jobs held by the worker", null);
             return;
         }
@@ -382,7 +393,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         streamDropRequested = false;
         syncAcknowledged = false;
         lastSyncAckNanos = System.nanoTime();
-        streamGeneration.incrementAndGet();
+        if (streamGeneration.getAndIncrement() > 0) {
+            countReconnection();
+        }
         streamCompleted = new CountDownLatch(1);
 
         ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = new ClientResponseObserver<>() {
@@ -408,6 +421,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                     log.warn("Stream error: {}", t.getMessage());
                 }
                 requestObserverRef.set(null);
+                if (reconnectReason == null) {
+                    reconnectReason = ReconnectReason.STREAM_ERROR;
+                }
                 scheduleReconnectBackoff();
                 streamCompleted.countDown();
             }
@@ -416,6 +432,9 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             public void onCompleted() {
                 log.trace("Stream completed by server");
                 requestObserverRef.set(null);
+                if (reconnectReason == null) {
+                    reconnectReason = ReconnectReason.STREAM_COMPLETED;
+                }
                 streamCompleted.countDown();
             }
         };
@@ -433,6 +452,16 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         } else {
             log.debug("Stream failed before initial request could be sent, will retry on next loop");
         }
+    }
+
+    private void countReconnection() {
+        ReconnectReason reason = reconnectReason == null ? ReconnectReason.STREAM_ERROR : reconnectReason;
+        reconnectReason = null;
+        metricRegistry.counter(
+            MetricRegistry.METRIC_WORKER_STREAM_RECONNECT_COUNT,
+            MetricRegistry.METRIC_WORKER_STREAM_RECONNECT_COUNT_DESCRIPTION,
+            metricRegistry.workerGroupTags(workerContext.workerGroupId(), MetricRegistry.TAG_REASON, reason.tag())
+        ).increment();
     }
 
     /**
@@ -825,6 +854,22 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             } catch (Exception e) {
                 log.debug("Error cancelling stream: {}", e.getMessage());
             }
+        }
+    }
+
+    private enum ReconnectReason {
+        STREAM_ERROR("stream_error"),
+        STREAM_COMPLETED("stream_completed"),
+        SYNC_UNACKNOWLEDGED("sync_unacknowledged");
+
+        private final String tag;
+
+        ReconnectReason(String tag) {
+            this.tag = tag;
+        }
+
+        String tag() {
+            return tag;
         }
     }
 
